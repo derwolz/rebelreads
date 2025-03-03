@@ -6,6 +6,9 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from 'express';
+import { db } from './db';
+import { ratings } from '@shared/schema';
+import { and, eq } from 'drizzle-orm';
 
 // Ensure uploads directory exists
 const uploadsDir = "./uploads/covers";
@@ -49,18 +52,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/books/:id/ratings", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const rating = await storage.createRating({
-      bookId: parseInt(req.params.id),
-      userId: req.user!.id,
-      enjoyment: req.body.enjoyment,
-      writing: req.body.writing,
-      themes: req.body.themes,
-      characters: req.body.characters,
-      worldbuilding: req.body.worldbuilding,
-      review: req.body.review
-    });
+    try {
+      // Try to create new rating
+      const rating = await storage.createRating({
+        bookId: parseInt(req.params.id),
+        userId: req.user!.id,
+        enjoyment: req.body.enjoyment,
+        writing: req.body.writing,
+        themes: req.body.themes,
+        characters: req.body.characters,
+        worldbuilding: req.body.worldbuilding,
+        review: req.body.review
+      });
 
-    res.json(rating);
+      res.json(rating);
+    } catch (error: any) {
+      if (error.code === '23505') { // Unique violation
+        try {
+          // If rating exists, update it
+          const [updatedRating] = await db
+            .update(ratings)
+            .set({
+              enjoyment: req.body.enjoyment,
+              writing: req.body.writing,
+              themes: req.body.themes,
+              characters: req.body.characters,
+              worldbuilding: req.body.worldbuilding,
+              review: req.body.review
+            })
+            .where(
+              and(
+                eq(ratings.userId, req.user!.id),
+                eq(ratings.bookId, parseInt(req.params.id))
+              )
+            )
+            .returning();
+
+          return res.json(updatedRating);
+        } catch (updateError) {
+          return res.status(500).send("Failed to update rating");
+        }
+      }
+      res.status(400).send(error.message);
+    }
   });
 
   app.get("/api/my-books", async (req, res) => {

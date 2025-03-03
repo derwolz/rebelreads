@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Rating } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./star-rating";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ interface RatingDialogProps {
 
 export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [ratings, setRatings] = useState({
     enjoyment: 0,
@@ -31,29 +33,54 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
   });
   const [review, setReview] = useState("");
 
+  // Get all ratings to find user's existing rating
+  const { data: existingRatings } = useQuery<Rating[]>({
+    queryKey: [`/api/books/${bookId}/ratings`],
+  });
+
+  // Find user's existing rating
+  const userRating = existingRatings?.find(r => r.userId === user?.id);
+
+  // Initialize form with existing rating if found
+  useEffect(() => {
+    if (userRating) {
+      setRatings({
+        enjoyment: userRating.enjoyment,
+        writing: userRating.writing,
+        themes: userRating.themes,
+        characters: userRating.characters,
+        worldbuilding: userRating.worldbuilding,
+      });
+      setReview(userRating.review || "");
+    }
+  }, [userRating]);
+
   const ratingMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/books/${bookId}/ratings`, {
         ...ratings,
         review,
       });
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/ratings`] });
       toast({
-        title: "Rating submitted",
+        title: userRating ? "Rating updated" : "Rating submitted",
         description: "Thank you for your review!",
       });
       setOpen(false);
-      setRatings({
-        enjoyment: 0,
-        writing: 0,
-        themes: 0,
-        characters: 0,
-        worldbuilding: 0,
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Rating failed",
+        description: error.message,
+        variant: "destructive",
       });
-      setReview("");
     },
   });
 
@@ -62,7 +89,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Rate this book</DialogTitle>
+          <DialogTitle>{userRating ? "Update your rating" : "Rate this book"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-4">
@@ -120,7 +147,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
             onClick={() => ratingMutation.mutate()}
             disabled={!Object.values(ratings).every(Boolean)}
           >
-            Submit
+            {userRating ? "Update Rating" : "Submit Rating"}
           </Button>
         </div>
       </DialogContent>
