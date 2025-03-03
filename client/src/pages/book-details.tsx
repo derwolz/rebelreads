@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { Book, Rating, calculateWeightedRating } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
@@ -16,8 +16,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 import type { ReferralLink } from "@shared/schema";
-import { ReviewCard } from "@/components/review-card"; // Change to named import
-
+import { ReviewCard } from "@/components/review-card";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -78,7 +77,15 @@ export default function BookDetails() {
           <div className="md:col-span-2 space-y-8">
             <div>
               <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
-              <p className="text-xl text-muted-foreground mb-4">by {book.author}</p>
+              <p className="text-xl mb-4">
+                by{" "}
+                <Link
+                  href={`/authors/${book.authorId}`}
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {book.author}
+                </Link>
+              </p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {book.genres.map((genre) => (
                   <Badge key={genre} variant="secondary">

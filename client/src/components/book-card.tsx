@@ -33,9 +33,11 @@ export function BookCard({ book }: { book: Book }) {
       />
       <CardContent className="p-4">
         <h3 className="text-lg font-semibold mb-2">{book.title}</h3>
-        <p className="text-sm text-muted-foreground mb-2">{book.author}</p>
+        <Link href={`/authors/${book.authorId}`} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+          {book.author}
+        </Link>
 
-        <div className="flex flex-wrap gap-1 mb-2">
+        <div className="flex flex-wrap gap-1 mt-2 mb-2">
           {book.genres.slice(0, 3).map((genre) => (
             <Badge key={genre} variant="secondary" className="text-xs">
               {genre}
