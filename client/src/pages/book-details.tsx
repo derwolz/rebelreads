@@ -195,6 +195,68 @@ export default function BookDetails() {
               {/* Ratings Section */}
               <div className="space-y-4">
                 <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
+                {ratings?.length > 0 && (
+                  <div className="space-y-4 mb-8">
+                    <h3 className="text-xl font-semibold">What Readers Say</h3>
+                    <div className="grid gap-6 p-6 bg-muted rounded-lg">
+                      {/* Sentiment Distribution */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Overall Sentiment</h4>
+                        <div className="flex items-center gap-4">
+                          {(() => {
+                            const sentiments = ratings
+                              .filter(r => r.analysis?.sentiment)
+                              .reduce((acc, r) => {
+                                const sentiment = r.analysis!.sentiment.label;
+                                acc[sentiment] = (acc[sentiment] || 0) + 1;
+                                return acc;
+                              }, {} as Record<string, number>);
+
+                            const total = Object.values(sentiments).reduce((a, b) => a + b, 0);
+
+                            return Object.entries(sentiments).map(([sentiment, count]) => (
+                              <div key={sentiment} className="flex items-center gap-2">
+                                <Badge
+                                  variant={sentiment === "POSITIVE" ? "success" : "destructive"}
+                                >
+                                  {sentiment}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  {Math.round((count / total) * 100)}%
+                                </span>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Common Themes */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Common Themes</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {(() => {
+                            const themes = ratings
+                              .filter(r => r.analysis?.themes)
+                              .flatMap(r => r.analysis!.themes)
+                              .reduce((acc, theme) => {
+                                acc[theme.label] = (acc[theme.label] || 0) + theme.score;
+                                return acc;
+                              }, {} as Record<string, number>);
+
+                            return Object.entries(themes)
+                              .sort(([,a], [,b]) => b - a)
+                              .slice(0, 5)
+                              .map(([theme, score]) => (
+                                <Badge key={theme} variant="outline" className="text-sm">
+                                  {theme} ({Math.round(score * 100 / ratings.length)}%)
+                                </Badge>
+                              ));
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {averageRatings ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
