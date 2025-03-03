@@ -5,7 +5,6 @@ import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { format } from "date-fns";
@@ -66,7 +65,12 @@ export default function BookDetails() {
                   </Badge>
                 ))}
                 <Badge variant="outline" className="bg-primary/10">
-                  {book.format.charAt(0).toUpperCase() + book.format.slice(1)}
+                  {book.formats?.map((format, index) => (
+                    <span key={format}>
+                      {format.charAt(0).toUpperCase() + format.slice(1)}
+                      {index < book.formats.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
                 </Badge>
               </div>
             </div>

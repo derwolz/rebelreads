@@ -7,20 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
 export function BookUploader() {
   const { toast } = useToast();
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [format, setFormat] = useState<string>("");
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
   const [awards, setAwards] = useState<string[]>([]);
   const [characterInput, setCharacterInput] = useState("");
@@ -50,7 +43,7 @@ export function BookUploader() {
       form.reset();
       setCoverFile(null);
       setSelectedGenres([]);
-      setFormat("");
+      setSelectedFormats([]);
       setSelectedCharacters([]);
       setAwards([]);
     },
@@ -83,10 +76,10 @@ export function BookUploader() {
       return;
     }
 
-    if (!format) {
+    if (selectedFormats.length === 0) {
       toast({
         title: "Upload failed",
-        description: "Please select a format",
+        description: "Please select at least one format",
         variant: "destructive",
       });
       return;
@@ -95,9 +88,9 @@ export function BookUploader() {
     const formData = new FormData(e.currentTarget);
     formData.set("cover", coverFile);
     formData.set("genres", JSON.stringify(selectedGenres));
+    formData.set("formats", JSON.stringify(selectedFormats));
     formData.set("characters", JSON.stringify(selectedCharacters));
     formData.set("awards", JSON.stringify(awards));
-    formData.set("format", format);
 
     uploadMutation.mutate(formData);
   };
@@ -107,6 +100,14 @@ export function BookUploader() {
       setSelectedGenres(selectedGenres.filter(g => g !== genre));
     } else {
       setSelectedGenres([...selectedGenres, genre]);
+    }
+  };
+
+  const handleFormatSelect = (format: string) => {
+    if (selectedFormats.includes(format)) {
+      setSelectedFormats(selectedFormats.filter(f => f !== format));
+    } else {
+      setSelectedFormats([...selectedFormats, format]);
     }
   };
 
@@ -210,19 +211,19 @@ export function BookUploader() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Format</label>
-        <Select value={format} onValueChange={setFormat}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select format..." />
-          </SelectTrigger>
-          <SelectContent>
-            {FORMAT_OPTIONS.map((format) => (
-              <SelectItem key={format} value={format}>
-                {format.charAt(0).toUpperCase() + format.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <label className="block text-sm font-medium mb-1">Available Formats</label>
+        <div className="flex flex-wrap gap-2">
+          {FORMAT_OPTIONS.map((format) => (
+            <Badge
+              key={format}
+              variant={selectedFormats.includes(format) ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => handleFormatSelect(format)}
+            >
+              {format.charAt(0).toUpperCase() + format.slice(1)}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <div>

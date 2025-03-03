@@ -114,6 +114,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const coverUrl = `/uploads/covers/${req.file.filename}`;
     const genres = JSON.parse(req.body.genres); // Parse the stringified genres array
+    const formats = JSON.parse(req.body.formats); // Parse the stringified formats array
+    const characters = req.body.characters ? JSON.parse(req.body.characters) : [];
+    const awards = req.body.awards ? JSON.parse(req.body.awards) : [];
+    const publishedDate = req.body.publishedDate ? new Date(req.body.publishedDate) : null;
 
     const book = await storage.createBook({
       title: req.body.title,
@@ -121,9 +125,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       authorId: req.user!.id,
       coverUrl,
       author: req.user!.authorName || req.user!.username, // Use authorName if available, fallback to username
-      genres: genres, // Add the parsed genres array
+      genres: genres,
+      formats: formats,
       promoted: false,
-      authorImageUrl: null
+      authorImageUrl: null,
+      pageCount: req.body.pageCount ? parseInt(req.body.pageCount) : null,
+      publishedDate,
+      awards,
+      originalTitle: req.body.originalTitle || null,
+      series: req.body.series || null,
+      setting: req.body.setting || null,
+      characters,
+      isbn: req.body.isbn || null,
+      asin: req.body.asin || null,
+      language: req.body.language || "English"
     });
 
     res.json(book);

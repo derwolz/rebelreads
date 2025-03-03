@@ -28,7 +28,7 @@ export const books = pgTable("books", {
 
   // Base book info
   pageCount: integer("page_count"),
-  format: text("format").notNull(), // softback, hardback, digital, audiobook
+  formats: text("formats").array().notNull(), // Array of formats (softback, hardback, etc)
   publishedDate: date("published_date"),
 
   // Additional details
@@ -88,9 +88,7 @@ export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] a
 
 export const insertBookSchema = createInsertSchema(books).extend({
   genres: z.array(z.string()).min(1, "At least one genre is required"),
-  format: z.enum(FORMAT_OPTIONS, {
-    required_error: "Please select a format",
-  }),
+  formats: z.array(z.enum(FORMAT_OPTIONS)).min(1, "At least one format is required"),
   publishedDate: z.date().optional(),
   pageCount: z.number().min(1, "Page count must be at least 1").optional(),
   awards: z.array(z.string()).optional(),
