@@ -1,6 +1,27 @@
-import { pgTable, text, serial, integer, timestamp, boolean, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export const RETAILER_OPTIONS = [
+  "Amazon",
+  "Barnes & Noble",
+  "Book Depository",
+  "IndieBound",
+  "Waterstones",
+  "Custom"
+] as const;
+
+export const referralLinkSchema = z.object({
+  retailer: z.enum(RETAILER_OPTIONS),
+  url: z.string().url("Please enter a valid URL"),
+  customName: z.string().optional(),
+});
+
+export type ReferralLink = z.infer<typeof referralLinkSchema>;
+
+export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] as const;
+
+export const AVAILABLE_GENRES = ["fantasy", "science fiction", "mystery", "romance", "thriller"] as const;
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -25,23 +46,18 @@ export const books = pgTable("books", {
   authorImageUrl: text("author_image_url"),
   promoted: boolean("promoted").default(false),
   genres: text("genres").array().notNull(), // Array of genre strings
-
-  // Base book info
   pageCount: integer("page_count"),
   formats: text("formats").array().notNull(), // Array of formats (softback, hardback, etc)
   publishedDate: date("published_date"),
-
-  // Additional details
   awards: text("awards").array(),
   originalTitle: text("original_title"),
   series: text("series"),
   setting: text("setting"),
   characters: text("characters").array(),
-
-  // Edition details
   isbn: text("isbn"),
   asin: text("asin"),
   language: text("language").notNull().default("English"),
+  referralLinks: jsonb("referral_links").default([]),
 });
 
 export const ratings = pgTable("ratings", {
@@ -84,8 +100,6 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
 });
 
-export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] as const;
-
 export const insertBookSchema = createInsertSchema(books).extend({
   genres: z.array(z.string()).min(1, "At least one genre is required"),
   formats: z.array(z.enum(FORMAT_OPTIONS)).min(1, "At least one format is required"),
@@ -94,6 +108,7 @@ export const insertBookSchema = createInsertSchema(books).extend({
   awards: z.array(z.string()).optional(),
   characters: z.array(z.string()).optional(),
   language: z.string().optional(),
+  referralLinks: z.array(referralLinkSchema).optional(),
 });
 
 export const insertRatingSchema = createInsertSchema(ratings);
@@ -120,5 +135,3 @@ export function calculateWeightedRating(rating: Rating): number {
     rating.worldbuilding * 0.1
   );
 }
-
-export const AVAILABLE_GENRES = ["fantasy", "science fiction", "mystery", "romance", "thriller"] as const;

@@ -21,6 +21,7 @@ export interface IStorage {
   getBooksByAuthor(authorId: number): Promise<Book[]>;
   createBook(book: Omit<Book, "id">): Promise<Book>;
   promoteBook(id: number): Promise<Book>;
+  updateBook(id: number, data: Partial<Book>): Promise<Book>;
 
   getRatings(bookId: number): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
@@ -103,6 +104,15 @@ export class DatabaseStorage implements IStorage {
     const [book] = await db
       .update(books)
       .set({ promoted: true })
+      .where(eq(books.id, id))
+      .returning();
+    return book;
+  }
+
+  async updateBook(id: number, data: Partial<Book>): Promise<Book> {
+    const [book] = await db
+      .update(books)
+      .set(data)
       .where(eq(books.id, id))
       .returning();
     return book;
@@ -252,6 +262,9 @@ export class MemStorage implements IStorage {
     throw new Error("Method not implemented.");
   }
   async promoteBook(id: number): Promise<Book> {
+    throw new Error("Method not implemented.");
+  }
+  async updateBook(id: number, data: Partial<Book>): Promise<Book> {
     throw new Error("Method not implemented.");
   }
   async deleteBook(id: number, authorId: number): Promise<void> {

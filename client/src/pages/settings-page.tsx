@@ -31,6 +31,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface ReferralLink {
+  retailer: string;
+  url: string;
+  customName?: string;
+}
+
+const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"];
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -120,6 +135,27 @@ export default function SettingsPage() {
     onError: (error: Error) => {
       toast({
         title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateBookMutation = useMutation({
+    mutationFn: async (data: { id: number; referralLinks: ReferralLink[] | undefined }) => {
+      const res = await apiRequest("PATCH", `/api/books/${data.id}`, { referralLinks: data.referralLinks });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
+      toast({
+        title: "Book updated",
+        description: "Your book has been successfully updated.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
         description: error.message,
         variant: "destructive",
       });
@@ -297,6 +333,80 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground">
                             {book.promoted ? "Promoted" : "Not promoted"}
                           </p>
+                          {/* Add Referral Links Section */}
+                          <div className="mt-4 space-y-2">
+                            <h4 className="text-sm font-medium">Referral Links</h4>
+                            {book.referralLinks?.map((link: ReferralLink, index: number) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <span className="text-sm">{link.customName || link.retailer}:</span>
+                                <Input
+                                  value={link.url}
+                                  onChange={(e) => {
+                                    const newLinks = [...(book.referralLinks || [])];
+                                    newLinks[index] = { ...link, url: e.target.value };
+                                    updateBookMutation.mutate({
+                                      id: book.id,
+                                      referralLinks: newLinks,
+                                    });
+                                  }}
+                                  className="text-sm h-8"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newLinks = book.referralLinks?.filter((_, i) => i !== index);
+                                    updateBookMutation.mutate({
+                                      id: book.id,
+                                      referralLinks: newLinks,
+                                    });
+                                  }}
+                                >
+                                  ×
+                                </Button>
+                              </div>
+                            ))}
+                            <div className="flex gap-2">
+                              <Select
+                                onValueChange={(value) => {
+                                  const newLink = {
+                                    retailer: value,
+                                    url: "",
+                                    customName: value === "Custom" ? "" : undefined,
+                                  };
+                                  updateBookMutation.mutate({
+                                    id: book.id,
+                                    referralLinks: [...(book.referralLinks || []), newLink],
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="w-[200px]">
+                                  <SelectValue placeholder="Add retailer..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {RETAILER_OPTIONS.map((retailer) => (
+                                    <SelectItem key={retailer} value={retailer}>
+                                      {retailer}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {book.referralLinks?.length > 0 && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    updateBookMutation.mutate({
+                                      id: book.id,
+                                      referralLinks: [],
+                                    })
+                                  }
+                                >
+                                  Clear All
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="flex gap-2">

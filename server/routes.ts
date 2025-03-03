@@ -156,6 +156,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(updatedBook);
   });
 
+  app.patch("/api/books/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const book = await storage.getBook(parseInt(req.params.id));
+    if (!book || book.authorId !== req.user!.id) {
+      return res.sendStatus(403);
+    }
+
+    const updatedBook = await storage.updateBook(book.id, req.body);
+    res.json(updatedBook);
+  });
+
   app.patch("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 

@@ -8,13 +8,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { format } from "date-fns";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useState } from "react";
+import type { ReferralLink } from "@shared/schema";
+
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -52,6 +54,24 @@ export default function BookDetails() {
               alt={book.title}
               className="w-full rounded-lg shadow-lg"
             />
+            {book.referralLinks && book.referralLinks.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {book.referralLinks.map((link: ReferralLink, index: number) => (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full"
+                  >
+                    <Button variant="outline" className="w-full">
+                      {link.customName || link.retailer}
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </Button>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2 space-y-8">
@@ -68,7 +88,7 @@ export default function BookDetails() {
                   {book.formats?.map((format, index) => (
                     <span key={format}>
                       {format.charAt(0).toUpperCase() + format.slice(1)}
-                      {index < book.formats.length - 1 ? ', ' : ''}
+                      {index < book.formats.length - 1 ? ", " : ""}
                     </span>
                   ))}
                 </Badge>
@@ -165,7 +185,7 @@ export default function BookDetails() {
                     <div className="flex items-center gap-2">
                       <StarRating rating={Math.round(averageRatings.overall)} readOnly />
                       <span className="text-sm text-muted-foreground">
-                        ({ratings?.length} {ratings?.length === 1 ? 'review' : 'reviews'})
+                        ({ratings?.length} {ratings?.length === 1 ? "review" : "reviews"})
                       </span>
                     </div>
                     <div className="grid gap-2">
