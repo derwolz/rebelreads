@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 import type { ReferralLink } from "@shared/schema";
+import { ReviewCard } from "@/components/review-card"; // Change to named import
 
 
 export default function BookDetails() {
@@ -227,13 +228,7 @@ export default function BookDetails() {
                 <div className="space-y-4 mt-8">
                   <h3 className="text-xl font-semibold">Reviews</h3>
                   {ratings?.map((rating) => (
-                    <div key={rating.id} className="p-4 bg-muted rounded-lg space-y-2">
-                      <div className="flex gap-2">
-                        <StarRating rating={Math.round(calculateWeightedRating(rating))} readOnly size="sm" />
-                        <span className="text-sm text-muted-foreground">Overall Rating</span>
-                      </div>
-                      {rating.review && <p className="text-sm mt-2">{rating.review}</p>}
-                    </div>
+                    <ReviewCard key={rating.id} rating={rating} />
                   ))}
                 </div>
               </div>

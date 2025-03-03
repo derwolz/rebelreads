@@ -20,6 +20,8 @@ interface RatingDialogProps {
   trigger: React.ReactNode;
 }
 
+const REVIEW_MAX_LENGTH = 2000;
+
 export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -84,6 +86,13 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
     },
   });
 
+  const handleReviewChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= REVIEW_MAX_LENGTH) {
+      setReview(value);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -130,10 +139,15 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium">Review</label>
+            <div className="flex justify-between">
+              <label className="text-sm font-medium">Review</label>
+              <span className="text-sm text-muted-foreground">
+                {review.length}/{REVIEW_MAX_LENGTH}
+              </span>
+            </div>
             <Textarea
               value={review}
-              onChange={(e) => setReview(e.target.value)}
+              onChange={handleReviewChange}
               placeholder="Write your review..."
               className="mt-1"
             />
