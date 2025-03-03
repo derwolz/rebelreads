@@ -38,24 +38,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(books);
   });
 
+  // In the book details route handler, add validation
   app.get("/api/books/:id", async (req, res) => {
-    const book = await storage.getBook(parseInt(req.params.id));
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const book = await storage.getBook(bookId);
     if (!book) return res.sendStatus(404);
     res.json(book);
   });
 
+  // Fix the ratings route as well
   app.get("/api/books/:id/ratings", async (req, res) => {
-    const ratings = await storage.getRatings(parseInt(req.params.id));
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const ratings = await storage.getRatings(bookId);
     res.json(ratings);
   });
 
+  // Fix ratings creation route
   app.post("/api/books/:id/ratings", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
     try {
-      // Try to create new rating
       const rating = await storage.createRating({
-        bookId: parseInt(req.params.id),
+        bookId,
         userId: req.user!.id,
         enjoyment: req.body.enjoyment,
         writing: req.body.writing,
@@ -69,7 +86,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       if (error.code === '23505') { // Unique violation
         try {
-          // If rating exists, update it
           const [updatedRating] = await db
             .update(ratings)
             .set({
@@ -83,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(
               and(
                 eq(ratings.userId, req.user!.id),
-                eq(ratings.bookId, parseInt(req.params.id))
+                eq(ratings.bookId, bookId)
               )
             )
             .returning();
