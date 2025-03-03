@@ -2,12 +2,6 @@ import { useState } from "react";
 import { Rating, calculateWeightedRating } from "@shared/schema";
 import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface ReviewCardProps {
   rating: Rating;
@@ -20,24 +14,12 @@ export function ReviewCard({ rating }: ReviewCardProps) {
   const hasLongReview = rating.review && rating.review.length > REVIEW_PREVIEW_LENGTH;
 
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="p-4 bg-muted rounded-lg space-y-2"
-    >
+    <div className="p-4 bg-muted rounded-lg space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <StarRating rating={Math.round(calculateWeightedRating(rating))} readOnly size="sm" />
           <span className="text-sm text-muted-foreground">Overall Rating</span>
         </div>
-        {hasLongReview && (
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
-              <span className="sr-only">Toggle details</span>
-            </Button>
-          </CollapsibleTrigger>
-        )}
       </div>
 
       {rating.review && (
@@ -45,10 +27,20 @@ export function ReviewCard({ rating }: ReviewCardProps) {
           <p className={!isOpen && hasLongReview ? "line-clamp-3" : undefined}>
             {rating.review}
           </p>
+          {hasLongReview && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(!isOpen)}
+              className="mt-2"
+            >
+              {isOpen ? "Show Less" : "Read More"}
+            </Button>
+          )}
         </div>
       )}
 
-      <CollapsibleContent className="space-y-2 pt-2">
+      {isOpen && (
         <div className="grid gap-2 text-sm border-t pt-2">
           <div className="flex justify-between items-center">
             <span>Enjoyment (30%)</span>
@@ -71,7 +63,7 @@ export function ReviewCard({ rating }: ReviewCardProps) {
             <StarRating rating={rating.worldbuilding} readOnly size="sm" />
           </div>
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      )}
+    </div>
   );
 }
