@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Book, UpdateProfile, updateProfileSchema } from "@shared/schema";
@@ -50,6 +51,8 @@ const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"];
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  // Keep track of edited referral links per book
+  const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
 
   const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
@@ -162,6 +165,24 @@ export default function SettingsPage() {
     },
   });
 
+  // Initialize edited referral links for a book
+  const initializeBookReferralLinks = (bookId: number, links: ReferralLink[] = []) => {
+    if (!editedReferralLinks[bookId]) {
+      setEditedReferralLinks(prev => ({
+        ...prev,
+        [bookId]: links
+      }));
+    }
+  };
+
+  // Update referral links for a specific book
+  const updateBookReferralLinks = (bookId: number, links: ReferralLink[]) => {
+    setEditedReferralLinks(prev => ({
+      ...prev,
+      [bookId]: links
+    }));
+  };
+
   return (
     <div>
       <MainNav />
@@ -228,83 +249,6 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Settings</CardTitle>
-              <CardDescription>
-                Update your profile information and password
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit((data) =>
-                    updateProfileMutation.mutate(data)
-                  )}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="space-y-4">
-                    <FormItem>
-                      <FormLabel>Current Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          onChange={(e) =>
-                            form.setValue("currentPassword", e.target.value)
-                          }
-                        />
-                      </FormControl>
-                    </FormItem>
-
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          onChange={(e) =>
-                            form.setValue("newPassword", e.target.value)
-                          }
-                        />
-                      </FormControl>
-                    </FormItem>
-                  </div>
-
-                  <Button type="submit">
-                    Save Changes
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
           {user?.isAuthor && (
             <Card>
               <CardHeader>
@@ -317,132 +261,144 @@ export default function SettingsPage() {
                 <BookUploader />
 
                 <div className="mt-8 grid gap-6">
-                  {userBooks?.map((book) => (
-                    <div
-                      key={book.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={book.coverUrl}
-                          alt={book.title}
-                          className="w-16 h-24 object-cover rounded"
-                        />
-                        <div>
-                          <h3 className="font-semibold">{book.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {book.promoted ? "Promoted" : "Not promoted"}
-                          </p>
-                          {/* Add Referral Links Section */}
-                          <div className="mt-4 space-y-2">
-                            <h4 className="text-sm font-medium">Referral Links</h4>
-                            {book.referralLinks?.map((link: ReferralLink, index: number) => (
-                              <div key={index} className="flex items-center gap-2">
-                                <span className="text-sm">{link.customName || link.retailer}:</span>
-                                <Input
-                                  value={link.url}
-                                  onChange={(e) => {
-                                    const newLinks = [...(book.referralLinks || [])];
-                                    newLinks[index] = { ...link, url: e.target.value };
-                                    updateBookMutation.mutate({
-                                      id: book.id,
-                                      referralLinks: newLinks,
-                                    });
-                                  }}
-                                  className="text-sm h-8"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    const newLinks = book.referralLinks?.filter((_, i) => i !== index);
-                                    updateBookMutation.mutate({
-                                      id: book.id,
-                                      referralLinks: newLinks,
-                                    });
+                  {userBooks?.map((book) => {
+                    // Initialize referral links state for this book
+                    if (!editedReferralLinks[book.id]) {
+                      initializeBookReferralLinks(book.id, book.referralLinks);
+                    }
+
+                    return (
+                      <div
+                        key={book.id}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={book.coverUrl}
+                            alt={book.title}
+                            className="w-16 h-24 object-cover rounded"
+                          />
+                          <div>
+                            <h3 className="font-semibold">{book.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {book.promoted ? "Promoted" : "Not promoted"}
+                            </p>
+                            {/* Add Referral Links Section */}
+                            <div className="mt-4 space-y-2">
+                              <h4 className="text-sm font-medium">Referral Links</h4>
+                              {editedReferralLinks[book.id]?.map((link: ReferralLink, index: number) => (
+                                <div key={index} className="flex items-center gap-2">
+                                  <span className="text-sm">{link.customName || link.retailer}:</span>
+                                  <Input
+                                    value={link.url}
+                                    onChange={(e) => {
+                                      const newLinks = [...editedReferralLinks[book.id]];
+                                      newLinks[index] = { ...link, url: e.target.value };
+                                      updateBookReferralLinks(book.id, newLinks);
+                                    }}
+                                    className="text-sm h-8"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
+                                      updateBookReferralLinks(book.id, newLinks);
+                                    }}
+                                  >
+                                    ×
+                                  </Button>
+                                </div>
+                              ))}
+                              <div className="flex gap-2">
+                                <Select
+                                  onValueChange={(value) => {
+                                    const newLink = {
+                                      retailer: value,
+                                      url: "",
+                                      customName: value === "Custom" ? "" : undefined,
+                                    };
+                                    updateBookReferralLinks(book.id, [
+                                      ...(editedReferralLinks[book.id] || []),
+                                      newLink,
+                                    ]);
                                   }}
                                 >
-                                  ×
-                                </Button>
+                                  <SelectTrigger className="w-[200px]">
+                                    <SelectValue placeholder="Add retailer..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {RETAILER_OPTIONS.map((retailer) => (
+                                      <SelectItem key={retailer} value={retailer}>
+                                        {retailer}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                {editedReferralLinks[book.id]?.length > 0 && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        updateBookReferralLinks(book.id, [])
+                                      }
+                                    >
+                                      Clear All
+                                    </Button>
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() =>
+                                        updateBookMutation.mutate({
+                                          id: book.id,
+                                          referralLinks: editedReferralLinks[book.id],
+                                        })
+                                      }
+                                    >
+                                      Save Changes
+                                    </Button>
+                                  </>
+                                )}
                               </div>
-                            ))}
-                            <div className="flex gap-2">
-                              <Select
-                                onValueChange={(value) => {
-                                  const newLink = {
-                                    retailer: value,
-                                    url: "",
-                                    customName: value === "Custom" ? "" : undefined,
-                                  };
-                                  updateBookMutation.mutate({
-                                    id: book.id,
-                                    referralLinks: [...(book.referralLinks || []), newLink],
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="w-[200px]">
-                                  <SelectValue placeholder="Add retailer..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {RETAILER_OPTIONS.map((retailer) => (
-                                    <SelectItem key={retailer} value={retailer}>
-                                      {retailer}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {book.referralLinks?.length > 0 && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    updateBookMutation.mutate({
-                                      id: book.id,
-                                      referralLinks: [],
-                                    })
-                                  }
-                                >
-                                  Clear All
-                                </Button>
-                              )}
                             </div>
                           </div>
                         </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => promoteBookMutation.mutate(book.id)}
+                            disabled={book.promoted}
+                          >
+                            Promote Book
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive">Delete</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete your book
+                                  and remove it from our servers.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteBookMutation.mutate(book.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => promoteBookMutation.mutate(book.id)}
-                          disabled={book.promoted}
-                        >
-                          Promote Book
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive">Delete</Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your book
-                                and remove it from our servers.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteBookMutation.mutate(book.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
