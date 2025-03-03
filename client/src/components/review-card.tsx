@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Rating, calculateWeightedRating } from "@shared/schema";
 import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ReviewCardProps {
   rating: Rating;
@@ -32,13 +33,39 @@ export function ReviewCard({ rating }: ReviewCardProps) {
               variant="ghost"
               size="sm"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent card expansion when clicking the review button
+                e.stopPropagation();
                 setIsOpen(!isOpen);
               }}
               className="mt-2"
             >
               {isOpen ? "Show Less" : "Read More"}
             </Button>
+          )}
+        </div>
+      )}
+
+      {rating.analysis && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Badge variant={rating.analysis.sentiment.label === "POSITIVE" ? "success" : "destructive"}>
+              {rating.analysis.sentiment.label}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {Math.round(rating.analysis.sentiment.score * 100)}% confidence
+            </span>
+          </div>
+
+          {rating.analysis.themes.length > 0 && (
+            <div>
+              <p className="text-sm font-medium mb-1">Key Themes:</p>
+              <div className="flex flex-wrap gap-1">
+                {rating.analysis.themes.map((theme, index) => (
+                  <Badge key={index} variant="outline">
+                    {theme.label} ({Math.round(theme.score * 100)}%)
+                  </Badge>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}

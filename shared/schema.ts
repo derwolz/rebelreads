@@ -71,6 +71,17 @@ export const books = pgTable("books", {
   referralLinks: jsonb("referral_links").default([]),
 });
 
+export interface ReviewAnalysis {
+  sentiment: {
+    label: string;
+    score: number;
+  };
+  themes: Array<{
+    label: string;
+    score: number;
+  }>;
+}
+
 export const ratings = pgTable("ratings", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -81,6 +92,7 @@ export const ratings = pgTable("ratings", {
   characters: integer("characters").notNull(),
   worldbuilding: integer("worldbuilding").notNull(),
   review: text("review"),
+  analysis: jsonb("analysis").$type<ReviewAnalysis>(), // Add analysis column
 });
 
 export const bookshelves = pgTable("bookshelves", {

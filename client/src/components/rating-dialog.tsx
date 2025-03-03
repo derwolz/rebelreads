@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./star-rating";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { analyzeReview } from "@/lib/review-analysis";
 import {
   Dialog,
   DialogContent,
@@ -59,9 +60,16 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
 
   const ratingMutation = useMutation({
     mutationFn: async () => {
+      // Analyze review if present
+      let analysis = null;
+      if (review.trim()) {
+        analysis = await analyzeReview(review);
+      }
+
       const res = await apiRequest("POST", `/api/books/${bookId}/ratings`, {
         ...ratings,
         review,
+        analysis,
       });
       if (!res.ok) {
         const error = await res.text();
