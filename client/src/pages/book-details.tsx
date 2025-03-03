@@ -1,18 +1,26 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Book, Rating, calculateWeightedRating } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { format } from "date-fns";
+import { ChevronDown } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useState } from "react";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
   const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: book } = useQuery<Book>({
     queryKey: [`/api/books/${params?.id}`],
@@ -57,6 +65,9 @@ export default function BookDetails() {
                     {genre}
                   </Badge>
                 ))}
+                <Badge variant="outline" className="bg-primary/10">
+                  {book.format.charAt(0).toUpperCase() + book.format.slice(1)}
+                </Badge>
               </div>
             </div>
 
@@ -64,9 +75,18 @@ export default function BookDetails() {
 
             <div className="grid gap-8">
               {/* More Details Section */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">More Details</h2>
-                <div className="grid gap-4">
+              <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold">More Details</h2>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+                      <span className="sr-only">Toggle details</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+
+                <CollapsibleContent className="space-y-4 mt-4">
                   {book.originalTitle && (
                     <div>
                       <span className="font-medium">Original Title:</span> {book.originalTitle}
@@ -106,17 +126,6 @@ export default function BookDetails() {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Edition Details Section */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">Edition Details</h2>
-                <div className="grid gap-4">
-                  <div>
-                    <span className="font-medium">Format:</span>{" "}
-                    {book.format.charAt(0).toUpperCase() + book.format.slice(1)}
-                  </div>
                   {book.pageCount && (
                     <div>
                       <span className="font-medium">Pages:</span> {book.pageCount}
@@ -141,8 +150,8 @@ export default function BookDetails() {
                   <div>
                     <span className="font-medium">Language:</span> {book.language}
                   </div>
-                </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Ratings Section */}
               <div className="space-y-4">
