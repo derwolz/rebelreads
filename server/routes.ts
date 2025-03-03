@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ...req.body,
       authorId: req.user!.id,
       coverUrl,
-      author: req.user!.username, 
+      author: req.user!.authorName || req.user!.username, // Use authorName if available, fallback to username
     });
 
     res.json(book);

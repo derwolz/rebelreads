@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   provider: text("provider"), // google, amazon, x, or null for email/password
   providerId: text("provider_id"), // external provider's user ID
   isAuthor: boolean("is_author").notNull().default(false),
+  authorName: text("author_name"), // Name to display for authored books
   authorBio: text("author_bio"),
 });
 
@@ -53,6 +54,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const updateProfileSchema = createInsertSchema(users).pick({
   email: true,
   username: true,
+  authorName: true,
   authorBio: true,
 }).extend({
   email: z.string().email("Invalid email format"),

@@ -38,6 +38,7 @@ export default function SettingsPage() {
       email: user?.email || "",
       username: user?.username || "",
       authorBio: user?.authorBio || "",
+      authorName: user?.authorName || ""
     },
   });
 
@@ -121,14 +122,42 @@ export default function SettingsPage() {
               </div>
 
               {user?.isAuthor && (
-                <Textarea
-                  className="mt-4"
-                  placeholder="Write a short bio about yourself..."
-                  value={profileForm.watch("authorBio")}
-                  onChange={(e) =>
-                    profileForm.setValue("authorBio", e.target.value)
-                  }
-                />
+                <div className="space-y-4 mt-4">
+                  <FormField
+                    control={profileForm.control}
+                    name="authorName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Author Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Name to display on your books"
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name="authorBio"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Author Bio</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Write a short bio about yourself..."
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               )}
             </CardContent>
           </Card>
