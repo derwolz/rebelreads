@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { MainNav } from "@/components/main-nav";
 import { BookCard } from "@/components/book-card";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { FollowButton } from "@/components/follow-button";
 import {
   Carousel,
   CarouselContent,
@@ -17,48 +17,24 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { Book, User } from "@shared/schema";
-import { format } from 'date-fns'; // Added import statement
+import { format } from 'date-fns';
 
 interface AuthorDetails extends User {
   books: Book[];
   followerCount: number;
   genres: { genre: string; count: number }[];
-  birthDate?: string; // Added birthDate
-  deathDate?: string; // Added deathDate
-  website?: string; // Added website
+  birthDate?: string;
+  deathDate?: string;
+  website?: string;
 }
 
 export default function AuthorPage() {
   const [, params] = useRoute("/authors/:id");
   const { user } = useAuth();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: author } = useQuery<AuthorDetails>({
     queryKey: [`/api/authors/${params?.id}`],
-  });
-
-  const { data: followStatus } = useQuery({
-    queryKey: [`/api/authors/${params?.id}/following`],
-    enabled: !!user && author?.id !== user.id,
-  });
-
-  const followMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest(
-        "POST",
-        `/api/authors/${params?.id}/${followStatus?.isFollowing ? 'unfollow' : 'follow'}`
-      );
-      if (!res.ok) throw new Error("Failed to update follow status");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/authors/${params?.id}`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/authors/${params?.id}/following`] });
-      toast({
-        title: followStatus?.isFollowing ? "Unfollowed" : "Following",
-        description: `You are ${followStatus?.isFollowing ? 'no longer' : 'now'} following ${author?.authorName || author?.username}`,
-      });
-    },
   });
 
   if (!author) return null;
@@ -82,7 +58,7 @@ export default function AuthorPage() {
                 <span>{author.followerCount} followers</span>
                 <span>•</span>
                 <span>{author.books.length} books</span>
-                {author.birthDate && ( // Added birthdate display
+                {author.birthDate && (
                   <div className="text-sm text-muted-foreground mt-2">
                     Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
                     {author.deathDate && (
@@ -92,7 +68,7 @@ export default function AuthorPage() {
                     )}
                   </div>
                 )}
-                {author.website && ( // Added website link
+                {author.website && (
                   <a
                     href={author.website}
                     target="_blank"
@@ -104,14 +80,10 @@ export default function AuthorPage() {
                 )}
               </div>
             </div>
-            {user && author.id !== user.id && (
-              <Button
-                variant={followStatus?.isFollowing ? "outline" : "default"}
-                onClick={() => followMutation.mutate()}
-              >
-                {followStatus?.isFollowing ? "Unfollow" : "Follow"}
-              </Button>
-            )}
+            <FollowButton
+              authorId={author.id}
+              authorName={author.authorName || author.username}
+            />
           </div>
 
           {author.authorBio && (

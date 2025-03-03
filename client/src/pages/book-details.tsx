@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
+import { FollowButton } from "@/components/follow-button";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import {
@@ -31,6 +32,8 @@ export default function BookDetails() {
     queryKey: [`/api/books/${params?.id}/ratings`],
   });
 
+  if (!book) return null;
+
   const averageRatings = ratings?.length ? {
     overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
     enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
@@ -40,12 +43,9 @@ export default function BookDetails() {
     worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
   } : null;
 
-  if (!book) return null;
-
   return (
     <div>
       <MainNav />
-
       <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
@@ -77,15 +77,22 @@ export default function BookDetails() {
           <div className="md:col-span-2 space-y-8">
             <div>
               <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
-              <p className="text-xl mb-4">
-                by{" "}
-                <Link
-                  href={`/authors/${book.authorId}`}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {book.author}
-                </Link>
-              </p>
+              <div className="flex items-center gap-4 mb-4">
+                <p className="text-xl">
+                  by{" "}
+                  <Link
+                    href={`/authors/${book.authorId}`}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {book.author}
+                  </Link>
+                </p>
+                <FollowButton
+                  authorId={book.authorId}
+                  authorName={book.author}
+                  className="ml-2"
+                />
+              </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 {book.genres.map((genre) => (
                   <Badge key={genre} variant="secondary">

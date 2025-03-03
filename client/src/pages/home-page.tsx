@@ -4,6 +4,7 @@ import { BookCard } from "@/components/book-card";
 import { MainNav } from "@/components/main-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 function BookCardSkeleton() {
   return (
@@ -16,11 +17,17 @@ function BookCardSkeleton() {
 }
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("title");
 
   const { data: books, isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
+  });
+
+  const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<Book[]>({
+    queryKey: ["/api/books/followed-authors"],
+    enabled: !!user,
   });
 
   const handleSearch = (query: string, type: string) => {
@@ -50,19 +57,37 @@ export default function HomePage() {
       <MainNav onSearch={handleSearch} />
 
       <main className="container mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
+        {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {isLoadingFollowed ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <BookCardSkeleton key={i} />
+                ))
+              ) : (
+                followedAuthorsBooks.map((book) => (
+                  <BookCard key={book.id} book={book} />
+                ))
+              )}
+            </div>
+          </section>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-              <BookCardSkeleton key={i} />
-            ))
-          ) : (
-            filteredBooks?.map((book) => (
-              <BookCard key={book.id} book={book} />
-            ))
-          )}
-        </div>
+        <section>
+          <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <BookCardSkeleton key={i} />
+              ))
+            ) : (
+              filteredBooks?.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))
+            )}
+          </div>
+        </section>
       </main>
     </div>
   );
