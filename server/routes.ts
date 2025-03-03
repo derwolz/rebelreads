@@ -227,6 +227,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendStatus(200);
   });
 
+  // Add these routes inside registerRoutes function
+  app.get("/api/authors/:id", async (req, res) => {
+    const author = await storage.getUser(parseInt(req.params.id));
+    if (!author?.isAuthor) return res.sendStatus(404);
+
+    const [books, followerCount, genres] = await Promise.all([
+      storage.getBooksByAuthor(author.id),
+      storage.getFollowerCount(author.id),
+      storage.getAuthorGenres(author.id)
+    ]);
+
+    res.json({
+      ...author,
+      books,
+      followerCount,
+      genres
+    });
+  });
+
+  app.get("/api/authors/:id/following", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const isFollowing = await storage.isFollowing(
+      req.user!.id,
+      parseInt(req.params.id)
+    );
+    res.json({ isFollowing });
+  });
+
+  app.post("/api/authors/:id/follow", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const authorId = parseInt(req.params.id);
+    const author = await storage.getUser(authorId);
+    if (!author?.isAuthor) return res.sendStatus(404);
+
+    await storage.followAuthor(req.user!.id, authorId);
+    res.sendStatus(200);
+  });
+
+  app.post("/api/authors/:id/unfollow", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const authorId = parseInt(req.params.id);
+    const author = await storage.getUser(authorId);
+    if (!author?.isAuthor) return res.sendStatus(404);
+
+    await storage.unfollowAuthor(req.user!.id, authorId);
+    res.sendStatus(200);
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -34,6 +34,14 @@ export const users = pgTable("users", {
   isAuthor: boolean("is_author").notNull().default(false),
   authorName: text("author_name"), // Name to display for authored books
   authorBio: text("author_bio"),
+  authorImageUrl: text("author_image_url"), // Add author profile image
+});
+
+export const followers = pgTable("followers", {
+  id: serial("id").primaryKey(),
+  followerId: integer("follower_id").notNull(), // The user who is following
+  followingId: integer("following_id").notNull(), // The author being followed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const books = pgTable("books", {
@@ -113,6 +121,7 @@ export const insertBookSchema = createInsertSchema(books).extend({
 
 export const insertRatingSchema = createInsertSchema(ratings);
 export const insertBookshelfSchema = createInsertSchema(bookshelves);
+export const insertFollowerSchema = createInsertSchema(followers);
 
 export const loginSchema = z.object({
   email: z.string().min(1, "Email or username is required"),
@@ -125,6 +134,7 @@ export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Rating = typeof ratings.$inferSelect;
 export type Bookshelf = typeof bookshelves.$inferSelect;
+export type Follower = typeof followers.$inferSelect;
 
 export function calculateWeightedRating(rating: Rating): number {
   return (

@@ -5,6 +5,8 @@ import { eq, and } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import { followers, Follower } from "@shared/schema";
+import { sql } from "drizzle-orm";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -31,6 +33,11 @@ export interface IStorage {
   deleteBook(id: number, authorId: number): Promise<void>;
 
   sessionStore: session.Store;
+  followAuthor(followerId: number, authorId: number): Promise<Follower>;
+  unfollowAuthor(followerId: number, authorId: number): Promise<void>;
+  isFollowing(followerId: number, authorId: number): Promise<boolean>;
+  getFollowerCount(authorId: number): Promise<number>;
+  getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -143,6 +150,58 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(books)
       .where(and(eq(books.id, id), eq(books.authorId, authorId)));
+  }
+
+  async followAuthor(followerId: number, authorId: number): Promise<Follower> {
+    const [follower] = await db
+      .insert(followers)
+      .values({ followerId, followingId: authorId })
+      .returning();
+    return follower;
+  }
+
+  async unfollowAuthor(followerId: number, authorId: number): Promise<void> {
+    await db
+      .delete(followers)
+      .where(and(
+        eq(followers.followerId, followerId),
+        eq(followers.followingId, authorId)
+      ));
+  }
+
+  async isFollowing(followerId: number, authorId: number): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(followers)
+      .where(and(
+        eq(followers.followerId, followerId),
+        eq(followers.followingId, authorId)
+      ));
+    return !!result;
+  }
+
+  async getFollowerCount(authorId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(followers)
+      .where(eq(followers.followingId, authorId));
+    return result?.count || 0;
+  }
+
+  async getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]> {
+    const books = await this.getBooksByAuthor(authorId);
+    const genreCounts = new Map<string, number>();
+
+    books.forEach(book => {
+      book.genres.forEach(genre => {
+        genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1);
+      });
+    });
+
+    return Array.from(genreCounts.entries()).map(([genre, count]) => ({
+      genre,
+      count
+    })).sort((a, b) => b.count - a.count);
   }
 }
 
@@ -268,6 +327,21 @@ export class MemStorage implements IStorage {
     throw new Error("Method not implemented.");
   }
   async deleteBook(id: number, authorId: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  async followAuthor(followerId: number, authorId: number): Promise<Follower> {
+    throw new Error("Method not implemented.");
+  }
+  async unfollowAuthor(followerId: number, authorId: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  async isFollowing(followerId: number, authorId: number): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  async getFollowerCount(authorId: number): Promise<number> {
+    throw new Error("Method not implemented.");
+  }
+  async getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]> {
     throw new Error("Method not implemented.");
   }
 }
