@@ -4,7 +4,11 @@ import { Link } from "wouter";
 import { Search, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-export function MainNav() {
+interface MainNavProps {
+  onSearch?: (query: string) => void;
+}
+
+export function MainNav({ onSearch }: MainNavProps) {
   const { user, logoutMutation } = useAuth();
 
   return (
@@ -20,6 +24,7 @@ export function MainNav() {
             <Input
               placeholder="Search books..."
               className="pl-9"
+              onChange={(e) => onSearch?.(e.target.value)}
             />
           </div>
         </div>
