@@ -79,7 +79,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         themes: req.body.themes,
         characters: req.body.characters,
         worldbuilding: req.body.worldbuilding,
-        review: req.body.review
+        review: req.body.review,
+        analysis: req.body.analysis  // Add this line to include the analysis
       });
 
       res.json(rating);
@@ -94,7 +95,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               themes: req.body.themes,
               characters: req.body.characters,
               worldbuilding: req.body.worldbuilding,
-              review: req.body.review
+              review: req.body.review,
+              analysis: req.body.analysis  // Add this line to include the analysis
             })
             .where(
               and(

@@ -66,11 +66,14 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
         analysis = await analyzeReview(review);
       }
 
-      const res = await apiRequest("POST", `/api/books/${bookId}/ratings`, {
+      // Create the payload with the analysis included
+      const payload = {
         ...ratings,
-        review,
-        analysis,
-      });
+        review: review.trim() || null,
+        analysis: analysis,  // This will be properly serialized by apiRequest
+      };
+
+      const res = await apiRequest("POST", `/api/books/${bookId}/ratings`, payload);
       if (!res.ok) {
         const error = await res.text();
         throw new Error(error);
