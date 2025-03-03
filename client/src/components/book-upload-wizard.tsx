@@ -11,6 +11,7 @@ import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
+import {DragDropCover} from "@/components/drag-drop-cover"; // Assuming this component exists
 
 interface FormData {
   // Basic Info
@@ -207,11 +208,10 @@ export function BookUploadWizard() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Book Cover</label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={e => setFormData(prev => ({ ...prev, cover: e.target.files?.[0] || null }))}
-                required
+              <DragDropCover
+                title={formData.title}
+                value={formData.cover}
+                onChange={(file) => setFormData(prev => ({ ...prev, cover: file }))}
               />
             </div>
             <div>
