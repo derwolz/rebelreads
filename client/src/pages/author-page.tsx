@@ -17,11 +17,15 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { Book, User } from "@shared/schema";
+import { format } from 'date-fns'; // Added import statement
 
 interface AuthorDetails extends User {
   books: Book[];
   followerCount: number;
   genres: { genre: string; count: number }[];
+  birthDate?: string; // Added birthDate
+  deathDate?: string; // Added deathDate
+  website?: string; // Added website
 }
 
 export default function AuthorPage() {
@@ -78,6 +82,26 @@ export default function AuthorPage() {
                 <span>{author.followerCount} followers</span>
                 <span>•</span>
                 <span>{author.books.length} books</span>
+                {author.birthDate && ( // Added birthdate display
+                  <div className="text-sm text-muted-foreground mt-2">
+                    Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
+                    {author.deathDate && (
+                      <>
+                        {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
+                      </>
+                    )}
+                  </div>
+                )}
+                {author.website && ( // Added website link
+                  <a
+                    href={author.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline mt-2 inline-block"
+                  >
+                    Visit Website
+                  </a>
+                )}
               </div>
             </div>
             {user && author.id !== user.id && (

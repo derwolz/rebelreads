@@ -127,7 +127,10 @@ export default function SettingsPage() {
       email: user?.email || "",
       username: user?.username || "",
       authorBio: user?.authorBio || "",
-      authorName: user?.authorName || ""
+      authorName: user?.authorName || "",
+      birthDate: user?.birthDate || null,
+      deathDate: user?.deathDate || null,
+      website: user?.website || ""
     },
   });
 
@@ -308,6 +311,60 @@ export default function SettingsPage() {
                           <FormControl>
                             <Textarea
                               placeholder="Write a short bio about yourself..."
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="birthDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Birth Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                              onChange={e => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="deathDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Death Date (if applicable)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                              onChange={e => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="website"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="url"
+                              placeholder="https://yourwebsite.com"
                               {...field}
                               value={field.value ?? ''}
                             />
