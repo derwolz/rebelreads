@@ -25,7 +25,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const profileForm = useForm<UpdateProfile>({
+  const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       email: user?.email || "",
@@ -115,42 +115,44 @@ export default function SettingsPage() {
               </div>
 
               {user?.isAuthor && (
-                <div className="space-y-4 mt-4">
-                  <FormField
-                    control={profileForm.control}
-                    name="authorName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Author Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Name to display on your books"
-                            {...field}
-                            value={field.value ?? ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={profileForm.control}
-                    name="authorBio"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Author Bio</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Write a short bio about yourself..."
-                            {...field}
-                            value={field.value ?? ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <Form {...form}>
+                  <form className="space-y-4 mt-4">
+                    <FormField
+                      control={form.control}
+                      name="authorName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Author Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Name to display on your books"
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="authorBio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Author Bio</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Write a short bio about yourself..."
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
               )}
             </CardContent>
           </Card>
@@ -163,15 +165,15 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...profileForm}>
+              <Form {...form}>
                 <form
-                  onSubmit={profileForm.handleSubmit((data) =>
+                  onSubmit={form.handleSubmit((data) =>
                     updateProfileMutation.mutate(data)
                   )}
                   className="space-y-4"
                 >
                   <FormField
-                    control={profileForm.control}
+                    control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -185,7 +187,7 @@ export default function SettingsPage() {
                   />
 
                   <FormField
-                    control={profileForm.control}
+                    control={form.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
@@ -205,10 +207,7 @@ export default function SettingsPage() {
                         <Input
                           type="password"
                           onChange={(e) =>
-                            profileForm.setValue(
-                              "currentPassword",
-                              e.target.value
-                            )
+                            form.setValue("currentPassword", e.target.value)
                           }
                         />
                       </FormControl>
@@ -220,7 +219,7 @@ export default function SettingsPage() {
                         <Input
                           type="password"
                           onChange={(e) =>
-                            profileForm.setValue("newPassword", e.target.value)
+                            form.setValue("newPassword", e.target.value)
                           }
                         />
                       </FormControl>
