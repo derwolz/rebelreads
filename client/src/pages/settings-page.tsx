@@ -20,6 +20,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { BookUploader } from "@/components/book-uploader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -87,6 +98,30 @@ export default function SettingsPage() {
       toast({
         title: "Book promoted",
         description: "Your book promotion request has been submitted.",
+      });
+    },
+  });
+
+  const deleteBookMutation = useMutation({
+    mutationFn: async (bookId: number) => {
+      const res = await apiRequest("DELETE", `/api/books/${bookId}`);
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
+      toast({
+        title: "Book deleted",
+        description: "Your book has been successfully deleted.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
@@ -264,13 +299,38 @@ export default function SettingsPage() {
                           </p>
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => promoteBookMutation.mutate(book.id)}
-                        disabled={book.promoted}
-                      >
-                        Promote Book
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => promoteBookMutation.mutate(book.id)}
+                          disabled={book.promoted}
+                        >
+                          Promote Book
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive">Delete</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your book
+                                and remove it from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteBookMutation.mutate(book.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   ))}
                 </div>

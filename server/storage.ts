@@ -1,7 +1,7 @@
 import { User, Book, Rating, Bookshelf, InsertUser, UpdateProfile } from "@shared/schema";
 import { users, books, ratings, bookshelves } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -27,6 +27,7 @@ export interface IStorage {
 
   getBookshelf(userId: number): Promise<Bookshelf[]>;
   updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf>;
+  deleteBook(id: number, authorId: number): Promise<void>;
 
   sessionStore: session.Store;
 }
@@ -126,6 +127,12 @@ export class DatabaseStorage implements IStorage {
       .values({ userId, bookId, status })
       .returning();
     return bookshelf;
+  }
+
+  async deleteBook(id: number, authorId: number): Promise<void> {
+    await db
+      .delete(books)
+      .where(and(eq(books.id, id), eq(books.authorId, authorId)));
   }
 }
 
@@ -245,6 +252,9 @@ export class MemStorage implements IStorage {
     throw new Error("Method not implemented.");
   }
   async promoteBook(id: number): Promise<Book> {
+    throw new Error("Method not implemented.");
+  }
+  async deleteBook(id: number, authorId: number): Promise<void> {
     throw new Error("Method not implemented.");
   }
 }
