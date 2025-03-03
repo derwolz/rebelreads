@@ -1,7 +1,7 @@
-import { User, Book, Rating, Bookshelf, InsertUser, UpdateProfile } from "@shared/schema";
+import { User, Book, Rating, Bookshelf, InsertUser, UpdateProfile, calculateWeightedRating } from "@shared/schema";
 import { users, books, ratings, bookshelves } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -38,6 +38,14 @@ export interface IStorage {
   isFollowing(followerId: number, authorId: number): Promise<boolean>;
   getFollowerCount(authorId: number): Promise<number>;
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
+  getAuthorAggregateRatings(authorId: number): Promise<{
+    overall: number;
+    enjoyment: number;
+    writing: number;
+    themes: number;
+    characters: number;
+    worldbuilding: number;
+  } | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -203,6 +211,36 @@ export class DatabaseStorage implements IStorage {
       count
     })).sort((a, b) => b.count - a.count);
   }
+
+  async getAuthorAggregateRatings(authorId: number): Promise<{
+    overall: number;
+    enjoyment: number;
+    writing: number;
+    themes: number;
+    characters: number;
+    worldbuilding: number;
+  } | null> {
+    const authorBooks = await this.getBooksByAuthor(authorId);
+    const bookIds = authorBooks.map(book => book.id);
+
+    if (bookIds.length === 0) return null;
+
+    const allRatings = await db
+      .select()
+      .from(ratings)
+      .where(inArray(ratings.bookId, bookIds));
+
+    if (allRatings.length === 0) return null;
+
+    return {
+      overall: allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / allRatings.length,
+      enjoyment: allRatings.reduce((acc, r) => acc + r.enjoyment, 0) / allRatings.length,
+      writing: allRatings.reduce((acc, r) => acc + r.writing, 0) / allRatings.length,
+      themes: allRatings.reduce((acc, r) => acc + r.themes, 0) / allRatings.length,
+      characters: allRatings.reduce((acc, r) => acc + r.characters, 0) / allRatings.length,
+      worldbuilding: allRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / allRatings.length,
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -342,6 +380,9 @@ export class MemStorage implements IStorage {
     throw new Error("Method not implemented.");
   }
   async getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]> {
+    throw new Error("Method not implemented.");
+  }
+  async getAuthorAggregateRatings(authorId: number): Promise<{ overall: number; enjoyment: number; writing: number; themes: number; characters: number; worldbuilding: number; } | null> {
     throw new Error("Method not implemented.");
   }
 }

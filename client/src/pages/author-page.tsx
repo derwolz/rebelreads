@@ -3,12 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { MainNav } from "@/components/main-nav";
 import { BookCard } from "@/components/book-card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
 import { FollowButton } from "@/components/follow-button";
+import { StarRating } from "@/components/star-rating";
 import {
   Carousel,
   CarouselContent,
@@ -26,6 +25,14 @@ interface AuthorDetails extends User {
   birthDate?: string;
   deathDate?: string;
   website?: string;
+  aggregateRatings?: {
+    overall: number;
+    enjoyment: number;
+    writing: number;
+    themes: number;
+    characters: number;
+    worldbuilding: number;
+  };
 }
 
 export default function AuthorPage() {
@@ -89,6 +96,40 @@ export default function AuthorPage() {
           {author.authorBio && (
             <div className="prose max-w-none">
               <p>{author.authorBio}</p>
+            </div>
+          )}
+
+          {author.aggregateRatings && (
+            <div className="bg-muted rounded-lg p-6 space-y-4">
+              <h2 className="text-2xl font-semibold">Overall Ratings</h2>
+              <div className="flex items-center gap-2">
+                <StarRating rating={Math.round(author.aggregateRatings.overall)} readOnly />
+                <span className="text-sm text-muted-foreground">
+                  Average across all books
+                </span>
+              </div>
+              <div className="grid gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Enjoyment (30%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.enjoyment)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Writing Style (30%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.writing)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Themes (20%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.themes)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Characters (10%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.characters)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">World Building (10%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.worldbuilding)} readOnly size="sm" />
+                </div>
+              </div>
             </div>
           )}
 

@@ -248,17 +248,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const author = await storage.getUser(parseInt(req.params.id));
     if (!author?.isAuthor) return res.sendStatus(404);
 
-    const [books, followerCount, genres] = await Promise.all([
+    const [books, followerCount, genres, ratings] = await Promise.all([
       storage.getBooksByAuthor(author.id),
       storage.getFollowerCount(author.id),
-      storage.getAuthorGenres(author.id)
+      storage.getAuthorGenres(author.id),
+      storage.getAuthorAggregateRatings(author.id)
     ]);
 
     res.json({
       ...author,
       books,
       followerCount,
-      genres
+      genres,
+      aggregateRatings: ratings
     });
   });
 
