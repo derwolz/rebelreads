@@ -10,15 +10,19 @@ export const users = pgTable("users", {
   newsletterOptIn: boolean("newsletter_opt_in").notNull().default(false),
   provider: text("provider"), // google, amazon, x, or null for email/password
   providerId: text("provider_id"), // external provider's user ID
+  isAuthor: boolean("is_author").notNull().default(false),
+  authorBio: text("author_bio"),
 });
 
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   author: text("author").notNull(),
+  authorId: integer("author_id").notNull(), // Reference to users table
   description: text("description").notNull(),
   coverUrl: text("cover_url").notNull(),
   authorImageUrl: text("author_image_url"),
+  promoted: boolean("promoted").default(false),
 });
 
 export const ratings = pgTable("ratings", {
@@ -46,11 +50,22 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const updateProfileSchema = createInsertSchema(users).pick({
+  email: true,
+  username: true,
+  authorBio: true,
+}).extend({
+  email: z.string().email("Invalid email format"),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
+});
+
 export const insertBookSchema = createInsertSchema(books);
 export const insertRatingSchema = createInsertSchema(ratings);
 export const insertBookshelfSchema = createInsertSchema(bookshelves);
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Rating = typeof ratings.$inferSelect;

@@ -1,4 +1,4 @@
-import { User, Book, Rating, Bookshelf, InsertUser } from "@shared/schema";
+import { User, Book, Rating, Bookshelf, InsertUser, UpdateProfile } from "@shared/schema";
 import { users, books, ratings, bookshelves } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -11,10 +11,16 @@ const PostgresSessionStore = connectPg(session);
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, data: Partial<UpdateProfile>): Promise<User>;
+  toggleAuthorStatus(id: number): Promise<User>;
 
   getBooks(): Promise<Book[]>;
   getBook(id: number): Promise<Book | undefined>;
+  getBooksByAuthor(authorId: number): Promise<Book[]>;
+  createBook(book: Omit<Book, "id">): Promise<Book>;
+  promoteBook(id: number): Promise<Book>;
 
   getRatings(bookId: number): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
@@ -45,9 +51,33 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async updateUser(id: number, data: Partial<UpdateProfile>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async toggleAuthorStatus(id: number): Promise<User> {
+    const user = await this.getUser(id);
+    const [updatedUser] = await db
+      .update(users)
+      .set({ isAuthor: !user?.isAuthor })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 
   async getBooks(): Promise<Book[]> {
@@ -56,6 +86,24 @@ export class DatabaseStorage implements IStorage {
 
   async getBook(id: number): Promise<Book | undefined> {
     const [book] = await db.select().from(books).where(eq(books.id, id));
+    return book;
+  }
+
+  async getBooksByAuthor(authorId: number): Promise<Book[]> {
+    return await db.select().from(books).where(eq(books.authorId, authorId));
+  }
+
+  async createBook(book: Omit<Book, "id">): Promise<Book> {
+    const [newBook] = await db.insert(books).values(book).returning();
+    return newBook;
+  }
+
+  async promoteBook(id: number): Promise<Book> {
+    const [book] = await db
+      .update(books)
+      .set({ promoted: true })
+      .where(eq(books.id, id))
+      .returning();
     return book;
   }
 
@@ -98,7 +146,7 @@ export class MemStorage implements IStorage {
     this.bookshelves = new Map();
     this.currentId = { users: 1, books: 1, ratings: 1, bookshelves: 1 };
     this.sessionStore = new MemoryStore({ checkPeriod: 86400000 });
-    
+
     // Seed some initial books
     const sampleBooks: Omit<Book, "id">[] = [
       {
@@ -135,7 +183,7 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId.users++;
-    const user = { 
+    const user = {
       ...insertUser,
       id,
       provider: null,
@@ -174,6 +222,24 @@ export class MemStorage implements IStorage {
     const bookshelf = { id, userId, bookId, status };
     this.bookshelves.set(id, bookshelf);
     return bookshelf;
+  }
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  async updateUser(id: number, data: Partial<UpdateProfile>): Promise<User> {
+    throw new Error("Method not implemented.");
+  }
+  async toggleAuthorStatus(id: number): Promise<User> {
+    throw new Error("Method not implemented.");
+  }
+  async getBooksByAuthor(authorId: number): Promise<Book[]> {
+    throw new Error("Method not implemented.");
+  }
+  async createBook(book: Omit<Book, "id">): Promise<Book> {
+    throw new Error("Method not implemented.");
+  }
+  async promoteBook(id: number): Promise<Book> {
+    throw new Error("Method not implemented.");
   }
 }
 
