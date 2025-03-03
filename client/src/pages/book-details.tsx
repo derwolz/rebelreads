@@ -4,19 +4,11 @@ import { Book, Rating, calculateWeightedRating } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { format } from "date-fns";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -39,31 +31,6 @@ export default function BookDetails() {
     worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
   } : null;
 
-  const ratingMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/books/${params?.id}/ratings`, {
-        rating,
-        review,
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/books/${params?.id}/ratings`] });
-      setRating(0);
-      setReview("");
-    },
-  });
-
-  const bookshelfMutation = useMutation({
-    mutationFn: async (status: string) => {
-      const res = await apiRequest("POST", `/api/bookshelf/${params?.id}`, { status });
-      return res.json();
-    },
-  });
-
-  const [rating, setRating] = useState(0);
-  const [review, setReview] = useState("");
-
   if (!book) return null;
 
   return (
@@ -80,7 +47,7 @@ export default function BookDetails() {
             />
           </div>
 
-          <div className="md:col-span-2 space-y-6">
+          <div className="md:col-span-2 space-y-8">
             <div>
               <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
               <p className="text-xl text-muted-foreground mb-4">by {book.author}</p>
@@ -95,9 +62,91 @@ export default function BookDetails() {
 
             <p className="text-lg">{book.description}</p>
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Ratings & Reviews</h3>
+            <div className="grid gap-8">
+              {/* More Details Section */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold">More Details</h2>
+                <div className="grid gap-4">
+                  {book.originalTitle && (
+                    <div>
+                      <span className="font-medium">Original Title:</span> {book.originalTitle}
+                    </div>
+                  )}
+                  {book.series && (
+                    <div>
+                      <span className="font-medium">Series:</span> {book.series}
+                    </div>
+                  )}
+                  {book.setting && (
+                    <div>
+                      <span className="font-medium">Setting:</span> {book.setting}
+                    </div>
+                  )}
+                  {book.characters && book.characters.length > 0 && (
+                    <div>
+                      <span className="font-medium">Characters:</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {book.characters.map((character, index) => (
+                          <Badge key={index} variant="outline">
+                            {character}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {book.awards && book.awards.length > 0 && (
+                    <div>
+                      <span className="font-medium">Awards:</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {book.awards.map((award, index) => (
+                          <Badge key={index} variant="outline">
+                            {award}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Edition Details Section */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold">Edition Details</h2>
+                <div className="grid gap-4">
+                  <div>
+                    <span className="font-medium">Format:</span>{" "}
+                    {book.format.charAt(0).toUpperCase() + book.format.slice(1)}
+                  </div>
+                  {book.pageCount && (
+                    <div>
+                      <span className="font-medium">Pages:</span> {book.pageCount}
+                    </div>
+                  )}
+                  {book.publishedDate && (
+                    <div>
+                      <span className="font-medium">Published:</span>{" "}
+                      {format(new Date(book.publishedDate), "MMMM d, yyyy")}
+                    </div>
+                  )}
+                  {book.isbn && (
+                    <div>
+                      <span className="font-medium">ISBN:</span> {book.isbn}
+                    </div>
+                  )}
+                  {book.asin && (
+                    <div>
+                      <span className="font-medium">ASIN:</span> {book.asin}
+                    </div>
+                  )}
+                  <div>
+                    <span className="font-medium">Language:</span> {book.language}
+                  </div>
+                </div>
+              </div>
+
+              {/* Ratings Section */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
                 {averageRatings ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
@@ -132,28 +181,28 @@ export default function BookDetails() {
                 ) : (
                   <p className="text-muted-foreground">No ratings yet</p>
                 )}
-              </div>
 
-              {user && (
-                <div>
-                  <RatingDialog
-                    bookId={book.id}
-                    trigger={<Button>Rate this book</Button>}
-                  />
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Reviews</h3>
-                {ratings?.map((rating) => (
-                  <div key={rating.id} className="p-4 bg-muted rounded-lg space-y-2">
-                    <div className="flex gap-2">
-                      <StarRating rating={Math.round(calculateWeightedRating(rating))} readOnly size="sm" />
-                      <span className="text-sm text-muted-foreground">Overall Rating</span>
-                    </div>
-                    {rating.review && <p className="text-sm mt-2">{rating.review}</p>}
+                {user && (
+                  <div className="mt-4">
+                    <RatingDialog
+                      bookId={book.id}
+                      trigger={<Button>Rate this book</Button>}
+                    />
                   </div>
-                ))}
+                )}
+
+                <div className="space-y-4 mt-8">
+                  <h3 className="text-xl font-semibold">Reviews</h3>
+                  {ratings?.map((rating) => (
+                    <div key={rating.id} className="p-4 bg-muted rounded-lg space-y-2">
+                      <div className="flex gap-2">
+                        <StarRating rating={Math.round(calculateWeightedRating(rating))} readOnly size="sm" />
+                        <span className="text-sm text-muted-foreground">Overall Rating</span>
+                      </div>
+                      {rating.review && <p className="text-sm mt-2">{rating.review}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

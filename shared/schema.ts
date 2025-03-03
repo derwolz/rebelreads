@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -25,6 +25,23 @@ export const books = pgTable("books", {
   authorImageUrl: text("author_image_url"),
   promoted: boolean("promoted").default(false),
   genres: text("genres").array().notNull(), // Array of genre strings
+
+  // Base book info
+  pageCount: integer("page_count"),
+  format: text("format").notNull(), // softback, hardback, digital, audiobook
+  publishedDate: date("published_date"),
+
+  // Additional details
+  awards: text("awards").array(),
+  originalTitle: text("original_title"),
+  series: text("series"),
+  setting: text("setting"),
+  characters: text("characters").array(),
+
+  // Edition details
+  isbn: text("isbn"),
+  asin: text("asin"),
+  language: text("language").notNull().default("English"),
 });
 
 export const ratings = pgTable("ratings", {
@@ -67,8 +84,18 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
 });
 
+export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] as const;
+
 export const insertBookSchema = createInsertSchema(books).extend({
   genres: z.array(z.string()).min(1, "At least one genre is required"),
+  format: z.enum(FORMAT_OPTIONS, {
+    required_error: "Please select a format",
+  }),
+  publishedDate: z.date().optional(),
+  pageCount: z.number().min(1, "Page count must be at least 1").optional(),
+  awards: z.array(z.string()).optional(),
+  characters: z.array(z.string()).optional(),
+  language: z.string().optional(),
 });
 
 export const insertRatingSchema = createInsertSchema(ratings);

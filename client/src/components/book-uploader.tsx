@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import { AVAILABLE_GENRES } from "@shared/schema";
+import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
 import {
   Select,
   SelectContent,
@@ -20,6 +20,11 @@ export function BookUploader() {
   const { toast } = useToast();
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [format, setFormat] = useState<string>("");
+  const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
+  const [awards, setAwards] = useState<string[]>([]);
+  const [characterInput, setCharacterInput] = useState("");
+  const [awardInput, setAwardInput] = useState("");
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -45,6 +50,9 @@ export function BookUploader() {
       form.reset();
       setCoverFile(null);
       setSelectedGenres([]);
+      setFormat("");
+      setSelectedCharacters([]);
+      setAwards([]);
     },
     onError: (error: Error) => {
       toast({
@@ -75,9 +83,21 @@ export function BookUploader() {
       return;
     }
 
+    if (!format) {
+      toast({
+        title: "Upload failed",
+        description: "Please select a format",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     formData.set("cover", coverFile);
     formData.set("genres", JSON.stringify(selectedGenres));
+    formData.set("characters", JSON.stringify(selectedCharacters));
+    formData.set("awards", JSON.stringify(awards));
+    formData.set("format", format);
 
     uploadMutation.mutate(formData);
   };
@@ -90,6 +110,20 @@ export function BookUploader() {
     }
   };
 
+  const addCharacter = () => {
+    if (characterInput.trim()) {
+      setSelectedCharacters([...selectedCharacters, characterInput.trim()]);
+      setCharacterInput("");
+    }
+  };
+
+  const addAward = () => {
+    if (awardInput.trim()) {
+      setAwards([...awards, awardInput.trim()]);
+      setAwardInput("");
+    }
+  };
+
   return (
     <form id="book-form" onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -98,8 +132,71 @@ export function BookUploader() {
       </div>
 
       <div>
+        <label className="block text-sm font-medium mb-1">Original Title (if different)</label>
+        <Input name="originalTitle" />
+      </div>
+
+      <div>
         <label className="block text-sm font-medium mb-1">Description</label>
         <Textarea name="description" required />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Series</label>
+        <Input name="series" placeholder="Name of the series if part of one" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Setting</label>
+        <Input name="setting" placeholder="Where/when does the story take place?" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Characters</label>
+        <div className="flex gap-2 mb-2">
+          <Input 
+            value={characterInput}
+            onChange={(e) => setCharacterInput(e.target.value)}
+            placeholder="Add a character"
+          />
+          <Button type="button" variant="outline" onClick={addCharacter}>Add</Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {selectedCharacters.map((char, index) => (
+            <Badge 
+              key={index}
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={() => setSelectedCharacters(selectedCharacters.filter((_, i) => i !== index))}
+            >
+              {char} ×
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Awards</label>
+        <div className="flex gap-2 mb-2">
+          <Input 
+            value={awardInput}
+            onChange={(e) => setAwardInput(e.target.value)}
+            placeholder="Add an award"
+          />
+          <Button type="button" variant="outline" onClick={addAward}>Add</Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {awards.map((award, index) => (
+            <Badge 
+              key={index}
+              variant="secondary"
+              className="cursor-pointer"
+              onClick={() => setAwards(awards.filter((_, i) => i !== index))}
+            >
+              {award} ×
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <div>
@@ -110,6 +207,55 @@ export function BookUploader() {
           onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
           required
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Format</label>
+        <Select value={format} onValueChange={setFormat}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select format..." />
+          </SelectTrigger>
+          <SelectContent>
+            {FORMAT_OPTIONS.map((format) => (
+              <SelectItem key={format} value={format}>
+                {format.charAt(0).toUpperCase() + format.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Number of Pages</label>
+        <Input 
+          name="pageCount" 
+          type="number" 
+          min="1"
+          placeholder="Number of pages"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Publication Date</label>
+        <Input 
+          name="publishedDate" 
+          type="date"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">ISBN</label>
+        <Input name="isbn" placeholder="ISBN number" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">ASIN</label>
+        <Input name="asin" placeholder="Amazon ASIN (for Kindle editions)" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Language</label>
+        <Input name="language" defaultValue="English" />
       </div>
 
       <div>
