@@ -11,7 +11,16 @@ import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
-import {DragDropCover} from "@/components/drag-drop-cover"; // Assuming this component exists
+import {DragDropCover} from "@/components/drag-drop-cover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+// Keep all the existing interfaces and type definitions
 
 interface FormData {
   // Basic Info
@@ -50,7 +59,31 @@ const STEPS = [
   "Preview"
 ] as const;
 
-export function BookUploadWizard() {
+export function BookUploadDialog() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-full">
+          Add Book
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add New Book</DialogTitle>
+        </DialogHeader>
+        <BookUploadWizard onSuccess={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface BookUploadWizardProps {
+  onSuccess?: () => void;
+}
+
+export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
@@ -123,6 +156,7 @@ export function BookUploadWizard() {
         referralLinks: []
       });
       setCurrentStep(0);
+      onSuccess?.(); // Call onSuccess callback if provided
     },
     onError: (error: Error) => {
       toast({

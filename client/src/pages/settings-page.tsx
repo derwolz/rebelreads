@@ -38,7 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { BookUploadWizard } from "@/components/book-upload-wizard"; // Replaced import
+import { BookUploadDialog } from "@/components/book-upload-wizard"; 
 import {
   AlertDialog,
   AlertDialogAction,
@@ -388,7 +388,7 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <BookUploadWizard /> {/* Replaced BookUploader with BookUploadWizard */}
+                <BookUploadDialog />
 
                 <div className="mt-8 grid gap-6">
                   {userBooks?.map((book) => {
