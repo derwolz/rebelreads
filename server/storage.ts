@@ -154,14 +154,20 @@ export class MemStorage implements IStorage {
         author: "Matt Ridley",
         description: "How ideas emerge and spread through society",
         coverUrl: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73",
-        authorImageUrl: "https://images.unsplash.com/photo-1733231291539-a1b0305c210a"
+        authorImageUrl: "https://images.unsplash.com/photo-1733231291539-a1b0305c210a",
+        authorId: 1,
+        promoted: false,
+        genres: ["fantasy"]
       },
       {
         title: "The Psychology of Money",
         author: "Morgan Housel",
         description: "Timeless lessons on wealth, greed, and happiness",
         coverUrl: "https://images.unsplash.com/photo-1592496431122-2349e0fbc666",
-        authorImageUrl: "https://images.unsplash.com/photo-1733231291455-3c4de1c24e20"
+        authorImageUrl: "https://images.unsplash.com/photo-1733231291455-3c4de1c24e20",
+        authorId: 1,
+        promoted: false,
+        genres: ["fantasy"]
       }
     ];
 
