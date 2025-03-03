@@ -216,6 +216,14 @@ export default function BookDetails() {
                   <p className="text-muted-foreground">No ratings yet</p>
                 )}
 
+                <div className="space-y-4 mt-8">
+                  <h3 className="text-xl font-semibold">Reviews</h3>
+                  <div className="max-w-3xl space-y-4">
+                    {ratings?.map((rating) => (
+                      <ReviewCard key={rating.id} rating={rating} />
+                    ))}
+                  </div>
+                </div>
                 {user && (
                   <div className="mt-4">
                     <RatingDialog
@@ -224,13 +232,6 @@ export default function BookDetails() {
                     />
                   </div>
                 )}
-
-                <div className="space-y-4 mt-8">
-                  <h3 className="text-xl font-semibold">Reviews</h3>
-                  {ratings?.map((rating) => (
-                    <ReviewCard key={rating.id} rating={rating} />
-                  ))}
-                </div>
               </div>
             </div>
           </div>

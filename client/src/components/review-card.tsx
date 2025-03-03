@@ -14,7 +14,7 @@ export function ReviewCard({ rating }: ReviewCardProps) {
   const hasLongReview = rating.review && rating.review.length > REVIEW_PREVIEW_LENGTH;
 
   return (
-    <div className="p-4 bg-muted rounded-lg space-y-2 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+    <div className="p-4 bg-muted rounded-lg space-y-2 cursor-pointer w-full" onClick={() => setIsOpen(!isOpen)}>
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <StarRating rating={Math.round(calculateWeightedRating(rating))} readOnly size="sm" />
@@ -24,7 +24,7 @@ export function ReviewCard({ rating }: ReviewCardProps) {
 
       {rating.review && (
         <div className="text-sm">
-          <p className={`max-w-prose ${!isOpen && hasLongReview ? "line-clamp-3" : undefined}`}>
+          <p className={`break-words ${!isOpen && hasLongReview ? "line-clamp-3" : undefined}`}>
             {rating.review}
           </p>
           {hasLongReview && (
