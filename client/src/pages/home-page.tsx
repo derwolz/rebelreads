@@ -17,22 +17,37 @@ function BookCardSkeleton() {
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("title");
 
   const { data: books, isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
   });
 
+  const handleSearch = (query: string, type: string) => {
+    setSearchQuery(query);
+    if (type) setSearchType(type);
+  };
+
   const filteredBooks = books?.filter((book) => {
     const query = searchQuery.toLowerCase();
-    return (
-      book.title.toLowerCase().includes(query) ||
-      book.author.toLowerCase().includes(query)
-    );
+
+    switch (searchType) {
+      case "title":
+        return book.title.toLowerCase().includes(query);
+      case "author":
+        return book.author.toLowerCase().includes(query);
+      case "genre":
+        return book.genres.some(genre => 
+          genre.toLowerCase().includes(query)
+        );
+      default:
+        return true;
+    }
   });
 
   return (
     <div>
-      <MainNav onSearch={setSearchQuery} />
+      <MainNav onSearch={handleSearch} />
 
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-3xl font-bold mb-8">Popular Books</h2>

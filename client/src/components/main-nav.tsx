@@ -3,9 +3,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
 import { Search, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AVAILABLE_GENRES } from "@shared/schema";
 
 interface MainNavProps {
-  onSearch?: (query: string) => void;
+  onSearch?: (query: string, type: string) => void;
 }
 
 export function MainNav({ onSearch }: MainNavProps) {
@@ -19,13 +27,29 @@ export function MainNav({ onSearch }: MainNavProps) {
             <h1 className="text-2xl font-bold text-primary">BookNook</h1>
           </Link>
 
-          <div className="hidden md:flex relative w-96">
-            <Search className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search books..."
-              className="pl-9"
-              onChange={(e) => onSearch?.(e.target.value)}
-            />
+          <div className="hidden md:flex items-center gap-2 relative w-96">
+            <Select
+              defaultValue="title"
+              onValueChange={(value) => onSearch?.("", value)}
+            >
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Search by..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="title">Title</SelectItem>
+                <SelectItem value="author">Author</SelectItem>
+                <SelectItem value="genre">Genre</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
+              <Input
+                placeholder="Search books..."
+                className="pl-9"
+                onChange={(e) => onSearch?.(e.target.value, "title")}
+              />
+            </div>
           </div>
         </div>
 

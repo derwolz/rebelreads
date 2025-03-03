@@ -6,6 +6,7 @@ import { RatingDialog } from "./rating-dialog";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 
 export function BookCard({ book }: { book: Book }) {
   const [showDetailed, setShowDetailed] = useState(false);
@@ -32,7 +33,16 @@ export function BookCard({ book }: { book: Book }) {
       />
       <CardContent className="p-4">
         <h3 className="text-lg font-semibold mb-2">{book.title}</h3>
-        <p className="text-sm text-muted-foreground">{book.author}</p>
+        <p className="text-sm text-muted-foreground mb-2">{book.author}</p>
+
+        <div className="flex flex-wrap gap-1 mb-2">
+          {book.genres.slice(0, 3).map((genre) => (
+            <Badge key={genre} variant="secondary" className="text-xs">
+              {genre}
+            </Badge>
+          ))}
+        </div>
+
         <div 
           className="mt-2"
           onMouseEnter={() => setShowDetailed(true)}

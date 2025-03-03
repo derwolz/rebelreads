@@ -24,6 +24,7 @@ export const books = pgTable("books", {
   coverUrl: text("cover_url").notNull(),
   authorImageUrl: text("author_image_url"),
   promoted: boolean("promoted").default(false),
+  genres: text("genres").array().notNull(), // Array of genre strings
 });
 
 export const ratings = pgTable("ratings", {
@@ -66,7 +67,10 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
 });
 
-export const insertBookSchema = createInsertSchema(books);
+export const insertBookSchema = createInsertSchema(books).extend({
+  genres: z.array(z.string()).min(1, "At least one genre is required"),
+});
+
 export const insertRatingSchema = createInsertSchema(ratings);
 export const insertBookshelfSchema = createInsertSchema(bookshelves);
 
@@ -91,3 +95,5 @@ export function calculateWeightedRating(rating: Rating): number {
     rating.worldbuilding * 0.1
   );
 }
+
+export const AVAILABLE_GENRES = ["fantasy", "science fiction", "mystery", "romance", "thriller"] as const;
