@@ -29,10 +29,10 @@ const themes = [
 
 export async function initializeModels() {
   if (!classifier) {
-    classifier = await pipeline('sentiment-analysis');
+    classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
   }
   if (!zeroShotClassifier) {
-    zeroShotClassifier = await pipeline('zero-shot-classification');
+    zeroShotClassifier = await pipeline('zero-shot-classification', 'Xenova/bart-large-mnli');
   }
 }
 

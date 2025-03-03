@@ -35,6 +35,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
     worldbuilding: 0,
   });
   const [review, setReview] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Get all ratings to find user's existing rating
   const { data: existingRatings } = useQuery<Rating[]>({
@@ -60,17 +61,30 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
 
   const ratingMutation = useMutation({
     mutationFn: async () => {
-      // Analyze review if present
       let analysis = null;
+
       if (review.trim()) {
-        analysis = await analyzeReview(review);
+        setIsAnalyzing(true);
+        try {
+          analysis = await analyzeReview(review);
+        } catch (error) {
+          console.error('Analysis error:', error);
+          toast({
+            title: "Review Analysis Failed",
+            description: "We couldn't analyze your review, but your rating will still be submitted.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsAnalyzing(false);
+        }
       }
 
-      // Create the payload with the analysis included
       const payload = {
         ...ratings,
         review: review.trim() || null,
-        analysis: analysis,  // This will be properly serialized by apiRequest
+        analysis,
+        bookId,
+        userId: user!.id,
       };
 
       const res = await apiRequest("POST", `/api/books/${bookId}/ratings`, payload);
@@ -170,9 +184,9 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
           </Button>
           <Button
             onClick={() => ratingMutation.mutate()}
-            disabled={!Object.values(ratings).every(Boolean)}
+            disabled={!Object.values(ratings).every(Boolean) || ratingMutation.isPending || isAnalyzing}
           >
-            {userRating ? "Update Rating" : "Submit Rating"}
+            {isAnalyzing ? "Analyzing Review..." : (userRating ? "Update Rating" : "Submit Rating")}
           </Button>
         </div>
       </DialogContent>
