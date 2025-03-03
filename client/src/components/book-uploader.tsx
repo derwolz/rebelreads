@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,18 @@ import { Loader2 } from "lucide-react";
 export function BookUploader() {
   const { toast } = useToast();
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  
+
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const res = await apiRequest("POST", "/api/books", formData);
+      const res = await fetch("/api/books", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -38,10 +46,18 @@ export function BookUploader() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    if (coverFile) {
-      formData.append("cover", coverFile);
+    if (!coverFile) {
+      toast({
+        title: "Upload failed",
+        description: "Please select a cover image",
+        variant: "destructive",
+      });
+      return;
     }
+
+    const formData = new FormData(e.currentTarget);
+    formData.set("cover", coverFile); // Ensure the file is added with the correct field name
+
     uploadMutation.mutate(formData);
   };
 

@@ -4,11 +4,19 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+import express from 'express';
+
+// Ensure uploads directory exists
+const uploadsDir = "./uploads/covers";
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.diskStorage({
-    destination: "./uploads/covers",
+    destination: uploadsDir,
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       cb(null, uniqueSuffix + path.extname(file.originalname));
@@ -19,7 +27,9 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Existing routes
+  // Serve uploaded files
+  app.use("/uploads", express.static("uploads"));
+
   app.get("/api/books", async (_req, res) => {
     const books = await storage.getBooks();
     res.json(books);
@@ -49,7 +59,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(rating);
   });
 
-  // New routes for author features
   app.get("/api/my-books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const books = await storage.getBooksByAuthor(req.user!.id);
@@ -61,11 +70,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const coverUrl = `/uploads/covers/${req.file!.filename}`;
+    if (!req.file) {
+      return res.status(400).json({ message: "Cover image is required" });
+    }
+
+    const coverUrl = `/uploads/covers/${req.file.filename}`;
     const book = await storage.createBook({
       ...req.body,
       authorId: req.user!.id,
       coverUrl,
+      author: req.user!.username, 
     });
 
     res.json(book);
@@ -83,7 +97,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(updatedBook);
   });
 
-  // Profile management routes
   app.patch("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
