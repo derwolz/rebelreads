@@ -30,7 +30,11 @@ export const ratings = pgTable("ratings", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   bookId: integer("book_id").notNull(),
-  rating: integer("rating").notNull(),
+  enjoyment: integer("enjoyment").notNull(),
+  writing: integer("writing").notNull(),
+  themes: integer("themes").notNull(),
+  characters: integer("characters").notNull(),
+  worldbuilding: integer("worldbuilding").notNull(),
   review: text("review"),
 });
 
@@ -77,3 +81,13 @@ export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Rating = typeof ratings.$inferSelect;
 export type Bookshelf = typeof bookshelves.$inferSelect;
+
+export function calculateWeightedRating(rating: Rating): number {
+  return (
+    rating.enjoyment * 0.3 +
+    rating.writing * 0.3 +
+    rating.themes * 0.2 +
+    rating.characters * 0.1 +
+    rating.worldbuilding * 0.1
+  );
+}
