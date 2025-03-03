@@ -1,11 +1,15 @@
-import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),
+  newsletterOptIn: boolean("newsletter_opt_in").notNull().default(false),
+  provider: text("provider"), // google, amazon, x, or null for email/password
+  providerId: text("provider_id"), // external provider's user ID
 });
 
 export const books = pgTable("books", {
@@ -33,8 +37,13 @@ export const bookshelves = pgTable("bookshelves", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
+  email: true,
   username: true,
   password: true,
+  newsletterOptIn: true,
+}).extend({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export const insertBookSchema = createInsertSchema(books);
