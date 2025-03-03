@@ -8,6 +8,24 @@ import { useForm } from "react-hook-form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from "lucide-react";
+import {
   Form,
   FormControl,
   FormField,
@@ -48,12 +66,61 @@ interface ReferralLink {
 
 const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"];
 
+interface SortableReferralLinkProps {
+  link: ReferralLink;
+  index: number;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+}
+
+function SortableReferralLink({ link, index, onChange, onRemove }: SortableReferralLinkProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: `${link.retailer}-${index}` });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab hover:text-primary"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="text-sm">{link.customName || link.retailer}:</span>
+      <Input
+        value={link.url}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-sm h-8"
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onRemove}
+      >
+        ×
+      </Button>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  // Keep track of edited referral links per book
   const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
-
   const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -165,7 +232,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Initialize edited referral links for a book
   const initializeBookReferralLinks = (bookId: number, links: ReferralLink[] = []) => {
     if (!editedReferralLinks[bookId]) {
       setEditedReferralLinks(prev => ({
@@ -175,13 +241,20 @@ export default function SettingsPage() {
     }
   };
 
-  // Update referral links for a specific book
   const updateBookReferralLinks = (bookId: number, links: ReferralLink[]) => {
     setEditedReferralLinks(prev => ({
       ...prev,
       [bookId]: links
     }));
   };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
 
   return (
     <div>
@@ -262,7 +335,6 @@ export default function SettingsPage() {
 
                 <div className="mt-8 grid gap-6">
                   {userBooks?.map((book) => {
-                    // Initialize referral links state for this book
                     if (!editedReferralLinks[book.id]) {
                       initializeBookReferralLinks(book.id, book.referralLinks);
                     }
@@ -283,33 +355,43 @@ export default function SettingsPage() {
                             <p className="text-sm text-muted-foreground">
                               {book.promoted ? "Promoted" : "Not promoted"}
                             </p>
-                            {/* Add Referral Links Section */}
                             <div className="mt-4 space-y-2">
                               <h4 className="text-sm font-medium">Referral Links</h4>
-                              {editedReferralLinks[book.id]?.map((link: ReferralLink, index: number) => (
-                                <div key={index} className="flex items-center gap-2">
-                                  <span className="text-sm">{link.customName || link.retailer}:</span>
-                                  <Input
-                                    value={link.url}
-                                    onChange={(e) => {
-                                      const newLinks = [...editedReferralLinks[book.id]];
-                                      newLinks[index] = { ...link, url: e.target.value };
-                                      updateBookReferralLinks(book.id, newLinks);
-                                    }}
-                                    className="text-sm h-8"
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
-                                      updateBookReferralLinks(book.id, newLinks);
-                                    }}
-                                  >
-                                    ×
-                                  </Button>
-                                </div>
-                              ))}
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(event) => {
+                                  const { active, over } = event;
+                                  if (over && active.id !== over.id) {
+                                    const oldIndex = parseInt(active.id.split('-')[1]);
+                                    const newIndex = parseInt(over.id.split('-')[1]);
+                                    const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
+                                    updateBookReferralLinks(book.id, newLinks);
+                                  }
+                                }}
+                              >
+                                <SortableContext
+                                  items={editedReferralLinks[book.id]?.map((_, i) => `${book.id}-${i}`) || []}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  {editedReferralLinks[book.id]?.map((link: ReferralLink, index: number) => (
+                                    <SortableReferralLink
+                                      key={`${link.retailer}-${index}`}
+                                      link={link}
+                                      index={index}
+                                      onChange={(newUrl) => {
+                                        const newLinks = [...editedReferralLinks[book.id]];
+                                        newLinks[index] = { ...link, url: newUrl };
+                                        updateBookReferralLinks(book.id, newLinks);
+                                      }}
+                                      onRemove={() => {
+                                        const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
+                                        updateBookReferralLinks(book.id, newLinks);
+                                      }}
+                                    />
+                                  ))}
+                                </SortableContext>
+                              </DndContext>
                               <div className="flex gap-2">
                                 <Select
                                   onValueChange={(value) => {
@@ -340,9 +422,7 @@ export default function SettingsPage() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() =>
-                                        updateBookReferralLinks(book.id, [])
-                                      }
+                                      onClick={() => updateBookReferralLinks(book.id, [])}
                                     >
                                       Clear All
                                     </Button>
