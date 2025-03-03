@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, loginSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -22,7 +22,7 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
 
   const loginForm = useForm({
-    resolver: zodResolver(insertUserSchema.pick({ email: true, password: true })),
+    resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 

@@ -66,6 +66,11 @@ export const insertBookSchema = createInsertSchema(books);
 export const insertRatingSchema = createInsertSchema(ratings);
 export const insertBookshelfSchema = createInsertSchema(bookshelves);
 
+export const loginSchema = z.object({
+  email: z.string().min(1, "Email or username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
