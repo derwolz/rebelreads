@@ -113,11 +113,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const coverUrl = `/uploads/covers/${req.file.filename}`;
+    const genres = JSON.parse(req.body.genres); // Parse the stringified genres array
+
     const book = await storage.createBook({
-      ...req.body,
+      title: req.body.title,
+      description: req.body.description,
       authorId: req.user!.id,
       coverUrl,
       author: req.user!.authorName || req.user!.username, // Use authorName if available, fallback to username
+      genres: genres, // Add the parsed genres array
+      promoted: false,
+      authorImageUrl: null
     });
 
     res.json(book);
