@@ -52,7 +52,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const rating = await storage.createRating({
       bookId: parseInt(req.params.id),
       userId: req.user!.id,
-      rating: req.body.rating,
+      enjoyment: req.body.enjoyment,
+      writing: req.body.writing,
+      themes: req.body.themes,
+      characters: req.body.characters,
+      worldbuilding: req.body.worldbuilding,
       review: req.body.review
     });
 
