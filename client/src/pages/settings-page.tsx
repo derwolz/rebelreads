@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Book, UpdateProfile } from "@shared/schema";
+import { Book, UpdateProfile, updateProfileSchema } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
