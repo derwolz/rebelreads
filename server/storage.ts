@@ -1,25 +1,87 @@
 import { User, Book, Rating, Bookshelf, InsertUser } from "@shared/schema";
-import createMemoryStore from "memorystore";
+import { users, books, ratings, bookshelves } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   getBooks(): Promise<Book[]>;
   getBook(id: number): Promise<Book | undefined>;
-  
+
   getRatings(bookId: number): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
-  
+
   getBookshelf(userId: number): Promise<Bookshelf[]>;
   updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf>;
-  
+
   sessionStore: session.Store;
 }
+
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async getBooks(): Promise<Book[]> {
+    return await db.select().from(books);
+  }
+
+  async getBook(id: number): Promise<Book | undefined> {
+    const [book] = await db.select().from(books).where(eq(books.id, id));
+    return book;
+  }
+
+  async getRatings(bookId: number): Promise<Rating[]> {
+    return await db.select().from(ratings).where(eq(ratings.bookId, bookId));
+  }
+
+  async createRating(rating: Omit<Rating, "id">): Promise<Rating> {
+    const [newRating] = await db.insert(ratings).values(rating).returning();
+    return newRating;
+  }
+
+  async getBookshelf(userId: number): Promise<Bookshelf[]> {
+    return await db.select().from(bookshelves).where(eq(bookshelves.userId, userId));
+  }
+
+  async updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf> {
+    const [bookshelf] = await db
+      .insert(bookshelves)
+      .values({ userId, bookId, status })
+      .returning();
+    return bookshelf;
+  }
+}
+
+export const storage = new DatabaseStorage();
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
@@ -109,4 +171,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import createMemoryStore from "memorystore";
+
+const MemoryStore = createMemoryStore(session);
