@@ -57,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ReaderSettings } from "@/components/reader-settings";
 
 interface ReferralLink {
   retailer: string;
@@ -266,6 +267,7 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
 
         <div className="grid gap-8">
+          <ReaderSettings />
           <Card>
             <CardHeader>
               <CardTitle>Author Settings</CardTitle>

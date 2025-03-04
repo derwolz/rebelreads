@@ -1,33 +1,41 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
-import { storage } from "./storage";
+import { dbStorage } from "./storage";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { and, eq } from "drizzle-orm";
 import { users, books, bookshelves } from "@shared/schema";
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
 
-// Ensure uploads directory exists
-const uploadsDir = "./uploads/covers";
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Ensure uploads directories exist
+const uploadsDir = "./uploads";
+const coversDir = path.join(uploadsDir, "covers");
+const profilesDir = path.join(uploadsDir, "profiles");
+
+[uploadsDir, coversDir, profilesDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // Configure multer for file uploads
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: uploadsDir,
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    },
-  }),
+const fileStorage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    // Choose directory based on upload type
+    const uploadDir = file.fieldname === 'profileImage' ? profilesDir : coversDir;
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
 });
+
+const upload = multer({ storage: fileStorage });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -36,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/uploads", express.static("uploads"));
 
   app.get("/api/books", async (_req, res) => {
-    const books = await storage.getBooks();
+    const books = await dbStorage.getBooks();
     res.json(books);
   });
 
@@ -47,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Invalid book ID" });
     }
 
-    const book = await storage.getBook(bookId);
+    const book = await dbStorage.getBook(bookId);
     if (!book) return res.sendStatus(404);
     res.json(book);
   });
@@ -59,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "Invalid book ID" });
     }
 
-    const ratings = await storage.getRatings(bookId);
+    const ratings = await dbStorage.getRatings(bookId);
     res.json(ratings);
   });
 
@@ -73,7 +81,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const rating = await storage.createRating({
+      const rating = await dbStorage.createRating({
         bookId,
         userId: req.user!.id,
         enjoyment: req.body.enjoyment,
@@ -117,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/my-books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    const books = await storage.getBooksByAuthor(req.user!.id);
+    const books = await dbStorage.getBooksByAuthor(req.user!.id);
     res.json(books);
   });
 
@@ -141,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ? new Date(req.body.publishedDate)
       : null;
 
-    const book = await storage.createBook({
+    const book = await dbStorage.createBook({
       title: req.body.title,
       description: req.body.description,
       authorId: req.user!.id,
@@ -169,24 +177,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/books/:id/promote", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const book = await storage.getBook(parseInt(req.params.id));
+    const book = await dbStorage.getBook(parseInt(req.params.id));
     if (!book || book.authorId !== req.user!.id) {
       return res.sendStatus(403);
     }
 
-    const updatedBook = await storage.promoteBook(book.id);
+    const updatedBook = await dbStorage.promoteBook(book.id);
     res.json(updatedBook);
   });
 
   app.patch("/api/books/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const book = await storage.getBook(parseInt(req.params.id));
+    const book = await dbStorage.getBook(parseInt(req.params.id));
     if (!book || book.authorId !== req.user!.id) {
       return res.sendStatus(403);
     }
 
-    const updatedBook = await storage.updateBook(book.id, req.body);
+    const updatedBook = await dbStorage.updateBook(book.id, req.body);
     res.json(updatedBook);
   });
 
@@ -194,41 +202,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     if (req.body.username) {
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      const existingUser = await dbStorage.getUserByUsername(req.body.username);
       if (existingUser && existingUser.id !== req.user!.id) {
         return res.status(400).send("Username already taken");
       }
     }
 
     if (req.body.email) {
-      const existingUser = await storage.getUserByEmail(req.body.email);
+      const existingUser = await dbStorage.getUserByEmail(req.body.email);
       if (existingUser && existingUser.id !== req.user!.id) {
         return res.status(400).send("Email already in use");
       }
     }
 
-    const updatedUser = await storage.updateUser(req.user!.id, req.body);
+    const updatedUser = await dbStorage.updateUser(req.user!.id, req.body);
     res.json(updatedUser);
   });
 
   app.post("/api/user/toggle-author", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const updatedUser = await storage.toggleAuthorStatus(req.user!.id);
+    const updatedUser = await dbStorage.toggleAuthorStatus(req.user!.id);
     res.json(updatedUser);
   });
 
   app.get("/api/bookshelf", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const bookshelf = await storage.getBookshelf(req.user!.id);
+    const bookshelf = await dbStorage.getBookshelf(req.user!.id);
     res.json(bookshelf);
   });
 
   app.post("/api/bookshelf/:bookId", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const bookshelf = await storage.updateBookshelfStatus(
+    const bookshelf = await dbStorage.updateBookshelfStatus(
       req.user!.id,
       parseInt(req.params.bookId),
       req.body.status,
@@ -240,24 +248,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/books/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const book = await storage.getBook(parseInt(req.params.id));
+    const book = await dbStorage.getBook(parseInt(req.params.id));
     if (!book || book.authorId !== req.user!.id) {
       return res.sendStatus(403);
     }
 
-    await storage.deleteBook(book.id, req.user!.id);
+    await dbStorage.deleteBook(book.id, req.user!.id);
     res.sendStatus(200);
   });
 
   app.get("/api/authors/:id", async (req, res) => {
-    const author = await storage.getUser(parseInt(req.params.id));
+    const author = await dbStorage.getUser(parseInt(req.params.id));
     if (!author?.isAuthor) return res.sendStatus(404);
 
     const [books, followerCount, genres, ratings] = await Promise.all([
-      storage.getBooksByAuthor(author.id),
-      storage.getFollowerCount(author.id),
-      storage.getAuthorGenres(author.id),
-      storage.getAuthorAggregateRatings(author.id),
+      dbStorage.getBooksByAuthor(author.id),
+      dbStorage.getFollowerCount(author.id),
+      dbStorage.getAuthorGenres(author.id),
+      dbStorage.getAuthorAggregateRatings(author.id),
     ]);
 
     res.json({
@@ -272,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/authors/:id/following", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const isFollowing = await storage.isFollowing(
+    const isFollowing = await dbStorage.isFollowing(
       req.user!.id,
       parseInt(req.params.id),
     );
@@ -283,10 +291,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const authorId = parseInt(req.params.id);
-    const author = await storage.getUser(authorId);
+    const author = await dbStorage.getUser(authorId);
     if (!author?.isAuthor) return res.sendStatus(404);
 
-    await storage.followAuthor(req.user!.id, authorId);
+    await dbStorage.followAuthor(req.user!.id, authorId);
     res.sendStatus(200);
   });
 
@@ -294,10 +302,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     const authorId = parseInt(req.params.id);
-    const author = await storage.getUser(authorId);
+    const author = await dbStorage.getUser(authorId);
     if (!author?.isAuthor) return res.sendStatus(404);
 
-    await storage.unfollowAuthor(req.user!.id, authorId);
+    await dbStorage.unfollowAuthor(req.user!.id, authorId);
     res.sendStatus(200);
   });
 
@@ -305,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const books = await storage.getFollowedAuthorsBooks(req.user!.id);
+      const books = await dbStorage.getFollowedAuthorsBooks(req.user!.id);
       res.json(books);
     } catch (error) {
       console.error("Error fetching followed authors books:", error);
@@ -329,11 +337,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         followerCount,
         user
       ] = await Promise.all([
-        storage.getBookshelf(userId),
-        storage.getUserRatings(userId),
-        storage.getFollowingCount(userId),
-        storage.getFollowerCount(userId),
-        storage.getUser(userId)
+        dbStorage.getBookshelf(userId),
+        dbStorage.getUserRatings(userId),
+        dbStorage.getFollowingCount(userId),
+        dbStorage.getFollowerCount(userId),
+        dbStorage.getUser(userId)
       ]);
 
       // Calculate reading stats
@@ -370,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         readingStats,
         averageRatings,
         recentReviews: ratings.slice(0, 5),
-        recommendations: await storage.getBooks() // This will be replaced with actual recommendations later
+        recommendations: await dbStorage.getBooks() // This will be replaced with actual recommendations later
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -378,6 +386,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+  // Add the profile image upload endpoint
+  app.post("/api/user/profile-image", upload.single("profileImage"), async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.file) return res.status(400).json({ message: "No image file provided" });
+
+    const imageUrl = `/uploads/profiles/${req.file.filename}`;
+
+    try {
+      const updatedUser = await dbStorage.updateUser(req.user!.id, {
+        profileImageUrl: imageUrl,
+      });
+      res.json({ profileImageUrl: imageUrl });
+    } catch (error) {
+      console.error("Error updating profile image:", error);
+      res.status(500).json({ message: "Failed to update profile image" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

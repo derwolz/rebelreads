@@ -40,6 +40,8 @@ export const users = pgTable("users", {
   birthDate: date("birth_date"),
   deathDate: date("death_date"),
   website: text("website"),
+  favoriteGenres: text("favorite_genres").array(), // Updated to array
+  displayName: text("display_name"), // Added display name field
 });
 
 export const followers = pgTable("followers", {
@@ -116,23 +118,17 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const updateProfileSchema = createInsertSchema(users).pick({
-  email: true,
   username: true,
-  authorName: true,
-  authorBio: true,
-  birthDate: true,
-  deathDate: true,
-  website: true,
-  profileImageUrl: true,
+  displayName: true,
   bio: true,
+  profileImageUrl: true,
+  favoriteGenres: true,
 }).extend({
-  email: z.string().email("Invalid email format"),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
-  website: z.string().url("Please enter a valid URL").optional().nullable(),
-  deathDate: z.date().optional().nullable(),
-  profileImageUrl: z.string().url("Please enter a valid URL").optional().nullable(),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  displayName: z.string().min(1, "Display name is required"),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional().nullable(),
+  profileImageUrl: z.string().url("Please enter a valid URL").optional().nullable(),
+  favoriteGenres: z.array(z.enum(AVAILABLE_GENRES)).min(1, "Select at least one favorite genre"),
 });
 
 export const insertBookSchema = createInsertSchema(books).extend({
