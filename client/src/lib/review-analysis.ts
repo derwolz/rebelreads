@@ -27,40 +27,74 @@ const themes = [
   'originality'
 ];
 
-export async function initializeModels() {
-  if (!classifier) {
-    classifier = await pipeline('sentiment-analysis', 'Xenova/distilbert-base-uncased-finetuned-sst-2-english');
+async function loadModel(task: string, model: string) {
+  console.log(`Loading ${task} model: ${model}`);
+  try {
+    return await pipeline(task, model);
+  } catch (error) {
+    console.error(`Error loading ${task} model:`, error);
+    throw error;
   }
-  if (!zeroShotClassifier) {
-    zeroShotClassifier = await pipeline('zero-shot-classification', 'Xenova/bart-large-mnli');
+}
+
+export async function initializeModels() {
+  try {
+    if (!classifier) {
+      classifier = await loadModel(
+        'sentiment-analysis',
+        'Xenova/distilbert-base-uncased-finetuned-sst-2-english'
+      );
+    }
+    if (!zeroShotClassifier) {
+      zeroShotClassifier = await loadModel(
+        'zero-shot-classification',
+        'Xenova/bart-large-mnli'
+      );
+    }
+    console.log('Models initialized successfully');
+  } catch (error) {
+    console.error('Error initializing models:', error);
+    throw error;
   }
 }
 
 export async function analyzeReview(text: string): Promise<ReviewAnalysis> {
-  await initializeModels();
+  console.log('Starting review analysis...');
 
-  // Analyze sentiment
-  const sentimentResult = await classifier(text);
+  try {
+    await initializeModels();
 
-  // Analyze themes
-  const themeResult = await zeroShotClassifier(text, themes, {
-    multi_label: true,
-  });
+    console.log('Analyzing sentiment...');
+    const sentimentResult = await classifier(text);
+    console.log('Sentiment result:', sentimentResult);
 
-  // Format themes to only include those with significant confidence
-  const significantThemes = themeResult.labels
-    .map((label: string, index: number) => ({
-      label,
-      score: themeResult.scores[index]
-    }))
-    .filter((theme: { score: number }) => theme.score > 0.3)
-    .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+    console.log('Analyzing themes...');
+    const themeResult = await zeroShotClassifier(text, themes, {
+      multi_label: true,
+    });
+    console.log('Theme result:', themeResult);
 
-  return {
-    sentiment: {
-      label: sentimentResult[0].label,
-      score: sentimentResult[0].score
-    },
-    themes: significantThemes
-  };
+    // Format themes to only include those with significant confidence
+    const significantThemes = themeResult.labels
+      .map((label: string, index: number) => ({
+        label,
+        score: themeResult.scores[index]
+      }))
+      .filter((theme: { score: number }) => theme.score > 0.3)
+      .sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+
+    const analysis: ReviewAnalysis = {
+      sentiment: {
+        label: sentimentResult[0].label.toUpperCase(),
+        score: sentimentResult[0].score
+      },
+      themes: significantThemes
+    };
+
+    console.log('Final analysis:', analysis);
+    return analysis;
+  } catch (error) {
+    console.error('Analysis error:', error);
+    throw error;
+  }
 }
