@@ -22,13 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AVAILABLE_GENRES, updateProfileSchema } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function ReaderSettings() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm({
@@ -64,6 +65,7 @@ export function ReaderSettings() {
         title: "Success",
         description: "Profile image updated successfully",
       });
+      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     } catch (error) {
       toast({
         title: "Error",
@@ -77,12 +79,17 @@ export function ReaderSettings() {
 
   async function onSubmit(data: any) {
     try {
-      await apiRequest("/api/user", {
+      const response = await fetch("/api/user", {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
 
-      await refreshUser();
+      if (!response.ok) throw new Error("Failed to update profile");
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
 
       toast({
         title: "Success",
