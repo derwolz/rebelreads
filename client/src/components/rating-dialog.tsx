@@ -8,13 +8,6 @@ import { StarRating } from "./star-rating";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { analyzeReview } from "@/lib/review-analysis";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 interface RatingDialogProps {
   bookId: number;
@@ -69,11 +62,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
           analysis = await analyzeReview(review);
         } catch (error) {
           console.error('Analysis error:', error);
-          toast({
-            title: "Review Analysis Failed",
-            description: "We couldn't analyze your review, but your rating will still be submitted.",
-            variant: "destructive",
-          });
+          // Don't show error toast for analysis failure, just continue without it
         } finally {
           setIsAnalyzing(false);
         }
@@ -82,7 +71,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
       const payload = {
         ...ratings,
         review: review.trim() || null,
-        analysis,
+        analysis, // This will be null if analysis failed
         bookId,
         userId: user!.id,
       };
@@ -184,9 +173,9 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
           </Button>
           <Button
             onClick={() => ratingMutation.mutate()}
-            disabled={!Object.values(ratings).every(Boolean) || ratingMutation.isPending || isAnalyzing}
+            disabled={!Object.values(ratings).every(Boolean) || ratingMutation.isPending}
           >
-            {isAnalyzing ? "Analyzing Review..." : (userRating ? "Update Rating" : "Submit Rating")}
+            {ratingMutation.isPending ? "Submitting..." : (userRating ? "Update Rating" : "Submit Rating")}
           </Button>
         </div>
       </DialogContent>

@@ -1,4 +1,4 @@
-import { pipeline, Pipeline } from '@xenova/transformers';
+import { pipeline, env } from '@xenova/transformers';
 
 export interface ReviewAnalysis {
   sentiment: {
@@ -11,8 +11,8 @@ export interface ReviewAnalysis {
   }>;
 }
 
-let classifier: Pipeline | null = null;
-let zeroShotClassifier: Pipeline | null = null;
+let classifier = null;
+let zeroShotClassifier = null;
 
 const themes = [
   'character development',
@@ -27,10 +27,19 @@ const themes = [
   'originality'
 ];
 
+// Configure environment for browser
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+env.backends.onnx.wasm.numThreads = 1;
+
 async function loadModel(task: 'sentiment-analysis' | 'zero-shot-classification', model: string) {
   console.log(`Loading ${task} model: ${model}`);
   try {
-    const pipe = await pipeline(task, model);
+    // Use pipeline with specific configuration
+    const pipe = await pipeline(task, model, {
+      quantized: false, // Disable quantization for better compatibility
+      progress_callback: (x: any) => console.log('Model loading progress:', x)
+    });
     console.log(`Successfully loaded ${task} model`);
     return pipe;
   } catch (error) {
@@ -42,15 +51,16 @@ async function loadModel(task: 'sentiment-analysis' | 'zero-shot-classification'
 export async function initializeModels() {
   try {
     if (!classifier) {
+      // Use a tiny model for sentiment analysis
       classifier = await loadModel(
         'sentiment-analysis',
-        'Xenova/distilbert-base-uncased-finetuned-sst-2-english'
+        'Xenova/tiny-distilbert-sentiment'
       );
     }
     if (!zeroShotClassifier) {
       zeroShotClassifier = await loadModel(
         'zero-shot-classification',
-        'Xenova/bart-large-mnli'
+        'Xenova/mobilebert-uncased-mnli'
       );
     }
     console.log('Models initialized successfully');

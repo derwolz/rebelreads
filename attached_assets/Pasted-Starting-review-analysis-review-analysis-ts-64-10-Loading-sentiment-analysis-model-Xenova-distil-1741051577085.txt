@@ -1,0 +1,58 @@
+Starting review analysis... review-analysis.ts:64:10
+Loading sentiment-analysis model: Xenova/distilbert-base-uncased-finetuned-sst-2-english review-analysis.ts:31:10
+Error loading sentiment-analysis model: SyntaxError: JSON.parse: unexpected character at line 1 column 1 of the JSON data
+    getModelJSON hub.js:581
+    loadTokenizer tokenizers.js:62
+    from_pretrained tokenizers.js:4459
+    loadItems pipelines.js:3271
+    pipeline pipelines.js:3219
+    loadModel review-analysis.ts:33
+    initializeModels review-analysis.ts:45
+    analyzeReview review-analysis.ts:67
+    mutationFn rating-dialog.tsx:69
+    fn mutation.ts:170
+    run retryer.ts:153
+    start retryer.ts:218
+    execute mutation.ts:208
+    mutate mutationObserver.ts:125
+    mutate useMutation.ts:52
+    onClick rating-dialog.tsx:186
+    React 15
+review-analysis.ts:37:12
+Error initializing models: Error: Failed to load sentiment-analysis model: JSON.parse: unexpected character at line 1 column 1 of the JSON data
+    loadModel review-analysis.ts:38
+    initializeModels review-analysis.ts:45
+    analyzeReview review-analysis.ts:67
+    mutationFn rating-dialog.tsx:69
+    fn mutation.ts:170
+    run retryer.ts:153
+    start retryer.ts:218
+    execute mutation.ts:208
+    mutate mutationObserver.ts:125
+    mutate useMutation.ts:52
+    onClick rating-dialog.tsx:186
+    React 15
+review-analysis.ts:58:12
+Analysis error: Error: Failed to initialize models: Failed to load sentiment-analysis model: JSON.parse: unexpected character at line 1 column 1 of the JSON data
+    initializeModels review-analysis.ts:59
+    analyzeReview review-analysis.ts:67
+    mutationFn rating-dialog.tsx:69
+    fn mutation.ts:170
+    run retryer.ts:153
+    start retryer.ts:218
+    execute mutation.ts:208
+    mutate mutationObserver.ts:125
+    mutate useMutation.ts:52
+    onClick rating-dialog.tsx:186
+    React 15
+review-analysis.ts:103:12
+Analysis error: Error: Failed to analyze review: Failed to initialize models: Failed to load sentiment-analysis model: JSON.parse: unexpected character at line 1 column 1 of the JSON data
+    analyzeReview review-analysis.ts:104
+    mutationFn rating-dialog.tsx:69
+    fn mutation.ts:170
+    run retryer.ts:153
+    start retryer.ts:218
+    execute mutation.ts:208
+    mutate mutationObserver.ts:125
+    mutate useMutation.ts:52
+    onClick rating-dialog.tsx:186
