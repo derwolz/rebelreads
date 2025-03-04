@@ -302,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/books/followed-authors", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    console.log(req);
+    
     try {
       const books = await storage.getFollowedAuthorsBooks(req.user!.id);
       res.json(books);
