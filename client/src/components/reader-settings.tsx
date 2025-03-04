@@ -54,17 +54,26 @@ export function ReaderSettings() {
       const response = await fetch("/api/user/profile-image", {
         method: "POST",
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error("Failed to upload image");
 
       const { profileImageUrl } = await response.json();
+
+      // Update the form value
       form.setValue("profileImageUrl", profileImageUrl);
+
+      // Update the query cache
+      queryClient.setQueryData(["/api/user"], (oldData: any) => ({
+        ...oldData,
+        profileImageUrl,
+      }));
+
       toast({
         title: "Success",
         description: "Profile image updated successfully",
       });
-      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     } catch (error) {
       toast({
         title: "Error",
@@ -83,6 +92,7 @@ export function ReaderSettings() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
