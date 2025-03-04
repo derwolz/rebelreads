@@ -1,4 +1,4 @@
-import { pipeline } from '@xenova/transformers';
+import { pipeline, Pipeline } from '@xenova/transformers';
 
 export interface ReviewAnalysis {
   sentiment: {
@@ -11,8 +11,8 @@ export interface ReviewAnalysis {
   }>;
 }
 
-let classifier: any = null;
-let zeroShotClassifier: any = null;
+let classifier: Pipeline | null = null;
+let zeroShotClassifier: Pipeline | null = null;
 
 const themes = [
   'character development',
@@ -27,13 +27,15 @@ const themes = [
   'originality'
 ];
 
-async function loadModel(task: string, model: string) {
+async function loadModel(task: 'sentiment-analysis' | 'zero-shot-classification', model: string) {
   console.log(`Loading ${task} model: ${model}`);
   try {
-    return await pipeline(task, model);
+    const pipe = await pipeline(task, model);
+    console.log(`Successfully loaded ${task} model`);
+    return pipe;
   } catch (error) {
     console.error(`Error loading ${task} model:`, error);
-    throw error;
+    throw new Error(`Failed to load ${task} model: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -54,7 +56,7 @@ export async function initializeModels() {
     console.log('Models initialized successfully');
   } catch (error) {
     console.error('Error initializing models:', error);
-    throw error;
+    throw new Error(`Failed to initialize models: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -63,6 +65,10 @@ export async function analyzeReview(text: string): Promise<ReviewAnalysis> {
 
   try {
     await initializeModels();
+
+    if (!classifier || !zeroShotClassifier) {
+      throw new Error('Models not properly initialized');
+    }
 
     console.log('Analyzing sentiment...');
     const sentimentResult = await classifier(text);
@@ -95,6 +101,6 @@ export async function analyzeReview(text: string): Promise<ReviewAnalysis> {
     return analysis;
   } catch (error) {
     console.error('Analysis error:', error);
-    throw error;
+    throw new Error(`Failed to analyze review: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
