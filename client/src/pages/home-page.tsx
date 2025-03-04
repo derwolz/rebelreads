@@ -5,6 +5,13 @@ import { MainNav } from "@/components/main-nav";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 function BookCardSkeleton() {
   return (
@@ -50,7 +57,7 @@ export default function HomePage() {
       default:
         return true;
     }
-  });
+  }).slice(0, 10); // Limit to 10 books
 
   return (
     <div>
@@ -60,33 +67,49 @@ export default function HomePage() {
         {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
           <section className="mb-12">
             <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {isLoadingFollowed ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <BookCardSkeleton key={i} />
-                ))
-              ) : (
-                followedAuthorsBooks.map((book) => (
-                  <BookCard key={book.id} book={book} />
-                ))
-              )}
-            </div>
+            <Carousel className="w-full">
+              <CarouselContent>
+                {isLoadingFollowed ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                      <BookCardSkeleton />
+                    </CarouselItem>
+                  ))
+                ) : (
+                  followedAuthorsBooks.slice(0, 10).map((book) => (
+                    <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
+                      <BookCard book={book} />
+                    </CarouselItem>
+                  ))
+                )}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
           </section>
         )}
 
         <section>
           <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
-                <BookCardSkeleton key={i} />
-              ))
-            ) : (
-              filteredBooks?.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))
-            )}
-          </div>
+          <Carousel className="w-full">
+            <CarouselContent>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                    <BookCardSkeleton />
+                  </CarouselItem>
+                ))
+              ) : (
+                filteredBooks?.map((book) => (
+                  <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
+                    <BookCard book={book} />
+                  </CarouselItem>
+                ))
+              )}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
         </section>
       </main>
     </div>
