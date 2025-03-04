@@ -18,6 +18,8 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/books/:id" component={BookDetails} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/settings/account" component={SettingsPage} />
+      <ProtectedRoute path="/settings/author" component={SettingsPage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <Route path="/authors/:id" component={AuthorPage} />
       <Route path="/auth" component={AuthPage} />

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Book, UpdateProfile, updateProfileSchema } from "@shared/schema";
+import { Book, UpdateProfile } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { SettingsSidebar } from "@/components/settings-sidebar";
 import { useLocation } from "wouter";
@@ -266,207 +266,232 @@ export default function SettingsPage() {
     })
   );
 
-  const section = location.split("/")[2] || "profile";
+
+  let content;
+  if (location === "/settings/account") {
+    content = (
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Settings</CardTitle>
+          <CardDescription>
+            Manage your account preferences and author status
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-4">
+            <Switch
+              checked={user?.isAuthor}
+              onCheckedChange={() => toggleAuthorMutation.mutate()}
+            />
+            <span>Register as an author</span>
+          </div>
+
+          {/* Add more account settings here */}
+        </CardContent>
+      </Card>
+    );
+  } else if (location === "/settings/author" && user?.isAuthor) {
+    content = (
+      <Card>
+        <CardHeader>
+          <CardTitle>Author Settings</CardTitle>
+          <CardDescription>
+            Manage your published books and upload new ones
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BookUploadDialog />
+          <div className="mt-8 grid gap-6">
+            {userBooks?.map((book) => {
+              if (!editedReferralLinks[book.id]) {
+                initializeBookReferralLinks(book.id, book.referralLinks);
+              }
+
+              return (
+                <div
+                  key={book.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      className="w-16 h-24 object-cover rounded"
+                    />
+                    <div>
+                      <h3 className="font-semibold">{book.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {book.promoted ? "Promoted" : "Not promoted"}
+                      </p>
+                      <div className="mt-4 space-y-2">
+                        <h4 className="text-sm font-medium">Referral Links</h4>
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(event) => {
+                            const { active, over } = event;
+                            if (over && active.id !== over.id) {
+                              const oldIndex = parseInt(active.id.split('-')[1]);
+                              const newIndex = parseInt(over.id.split('-')[1]);
+                              const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
+                              updateBookReferralLinks(book.id, newLinks);
+                            }
+                          }}
+                        >
+                          <SortableContext
+                            items={editedReferralLinks[book.id]?.map((_, i) => `${book.id}-${i}`) || []}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {editedReferralLinks[book.id]?.map((link: ReferralLink, index: number) => (
+                              <SortableReferralLink
+                                key={`${link.retailer}-${index}`}
+                                link={link}
+                                index={index}
+                                onChange={(newUrl) => {
+                                  const newLinks = [...editedReferralLinks[book.id]];
+                                  newLinks[index] = { ...link, url: newUrl };
+                                  updateBookReferralLinks(book.id, newLinks);
+                                }}
+                                onRemove={() => {
+                                  const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
+                                  updateBookReferralLinks(book.id, newLinks);
+                                }}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                        <div className="flex gap-2">
+                          <Select
+                            onValueChange={(value) => {
+                              const newLink = {
+                                retailer: value,
+                                url: "",
+                                customName: value === "Custom" ? "" : undefined,
+                              };
+                              updateBookReferralLinks(book.id, [
+                                ...(editedReferralLinks[book.id] || []),
+                                newLink,
+                              ]);
+                            }}
+                          >
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="Add retailer..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {RETAILER_OPTIONS.map((retailer) => (
+                                <SelectItem key={retailer} value={retailer}>
+                                  {retailer}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {editedReferralLinks[book.id]?.length > 0 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateBookReferralLinks(book.id, [])}
+                              >
+                                Clear All
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() =>
+                                  updateBookMutation.mutate({
+                                    id: book.id,
+                                    referralLinks: editedReferralLinks[book.id],
+                                  })
+                                }
+                              >
+                                Save Changes
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => promoteBookMutation.mutate(book.id)}
+                      disabled={book.promoted}
+                    >
+                      Promote Book
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">Delete</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your book
+                            and remove it from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteBookMutation.mutate(book.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  } else {
+    // Default to profile settings
+    content = <ReaderSettings />;
+  }
 
   return (
     <div>
       <MainNav />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Settings</h1>
-
         <div className="flex gap-8">
           <SettingsSidebar />
-
           <div className="flex-1">
-            {section === "profile" && (
-              <ReaderSettings />
-            )}
-
-            {section === "account" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                  <CardDescription>
-                    Manage your account preferences and author status
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center space-x-4">
-                    <Switch
-                      checked={user?.isAuthor}
-                      onCheckedChange={() => toggleAuthorMutation.mutate()}
-                    />
-                    <span>Register as an author</span>
-                  </div>
-
-                  {/* Add more account settings here */}
-                </CardContent>
-              </Card>
-            )}
-
-            {section === "author" && user?.isAuthor && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Author Settings</CardTitle>
-                  <CardDescription>
-                    Manage your published books and upload new ones
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <BookUploadDialog />
-                  <div className="mt-8 grid gap-6">
-                    {userBooks?.map((book) => {
-                      if (!editedReferralLinks[book.id]) {
-                        initializeBookReferralLinks(book.id, book.referralLinks);
-                      }
-
-                      return (
-                        <div
-                          key={book.id}
-                          className="flex items-center justify-between p-4 border rounded-lg"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={book.coverUrl}
-                              alt={book.title}
-                              className="w-16 h-24 object-cover rounded"
-                            />
-                            <div>
-                              <h3 className="font-semibold">{book.title}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {book.promoted ? "Promoted" : "Not promoted"}
-                              </p>
-                              <div className="mt-4 space-y-2">
-                                <h4 className="text-sm font-medium">Referral Links</h4>
-                                <DndContext
-                                  sensors={sensors}
-                                  collisionDetection={closestCenter}
-                                  onDragEnd={(event) => {
-                                    const { active, over } = event;
-                                    if (over && active.id !== over.id) {
-                                      const oldIndex = parseInt(active.id.split('-')[1]);
-                                      const newIndex = parseInt(over.id.split('-')[1]);
-                                      const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
-                                      updateBookReferralLinks(book.id, newLinks);
-                                    }
-                                  }}
-                                >
-                                  <SortableContext
-                                    items={editedReferralLinks[book.id]?.map((_, i) => `${book.id}-${i}`) || []}
-                                    strategy={verticalListSortingStrategy}
-                                  >
-                                    {editedReferralLinks[book.id]?.map((link: ReferralLink, index: number) => (
-                                      <SortableReferralLink
-                                        key={`${link.retailer}-${index}`}
-                                        link={link}
-                                        index={index}
-                                        onChange={(newUrl) => {
-                                          const newLinks = [...editedReferralLinks[book.id]];
-                                          newLinks[index] = { ...link, url: newUrl };
-                                          updateBookReferralLinks(book.id, newLinks);
-                                        }}
-                                        onRemove={() => {
-                                          const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
-                                          updateBookReferralLinks(book.id, newLinks);
-                                        }}
-                                      />
-                                    ))}
-                                  </SortableContext>
-                                </DndContext>
-                                <div className="flex gap-2">
-                                  <Select
-                                    onValueChange={(value) => {
-                                      const newLink = {
-                                        retailer: value,
-                                        url: "",
-                                        customName: value === "Custom" ? "" : undefined,
-                                      };
-                                      updateBookReferralLinks(book.id, [
-                                        ...(editedReferralLinks[book.id] || []),
-                                        newLink,
-                                      ]);
-                                    }}
-                                  >
-                                    <SelectTrigger className="w-[200px]">
-                                      <SelectValue placeholder="Add retailer..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {RETAILER_OPTIONS.map((retailer) => (
-                                        <SelectItem key={retailer} value={retailer}>
-                                          {retailer}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                  {editedReferralLinks[book.id]?.length > 0 && (
-                                    <>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => updateBookReferralLinks(book.id, [])}
-                                      >
-                                        Clear All
-                                      </Button>
-                                      <Button
-                                        variant="default"
-                                        size="sm"
-                                        onClick={() =>
-                                          updateBookMutation.mutate({
-                                            id: book.id,
-                                            referralLinks: editedReferralLinks[book.id],
-                                          })
-                                        }
-                                      >
-                                        Save Changes
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={() => promoteBookMutation.mutate(book.id)}
-                              disabled={book.promoted}
-                            >
-                              Promote Book
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive">Delete</Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your book
-                                    and remove it from our servers.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteBookMutation.mutate(book.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {content}
           </div>
         </div>
       </main>
     </div>
   );
+}
+
+// Assuming apiRequest is defined elsewhere
+async function apiRequest(method: string, url: string, data?: any) {
+  const res = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: data ? JSON.stringify(data) : undefined,
+    credentials: 'include'
+  });
+  return res;
+}
+
+//Assuming updateProfileSchema is defined elsewhere.  Replace with your actual schema.
+const updateProfileSchema = {
+  email: '',
+  username: '',
+  authorBio: '',
+  authorName: '',
+  birthDate: null,
+  deathDate: null,
+  website: ''
 }
