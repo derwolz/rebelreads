@@ -44,32 +44,6 @@ export function ReviewCard({ rating }: ReviewCardProps) {
         </div>
       )}
 
-      {rating.analysis && (
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <Badge variant={rating.analysis.sentiment.label === "POSITIVE" ? "default" : "destructive"}>
-              {rating.analysis.sentiment.label}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {Math.round(rating.analysis.sentiment.score * 100)}% confidence
-            </span>
-          </div>
-
-          {rating.analysis.themes.length > 0 && (
-            <div>
-              <p className="text-sm font-medium mb-1">Key Themes:</p>
-              <div className="flex flex-wrap gap-1">
-                {rating.analysis.themes.map((theme, index) => (
-                  <Badge key={index} variant="outline">
-                    {theme.label} ({Math.round(theme.score * 100)}%)
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className={`grid gap-2 text-sm border-t pt-2 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
         <div className="flex justify-between items-center">
           <span>Enjoyment (30%)</span>

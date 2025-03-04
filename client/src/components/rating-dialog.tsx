@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./star-rating";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { analyzeReview } from "@/lib/review-analysis";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +34,6 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
     worldbuilding: 0,
   });
   const [review, setReview] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Get all ratings to find user's existing rating
   const { data: existingRatings } = useQuery<Rating[]>({
@@ -61,24 +59,10 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
 
   const ratingMutation = useMutation({
     mutationFn: async () => {
-      let analysis = null;
-
-      if (review.trim()) {
-        setIsAnalyzing(true);
-        try {
-          analysis = await analyzeReview(review);
-        } catch (error) {
-          console.error('Analysis error:', error);
-          // Don't show error toast for analysis failure, just continue without it
-        } finally {
-          setIsAnalyzing(false);
-        }
-      }
-
       const payload = {
         ...ratings,
         review: review.trim() || null,
-        analysis, // This will be null if analysis failed
+        analysis: null, // Skip sentiment analysis for now
         bookId,
         userId: user!.id,
       };
