@@ -25,12 +25,14 @@ import { AVAILABLE_GENRES, updateProfileSchema } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ImageCropperDialog } from "./image-cropper-dialog";
 
 export function ReaderSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(updateProfileSchema),
@@ -43,12 +45,9 @@ export function ReaderSettings() {
     },
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleCroppedImage = async (croppedImage: Blob) => {
     const formData = new FormData();
-    formData.append("profileImage", file);
+    formData.append("profileImage", croppedImage, "profile.jpg");
 
     setIsUploading(true);
     try {
@@ -119,17 +118,24 @@ export function ReaderSettings() {
           <AvatarFallback>👤</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-2">
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
+          <Button
+            variant="outline"
+            onClick={() => setCropperOpen(true)}
             disabled={isUploading}
-          />
+          >
+            {isUploading ? "Uploading..." : "Change Profile Picture"}
+          </Button>
           <p className="text-xs text-muted-foreground">
-            Recommended: Square image, 500x500px or larger
+            Click to upload or drag and drop
           </p>
         </div>
       </div>
+
+      <ImageCropperDialog
+        open={cropperOpen}
+        onOpenChange={setCropperOpen}
+        onCropComplete={handleCroppedImage}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
