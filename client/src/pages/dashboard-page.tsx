@@ -132,19 +132,46 @@ export default function DashboardPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Overall</span>
+                    <span className="font-semibold">Overall Rating</span>
                     <span>{averageRatings.overall.toFixed(1)}/5</span>
                   </div>
-                  <Progress value={averageRatings.overall * 20} />
+                  <Progress value={averageRatings.overall * 20} className="h-2" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Enjoyment</span>
+                    <span>Enjoyment (30%)</span>
                     <span>{averageRatings.enjoyment.toFixed(1)}/5</span>
                   </div>
-                  <Progress value={averageRatings.enjoyment * 20} />
+                  <Progress value={averageRatings.enjoyment * 20} className="h-2" />
                 </div>
-                {/* Add similar sections for other rating categories */}
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Writing (20%)</span>
+                    <span>{averageRatings.writing.toFixed(1)}/5</span>
+                  </div>
+                  <Progress value={averageRatings.writing * 20} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Themes (20%)</span>
+                    <span>{averageRatings.themes.toFixed(1)}/5</span>
+                  </div>
+                  <Progress value={averageRatings.themes * 20} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Characters (10%)</span>
+                    <span>{averageRatings.characters.toFixed(1)}/5</span>
+                  </div>
+                  <Progress value={averageRatings.characters * 20} className="h-2" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Worldbuilding (10%)</span>
+                    <span>{averageRatings.worldbuilding.toFixed(1)}/5</span>
+                  </div>
+                  <Progress value={averageRatings.worldbuilding * 20} className="h-2" />
+                </div>
               </CardContent>
             </Card>
           )}

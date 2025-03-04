@@ -9,6 +9,8 @@ import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
+import { users, books, bookshelves } from "@shared/schema";
+import { eq, and, inArray, desc, sql } from "drizzle-orm";
 
 // Ensure uploads directory exists
 const uploadsDir = "./uploads/covers";
@@ -351,10 +353,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
       } : null;
 
-      // For now, return placeholder recommendations
-      // This will be replaced with actual recommendation logic later
-      const recommendations = await storage.getBooks();
-
       res.json({
         user: {
           ...user,
@@ -364,14 +362,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         readingStats,
         averageRatings,
         recentReviews: ratings.slice(0, 5),
-        recommendations: recommendations.slice(0, 5)
+        recommendations: await storage.getBooks() // This will be replaced with actual recommendations later
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
-
 
 
   const httpServer = createServer(app);
