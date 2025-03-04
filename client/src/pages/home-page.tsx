@@ -1,9 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
+import { BookCard } from "@/components/book-card";
 import { MainNav } from "@/components/main-nav";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { BookCarousel } from "@/components/book-carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
+function BookCardSkeleton() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-64 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -40,25 +58,59 @@ export default function HomePage() {
         return true;
     }
   }).slice(0, 10); // Limit to 10 books
-
+console.log(user, followedAuthorsBooks)
   return (
     <div>
       <MainNav onSearch={handleSearch} />
 
       <main className="container mx-auto px-4 py-8">
         {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
-          <BookCarousel
-            title="From Authors You Follow"
-            books={followedAuthorsBooks}
-            isLoading={isLoadingFollowed}
-          />
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
+            <Carousel className="w-full">
+              <CarouselContent>
+                {isLoadingFollowed ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                      <BookCardSkeleton />
+                    </CarouselItem>
+                  ))
+                ) : (
+                  followedAuthorsBooks.slice(0, 10).map((book) => (
+                    <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
+                      <BookCard book={book} />
+                    </CarouselItem>
+                  ))
+                )}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
+          </section>
         )}
 
-        <BookCarousel
-          title="Popular Books"
-          books={filteredBooks}
-          isLoading={isLoading}
-        />
+        <section>
+          <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
+          <Carousel className="w-full">
+            <CarouselContent>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                    <BookCardSkeleton />
+                  </CarouselItem>
+                ))
+              ) : (
+                filteredBooks?.map((book) => (
+                  <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
+                    <BookCard book={book} />
+                  </CarouselItem>
+                ))
+              )}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
+        </section>
       </main>
     </div>
   );

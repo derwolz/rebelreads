@@ -299,6 +299,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  app.get("/api/books/followed-authors", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const books = await storage.getFollowedAuthorsBooks(req.user!.id);
+      res.json(books);
+    } catch (error) {
+      console.error('Error fetching followed authors books:', error);
+      res.status(500).json({ error: "Failed to fetch books from followed authors" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

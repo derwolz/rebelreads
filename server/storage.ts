@@ -46,6 +46,7 @@ export interface IStorage {
     characters: number;
     worldbuilding: number;
   } | null>;
+  getFollowedAuthorsBooks(userId: number): Promise<Book[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -241,6 +242,25 @@ export class DatabaseStorage implements IStorage {
       worldbuilding: allRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / allRatings.length,
     };
   }
+
+  async getFollowedAuthorsBooks(userId: number): Promise<Book[]> {
+    const followedAuthors = await db
+      .select({ authorId: followers.followingId })
+      .from(followers)
+      .where(eq(followers.followerId, userId));
+
+    if (followedAuthors.length === 0) {
+      return [];
+    }
+
+    const authorIds = followedAuthors.map(f => f.authorId);
+    const followedAuthorsBooks = await db
+      .select()
+      .from(books)
+      .where(inArray(books.authorId, authorIds));
+
+    return followedAuthorsBooks;
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -261,7 +281,6 @@ export class MemStorage implements IStorage {
     this.currentId = { users: 1, books: 1, ratings: 1, bookshelves: 1 };
     this.sessionStore = new MemoryStore({ checkPeriod: 86400000 });
 
-    // Seed some initial books
     const sampleBooks: Omit<Book, "id">[] = [
       {
         title: "The Evolution of Everything",
@@ -383,6 +402,9 @@ export class MemStorage implements IStorage {
     throw new Error("Method not implemented.");
   }
   async getAuthorAggregateRatings(authorId: number): Promise<{ overall: number; enjoyment: number; writing: number; themes: number; characters: number; worldbuilding: number; } | null> {
+    throw new Error("Method not implemented.");
+  }
+  async getFollowedAuthorsBooks(userId: number): Promise<Book[]> {
     throw new Error("Method not implemented.");
   }
 }
