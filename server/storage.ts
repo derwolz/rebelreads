@@ -7,7 +7,7 @@ import {
   UpdateProfile,
   calculateWeightedRating,
 } from "@shared/schema";
-import { users, books, ratings, bookshelves, booksTable } from "@shared/schema";
+import { users, books, ratings, bookshelves } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray } from "drizzle-orm";
 import session from "express-session";
@@ -297,8 +297,8 @@ export class DatabaseStorage implements IStorage {
     const authorIds = followedAuthors.map((f) => f.authorId);
     const followedAuthorsBooks = await db
       .select()
-      .from(booksTable)
-      .where(inArray(booksTable.authorId, authorIds));
+      .from(books)
+      .where(inArray(books.authorId, authorIds));
     return followedAuthorsBooks;
   }
 }
