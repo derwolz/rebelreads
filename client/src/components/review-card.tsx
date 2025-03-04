@@ -47,7 +47,7 @@ export function ReviewCard({ rating }: ReviewCardProps) {
       {rating.analysis && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Badge variant={rating.analysis.sentiment.label === "POSITIVE" ? "success" : "destructive"}>
+            <Badge variant={rating.analysis.sentiment.label === "POSITIVE" ? "default" : "destructive"}>
               {rating.analysis.sentiment.label}
             </Badge>
             <span className="text-sm text-muted-foreground">

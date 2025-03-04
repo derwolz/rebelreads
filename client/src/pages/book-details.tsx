@@ -54,7 +54,7 @@ export default function BookDetails() {
               alt={book.title}
               className="w-full rounded-lg shadow-lg"
             />
-            {book.referralLinks && book.referralLinks.length > 0 && (
+            {Array.isArray(book.referralLinks) && book.referralLinks.length > 0 && (
               <div className="mt-4 space-y-2">
                 {book.referralLinks.map((link: ReferralLink, index: number) => (
                   <a
@@ -217,7 +217,7 @@ export default function BookDetails() {
                             return Object.entries(sentiments).map(([sentiment, count]) => (
                               <div key={sentiment} className="flex items-center gap-2">
                                 <Badge
-                                  variant={sentiment === "POSITIVE" ? "success" : "destructive"}
+                                  variant={sentiment === "POSITIVE" ? "default" : "destructive"}
                                 >
                                   {sentiment}
                                 </Badge>
@@ -235,6 +235,8 @@ export default function BookDetails() {
                         <h4 className="text-sm font-medium mb-2">Common Themes</h4>
                         <div className="flex flex-wrap gap-2">
                           {(() => {
+                            if (!ratings) return null;
+
                             const themes = ratings
                               .filter(r => r.analysis?.themes)
                               .flatMap(r => r.analysis!.themes)
