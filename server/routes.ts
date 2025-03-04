@@ -298,7 +298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendStatus(200);
   });
 
-
   app.get("/api/books/followed-authors", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
