@@ -8,6 +8,13 @@ import { StarRating } from "./star-rating";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { analyzeReview } from "@/lib/review-analysis";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface RatingDialogProps {
   bookId: number;
