@@ -5,10 +5,10 @@ import { storage } from "./storage";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import express from 'express';
-import { db } from './db';
-import { ratings } from '@shared/schema';
-import { and, eq } from 'drizzle-orm';
+import express from "express";
+import { db } from "./db";
+import { ratings } from "@shared/schema";
+import { and, eq } from "drizzle-orm";
 
 // Ensure uploads directory exists
 const uploadsDir = "./uploads/covers";
@@ -80,12 +80,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         characters: req.body.characters,
         worldbuilding: req.body.worldbuilding,
         review: req.body.review,
-        analysis: req.body.analysis  // Add this line to include the analysis
+        analysis: req.body.analysis, // Add this line to include the analysis
       });
 
       res.json(rating);
     } catch (error: any) {
-      if (error.code === '23505') { // Unique violation
+      if (error.code === "23505") {
+        // Unique violation
         try {
           const [updatedRating] = await db
             .update(ratings)
@@ -96,13 +97,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               characters: req.body.characters,
               worldbuilding: req.body.worldbuilding,
               review: req.body.review,
-              analysis: req.body.analysis  // Add this line to include the analysis
+              analysis: req.body.analysis, // Add this line to include the analysis
             })
             .where(
-              and(
-                eq(ratings.userId, req.user!.id),
-                eq(ratings.bookId, bookId)
-              )
+              and(eq(ratings.userId, req.user!.id), eq(ratings.bookId, bookId)),
             )
             .returning();
 
@@ -133,9 +131,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const coverUrl = `/uploads/covers/${req.file.filename}`;
     const genres = JSON.parse(req.body.genres); // Parse the stringified genres array
     const formats = JSON.parse(req.body.formats); // Parse the stringified formats array
-    const characters = req.body.characters ? JSON.parse(req.body.characters) : [];
+    const characters = req.body.characters
+      ? JSON.parse(req.body.characters)
+      : [];
     const awards = req.body.awards ? JSON.parse(req.body.awards) : [];
-    const publishedDate = req.body.publishedDate ? new Date(req.body.publishedDate) : null;
+    const publishedDate = req.body.publishedDate
+      ? new Date(req.body.publishedDate)
+      : null;
 
     const book = await storage.createBook({
       title: req.body.title,
@@ -156,7 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       characters,
       isbn: req.body.isbn || null,
       asin: req.body.asin || null,
-      language: req.body.language || "English"
+      language: req.body.language || "English",
     });
 
     res.json(book);
@@ -227,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const bookshelf = await storage.updateBookshelfStatus(
       req.user!.id,
       parseInt(req.params.bookId),
-      req.body.status
+      req.body.status,
     );
 
     res.json(bookshelf);
@@ -254,7 +256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       storage.getBooksByAuthor(author.id),
       storage.getFollowerCount(author.id),
       storage.getAuthorGenres(author.id),
-      storage.getAuthorAggregateRatings(author.id)
+      storage.getAuthorAggregateRatings(author.id),
     ]);
 
     res.json({
@@ -262,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       books,
       followerCount,
       genres,
-      aggregateRatings: ratings
+      aggregateRatings: ratings,
     });
   });
 
@@ -271,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const isFollowing = await storage.isFollowing(
       req.user!.id,
-      parseInt(req.params.id)
+      parseInt(req.params.id),
     );
     res.json({ isFollowing });
   });
@@ -300,13 +302,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/books/followed-authors", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-
+    console.log(req);
     try {
       const books = await storage.getFollowedAuthorsBooks(req.user!.id);
       res.json(books);
     } catch (error) {
-      console.error('Error fetching followed authors books:', error);
-      res.status(500).json({ error: "Failed to fetch books from followed authors" });
+      console.error("Error fetching followed authors books:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to fetch books from followed authors" });
     }
   });
 

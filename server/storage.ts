@@ -1,4 +1,12 @@
-import { User, Book, Rating, Bookshelf, InsertUser, UpdateProfile, calculateWeightedRating } from "@shared/schema";
+import {
+  User,
+  Book,
+  Rating,
+  Bookshelf,
+  InsertUser,
+  UpdateProfile,
+  calculateWeightedRating,
+} from "@shared/schema";
 import { users, books, ratings, bookshelves } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray } from "drizzle-orm";
@@ -29,7 +37,11 @@ export interface IStorage {
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
 
   getBookshelf(userId: number): Promise<Bookshelf[]>;
-  updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf>;
+  updateBookshelfStatus(
+    userId: number,
+    bookId: number,
+    status: string,
+  ): Promise<Bookshelf>;
   deleteBook(id: number, authorId: number): Promise<void>;
 
   sessionStore: session.Store;
@@ -37,7 +49,9 @@ export interface IStorage {
   unfollowAuthor(followerId: number, authorId: number): Promise<void>;
   isFollowing(followerId: number, authorId: number): Promise<boolean>;
   getFollowerCount(authorId: number): Promise<number>;
-  getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
+  getAuthorGenres(
+    authorId: number,
+  ): Promise<{ genre: string; count: number }[]>;
   getAuthorAggregateRatings(authorId: number): Promise<{
     overall: number;
     enjoyment: number;
@@ -65,7 +79,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
     return user;
   }
 
@@ -144,10 +161,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBookshelf(userId: number): Promise<Bookshelf[]> {
-    return await db.select().from(bookshelves).where(eq(bookshelves.userId, userId));
+    return await db
+      .select()
+      .from(bookshelves)
+      .where(eq(bookshelves.userId, userId));
   }
 
-  async updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf> {
+  async updateBookshelfStatus(
+    userId: number,
+    bookId: number,
+    status: string,
+  ): Promise<Bookshelf> {
     const [bookshelf] = await db
       .insert(bookshelves)
       .values({ userId, bookId, status })
@@ -172,20 +196,24 @@ export class DatabaseStorage implements IStorage {
   async unfollowAuthor(followerId: number, authorId: number): Promise<void> {
     await db
       .delete(followers)
-      .where(and(
-        eq(followers.followerId, followerId),
-        eq(followers.followingId, authorId)
-      ));
+      .where(
+        and(
+          eq(followers.followerId, followerId),
+          eq(followers.followingId, authorId),
+        ),
+      );
   }
 
   async isFollowing(followerId: number, authorId: number): Promise<boolean> {
     const [result] = await db
       .select()
       .from(followers)
-      .where(and(
-        eq(followers.followerId, followerId),
-        eq(followers.followingId, authorId)
-      ));
+      .where(
+        and(
+          eq(followers.followerId, followerId),
+          eq(followers.followingId, authorId),
+        ),
+      );
     return !!result;
   }
 
@@ -197,20 +225,24 @@ export class DatabaseStorage implements IStorage {
     return result?.count || 0;
   }
 
-  async getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]> {
+  async getAuthorGenres(
+    authorId: number,
+  ): Promise<{ genre: string; count: number }[]> {
     const books = await this.getBooksByAuthor(authorId);
     const genreCounts = new Map<string, number>();
 
-    books.forEach(book => {
-      book.genres.forEach(genre => {
+    books.forEach((book) => {
+      book.genres.forEach((genre) => {
         genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1);
       });
     });
 
-    return Array.from(genreCounts.entries()).map(([genre, count]) => ({
-      genre,
-      count
-    })).sort((a, b) => b.count - a.count);
+    return Array.from(genreCounts.entries())
+      .map(([genre, count]) => ({
+        genre,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
   }
 
   async getAuthorAggregateRatings(authorId: number): Promise<{
@@ -222,7 +254,7 @@ export class DatabaseStorage implements IStorage {
     worldbuilding: number;
   } | null> {
     const authorBooks = await this.getBooksByAuthor(authorId);
-    const bookIds = authorBooks.map(book => book.id);
+    const bookIds = authorBooks.map((book) => book.id);
 
     if (bookIds.length === 0) return null;
 
@@ -234,31 +266,41 @@ export class DatabaseStorage implements IStorage {
     if (allRatings.length === 0) return null;
 
     return {
-      overall: allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / allRatings.length,
-      enjoyment: allRatings.reduce((acc, r) => acc + r.enjoyment, 0) / allRatings.length,
-      writing: allRatings.reduce((acc, r) => acc + r.writing, 0) / allRatings.length,
-      themes: allRatings.reduce((acc, r) => acc + r.themes, 0) / allRatings.length,
-      characters: allRatings.reduce((acc, r) => acc + r.characters, 0) / allRatings.length,
-      worldbuilding: allRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / allRatings.length,
+      overall:
+        allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) /
+        allRatings.length,
+      enjoyment:
+        allRatings.reduce((acc, r) => acc + r.enjoyment, 0) / allRatings.length,
+      writing:
+        allRatings.reduce((acc, r) => acc + r.writing, 0) / allRatings.length,
+      themes:
+        allRatings.reduce((acc, r) => acc + r.themes, 0) / allRatings.length,
+      characters:
+        allRatings.reduce((acc, r) => acc + r.characters, 0) /
+        allRatings.length,
+      worldbuilding:
+        allRatings.reduce((acc, r) => acc + r.worldbuilding, 0) /
+        allRatings.length,
     };
   }
 
   async getFollowedAuthorsBooks(userId: number): Promise<Book[]> {
+    
     const followedAuthors = await db
       .select({ authorId: followers.followingId })
       .from(followers)
       .where(eq(followers.followerId, userId));
-
+    console.log("followedAuthors", followedAuthors);
     if (followedAuthors.length === 0) {
       return [];
     }
 
-    const authorIds = followedAuthors.map(f => f.authorId);
+    const authorIds = followedAuthors.map((f) => f.authorId);
     const followedAuthorsBooks = await db
       .select()
       .from(books)
       .where(inArray(books.authorId, authorIds));
-
+    console.log("followedAuthorsBooks", followedAuthorsBooks);
     return followedAuthorsBooks;
   }
 }
@@ -286,22 +328,26 @@ export class MemStorage implements IStorage {
         title: "The Evolution of Everything",
         author: "Matt Ridley",
         description: "How ideas emerge and spread through society",
-        coverUrl: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73",
-        authorImageUrl: "https://images.unsplash.com/photo-1733231291539-a1b0305c210a",
+        coverUrl:
+          "https://images.unsplash.com/photo-1589829085413-56de8ae18c73",
+        authorImageUrl:
+          "https://images.unsplash.com/photo-1733231291539-a1b0305c210a",
         authorId: 1,
         promoted: false,
-        genres: ["fantasy"]
+        genres: ["fantasy"],
       },
       {
         title: "The Psychology of Money",
         author: "Morgan Housel",
         description: "Timeless lessons on wealth, greed, and happiness",
-        coverUrl: "https://images.unsplash.com/photo-1592496431122-2349e0fbc666",
-        authorImageUrl: "https://images.unsplash.com/photo-1733231291455-3c4de1c24e20",
+        coverUrl:
+          "https://images.unsplash.com/photo-1592496431122-2349e0fbc666",
+        authorImageUrl:
+          "https://images.unsplash.com/photo-1733231291455-3c4de1c24e20",
         authorId: 1,
         promoted: false,
-        genres: ["fantasy"]
-      }
+        genres: ["fantasy"],
+      },
     ];
 
     sampleBooks.forEach((book) => {
@@ -316,7 +362,7 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username
+      (user) => user.username === username,
     );
   }
 
@@ -342,7 +388,7 @@ export class MemStorage implements IStorage {
   }
 
   async getRatings(bookId: number): Promise<Rating[]> {
-    return Array.from(this.ratings.values()).filter(r => r.bookId === bookId);
+    return Array.from(this.ratings.values()).filter((r) => r.bookId === bookId);
   }
 
   async createRating(rating: Omit<Rating, "id">): Promise<Rating> {
@@ -353,10 +399,16 @@ export class MemStorage implements IStorage {
   }
 
   async getBookshelf(userId: number): Promise<Bookshelf[]> {
-    return Array.from(this.bookshelves.values()).filter(b => b.userId === userId);
+    return Array.from(this.bookshelves.values()).filter(
+      (b) => b.userId === userId,
+    );
   }
 
-  async updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf> {
+  async updateBookshelfStatus(
+    userId: number,
+    bookId: number,
+    status: string,
+  ): Promise<Bookshelf> {
     const id = this.currentId.bookshelves++;
     const bookshelf = { id, userId, bookId, status };
     this.bookshelves.set(id, bookshelf);
@@ -398,10 +450,21 @@ export class MemStorage implements IStorage {
   async getFollowerCount(authorId: number): Promise<number> {
     throw new Error("Method not implemented.");
   }
-  async getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]> {
+  async getAuthorGenres(
+    authorId: number,
+  ): Promise<{ genre: string; count: number }[]> {
     throw new Error("Method not implemented.");
   }
-  async getAuthorAggregateRatings(authorId: number): Promise<{ overall: number; enjoyment: number; writing: number; themes: number; characters: number; worldbuilding: number; } | null> {
+  async getAuthorAggregateRatings(
+    authorId: number,
+  ): Promise<{
+    overall: number;
+    enjoyment: number;
+    writing: number;
+    themes: number;
+    characters: number;
+    worldbuilding: number;
+  } | null> {
     throw new Error("Method not implemented.");
   }
   async getFollowedAuthorsBooks(userId: number): Promise<Book[]> {
