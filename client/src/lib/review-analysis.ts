@@ -51,16 +51,16 @@ async function loadModel(task: 'sentiment-analysis' | 'zero-shot-classification'
 export async function initializeModels() {
   try {
     if (!classifier) {
-      // Use a tiny model for sentiment analysis
+      // Use a different public model for sentiment analysis
       classifier = await loadModel(
         'sentiment-analysis',
-        'Xenova/tiny-distilbert-sentiment'
+        'Xenova/bert-base-uncased-sst2'
       );
     }
     if (!zeroShotClassifier) {
       zeroShotClassifier = await loadModel(
         'zero-shot-classification',
-        'Xenova/mobilebert-uncased-mnli'
+        'Xenova/all-MiniLM-L6-v2'
       );
     }
     console.log('Models initialized successfully');
