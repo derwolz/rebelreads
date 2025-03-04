@@ -4,7 +4,7 @@ import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { storage } from "./storage";
+import { dbStorage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 
 declare global {
@@ -33,7 +33,7 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
+    store: dbStorage.sessionStore,
   };
 
   app.set("trust proxy", 1);
@@ -46,11 +46,11 @@ export function setupAuth(app: Express) {
       usernameField: 'email', // This will accept either email or username
     }, async (emailOrUsername, password, done) => {
       // Try to find user by email first
-      let user = await storage.getUserByEmail(emailOrUsername);
+      let user = await dbStorage.getUserByEmail(emailOrUsername);
 
       // If not found by email, try username
       if (!user) {
-        user = await storage.getUserByUsername(emailOrUsername);
+        user = await dbStorage.getUserByUsername(emailOrUsername);
       }
 
       if (!user || !(await comparePasswords(password, user.password!))) {
@@ -63,24 +63,24 @@ export function setupAuth(app: Express) {
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
-    const user = await storage.getUser(id);
+    const user = await dbStorage.getUser(id);
     done(null, user);
   });
 
   app.post("/api/register", async (req, res, next) => {
     // Check for existing email
-    const existingEmail = await storage.getUserByEmail(req.body.email);
+    const existingEmail = await dbStorage.getUserByEmail(req.body.email);
     if (existingEmail) {
       return res.status(400).send("Email already exists");
     }
 
     // Check for existing username
-    const existingUsername = await storage.getUserByUsername(req.body.username);
+    const existingUsername = await dbStorage.getUserByUsername(req.body.username);
     if (existingUsername) {
       return res.status(400).send("Username already exists");
     }
 
-    const user = await storage.createUser({
+    const user = await dbStorage.createUser({
       ...req.body,
       password: await hashPassword(req.body.password),
     });
