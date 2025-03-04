@@ -9,7 +9,7 @@ import {
 } from "@shared/schema";
 import { users, books, ratings, bookshelves } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -32,26 +32,22 @@ export interface IStorage {
   createBook(book: Omit<Book, "id">): Promise<Book>;
   promoteBook(id: number): Promise<Book>;
   updateBook(id: number, data: Partial<Book>): Promise<Book>;
+  deleteBook(id: number, authorId: number): Promise<void>;
 
   getRatings(bookId: number): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
+  getUserRatings(userId: number): Promise<Rating[]>;
 
   getBookshelf(userId: number): Promise<Bookshelf[]>;
-  updateBookshelfStatus(
-    userId: number,
-    bookId: number,
-    status: string,
-  ): Promise<Bookshelf>;
-  deleteBook(id: number, authorId: number): Promise<void>;
+  updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf>;
 
-  sessionStore: session.Store;
   followAuthor(followerId: number, authorId: number): Promise<Follower>;
   unfollowAuthor(followerId: number, authorId: number): Promise<void>;
   isFollowing(followerId: number, authorId: number): Promise<boolean>;
   getFollowerCount(authorId: number): Promise<number>;
-  getAuthorGenres(
-    authorId: number,
-  ): Promise<{ genre: string; count: number }[]>;
+  getFollowingCount(userId: number): Promise<number>;
+
+  getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   getAuthorAggregateRatings(authorId: number): Promise<{
     overall: number;
     enjoyment: number;
@@ -61,8 +57,8 @@ export interface IStorage {
     worldbuilding: number;
   } | null>;
   getFollowedAuthorsBooks(userId: number): Promise<Book[]>;
-  getUserRatings(userId: number): Promise<Rating[]>;
-  getFollowingCount(userId: number): Promise<number>;
+
+  sessionStore: session.Store;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -308,7 +304,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(ratings)
       .where(eq(ratings.userId, userId))
-      .orderBy(sql`created_at DESC`);
+      .orderBy(desc(ratings.createdAt));
   }
 
   async getFollowingCount(userId: number): Promise<number> {

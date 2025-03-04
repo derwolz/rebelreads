@@ -94,7 +94,8 @@ export const ratings = pgTable("ratings", {
   characters: integer("characters").notNull(),
   worldbuilding: integer("worldbuilding").notNull(),
   review: text("review"),
-  analysis: jsonb("analysis").$type<ReviewAnalysis>(), // Add analysis column
+  analysis: jsonb("analysis").$type<ReviewAnalysis>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const bookshelves = pgTable("bookshelves", {
