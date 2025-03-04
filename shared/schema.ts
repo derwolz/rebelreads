@@ -34,7 +34,9 @@ export const users = pgTable("users", {
   isAuthor: boolean("is_author").notNull().default(false),
   authorName: text("author_name"), // Name to display for authored books
   authorBio: text("author_bio"),
-  authorImageUrl: text("author_image_url"), // Add author profile image
+  authorImageUrl: text("author_image_url"), // Author profile image
+  profileImageUrl: text("profile_image_url"), // General user profile image
+  bio: text("bio"), // General user bio
   birthDate: date("birth_date"),
   deathDate: date("death_date"),
   website: text("website"),
@@ -120,12 +122,16 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   birthDate: true,
   deathDate: true,
   website: true,
+  profileImageUrl: true,
+  bio: true,
 }).extend({
   email: z.string().email("Invalid email format"),
   currentPassword: z.string().optional(),
   newPassword: z.string().min(8, "Password must be at least 8 characters").optional(),
   website: z.string().url("Please enter a valid URL").optional().nullable(),
   deathDate: z.date().optional().nullable(),
+  profileImageUrl: z.string().url("Please enter a valid URL").optional().nullable(),
+  bio: z.string().max(500, "Bio must be less than 500 characters").optional().nullable(),
 });
 
 export const insertBookSchema = createInsertSchema(books).extend({

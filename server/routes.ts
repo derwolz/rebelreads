@@ -247,7 +247,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendStatus(200);
   });
 
-  // Add these routes inside registerRoutes function
   app.get("/api/authors/:id", async (req, res) => {
     const author = await storage.getUser(parseInt(req.params.id));
     if (!author?.isAuthor) return res.sendStatus(404);
@@ -302,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/books/followed-authors", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
       const books = await storage.getFollowedAuthorsBooks(req.user!.id);
       res.json(books);
@@ -314,6 +313,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/dashboard", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const userId = req.user!.id;
+
+      // Fetch all required data in parallel
+      const [
+        bookshelf,
+        ratings,
+        followingCount,
+        followerCount,
+        user
+      ] = await Promise.all([
+        storage.getBookshelf(userId),
+        storage.getUserRatings(userId),
+        storage.getFollowingCount(userId),
+        storage.getFollowerCount(userId),
+        storage.getUser(userId)
+      ]);
+
+      // Calculate reading stats
+      const readingStats = {
+        reading: bookshelf.filter(b => b.status === 'reading').length,
+        completed: bookshelf.filter(b => b.status === 'read').length,
+        wantToRead: bookshelf.filter(b => b.status === 'want-to-read').length
+      };
+
+      // Calculate average ratings
+      const averageRatings = ratings.length > 0 ? {
+        overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
+        enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
+        writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+        themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
+        characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
+        worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+      } : null;
+
+      // For now, return placeholder recommendations
+      // This will be replaced with actual recommendation logic later
+      const recommendations = await storage.getBooks();
+
+      res.json({
+        user: {
+          ...user,
+          followingCount,
+          followerCount
+        },
+        readingStats,
+        averageRatings,
+        recentReviews: ratings.slice(0, 5),
+        recommendations: recommendations.slice(0, 5)
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
+    }
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
+}
+
+function calculateWeightedRating(rating) {
+  // Implement weighted rating logic here if needed.  For now, a simple sum.
+  return rating.enjoyment + rating.writing + rating.themes + rating.characters + rating.worldbuilding;
 }

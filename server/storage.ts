@@ -61,6 +61,8 @@ export interface IStorage {
     worldbuilding: number;
   } | null>;
   getFollowedAuthorsBooks(userId: number): Promise<Book[]>;
+  getUserRatings(userId: number): Promise<Rating[]>;
+  getFollowingCount(userId: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -301,6 +303,21 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(books.authorId, authorIds));
     return followedAuthorsBooks;
   }
+  async getUserRatings(userId: number): Promise<Rating[]> {
+    return await db
+      .select()
+      .from(ratings)
+      .where(eq(ratings.userId, userId))
+      .orderBy(sql`created_at DESC`);
+  }
+
+  async getFollowingCount(userId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(followers)
+      .where(eq(followers.followerId, userId));
+    return result?.count || 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
@@ -466,6 +483,14 @@ export class MemStorage implements IStorage {
     throw new Error("Method not implemented.");
   }
   async getFollowedAuthorsBooks(userId: number): Promise<Book[]> {
+    throw new Error("Method not implemented.");
+  }
+  async getUserRatings(userId: number): Promise<Rating[]> {
+    return Array.from(this.ratings.values())
+      .filter(rating => rating.userId === userId);
+  }
+
+  async getFollowingCount(userId: number): Promise<number> {
     throw new Error("Method not implemented.");
   }
 }
