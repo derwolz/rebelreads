@@ -64,21 +64,20 @@ export default function HomePage() {
       <MainNav onSearch={handleSearch} />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Popular Books Section */}
-          <section>
-            <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
+        {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
             <Carousel className="w-full">
               <CarouselContent>
-                {isLoading ? (
+                {isLoadingFollowed ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <CarouselItem key={i} className="basis-full md:basis-1/2">
+                    <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
                       <BookCardSkeleton />
                     </CarouselItem>
                   ))
                 ) : (
-                  filteredBooks?.map((book) => (
-                    <CarouselItem key={book.id} className="basis-full md:basis-1/2">
+                  followedAuthorsBooks.slice(0, 10).map((book) => (
+                    <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
                       <BookCard book={book} />
                     </CarouselItem>
                   ))
@@ -88,33 +87,30 @@ export default function HomePage() {
               <CarouselNext className="hidden md:flex" />
             </Carousel>
           </section>
+        )}
 
-          {/* From Authors You Follow Section */}
-          {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
-            <section>
-              <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {isLoadingFollowed ? (
-                    Array.from({ length: 4 }).map((_, i) => (
-                      <CarouselItem key={i} className="basis-full md:basis-1/2">
-                        <BookCardSkeleton />
-                      </CarouselItem>
-                    ))
-                  ) : (
-                    followedAuthorsBooks.slice(0, 10).map((book) => (
-                      <CarouselItem key={book.id} className="basis-full md:basis-1/2">
-                        <BookCard book={book} />
-                      </CarouselItem>
-                    ))
-                  )}
-                </CarouselContent>
-                <CarouselPrevious className="hidden md:flex" />
-                <CarouselNext className="hidden md:flex" />
-              </Carousel>
-            </section>
-          )}
-        </div>
+        <section>
+          <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
+          <Carousel className="w-full">
+            <CarouselContent>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                    <BookCardSkeleton />
+                  </CarouselItem>
+                ))
+              ) : (
+                filteredBooks?.map((book) => (
+                  <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
+                    <BookCard book={book} />
+                  </CarouselItem>
+                ))
+              )}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
+        </section>
       </main>
     </div>
   );
