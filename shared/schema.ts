@@ -165,10 +165,10 @@ export type Follower = typeof followers.$inferSelect;
 
 export function calculateWeightedRating(rating: Rating): number {
   return (
-    rating.enjoyment * 0.3 +
-    rating.writing * 0.3 +
-    rating.themes * 0.2 +
-    rating.characters * 0.1 +
-    rating.worldbuilding * 0.1
+    rating.enjoyment * 0.3 +     // 30% weight for enjoyment
+    rating.writing * 0.2 +       // 20% weight for writing
+    rating.themes * 0.2 +        // 20% weight for themes
+    rating.characters * 0.1 +    // 10% weight for characters
+    rating.worldbuilding * 0.1   // 10% weight for worldbuilding
   );
 }

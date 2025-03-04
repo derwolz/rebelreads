@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 import { db } from "./db";
-import { ratings } from "@shared/schema";
+import { ratings, calculateWeightedRating } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
 
 // Ensure uploads directory exists
@@ -341,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wantToRead: bookshelf.filter(b => b.status === 'want-to-read').length
       };
 
-      // Calculate average ratings
+      // Calculate average ratings using the proper weighted calculation
       const averageRatings = ratings.length > 0 ? {
         overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
         enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
@@ -371,6 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
+
 
 
   const httpServer = createServer(app);

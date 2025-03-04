@@ -50,7 +50,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           <StarRating rating={review.enjoyment} readOnly size="sm" />
         </div>
         <div className="flex justify-between items-center">
-          <span>Writing Style (30%)</span>
+          <span>Writing Style (20%)</span>
           <StarRating rating={review.writing} readOnly size="sm" />
         </div>
         <div className="flex justify-between items-center">
