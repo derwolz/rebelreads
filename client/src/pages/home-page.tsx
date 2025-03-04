@@ -34,7 +34,7 @@ export default function HomePage() {
 
   const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<Book[]>({
     queryKey: ["/api/books/followed-authors"],
-    enabled: !!user, // Only fetch if user is logged in
+    enabled: !!user,
   });
 
   const handleSearch = (query: string, type: string) => {
