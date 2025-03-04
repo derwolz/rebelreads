@@ -49,7 +49,7 @@ export default function HomePage() {
       case "title":
         return book.title.toLowerCase().includes(query);
       case "author":
-        return book.author.toLowerCase().includes(query);
+        retuwhy the fuck is the login pagrn book.author.toLowerCase().includes(query);
       case "genre":
         return book.genres.some(genre => 
           genre.toLowerCase().includes(query)
