@@ -47,7 +47,7 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
   function onSelectFile(e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) {
     setError(null);
     let files: FileList | null;
-    
+
     if ('dataTransfer' in e) {
       e.preventDefault();
       files = e.dataTransfer.files;
@@ -75,7 +75,7 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
     reader.addEventListener('load', () => {
       const imageUrl = reader.result?.toString() || '';
       setImgSrc(imageUrl);
-      
+
       // Load the image to get dimensions
       const img = new Image();
       img.onload = () => {
@@ -97,48 +97,65 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
   }
 
   async function cropImage() {
-    if (!imageRef.current || !crop) return;
+    try {
+      if (!imageRef.current || !crop) return;
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        toast({
+          title: "Error",
+          description: "Failed to process image",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-    const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+      const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
+      const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
 
-    canvas.width = 500;
-    canvas.height = 500;
+      // Set desired output size
+      canvas.width = 500;
+      canvas.height = 500;
 
-    ctx.drawImage(
-      imageRef.current,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
-      0,
-      0,
-      500,
-      500
-    );
+      ctx.drawImage(
+        imageRef.current,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        crop.width * scaleX,
+        crop.height * scaleY,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          toast({
-            title: "Error",
-            description: "Failed to process image",
-            variant: "destructive",
-          });
-          return;
-        }
-        onCropComplete(blob);
-        onOpenChange(false);
-        setImgSrc('');
-        setCrop(undefined);
-      },
-      'image/jpeg',
-      0.9
-    );
+      // Convert to blob with specific format and quality
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            toast({
+              title: "Error",
+              description: "Failed to process image",
+              variant: "destructive",
+            });
+            return;
+          }
+          onCropComplete(blob);
+          onOpenChange(false);
+          setImgSrc('');
+          setCrop(undefined);
+        },
+        'image/jpeg',
+        0.9
+      );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process image",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
