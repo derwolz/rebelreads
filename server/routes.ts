@@ -345,12 +345,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate average ratings using the proper weighted calculation
       const averageRatings = ratings.length > 0 ? {
-        overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
+        // First calculate individual category averages
         enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
         writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
         themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
         characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
         worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+        // Then calculate overall score using weights on the averages
+        overall: (
+          (ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length) * 0.3 +
+          (ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length) * 0.2 +
+          (ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length) * 0.2 +
+          (ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length) * 0.1 +
+          (ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length) * 0.1
+        )
       } : null;
 
       res.json({
