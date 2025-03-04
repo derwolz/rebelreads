@@ -38,6 +38,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -267,6 +268,10 @@ export default function SettingsPage() {
   );
 
 
+  const onSubmit = (data:UpdateProfile) => {
+    updateProfileMutation.mutate(data);
+  }
+
   let content;
   if (location === "/settings/account") {
     content = (
@@ -274,19 +279,108 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Account Settings</CardTitle>
           <CardDescription>
-            Manage your account preferences and author status
+            Manage your account credentials and author status
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-4">
-            <Switch
-              checked={user?.isAuthor}
-              onCheckedChange={() => toggleAuthorMutation.mutate()}
-            />
-            <span>Register as an author</span>
-          </div>
+        <CardContent className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" value={field.value || ''} />
+                    </FormControl>
+                    <FormDescription>
+                      Your email address for notifications and account recovery
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Add more account settings here */}
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormDescription>
+                      Your unique username for logging in
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium mb-4">Change Password</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Must be at least 8 characters long
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-4">
+                <div className="flex items-center space-x-4">
+                  <Switch
+                    checked={user?.isAuthor}
+                    onCheckedChange={() => toggleAuthorMutation.mutate()}
+                  />
+                  <span>Register as an author</span>
+                </div>
+                <Button type="submit">Save Changes</Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     );
@@ -452,7 +546,6 @@ export default function SettingsPage() {
       </Card>
     );
   } else {
-    // Default to profile settings
     content = <ReaderSettings />;
   }
 
@@ -485,13 +578,16 @@ async function apiRequest(method: string, url: string, data?: any) {
   return res;
 }
 
-//Assuming updateProfileSchema is defined elsewhere.  Replace with your actual schema.
+//Assuming updateProfileSchema is defined elsewhere.  Replace with your actual schema.  This is a placeholder.  You MUST replace this.
 const updateProfileSchema = {
-  email: '',
-  username: '',
-  authorBio: '',
-  authorName: '',
+  email: "",
+  username: "",
+  authorBio: "",
+  authorName: "",
   birthDate: null,
   deathDate: null,
-  website: ''
+  website: "",
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: ""
 }

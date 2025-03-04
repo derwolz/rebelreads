@@ -10,6 +10,10 @@ import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
 import { users, books, bookshelves } from "@shared/schema";
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
+import { promisify } from "util";
+import { scrypt } from "crypto";
+import { randomBytes } from "crypto";
+import { timingSafeEqual } from "crypto";
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -201,21 +205,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    if (req.body.username) {
-      const existingUser = await dbStorage.getUserByUsername(req.body.username);
+    const { currentPassword, newPassword, confirmPassword, ...updateData } = req.body;
+
+    // If updating username, check if it's taken
+    if (updateData.username) {
+      const existingUser = await dbStorage.getUserByUsername(updateData.username);
       if (existingUser && existingUser.id !== req.user!.id) {
         return res.status(400).send("Username already taken");
       }
     }
 
-    if (req.body.email) {
-      const existingUser = await dbStorage.getUserByEmail(req.body.email);
+    // If updating email, check if it's taken
+    if (updateData.email) {
+      const existingUser = await dbStorage.getUserByEmail(updateData.email);
       if (existingUser && existingUser.id !== req.user!.id) {
         return res.status(400).send("Email already in use");
       }
     }
 
-    const updatedUser = await dbStorage.updateUser(req.user!.id, req.body);
+    // Handle password change if requested
+    if (currentPassword && newPassword && confirmPassword) {
+      const user = await dbStorage.getUser(req.user!.id);
+
+      // Verify current password
+      const scryptAsync = promisify(scrypt);
+      const [salt, hash] = user!.password!.split(":");
+      const hashBuffer = await scryptAsync(currentPassword, salt, 64) as Buffer;
+      const passwordValid = timingSafeEqual(
+        Buffer.from(hash, "hex"),
+        hashBuffer
+      );
+
+      if (!passwordValid) {
+        return res.status(400).send("Current password is incorrect");
+      }
+
+      // Generate new password hash
+      const newSalt = randomBytes(16).toString("hex");
+      const newHashBuffer = await scryptAsync(newPassword, newSalt, 64) as Buffer;
+      const newHashedPassword = `${newSalt}:${newHashBuffer.toString("hex")}`;
+
+      updateData.password = newHashedPassword;
+    }
+
+    const updatedUser = await dbStorage.updateUser(req.user!.id, updateData);
     res.json(updatedUser);
   });
 

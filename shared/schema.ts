@@ -119,16 +119,38 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const updateProfileSchema = createInsertSchema(users).pick({
   username: true,
+  email: true,
   displayName: true,
   bio: true,
   profileImageUrl: true,
   favoriteGenres: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
-  displayName: z.string().min(1, "Display name is required"),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional().nullable(),
-  profileImageUrl: z.string().url("Please enter a valid URL").optional().nullable(),
-  favoriteGenres: z.array(z.enum(AVAILABLE_GENRES)).min(1, "Select at least one favorite genre"),
+  email: z.string().email("Invalid email format"),
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .optional(),
+  confirmPassword: z.string().optional(),
+}).refine((data) => {
+  // If any password field is filled, all password fields must be filled
+  if (data.newPassword || data.currentPassword || data.confirmPassword) {
+    return data.newPassword && data.currentPassword && data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "All password fields are required when changing password",
+}).refine((data) => {
+  // Passwords must match if provided
+  if (data.newPassword && data.confirmPassword) {
+    return data.newPassword === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Passwords do not match",
 });
 
 export const insertBookSchema = createInsertSchema(books).extend({
