@@ -62,7 +62,7 @@ export function MainNav({ onSearch }: MainNavProps) {
                 </Button>
               </Link>
               <span className="text-sm text-muted-foreground">
-                Welcome, {user.username}
+                👤 <Link href="/dashboard"><span className="hover:underline">{user.username}</span></Link>
               </span>
               <Button
                 variant="ghost"
