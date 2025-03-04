@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AVAILABLE_GENRES } from "@shared/schema";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface MainNavProps {
   onSearch?: (query: string, type: string) => void;
@@ -61,9 +62,17 @@ export function MainNav({ onSearch }: MainNavProps) {
                   <Settings className="h-5 w-5" />
                 </Button>
               </Link>
-              <span className="text-sm text-muted-foreground">
-                👤 <Link href="/dashboard"><span className="hover:underline">{user.username}</span></Link>
-              </span>
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.profileImageUrl || undefined} alt={user.username} />
+                  <AvatarFallback>👤</AvatarFallback>
+                </Avatar>
+                <Link href="/dashboard">
+                  <span className="text-sm text-muted-foreground hover:underline">
+                    {user.username}
+                  </span>
+                </Link>
+              </div>
               <Button
                 variant="ghost"
                 onClick={() => logoutMutation.mutate()}
