@@ -119,175 +119,184 @@ export default function BookDetails() {
                   className="ml-2"
                 />
               </div>
+
               <div className="flex flex-wrap gap-2 mb-4">
                 {book.genres.map((genre) => (
                   <Badge key={genre} variant="secondary" className="text-sm">
                     {genre}
                   </Badge>
                 ))}
-                <Badge variant="outline" className="bg-primary/10">
-                  {book.formats?.map((format, index) => (
-                    <span key={format}>
-                      {format.charAt(0).toUpperCase() + format.slice(1)}
-                      {index < book.formats.length - 1 ? ", " : ""}
-                    </span>
-                  ))}
-                </Badge>
               </div>
-            </div>
 
-            <p className="text-lg">{book.description}</p>
-
-            <div className="grid gap-8">
-              <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">More Details</h2>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
-                      <span className="sr-only">Toggle details</span>
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-
-                <CollapsibleContent className="space-y-4 mt-4">
-                  {book.originalTitle && (
-                    <div>
-                      <span className="font-medium">Original Title:</span> {book.originalTitle}
-                    </div>
-                  )}
-                  {book.series && (
-                    <div>
-                      <span className="font-medium">Series:</span> {book.series}
-                    </div>
-                  )}
-                  {book.setting && (
-                    <div>
-                      <span className="font-medium">Setting:</span> {book.setting}
-                    </div>
-                  )}
-                  {book.characters && book.characters.length > 0 && (
-                    <div>
-                      <span className="font-medium">Characters:</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {book.characters.map((character, index) => (
-                          <Badge key={index} variant="outline">
-                            {character}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {book.awards && book.awards.length > 0 && (
-                    <div>
-                      <span className="font-medium">Awards:</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {book.awards.map((award, index) => (
-                          <Badge key={index} variant="outline">
-                            {award}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {book.pageCount && (
-                    <div>
-                      <span className="font-medium">Pages:</span> {book.pageCount}
-                    </div>
-                  )}
-                  {book.publishedDate && (
-                    <div>
-                      <span className="font-medium">Published:</span>{" "}
-                      {format(new Date(book.publishedDate), "MMMM d, yyyy")}
-                    </div>
-                  )}
-                  {book.isbn && (
-                    <div>
-                      <span className="font-medium">ISBN:</span> {book.isbn}
-                    </div>
-                  )}
-                  {book.asin && (
-                    <div>
-                      <span className="font-medium">ASIN:</span> {book.asin}
-                    </div>
-                  )}
-                  <div>
-                    <span className="font-medium">Language:</span> {book.language}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
-                  <Select
-                    value={ratingFilter}
-                    onValueChange={setRatingFilter}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filter by rating" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Ratings</SelectItem>
-                      <SelectItem value="5">5 Stars</SelectItem>
-                      <SelectItem value="4">4 Stars</SelectItem>
-                      <SelectItem value="3">3 Stars</SelectItem>
-                      <SelectItem value="2">2 Stars</SelectItem>
-                      <SelectItem value="1">1 Star</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {averageRatings ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <StarRating rating={Math.round(averageRatings.overall)} readOnly />
-                      <span className="text-sm text-muted-foreground">
-                        ({ratings?.length} {ratings?.length === 1 ? "review" : "reviews"})
+              {book.formats && book.formats.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Available Formats</h3>
+                  <div className="flex gap-4">
+                    {book.formats.map((format, index) => (
+                      <span
+                        key={format}
+                        className="text-sm bg-muted px-4 py-2 rounded-md"
+                      >
+                        {format.charAt(0).toUpperCase() + format.slice(1)}
                       </span>
-                    </div>
-                    <div className="grid gap-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Enjoyment (30%)</span>
-                        <StarRating rating={Math.round(averageRatings.enjoyment)} readOnly size="sm" />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Writing Style (30%)</span>
-                        <StarRating rating={Math.round(averageRatings.writing)} readOnly size="sm" />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Themes (20%)</span>
-                        <StarRating rating={Math.round(averageRatings.themes)} readOnly size="sm" />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Characters (10%)</span>
-                        <StarRating rating={Math.round(averageRatings.characters)} readOnly size="sm" />
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">World Building (10%)</span>
-                        <StarRating rating={Math.round(averageRatings.worldbuilding)} readOnly size="sm" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No ratings yet</p>
-                )}
-
-                <div className="space-y-4 mt-8">
-                  <h3 className="text-xl font-semibold">Reviews</h3>
-                  <div className="max-w-3xl space-y-4">
-                    {filteredRatings?.map((review) => (
-                      <ReviewCard key={review.id} review={review} />
                     ))}
                   </div>
                 </div>
-                {user && (
-                  <div className="mt-4">
-                    <RatingDialog
-                      bookId={book.id}
-                      trigger={<Button>Rate this book</Button>}
-                    />
+              )}
+
+              <p className="text-lg">{book.description}</p>
+
+              <div className="grid gap-8">
+                <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold">More Details</h2>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+                        <span className="sr-only">Toggle details</span>
+                      </Button>
+                    </CollapsibleTrigger>
                   </div>
-                )}
+
+                  <CollapsibleContent className="space-y-4 mt-4">
+                    {book.originalTitle && (
+                      <div>
+                        <span className="font-medium">Original Title:</span> {book.originalTitle}
+                      </div>
+                    )}
+                    {book.series && (
+                      <div>
+                        <span className="font-medium">Series:</span> {book.series}
+                      </div>
+                    )}
+                    {book.setting && (
+                      <div>
+                        <span className="font-medium">Setting:</span> {book.setting}
+                      </div>
+                    )}
+                    {book.characters && book.characters.length > 0 && (
+                      <div>
+                        <span className="font-medium">Characters:</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {book.characters.map((character, index) => (
+                            <Badge key={index} variant="outline">
+                              {character}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {book.awards && book.awards.length > 0 && (
+                      <div>
+                        <span className="font-medium">Awards:</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {book.awards.map((award, index) => (
+                            <Badge key={index} variant="outline">
+                              {award}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {book.pageCount && (
+                      <div>
+                        <span className="font-medium">Pages:</span> {book.pageCount}
+                      </div>
+                    )}
+                    {book.publishedDate && (
+                      <div>
+                        <span className="font-medium">Published:</span>{" "}
+                        {format(new Date(book.publishedDate), "MMMM d, yyyy")}
+                      </div>
+                    )}
+                    {book.isbn && (
+                      <div>
+                        <span className="font-medium">ISBN:</span> {book.isbn}
+                      </div>
+                    )}
+                    {book.asin && (
+                      <div>
+                        <span className="font-medium">ASIN:</span> {book.asin}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium">Language:</span> {book.language}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
+                    <Select
+                      value={ratingFilter}
+                      onValueChange={setRatingFilter}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by rating" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Ratings</SelectItem>
+                        <SelectItem value="5">5 Stars</SelectItem>
+                        <SelectItem value="4">4 Stars</SelectItem>
+                        <SelectItem value="3">3 Stars</SelectItem>
+                        <SelectItem value="2">2 Stars</SelectItem>
+                        <SelectItem value="1">1 Star</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {averageRatings ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <StarRating rating={Math.round(averageRatings.overall)} readOnly />
+                        <span className="text-sm text-muted-foreground">
+                          ({ratings?.length} {ratings?.length === 1 ? "review" : "reviews"})
+                        </span>
+                      </div>
+                      <div className="grid gap-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Enjoyment (30%)</span>
+                          <StarRating rating={Math.round(averageRatings.enjoyment)} readOnly size="sm" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Writing Style (30%)</span>
+                          <StarRating rating={Math.round(averageRatings.writing)} readOnly size="sm" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Themes (20%)</span>
+                          <StarRating rating={Math.round(averageRatings.themes)} readOnly size="sm" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Characters (10%)</span>
+                          <StarRating rating={Math.round(averageRatings.characters)} readOnly size="sm" />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">World Building (10%)</span>
+                          <StarRating rating={Math.round(averageRatings.worldbuilding)} readOnly size="sm" />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No ratings yet</p>
+                  )}
+
+                  <div className="space-y-4 mt-8">
+                    <h3 className="text-xl font-semibold">Reviews</h3>
+                    <div className="max-w-3xl space-y-4">
+                      {filteredRatings?.map((review) => (
+                        <ReviewCard key={review.id} review={review} />
+                      ))}
+                    </div>
+                  </div>
+                  {user && (
+                    <div className="mt-4">
+                      <RatingDialog
+                        bookId={book.id}
+                        trigger={<Button>Rate this book</Button>}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
