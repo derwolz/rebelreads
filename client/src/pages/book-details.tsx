@@ -25,6 +25,7 @@ import {
 import { useState } from "react";
 import type { ReferralLink } from "@shared/schema";
 import { ReviewCard } from "@/components/review-card";
+import { WishlistButton } from "@/components/wishlist-button";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -80,24 +81,33 @@ export default function BookDetails() {
               alt={book.title}
               className="w-full rounded-lg shadow-lg"
             />
-            {Array.isArray(book.referralLinks) && book.referralLinks.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {book.referralLinks.map((link: ReferralLink, index: number) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full"
-                  >
-                    <Button variant="outline" className="w-full">
-                      {link.customName || link.retailer}
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Button>
-                  </a>
-                ))}
-              </div>
-            )}
+            <div className="mt-4 space-y-2">
+              <WishlistButton bookId={book.id} className="w-full" />
+              {user && (
+                <RatingDialog
+                  bookId={book.id}
+                  trigger={<Button variant="outline" className="w-full">Rate this book</Button>}
+                />
+              )}
+              {Array.isArray(book.referralLinks) && book.referralLinks.length > 0 && (
+                <>
+                  {book.referralLinks.map((link: ReferralLink, index: number) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full"
+                    >
+                      <Button variant="outline" className="w-full">
+                        {link.customName || link.retailer}
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </Button>
+                    </a>
+                  ))}
+                </>
+              )}
+            </div>
           </div>
 
           <div className="md:col-span-2 space-y-8">

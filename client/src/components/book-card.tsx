@@ -3,6 +3,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "./star-rating";
 import { RatingDialog } from "./rating-dialog";
+import { WishlistButton } from "./wishlist-button";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -84,6 +85,7 @@ export function BookCard({ book }: { book: Book }) {
         </div>
       </CardContent>
       <CardFooter className="px-4 pb-4 flex gap-2">
+        <WishlistButton bookId={book.id} />
         <RatingDialog
           bookId={book.id}
           trigger={<Button variant="outline" className="flex-1">Rate</Button>}
