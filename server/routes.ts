@@ -85,6 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      // Start a transaction for creating/updating the rating
       const rating = await dbStorage.createRating({
         bookId,
         userId: req.user!.id,
@@ -94,8 +95,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         characters: req.body.characters,
         worldbuilding: req.body.worldbuilding,
         review: req.body.review,
-        analysis: req.body.analysis, // Add this line to include the analysis
+        analysis: req.body.analysis,
       });
+
+      // Also mark the book as read in the user's bookshelf
+      try {
+        await dbStorage.updateBookshelfStatus(req.user!.id, bookId, "read");
+      } catch (bookshelfError) {
+        console.error("Error updating bookshelf status:", bookshelfError);
+        // Continue with the response even if bookshelf update fails
+      }
 
       res.json(rating);
     } catch (error: any) {
@@ -111,12 +120,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               characters: req.body.characters,
               worldbuilding: req.body.worldbuilding,
               review: req.body.review,
-              analysis: req.body.analysis, // Add this line to include the analysis
+              analysis: req.body.analysis,
             })
             .where(
               and(eq(ratings.userId, req.user!.id), eq(ratings.bookId, bookId)),
             )
             .returning();
+          
+          // Also mark the book as read in the user's bookshelf
+          try {
+            await dbStorage.updateBookshelfStatus(req.user!.id, bookId, "read");
+          } catch (bookshelfError) {
+            console.error("Error updating bookshelf status:", bookshelfError);
+            // Continue with the response even if bookshelf update fails
+          }
 
           return res.json(updatedRating);
         } catch (updateError) {
