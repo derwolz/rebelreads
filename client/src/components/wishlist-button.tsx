@@ -23,11 +23,13 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
 
   const { mutate: toggleWishlist, isPending } = useMutation({
     mutationFn: async () => {
+      const method = readingStatus?.isWishlisted ? 'DELETE' : 'POST';
       return apiRequest(`/api/books/${bookId}/wishlist`, {
-        method: readingStatus?.isWishlisted ? "DELETE" : "POST",
+        method,
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ bookId })
       });
     },
     onSuccess: () => {
