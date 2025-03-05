@@ -11,6 +11,13 @@ import { FollowButton } from "@/components/follow-button";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -23,6 +30,7 @@ export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
 
   const { data: book } = useQuery<Book>({
     queryKey: [`/api/books/${params?.id}`],
@@ -42,6 +50,24 @@ export default function BookDetails() {
     characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
     worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
   } : null;
+
+  const filteredRatings = ratings?.filter(rating => {
+    const overallRating = calculateWeightedRating(rating);
+    switch (ratingFilter) {
+      case "5":
+        return overallRating >= 4.5;
+      case "4":
+        return overallRating >= 3.5 && overallRating < 4.5;
+      case "3":
+        return overallRating >= 2.5 && overallRating < 3.5;
+      case "2":
+        return overallRating >= 1.5 && overallRating < 2.5;
+      case "1":
+        return overallRating < 1.5;
+      default:
+        return true;
+    }
+  }).sort((a, b) => calculateWeightedRating(b) - calculateWeightedRating(a));
 
   return (
     <div>
@@ -95,7 +121,7 @@ export default function BookDetails() {
               </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 {book.genres.map((genre) => (
-                  <Badge key={genre} variant="secondary">
+                  <Badge key={genre} variant="secondary" className="text-sm">
                     {genre}
                   </Badge>
                 ))}
@@ -113,7 +139,6 @@ export default function BookDetails() {
             <p className="text-lg">{book.description}</p>
 
             <div className="grid gap-8">
-              {/* More Details Section */}
               <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold">More Details</h2>
@@ -192,9 +217,26 @@ export default function BookDetails() {
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Ratings Section */}
               <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
+                  <Select
+                    value={ratingFilter}
+                    onValueChange={setRatingFilter}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filter by rating" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Ratings</SelectItem>
+                      <SelectItem value="5">5 Stars</SelectItem>
+                      <SelectItem value="4">4 Stars</SelectItem>
+                      <SelectItem value="3">3 Stars</SelectItem>
+                      <SelectItem value="2">2 Stars</SelectItem>
+                      <SelectItem value="1">1 Star</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {averageRatings ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
@@ -230,11 +272,10 @@ export default function BookDetails() {
                   <p className="text-muted-foreground">No ratings yet</p>
                 )}
 
-                {/* Reviews Section */}
                 <div className="space-y-4 mt-8">
                   <h3 className="text-xl font-semibold">Reviews</h3>
                   <div className="max-w-3xl space-y-4">
-                    {ratings?.map((review) => (
+                    {filteredRatings?.map((review) => (
                       <ReviewCard key={review.id} review={review} />
                     ))}
                   </div>
