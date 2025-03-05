@@ -32,7 +32,9 @@ export default function HomePage() {
     queryKey: ["/api/books"],
   });
 
-  const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<Book[]>({
+  const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<
+    Book[]
+  >({
     queryKey: ["/api/books/followed-authors"],
     enabled: !!user,
   });
@@ -42,23 +44,25 @@ export default function HomePage() {
     if (type) setSearchType(type);
   };
 
-  const filteredBooks = books?.filter((book) => {
-    const query = searchQuery.toLowerCase();
+  const filteredBooks = books
+    ?.filter((book) => {
+      const query = searchQuery.toLowerCase();
 
-    switch (searchType) {
-      case "title":
-        return book.title.toLowerCase().includes(query);
-      case "author":
-        return book.author.toLowerCase().includes(query);
-      case "genre":
-        return book.genres.some(genre => 
-          genre.toLowerCase().includes(query)
-        );
-      default:
-        return true;
-    }
-  }).slice(0, 10); // Limit to 10 books
-console.log(user, followedAuthorsBooks)
+      switch (searchType) {
+        case "title":
+          return book.title.toLowerCase().includes(query);
+        case "author":
+          return book.author.toLowerCase().includes(query);
+        case "genre":
+          return book.genres.some((genre) =>
+            genre.toLowerCase().includes(query),
+          );
+        default:
+          return true;
+      }
+    })
+    .slice(0, 10); // Limit to 10 books
+  console.log(user, followedAuthorsBooks);
   return (
     <div>
       <MainNav onSearch={handleSearch} />
@@ -69,19 +73,23 @@ console.log(user, followedAuthorsBooks)
             <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
             <Carousel className="w-full">
               <CarouselContent>
-                {isLoadingFollowed ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
-                      <BookCardSkeleton />
-                    </CarouselItem>
-                  ))
-                ) : (
-                  followedAuthorsBooks.slice(0, 10).map((book) => (
-                    <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
-                      <BookCard book={book} />
-                    </CarouselItem>
-                  ))
-                )}
+                {isLoadingFollowed
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <CarouselItem
+                        key={i}
+                        className="md:basis-1/3 lg:basis-1/4"
+                      >
+                        <BookCardSkeleton />
+                      </CarouselItem>
+                    ))
+                  : followedAuthorsBooks.slice(0, 10).map((book) => (
+                      <CarouselItem
+                        key={book.id}
+                        className="md:basis-1/3 lg:basis-1/4"
+                      >
+                        <BookCard book={book} />
+                      </CarouselItem>
+                    ))}
               </CarouselContent>
               <CarouselPrevious className="hidden md:flex" />
               <CarouselNext className="hidden md:flex" />
@@ -93,19 +101,20 @@ console.log(user, followedAuthorsBooks)
           <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
           <Carousel className="w-full">
             <CarouselContent>
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
-                    <BookCardSkeleton />
-                  </CarouselItem>
-                ))
-              ) : (
-                filteredBooks?.map((book) => (
-                  <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
-                    <BookCard book={book} />
-                  </CarouselItem>
-                ))
-              )}
+              {isLoading
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                      <BookCardSkeleton />
+                    </CarouselItem>
+                  ))
+                : filteredBooks?.map((book) => (
+                    <CarouselItem
+                      key={book.id}
+                      className="md:basis-1/3 lg:basis-1/4"
+                    >
+                      <BookCard book={book} />
+                    </CarouselItem>
+                  ))}
             </CarouselContent>
             <CarouselPrevious className="hidden md:flex" />
             <CarouselNext className="hidden md:flex" />
