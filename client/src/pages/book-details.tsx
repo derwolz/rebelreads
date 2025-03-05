@@ -230,11 +230,12 @@ export default function BookDetails() {
                   <p className="text-muted-foreground">No ratings yet</p>
                 )}
 
+                {/* Reviews Section */}
                 <div className="space-y-4 mt-8">
                   <h3 className="text-xl font-semibold">Reviews</h3>
                   <div className="max-w-3xl space-y-4">
-                    {ratings?.map((rating) => (
-                      <ReviewCard key={rating.id} rating={rating} />
+                    {ratings?.map((review) => (
+                      <ReviewCard key={review.id} review={review} />
                     ))}
                   </div>
                 </div>
