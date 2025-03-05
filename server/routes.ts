@@ -414,15 +414,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
-}
-
-function calculateWeightedRating(rating) {
-  // Implement weighted rating logic here if needed.  For now, a simple sum.
-  return rating.enjoyment + rating.writing + rating.themes + rating.characters + rating.worldbuilding;
-}
-
   app.get("/api/authors/:id", async (req, res) => {
     const authorId = parseInt(req.params.id);
     if (isNaN(authorId)) {
@@ -449,7 +440,7 @@ function calculateWeightedRating(rating) {
           genreMap.set(genre, (genreMap.get(genre) || 0) + 1);
         });
       });
-      
+
       const genres = Array.from(genreMap.entries()).map(([genre, count]) => ({
         genre,
         count
@@ -503,3 +494,12 @@ function calculateWeightedRating(rating) {
       res.status(500).send("Failed to check following status");
     }
   });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
+
+function calculateWeightedRating(rating) {
+  // Implement weighted rating logic here if needed.  For now, a simple sum.
+  return rating.enjoyment + rating.writing + rating.themes + rating.characters + rating.worldbuilding;
+}
