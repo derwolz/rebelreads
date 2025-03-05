@@ -23,6 +23,36 @@ export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] a
 
 export const AVAILABLE_GENRES = ["fantasy", "science fiction", "mystery", "romance", "thriller"] as const;
 
+export const SOCIAL_MEDIA_PLATFORMS = [
+  "twitter",
+  "instagram",
+  "facebook",
+  "tiktok",
+  "youtube",
+  "linkedin",
+  "goodreads",
+  "pinterest",
+  "reddit",
+  "tumblr",
+  "medium",
+  "substack",
+  "patreon",
+  "discord",
+  "twitch",
+  "mastodon",
+  "threads",
+  "bluesky",
+  "custom"
+] as const;
+
+export type SocialMediaType = typeof SOCIAL_MEDIA_PLATFORMS[number];
+
+export interface SocialMediaLink {
+  platform: SocialMediaType;
+  url: string;
+  displayName?: string; // Only used for custom platforms
+}
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -42,6 +72,7 @@ export const users = pgTable("users", {
   website: text("website"),
   favoriteGenres: text("favorite_genres").array(), // Updated to array
   displayName: text("display_name"), // Added display name field
+  socialLinks: jsonb("social_links").$type<SocialMediaLink[]>().default([]),
 });
 
 export const followers = pgTable("followers", {
@@ -120,6 +151,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+export const socialMediaLinkSchema = z.object({
+  platform: z.enum(SOCIAL_MEDIA_PLATFORMS),
+  url: z.string().url("Please enter a valid URL"),
+  displayName: z.string().optional(), // Only used for custom platforms
+});
+
 export const updateProfileSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
@@ -138,6 +175,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
     .regex(/[0-9]/, "Password must contain at least one number")
     .optional(),
   confirmPassword: z.string().optional(),
+  socialLinks: z.array(socialMediaLinkSchema).optional(),
 }).refine((data) => {
   // If any password field is filled, all password fields must be filled
   if (data.newPassword || data.currentPassword || data.confirmPassword) {
