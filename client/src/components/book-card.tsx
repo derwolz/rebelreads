@@ -44,10 +44,10 @@ export function BookCard({ book }: { book: Book }) {
     <div className="relative group min-h-256">
       <Card
         className={`
-          overflow-hidden cursor-pointer
+          overflow-visible cursor-pointer
           transition-all duration-300 ease-in-out
           group-hover:scale-105 group-hover:shadow-xl
-          ${showDetailed ? "z-50" : "z-0"}
+          ${showDetailed ? "z-50" : "z-10"}
           relative
         `}
         onClick={handleCardClick}
@@ -103,7 +103,8 @@ export function BookCard({ book }: { book: Book }) {
             style={{
               top: "100%",
               borderTop: "1px solid var(--border)",
-              zIndex: 20,
+              zIndex: 100,
+              transformOrigin: "top",
             }}
           >
             <div className="p-4 space-y-2">
