@@ -100,11 +100,14 @@ export const ratings = pgTable("ratings", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const bookshelves = pgTable("bookshelves", {
+// Replace bookshelves table with reading_status
+export const reading_status = pgTable("reading_status", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   bookId: integer("book_id").notNull(),
-  status: text("status").notNull(), // reading, want-to-read, read
+  isWishlisted: boolean("is_wishlisted").notNull().default(false),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -165,7 +168,7 @@ export const insertBookSchema = createInsertSchema(books).extend({
 });
 
 export const insertRatingSchema = createInsertSchema(ratings);
-export const insertBookshelfSchema = createInsertSchema(bookshelves);
+export const insertReadingStatusSchema = createInsertSchema(reading_status);
 export const insertFollowerSchema = createInsertSchema(followers);
 
 export const loginSchema = z.object({
@@ -178,7 +181,8 @@ export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Rating = typeof ratings.$inferSelect;
-export type Bookshelf = typeof bookshelves.$inferSelect;
+export type ReadingStatus = typeof reading_status.$inferSelect;
+export type InsertReadingStatus = typeof reading_status.$inferInsert;
 export type Follower = typeof followers.$inferSelect;
 
 export function calculateWeightedRating(rating: Rating): number {

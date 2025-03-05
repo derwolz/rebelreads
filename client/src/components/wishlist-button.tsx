@@ -9,25 +9,29 @@ interface WishlistButtonProps {
   bookId: number;
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
 }
 
-export function WishlistButton({ bookId, variant = "outline", size = "default" }: WishlistButtonProps) {
+export function WishlistButton({ bookId, variant = "outline", size = "default", className }: WishlistButtonProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: isWishlisted } = useQuery<boolean>({
-    queryKey: [`/api/books/${bookId}/wishlist`],
+  const { data: readingStatus } = useQuery({
+    queryKey: [`/api/books/${bookId}/reading-status`],
     enabled: !!user,
   });
 
   const { mutate: toggleWishlist, isPending } = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/books/${bookId}/wishlist`, {
-        method: isWishlisted ? "DELETE" : "POST",
+      return apiRequest(`/api/books/${bookId}/wishlist`, {
+        method: readingStatus?.isWishlisted ? "DELETE" : "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/wishlist`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/reading-status`] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     },
   });
@@ -40,8 +44,9 @@ export function WishlistButton({ bookId, variant = "outline", size = "default" }
       size={size}
       onClick={() => toggleWishlist()}
       disabled={isPending}
+      className={className}
     >
-      {isWishlisted ? (
+      {readingStatus?.isWishlisted ? (
         <>
           <HeartOff className="h-4 w-4 mr-2" />
           Remove from Wishlist

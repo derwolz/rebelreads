@@ -2,12 +2,13 @@ import {
   User,
   Book,
   Rating,
-  Bookshelf,
+  ReadingStatus,
   InsertUser,
   UpdateProfile,
   calculateWeightedRating,
+  reading_status,
 } from "@shared/schema";
-import { users, books, ratings, bookshelves } from "@shared/schema";
+import { users, books, ratings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray, desc } from "drizzle-orm";
 import session from "express-session";
@@ -38,8 +39,11 @@ export interface IStorage {
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
   getUserRatings(userId: number): Promise<Rating[]>;
 
-  getBookshelf(userId: number): Promise<Bookshelf[]>;
-  updateBookshelfStatus(userId: number, bookId: number, status: string): Promise<Bookshelf>;
+  getReadingStatus(userId: number, bookId: number): Promise<ReadingStatus | undefined>;
+  toggleWishlist(userId: number, bookId: number): Promise<ReadingStatus>;
+  markAsCompleted(userId: number, bookId: number): Promise<ReadingStatus>;
+  getWishlistedBooks(userId: number): Promise<Book[]>;
+  getCompletedBooks(userId: number): Promise<Book[]>;
 
   followAuthor(followerId: number, authorId: number): Promise<Follower>;
   unfollowAuthor(followerId: number, authorId: number): Promise<void>;
@@ -158,23 +162,94 @@ export class DatabaseStorage implements IStorage {
     return newRating;
   }
 
-  async getBookshelf(userId: number): Promise<Bookshelf[]> {
-    return await db
+  async getReadingStatus(userId: number, bookId: number): Promise<ReadingStatus | undefined> {
+    const [status] = await db
       .select()
-      .from(bookshelves)
-      .where(eq(bookshelves.userId, userId));
+      .from(reading_status)
+      .where(
+        and(
+          eq(reading_status.userId, userId),
+          eq(reading_status.bookId, bookId)
+        )
+      );
+    return status;
   }
 
-  async updateBookshelfStatus(
-    userId: number,
-    bookId: number,
-    status: string,
-  ): Promise<Bookshelf> {
-    const [bookshelf] = await db
-      .insert(bookshelves)
-      .values({ userId, bookId, status })
+  async toggleWishlist(userId: number, bookId: number): Promise<ReadingStatus> {
+    const existingStatus = await this.getReadingStatus(userId, bookId);
+
+    if (existingStatus) {
+      const [updated] = await db
+        .update(reading_status)
+        .set({ isWishlisted: !existingStatus.isWishlisted })
+        .where(eq(reading_status.id, existingStatus.id))
+        .returning();
+      return updated;
+    }
+
+    const [status] = await db
+      .insert(reading_status)
+      .values({ userId, bookId, isWishlisted: true })
       .returning();
-    return bookshelf;
+    return status;
+  }
+
+  async markAsCompleted(userId: number, bookId: number): Promise<ReadingStatus> {
+    const existingStatus = await this.getReadingStatus(userId, bookId);
+
+    if (existingStatus) {
+      const [updated] = await db
+        .update(reading_status)
+        .set({
+          isCompleted: true,
+          completedAt: new Date(),
+          isWishlisted: false // Remove from wishlist when completed
+        })
+        .where(eq(reading_status.id, existingStatus.id))
+        .returning();
+      return updated;
+    }
+
+    const [status] = await db
+      .insert(reading_status)
+      .values({
+        userId,
+        bookId,
+        isCompleted: true,
+        completedAt: new Date()
+      })
+      .returning();
+    return status;
+  }
+
+  async getWishlistedBooks(userId: number): Promise<Book[]> {
+    const wishlistedBooks = await db
+      .select()
+      .from(books)
+      .innerJoin(
+        reading_status,
+        and(
+          eq(reading_status.bookId, books.id),
+          eq(reading_status.userId, userId),
+          eq(reading_status.isWishlisted, true)
+        )
+      );
+    return wishlistedBooks.map(({ books }) => books);
+  }
+
+  async getCompletedBooks(userId: number): Promise<Book[]> {
+    const completedBooks = await db
+      .select()
+      .from(books)
+      .innerJoin(
+        reading_status,
+        and(
+          eq(reading_status.bookId, books.id),
+          eq(reading_status.userId, userId),
+          eq(reading_status.isCompleted, true)
+        )
+      );
+    return completedBooks.map(({ books }) => books);
   }
 
   async deleteBook(id: number, authorId: number): Promise<void> {
