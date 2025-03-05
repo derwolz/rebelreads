@@ -41,7 +41,7 @@ export function BookCard({ book }: { book: Book }) {
   };
 
   return (
-    <div className="relative group min-h-256">
+    <div className="relative group min-h-256" style={{ marginBottom: "10rem" }}>
       <Card
         className={`
           overflow-visible cursor-pointer
