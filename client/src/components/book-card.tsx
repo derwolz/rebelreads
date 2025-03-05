@@ -79,7 +79,7 @@ export function BookCard({ book }: { book: Book }) {
               </Badge>
             ))}
           </div>
-          {!showDetailed ? 
+          {/* Always show basic rating summary */}
           <div className="mt-2">
             <div className="flex items-center gap-2">
               <StarRating
@@ -91,65 +91,64 @@ export function BookCard({ book }: { book: Book }) {
               </span>
             </div>
           </div>
-       :
 
-
-        <div
-          className={`
-            absolute left-0 right-0 bg-background/95 backdrop-blur-sm
-            transition-all duration-300 ease-in-out
-            shadow-lg rounded-b-lg
-        ${showDetailed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}
-          `}
-          style={{
-            top: "100%",
-            borderTop: "1px solid var(--border)",
-          }}
-        >
-          <div className="p-4 space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Enjoyment (30%)</span>
-              <StarRating
-                rating={Math.round(averageRatings?.enjoyment || 0)}
-                readOnly
-                size="sm"
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Writing (30%)</span>
-              <StarRating
-                rating={Math.round(averageRatings?.writing || 0)}
-                readOnly
-                size="sm"
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Themes (20%)</span>
-              <StarRating
-                rating={Math.round(averageRatings?.themes || 0)}
-                readOnly
-                size="sm"
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Characters (10%)</span>
-              <StarRating
-                rating={Math.round(averageRatings?.characters || 0)}
-                readOnly
-                size="sm"
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">World Building (10%)</span>
-              <StarRating
-                rating={Math.round(averageRatings?.worldbuilding || 0)}
-                readOnly
-                size="sm"
-              />
+          {/* Detailed ratings that show on hover */}
+          <div
+            className={`
+              absolute left-0 right-0 bg-background/95 backdrop-blur-sm
+              transition-all duration-300 ease-in-out
+              shadow-lg rounded-b-lg
+              ${showDetailed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}
+            `}
+            style={{
+              top: "100%",
+              borderTop: "1px solid var(--border)",
+              zIndex: 20,
+            }}
+          >
+            <div className="p-4 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Enjoyment (30%)</span>
+                <StarRating
+                  rating={Math.round(averageRatings?.enjoyment || 0)}
+                  readOnly
+                  size="sm"
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Writing (30%)</span>
+                <StarRating
+                  rating={Math.round(averageRatings?.writing || 0)}
+                  readOnly
+                  size="sm"
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Themes (20%)</span>
+                <StarRating
+                  rating={Math.round(averageRatings?.themes || 0)}
+                  readOnly
+                  size="sm"
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Characters (10%)</span>
+                <StarRating
+                  rating={Math.round(averageRatings?.characters || 0)}
+                  readOnly
+                  size="sm"
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">World Building (10%)</span>
+                <StarRating
+                  rating={Math.round(averageRatings?.worldbuilding || 0)}
+                  readOnly
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
-        </div>
-        }
            </CardContent>
       </Card>
     </div>
