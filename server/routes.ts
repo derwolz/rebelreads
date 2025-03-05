@@ -422,3 +422,84 @@ function calculateWeightedRating(rating) {
   // Implement weighted rating logic here if needed.  For now, a simple sum.
   return rating.enjoyment + rating.writing + rating.themes + rating.characters + rating.worldbuilding;
 }
+
+  app.get("/api/authors/:id", async (req, res) => {
+    const authorId = parseInt(req.params.id);
+    if (isNaN(authorId)) {
+      return res.status(400).json({ error: "Invalid author ID" });
+    }
+
+    try {
+      // Get author details
+      const author = await dbStorage.getUser(authorId);
+      if (!author || !author.isAuthor) {
+        return res.status(404).send("Author not found");
+      }
+
+      // Get author's books
+      const books = await dbStorage.getBooksByAuthor(authorId);
+
+      // Get follower count
+      const followerCount = await dbStorage.getFollowerCount(authorId);
+
+      // Calculate genres
+      const genreMap = new Map<string, number>();
+      books.forEach(book => {
+        book.genres.forEach(genre => {
+          genreMap.set(genre, (genreMap.get(genre) || 0) + 1);
+        });
+      });
+      
+      const genres = Array.from(genreMap.entries()).map(([genre, count]) => ({
+        genre,
+        count
+      }));
+
+      // Get aggregate ratings
+      const allRatings = await db.select().from(ratings)
+        .where(inArray(ratings.bookId, books.map(b => b.id)));
+
+      let aggregateRatings = null;
+      if (allRatings.length > 0) {
+        aggregateRatings = {
+          overall: allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / allRatings.length,
+          enjoyment: allRatings.reduce((acc, r) => acc + r.enjoyment, 0) / allRatings.length,
+          writing: allRatings.reduce((acc, r) => acc + r.writing, 0) / allRatings.length,
+          themes: allRatings.reduce((acc, r) => acc + r.themes, 0) / allRatings.length,
+          characters: allRatings.reduce((acc, r) => acc + r.characters, 0) / allRatings.length,
+          worldbuilding: allRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / allRatings.length,
+        };
+      }
+
+      // Compose full author details
+      const authorDetails = {
+        ...author,
+        books,
+        followerCount,
+        genres,
+        aggregateRatings
+      };
+
+      res.json(authorDetails);
+    } catch (error) {
+      console.error("Error fetching author details:", error);
+      res.status(500).send("Failed to fetch author details");
+    }
+  });
+
+  app.get("/api/authors/:id/following", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const authorId = parseInt(req.params.id);
+    if (isNaN(authorId)) {
+      return res.status(400).json({ error: "Invalid author ID" });
+    }
+
+    try {
+      const isFollowing = await dbStorage.isFollowing(req.user!.id, authorId);
+      res.json(isFollowing);
+    } catch (error) {
+      console.error("Error checking following status:", error);
+      res.status(500).send("Failed to check following status");
+    }
+  });
