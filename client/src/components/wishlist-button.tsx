@@ -38,20 +38,31 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
     <Button
       variant={variant}
       size={size}
-      onClick={() => toggleWishlist()}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleWishlist();
+      }}
       disabled={isPending}
       className={className}
     >
       {readingStatus?.isWishlisted ? (
-        <>
-          <HeartOff className="h-4 w-4 mr-2" />
-          Remove from Wishlist
-        </>
+        size === "icon" ? (
+          <HeartOff className="h-4 w-4" />
+        ) : (
+          <>
+            <HeartOff className="h-4 w-4 mr-2" />
+            Remove from Wishlist
+          </>
+        )
       ) : (
-        <>
-          <Heart className="h-4 w-4 mr-2" />
-          Add to Wishlist
-        </>
+        size === "icon" ? (
+          <Heart className="h-4 w-4" />
+        ) : (
+          <>
+            <Heart className="h-4 w-4 mr-2" />
+            Add to Wishlist
+          </>
+        )
       )}
     </Button>
   );
