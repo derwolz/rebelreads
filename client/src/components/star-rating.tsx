@@ -3,33 +3,38 @@ import { cn } from "@/lib/utils";
 
 interface StarRatingProps {
   rating?: number;
+  maxRating?: number;
   onChange?: (rating: number) => void;
-  className?: string;
   readOnly?: boolean;
-  size?: "sm" | "default";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 export function StarRating({ 
   rating = 0, 
+  maxRating = 5,
   onChange, 
-  className, 
   readOnly = false,
-  size = "default" 
+  size = "md" 
 }: StarRatingProps) {
-  const starSize = size === "sm" ? "w-3 h-3" : "w-5 h-5";
+  const sizeClasses = {
+    xs: "w-3 h-3",
+    sm: "w-3.5 h-3.5",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
+  }[size];
 
   return (
-    <div className={cn("flex gap-1", className)}>
-      {[1, 2, 3, 4, 5].map((star) => (
+    <div className={cn("flex gap-1")}>
+      {[...Array(maxRating)].map((_, star) => (
         <Star
           key={star}
           className={cn(
-            starSize,
+            sizeClasses,
             "cursor-pointer transition-colors",
-            star <= rating ? "fill-primary text-primary" : "text-muted",
+            star < rating ? "fill-primary text-primary" : "text-muted",
             readOnly && "cursor-default"
           )}
-          onClick={() => !readOnly && onChange?.(star)}
+          onClick={() => !readOnly && onChange?.(star + 1)}
         />
       ))}
     </div>

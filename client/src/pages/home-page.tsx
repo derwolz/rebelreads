@@ -1,8 +1,8 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { BookCard } from "@/components/book-card";
 import { MainNav } from "@/components/main-nav";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -12,16 +12,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
-function BookCardSkeleton() {
-  return (
-    <div className="space-y-3">
-      <Skeleton className="h-64 w-full" />
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-4 w-1/2" />
-    </div>
-  );
-}
+import { HeroCarousel } from "@/components/hero-carousel";
+import { BookGrid } from "@/components/book-grid";
+import { WhatsHotSidebar } from "@/components/whats-hot-sidebar";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -61,13 +54,36 @@ export default function HomePage() {
           return true;
       }
     })
-    .slice(0, 10); // Limit to 10 books
-  console.log(user, followedAuthorsBooks);
+    .slice(0, 10); // Limit to 10 books for carousel
+
+  // Get all books for grid display
+  const allBooks = books?.filter((book) => {
+    const query = searchQuery.toLowerCase();
+    if (!query) return true;
+
+    switch (searchType) {
+      case "title":
+        return book.title.toLowerCase().includes(query);
+      case "author":
+        return book.author.toLowerCase().includes(query);
+      case "genre":
+        return book.genres.some((genre) =>
+          genre.toLowerCase().includes(query),
+        );
+      default:
+        return true;
+    }
+  });
+
   return (
     <div>
       <MainNav onSearch={handleSearch} />
 
       <main className="container mx-auto px-4 py-8">
+        {/* Hero Carousel for Promoted Books */}
+        <HeroCarousel />
+
+        {/* From Authors You Follow Section */}
         {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
           <section className="mb-12">
             <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
@@ -79,7 +95,11 @@ export default function HomePage() {
                         key={i}
                         className="md:basis-1/3 lg:basis-1/4"
                       >
-                        <BookCardSkeleton />
+                        <div className="space-y-3">
+                          <div className="h-64 w-full bg-muted rounded-md"></div>
+                          <div className="h-4 w-3/4 bg-muted rounded"></div>
+                          <div className="h-4 w-1/2 bg-muted rounded"></div>
+                        </div>
                       </CarouselItem>
                     ))
                   : followedAuthorsBooks.slice(0, 10).map((book) => (
@@ -97,29 +117,48 @@ export default function HomePage() {
           </section>
         )}
 
-        <section>
-          <h2 className="text-3xl font-bold mb-8">Popular Books</h2>
-          <Carousel className="w-full">
-            <CarouselContent>
-              {isLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
-                      <BookCardSkeleton />
-                    </CarouselItem>
-                  ))
-                : filteredBooks?.map((book) => (
-                    <CarouselItem
-                      key={book.id}
-                      className="md:basis-1/3 lg:basis-1/4"
-                    >
-                      <BookCard book={book} />
-                    </CarouselItem>
-                  ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
-        </section>
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            {/* Popular Books Carousel */}
+            <section className="mb-12">
+              <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {isLoading
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                          <div className="space-y-3">
+                            <div className="h-64 w-full bg-muted rounded-md"></div>
+                            <div className="h-4 w-3/4 bg-muted rounded"></div>
+                            <div className="h-4 w-1/2 bg-muted rounded"></div>
+                          </div>
+                        </CarouselItem>
+                      ))
+                    : filteredBooks?.map((book) => (
+                        <CarouselItem
+                          key={book.id}
+                          className="md:basis-1/3 lg:basis-1/4"
+                        >
+                          <BookCard book={book} />
+                        </CarouselItem>
+                      ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex" />
+                <CarouselNext className="hidden md:flex" />
+              </Carousel>
+            </section>
+
+            {/* All Books Grid */}
+            <BookGrid
+              title="Explore More Books"
+              books={allBooks?.slice(0, 12)} // First 12 books
+              isLoading={isLoading}
+            />
+          </div>
+
+          {/* What's Hot Sidebar */}
+          <WhatsHotSidebar />
+        </div>
       </main>
     </div>
   );
