@@ -24,13 +24,7 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
   const { mutate: toggleWishlist, isPending } = useMutation({
     mutationFn: async () => {
       const method = readingStatus?.isWishlisted ? 'DELETE' : 'POST';
-      return apiRequest(`/api/books/${bookId}/wishlist`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ bookId })
-      });
+      return apiRequest(method, `/api/books/${bookId}/wishlist`, { bookId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/reading-status`] });
