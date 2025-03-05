@@ -75,7 +75,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(ratings);
   });
 
-  // Fix ratings creation route
   app.post("/api/books/:id/ratings", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -98,13 +97,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         analysis: req.body.analysis,
       });
 
-      // Also mark the book as read in the user's bookshelf
-      try {
-        await dbStorage.updateBookshelfStatus(req.user!.id, bookId, "read");
-      } catch (bookshelfError) {
-        console.error("Error updating bookshelf status:", bookshelfError);
-        // Continue with the response even if bookshelf update fails
-      }
+      // Mark the book as completed
+      await dbStorage.markAsCompleted(req.user!.id, bookId);
 
       res.json(rating);
     } catch (error: any) {
@@ -126,14 +120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               and(eq(ratings.userId, req.user!.id), eq(ratings.bookId, bookId)),
             )
             .returning();
-          
-          // Also mark the book as read in the user's bookshelf
-          try {
-            await dbStorage.updateBookshelfStatus(req.user!.id, bookId, "read");
-          } catch (bookshelfError) {
-            console.error("Error updating bookshelf status:", bookshelfError);
-            // Continue with the response even if bookshelf update fails
-          }
+
+          // Mark the book as completed
+          await dbStorage.markAsCompleted(req.user!.id, bookId);
 
           return res.json(updatedRating);
         } catch (updateError) {
@@ -143,6 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).send(error.message);
     }
   });
+
 
   app.get("/api/my-books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -453,6 +443,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error updating profile image:", error);
       res.status(500).json({ message: "Failed to update profile image" });
     }
+  });
+
+  app.get("/api/books/:id/reading-status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const status = await dbStorage.getReadingStatus(req.user!.id, bookId);
+    res.json(status || {});
+  });
+
+  app.post("/api/books/:id/wishlist", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const status = await dbStorage.toggleWishlist(req.user!.id, bookId);
+    res.json(status);
+  });
+
+  app.delete("/api/books/:id/wishlist", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const status = await dbStorage.toggleWishlist(req.user!.id, bookId);
+    res.json(status);
   });
 
   const httpServer = createServer(app);
