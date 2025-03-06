@@ -1,17 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { BookGridCard } from "@/components/book-grid-card";
 import { Book } from "@shared/schema";
 
 export function SearchBooksPage() {
-  const [location] = useLocation();
-  const query = new URLSearchParams(location.split("?")[1]).get("q") || "";
+  const query = new URLSearchParams(window.location.search).get("q") || "";
 
   const { data: searchResults, isLoading } = useQuery<{ books: Book[] }>({
     queryKey: ["/api/search/books", query],
-    enabled: query.length > 1,
+    enabled: query.length > 0,
   });
-
+  console.log(searchResults, "searchResults");
+  console.log(query, "query");
+  console.log(location, "location");
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Search Results for "{query}"</h1>
