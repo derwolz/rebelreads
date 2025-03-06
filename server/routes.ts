@@ -8,7 +8,7 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { users, books, bookshelves } from "@shared/schema";
+import { users, books, bookshelves, replies } from "@shared/schema"; // Added replies import
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
@@ -580,9 +580,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get paginated reviews for author's books
       const reviews = await db
-        .select()
+        .select({
+          review: ratings,
+          user: users,
+          replies: replies
+        })
         .from(ratings)
         .where(inArray(ratings.bookId, bookIds))
+        .leftJoin(users, eq(users.id, ratings.userId))
+        .leftJoin(replies, eq(replies.reviewId, ratings.id))
         .orderBy(desc(ratings.createdAt))
         .limit(limit)
         .offset(offset);
@@ -595,8 +601,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const hasMore = totalCount[0].count > page * limit;
 
+      // Group replies with their reviews
+      const processedReviews = reviews.reduce((acc: any[], curr) => {
+        const existingReview = acc.find(r => r.id === curr.review.id);
+        if (existingReview) {
+          if (curr.replies) {
+            existingReview.replies.push(curr.replies);
+          }
+        } else {
+          acc.push({
+            ...curr.review,
+            user: curr.user,
+            replies: curr.replies ? [curr.replies] : []
+          });
+        }
+        return acc;
+      }, []);
+
       res.json({
-        reviews,
+        reviews: processedReviews,
         hasMore
       });
     } catch (error) {
@@ -669,9 +692,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.sendStatus(403);
       }
 
-      // Store the reply (You'll need to add a replies table to your schema)
-      // For now, we'll just acknowledge the reply
-      res.json({ success: true });
+      // Create the reply
+      const [newReply] = await db
+        .insert(replies)
+        .values({
+          reviewId,
+          authorId: req.user!.id,
+          content
+        })
+        .returning();
+
+      res.json(newReply);
     } catch (error) {
       console.error("Error replying to review:", error);
       res.status(500).json({ error: "Failed to reply to review" });

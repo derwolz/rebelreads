@@ -177,7 +177,7 @@ export function ReviewManagement() {
       </div>
 
       <div className="space-y-4">
-        {data?.reviews.map((review: Rating & { user: any; book: any; featured?: boolean }) => (
+        {data?.reviews.map((review: Rating & { user: any; book: any; featured?: boolean; replies?: any[] }) => (
           <Card key={review.id} className={review.featured ? "border-primary" : undefined}>
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
@@ -216,6 +216,22 @@ export function ReviewManagement() {
               <div className="mt-4">
                 <p className="text-sm">{review.review}</p>
               </div>
+              {review.replies?.map((reply) => (
+                <div key={reply.id} className="mt-4 pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={reply.author?.profileImageUrl} />
+                      <AvatarFallback>{reply.author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">Author Response</span>
+                    <span className="text-sm text-muted-foreground">•</span>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(reply.createdAt), 'MMM d, yyyy')}
+                    </span>
+                  </div>
+                  <p className="text-sm pl-8">{reply.content}</p>
+                </div>
+              ))}
             </CardContent>
           </Card>
         ))}

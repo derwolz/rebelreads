@@ -132,6 +132,8 @@ export const ratings = pgTable("ratings", {
   review: text("review"),
   analysis: jsonb("analysis").$type<ReviewAnalysis>(),
   featured: boolean("featured").default(false),
+  report_status: text("report_status").default("none"),
+  report_reason: text("report_reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
