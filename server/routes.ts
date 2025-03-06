@@ -489,6 +489,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this near the other API endpoints
+  app.get("/api/genres", async (_req, res) => {
+    try {
+      // Get all unique genres from existing books
+      const result = await db
+        .select({ genres: books.genres })
+        .from(books);
+
+      // Flatten and deduplicate genres
+      const uniqueGenres = Array.from(new Set(
+        result.flatMap(r => r.genres || [])
+      )).sort();
+
+      res.json(uniqueGenres);
+    } catch (error) {
+      console.error("Error fetching genres:", error);
+      res.status(500).json({ error: "Failed to fetch genres" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

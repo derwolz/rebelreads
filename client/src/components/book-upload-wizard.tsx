@@ -425,28 +425,13 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Genres</h2>
-            <div className="flex flex-wrap gap-2">
-              {AVAILABLE_GENRES.map((genre) => (
-                <Badge
-                  key={genre}
-                  variant={formData.genres.includes(genre) ? "default" : "outline"}
-                  className="cursor-pointer text-base px-4 py-2"
-                  onClick={() => handleGenreToggle(genre)}
-                >
-                  {genre}
-                </Badge>
-              ))}
-            </div>
-            {formData.genres.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Selected genres: {formData.genres.join(", ")}
-                {formData.genres.length > 3 && (
-                  <span className="block mt-1 text-yellow-600">
-                    Note: Only the first 3 genres will be displayed on the book card
-                  </span>
-                )}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Select existing genres or create new ones to accurately categorize your book.
+            </p>
+            <GenreTagInput
+              selectedGenres={formData.genres}
+              onGenresChange={(genres) => setFormData(prev => ({ ...prev, genres }))}
+            />
           </div>
         );
 
