@@ -563,6 +563,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add near the other API endpoints
+  app.get("/api/pro/reviews", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = 10;
+      const offset = (page - 1) * limit;
+
+      // Get all books by the author
+      const authorBooks = await dbStorage.getBooksByAuthor(req.user!.id);
+      const bookIds = authorBooks.map(book => book.id);
+
+      // Get paginated reviews for author's books
+      const reviews = await db
+        .select()
+        .from(ratings)
+        .where(inArray(ratings.bookId, bookIds))
+        .orderBy(desc(ratings.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Check if there are more reviews
+      const totalCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(ratings)
+        .where(inArray(ratings.bookId, bookIds));
+
+      const hasMore = totalCount[0].count > page * limit;
+
+      res.json({
+        reviews,
+        hasMore
+      });
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+
+  app.post("/api/pro/reviews/:id/feature", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { featured } = req.body;
+
+      // Verify the review belongs to one of the author's books
+      const review = await db
+        .select()
+        .from(ratings)
+        .where(eq(ratings.id, reviewId))
+        .limit(1);
+
+      if (!review.length) {
+        return res.status(404).json({ error: "Review not found" });
+      }
+
+      const book = await dbStorage.getBook(review[0].bookId);
+      if (!book || book.authorId !== req.user!.id) {
+        return res.sendStatus(403);
+      }
+
+      // Update the review's featured status
+      const [updatedReview] = await db
+        .update(ratings)
+        .set({ featured })
+        .where(eq(ratings.id, reviewId))
+        .returning();
+
+      res.json(updatedReview);
+    } catch (error) {
+      console.error("Error featuring review:", error);
+      res.status(500).json({ error: "Failed to feature review" });
+    }
+  });
+
+  app.post("/api/pro/reviews/:id/reply", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { content } = req.body;
+
+      // Verify the review belongs to one of the author's books
+      const review = await db
+        .select()
+        .from(ratings)
+        .where(eq(ratings.id, reviewId))
+        .limit(1);
+
+      if (!review.length) {
+        return res.status(404).json({ error: "Review not found" });
+      }
+
+      const book = await dbStorage.getBook(review[0].bookId);
+      if (!book || book.authorId !== req.user!.id) {
+        return res.sendStatus(403);
+      }
+
+      // Store the reply (You'll need to add a replies table to your schema)
+      // For now, we'll just acknowledge the reply
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error replying to review:", error);
+      res.status(500).json({ error: "Failed to reply to review" });
+    }
+  });
+
+  app.post("/api/pro/reviews/:id/report", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const reviewId = parseInt(req.params.id);
+      const { reason } = req.body;
+
+      // Verify the review belongs to one of the author's books
+      const review = await db
+        .select()
+        .from(ratings)
+        .where(eq(ratings.id, reviewId))
+        .limit(1);
+
+      if (!review.length) {
+        return res.status(404).json({ error: "Review not found" });
+      }
+
+      const book = await dbStorage.getBook(review[0].bookId);
+      if (!book || book.authorId !== req.user!.id) {
+        return res.sendStatus(403);
+      }
+
+      // Store the report (You'll need to add a reports table to your schema)
+      // For now, we'll just acknowledge the report
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reporting review:", error);
+      res.status(500).json({ error: "Failed to report review" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

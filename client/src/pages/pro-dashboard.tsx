@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { ReviewManagement } from "@/components/review-management";
 
 interface BookInterest {
   date: string;
@@ -56,6 +57,10 @@ export default function ProDashboard() {
 
   // Render different content based on the current route
   const renderContent = () => {
+    if (location === "/pro/reviews") {
+      return <ReviewManagement />;
+    }
+
     if (location === "/pro/reports") {
       return (
         <div className="flex-1 space-y-8">

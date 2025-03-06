@@ -131,6 +131,24 @@ export const ratings = pgTable("ratings", {
   worldbuilding: integer("worldbuilding").notNull(),
   review: text("review"),
   analysis: jsonb("analysis").$type<ReviewAnalysis>(),
+  featured: boolean("featured").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull(),
+  authorId: integer("author_id").notNull(),
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const replies = pgTable("replies", {
+  id: serial("id").primaryKey(),
+  reviewId: integer("review_id").notNull(),
+  authorId: integer("author_id").notNull(),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
