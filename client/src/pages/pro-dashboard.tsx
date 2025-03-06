@@ -12,23 +12,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
-import { useState, useEffect } from "react";
-import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
-import { cn } from "@/lib/utils";
-import { ReviewBoostWizard } from "@/components/review-boost-wizard";
-import { format } from "date-fns";
+import { useState } from "react";
 import type { Book } from "@shared/schema";
 
-interface BookAnalytics {
+interface BookPerformance {
   bookId: number;
   title: string;
   metrics: {
-    impressions: Array<{ date: string; count: number }>;
-    clickThroughs: Array<{ date: string; count: number }>;
-    referralClicks: Array<{ date: string; count: number }>;
+    impressions?: Array<{ date: string; count: number }>;
+    clicks?: Array<{ date: string; count: number }>;
+    referrals?: Array<{ date: string; count: number }>;
   };
 }
 
@@ -38,13 +35,21 @@ interface ProDashboardData {
   recentReports: number;
 }
 
+const METRICS = [
+  { id: 'impressions', label: 'Impressions' },
+  { id: 'clicks', label: 'Clicks' },
+  { id: 'referrals', label: 'Referral Clicks' }
+] as const;
+
+type MetricType = typeof METRICS[number]['id'];
+
 export default function ProDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
+  const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>(['impressions']);
   const [timeRange, setTimeRange] = useState("30"); // days
-  const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
 
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
@@ -56,8 +61,8 @@ export default function ProDashboard() {
     enabled: !!user?.isAuthor,
   });
 
-  const { data: analyticsData } = useQuery<BookAnalytics[]>({
-    queryKey: ["/api/pro/book-analytics", selectedBookIds, timeRange],
+  const { data: performanceData } = useQuery<BookPerformance[]>({
+    queryKey: ["/api/pro/book-performance", selectedBookIds, selectedMetrics, timeRange],
     enabled: !!user?.isAuthor && selectedBookIds.length > 0,
   });
 
@@ -69,30 +74,52 @@ export default function ProDashboard() {
     }
   };
 
-  // Transform analytics data for the chart
-  const chartData = analyticsData?.reduce((acc: any[], book) => {
-    const dates = new Set([
-      ...book.metrics.impressions.map(i => i.date),
-      ...book.metrics.clickThroughs.map(c => c.date),
-      ...book.metrics.referralClicks.map(r => r.date)
-    ]);
+  const handleMetricToggle = (metric: MetricType) => {
+    if (selectedMetrics.includes(metric)) {
+      setSelectedMetrics(selectedMetrics.filter(m => m !== metric));
+    } else {
+      setSelectedMetrics([...selectedMetrics, metric]);
+    }
+  };
+
+  // Transform performance data for the chart
+  const chartData = performanceData?.reduce((acc: any[], book) => {
+    const dates = new Set(
+      Object.values(book.metrics).flatMap(metric => 
+        metric?.map(entry => entry.date) || []
+      )
+    );
 
     dates.forEach(date => {
       const existingDate = acc.find(d => d.date === date);
       if (existingDate) {
-        existingDate[`${book.title}_impressions`] = 
-          book.metrics.impressions.find(i => i.date === date)?.count || 0;
-        existingDate[`${book.title}_clicks`] = 
-          book.metrics.clickThroughs.find(c => c.date === date)?.count || 0;
-        existingDate[`${book.title}_referrals`] = 
-          book.metrics.referralClicks.find(r => r.date === date)?.count || 0;
+        if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
+          existingDate[`${book.title}_impressions`] = 
+            book.metrics.impressions.find(i => i.date === date)?.count || 0;
+        }
+        if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
+          existingDate[`${book.title}_clicks`] = 
+            book.metrics.clicks.find(c => c.date === date)?.count || 0;
+        }
+        if (book.metrics.referrals && selectedMetrics.includes('referrals')) {
+          existingDate[`${book.title}_referrals`] = 
+            book.metrics.referrals.find(r => r.date === date)?.count || 0;
+        }
       } else {
-        acc.push({
-          date,
-          [`${book.title}_impressions`]: book.metrics.impressions.find(i => i.date === date)?.count || 0,
-          [`${book.title}_clicks`]: book.metrics.clickThroughs.find(c => c.date === date)?.count || 0,
-          [`${book.title}_referrals`]: book.metrics.referralClicks.find(r => r.date === date)?.count || 0
-        });
+        const newEntry: any = { date };
+        if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
+          newEntry[`${book.title}_impressions`] = 
+            book.metrics.impressions.find(i => i.date === date)?.count || 0;
+        }
+        if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
+          newEntry[`${book.title}_clicks`] = 
+            book.metrics.clicks.find(c => c.date === date)?.count || 0;
+        }
+        if (book.metrics.referrals && selectedMetrics.includes('referrals')) {
+          newEntry[`${book.title}_referrals`] = 
+            book.metrics.referrals.find(r => r.date === date)?.count || 0;
+        }
+        acc.push(newEntry);
       }
     });
 
@@ -147,20 +174,22 @@ export default function ProDashboard() {
         <Card>
           <CardHeader className="space-y-4">
             <CardTitle>Book Performance Analytics</CardTitle>
-            <div className="flex flex-wrap gap-4">
-              <Select
-                value={timeRange}
-                onValueChange={(value) => setTimeRange(value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">Last 7 days</SelectItem>
-                  <SelectItem value="30">Last 30 days</SelectItem>
-                  <SelectItem value="90">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-4">
+                <Select
+                  value={timeRange}
+                  onValueChange={(value) => setTimeRange(value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select time range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">Last 7 days</SelectItem>
+                    <SelectItem value="30">Last 30 days</SelectItem>
+                    <SelectItem value="90">Last 90 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {books?.map((book) => (
                   <Button
@@ -171,6 +200,23 @@ export default function ProDashboard() {
                   >
                     {book.title}
                   </Button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-4">
+                {METRICS.map((metric) => (
+                  <div key={metric.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={metric.id}
+                      checked={selectedMetrics.includes(metric.id)}
+                      onCheckedChange={() => handleMetricToggle(metric.id)}
+                    />
+                    <label
+                      htmlFor={metric.id}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {metric.label}
+                    </label>
+                  </div>
                 ))}
               </div>
             </div>
@@ -187,30 +233,23 @@ export default function ProDashboard() {
                   {selectedBookIds.map((bookId) => {
                     const book = books?.find(b => b.id === bookId);
                     if (!book) return null;
-                    return (
-                      <>
+
+                    return selectedMetrics.map(metric => {
+                      const strokeStyle = metric === 'referrals' ? "5 5" 
+                        : metric === 'impressions' ? "3 3" 
+                        : undefined;
+
+                      return (
                         <Line
+                          key={`${book.id}_${metric}`}
                           type="monotone"
-                          dataKey={`${book.title}_impressions`}
-                          name={`${book.title} (Impressions)`}
+                          dataKey={`${book.title}_${metric}`}
+                          name={`${book.title} (${metric})`}
                           stroke={`hsl(${bookId * 30}, 70%, 50%)`}
-                          strokeDasharray="3 3"
+                          strokeDasharray={strokeStyle}
                         />
-                        <Line
-                          type="monotone"
-                          dataKey={`${book.title}_clicks`}
-                          name={`${book.title} (Clicks)`}
-                          stroke={`hsl(${bookId * 30}, 70%, 50%)`}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey={`${book.title}_referrals`}
-                          name={`${book.title} (Referrals)`}
-                          stroke={`hsl(${bookId * 30}, 70%, 50%)`}
-                          strokeDasharray="5 5"
-                        />
-                      </>
-                    );
+                      );
+                    });
                   })}
                 </LineChart>
               </ResponsiveContainer>

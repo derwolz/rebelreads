@@ -881,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       res.json(clickThrough);
-    } catch(error) {
+    }catch(error) {
       console.error("Error recording click-through:", error);
       res.status(500).json({ error: "Failed to record click-through" });
     }
@@ -977,6 +977,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching book analytics:", error);
       res.status(500).json({ error: "Failed to fetch analytics data" });
+    }
+  });
+
+  app.get("/api/pro/book-performance", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const authorId = req.user!.id;
+      const bookIds = req.query.bookIds ? (req.query.bookIds as string).split(',').map(Number) : [];
+      const metrics = (req.query.metrics as string || '').split(',');
+      const days = parseInt(req.query.days as string) || 30;
+
+      // Get all books if no specific books requested
+      const authorBooks = await db
+        .select()
+        .from(books)
+        .where(
+          bookIds.length > 0
+            ? and(eq(books.authorId, authorId), inArray(books.id, bookIds))
+            : eq(books.authorId, authorId)
+        );
+
+      // Calculate date range
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const performanceData = await Promise.all(authorBooks.map(async (book) => {
+        const data: any = {
+          bookId: book.id,
+          title: book.title,
+          metrics: {}
+        };
+
+        if (metrics.includes('impressions')) {
+          const impressions = await db
+            .select({
+              date: sql`DATE(${bookImpressions.timestamp})`,
+              count: sql`COUNT(*)`
+            })
+            .from(bookImpressions)
+            .where(and(
+              eq(bookImpressions.bookId, book.id),
+              sql`${bookImpressions.timestamp} >= ${startDate}`,
+              sql`${bookImpressions.timestamp} <= ${endDate}`
+            ))
+            .groupBy(sql`DATE(${bookImpressions.timestamp})`)
+            .orderBy(sql`DATE(${bookImpressions.timestamp})`);
+
+          data.metrics.impressions = impressions;
+        }
+
+        if (metrics.includes('clicks')) {
+          const clicks = await db
+            .select({
+              date: sql`DATE(${bookClickThroughs.timestamp})`,
+              count: sql`COUNT(*)`
+            })
+            .from(bookClickThroughs)
+            .where(and(
+              eq(bookClickThroughs.bookId, book.id),
+              sql`${bookClickThroughs.source} NOT LIKE 'referral_%'`,
+              sql`${bookClickThroughs.timestamp} >= ${startDate}`,
+              sql`${bookClickThroughs.timestamp} <= ${endDate}`
+            ))
+            .groupBy(sql`DATE(${bookClickThroughs.timestamp})`)
+            .orderBy(sql`DATE(${bookClickThroughs.timestamp})`);
+
+          data.metrics.clicks = clicks;
+        }
+
+        if (metrics.includes('referrals')) {
+          const referrals = await db
+            .select({
+              date: sql`DATE(${bookClickThroughs.timestamp})`,
+              count: sql`COUNT(*)`
+            })
+            .from(bookClickThroughs)
+            .where(and(
+              eq(bookClickThroughs.bookId, book.id),
+              sql`${bookClickThroughs.source} LIKE 'referral_%'`,
+              sql`${bookClickThroughs.timestamp} >= ${startDate}`,
+              sql`${bookClickThroughs.timestamp} <= ${endDate}`
+            ))
+            .groupBy(sql`DATE(${bookClickThroughs.timestamp})`)
+            .orderBy(sql`DATE(${bookClickThroughs.timestamp})`);
+
+          data.metrics.referrals = referrals;
+        }
+
+        return data;
+      }));
+
+      res.json(performanceData);
+    } catch (error) {
+      console.error("Error fetching book performance:", error);
+      res.status(500).json({ error: "Failed to fetch performance data" });
     }
   });
 
