@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { AVAILABLE_GENRES } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 interface GenreTagInputProps {
   selectedGenres: string[];
@@ -15,17 +16,19 @@ interface GenreTagInputProps {
 export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [availableGenres, setAvailableGenres] = useState<string[]>([...AVAILABLE_GENRES]);
 
-  // Load existing genres from the server
-  useEffect(() => {
-    fetch("/api/genres")
-      .then(res => res.json())
-      .then(data => {
-        setAvailableGenres(prev => Array.from(new Set([...prev, ...data])));
-      })
-      .catch(console.error);
-  }, []);
+  // Load existing genres from the server using React Query
+  const { data: customGenres = [] } = useQuery({
+    queryKey: ["/api/genres"],
+    queryFn: async () => {
+      const res = await fetch("/api/genres");
+      if (!res.ok) throw new Error("Failed to fetch genres");
+      return res.json();
+    }
+  });
+
+  // Combine built-in and custom genres
+  const availableGenres = Array.from(new Set([...AVAILABLE_GENRES, ...customGenres]));
 
   const addGenre = (genre: string) => {
     if (!selectedGenres.includes(genre)) {
@@ -42,7 +45,6 @@ export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputP
     if (currentValue === "create-new") {
       const newGenre = searchValue.trim();
       if (newGenre && !availableGenres.includes(newGenre)) {
-        setAvailableGenres(prev => [...prev, newGenre]);
         addGenre(newGenre);
       }
     } else {
@@ -105,7 +107,7 @@ export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputP
                     <CommandItem
                       key={genre}
                       value={genre}
-                      onSelect={handleSelect}
+                      onSelect={() => handleSelect(genre)}
                     >
                       <Check
                         className={cn(
