@@ -21,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AVAILABLE_GENRES, updateProfileSchema, SOCIAL_MEDIA_PLATFORMS, type SocialMediaLink } from "@shared/schema";
-import { useQueryClient } from "@tanstack/react-query";
+import { AVAILABLE_GENRES, updateProfileSchema, SOCIAL_MEDIA_PLATFORMS, type SocialMediaLink, type UpdateProfile } from "@shared/schema";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropperDialog } from "./image-cropper-dialog";
@@ -35,7 +35,7 @@ export function ReaderSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
 
-  const form = useForm({
+  const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       username: user?.username || "",
@@ -45,6 +45,38 @@ export function ReaderSettings() {
       favoriteGenres: user?.favoriteGenres || [AVAILABLE_GENRES[0]],
       profileImageUrl: user?.profileImageUrl || "",
       socialMediaLinks: user?.socialMediaLinks || []
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: UpdateProfile) => {
+      const res = await fetch("/api/user", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -86,33 +118,9 @@ export function ReaderSettings() {
     }
   };
 
-  async function onSubmit(data: any) {
-    try {
-      const response = await fetch("/api/user", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) throw new Error("Failed to update profile");
-
-      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
-    }
-  }
+  const onSubmit = (data: UpdateProfile) => {
+    updateProfileMutation.mutate(data);
+  };
 
   return (
     <div className="space-y-6">
@@ -255,7 +263,7 @@ export function ReaderSettings() {
                   <Select
                     value={link.platform}
                     onValueChange={(value: typeof SOCIAL_MEDIA_PLATFORMS[number]) => {
-                      const newLinks = [...(form.getValues("socialMediaLinks") || [])];
+                      const newLinks = [...(form.getValues("socialMediaLinks") || [])] as SocialMediaLink[];
                       newLinks[index] = {
                         ...newLinks[index],
                         platform: value,
@@ -340,7 +348,7 @@ export function ReaderSettings() {
             </div>
           </div>
 
-          <Button type="submit" disabled={isUploading}>
+          <Button type="submit" disabled={isUploading || updateProfileMutation.isPending}>
             Save Changes
           </Button>
         </form>
