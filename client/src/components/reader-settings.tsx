@@ -21,7 +21,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AVAILABLE_GENRES, updateProfileSchema, SOCIAL_MEDIA_PLATFORMS, type SocialMediaLink, type UpdateProfile } from "@shared/schema";
+import {
+  AVAILABLE_GENRES,
+  updateProfileSchema,
+  SOCIAL_MEDIA_PLATFORMS,
+  type SocialMediaLink,
+  type UpdateProfile,
+} from "@shared/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,18 +50,19 @@ export function ReaderSettings() {
       bio: user?.bio || "",
       favoriteGenres: user?.favoriteGenres || [AVAILABLE_GENRES[0]],
       profileImageUrl: user?.profileImageUrl || "",
-      socialMediaLinks: user?.socialMediaLinks || []
+      socialMediaLinks: user?.socialMediaLinks || [],
     },
   });
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfile) => {
+      console.log("here");
       const res = await fetch("/api/user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!res.ok) {
@@ -65,6 +72,7 @@ export function ReaderSettings() {
       return res.json();
     },
     onSuccess: () => {
+      console.log("hi");
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Success",
@@ -89,7 +97,7 @@ export function ReaderSettings() {
       const response = await fetch("/api/user/profile-image", {
         method: "POST",
         body: formData,
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) throw new Error("Failed to upload image");
@@ -119,6 +127,7 @@ export function ReaderSettings() {
   };
 
   const onSubmit = (data: UpdateProfile) => {
+    console.log("form submitted");
     updateProfileMutation.mutate(data);
   };
 
@@ -133,7 +142,10 @@ export function ReaderSettings() {
 
       <div className="flex items-center gap-4">
         <Avatar className="h-20 w-20">
-          <AvatarImage src={form.watch("profileImageUrl")} alt={user?.username} />
+          <AvatarImage
+            src={form.watch("profileImageUrl")}
+            alt={user?.username}
+          />
           <AvatarFallback>👤</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-2">
@@ -157,7 +169,13 @@ export function ReaderSettings() {
       />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(
+            (data) => onSubmit(data),
+            (errors) => console.log(errors),
+          )}
+          className="space-y-4"
+        >
           <FormField
             control={form.control}
             name="displayName"
@@ -202,7 +220,7 @@ export function ReaderSettings() {
                   onValueChange={(value) => {
                     const currentGenres = field.value || [];
                     if (currentGenres.includes(value)) {
-                      field.onChange(currentGenres.filter(g => g !== value));
+                      field.onChange(currentGenres.filter((g) => g !== value));
                     } else {
                       field.onChange([...currentGenres, value]);
                     }
@@ -219,7 +237,9 @@ export function ReaderSettings() {
                       <SelectItem
                         key={genre}
                         value={genre}
-                        className={field.value?.includes(genre) ? "bg-primary/10" : ""}
+                        className={
+                          field.value?.includes(genre) ? "bg-primary/10" : ""
+                        }
                       >
                         {genre.charAt(0).toUpperCase() + genre.slice(1)}
                       </SelectItem>
@@ -227,7 +247,10 @@ export function ReaderSettings() {
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Selected genres: {field.value?.map(g => g.charAt(0).toUpperCase() + g.slice(1)).join(", ")}
+                  Selected genres:{" "}
+                  {field.value
+                    ?.map((g) => g.charAt(0).toUpperCase() + g.slice(1))
+                    .join(", ")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -262,12 +285,16 @@ export function ReaderSettings() {
                 <div key={index} className="flex items-center gap-2">
                   <Select
                     value={link.platform}
-                    onValueChange={(value: typeof SOCIAL_MEDIA_PLATFORMS[number]) => {
-                      const newLinks = [...(form.getValues("socialMediaLinks") || [])] as SocialMediaLink[];
+                    onValueChange={(
+                      value: (typeof SOCIAL_MEDIA_PLATFORMS)[number],
+                    ) => {
+                      const newLinks = [
+                        ...(form.getValues("socialMediaLinks") || []),
+                      ] as SocialMediaLink[];
                       newLinks[index] = {
                         ...newLinks[index],
                         platform: value,
-                        customName: value === "Custom" ? "" : undefined
+                        customName: value === "Custom" ? "" : undefined,
                       };
                       form.setValue("socialMediaLinks", newLinks);
                     }}
@@ -289,10 +316,12 @@ export function ReaderSettings() {
                       placeholder="Platform name"
                       value={link.customName || ""}
                       onChange={(e) => {
-                        const newLinks = [...(form.getValues("socialMediaLinks") || [])] as SocialMediaLink[];
+                        const newLinks = [
+                          ...(form.getValues("socialMediaLinks") || []),
+                        ] as SocialMediaLink[];
                         newLinks[index] = {
                           ...newLinks[index],
-                          customName: e.target.value
+                          customName: e.target.value,
                         };
                         form.setValue("socialMediaLinks", newLinks);
                       }}
@@ -301,13 +330,20 @@ export function ReaderSettings() {
                   )}
 
                   <Input
-                    placeholder="URL"
+                    placeholder="https://example.com" // Updated placeholder to hint at protocol
                     value={link.url}
                     onChange={(e) => {
-                      const newLinks = [...(form.getValues("socialMediaLinks") || [])] as SocialMediaLink[];
+                      let value = e.target.value;
+                      // If there's input and it doesn't start with http:// or https://, prepend https://
+                      if (value && !value.match(/^https?:\/\//)) {
+                        value = `https://${value}`;
+                      }
+                      const newLinks = [
+                        ...(form.getValues("socialMediaLinks") || []),
+                      ] as SocialMediaLink[];
                       newLinks[index] = {
                         ...newLinks[index],
-                        url: e.target.value
+                        url: value,
                       };
                       form.setValue("socialMediaLinks", newLinks);
                     }}
@@ -319,7 +355,10 @@ export function ReaderSettings() {
                     size="icon"
                     type="button"
                     onClick={() => {
-                      const newLinks = form.getValues("socialMediaLinks")?.filter((_, i) => i !== index) || [];
+                      const newLinks =
+                        form
+                          .getValues("socialMediaLinks")
+                          ?.filter((_, i) => i !== index) || [];
                       form.setValue("socialMediaLinks", newLinks);
                     }}
                   >
@@ -328,16 +367,18 @@ export function ReaderSettings() {
                 </div>
               ))}
 
-              {(!form.watch("socialMediaLinks") || form.watch("socialMediaLinks").length < 4) && (
+              {(!form.watch("socialMediaLinks") ||
+                form.watch("socialMediaLinks").length < 4) && (
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full"
                   onClick={() => {
-                    const currentLinks = form.getValues("socialMediaLinks") || [];
+                    const currentLinks =
+                      form.getValues("socialMediaLinks") || [];
                     form.setValue("socialMediaLinks", [
                       ...currentLinks,
-                      { platform: "Twitter" as const, url: "" }
+                      { platform: "Twitter" as const, url: "" },
                     ]);
                   }}
                 >
@@ -348,7 +389,10 @@ export function ReaderSettings() {
             </div>
           </div>
 
-          <Button type="submit" disabled={isUploading || updateProfileMutation.isPending}>
+          <Button
+            type="submit"
+            disabled={isUploading || updateProfileMutation.isPending}
+          >
             Save Changes
           </Button>
         </form>
