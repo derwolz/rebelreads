@@ -428,19 +428,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Author not found" });
       }
 
-      // Get author's books
-      const books = await dbStorage.getBooksByAuthor(authorId);
+      // Get author's books with genres
+      const authorBooks = await db
+        .select()
+        .from(books)
+        .where(eq(books.authorId, authorId));
 
-      // Get follower count
-      const followerCount = await dbStorage.getFollowerCount(authorId);
-
-      // Get genre distribution - fix the SQL syntax error here
-      const bookResults = await db.query.books.findMany({
-        where: eq(books.authorId, authorId)
-      });
-
+      // Calculate genre distribution
       const genreCounts: { [key: string]: number } = {};
-      bookResults.forEach(book => {
+      authorBooks.forEach(book => {
         if (Array.isArray(book.genres)) {
           book.genres.forEach(genre => {
             genreCounts[genre] = (genreCounts[genre] || 0) + 1;
@@ -448,19 +444,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      const genres = Object.entries(genreCounts).map(([genre, count]) => ({ 
-        genre, 
-        count 
+      const genres = Object.entries(genreCounts).map(([genre, count]) => ({
+        genre,
+        count
       }));
 
-      // Get aggregate ratings
-      const authorRatings = await db.query.ratings.findMany({
-        where: inArray(
-          ratings.bookId,
-          books.map(b => b.id)
-        )
-      });
+      // Get follower count
+      const followerCount = await dbStorage.getFollowerCount(authorId);
 
+      // Get ratings for all author's books
+      const bookIds = authorBooks.map(book => book.id);
+      const authorRatings = await db
+        .select()
+        .from(ratings)
+        .where(inArray(ratings.bookId, bookIds));
+
+      // Calculate aggregate ratings
       const aggregateRatings = authorRatings.length > 0 ? {
         enjoyment: authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) / authorRatings.length,
         writing: authorRatings.reduce((acc, r) => acc + r.writing, 0) / authorRatings.length,
@@ -479,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deathDate: author.deathDate,
         website: author.website,
         socialMediaLinks: author.socialMediaLinks,
-        books,
+        books: authorBooks,
         followerCount,
         genres,
         aggregateRatings
