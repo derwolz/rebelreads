@@ -417,8 +417,3 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
-
-function calculateWeightedRating(rating) {
-  // Implement weighted rating logic here if needed.  For now, a simple sum.
-  return rating.enjoyment + rating.writing + rating.themes + rating.characters + rating.worldbuilding;
-}
