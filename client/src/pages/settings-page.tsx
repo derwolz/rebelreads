@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Book, UpdateProfile, ReferralLink, updateProfileSchema } from "@shared/schema";
@@ -59,6 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AppearanceSettings } from "@/components/appearance-settings";
+import { cn } from "@/lib/utils";
 
 interface SortableReferralLinkProps {
   link: ReferralLink;
@@ -117,6 +118,39 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
   const [location] = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      touchEndX = e.touches[0].clientX;
+      const deltaX = touchEndX - touchStartX;
+
+      // Only open sidebar if swipe starts from right edge
+      if (touchStartX > window.innerWidth - 30 && deltaX < -50) {
+        setIsSidebarOpen(true);
+      }
+      // Close sidebar if swipe starts from left side of screen
+      else if (touchStartX < window.innerWidth / 2 && deltaX > 50) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -263,17 +297,10 @@ export default function SettingsPage() {
     updateProfileMutation.mutate(data);
   }
 
-  let content;
-  if (location === "/settings/account") {
-    content = (
+  const AccountSettings = () => {
+    return (
       <Card>
-        <CardHeader>
-          <CardTitle>Account Settings</CardTitle>
-          <CardDescription>
-            Manage your account credentials
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="pt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -374,6 +401,14 @@ export default function SettingsPage() {
           </Form>
         </CardContent>
       </Card>
+    );
+  };
+
+
+  let content;
+  if (location === "/settings/account") {
+    content = (
+      <AccountSettings />
     );
   } else if (location === "/settings/appearance") {
     content = <AppearanceSettings />;
@@ -546,12 +581,37 @@ export default function SettingsPage() {
     <div>
       <MainNav />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-8">Settings</h1>
         <div className="flex gap-8">
-          <SettingsSidebar />
-          <div className="flex-1">
+          {/* Desktop Sidebar */}
+          <div className="hidden md:block">
+            <SettingsSidebar />
+          </div>
+
+          {/* Mobile Swipeable Sidebar */}
+          <div
+            className={cn(
+              "fixed inset-y-0 right-0 w-64 bg-background border-l transform transition-transform duration-200 ease-in-out z-50 md:hidden",
+              isSidebarOpen ? "translate-x-0" : "translate-x-full"
+            )}
+          >
+            <div className="h-full overflow-y-auto pt-20 px-4">
+              <SettingsSidebar />
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
             {content}
           </div>
+
+          {/* Overlay */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/20 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
         </div>
       </main>
     </div>
