@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Rating, calculateWeightedRating } from "@shared/schema";
 import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { SocialMediaLinks } from "./social-media-links";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 
@@ -34,9 +32,6 @@ export function ReviewCard({ review }: ReviewCardProps) {
             </div>
           </div>
         </div>
-        {review.user?.socialMediaLinks && review.user.socialMediaLinks.length > 0 && (
-          <SocialMediaLinks links={review.user.socialMediaLinks} className="ml-auto" />
-        )}
       </div>
 
       {review.review && (
