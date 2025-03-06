@@ -58,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface SortableReferralLinkProps {
   link: ReferralLink;
@@ -263,7 +264,29 @@ export default function SettingsPage() {
   }
 
   let content;
-  if (location === "/settings/account") {
+  if (location === "/settings") {
+    content = (
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>
+            Customize how the application looks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-1">
+              <p className="font-medium">Theme</p>
+              <p className="text-sm text-muted-foreground">
+                Select your preferred theme or sync with your system
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  } else if (location === "/settings/account") {
     content = (
       <Card>
         <CardHeader>
