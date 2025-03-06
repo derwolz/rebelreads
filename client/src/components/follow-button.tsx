@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { Heart, HeartOff } from "lucide-react";
 
 interface FollowButtonProps {
@@ -21,6 +21,7 @@ export function FollowButton({
 }: FollowButtonProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: followStatus } = useQuery({
     queryKey: [`/api/authors/${authorId}/following`],
@@ -41,10 +42,17 @@ export function FollowButton({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}/following`] });
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}`] });
-      toast.success(`Author ${authorName} followed successfully`);
+      toast({
+        title: "Success",
+        description: `Author ${authorName} followed successfully`
+      });
     },
     onError: () => {
-      toast.error("Failed to follow author");
+      toast({
+        title: "Error",
+        description: "Failed to follow author",
+        variant: "destructive"
+      });
     },
   });
 
@@ -62,10 +70,17 @@ export function FollowButton({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}/following`] });
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}`] });
-      toast.success(`Author ${authorName} unfollowed successfully`);
+      toast({
+        title: "Success",
+        description: `Author ${authorName} unfollowed successfully`
+      });
     },
     onError: () => {
-      toast.error("Failed to unfollow author");
+      toast({
+        title: "Error",
+        description: "Failed to unfollow author",
+        variant: "destructive"
+      });
     },
   });
 
