@@ -2,7 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { MainNav } from "@/components/main-nav";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  ComposedChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,7 +107,7 @@ export default function ProDashboard() {
   // Transform performance data for the chart
   const chartData = performanceData?.reduce((acc: any[], book) => {
     const dates = new Set(
-      Object.values(book.metrics).flatMap(metric => 
+      Object.values(book.metrics).flatMap(metric =>
         metric?.map(entry => entry.date) || []
       )
     );
@@ -104,29 +116,29 @@ export default function ProDashboard() {
       const existingDate = acc.find(d => d.date === date);
       if (existingDate) {
         if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
-          existingDate[`${book.title}_impressions`] = 
+          existingDate[`${book.title}_impressions`] =
             book.metrics.impressions.find(i => i.date === date)?.count || 0;
         }
         if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
-          existingDate[`${book.title}_clicks`] = 
+          existingDate[`${book.title}_clicks`] =
             book.metrics.clicks.find(c => c.date === date)?.count || 0;
         }
         if (book.metrics.referrals && selectedMetrics.includes('referrals')) {
-          existingDate[`${book.title}_referrals`] = 
+          existingDate[`${book.title}_referrals`] =
             book.metrics.referrals.find(r => r.date === date)?.count || 0;
         }
       } else {
         const newEntry: any = { date };
         if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
-          newEntry[`${book.title}_impressions`] = 
+          newEntry[`${book.title}_impressions`] =
             book.metrics.impressions.find(i => i.date === date)?.count || 0;
         }
         if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
-          newEntry[`${book.title}_clicks`] = 
+          newEntry[`${book.title}_clicks`] =
             book.metrics.clicks.find(c => c.date === date)?.count || 0;
         }
         if (book.metrics.referrals && selectedMetrics.includes('referrals')) {
-          newEntry[`${book.title}_referrals`] = 
+          newEntry[`${book.title}_referrals`] =
             book.metrics.referrals.find(r => r.date === date)?.count || 0;
         }
         acc.push(newEntry);
@@ -266,8 +278,8 @@ export default function ProDashboard() {
                     if (!book) return null;
 
                     return selectedMetrics.map(metric => {
-                      const strokeStyle = metric === 'referrals' ? "5 5" 
-                        : metric === 'impressions' ? "3 3" 
+                      const strokeStyle = metric === 'referrals' ? "5 5"
+                        : metric === 'impressions' ? "3 3"
                         : undefined;
 
                       return (
@@ -289,41 +301,40 @@ export default function ProDashboard() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Follower Growth Analytics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={followerChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="New Followers"
-                    stroke="hsl(145, 70%, 50%)"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Lost Followers"
-                    stroke="hsl(0, 70%, 50%)"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Net Change"
-                    stroke="hsl(200, 70%, 50%)"
-                    strokeDasharray="5 5"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+            <CardHeader>
+              <CardTitle>Follower Growth Analytics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={followerChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="New Followers"
+                      fill="hsl(145, 70%, 50%)"
+                      stackId="stack"
+                    />
+                    <Bar
+                      dataKey="Lost Followers"
+                      fill="hsl(0, 70%, 50%)"
+                      stackId="stack"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Net Change"
+                      stroke="hsl(200, 70%, 50%)"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(200, 70%, 50%)" }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
       </div>
     );
   };
