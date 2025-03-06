@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/carousel";
 import type { Book, User } from "@shared/schema";
 import { format } from 'date-fns';
+import { SocialMediaLinks } from "@/components/social-media-links";
 
 interface AuthorDetails extends User {
   books: Book[];
@@ -33,6 +34,7 @@ interface AuthorDetails extends User {
     characters: number;
     worldbuilding: number;
   };
+  socialMediaLinks?: { platform: string; url: string }[];
 }
 
 export default function AuthorPage() {
@@ -66,26 +68,34 @@ export default function AuthorPage() {
                 <span>•</span>
                 <span>{author.books.length} books</span>
                 {author.birthDate && (
-                  <div className="text-sm text-muted-foreground mt-2">
-                    Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
-                    {author.deathDate && (
-                      <>
-                        {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
-                      </>
-                    )}
-                  </div>
-                )}
-                {author.website && (
-                  <a
-                    href={author.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline mt-2 inline-block"
-                  >
-                    Visit Website
-                  </a>
+                  <>
+                    <span>•</span>
+                    <span className="text-sm">
+                      Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
+                      {author.deathDate && (
+                        <>
+                          {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
+                        </>
+                      )}
+                    </span>
+                  </>
                 )}
               </div>
+              {author.website && (
+                <a
+                  href={author.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline mt-2 inline-block"
+                >
+                  Visit Website
+                </a>
+              )}
+              {author.socialMediaLinks && author.socialMediaLinks.length > 0 && (
+                <div className="mt-4">
+                  <SocialMediaLinks links={author.socialMediaLinks} />
+                </div>
+              )}
             </div>
             <FollowButton
               authorId={author.id}

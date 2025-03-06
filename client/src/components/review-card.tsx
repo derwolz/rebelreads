@@ -3,6 +3,9 @@ import { Rating, calculateWeightedRating } from "@shared/schema";
 import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SocialMediaLinks } from "./social-media-links";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { format } from "date-fns";
 
 interface ReviewCardProps {
   review: Rating;
@@ -16,15 +19,28 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
   return (
     <div className="p-4 bg-muted rounded-lg space-y-2 cursor-pointer w-full" onClick={() => setIsOpen(!isOpen)}>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
-          <span className="text-sm text-muted-foreground">Overall Rating</span>
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={review.user?.profileImageUrl} alt={review.user?.username} />
+            <AvatarFallback>{review.user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
+              <span>•</span>
+              <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
+            </div>
+          </div>
         </div>
+        {review.user?.socialMediaLinks && review.user.socialMediaLinks.length > 0 && (
+          <SocialMediaLinks links={review.user.socialMediaLinks} className="ml-auto" />
+        )}
       </div>
 
       {review.review && (
-        <div className="text-sm">
+        <div className="text-sm mt-3">
           <p className={`break-words ${!isOpen && hasLongReview ? "line-clamp-3" : undefined}`}>
             {review.review}
           </p>

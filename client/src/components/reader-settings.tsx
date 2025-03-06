@@ -189,7 +189,7 @@ export function ReaderSettings() {
                 Please fix the highlighted errors below before submitting.
               </AlertDescription>
             </Alert>
-          )
+          )}
           <FormField
             control={form.control}
             name="displayName"
