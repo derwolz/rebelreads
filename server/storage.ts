@@ -154,7 +154,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRatings(bookId: number): Promise<Rating[]> {
-    return await db.select().from(ratings).where(eq(ratings.bookId, bookId));
+    // Only select the columns that we know exist in the ratings table
+    return await db
+      .select({
+        id: ratings.id,
+        userId: ratings.userId,
+        bookId: ratings.bookId,
+        enjoyment: ratings.enjoyment,
+        writing: ratings.writing,
+        themes: ratings.themes,
+        characters: ratings.characters,
+        worldbuilding: ratings.worldbuilding,
+        review: ratings.review,
+        analysis: ratings.analysis,
+        createdAt: ratings.createdAt,
+        featured: ratings.featured
+      })
+      .from(ratings)
+      .where(eq(ratings.bookId, bookId));
   }
 
   async createRating(rating: Omit<Rating, "id">): Promise<Rating> {
