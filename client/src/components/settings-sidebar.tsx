@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { User, Settings, BookOpen } from "lucide-react";
+import { User, Settings, BookOpen, Monitor } from "lucide-react";
 
 interface NavItemProps {
   href: string;
@@ -44,6 +44,13 @@ export function SettingsSidebar() {
         icon={<Settings className="h-4 w-4" />}
       >
         Account
+      </NavItem>
+      <NavItem
+        href="/settings/appearance"
+        active={location === "/settings/appearance"}
+        icon={<Monitor className="h-4 w-4" />}
+      >
+        Appearance
       </NavItem>
       {user?.isAuthor && (
         <NavItem

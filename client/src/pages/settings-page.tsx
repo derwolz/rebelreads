@@ -58,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AppearanceSettings } from "@/components/appearance-settings";
 
 interface SortableReferralLinkProps {
   link: ReferralLink;
@@ -374,6 +375,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     );
+  } else if (location === "/settings/appearance") {
+    content = <AppearanceSettings />;
   } else if (location === "/settings/author" && user?.isAuthor) {
     content = (
       <Card>
