@@ -1,92 +1,104 @@
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
-import { Search, Settings } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { AVAILABLE_GENRES } from "@shared/schema";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "./ui/button";
+import { useNavigate } from "@tanstack/react-router";
 
-interface MainNavProps {
-  onSearch?: (query: string, type: string) => void;
-}
-
-export function MainNav({ onSearch }: MainNavProps) {
-  const { user, logoutMutation } = useAuth();
+export function MainNav() {
+  const { user, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
-    <nav className="border-b">
-      <div className="container mx-auto px-4 flex items-center justify-between h-16">
-        <div className="flex items-center gap-8">
-          <Link href="/">
-            <h1 className="text-2xl font-bold text-primary">BookNook</h1>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-2 relative w-96">
-            <Select
-              defaultValue="title"
-              onValueChange={(value) => onSearch?.("", value)}
+    <header className="border-b">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <a href="/" className="font-bold text-xl flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mr-2"
             >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Search by..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="author">Author</SelectItem>
-                <SelectItem value="genre">Genre</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search books..."
-                className="pl-9"
-                onChange={(e) => onSearch?.(e.target.value, "title")}
-              />
-            </div>
-          </div>
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+              <path d="M8 7h6" />
+              <path d="M8 11h8" />
+              <path d="M8 15h6" />
+            </svg>
+            Booktopia
+          </a>
+          <nav className="hidden md:flex items-center space-x-6">
+            <a
+              href="/"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Home
+            </a>
+            <a
+              href="/books"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Books
+            </a>
+            <a
+              href="/genres"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Genres
+            </a>
+          </nav>
         </div>
-
-        <div className="flex items-center gap-4">
-          {user ? (
+        <div className="flex items-center space-x-4">
+          {isLoading ? (
+            <div className="h-9 w-20 bg-muted rounded animate-pulse"></div>
+          ) : user ? (
             <>
-              <Link href="/settings">
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.profileImageUrl || undefined} alt={user.username} />
-                  <AvatarFallback>👤</AvatarFallback>
-                </Avatar>
-                <Link href="/dashboard">
-                  <span className="text-sm text-muted-foreground hover:underline">
-                    {user.username}
-                  </span>
-                </Link>
-              </div>
               <Button
                 variant="ghost"
-                onClick={() => logoutMutation.mutate()}
+                onClick={() => navigate({ to: "/dashboard" })}
               >
+                Dashboard
+              </Button>
+              {user.isAuthor && (
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate({ to: "/pro" })}
+                  className="text-primary"
+                >
+                  Pro Dashboard
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => navigate({ to: "/settings" })}
+              >
+                Settings
+              </Button>
+              <Button variant="outline" onClick={logout}>
                 Logout
               </Button>
             </>
           ) : (
-            <Link href="/auth">
-              <Button>Login</Button>
-            </Link>
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => navigate({ to: "/login" })}
+              >
+                Login
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => navigate({ to: "/register" })}
+              >
+                Register
+              </Button>
+            </>
           )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 }
