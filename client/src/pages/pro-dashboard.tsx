@@ -11,6 +11,7 @@ import { ProAuthorSettings } from "@/components/pro-author-settings";
 import { useState, useEffect } from "react";
 import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
+import { ReviewBoostWizard } from "@/components/review-boost-wizard";
 
 interface BookInterest {
   date: string;
@@ -22,6 +23,7 @@ interface ProDashboardData {
   totalReviews: number;
   averageRating: number;
   recentReports: number;
+  books: any[]; // Added to handle books prop in ReviewBoostWizard
 }
 
 export default function ProDashboard() {
@@ -29,6 +31,7 @@ export default function ProDashboard() {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [startX, setStartX] = useState(0);
+  const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -119,6 +122,23 @@ export default function ProDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
+                <CardTitle>Review Boost</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Get more reviews for your books through our AI-powered reader matching program.
+                </p>
+                <Button
+                  className="w-full"
+                  onClick={() => setIsReviewBoostOpen(true)}
+                >
+                  Boost Reviews
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Create Survey</CardTitle>
               </CardHeader>
               <CardContent>
@@ -143,6 +163,13 @@ export default function ProDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Review Boost Wizard */}
+          <ReviewBoostWizard
+            open={isReviewBoostOpen}
+            onClose={() => setIsReviewBoostOpen(false)}
+            books={dashboardData?.books || []}
+          />
         </div>
       );
     }
