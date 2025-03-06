@@ -14,6 +14,7 @@ import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
 import { timingSafeEqual } from "crypto";
+import {format} from 'date-fns';
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -506,6 +507,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching genres:", error);
       res.status(500).json({ error: "Failed to fetch genres" });
+    }
+  });
+
+  // Add near the other API endpoints
+  app.get("/api/pro/dashboard", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const authorId = req.user!.id;
+
+      // Get author's books
+      const books = await dbStorage.getBooksByAuthor(authorId);
+
+      // Get all ratings for author's books
+      const bookIds = books.map(book => book.id);
+      const allRatings = await db
+        .select()
+        .from(ratings)
+        .where(inArray(ratings.bookId, bookIds));
+
+      // Calculate average rating
+      const averageRating = allRatings.length > 0
+        ? allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / allRatings.length
+        : 0;
+
+      // Generate sample interest data (In a real app, this would come from actual view/interaction tracking)
+      const today = new Date();
+      const bookInterest = Array.from({ length: 30 }, (_, i) => {
+        const date = new Date(today);
+        date.setDate(date.getDate() - (29 - i));
+        return {
+          date: format(date, 'MMM dd'),
+          ...Object.fromEntries(
+            books.map(book => [
+              book.title,
+              // Random number between 50-200 with some trending
+              Math.floor(100 + Math.random() * 100 + (i / 2))
+            ])
+          )
+        };
+      });
+
+      res.json({
+        bookInterest,
+        totalReviews: allRatings.length,
+        averageRating,
+        recentReports: 0, // Placeholder for review reports feature
+      });
+    } catch (error) {
+      console.error("Error fetching pro dashboard data:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
 

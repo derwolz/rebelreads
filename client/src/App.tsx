@@ -11,6 +11,7 @@ import BookDetails from "@/pages/book-details";
 import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
 import DashboardPage from "@/pages/dashboard-page";
+import ProDashboard from "@/pages/pro-dashboard";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
@@ -23,6 +24,10 @@ function Router() {
       <ProtectedRoute path="/settings/author" component={SettingsPage} />
       <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      <ProtectedRoute path="/pro" component={ProDashboard} />
+      <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
+      <ProtectedRoute path="/pro/reports" component={ProDashboard} />
+      <ProtectedRoute path="/pro/settings" component={ProDashboard} />
       <Route path="/authors/:id" component={AuthorPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
