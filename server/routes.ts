@@ -14,14 +14,14 @@ import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
 import { timingSafeEqual } from "crypto";
-import {format} from 'date-fns';
+import { format } from "date-fns";
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
 const coversDir = path.join(uploadsDir, "covers");
 const profilesDir = path.join(uploadsDir, "profiles");
 
-[uploadsDir, coversDir, profilesDir].forEach(dir => {
+[uploadsDir, coversDir, profilesDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -29,9 +29,10 @@ const profilesDir = path.join(uploadsDir, "profiles");
 
 // Configure multer for file uploads
 const fileStorage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     // Choose directory based on upload type
-    const uploadDir = file.fieldname === 'profileImage' ? profilesDir : coversDir;
+    const uploadDir =
+      file.fieldname === "profileImage" ? profilesDir : coversDir;
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -134,7 +135,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   app.get("/api/my-books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const books = await dbStorage.getBooksByAuthor(req.user!.id);
@@ -213,11 +213,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const { currentPassword, newPassword, confirmPassword, ...updateData } = req.body;
+    const { currentPassword, newPassword, confirmPassword, ...updateData } =
+      req.body;
 
     // If updating username, check if it's taken
     if (updateData.username) {
-      const existingUser = await dbStorage.getUserByUsername(updateData.username);
+      const existingUser = await dbStorage.getUserByUsername(
+        updateData.username,
+      );
       if (existingUser && existingUser.id !== req.user!.id) {
         return res.status(400).send("Username already taken");
       }
@@ -238,10 +241,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify current password
       const scryptAsync = promisify(scrypt);
       const [salt, hash] = user!.password!.split(":");
-      const hashBuffer = await scryptAsync(currentPassword, salt, 64) as Buffer;
+      const hashBuffer = (await scryptAsync(
+        currentPassword,
+        salt,
+        64,
+      )) as Buffer;
       const passwordValid = timingSafeEqual(
         Buffer.from(hash, "hex"),
-        hashBuffer
+        hashBuffer,
       );
 
       if (!passwordValid) {
@@ -250,7 +257,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate new password hash
       const newSalt = randomBytes(16).toString("hex");
-      const newHashBuffer = await scryptAsync(newPassword, newSalt, 64) as Buffer;
+      const newHashBuffer = (await scryptAsync(
+        newPassword,
+        newSalt,
+        64,
+      )) as Buffer;
       const newHashedPassword = `${newSalt}:${newHashBuffer.toString("hex")}`;
 
       updateData.password = newHashedPassword;
@@ -316,50 +327,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ratings,
         followingCount,
         followerCount,
-        user
+        user,
       ] = await Promise.all([
         dbStorage.getWishlistedBooks(userId),
         dbStorage.getCompletedBooks(userId),
         dbStorage.getUserRatings(userId),
         dbStorage.getFollowingCount(userId),
         dbStorage.getFollowerCount(userId),
-        dbStorage.getUser(userId)
+        dbStorage.getUser(userId),
       ]);
 
       // Calculate reading stats
       const readingStats = {
         wishlisted: wishlistedBooks.length,
-        completed: completedBooks.length
+        completed: completedBooks.length,
       };
 
       // Calculate average ratings using the proper weighted calculation
-      const averageRatings = ratings.length > 0 ? {
-        enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-        writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
-        themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-        characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-        worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
-        // Calculate overall score using weights
-        overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length
-      } : null;
+      const averageRatings =
+        ratings.length > 0
+          ? {
+              enjoyment:
+                ratings.reduce((acc, r) => acc + r.enjoyment, 0) /
+                ratings.length,
+              writing:
+                ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+              themes:
+                ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
+              characters:
+                ratings.reduce((acc, r) => acc + r.characters, 0) /
+                ratings.length,
+              worldbuilding:
+                ratings.reduce((acc, r) => acc + r.worldbuilding, 0) /
+                ratings.length,
+              // Calculate overall score using weights
+              overall:
+                ratings.reduce(
+                  (acc, r) => acc + calculateWeightedRating(r),
+                  0,
+                ) / ratings.length,
+            }
+          : null;
 
       res.json({
         user: {
           ...user,
           followingCount,
-          followerCount
+          followerCount,
         },
         readingStats,
         averageRatings,
         recentReviews: ratings.slice(0, 5),
-        recommendations: [] // This will be implemented later with actual recommendations
+        recommendations: [], // This will be implemented later with actual recommendations
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
-
 
   app.post("/api/authors/:id/follow", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -398,22 +423,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add the profile image upload endpoint
-  app.post("/api/user/profile-image", upload.single("profileImage"), async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    if (!req.file) return res.status(400).json({ message: "No image file provided" });
+  app.post(
+    "/api/user/profile-image",
+    upload.single("profileImage"),
+    async (req, res) => {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (!req.file)
+        return res.status(400).json({ message: "No image file provided" });
 
-    const imageUrl = `/uploads/profiles/${req.file.filename}`;
+      const imageUrl = `/uploads/profiles/${req.file.filename}`;
 
-    try {
-      await dbStorage.updateUser(req.user!.id, {
-        profileImageUrl: imageUrl,
-      });
-      res.json({ profileImageUrl: imageUrl });
-    } catch (error) {
-      console.error("Error updating profile image:", error);
-      res.status(500).json({ message: "Failed to update profile image" });
-    }
-  });
+      try {
+        await dbStorage.updateUser(req.user!.id, {
+          profileImageUrl: imageUrl,
+        });
+        res.json({ profileImageUrl: imageUrl });
+      } catch (error) {
+        console.error("Error updating profile image:", error);
+        res.status(500).json({ message: "Failed to update profile image" });
+      }
+    },
+  );
 
   // Add author endpoint
   app.get("/api/authors/:id", async (req, res) => {
@@ -437,9 +467,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate genre distribution
       const genreCounts: { [key: string]: number } = {};
-      authorBooks.forEach(book => {
+      authorBooks.forEach((book) => {
         if (Array.isArray(book.genres)) {
-          book.genres.forEach(genre => {
+          book.genres.forEach((genre) => {
             genreCounts[genre] = (genreCounts[genre] || 0) + 1;
           });
         }
@@ -447,28 +477,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const genres = Object.entries(genreCounts).map(([genre, count]) => ({
         genre,
-        count
+        count,
       }));
 
       // Get follower count
       const followerCount = await dbStorage.getFollowerCount(authorId);
 
       // Get ratings for all author's books
-      const bookIds = authorBooks.map(book => book.id);
+      const bookIds = authorBooks.map((book) => book.id);
       const authorRatings = await db
         .select()
         .from(ratings)
         .where(inArray(ratings.bookId, bookIds));
 
       // Calculate aggregate ratings
-      const aggregateRatings = authorRatings.length > 0 ? {
-        enjoyment: authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) / authorRatings.length,
-        writing: authorRatings.reduce((acc, r) => acc + r.writing, 0) / authorRatings.length,
-        themes: authorRatings.reduce((acc, r) => acc + r.themes, 0) / authorRatings.length,
-        characters: authorRatings.reduce((acc, r) => acc + r.characters, 0) / authorRatings.length,
-        worldbuilding: authorRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / authorRatings.length,
-        overall: authorRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / authorRatings.length
-      } : undefined;
+      const aggregateRatings =
+        authorRatings.length > 0
+          ? {
+              enjoyment:
+                authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) /
+                authorRatings.length,
+              writing:
+                authorRatings.reduce((acc, r) => acc + r.writing, 0) /
+                authorRatings.length,
+              themes:
+                authorRatings.reduce((acc, r) => acc + r.themes, 0) /
+                authorRatings.length,
+              characters:
+                authorRatings.reduce((acc, r) => acc + r.characters, 0) /
+                authorRatings.length,
+              worldbuilding:
+                authorRatings.reduce((acc, r) => acc + r.worldbuilding, 0) /
+                authorRatings.length,
+              overall:
+                authorRatings.reduce(
+                  (acc, r) => acc + calculateWeightedRating(r),
+                  0,
+                ) / authorRatings.length,
+            }
+          : undefined;
 
       res.json({
         id: author.id,
@@ -482,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         books: authorBooks,
         followerCount,
         genres,
-        aggregateRatings
+        aggregateRatings,
       });
     } catch (error) {
       console.error("Error fetching author details:", error);
@@ -494,14 +541,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/genres", async (_req, res) => {
     try {
       // Get all unique genres from existing books
-      const result = await db
-        .select({ genres: books.genres })
-        .from(books);
+      const result = await db.select({ genres: books.genres }).from(books);
 
       // Flatten and deduplicate genres
-      const uniqueGenres = Array.from(new Set(
-        result.flatMap(r => r.genres || [])
-      )).sort();
+      const uniqueGenres = Array.from(
+        new Set(result.flatMap((r) => r.genres || [])),
+      ).sort();
 
       res.json(uniqueGenres);
     } catch (error) {
@@ -523,16 +568,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const books = await dbStorage.getBooksByAuthor(authorId);
 
       // Get all ratings for author's books
-      const bookIds = books.map(book => book.id);
+      const bookIds = books.map((book) => book.id);
       const allRatings = await db
         .select()
         .from(ratings)
         .where(inArray(ratings.bookId, bookIds));
 
       // Calculate average rating
-      const averageRating = allRatings.length > 0
-        ? allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / allRatings.length
-        : 0;
+      const averageRating =
+        allRatings.length > 0
+          ? allRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) /
+            allRatings.length
+          : 0;
 
       // Generate sample interest data (In a real app, this would come from actual view/interaction tracking)
       const today = new Date();
@@ -540,14 +587,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const date = new Date(today);
         date.setDate(date.getDate() - (29 - i));
         return {
-          date: format(date, 'MMM dd'),
+          date: format(date, "MMM dd"),
           ...Object.fromEntries(
-            books.map(book => [
+            books.map((book) => [
               book.title,
               // Random number between 50-200 with some trending
-              Math.floor(100 + Math.random() * 100 + (i / 2))
-            ])
-          )
+              Math.floor(100 + Math.random() * 100 + i / 2),
+            ]),
+          ),
         };
       });
 
@@ -576,14 +623,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all books by the author
       const authorBooks = await dbStorage.getBooksByAuthor(req.user!.id);
-      const bookIds = authorBooks.map(book => book.id);
+      const bookIds = authorBooks.map((book) => book.id);
 
       // Get paginated reviews for author's books
       const reviews = await db
         .select({
           review: ratings,
           user: users,
-          replies: replies
+          replies: replies,
         })
         .from(ratings)
         .where(inArray(ratings.bookId, bookIds))
@@ -603,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Group replies with their reviews
       const processedReviews = reviews.reduce((acc: any[], curr) => {
-        const existingReview = acc.find(r => r.id === curr.review.id);
+        const existingReview = acc.find((r) => r.id === curr.review.id);
         if (existingReview) {
           if (curr.replies) {
             existingReview.replies.push(curr.replies);
@@ -612,7 +659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           acc.push({
             ...curr.review,
             user: curr.user,
-            replies: curr.replies ? [curr.replies] : []
+            replies: curr.replies ? [curr.replies] : [],
           });
         }
         return acc;
@@ -620,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         reviews: processedReviews,
-        hasMore
+        hasMore,
       });
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -698,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .values({
           reviewId,
           authorId: req.user!.id,
-          content
+          content,
         })
         .returning();
 
@@ -745,6 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/search/books", async (req, res) => {
     try {
+      console.log("Searching for books...", req.query);
       const query = req.query.q as string;
 
       if (!query || query.length < 2) {
@@ -792,9 +840,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             users.isAuthor.equals(true),
             or(
               ilike(users.username, searchPattern),
-              ilike(users.authorName, searchPattern)
-            )
-          )
+              ilike(users.authorName, searchPattern),
+            ),
+          ),
         )
         .limit(10);
 
@@ -806,36 +854,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .from(books)
             .where(eq(books.authorId, author.id));
 
-          const bookIds = authorBooks.map(book => book.id);
-          const authorRatings = bookIds.length > 0 ? await db
-            .select()
-            .from(ratings)
-            .where(inArray(ratings.bookId, bookIds)) : [];
+          const bookIds = authorBooks.map((book) => book.id);
+          const authorRatings =
+            bookIds.length > 0
+              ? await db
+                  .select()
+                  .from(ratings)
+                  .where(inArray(ratings.bookId, bookIds))
+              : [];
 
           const followerCount = await dbStorage.getFollowerCount(author.id);
 
-          const aggregateRatings = authorRatings.length > 0 ? {
-            enjoyment: authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) / authorRatings.length,
-            writing: authorRatings.reduce((acc, r) => acc + r.writing, 0) / authorRatings.length,
-            themes: authorRatings.reduce((acc, r) => acc + r.themes, 0) / authorRatings.length,
-            characters: authorRatings.reduce((acc, r) => acc + r.characters, 0) / authorRatings.length,
-            worldbuilding: authorRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / authorRatings.length,
-            overall: authorRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / authorRatings.length
-          } : undefined;
+          const aggregateRatings =
+            authorRatings.length > 0
+              ? {
+                  enjoyment:
+                    authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) /
+                    authorRatings.length,
+                  writing:
+                    authorRatings.reduce((acc, r) => acc + r.writing, 0) /
+                    authorRatings.length,
+                  themes:
+                    authorRatings.reduce((acc, r) => acc + r.themes, 0) /
+                    authorRatings.length,
+                  characters:
+                    authorRatings.reduce((acc, r) => acc + r.characters, 0) /
+                    authorRatings.length,
+                  worldbuilding:
+                    authorRatings.reduce((acc, r) => acc + r.worldbuilding, 0) /
+                    authorRatings.length,
+                  overall:
+                    authorRatings.reduce(
+                      (acc, r) => acc + calculateWeightedRating(r),
+                      0,
+                    ) / authorRatings.length,
+                }
+              : undefined;
 
           return {
             ...author,
             books: authorBooks,
             followerCount,
-            aggregateRatings
+            aggregateRatings,
           };
-        })
+        }),
       );
 
       res.json({ authors: authorsWithDetails });
     } catch (error) {
       console.error("Author search error:", error);
       res.status(500).json({ error: "Failed to search authors" });
+    }
+  });
+
+  // Add these routes near the other search-related routes
+  app.get("/search/books", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      res.sendFile("index.html", { root: "./client" });
+    } catch (error) {
+      console.error("Error serving search page:", error);
+      res.status(500).json({ error: "Failed to serve search page" });
+    }
+  });
+
+  app.get("/search/authors", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      res.sendFile("index.html", { root: "./client" });
+    } catch (error) {
+      console.error("Error serving search page:", error);
+      res.status(500).json({ error: "Failed to serve search page" });
     }
   });
 
