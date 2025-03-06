@@ -1,4 +1,3 @@
-```typescript
 import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,7 +15,7 @@ interface GenreTagInputProps {
 export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputProps) {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const [availableGenres, setAvailableGenres] = useState<string[]>(AVAILABLE_GENRES);
+  const [availableGenres, setAvailableGenres] = useState<string[]>([...AVAILABLE_GENRES]);
 
   // Load existing genres from the server
   useEffect(() => {
@@ -138,4 +137,3 @@ export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputP
     </div>
   );
 }
-```

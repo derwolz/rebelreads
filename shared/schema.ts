@@ -38,7 +38,23 @@ export type ReferralLink = z.infer<typeof referralLinkSchema>;
 
 export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] as const;
 
-export const AVAILABLE_GENRES = ["fantasy", "science fiction", "mystery", "romance", "thriller"] as const;
+export const AVAILABLE_GENRES = [
+  "Fantasy",
+  "Science Fiction",
+  "Mystery",
+  "Romance",
+  "Thriller",
+  "Horror",
+  "Literary Fiction",
+  "Historical Fiction",
+  "Young Adult",
+  "Biography",
+  "Non-fiction",
+  "Poetry",
+  "Drama",
+  "Adventure",
+  "Crime"
+] as const;
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

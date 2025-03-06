@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
 import {DragDropCover} from "@/components/drag-drop-cover";
+import { GenreTagInput } from "@/components/genre-tag-input";
 import {
   Dialog,
   DialogContent,
