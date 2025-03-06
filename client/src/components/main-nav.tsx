@@ -1,8 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
-import { Search, Settings, Menu } from "lucide-react";
+import { Search, Settings, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Select,
   SelectContent,
@@ -19,13 +29,55 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { useState, useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Book } from "@shared/schema";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface MainNavProps {
   onSearch?: (query: string, type: string) => void;
 }
 
+type SearchFilter = "all" | "books" | "authors" | "genres";
+
 export function MainNav({ onSearch }: MainNavProps) {
   const { user, logoutMutation } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<SearchFilter>("all");
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  const { data: searchResults, isLoading } = useQuery<{
+    books: Book[];
+    authors: { id: number; name: string }[];
+    genres: string[];
+  }>({
+    queryKey: ["/api/search", debouncedSearch, activeFilter],
+    enabled: debouncedSearch.length > 1,
+  });
+
+  const handleFilterChange = (filter: SearchFilter) => {
+    setActiveFilter(filter);
+    onSearch?.(searchQuery, filter);
+  };
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen(open => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  const filters: { value: SearchFilter; label: string }[] = [
+    { value: "all", label: "All" },
+    { value: "books", label: "Books" },
+    { value: "authors", label: "Authors" },
+    { value: "genres", label: "Genres" },
+  ];
 
   return (
     <nav className="border-b">
@@ -35,29 +87,18 @@ export function MainNav({ onSearch }: MainNavProps) {
             <h1 className="text-2xl font-bold text-primary">BookNook</h1>
           </Link>
 
-          <div className="hidden md:flex items-center gap-2 relative w-96">
-            <Select
-              defaultValue="title"
-              onValueChange={(value) => onSearch?.("", value)}
+          <div className="hidden md:flex items-center gap-2 relative">
+            <Button
+              variant="outline"
+              className="relative w-96 justify-start text-sm text-muted-foreground"
+              onClick={() => setOpen(true)}
             >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Search by..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="author">Author</SelectItem>
-                <SelectItem value="genre">Genre</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search books..."
-                className="pl-9"
-                onChange={(e) => onSearch?.(e.target.value, "title")}
-              />
-            </div>
+              <Search className="mr-2 h-4 w-4" />
+              Search...
+              <kbd className="pointer-events-none absolute right-2 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
           </div>
         </div>
 
@@ -86,10 +127,7 @@ export function MainNav({ onSearch }: MainNavProps) {
                   </span>
                 </Link>
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => logoutMutation.mutate()}
-              >
+              <Button variant="ghost" onClick={() => logoutMutation.mutate()}>
                 Logout
               </Button>
             </>
@@ -113,30 +151,14 @@ export function MainNav({ onSearch }: MainNavProps) {
                 <DrawerTitle>Menu</DrawerTitle>
               </DrawerHeader>
               <div className="px-4 py-2 space-y-4">
-                <div className="flex items-center gap-2 relative w-full">
-                  <Select
-                    defaultValue="title"
-                    onValueChange={(value) => onSearch?.("", value)}
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Search by..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="title">Title</SelectItem>
-                      <SelectItem value="author">Author</SelectItem>
-                      <SelectItem value="genre">Genre</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      placeholder="Search books..."
-                      className="pl-9"
-                      onChange={(e) => onSearch?.(e.target.value, "title")}
-                    />
-                  </div>
-                </div>
+                <Button
+                  variant="outline"
+                  className="relative w-full justify-start text-sm text-muted-foreground"
+                  onClick={() => setOpen(true)}
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Search...
+                </Button>
                 {user ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 py-2">
@@ -183,6 +205,70 @@ export function MainNav({ onSearch }: MainNavProps) {
           </Drawer>
         </div>
       </div>
+
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2 p-2 border-b">
+          {filters.map((filter) => (
+            <Badge
+              key={filter.value}
+              variant={activeFilter === filter.value ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => handleFilterChange(filter.value)}
+            >
+              {filter.label}
+            </Badge>
+          ))}
+        </div>
+        <CommandInput
+          placeholder="Search books, authors, or genres..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          {searchResults?.books && activeFilter !== "authors" && activeFilter !== "genres" && (
+            <CommandGroup heading="Books">
+              {searchResults.books.slice(0, 5).map((book) => (
+                <CommandItem key={book.id} value={book.title}>
+                  <Link href={`/books/${book.id}`} className="flex items-center gap-2">
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      className="w-8 h-12 object-cover rounded"
+                    />
+                    <div>
+                      <div className="font-medium">{book.title}</div>
+                      <div className="text-sm text-muted-foreground">by {book.author}</div>
+                    </div>
+                  </Link>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {searchResults?.authors && activeFilter !== "books" && activeFilter !== "genres" && (
+            <CommandGroup heading="Authors">
+              {searchResults.authors.slice(0, 5).map((author) => (
+                <CommandItem key={author.id} value={author.name}>
+                  <Link href={`/authors/${author.id}`} className="flex items-center gap-2">
+                    {author.name}
+                  </Link>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {searchResults?.genres && activeFilter !== "books" && activeFilter !== "authors" && (
+            <CommandGroup heading="Genres">
+              {searchResults.genres.slice(0, 5).map((genre) => (
+                <CommandItem key={genre} value={genre}>
+                  <Link href={`/genres/${genre}`} className="flex items-center gap-2">
+                    {genre}
+                  </Link>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </CommandDialog>
     </nav>
   );
 }
