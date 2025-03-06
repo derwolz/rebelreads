@@ -748,7 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const query = req.query.q as string;
 
       if (!query || query.length < 2) {
-        return res.json([]);
+        return res.json({ books: [] });
       }
 
       const searchPattern = `%${query.toLowerCase()}%`;
@@ -756,13 +756,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const results = await db
         .select()
         .from(books)
-        .where(
-          or(
-            ilike(books.title, searchPattern),
-            ilike(books.description, searchPattern),
-            ilike(books.author, searchPattern)
-          )
-        )
+        .where(ilike(books.title, searchPattern))
         .limit(20);
 
       res.json({ books: results });
@@ -777,12 +771,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const query = req.query.q as string;
 
       if (!query || query.length < 2) {
-        return res.json([]);
+        return res.json({ authors: [] });
       }
 
       const searchPattern = `%${query.toLowerCase()}%`;
 
-      // Get matching authors
+      // Get matching authors by name
       const authors = await db
         .select({
           id: users.id,
@@ -798,8 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             users.isAuthor.equals(true),
             or(
               ilike(users.username, searchPattern),
-              ilike(users.authorName, searchPattern),
-              ilike(users.authorBio, searchPattern)
+              ilike(users.authorName, searchPattern)
             )
           )
         )
@@ -808,23 +801,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get books and aggregate ratings for each author
       const authorsWithDetails = await Promise.all(
         authors.map(async (author) => {
-          // Get author's books
           const authorBooks = await db
             .select()
             .from(books)
             .where(eq(books.authorId, author.id));
 
-          // Get ratings for all author's books
           const bookIds = authorBooks.map(book => book.id);
           const authorRatings = bookIds.length > 0 ? await db
             .select()
             .from(ratings)
             .where(inArray(ratings.bookId, bookIds)) : [];
 
-          // Calculate follower count
           const followerCount = await dbStorage.getFollowerCount(author.id);
 
-          // Calculate aggregate ratings
           const aggregateRatings = authorRatings.length > 0 ? {
             enjoyment: authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) / authorRatings.length,
             writing: authorRatings.reduce((acc, r) => acc + r.writing, 0) / authorRatings.length,
