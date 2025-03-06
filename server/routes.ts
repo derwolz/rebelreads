@@ -9,7 +9,7 @@ import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
 import { users, books, bookshelves, replies } from "@shared/schema"; // Added replies import
-import { eq, and, inArray, desc, sql } from "drizzle-orm";
+import { eq, and, inArray, desc, sql, ilike, or } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
@@ -740,6 +740,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error reporting review:", error);
       res.status(500).json({ error: "Failed to report review" });
+    }
+  });
+
+  app.get("/api/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      const filter = req.query.filter as string;
+
+      if (!query || query.length < 2) {
+        return res.json({
+          books: [],
+          authors: [],
+          genres: []
+        });
+      }
+
+      const searchPattern = `%${query.toLowerCase()}%`;
+
+      // Create promises for parallel execution
+      const searchPromises: Promise<any>[] = [];
+
+      // Only search books if filter is 'all' or 'books'
+      if (filter === 'all' || filter === 'books') {
+        searchPromises.push(
+          db.select()
+            .from(books)
+            .where(
+              or(
+                ilike(books.title, searchPattern),
+                ilike(books.description, searchPattern),
+                ilike(books.author, searchPattern)
+              )
+            )
+            .limit(5)
+        );
+      } else {
+        searchPromises.push(Promise.resolve([]));
+      }
+
+      // Only search authors if filter is 'all' or 'authors'
+      if (filter === 'all' || filter === 'authors') {
+        searchPromises.push(
+          db.select({
+            id: users.id,
+            name: sql<string>`COALESCE(${users.authorName}, ${users.username})`
+          })
+            .from(users)
+            .where(
+              and(
+                users.isAuthor.equals(true),
+                or(
+                  ilike(users.username, searchPattern),
+                  ilike(users.authorName, searchPattern)
+                )
+              )
+            )
+            .limit(5)
+        );
+      } else {
+        searchPromises.push(Promise.resolve([]));
+      }
+
+      // Only search genres if filter is 'all' or 'genres'
+      if (filter === 'all' || filter === 'genres') {
+        searchPromises.push(
+          db.select({ genres: books.genres })
+            .from(books)
+            .then(results => {
+              const allGenres = results.flatMap(r => r.genres || []);
+              const uniqueGenres = Array.from(new Set(allGenres))
+                .filter(genre =>
+                  genre.toLowerCase().includes(query.toLowerCase())
+                )
+                .sort()
+                .slice(0, 5);
+              return uniqueGenres;
+            })
+        );
+      } else {
+        searchPromises.push(Promise.resolve([]));
+      }
+
+      // Execute all searches in parallel
+      const [books_results, authors_results, genres_results] = await Promise.all(searchPromises);
+
+      res.json({
+        books: books_results,
+        authors: authors_results,
+        genres: genres_results
+      });
+    } catch (error) {
+      console.error("Search error:", error);
+      res.status(500).json({ error: "Failed to perform search" });
     }
   });
 
