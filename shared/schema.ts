@@ -169,9 +169,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   newsletterOptIn: true,
+  isAuthor: true, // Add isAuthor to the schema
 }).extend({
   email: z.string().email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  isAuthor: z.boolean().default(false),
 });
 
 export const updateProfileSchema = createInsertSchema(users).pick({
