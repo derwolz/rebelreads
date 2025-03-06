@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Book, UpdateProfile, SOCIAL_MEDIA_PLATFORMS, SocialMediaLink } from "@shared/schema";
+import { Book, UpdateProfile, ReferralLink } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { SettingsSidebar } from "@/components/settings-sidebar";
 import { useLocation } from "wouter";
@@ -20,7 +20,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -30,7 +29,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, PlusCircle, Trash2, Link as LinkIcon } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -61,30 +60,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-interface ReferralLink {
-  retailer: string;
-  url: string;
-  customName?: string;
-}
-
-const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"];
-
-interface SortableReferralLinkProps {
-  link: ReferralLink;
-  index: number;
-  onChange: (value: string) => void;
-  onRemove: () => void;
-}
-
-function SortableReferralLink({ link, index, onChange, onRemove }: SortableReferralLinkProps) {
+function SortableReferralLink({ link, index, onChange, onRemove }) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: `${link.retailer}-${index}` });
+  } = useSortable({ id: index });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -134,13 +117,10 @@ export default function SettingsPage() {
       username: user?.username || "",
       displayName: user?.displayName || "",
       bio: user?.bio || "",
-      socialMediaLinks: user?.socialMediaLinks || [],
       favoriteGenres: user?.favoriteGenres || [],
-      authorBio: user?.authorBio || "",
-      authorName: user?.authorName || "",
-      birthDate: user?.birthDate || null,
-      deathDate: user?.deathDate || null,
-      website: user?.website || ""
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
     },
   });
 
@@ -228,7 +208,7 @@ export default function SettingsPage() {
   });
 
   const updateBookMutation = useMutation({
-    mutationFn: async (data: { id: number; referralLinks: ReferralLink[] | undefined }) => {
+    mutationFn: async (data: { id: number; referralLinks: ReferralLink[] }) => {
       const res = await apiRequest("PATCH", `/api/books/${data.id}`, { referralLinks: data.referralLinks });
       return res.json();
     },
@@ -271,8 +251,7 @@ export default function SettingsPage() {
     })
   );
 
-
-  const onSubmit = (data:UpdateProfile) => {
+  const onSubmit = (data: UpdateProfile) => {
     updateProfileMutation.mutate(data);
   }
 
@@ -283,7 +262,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Account Settings</CardTitle>
           <CardDescription>
-            Manage your account credentials and social media links
+            Manage your account credentials
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -322,130 +301,6 @@ export default function SettingsPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} />
-                    </FormControl>
-                    <FormDescription>
-                      The name displayed publicly
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} value={field.value || ''} />
-                    </FormControl>
-                    <FormDescription>
-                      A short description about yourself
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-lg font-medium mb-4">Social Media Links</h3>
-                <div className="space-y-4">
-                  {form.watch("socialMediaLinks")?.map((link, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Select
-                        value={link.platform}
-                        onValueChange={(value) => {
-                          const newLinks = [...(form.getValues("socialMediaLinks") || [])];
-                          newLinks[index] = {
-                            ...newLinks[index],
-                            platform: value as typeof SOCIAL_MEDIA_PLATFORMS[number],
-                            customName: value === "Custom" ? "" : undefined
-                          };
-                          form.setValue("socialMediaLinks", newLinks);
-                        }}
-                      >
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
-                            <SelectItem key={platform} value={platform}>
-                              {platform}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {link.platform === "Custom" && (
-                        <Input
-                          placeholder="Platform name"
-                          value={link.customName || ""}
-                          onChange={(e) => {
-                            const newLinks = [...(form.getValues("socialMediaLinks") || [])];
-                            newLinks[index] = {
-                              ...newLinks[index],
-                              customName: e.target.value
-                            };
-                            form.setValue("socialMediaLinks", newLinks);
-                          }}
-                          className="w-[150px]"
-                        />
-                      )}
-
-                      <Input
-                        placeholder="URL"
-                        value={link.url}
-                        onChange={(e) => {
-                          const newLinks = [...(form.getValues("socialMediaLinks") || [])];
-                          newLinks[index] = {
-                            ...newLinks[index],
-                            url: e.target.value
-                          };
-                          form.setValue("socialMediaLinks", newLinks);
-                        }}
-                        className="flex-1"
-                      />
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        type="button"
-                        onClick={() => {
-                          const newLinks = form.getValues("socialMediaLinks")?.filter((_, i) => i !== index) || [];
-                          form.setValue("socialMediaLinks", newLinks);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-
-                  {(!form.watch("socialMediaLinks") || form.watch("socialMediaLinks").length < 4) && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        const currentLinks = form.getValues("socialMediaLinks") || [];
-                        form.setValue("socialMediaLinks", [
-                          ...currentLinks,
-                          { platform: "Twitter", url: "" }
-                        ]);
-                      }}
-                    >
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      Add Social Media Link
-                    </Button>
-                  )}
-                </div>
-              </div>
 
               <div className="border-t pt-4 mt-4">
                 <h3 className="text-lg font-medium mb-4">Change Password</h3>
@@ -553,20 +408,20 @@ export default function SettingsPage() {
                           onDragEnd={(event) => {
                             const { active, over } = event;
                             if (over && active.id !== over.id) {
-                              const oldIndex = parseInt(active.id.split('-')[1]);
-                              const newIndex = parseInt(over.id.split('-')[1]);
+                              const oldIndex = active.id;
+                              const newIndex = over.id;
                               const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
                               updateBookReferralLinks(book.id, newLinks);
                             }
                           }}
                         >
                           <SortableContext
-                            items={editedReferralLinks[book.id]?.map((_, i) => `${book.id}-${i}`) || []}
+                            items={editedReferralLinks[book.id]?.map((_, i) => i) || []}
                             strategy={verticalListSortingStrategy}
                           >
-                            {editedReferralLinks[book.id]?.map((link: ReferralLink, index: number) => (
+                            {editedReferralLinks[book.id]?.map((link, index) => (
                               <SortableReferralLink
-                                key={`${link.retailer}-${index}`}
+                                key={index}
                                 link={link}
                                 index={index}
                                 onChange={(newUrl) => {
@@ -693,7 +548,6 @@ export default function SettingsPage() {
   );
 }
 
-// Assuming apiRequest is defined elsewhere
 async function apiRequest(method: string, url: string, data?: any) {
   const res = await fetch(url, {
     method,
@@ -706,20 +560,16 @@ async function apiRequest(method: string, url: string, data?: any) {
   return res;
 }
 
-//Assuming updateProfileSchema is defined elsewhere.  Replace with your actual schema.  This is a placeholder.  You MUST replace this.
+const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"];
+
+// Replace with your actual schema
 const updateProfileSchema = {
   email: "",
   username: "",
   displayName: "",
   bio: "",
-  socialMediaLinks: [],
   favoriteGenres: [],
-  authorBio: "",
-  authorName: "",
-  birthDate: null,
-  deathDate: null,
-  website: "",
   currentPassword: "",
   newPassword: "",
   confirmPassword: ""
-}
+};

@@ -21,11 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AVAILABLE_GENRES, updateProfileSchema } from "@shared/schema";
+import { AVAILABLE_GENRES, updateProfileSchema, SOCIAL_MEDIA_PLATFORMS } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropperDialog } from "./image-cropper-dialog";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 export function ReaderSettings() {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ export function ReaderSettings() {
       bio: user?.bio || "",
       favoriteGenres: user?.favoriteGenres || [AVAILABLE_GENRES[0]],
       profileImageUrl: user?.profileImageUrl || "",
+      socialMediaLinks: user?.socialMediaLinks || []
     },
   });
 
@@ -207,8 +209,8 @@ export function ReaderSettings() {
                   </FormControl>
                   <SelectContent>
                     {AVAILABLE_GENRES.map((genre) => (
-                      <SelectItem 
-                        key={genre} 
+                      <SelectItem
+                        key={genre}
                         value={genre}
                         className={field.value?.includes(genre) ? "bg-primary/10" : ""}
                       >
@@ -245,6 +247,99 @@ export function ReaderSettings() {
               </FormItem>
             )}
           />
+
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-medium mb-4">Social Media Links</h3>
+            <div className="space-y-4">
+              {form.watch("socialMediaLinks")?.map((link, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Select
+                    value={link.platform}
+                    onValueChange={(value) => {
+                      const newLinks = [...(form.getValues("socialMediaLinks") || [])];
+                      newLinks[index] = {
+                        ...newLinks[index],
+                        platform: value,
+                        customName: value === "Custom" ? "" : undefined
+                      };
+                      form.setValue("socialMediaLinks", newLinks);
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
+                        <SelectItem key={platform} value={platform}>
+                          {platform}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {link.platform === "Custom" && (
+                    <Input
+                      placeholder="Platform name"
+                      value={link.customName || ""}
+                      onChange={(e) => {
+                        const newLinks = [...(form.getValues("socialMediaLinks") || [])];
+                        newLinks[index] = {
+                          ...newLinks[index],
+                          customName: e.target.value
+                        };
+                        form.setValue("socialMediaLinks", newLinks);
+                      }}
+                      className="w-[150px]"
+                    />
+                  )}
+
+                  <Input
+                    placeholder="URL"
+                    value={link.url}
+                    onChange={(e) => {
+                      const newLinks = [...(form.getValues("socialMediaLinks") || [])];
+                      newLinks[index] = {
+                        ...newLinks[index],
+                        url: e.target.value
+                      };
+                      form.setValue("socialMediaLinks", newLinks);
+                    }}
+                    className="flex-1"
+                  />
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    onClick={() => {
+                      const newLinks = form.getValues("socialMediaLinks")?.filter((_, i) => i !== index) || [];
+                      form.setValue("socialMediaLinks", newLinks);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+
+              {(!form.watch("socialMediaLinks") || form.watch("socialMediaLinks").length < 4) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const currentLinks = form.getValues("socialMediaLinks") || [];
+                    form.setValue("socialMediaLinks", [
+                      ...currentLinks,
+                      { platform: "Twitter", url: "" }
+                    ]);
+                  }}
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Social Media Link
+                </Button>
+              )}
+            </div>
+          </div>
 
           <Button type="submit" disabled={isUploading}>
             Save Changes
