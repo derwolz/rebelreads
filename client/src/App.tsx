@@ -21,13 +21,12 @@ function Router() {
       <ProtectedRoute path="/books/:id" component={BookDetails} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/settings/account" component={SettingsPage} />
-      <ProtectedRoute path="/settings/author" component={SettingsPage} />
       <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/pro" component={ProDashboard} />
       <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
       <ProtectedRoute path="/pro/reports" component={ProDashboard} />
-      <ProtectedRoute path="/pro/settings" component={ProDashboard} />
+      <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
       <Route path="/authors/:id" component={AuthorPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

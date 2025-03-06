@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
+import { ProAuthorSettings } from "@/components/pro-author-settings";
 
 interface BookInterest {
   date: string;
@@ -59,6 +60,10 @@ export default function ProDashboard() {
   const renderContent = () => {
     if (location === "/pro/reviews") {
       return <ReviewManagement />;
+    }
+
+    if (location === "/pro/author-settings") {
+      return <ProAuthorSettings />;
     }
 
     if (location === "/pro/reports") {
