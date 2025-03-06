@@ -32,7 +32,9 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropperDialog } from "./image-cropper-dialog";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function ReaderSettings() {
   const { user } = useAuth();
@@ -130,6 +132,9 @@ export function ReaderSettings() {
     console.log("form submitted");
     updateProfileMutation.mutate(data);
   };
+  
+  const formState = form.formState;
+  const hasErrors = Object.keys(formState.errors).length > 0;
 
   return (
     <div className="space-y-6">
@@ -176,6 +181,15 @@ export function ReaderSettings() {
           )}
           className="space-y-4"
         >
+          {hasErrors && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                Please fix the highlighted errors below before submitting.
+              </AlertDescription>
+            </Alert>
+          )
           <FormField
             control={form.control}
             name="displayName"
@@ -183,12 +197,18 @@ export function ReaderSettings() {
               <FormItem>
                 <FormLabel>Display Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input 
+                    {...field} 
+                    className={cn(
+                      formState.errors.displayName && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
+                  />
                 </FormControl>
                 <FormDescription>
                   This is your public display name
                 </FormDescription>
-                <FormMessage />
+                <FormMessage className="text-destructive" />
               </FormItem>
             )}
           />
@@ -200,12 +220,18 @@ export function ReaderSettings() {
               <FormItem>
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input 
+                    {...field} 
+                    className={cn(
+                      formState.errors.username && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
+                  />
                 </FormControl>
                 <FormDescription>
                   Your unique username for logging in
                 </FormDescription>
-                <FormMessage />
+                <FormMessage className="text-destructive" />
               </FormItem>
             )}
           />
@@ -228,7 +254,10 @@ export function ReaderSettings() {
                   value={field.value?.[0]}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className={cn(
+                      formState.errors.favoriteGenres && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}>
                       <SelectValue placeholder="Select your favorite genres" />
                     </SelectTrigger>
                   </FormControl>
@@ -266,7 +295,11 @@ export function ReaderSettings() {
                 <FormControl>
                   <Textarea
                     placeholder="Tell us about yourself..."
-                    className="resize-none"
+                    className={cn(
+                      "resize-none",
+                      formState.errors.bio && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
                     {...field}
                   />
                 </FormControl>
@@ -347,7 +380,11 @@ export function ReaderSettings() {
                       };
                       form.setValue("socialMediaLinks", newLinks);
                     }}
-                    className="flex-1"
+                    className={cn(
+                      "flex-1",
+                      form.formState.errors.socialMediaLinks?.[index] && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
                   />
 
                   <Button
@@ -392,9 +429,22 @@ export function ReaderSettings() {
           <Button
             type="submit"
             disabled={isUploading || updateProfileMutation.isPending}
+            variant={hasErrors ? "destructive" : "default"}
           >
-            Save Changes
+            {hasErrors ? "Fix Errors" : "Save Changes"}
           </Button>
+          
+          {updateProfileMutation.isError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Submission Error</AlertTitle>
+              <AlertDescription>
+                {updateProfileMutation.error instanceof Error 
+                  ? updateProfileMutation.error.message 
+                  : "Failed to save changes. Please try again."}
+              </AlertDescription>
+            </Alert>
+          )}
         </form>
       </Form>
     </div>
