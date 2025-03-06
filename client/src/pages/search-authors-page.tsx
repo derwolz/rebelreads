@@ -65,13 +65,13 @@ export function SearchAuthorsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Author Results for "{query}"</h1>
-      {searchResults?.authors.length === 0 ? (
+      {!searchResults?.authors?.length ? (
         <div className="text-center text-muted-foreground">
           No authors found matching your search.
         </div>
       ) : (
         <div className="space-y-8">
-          {searchResults?.authors.map((author) => (
+          {searchResults.authors.map((author) => (
             <Card key={author.id} className="w-full">
               <CardHeader>
                 <div className="flex items-start gap-4">
