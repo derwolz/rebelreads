@@ -2,6 +2,23 @@ import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const SOCIAL_MEDIA_PLATFORMS = [
+  "Twitter",
+  "Instagram",
+  "Facebook",
+  "LinkedIn",
+  "GitHub",
+  "Custom"
+] as const;
+
+export const socialMediaLinkSchema = z.object({
+  platform: z.enum(SOCIAL_MEDIA_PLATFORMS),
+  url: z.string().url("Please enter a valid URL"),
+  customName: z.string().optional(),
+});
+
+export type SocialMediaLink = z.infer<typeof socialMediaLinkSchema>;
+
 export const RETAILER_OPTIONS = [
   "Amazon",
   "Barnes & Noble",
@@ -42,6 +59,7 @@ export const users = pgTable("users", {
   website: text("website"),
   favoriteGenres: text("favorite_genres").array(), // Updated to array
   displayName: text("display_name"), // Added display name field
+  socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
 });
 
 export const followers = pgTable("followers", {
@@ -127,6 +145,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   bio: true,
   profileImageUrl: true,
   favoriteGenres: true,
+  socialMediaLinks: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email format"),
@@ -138,6 +157,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
     .regex(/[0-9]/, "Password must contain at least one number")
     .optional(),
   confirmPassword: z.string().optional(),
+  socialMediaLinks: z.array(socialMediaLinkSchema).max(4, "Maximum 4 social media links allowed").optional(),
 }).refine((data) => {
   // If any password field is filled, all password fields must be filled
   if (data.newPassword || data.currentPassword || data.confirmPassword) {
