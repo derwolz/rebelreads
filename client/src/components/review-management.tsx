@@ -172,15 +172,15 @@ export function ReviewManagement() {
 
   return (
     <div className="flex-1 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Review Management</h1>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold">Review Management</h1>
       </div>
 
       <div className="space-y-4">
         {data?.reviews.map((review: Rating & { user: any; book: any; featured?: boolean; replies?: any[] }) => (
           <Card key={review.id} className={review.featured ? "border-primary" : undefined}>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={review.user?.profileImageUrl} alt={review.user?.username} />
@@ -188,14 +188,14 @@ export function ReviewManagement() {
                   </Avatar>
                   <div>
                     <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
                       <span>•</span>
                       <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant={review.featured ? "default" : "ghost"}
                     size="sm"
@@ -218,7 +218,7 @@ export function ReviewManagement() {
               </div>
               {review.replies?.map((reply) => (
                 <div key={reply.id} className="mt-4 pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={reply.author?.profileImageUrl} />
                       <AvatarFallback>{reply.author?.username?.charAt(0).toUpperCase()}</AvatarFallback>

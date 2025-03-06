@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
+import { Menu } from "lucide-react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface BookInterest {
   date: string;
@@ -111,7 +119,7 @@ export default function ProDashboard() {
           <h1 className="text-3xl font-bold">Author Analytics</h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader>
               <CardTitle>Total Reviews</CardTitle>
@@ -128,7 +136,7 @@ export default function ProDashboard() {
               <p className="text-3xl font-bold">{dashboardData?.averageRating.toFixed(1)}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="sm:col-span-2 md:col-span-1">
             <CardHeader>
               <CardTitle>Recent Reports</CardTitle>
             </CardHeader>
@@ -143,7 +151,7 @@ export default function ProDashboard() {
             <CardTitle>Book Interest Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px]">
+            <div className="h-[300px] md:h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dashboardData?.bookInterest || []}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -176,8 +184,34 @@ export default function ProDashboard() {
       <MainNav />
       <main className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
-          <ProDashboardSidebar />
-          {renderContent()}
+          {/* Mobile Sidebar */}
+          <div className="md:hidden">
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <DrawerTitle>Dashboard Menu</DrawerTitle>
+                </DrawerHeader>
+                <div className="px-4 pb-4">
+                  <ProDashboardSidebar />
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <div className="hidden md:block">
+            <ProDashboardSidebar />
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {renderContent()}
+          </div>
         </div>
       </main>
     </div>
