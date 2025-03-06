@@ -8,7 +8,7 @@ export function SearchBooksPage() {
   const query = new URLSearchParams(location.split("?")[1]).get("q") || "";
 
   const { data: searchResults, isLoading } = useQuery<{ books: Book[] }>({
-    queryKey: ["/api/search", query, "books"],
+    queryKey: ["/api/search/books", query],
     enabled: query.length > 1,
   });
 

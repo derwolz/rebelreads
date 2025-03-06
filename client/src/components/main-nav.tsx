@@ -14,31 +14,31 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { AVAILABLE_GENRES } from "@shared/schema";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+interface SearchAuthor {
+  id: number;
+  username: string;
+  authorName: string | null;
+  authorBio: string | null;
+  authorImageUrl: string | null;
+}
 
 interface MainNavProps {
   onSearch?: (query: string, type: string) => void;
 }
 
-type SearchFilter = "books" | "authors" | "genres";
+type SearchFilter = "books" | "authors";
 
 export function MainNav({ onSearch }: MainNavProps) {
   const { user, logoutMutation } = useAuth();
@@ -48,12 +48,8 @@ export function MainNav({ onSearch }: MainNavProps) {
   const [activeFilter, setActiveFilter] = useState<SearchFilter>("books");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: searchResults, isLoading } = useQuery<{
-    books: Book[];
-    authors: { id: number; name: string }[];
-    genres: string[];
-  }>({
-    queryKey: ["/api/search", debouncedSearch, activeFilter],
+  const { data: searchResults } = useQuery<{ books: Book[] } | { authors: SearchAuthor[] }>({
+    queryKey: [`/api/search/${activeFilter}`, debouncedSearch],
     enabled: debouncedSearch.length > 1,
   });
 
@@ -69,8 +65,6 @@ export function MainNav({ onSearch }: MainNavProps) {
         navigate(`/search/books?q=${encodeURIComponent(searchQuery)}`);
       } else if (activeFilter === "authors") {
         navigate(`/search/authors?q=${encodeURIComponent(searchQuery)}`);
-      } else {
-        navigate(`/genres/${encodeURIComponent(searchQuery)}`);
       }
       setOpen(false);
     }
@@ -90,8 +84,72 @@ export function MainNav({ onSearch }: MainNavProps) {
   const filters: { value: SearchFilter; label: string }[] = [
     { value: "books", label: "Books" },
     { value: "authors", label: "Authors" },
-    { value: "genres", label: "Genres" },
   ];
+
+  const renderSearchResults = () => {
+    if (activeFilter === "books" && "books" in (searchResults || {})) {
+      return (
+        <CommandGroup heading="Books">
+          {searchResults.books.slice(0, 5).map((book) => (
+            <CommandItem key={book.id} value={book.title}>
+              <Link href={`/books/${book.id}`} className="flex items-center gap-2">
+                <img
+                  src={book.coverUrl}
+                  alt={book.title}
+                  className="w-8 h-12 object-cover rounded"
+                />
+                <div>
+                  <div className="font-medium">{book.title}</div>
+                  <div className="text-sm text-muted-foreground">by {book.author}</div>
+                </div>
+              </Link>
+            </CommandItem>
+          ))}
+          {searchResults.books.length > 0 && (
+            <CommandItem onSelect={() => handleSearchSubmit()}>
+              <div className="w-full text-center text-sm text-muted-foreground">
+                View all results →
+              </div>
+            </CommandItem>
+          )}
+        </CommandGroup>
+      );
+    }
+
+    if (activeFilter === "authors" && "authors" in (searchResults || {})) {
+      return (
+        <CommandGroup heading="Authors">
+          {searchResults.authors.slice(0, 5).map((author) => (
+            <CommandItem key={author.id} value={author.authorName || author.username}>
+              <Link href={`/authors/${author.id}`} className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={author.authorImageUrl || undefined} />
+                  <AvatarFallback>👤</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">{author.authorName || author.username}</div>
+                  {author.authorBio && (
+                    <div className="text-sm text-muted-foreground line-clamp-1">
+                      {author.authorBio}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            </CommandItem>
+          ))}
+          {searchResults.authors.length > 0 && (
+            <CommandItem onSelect={() => handleSearchSubmit()}>
+              <div className="w-full text-center text-sm text-muted-foreground">
+                View all results →
+              </div>
+            </CommandItem>
+          )}
+        </CommandGroup>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <nav className="border-b">
@@ -235,67 +293,13 @@ export function MainNav({ onSearch }: MainNavProps) {
             ))}
           </div>
           <CommandInput
-            placeholder="Search books, authors, or genres..."
+            placeholder={`Search ${activeFilter}...`}
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            {searchResults?.books && activeFilter === "books" && (
-              <CommandGroup heading="Books">
-                {searchResults.books.slice(0, 5).map((book) => (
-                  <CommandItem key={book.id} value={book.title}>
-                    <Link href={`/books/${book.id}`} className="flex items-center gap-2">
-                      <img
-                        src={book.coverUrl}
-                        alt={book.title}
-                        className="w-8 h-12 object-cover rounded"
-                      />
-                      <div>
-                        <div className="font-medium">{book.title}</div>
-                        <div className="text-sm text-muted-foreground">by {book.author}</div>
-                      </div>
-                    </Link>
-                  </CommandItem>
-                ))}
-                {searchResults.books.length > 0 && (
-                  <CommandItem onSelect={() => handleSearchSubmit()}>
-                    <div className="w-full text-center text-sm text-muted-foreground">
-                      View all results →
-                    </div>
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            )}
-            {searchResults?.authors && activeFilter === "authors" && (
-              <CommandGroup heading="Authors">
-                {searchResults.authors.slice(0, 5).map((author) => (
-                  <CommandItem key={author.id} value={author.name}>
-                    <Link href={`/authors/${author.id}`} className="flex items-center gap-2">
-                      {author.name}
-                    </Link>
-                  </CommandItem>
-                ))}
-                {searchResults.authors.length > 0 && (
-                  <CommandItem onSelect={() => handleSearchSubmit()}>
-                    <div className="w-full text-center text-sm text-muted-foreground">
-                      View all results →
-                    </div>
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            )}
-            {searchResults?.genres && activeFilter === "genres" && (
-              <CommandGroup heading="Genres">
-                {searchResults.genres.slice(0, 5).map((genre) => (
-                  <CommandItem key={genre} value={genre}>
-                    <Link href={`/genres/${genre}`} className="flex items-center gap-2">
-                      {genre}
-                    </Link>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
+            {renderSearchResults()}
           </CommandList>
         </form>
       </CommandDialog>

@@ -743,96 +743,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/search", async (req, res) => {
+  app.get("/api/search/books", async (req, res) => {
     try {
       const query = req.query.q as string;
-      const filter = req.query.filter as string;
 
       if (!query || query.length < 2) {
-        return res.json({
-          books: [],
-          authors: [],
-          genres: []
-        });
+        return res.json([]);
       }
 
       const searchPattern = `%${query.toLowerCase()}%`;
 
-      // Create promises for parallel execution
-      const searchPromises: Promise<any>[] = [];
+      const results = await db
+        .select()
+        .from(books)
+        .where(
+          or(
+            ilike(books.title, searchPattern),
+            ilike(books.description, searchPattern),
+            ilike(books.author, searchPattern)
+          )
+        )
+        .limit(20);
 
-      // Only search books if filter is 'all' or 'books'
-      if (filter === 'all' || filter === 'books') {
-        searchPromises.push(
-          db.select()
-            .from(books)
-            .where(
-              or(
-                ilike(books.title, searchPattern),
-                ilike(books.description, searchPattern),
-                ilike(books.author, searchPattern)
-              )
-            )
-            .limit(5)
-        );
-      } else {
-        searchPromises.push(Promise.resolve([]));
-      }
-
-      // Only search authors if filter is 'all' or 'authors'
-      if (filter === 'all' || filter === 'authors') {
-        searchPromises.push(
-          db.select({
-            id: users.id,
-            name: sql<string>`COALESCE(${users.authorName}, ${users.username})`
-          })
-            .from(users)
-            .where(
-              and(
-                users.isAuthor.equals(true),
-                or(
-                  ilike(users.username, searchPattern),
-                  ilike(users.authorName, searchPattern)
-                )
-              )
-            )
-            .limit(5)
-        );
-      } else {
-        searchPromises.push(Promise.resolve([]));
-      }
-
-      // Only search genres if filter is 'all' or 'genres'
-      if (filter === 'all' || filter === 'genres') {
-        searchPromises.push(
-          db.select({ genres: books.genres })
-            .from(books)
-            .then(results => {
-              const allGenres = results.flatMap(r => r.genres || []);
-              const uniqueGenres = Array.from(new Set(allGenres))
-                .filter(genre =>
-                  genre.toLowerCase().includes(query.toLowerCase())
-                )
-                .sort()
-                .slice(0, 5);
-              return uniqueGenres;
-            })
-        );
-      } else {
-        searchPromises.push(Promise.resolve([]));
-      }
-
-      // Execute all searches in parallel
-      const [books_results, authors_results, genres_results] = await Promise.all(searchPromises);
-
-      res.json({
-        books: books_results,
-        authors: authors_results,
-        genres: genres_results
-      });
+      res.json({ books: results });
     } catch (error) {
-      console.error("Search error:", error);
-      res.status(500).json({ error: "Failed to perform search" });
+      console.error("Book search error:", error);
+      res.status(500).json({ error: "Failed to search books" });
+    }
+  });
+
+  app.get("/api/search/authors", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+
+      if (!query || query.length < 2) {
+        return res.json([]);
+      }
+
+      const searchPattern = `%${query.toLowerCase()}%`;
+
+      // Get matching authors
+      const authors = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          authorName: users.authorName,
+          authorBio: users.authorBio,
+          authorImageUrl: users.profileImageUrl,
+          socialMediaLinks: users.socialMediaLinks,
+        })
+        .from(users)
+        .where(
+          and(
+            users.isAuthor.equals(true),
+            or(
+              ilike(users.username, searchPattern),
+              ilike(users.authorName, searchPattern),
+              ilike(users.authorBio, searchPattern)
+            )
+          )
+        )
+        .limit(10);
+
+      // Get books and aggregate ratings for each author
+      const authorsWithDetails = await Promise.all(
+        authors.map(async (author) => {
+          // Get author's books
+          const authorBooks = await db
+            .select()
+            .from(books)
+            .where(eq(books.authorId, author.id));
+
+          // Get ratings for all author's books
+          const bookIds = authorBooks.map(book => book.id);
+          const authorRatings = bookIds.length > 0 ? await db
+            .select()
+            .from(ratings)
+            .where(inArray(ratings.bookId, bookIds)) : [];
+
+          // Calculate follower count
+          const followerCount = await dbStorage.getFollowerCount(author.id);
+
+          // Calculate aggregate ratings
+          const aggregateRatings = authorRatings.length > 0 ? {
+            enjoyment: authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) / authorRatings.length,
+            writing: authorRatings.reduce((acc, r) => acc + r.writing, 0) / authorRatings.length,
+            themes: authorRatings.reduce((acc, r) => acc + r.themes, 0) / authorRatings.length,
+            characters: authorRatings.reduce((acc, r) => acc + r.characters, 0) / authorRatings.length,
+            worldbuilding: authorRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / authorRatings.length,
+            overall: authorRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / authorRatings.length
+          } : undefined;
+
+          return {
+            ...author,
+            books: authorBooks,
+            followerCount,
+            aggregateRatings
+          };
+        })
+      );
+
+      res.json({ authors: authorsWithDetails });
+    } catch (error) {
+      console.error("Author search error:", error);
+      res.status(500).json({ error: "Failed to search authors" });
     }
   });
 
