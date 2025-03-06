@@ -8,14 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
-import { Menu } from "lucide-react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { useState, useEffect } from "react";
+import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
+import { cn } from "@/lib/utils";
 
 interface BookInterest {
   date: string;
@@ -32,11 +27,52 @@ interface ProDashboardData {
 export default function ProDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [startX, setStartX] = useState(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    })
+  );
 
   const { data: dashboardData, isLoading } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
     enabled: !!user?.isAuthor,
   });
+
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      touchEndX = e.touches[0].clientX;
+      const deltaX = touchEndX - touchStartX;
+
+      // Only open sidebar if swipe starts from right edge
+      if (touchStartX > window.innerWidth - 30 && deltaX < -50) {
+        setIsSidebarOpen(true);
+      }
+      // Close sidebar if swipe starts from left side of screen
+      else if (touchStartX < window.innerWidth / 2 && deltaX > 50) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
 
   if (!user?.isAuthor) {
     return (
@@ -64,7 +100,6 @@ export default function ProDashboard() {
     );
   }
 
-  // Render different content based on the current route
   const renderContent = () => {
     if (location === "/pro/reviews") {
       return <ReviewManagement />;
@@ -184,34 +219,35 @@ export default function ProDashboard() {
       <MainNav />
       <main className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
-          {/* Mobile Sidebar */}
-          <div className="md:hidden">
-            <Drawer>
-              <DrawerTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Dashboard Menu</DrawerTitle>
-                </DrawerHeader>
-                <div className="px-4 pb-4">
-                  <ProDashboardSidebar />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          </div>
-
           {/* Desktop Sidebar */}
           <div className="hidden md:block">
             <ProDashboardSidebar />
+          </div>
+
+          {/* Mobile Swipeable Sidebar */}
+          <div
+            className={cn(
+              "fixed inset-y-0 right-0 w-64 bg-background border-l transform transition-transform duration-200 ease-in-out z-50 md:hidden",
+              isSidebarOpen ? "translate-x-0" : "translate-x-full"
+            )}
+          >
+            <div className="h-full overflow-y-auto pt-20 px-4">
+              <ProDashboardSidebar />
+            </div>
           </div>
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {renderContent()}
           </div>
+
+          {/* Overlay */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/20 z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
         </div>
       </main>
     </div>
