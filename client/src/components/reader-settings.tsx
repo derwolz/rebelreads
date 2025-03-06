@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AVAILABLE_GENRES, updateProfileSchema, SOCIAL_MEDIA_PLATFORMS } from "@shared/schema";
+import { AVAILABLE_GENRES, updateProfileSchema, SOCIAL_MEDIA_PLATFORMS, type SocialMediaLink } from "@shared/schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +39,7 @@ export function ReaderSettings() {
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       username: user?.username || "",
+      email: user?.email || "",
       displayName: user?.displayName || "",
       bio: user?.bio || "",
       favoriteGenres: user?.favoriteGenres || [AVAILABLE_GENRES[0]],
@@ -63,10 +64,8 @@ export function ReaderSettings() {
 
       const { profileImageUrl } = await response.json();
 
-      // Update the form value
       form.setValue("profileImageUrl", profileImageUrl);
 
-      // Update the query cache
       queryClient.setQueryData(["/api/user"], (oldData: any) => ({
         ...oldData,
         profileImageUrl,
@@ -255,7 +254,7 @@ export function ReaderSettings() {
                 <div key={index} className="flex items-center gap-2">
                   <Select
                     value={link.platform}
-                    onValueChange={(value) => {
+                    onValueChange={(value: typeof SOCIAL_MEDIA_PLATFORMS[number]) => {
                       const newLinks = [...(form.getValues("socialMediaLinks") || [])];
                       newLinks[index] = {
                         ...newLinks[index],
@@ -282,7 +281,7 @@ export function ReaderSettings() {
                       placeholder="Platform name"
                       value={link.customName || ""}
                       onChange={(e) => {
-                        const newLinks = [...(form.getValues("socialMediaLinks") || [])];
+                        const newLinks = [...(form.getValues("socialMediaLinks") || [])] as SocialMediaLink[];
                         newLinks[index] = {
                           ...newLinks[index],
                           customName: e.target.value
@@ -297,7 +296,7 @@ export function ReaderSettings() {
                     placeholder="URL"
                     value={link.url}
                     onChange={(e) => {
-                      const newLinks = [...(form.getValues("socialMediaLinks") || [])];
+                      const newLinks = [...(form.getValues("socialMediaLinks") || [])] as SocialMediaLink[];
                       newLinks[index] = {
                         ...newLinks[index],
                         url: e.target.value
@@ -330,7 +329,7 @@ export function ReaderSettings() {
                     const currentLinks = form.getValues("socialMediaLinks") || [];
                     form.setValue("socialMediaLinks", [
                       ...currentLinks,
-                      { platform: "Twitter", url: "" }
+                      { platform: "Twitter" as const, url: "" }
                     ]);
                   }}
                 >

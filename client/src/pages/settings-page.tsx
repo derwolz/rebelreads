@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Book, UpdateProfile, ReferralLink } from "@shared/schema";
+import { Book, UpdateProfile, ReferralLink, updateProfileSchema } from "@shared/schema";
 import { MainNav } from "@/components/main-nav";
 import { SettingsSidebar } from "@/components/settings-sidebar";
 import { useLocation } from "wouter";
@@ -40,7 +40,6 @@ import {
   FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +59,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-function SortableReferralLink({ link, index, onChange, onRemove }) {
+interface SortableReferralLinkProps {
+  link: ReferralLink;
+  index: number;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+}
+
+function SortableReferralLink({ link, index, onChange, onRemove }: SortableReferralLinkProps) {
   const {
     attributes,
     listeners,
@@ -115,9 +121,6 @@ export default function SettingsPage() {
     defaultValues: {
       email: user?.email || "",
       username: user?.username || "",
-      displayName: user?.displayName || "",
-      bio: user?.bio || "",
-      favoriteGenres: user?.favoriteGenres || [],
       currentPassword: "",
       newPassword: "",
       confirmPassword: ""
@@ -132,6 +135,10 @@ export default function SettingsPage() {
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfile) => {
       const res = await apiRequest("PATCH", "/api/user", data);
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -381,7 +388,7 @@ export default function SettingsPage() {
           <div className="mt-8 grid gap-6">
             {userBooks?.map((book) => {
               if (!editedReferralLinks[book.id]) {
-                initializeBookReferralLinks(book.id, book.referralLinks);
+                initializeBookReferralLinks(book.id, book.referralLinks as ReferralLink[]);
               }
 
               return (
@@ -408,8 +415,8 @@ export default function SettingsPage() {
                           onDragEnd={(event) => {
                             const { active, over } = event;
                             if (over && active.id !== over.id) {
-                              const oldIndex = active.id;
-                              const newIndex = over.id;
+                              const oldIndex = Number(active.id);
+                              const newIndex = Number(over.id);
                               const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
                               updateBookReferralLinks(book.id, newLinks);
                             }
@@ -440,7 +447,7 @@ export default function SettingsPage() {
                         <div className="flex gap-2">
                           <Select
                             onValueChange={(value) => {
-                              const newLink = {
+                              const newLink: ReferralLink = {
                                 retailer: value,
                                 url: "",
                                 customName: value === "Custom" ? "" : undefined,
@@ -493,7 +500,7 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       onClick={() => promoteBookMutation.mutate(book.id)}
-                      disabled={book.promoted}
+                      disabled={book.promoted || false}
                     >
                       Promote Book
                     </Button>
@@ -560,16 +567,4 @@ async function apiRequest(method: string, url: string, data?: any) {
   return res;
 }
 
-const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"];
-
-// Replace with your actual schema
-const updateProfileSchema = {
-  email: "",
-  username: "",
-  displayName: "",
-  bio: "",
-  favoriteGenres: [],
-  currentPassword: "",
-  newPassword: "",
-  confirmPassword: ""
-};
+const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"] as const;
