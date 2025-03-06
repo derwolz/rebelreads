@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
-import { Search, Settings } from "lucide-react";
+import { Search, Settings, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/select";
 import { AVAILABLE_GENRES } from "@shared/schema";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface MainNavProps {
   onSearch?: (query: string, type: string) => void;
@@ -54,9 +61,15 @@ export function MainNav({ onSearch }: MainNavProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
+              {user.isAuthor && (
+                <Link href="/pro">
+                  <Button variant="outline">Author Dashboard</Button>
+                </Link>
+              )}
               <Link href="/settings">
                 <Button variant="ghost" size="icon">
                   <Settings className="h-5 w-5" />
@@ -85,6 +98,89 @@ export function MainNav({ onSearch }: MainNavProps) {
               <Button>Login</Button>
             </Link>
           )}
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>Menu</DrawerTitle>
+              </DrawerHeader>
+              <div className="px-4 py-2 space-y-4">
+                <div className="flex items-center gap-2 relative w-full">
+                  <Select
+                    defaultValue="title"
+                    onValueChange={(value) => onSearch?.("", value)}
+                  >
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Search by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="title">Title</SelectItem>
+                      <SelectItem value="author">Author</SelectItem>
+                      <SelectItem value="genre">Genre</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search books..."
+                      className="pl-9"
+                      onChange={(e) => onSearch?.(e.target.value, "title")}
+                    />
+                  </div>
+                </div>
+                {user ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 py-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.profileImageUrl || undefined} alt={user.username} />
+                        <AvatarFallback>👤</AvatarFallback>
+                      </Avatar>
+                      <Link href="/dashboard">
+                        <span className="text-sm text-muted-foreground hover:underline">
+                          {user.username}
+                        </span>
+                      </Link>
+                    </div>
+                    <div className="grid gap-2">
+                      {user.isAuthor && (
+                        <Link href="/pro">
+                          <Button variant="outline" className="w-full justify-start">
+                            Author Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      <Link href="/settings">
+                        <Button variant="outline" className="w-full justify-start">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Settings
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => logoutMutation.mutate()}
+                      >
+                        Logout
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Link href="/auth">
+                    <Button className="w-full">Login</Button>
+                  </Link>
+                )}
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
       </div>
     </nav>
