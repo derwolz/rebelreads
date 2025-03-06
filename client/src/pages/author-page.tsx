@@ -1,187 +1,16 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
+import { User, Book } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
 import { MainNav } from "@/components/main-nav";
-import { BookCard } from "@/components/book-card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/use-auth";
-import { FollowButton } from "@/components/follow-button";
 import { StarRating } from "@/components/star-rating";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import type { Book, User } from "@shared/schema";
-import { format } from 'date-fns';
-
-interface AuthorDetails extends User {
-  books: Book[];
-  followerCount: number;
-  genres: { genre: string; count: number }[];
-  birthDate?: string;
-  deathDate?: string;
-  website?: string;
-  aggregateRatings?: {
-    overall: number;
-    enjoyment: number;
-    writing: number;
-    themes: number;
-    characters: number;
-    worldbuilding: number;
-  };
-}
-
-export default function AuthorPage() {
-  const [, params] = useRoute("/authors/:id");
-  const { user } = useAuth();
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const { data: author } = useQuery<AuthorDetails>({
-    queryKey: [`/api/authors/${params?.id}`],
-  });
-
-  if (!author) return null;
-
-  const filteredBooks = author.books.filter(book =>
-    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div>
-      <MainNav />
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">
-                {author.authorName || author.username}
-              </h1>
-              <div className="flex items-center gap-4 text-muted-foreground">
-                <span>{author.followerCount} followers</span>
-                <span>•</span>
-                <span>{author.books.length} books</span>
-                {author.birthDate && (
-                  <div className="text-sm text-muted-foreground mt-2">
-                    Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
-                    {author.deathDate && (
-                      <>
-                        {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
-                      </>
-                    )}
-                  </div>
-                )}
-                {author.website && (
-                  <a
-                    href={author.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline mt-2 inline-block"
-                  >
-                    Visit Website
-                  </a>
-                )}
-              </div>
-            </div>
-            <FollowButton
-              authorId={author.id}
-              authorName={author.authorName || author.username}
-            />
-          </div>
-
-          {author.authorBio && (
-            <div className="prose max-w-none">
-              <p>{author.authorBio}</p>
-            </div>
-          )}
-
-          {author.aggregateRatings && (
-            <div className="bg-muted rounded-lg p-6 space-y-4">
-              <h2 className="text-2xl font-semibold">Overall Ratings</h2>
-              <div className="flex items-center gap-2">
-                <StarRating rating={Math.round(author.aggregateRatings.overall)} readOnly />
-                <span className="text-sm text-muted-foreground">
-                  Average across all books
-                </span>
-              </div>
-              <div className="grid gap-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Enjoyment (30%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.enjoyment)} readOnly size="sm" />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Writing Style (30%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.writing)} readOnly size="sm" />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Themes (20%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.themes)} readOnly size="sm" />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Characters (10%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.characters)} readOnly size="sm" />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">World Building (10%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.worldbuilding)} readOnly size="sm" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {author.genres.map(({ genre, count }) => (
-              <Badge key={genre} variant="secondary" className="text-sm">
-                {genre} ({count})
-              </Badge>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Books</h2>
-              <Input
-                placeholder="Search books..."
-                className="max-w-xs"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <Carousel className="w-full">
-              <CarouselContent>
-                {filteredBooks.map((book) => (
-                  <CarouselItem key={book.id} className="md:basis-1/2 lg:basis-1/3">
-                    <BookCard book={book} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { BookCard } from "@/components/book-card";
+import { FollowButton } from "@/components/follow-button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { Book, Rating, User } from "@shared/schema";
-import { MainNav } from "@/components/main-nav";
-import { BookCard } from "@/components/book-card";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { StarRating } from "@/components/star-rating";
-import { FollowButton } from "@/components/follow-button";
+import { ProfileSocialLinks } from "@/components/profile-social-links";
 
 interface AuthorDetails extends User {
   books: Book[];
@@ -198,6 +27,8 @@ interface AuthorDetails extends User {
     characters: number;
     worldbuilding: number;
   };
+  socialLinks?: { platform: string; url: string }[];
+  bio?: string;
 }
 
 export default function AuthorPage() {
@@ -271,74 +102,64 @@ export default function AuthorPage() {
                   </a>
                 )}
                 {author.socialLinks && author.socialLinks.length > 0 && (
-                  <div className="flex space-x-2 mt-2">
-                    {author.socialLinks.map(link => (
-                      <a 
-                        key={link.platform}
-                        href={link.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-dark"
-                      >
-                        {link.platform}
-                      </a>
-                    ))}
+                  <div className="mt-2">
+                    <ProfileSocialLinks socialLinks={author.socialLinks} />
                   </div>
                 )}
               </div>
             </div>
             {user && user.id !== author.id && (
-              <FollowButton authorId={author.id} />
+              <FollowButton authorId={author.id} authorName={author.authorName || author.username} />
             )}
           </div>
-          
-          <div className="grid md:grid-cols-[2fr_1fr] gap-8">
-            <div className="space-y-6">
-              <div className="prose dark:prose-invert">
-                <p>{author.bio || "No biography available."}</p>
-              </div>
+
+          {author.bio && (
+            <div className="prose max-w-none">
+              <p>{author.bio}</p>
             </div>
-            
-            {author.aggregateRatings && (
-              <div className="bg-muted p-4 rounded-lg">
-                <h3 className="font-semibold mb-3">Average Ratings</h3>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Overall</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.overall)} readOnly />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Enjoyment (30%)</span>
-                    <StarRating rating={Math.round(author.aggregateRatings.enjoyment)} readOnly size="sm" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Writing (25%)</span>
-                    <StarRating rating={Math.round(author.aggregateRatings.writing)} readOnly size="sm" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Themes (15%)</span>
-                    <StarRating rating={Math.round(author.aggregateRatings.themes)} readOnly size="sm" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Characters (20%)</span>
-                    <StarRating rating={Math.round(author.aggregateRatings.characters)} readOnly size="sm" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">World Building (10%)</span>
-                    <StarRating rating={Math.round(author.aggregateRatings.worldbuilding)} readOnly size="sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
+          )}
+
           <div className="flex flex-wrap gap-2">
-            {author.genres?.map(({ genre, count }) => (
+            {author.genres.map(({ genre, count }) => (
               <Badge key={genre} variant="secondary" className="text-sm">
                 {genre} ({count})
               </Badge>
             ))}
           </div>
+
+          {author.aggregateRatings && (
+            <div className="bg-muted rounded-lg p-6 space-y-4">
+              <h2 className="text-2xl font-semibold">Overall Ratings</h2>
+              <div className="flex items-center gap-2">
+                <StarRating rating={Math.round(author.aggregateRatings.overall)} readOnly />
+                <span className="text-sm text-muted-foreground">
+                  Average across all books
+                </span>
+              </div>
+              <div className="grid gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Enjoyment (30%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.enjoyment)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Writing Style (30%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.writing)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Themes (20%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.themes)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Characters (10%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.characters)} readOnly size="sm" />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">World Building (10%)</span>
+                  <StarRating rating={Math.round(author.aggregateRatings.worldbuilding)} readOnly size="sm" />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -350,26 +171,16 @@ export default function AuthorPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
-            <Carousel className="w-full">
-              <CarouselContent>
-                {filteredBooks.length > 0 ? (
-                  filteredBooks.map((book) => (
-                    <CarouselItem key={book.id} className="md:basis-1/2 lg:basis-1/3">
-                      <BookCard book={book} />
-                    </CarouselItem>
-                  ))
-                ) : (
-                  <CarouselItem className="basis-full">
-                    <div className="text-center p-8 bg-muted rounded-lg">
-                      <p>No books found</p>
-                    </div>
-                  </CarouselItem>
-                )}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredBooks.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
+              {filteredBooks.length === 0 && (
+                <div className="col-span-full text-center py-8">
+                  <p>No books found</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>
