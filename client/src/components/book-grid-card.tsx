@@ -37,14 +37,18 @@ export function BookGridCard({ book }: { book: Book }) {
   // Record impression when card becomes visible
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
-      apiRequest(`/api/books/${book.id}/impression`, {
-        method: 'POST',
-        body: JSON.stringify({
-          source: 'grid',
-          context: window.location.pathname
-        })
-      });
-      setHasRecordedImpression(true);
+      const recordImpression = async () => {
+        await apiRequest(
+          "POST",
+          `/api/books/${book.id}/impression`,
+          {
+            source: 'grid',
+            context: window.location.pathname
+          }
+        );
+        setHasRecordedImpression(true);
+      };
+      recordImpression();
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
@@ -62,13 +66,14 @@ export function BookGridCard({ book }: { book: Book }) {
       return;
     }
     // Record click-through before navigation
-    await apiRequest(`/api/books/${book.id}/click-through`, {
-      method: 'POST',
-      body: JSON.stringify({
+    await apiRequest(
+      "POST",
+      `/api/books/${book.id}/click-through`,
+      {
         source: 'grid',
         referrer: window.location.pathname
-      })
-    });
+      }
+    );
     navigate(`/books/${book.id}`);
   };
 

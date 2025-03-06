@@ -839,6 +839,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add after other book-related routes
+  app.post("/api/books/:id/impression", async (req, res) => {
+    try {
+      const bookId = parseInt(req.params.id);
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+
+      const userId = req.isAuthenticated() ? req.user!.id : null;
+      const { source, context } = req.body;
+
+      const impression = await dbStorage.recordBookImpression(
+        bookId,
+        userId,
+        source,
+        context
+      );
+
+      res.json(impression);
+    } catch (error) {
+      console.error("Error recording impression:", error);
+      res.status(500).json({ error: "Failed to record impression" });
+    }
+  });
+
+  app.post("/api/books/:id/click-through", async (req, res) => {
+    try {
+      const bookId = parseInt(req.params.id);
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+
+      const userId = req.isAuthenticated() ? req.user!.id : null;
+      const { source, referrer } = req.body;
+
+      const clickThrough = await dbStorage.recordBookClickThrough(
+        bookId,
+        userId,
+        source,
+        referrer
+      );
+
+      res.json(clickThrough);
+    } catch(error) {
+      console.error("Error recording click-through:", error);
+      res.status(500).json({ error: "Failed to record click-through" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

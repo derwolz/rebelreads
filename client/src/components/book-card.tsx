@@ -38,14 +38,18 @@ export function BookCard({ book }: { book: Book }) {
   // Record impression when card becomes visible
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
-      apiRequest(`/api/books/${book.id}/impression`, {
-        method: 'POST',
-        body: JSON.stringify({
-          source: 'card',
-          context: window.location.pathname
-        })
-      });
-      setHasRecordedImpression(true);
+      const recordImpression = async () => {
+        await apiRequest(
+          "POST",
+          `/api/books/${book.id}/impression`,
+          {
+            source: 'card',
+            context: window.location.pathname
+          }
+        );
+        setHasRecordedImpression(true);
+      };
+      recordImpression();
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
@@ -72,13 +76,14 @@ export function BookCard({ book }: { book: Book }) {
       return;
     }
     // Record click-through before navigation
-    await apiRequest(`/api/books/${book.id}/click-through`, {
-      method: 'POST',
-      body: JSON.stringify({
+    await apiRequest(
+      "POST",
+      `/api/books/${book.id}/click-through`,
+      {
         source: 'card',
         referrer: window.location.pathname
-      })
-    });
+      }
+    );
     navigate(`/books/${book.id}`);
   };
 
@@ -122,7 +127,7 @@ export function BookCard({ book }: { book: Book }) {
               </Badge>
             ))}
           </div>
-          {/* Always show basic rating summary */}
+
           <div className="mt-2">
             <div className="flex items-center gap-2">
               <StarRating
@@ -135,7 +140,6 @@ export function BookCard({ book }: { book: Book }) {
             </div>
           </div>
 
-          {/* Detailed ratings that show on hover */}
           <div
             className={`
               absolute left-0 right-0 bg-background/95 backdrop-blur-sm
