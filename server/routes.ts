@@ -434,21 +434,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get follower count
       const followerCount = await dbStorage.getFollowerCount(authorId);
 
-      // Get genre distribution
-      const genres = await db.query.books.findMany({
-        where: eq(books.authorId, authorId),
-        columns: {
-          genres: true
-        }
-      }).then(results => {
-        const genreCounts: { [key: string]: number } = {};
-        results.forEach(book => {
-          book.genres.forEach((genre: string) => {
+      // Get genre distribution - fix the SQL syntax error here
+      const bookResults = await db.query.books.findMany({
+        where: eq(books.authorId, authorId)
+      });
+
+      const genreCounts: { [key: string]: number } = {};
+      bookResults.forEach(book => {
+        if (Array.isArray(book.genres)) {
+          book.genres.forEach(genre => {
             genreCounts[genre] = (genreCounts[genre] || 0) + 1;
           });
-        });
-        return Object.entries(genreCounts).map(([genre, count]) => ({ genre, count }));
+        }
       });
+
+      const genres = Object.entries(genreCounts).map(([genre, count]) => ({ 
+        genre, 
+        count 
+      }));
 
       // Get aggregate ratings
       const authorRatings = await db.query.ratings.findMany({
