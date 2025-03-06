@@ -6,6 +6,7 @@ import { BookCard } from "@/components/book-card";
 import { ReviewCard } from "@/components/review-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { SocialMediaLinks } from "@/components/social-media-links";
 
 interface DashboardData {
   user: {
@@ -14,6 +15,7 @@ interface DashboardData {
     profileImageUrl: string | null;
     followingCount: number;
     followerCount: number;
+    socialMediaLinks?: any[];
   };
   readingStats: {
     wishlisted: number;
@@ -88,6 +90,11 @@ export default function DashboardPage() {
                     <span>{dashboardData.user.followingCount} Following</span>
                     <span>{dashboardData.user.followerCount} Followers</span>
                   </div>
+                  {dashboardData.user.socialMediaLinks && dashboardData.user.socialMediaLinks.length > 0 && (
+                    <div className="mt-4">
+                      <SocialMediaLinks links={dashboardData.user.socialMediaLinks} />
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>

@@ -15,11 +15,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { Book, User } from "@shared/schema";
+import type { Book, User, SocialMediaLink } from "@shared/schema";
 import { format } from 'date-fns';
 import { SocialMediaLinks } from "@/components/social-media-links";
 
-interface AuthorDetails extends User {
+interface AuthorDetails extends Omit<User, 'birthDate' | 'deathDate' | 'socialMediaLinks'> {
   books: Book[];
   followerCount: number;
   genres: { genre: string; count: number }[];
@@ -34,7 +34,7 @@ interface AuthorDetails extends User {
     characters: number;
     worldbuilding: number;
   };
-  socialMediaLinks?: { platform: string; url: string }[];
+  socialMediaLinks?: SocialMediaLink[];
 }
 
 export default function AuthorPage() {
