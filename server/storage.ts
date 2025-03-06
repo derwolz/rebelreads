@@ -14,7 +14,7 @@ import {
 } from "@shared/schema";
 import { users, books, ratings } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray, desc, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -292,11 +292,13 @@ export class DatabaseStorage implements IStorage {
 
   async unfollowAuthor(followerId: number, authorId: number): Promise<void> {
     await db
-      .delete(followers)
+      .update(followers)
+      .set({ deletedAt: new Date() })
       .where(
         and(
           eq(followers.followerId, followerId),
           eq(followers.followingId, authorId),
+          isNull(followers.deletedAt)
         ),
       );
   }
@@ -309,6 +311,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(followers.followerId, followerId),
           eq(followers.followingId, authorId),
+          isNull(followers.deletedAt)
         ),
       );
     return !!result;
@@ -318,7 +321,10 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(followers)
-      .where(eq(followers.followingId, authorId));
+      .where(and(
+        eq(followers.followingId, authorId),
+        isNull(followers.deletedAt)
+      ));
     return result?.count || 0;
   }
 
@@ -326,7 +332,10 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(followers)
-      .where(eq(followers.followerId, userId));
+      .where(and(
+        eq(followers.followerId, userId),
+        isNull(followers.deletedAt)
+      ));
     return result?.count || 0;
   }
 

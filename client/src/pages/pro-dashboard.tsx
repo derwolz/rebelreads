@@ -29,6 +29,11 @@ interface BookPerformance {
   };
 }
 
+interface FollowerAnalytics {
+  follows: Array<{ date: string; count: number }>;
+  unfollows: Array<{ date: string; count: number }>;
+}
+
 interface ProDashboardData {
   totalReviews: number;
   averageRating: number;
@@ -64,6 +69,11 @@ export default function ProDashboard() {
   const { data: performanceData } = useQuery<BookPerformance[]>({
     queryKey: ["/api/pro/book-performance", selectedBookIds, selectedMetrics, timeRange],
     enabled: !!user?.isAuthor && selectedBookIds.length > 0,
+  });
+
+  const { data: followerData } = useQuery<FollowerAnalytics>({
+    queryKey: ["/api/pro/follower-analytics", timeRange],
+    enabled: !!user?.isAuthor,
   });
 
   const handleBookSelect = (bookId: number) => {
@@ -125,6 +135,27 @@ export default function ProDashboard() {
 
     return acc;
   }, []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // Transform follower data for the chart
+  const followerChartData = (() => {
+    if (!followerData) return [];
+
+    const dates = new Set([
+      ...followerData.follows.map(f => f.date),
+      ...followerData.unfollows.map(u => u.date)
+    ]);
+
+    return Array.from(dates).map(date => {
+      const follows = followerData.follows.find(f => f.date === date)?.count || 0;
+      const unfollows = followerData.unfollows.find(u => u.date === date)?.count || 0;
+      return {
+        date,
+        'New Followers': follows,
+        'Lost Followers': unfollows,
+        'Net Change': follows - unfollows
+      };
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  })();
 
   const renderContent = () => {
     if (location === "/pro/reviews") {
@@ -251,6 +282,43 @@ export default function ProDashboard() {
                       );
                     });
                   })}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Follower Growth Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={followerChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="New Followers"
+                    stroke="hsl(145, 70%, 50%)"
+                    strokeWidth={2}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Lost Followers"
+                    stroke="hsl(0, 70%, 50%)"
+                    strokeWidth={2}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Net Change"
+                    stroke="hsl(200, 70%, 50%)"
+                    strokeDasharray="5 5"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>

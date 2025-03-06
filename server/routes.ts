@@ -8,8 +8,8 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { users, books, bookshelves, replies } from "@shared/schema"; // Added replies import
-import { eq, and, inArray, desc, sql, ilike, or } from "drizzle-orm";
+import { users, books, bookshelves, replies, followers } from "@shared/schema"; // Added replies and followers imports
+import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
@@ -630,7 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/pro/reviews/:id/feature", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -669,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/pro/reviews/:id/reply", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -711,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/pro/reviews/:id/report", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -1076,6 +1076,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching book performance:", error);
       res.status(500).json({ error: "Failed to fetch performance data" });
+    }
+  });
+
+  app.get("/api/pro/follower-analytics", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const authorId = req.user!.id;
+      const days = parseInt(req.query.days as string) || 30;
+
+      // Calculate date range
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Get follower history from followers table
+      const followerHistory = await db
+        .select({
+          date: sql`DATE(${followers.createdAt})`,
+          count: sql`COUNT(*)`
+        })
+        .from(followers)
+        .where(and(
+          eq(followers.followedId, authorId),
+          sql`${followers.createdAt} >= ${startDate}`,
+          sql`${followers.createdAt} <= ${endDate}`
+        ))
+        .groupBy(sql`DATE(${followers.createdAt})`)
+        .orderBy(sql`DATE(${followers.createdAt})`);
+
+      // Get unfollower history (if we track unfollows)
+      const unfollowerHistory = await db
+        .select({
+          date: sql`DATE(${followers.deletedAt})`,
+          count: sql`COUNT(*)`
+        })
+        .from(followers)
+        .where(and(
+          eq(followers.followedId, authorId),
+          sql`${followers.deletedAt} >= ${startDate}`,
+          sql`${followers.deletedAt} <= ${endDate}`,
+          isNotNull(followers.deletedAt)
+        ))
+        .groupBy(sql`DATE(${followers.deletedAt})`)
+        .orderBy(sql`DATE(${followers.deletedAt})`);
+
+      res.json({
+        follows: followerHistory,
+        unfollows: unfollowerHistory
+      });
+    } catch (error) {
+      console.error("Error fetching follower analytics:", error);
+      res.status(500).json({ error: "Failed to fetch follower analytics" });
     }
   });
 

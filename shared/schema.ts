@@ -83,6 +83,7 @@ export const followers = pgTable("followers", {
   followerId: integer("follower_id").notNull(), // The user who is following
   followingId: integer("following_id").notNull(), // The author being followed
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at"), // Add deletedAt field for tracking unfollows
 });
 
 export const books = pgTable("books", {
