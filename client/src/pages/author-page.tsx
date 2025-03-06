@@ -15,17 +15,21 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { Book, User, SocialMediaLink } from "@shared/schema";
+import type { Book, SocialMediaLink } from "@shared/schema";
 import { format } from 'date-fns';
 import { SocialMediaLinks } from "@/components/social-media-links";
 
-interface AuthorDetails extends Omit<User, 'birthDate' | 'deathDate' | 'socialMediaLinks'> {
+interface AuthorDetails {
+  id: number;
+  username: string;
+  authorName: string | null;
+  authorBio: string | null;
+  birthDate?: string | null;
+  deathDate?: string | null;
+  website?: string | null;
   books: Book[];
   followerCount: number;
   genres: { genre: string; count: number }[];
-  birthDate?: string;
-  deathDate?: string;
-  website?: string;
   aggregateRatings?: {
     overall: number;
     enjoyment: number;
@@ -42,11 +46,39 @@ export default function AuthorPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: author } = useQuery<AuthorDetails>({
+  const { data: author, isLoading, error } = useQuery<AuthorDetails>({
     queryKey: [`/api/authors/${params?.id}`],
+    enabled: !!params?.id,
   });
 
-  if (!author) return null;
+  if (isLoading) {
+    return (
+      <div>
+        <MainNav />
+        <main className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/3" />
+            <div className="h-4 bg-muted rounded w-1/4" />
+            <div className="h-32 bg-muted rounded" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !author) {
+    return (
+      <div>
+        <MainNav />
+        <main className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Error loading author</h1>
+            <p className="text-muted-foreground">Please try again later</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const filteredBooks = author.books.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
