@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Search, Settings, Menu, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,13 +38,14 @@ interface MainNavProps {
   onSearch?: (query: string, type: string) => void;
 }
 
-type SearchFilter = "all" | "books" | "authors" | "genres";
+type SearchFilter = "books" | "authors" | "genres";
 
 export function MainNav({ onSearch }: MainNavProps) {
   const { user, logoutMutation } = useAuth();
+  const [, navigate] = useLocation();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<SearchFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<SearchFilter>("books");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { data: searchResults, isLoading } = useQuery<{
@@ -61,6 +62,20 @@ export function MainNav({ onSearch }: MainNavProps) {
     onSearch?.(searchQuery, filter);
   };
 
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (searchQuery.trim()) {
+      if (activeFilter === "books") {
+        navigate(`/search/books?q=${encodeURIComponent(searchQuery)}`);
+      } else if (activeFilter === "authors") {
+        navigate(`/search/authors?q=${encodeURIComponent(searchQuery)}`);
+      } else {
+        navigate(`/genres/${encodeURIComponent(searchQuery)}`);
+      }
+      setOpen(false);
+    }
+  };
+
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -73,7 +88,6 @@ export function MainNav({ onSearch }: MainNavProps) {
   }, []);
 
   const filters: { value: SearchFilter; label: string }[] = [
-    { value: "all", label: "All" },
     { value: "books", label: "Books" },
     { value: "authors", label: "Authors" },
     { value: "genres", label: "Genres" },
@@ -207,67 +221,83 @@ export function MainNav({ onSearch }: MainNavProps) {
       </div>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <div className="flex items-center gap-2 p-2 border-b">
-          {filters.map((filter) => (
-            <Badge
-              key={filter.value}
-              variant={activeFilter === filter.value ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => handleFilterChange(filter.value)}
-            >
-              {filter.label}
-            </Badge>
-          ))}
-        </div>
-        <CommandInput
-          placeholder="Search books, authors, or genres..."
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {searchResults?.books && activeFilter !== "authors" && activeFilter !== "genres" && (
-            <CommandGroup heading="Books">
-              {searchResults.books.slice(0, 5).map((book) => (
-                <CommandItem key={book.id} value={book.title}>
-                  <Link href={`/books/${book.id}`} className="flex items-center gap-2">
-                    <img
-                      src={book.coverUrl}
-                      alt={book.title}
-                      className="w-8 h-12 object-cover rounded"
-                    />
-                    <div>
-                      <div className="font-medium">{book.title}</div>
-                      <div className="text-sm text-muted-foreground">by {book.author}</div>
+        <form onSubmit={handleSearchSubmit}>
+          <div className="flex items-center gap-2 p-2 border-b">
+            {filters.map((filter) => (
+              <Badge
+                key={filter.value}
+                variant={activeFilter === filter.value ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => handleFilterChange(filter.value)}
+              >
+                {filter.label}
+              </Badge>
+            ))}
+          </div>
+          <CommandInput
+            placeholder="Search books, authors, or genres..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            {searchResults?.books && activeFilter === "books" && (
+              <CommandGroup heading="Books">
+                {searchResults.books.slice(0, 5).map((book) => (
+                  <CommandItem key={book.id} value={book.title}>
+                    <Link href={`/books/${book.id}`} className="flex items-center gap-2">
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
+                        className="w-8 h-12 object-cover rounded"
+                      />
+                      <div>
+                        <div className="font-medium">{book.title}</div>
+                        <div className="text-sm text-muted-foreground">by {book.author}</div>
+                      </div>
+                    </Link>
+                  </CommandItem>
+                ))}
+                {searchResults.books.length > 0 && (
+                  <CommandItem onSelect={() => handleSearchSubmit()}>
+                    <div className="w-full text-center text-sm text-muted-foreground">
+                      View all results →
                     </div>
-                  </Link>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          {searchResults?.authors && activeFilter !== "books" && activeFilter !== "genres" && (
-            <CommandGroup heading="Authors">
-              {searchResults.authors.slice(0, 5).map((author) => (
-                <CommandItem key={author.id} value={author.name}>
-                  <Link href={`/authors/${author.id}`} className="flex items-center gap-2">
-                    {author.name}
-                  </Link>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          {searchResults?.genres && activeFilter !== "books" && activeFilter !== "authors" && (
-            <CommandGroup heading="Genres">
-              {searchResults.genres.slice(0, 5).map((genre) => (
-                <CommandItem key={genre} value={genre}>
-                  <Link href={`/genres/${genre}`} className="flex items-center gap-2">
-                    {genre}
-                  </Link>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </CommandList>
+                  </CommandItem>
+                )}
+              </CommandGroup>
+            )}
+            {searchResults?.authors && activeFilter === "authors" && (
+              <CommandGroup heading="Authors">
+                {searchResults.authors.slice(0, 5).map((author) => (
+                  <CommandItem key={author.id} value={author.name}>
+                    <Link href={`/authors/${author.id}`} className="flex items-center gap-2">
+                      {author.name}
+                    </Link>
+                  </CommandItem>
+                ))}
+                {searchResults.authors.length > 0 && (
+                  <CommandItem onSelect={() => handleSearchSubmit()}>
+                    <div className="w-full text-center text-sm text-muted-foreground">
+                      View all results →
+                    </div>
+                  </CommandItem>
+                )}
+              </CommandGroup>
+            )}
+            {searchResults?.genres && activeFilter === "genres" && (
+              <CommandGroup heading="Genres">
+                {searchResults.genres.slice(0, 5).map((genre) => (
+                  <CommandItem key={genre} value={genre}>
+                    <Link href={`/genres/${genre}`} className="flex items-center gap-2">
+                      {genre}
+                    </Link>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </form>
       </CommandDialog>
     </nav>
   );

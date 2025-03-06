@@ -12,11 +12,15 @@ import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ProDashboard from "@/pages/pro-dashboard";
+import { SearchBooksPage } from "@/pages/search-books-page";
+import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/search/books" component={SearchBooksPage} />
+      <Route path="/search/authors" component={SearchAuthorsPage} />
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/books/:id" component={BookDetails} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
