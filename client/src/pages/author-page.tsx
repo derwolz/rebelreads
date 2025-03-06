@@ -16,7 +16,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { Book, SocialMediaLink } from "@shared/schema";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
 
 interface AuthorDetails {
@@ -46,7 +46,11 @@ export default function AuthorPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: author, isLoading, error } = useQuery<AuthorDetails>({
+  const {
+    data: author,
+    isLoading,
+    error,
+  } = useQuery<AuthorDetails>({
     queryKey: [`/api/authors/${params?.id}`],
     enabled: !!params?.id,
   });
@@ -79,10 +83,11 @@ export default function AuthorPage() {
       </div>
     );
   }
-
-  const filteredBooks = author.books.filter(book =>
-    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    book.description.toLowerCase().includes(searchTerm.toLowerCase())
+  console.log("Author: ", author);
+  const filteredBooks = author.books.filter(
+    (book) =>
+      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -106,7 +111,8 @@ export default function AuthorPage() {
                       Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
                       {author.deathDate && (
                         <>
-                          {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
+                          {" • "}Died:{" "}
+                          {format(new Date(author.deathDate), "MMMM d, yyyy")}
                         </>
                       )}
                     </span>
@@ -123,11 +129,12 @@ export default function AuthorPage() {
                   Visit Website
                 </a>
               )}
-              {author.socialMediaLinks && author.socialMediaLinks.length > 0 && (
-                <div className="mt-4">
-                  <SocialMediaLinks links={author.socialMediaLinks} />
-                </div>
-              )}
+              {author.socialMediaLinks &&
+                author.socialMediaLinks.length > 0 && (
+                  <div className="mt-4">
+                    <SocialMediaLinks links={author.socialMediaLinks} />
+                  </div>
+                )}
             </div>
             <FollowButton
               authorId={author.id}
@@ -145,7 +152,10 @@ export default function AuthorPage() {
             <div className="bg-muted rounded-lg p-6 space-y-4">
               <h2 className="text-2xl font-semibold">Overall Ratings</h2>
               <div className="flex items-center gap-2">
-                <StarRating rating={Math.round(author.aggregateRatings.overall)} readOnly />
+                <StarRating
+                  rating={Math.round(author.aggregateRatings.overall)}
+                  readOnly
+                />
                 <span className="text-sm text-muted-foreground">
                   Average across all books
                 </span>
@@ -153,23 +163,43 @@ export default function AuthorPage() {
               <div className="grid gap-2">
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Enjoyment (30%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.enjoyment)} readOnly size="sm" />
+                  <StarRating
+                    rating={Math.round(author.aggregateRatings.enjoyment)}
+                    readOnly
+                    size="sm"
+                  />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Writing Style (30%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.writing)} readOnly size="sm" />
+                  <StarRating
+                    rating={Math.round(author.aggregateRatings.writing)}
+                    readOnly
+                    size="sm"
+                  />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Themes (20%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.themes)} readOnly size="sm" />
+                  <StarRating
+                    rating={Math.round(author.aggregateRatings.themes)}
+                    readOnly
+                    size="sm"
+                  />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Characters (10%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.characters)} readOnly size="sm" />
+                  <StarRating
+                    rating={Math.round(author.aggregateRatings.characters)}
+                    readOnly
+                    size="sm"
+                  />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm">World Building (10%)</span>
-                  <StarRating rating={Math.round(author.aggregateRatings.worldbuilding)} readOnly size="sm" />
+                  <StarRating
+                    rating={Math.round(author.aggregateRatings.worldbuilding)}
+                    readOnly
+                    size="sm"
+                  />
                 </div>
               </div>
             </div>
@@ -197,7 +227,10 @@ export default function AuthorPage() {
             <Carousel className="w-full">
               <CarouselContent>
                 {filteredBooks.map((book) => (
-                  <CarouselItem key={book.id} className="md:basis-1/2 lg:basis-1/3">
+                  <CarouselItem
+                    key={book.id}
+                    className="md:basis-1/2 lg:basis-1/3"
+                  >
                     <BookCard book={book} />
                   </CarouselItem>
                 ))}

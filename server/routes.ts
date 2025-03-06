@@ -414,6 +414,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add author endpoint
+  app.get("/api/authors/:id", async (req, res) => {
+    try {
+      const authorId = parseInt(req.params.id);
+      if (isNaN(authorId)) {
+        return res.status(400).json({ error: "Invalid author ID" });
+      }
+
+      // Get author details
+      const author = await dbStorage.getUser(authorId);
+      if (!author || !author.isAuthor) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+
+      // Get author's books
+      const books = await dbStorage.getBooksByAuthor(authorId);
+
+      // Get follower count
+      const followerCount = await dbStorage.getFollowerCount(authorId);
+
+      // Get genre distribution
+      const genres = await db.query.books.findMany({
+        where: eq(books.authorId, authorId),
+        columns: {
+          genres: true
+        }
+      }).then(results => {
+        const genreCounts: { [key: string]: number } = {};
+        results.forEach(book => {
+          book.genres.forEach((genre: string) => {
+            genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+          });
+        });
+        return Object.entries(genreCounts).map(([genre, count]) => ({ genre, count }));
+      });
+
+      // Get aggregate ratings
+      const authorRatings = await db.query.ratings.findMany({
+        where: inArray(
+          ratings.bookId,
+          books.map(b => b.id)
+        )
+      });
+
+      const aggregateRatings = authorRatings.length > 0 ? {
+        enjoyment: authorRatings.reduce((acc, r) => acc + r.enjoyment, 0) / authorRatings.length,
+        writing: authorRatings.reduce((acc, r) => acc + r.writing, 0) / authorRatings.length,
+        themes: authorRatings.reduce((acc, r) => acc + r.themes, 0) / authorRatings.length,
+        characters: authorRatings.reduce((acc, r) => acc + r.characters, 0) / authorRatings.length,
+        worldbuilding: authorRatings.reduce((acc, r) => acc + r.worldbuilding, 0) / authorRatings.length,
+        overall: authorRatings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / authorRatings.length
+      } : undefined;
+
+      res.json({
+        id: author.id,
+        username: author.username,
+        authorName: author.authorName,
+        authorBio: author.authorBio,
+        birthDate: author.birthDate,
+        deathDate: author.deathDate,
+        website: author.website,
+        socialMediaLinks: author.socialMediaLinks,
+        books,
+        followerCount,
+        genres,
+        aggregateRatings
+      });
+    } catch (error) {
+      console.error("Error fetching author details:", error);
+      res.status(500).json({ error: "Failed to fetch author details" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
