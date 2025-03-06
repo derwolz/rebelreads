@@ -22,10 +22,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReferralLink } from "@shared/schema";
 import { ReviewCard } from "@/components/review-card";
 import { WishlistButton } from "@/components/wishlist-button";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -40,6 +41,19 @@ export default function BookDetails() {
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${params?.id}/ratings`],
   });
+
+  // Record click-through when the page loads
+  useEffect(() => {
+    if (book?.id) {
+      apiRequest(`/api/books/${book.id}/click-through`, {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'direct',
+          referrer: document.referrer
+        })
+      });
+    }
+  }, [book?.id]);
 
   if (!book) return null;
 

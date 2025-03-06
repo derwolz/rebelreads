@@ -107,6 +107,10 @@ export const books = pgTable("books", {
   asin: text("asin"),
   language: text("language").notNull().default("English"),
   referralLinks: jsonb("referral_links").default([]),
+  impressionCount: integer("impression_count").notNull().default(0),
+  clickThroughCount: integer("click_through_count").notNull().default(0),
+  lastImpressionAt: timestamp("last_impression_at"),
+  lastClickThroughAt: timestamp("last_click_through_at"),
 });
 
 export interface ReviewAnalysis {
@@ -162,6 +166,24 @@ export const reading_status = pgTable("reading_status", {
   isWishlisted: boolean("is_wishlisted").notNull().default(false),
   isCompleted: boolean("is_completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
+});
+
+export const bookImpressions = pgTable("book_impressions", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull(),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  source: text("source").notNull(), // e.g., 'card', 'grid', 'carousel'
+  context: text("context").notNull(), // e.g., 'home', 'search', 'author-page'
+});
+
+export const bookClickThroughs = pgTable("book_click_throughs", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull(),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  source: text("source").notNull(), // Where the click came from
+  referrer: text("referrer"), // Previous page URL
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -223,11 +245,15 @@ export const insertBookSchema = createInsertSchema(books).extend({
   characters: z.array(z.string()).optional(),
   language: z.string().optional(),
   referralLinks: z.array(referralLinkSchema).optional(),
+  impressionCount: z.number().int().min(0).default(0),
+  clickThroughCount: z.number().int().min(0).default(0),
 });
 
 export const insertRatingSchema = createInsertSchema(ratings);
 export const insertReadingStatusSchema = createInsertSchema(reading_status);
 export const insertFollowerSchema = createInsertSchema(followers);
+export const insertImpressionSchema = createInsertSchema(bookImpressions);
+export const insertClickThroughSchema = createInsertSchema(bookClickThroughs);
 
 export const loginSchema = z.object({
   email: z.string().min(1, "Email or username is required"),
@@ -242,6 +268,12 @@ export type Rating = typeof ratings.$inferSelect;
 export type ReadingStatus = typeof reading_status.$inferSelect;
 export type InsertReadingStatus = typeof reading_status.$inferInsert;
 export type Follower = typeof followers.$inferSelect;
+export type BookImpression = typeof bookImpressions.$inferSelect;
+export type BookClickThrough = typeof bookClickThroughs.$inferSelect;
+export type InsertBookImpression = typeof bookImpressions.$inferInsert;
+export type InsertBookClickThrough = typeof bookClickThroughs.$inferInsert;
+export type InsertBook = typeof books.$inferInsert;
+
 
 export function calculateWeightedRating(rating: Rating): number {
   return (

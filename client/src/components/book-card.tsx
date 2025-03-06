@@ -4,16 +4,50 @@ import { StarRating } from "./star-rating";
 import { WishlistButton } from "./wishlist-button";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { apiRequest } from "@/lib/queryClient";
 
 export function BookCard({ book }: { book: Book }) {
   const [showDetailed, setShowDetailed] = useState(false);
   const [, navigate] = useLocation();
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
   });
+
+  // Set up intersection observer to track when the card becomes visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5 } // Card must be 50% visible to count
+    );
+
+    const element = document.getElementById(`book-card-${book.id}`);
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => observer.disconnect();
+  }, [book.id]);
+
+  // Record impression when card becomes visible
+  useEffect(() => {
+    if (isVisible && !hasRecordedImpression) {
+      apiRequest(`/api/books/${book.id}/impression`, {
+        method: 'POST',
+        body: JSON.stringify({
+          source: 'card',
+          context: window.location.pathname
+        })
+      });
+      setHasRecordedImpression(true);
+    }
+  }, [isVisible, hasRecordedImpression, book.id]);
 
   const averageRatings = ratings?.length
     ? {
@@ -32,17 +66,26 @@ export function BookCard({ book }: { book: Book }) {
       }
     : null;
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = async (e: React.MouseEvent) => {
     // Don't navigate if clicking on the wishlist button
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
+    // Record click-through before navigation
+    await apiRequest(`/api/books/${book.id}/click-through`, {
+      method: 'POST',
+      body: JSON.stringify({
+        source: 'card',
+        referrer: window.location.pathname
+      })
+    });
     navigate(`/books/${book.id}`);
   };
 
   return (
     <div className="relative group min-h-256" style={{ marginBottom: "10rem" }}>
       <Card
+        id={`book-card-${book.id}`}
         className={`
           overflow-visible cursor-pointer
           transition-all duration-300 ease-in-out
@@ -150,7 +193,7 @@ export function BookCard({ book }: { book: Book }) {
               </div>
             </div>
           </div>
-           </CardContent>
+        </CardContent>
       </Card>
     </div>
   );
