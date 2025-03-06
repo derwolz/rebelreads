@@ -150,7 +150,7 @@ export function BookCard({ book }: { book: Book }) {
               </div>
             </div>
           </div>
-        </CardContent>
+           </CardContent>
       </Card>
     </div>
   );

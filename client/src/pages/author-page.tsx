@@ -1,16 +1,22 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { User, Book } from "@shared/schema";
-import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
 import { MainNav } from "@/components/main-nav";
-import { StarRating } from "@/components/star-rating";
 import { BookCard } from "@/components/book-card";
-import { FollowButton } from "@/components/follow-button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
-import { ProfileSocialLinks } from "@/components/profile-social-links";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
+import { FollowButton } from "@/components/follow-button";
+import { StarRating } from "@/components/star-rating";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import type { Book, User } from "@shared/schema";
+import { format } from 'date-fns';
 
 interface AuthorDetails extends User {
   books: Book[];
@@ -27,8 +33,6 @@ interface AuthorDetails extends User {
     characters: number;
     worldbuilding: number;
   };
-  socialLinks?: { platform: string; url: string }[];
-  bio?: string;
 }
 
 export default function AuthorPage() {
@@ -36,36 +40,16 @@ export default function AuthorPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: author, isLoading } = useQuery<AuthorDetails>({
+  const { data: author } = useQuery<AuthorDetails>({
     queryKey: [`/api/authors/${params?.id}`],
   });
 
-  if (isLoading) {
-    return (
-      <div>
-        <MainNav />
-        <main className="container mx-auto px-4 py-8">
-          <div>Loading author information...</div>
-        </main>
-      </div>
-    );
-  }
+  if (!author) return null;
 
-  if (!author) {
-    return (
-      <div>
-        <MainNav />
-        <main className="container mx-auto px-4 py-8">
-          <div>Author not found</div>
-        </main>
-      </div>
-    );
-  }
-
-  const filteredBooks = author.books?.filter(book =>
+  const filteredBooks = author.books.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.description.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   return (
     <div>
@@ -101,31 +85,19 @@ export default function AuthorPage() {
                     Visit Website
                   </a>
                 )}
-                {author.socialLinks && author.socialLinks.length > 0 && (
-                  <div className="mt-2">
-                    <ProfileSocialLinks socialLinks={author.socialLinks} />
-                  </div>
-                )}
               </div>
             </div>
-            {user && user.id !== author.id && (
-              <FollowButton authorId={author.id} authorName={author.authorName || author.username} />
-            )}
+            <FollowButton
+              authorId={author.id}
+              authorName={author.authorName || author.username}
+            />
           </div>
 
-          {author.bio && (
+          {author.authorBio && (
             <div className="prose max-w-none">
-              <p>{author.bio}</p>
+              <p>{author.authorBio}</p>
             </div>
           )}
-
-          <div className="flex flex-wrap gap-2">
-            {author.genres.map(({ genre, count }) => (
-              <Badge key={genre} variant="secondary" className="text-sm">
-                {genre} ({count})
-              </Badge>
-            ))}
-          </div>
 
           {author.aggregateRatings && (
             <div className="bg-muted rounded-lg p-6 space-y-4">
@@ -161,6 +133,14 @@ export default function AuthorPage() {
             </div>
           )}
 
+          <div className="flex flex-wrap gap-2">
+            {author.genres.map(({ genre, count }) => (
+              <Badge key={genre} variant="secondary" className="text-sm">
+                {genre} ({count})
+              </Badge>
+            ))}
+          </div>
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-semibold">Books</h2>
@@ -171,16 +151,18 @@ export default function AuthorPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredBooks.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))}
-              {filteredBooks.length === 0 && (
-                <div className="col-span-full text-center py-8">
-                  <p>No books found</p>
-                </div>
-              )}
-            </div>
+
+            <Carousel className="w-full">
+              <CarouselContent>
+                {filteredBooks.map((book) => (
+                  <CarouselItem key={book.id} className="md:basis-1/2 lg:basis-1/3">
+                    <BookCard book={book} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </div>
       </main>
