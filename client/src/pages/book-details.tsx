@@ -112,6 +112,19 @@ export default function BookDetails() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        // Record click-through before navigation
+                        await apiRequest(
+                          "POST",
+                          `/api/books/${book.id}/click-through`,
+                          {
+                            source: `referral_${link.retailer.toLowerCase()}`,
+                            referrer: window.location.pathname
+                          }
+                        );
+                        window.open(link.url, '_blank');
+                      }}
                     >
                       <Button variant="outline" className="w-full">
                         {link.customName || link.retailer}
