@@ -1,10 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation } from "wouter";
 
 export function MainNav() {
   const { user, isLoading, logout } = useAuth();
-  const navigate = useNavigate();
+  const [_, navigate] = useLocation();
 
   return (
     <header className="border-b">
