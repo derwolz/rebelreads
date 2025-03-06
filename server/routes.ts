@@ -874,8 +874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.isAuthenticated() ? req.user!.id : null;
       const { source, referrer } = req.body;
 
-      const clickThrough = await dbStorage.recordBookClickThrough(
-        bookId,
+      const clickThrough = await dbStorage.recordBookClickThrough(        bookId,
         userId,
         source,
         referrer
@@ -885,6 +884,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch(error) {
       console.error("Error recording click-through:", error);
       res.status(500).json({ error: "Failed to record click-through" });
+    }
+  });
+
+  // Add after other API endpoint definitions
+  app.get("/api/pro/book-analytics", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const authorId = req.user!.id;
+      const bookIds = req.query.bookIds ? (req.query.bookIds as string).split(',').map(Number) : [];
+      const days = parseInt(req.query.days as string) || 30;
+
+      // Get all books if no specific books requested
+      const books = bookIds.length > 0
+        ? await db
+            .select()
+            .from(books)
+            .where(and(
+              eq(books.authorId, authorId),
+              inArray(books.id, bookIds)
+            ))
+        : await dbStorage.getBooksByAuthor(authorId);
+
+      // Calculate date range
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Get analytics data for each book
+      const analyticsData = await Promise.all(books.map(async (book) => {
+        // Get impressions
+        const impressions = await db
+          .select({
+            date: sql`DATE(${bookImpressions.timestamp})`,
+            count: sql`COUNT(*)`
+          })
+          .from(bookImpressions)
+          .where(and(
+            eq(bookImpressions.bookId, book.id),
+            sql`${bookImpressions.timestamp} >= ${startDate}`,
+            sql`${bookImpressions.timestamp} <= ${endDate}`
+          ))
+          .groupBy(sql`DATE(${bookImpressions.timestamp})`)
+          .orderBy(sql`DATE(${bookImpressions.timestamp})`);
+
+        // Get click-throughs
+        const clickThroughs = await db
+          .select({
+            date: sql`DATE(${bookClickThroughs.timestamp})`,
+            count: sql`COUNT(*)`
+          })
+          .from(bookClickThroughs)
+          .where(and(
+            eq(bookClickThroughs.bookId, book.id),
+            sql`${bookClickThroughs.timestamp} >= ${startDate}`,
+            sql`${bookClickThroughs.timestamp} <= ${endDate}`
+          ))
+          .groupBy(sql`DATE(${bookClickThroughs.timestamp})`)
+          .orderBy(sql`DATE(${bookClickThroughs.timestamp})`);
+
+        // Get referral clicks
+        const referralClicks = await db
+          .select({
+            date: sql`DATE(${bookClickThroughs.timestamp})`,
+            count: sql`COUNT(*)`
+          })
+          .from(bookClickThroughs)
+          .where(and(
+            eq(bookClickThroughs.bookId, book.id),
+            sql`${bookClickThroughs.source} LIKE 'referral_%'`,
+            sql`${bookClickThroughs.timestamp} >= ${startDate}`,
+            sql`${bookClickThroughs.timestamp} <= ${endDate}`
+          ))
+          .groupBy(sql`DATE(${bookClickThroughs.timestamp})`)
+          .orderBy(sql`DATE(${bookClickThroughs.timestamp})`);
+
+        return {
+          bookId: book.id,
+          title: book.title,
+          metrics: {
+            impressions,
+            clickThroughs,
+            referralClicks
+          }
+        };
+      }));
+
+      res.json(analyticsData);
+    } catch (error) {
+      console.error("Error fetching book analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics data" });
     }
   });
 

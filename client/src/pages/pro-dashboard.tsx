@@ -5,6 +5,13 @@ import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
@@ -12,96 +19,85 @@ import { useState, useEffect } from "react";
 import { DndContext, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { ReviewBoostWizard } from "@/components/review-boost-wizard";
+import { format } from "date-fns";
+import type { Book } from "@shared/schema";
 
-interface BookInterest {
-  date: string;
-  [key: string]: number | string;
+interface BookAnalytics {
+  bookId: number;
+  title: string;
+  metrics: {
+    impressions: Array<{ date: string; count: number }>;
+    clickThroughs: Array<{ date: string; count: number }>;
+    referralClicks: Array<{ date: string; count: number }>;
+  };
 }
 
 interface ProDashboardData {
-  bookInterest: BookInterest[];
   totalReviews: number;
   averageRating: number;
   recentReports: number;
-  books: Book[]; // Use the proper Book type from schema
 }
 
 export default function ProDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [startX, setStartX] = useState(0);
+  const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
+  const [timeRange, setTimeRange] = useState("30"); // days
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    })
-  );
-
-  const { data: dashboardData, isLoading } = useQuery<ProDashboardData>({
+  const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
     enabled: !!user?.isAuthor,
   });
 
-  useEffect(() => {
-    let touchStartX = 0;
-    let touchEndX = 0;
+  const { data: books } = useQuery<Book[]>({
+    queryKey: ["/api/my-books"],
+    enabled: !!user?.isAuthor,
+  });
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX;
-    };
+  const { data: analyticsData } = useQuery<BookAnalytics[]>({
+    queryKey: ["/api/pro/book-analytics", selectedBookIds, timeRange],
+    enabled: !!user?.isAuthor && selectedBookIds.length > 0,
+  });
 
-    const handleTouchMove = (e: TouchEvent) => {
-      touchEndX = e.touches[0].clientX;
-      const deltaX = touchEndX - touchStartX;
+  const handleBookSelect = (bookId: number) => {
+    if (selectedBookIds.includes(bookId)) {
+      setSelectedBookIds(selectedBookIds.filter(id => id !== bookId));
+    } else if (selectedBookIds.length < 5) {
+      setSelectedBookIds([...selectedBookIds, bookId]);
+    }
+  };
 
-      // Only open sidebar if swipe starts from right edge
-      if (touchStartX > window.innerWidth - 30 && deltaX < -50) {
-        setIsSidebarOpen(true);
+  // Transform analytics data for the chart
+  const chartData = analyticsData?.reduce((acc: any[], book) => {
+    const dates = new Set([
+      ...book.metrics.impressions.map(i => i.date),
+      ...book.metrics.clickThroughs.map(c => c.date),
+      ...book.metrics.referralClicks.map(r => r.date)
+    ]);
+
+    dates.forEach(date => {
+      const existingDate = acc.find(d => d.date === date);
+      if (existingDate) {
+        existingDate[`${book.title}_impressions`] = 
+          book.metrics.impressions.find(i => i.date === date)?.count || 0;
+        existingDate[`${book.title}_clicks`] = 
+          book.metrics.clickThroughs.find(c => c.date === date)?.count || 0;
+        existingDate[`${book.title}_referrals`] = 
+          book.metrics.referralClicks.find(r => r.date === date)?.count || 0;
+      } else {
+        acc.push({
+          date,
+          [`${book.title}_impressions`]: book.metrics.impressions.find(i => i.date === date)?.count || 0,
+          [`${book.title}_clicks`]: book.metrics.clickThroughs.find(c => c.date === date)?.count || 0,
+          [`${book.title}_referrals`]: book.metrics.referralClicks.find(r => r.date === date)?.count || 0
+        });
       }
-      // Close sidebar if swipe starts from left side of screen
-      else if (touchStartX < window.innerWidth / 2 && deltaX > 50) {
-        setIsSidebarOpen(false);
-      }
-    };
+    });
 
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, []);
-
-  if (!user?.isAuthor) {
-    return (
-      <div>
-        <MainNav />
-        <main className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold">Access Denied</h1>
-          <p>You need to be an author to access this page.</p>
-        </main>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div>
-        <MainNav />
-        <main className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/3" />
-            <div className="h-[400px] bg-muted rounded" />
-          </div>
-        </main>
-      </div>
-    );
-  }
+    return acc;
+  }, []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const renderContent = () => {
     if (location === "/pro/reviews") {
@@ -110,68 +106,6 @@ export default function ProDashboard() {
 
     if (location === "/pro/author-settings") {
       return <ProAuthorSettings />;
-    }
-
-    if (location === "/pro/reports") {
-      return (
-        <div className="flex-1 space-y-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Take Action</h1>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Review Boost</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Get more reviews for your books through our AI-powered reader matching program.
-                </p>
-                <Button
-                  className="w-full"
-                  onClick={() => setIsReviewBoostOpen(true)}
-                >
-                  Boost Reviews
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Create Survey</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Create custom surveys to gather feedback from your readers.
-                </p>
-                <Button variant="secondary" disabled className="w-full">
-                  Make a Survey (Planned)
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Advertisement</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Start an advertising campaign to reach more readers.
-                </p>
-                <Button className="w-full">Start Ad Campaign</Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Review Boost Wizard */}
-          <ReviewBoostWizard
-            open={isReviewBoostOpen}
-            onClose={() => setIsReviewBoostOpen(false)}
-            books={dashboardData?.books || []}
-          />
-        </div>
-      );
     }
 
     // Default analytics view
@@ -195,10 +129,12 @@ export default function ProDashboard() {
               <CardTitle>Average Rating</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{dashboardData?.averageRating.toFixed(1)}</p>
+              <p className="text-3xl font-bold">
+                {dashboardData?.averageRating.toFixed(1)}
+              </p>
             </CardContent>
           </Card>
-          <Card className="sm:col-span-2 md:col-span-1">
+          <Card>
             <CardHeader>
               <CardTitle>Recent Reports</CardTitle>
             </CardHeader>
@@ -209,29 +145,73 @@ export default function ProDashboard() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Book Interest Over Time</CardTitle>
+          <CardHeader className="space-y-4">
+            <CardTitle>Book Performance Analytics</CardTitle>
+            <div className="flex flex-wrap gap-4">
+              <Select
+                value={timeRange}
+                onValueChange={(value) => setTimeRange(value)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">Last 7 days</SelectItem>
+                  <SelectItem value="30">Last 30 days</SelectItem>
+                  <SelectItem value="90">Last 90 days</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2">
+                {books?.map((book) => (
+                  <Button
+                    key={book.id}
+                    variant={selectedBookIds.includes(book.id) ? "default" : "outline"}
+                    onClick={() => handleBookSelect(book.id)}
+                    className="text-sm"
+                  >
+                    {book.title}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] md:h-[400px]">
+            <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dashboardData?.bookInterest || []}>
+                <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  {Object.keys(dashboardData?.bookInterest?.[0] || {})
-                    .filter(key => key !== 'date')
-                    .map((book, index) => (
-                      <Line
-                        key={book}
-                        type="monotone"
-                        dataKey={book}
-                        stroke={`hsl(${index * 30}, 70%, 50%)`}
-                        strokeWidth={2}
-                      />
-                    ))}
+                  {selectedBookIds.map((bookId) => {
+                    const book = books?.find(b => b.id === bookId);
+                    if (!book) return null;
+                    return (
+                      <>
+                        <Line
+                          type="monotone"
+                          dataKey={`${book.title}_impressions`}
+                          name={`${book.title} (Impressions)`}
+                          stroke={`hsl(${bookId * 30}, 70%, 50%)`}
+                          strokeDasharray="3 3"
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey={`${book.title}_clicks`}
+                          name={`${book.title} (Clicks)`}
+                          stroke={`hsl(${bookId * 30}, 70%, 50%)`}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey={`${book.title}_referrals`}
+                          name={`${book.title} (Referrals)`}
+                          stroke={`hsl(${bookId * 30}, 70%, 50%)`}
+                          strokeDasharray="5 5"
+                        />
+                      </>
+                    );
+                  })}
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -246,29 +226,14 @@ export default function ProDashboard() {
       <MainNav />
       <main className="container mx-auto px-4 py-8">
         <div className="flex gap-8">
-          {/* Desktop Sidebar */}
           <div className="hidden md:block">
             <ProDashboardSidebar />
           </div>
 
-          {/* Mobile Swipeable Sidebar */}
-          <div
-            className={cn(
-              "fixed inset-y-0 right-0 w-64 bg-background border-l transform transition-transform duration-200 ease-in-out z-50 md:hidden",
-              isSidebarOpen ? "translate-x-0" : "translate-x-full"
-            )}
-          >
-            <div className="h-full overflow-y-auto pt-20 px-4">
-              <ProDashboardSidebar />
-            </div>
-          </div>
-
-          {/* Main Content */}
           <div className="flex-1 min-w-0">
             {renderContent()}
           </div>
 
-          {/* Overlay */}
           {isSidebarOpen && (
             <div
               className="fixed inset-0 bg-black/20 z-40 md:hidden"
