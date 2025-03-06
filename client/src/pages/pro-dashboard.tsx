@@ -23,7 +23,7 @@ interface ProDashboardData {
   totalReviews: number;
   averageRating: number;
   recentReports: number;
-  books: any[]; // Added to handle books prop in ReviewBoostWizard
+  books: Book[]; // Use the proper Book type from schema
 }
 
 export default function ProDashboard() {

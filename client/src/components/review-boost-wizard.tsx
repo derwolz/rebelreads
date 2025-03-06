@@ -71,6 +71,14 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
     }
   };
 
+  const handleBookSelection = (bookId: number) => {
+    setSelectedBooks(prev => 
+      prev.includes(bookId) 
+        ? prev.filter(id => id !== bookId)
+        : [...prev, bookId]
+    );
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -84,30 +92,40 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
             </DialogHeader>
             <div className="grid gap-4 py-4">
               {books.map((book) => (
-                <Card key={book.id} className="cursor-pointer" onClick={() => {
-                  setSelectedBooks(prev => 
-                    prev.includes(book.id) 
-                      ? prev.filter(id => id !== book.id)
-                      : [...prev, book.id]
-                  );
-                }}>
+                <Card 
+                  key={book.id} 
+                  className={`cursor-pointer transition-colors ${
+                    selectedBooks.includes(book.id) ? 'border-primary' : ''
+                  }`}
+                  onClick={() => handleBookSelection(book.id)}
+                >
                   <CardContent className="flex items-center p-4">
                     <Checkbox
                       checked={selectedBooks.includes(book.id)}
-                      onCheckedChange={() => {
-                        setSelectedBooks(prev => 
-                          prev.includes(book.id) 
-                            ? prev.filter(id => id !== book.id)
-                            : [...prev, book.id]
-                        );
-                      }}
+                      onCheckedChange={() => handleBookSelection(book.id)}
+                      className="mr-4"
                     />
-                    <div className="ml-4">
-                      <h3 className="font-medium">{book.title}</h3>
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={book.coverUrl} 
+                        alt={book.title} 
+                        className="h-16 w-12 object-cover rounded"
+                      />
+                      <div>
+                        <h3 className="font-medium">{book.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {book.genres.join(", ")}
+                        </p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
+              {books.length === 0 && (
+                <div className="text-center text-muted-foreground py-8">
+                  No books available for review boost
+                </div>
+              )}
             </div>
           </>
         );
@@ -146,7 +164,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
         return (
           <>
             <DialogHeader>
-              <DialogTitle>Upload Book File</DialogTitle>
+              <DialogTitle>Upload Book Files</DialogTitle>
               <DialogDescription>
                 Upload your book in .epub format
               </DialogDescription>
