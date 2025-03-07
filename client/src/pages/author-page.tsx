@@ -92,7 +92,7 @@ export default function AuthorPage() {
 
   return (
     <div>
-      <MainNav />
+      
       <main className="container mx-auto px-4 py-8">
         <div className="grid gap-8">
           <div className="flex items-start justify-between">
