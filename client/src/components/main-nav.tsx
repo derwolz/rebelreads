@@ -48,8 +48,13 @@ export function MainNav({ onSearch }: MainNavProps) {
   const [activeFilter, setActiveFilter] = useState<SearchFilter>("books");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: searchResults } = useQuery<{ books: Book[] } | { authors: SearchAuthor[] }>({
+  const { data: searchResults } = useQuery<
+    { books: Book[] } | { authors: SearchAuthor[] }
+  >({
     queryKey: [`/api/search/${activeFilter}`, debouncedSearch],
+    queryFn: () =>
+      fetch(`/api/search/${activeFilter}?q=${debouncedSearch}`) // Correctly fetch the results using the API
+        .then((response) => response.json()),
     enabled: debouncedSearch.length > 1,
   });
 
@@ -74,7 +79,7 @@ export function MainNav({ onSearch }: MainNavProps) {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen(open => !open);
+        setOpen((open) => !open);
       }
     };
     document.addEventListener("keydown", down);
@@ -92,7 +97,10 @@ export function MainNav({ onSearch }: MainNavProps) {
         <CommandGroup heading="Books">
           {searchResults.books.slice(0, 5).map((book) => (
             <CommandItem key={book.id} value={book.title}>
-              <Link href={`/books/${book.id}`} className="flex items-center gap-2">
+              <Link
+                href={`/books/${book.id}`}
+                className="flex items-center gap-2"
+              >
                 <img
                   src={book.coverUrl}
                   alt={book.title}
@@ -100,7 +108,9 @@ export function MainNav({ onSearch }: MainNavProps) {
                 />
                 <div>
                   <div className="font-medium">{book.title}</div>
-                  <div className="text-sm text-muted-foreground">by {book.author}</div>
+                  <div className="text-sm text-muted-foreground">
+                    by {book.author}
+                  </div>
                 </div>
               </Link>
             </CommandItem>
@@ -120,14 +130,22 @@ export function MainNav({ onSearch }: MainNavProps) {
       return (
         <CommandGroup heading="Authors">
           {searchResults.authors.slice(0, 5).map((author) => (
-            <CommandItem key={author.id} value={author.authorName || author.username}>
-              <Link href={`/authors/${author.id}`} className="flex items-center gap-2">
+            <CommandItem
+              key={author.id}
+              value={author.authorName || author.username}
+            >
+              <Link
+                href={`/authors/${author.id}`}
+                className="flex items-center gap-2"
+              >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={author.authorImageUrl || undefined} />
                   <AvatarFallback>👤</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">{author.authorName || author.username}</div>
+                  <div className="font-medium">
+                    {author.authorName || author.username}
+                  </div>
                   {author.authorBio && (
                     <div className="text-sm text-muted-foreground line-clamp-1">
                       {author.authorBio}
@@ -190,7 +208,10 @@ export function MainNav({ onSearch }: MainNavProps) {
               </Link>
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.profileImageUrl || undefined} alt={user.username} />
+                  <AvatarImage
+                    src={user.profileImageUrl || undefined}
+                    alt={user.username}
+                  />
                   <AvatarFallback>👤</AvatarFallback>
                 </Avatar>
                 <Link href="/dashboard">
@@ -235,7 +256,10 @@ export function MainNav({ onSearch }: MainNavProps) {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 py-2">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.profileImageUrl || undefined} alt={user.username} />
+                        <AvatarImage
+                          src={user.profileImageUrl || undefined}
+                          alt={user.username}
+                        />
                         <AvatarFallback>👤</AvatarFallback>
                       </Avatar>
                       <Link href="/dashboard">
@@ -247,13 +271,19 @@ export function MainNav({ onSearch }: MainNavProps) {
                     <div className="grid gap-2">
                       {user.isAuthor && (
                         <Link href="/pro">
-                          <Button variant="outline" className="w-full justify-start">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                          >
                             Author Dashboard
                           </Button>
                         </Link>
                       )}
                       <Link href="/settings">
-                        <Button variant="outline" className="w-full justify-start">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                        >
                           <Settings className="mr-2 h-4 w-4" />
                           Settings
                         </Button>

@@ -14,7 +14,7 @@ import {
 } from "@shared/schema";
 import { users, books, ratings } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray, desc, isNull } from "drizzle-orm";
+import { eq, and, inArray, ilike, desc, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -43,7 +43,10 @@ export interface IStorage {
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
   getUserRatings(userId: number): Promise<Rating[]>;
 
-  getReadingStatus(userId: number, bookId: number): Promise<ReadingStatus | undefined>;
+  getReadingStatus(
+    userId: number,
+    bookId: number,
+  ): Promise<ReadingStatus | undefined>;
   toggleWishlist(userId: number, bookId: number): Promise<ReadingStatus>;
   markAsCompleted(userId: number, bookId: number): Promise<ReadingStatus>;
   getWishlistedBooks(userId: number): Promise<Book[]>;
@@ -55,7 +58,9 @@ export interface IStorage {
   getFollowerCount(authorId: number): Promise<number>;
   getFollowingCount(userId: number): Promise<number>;
 
-  getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
+  getAuthorGenres(
+    authorId: number,
+  ): Promise<{ genre: string; count: number }[]>;
   getAuthorAggregateRatings(authorId: number): Promise<{
     overall: number;
     enjoyment: number;
@@ -67,9 +72,19 @@ export interface IStorage {
   getFollowedAuthorsBooks(userId: number): Promise<Book[]>;
 
   sessionStore: session.Store;
-  recordBookImpression(bookId: number, userId: number | null, source: string, context: string): Promise<BookImpression>;
-  recordBookClickThrough(bookId: number, userId: number | null, source: string, referrer: string): Promise<BookClickThrough>;
-  updateBookStats(bookId: number, type: 'impression' | 'click'): Promise<void>;
+  recordBookImpression(
+    bookId: number,
+    userId: number | null,
+    source: string,
+    context: string,
+  ): Promise<BookImpression>;
+  recordBookClickThrough(
+    bookId: number,
+    userId: number | null,
+    source: string,
+    referrer: string,
+  ): Promise<BookClickThrough>;
+  updateBookStats(bookId: number, type: "impression" | "click"): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -128,6 +143,16 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(books);
   }
 
+  async selectBooks(query: string): Promise<Book[]> {
+    const results = await db
+      .select()
+      .from(books)
+      .where(ilike(books.title, query))
+      .limit(20);
+    console.log(results, "Filtered search results"); // Optional: Log the filtered results for debugging
+    return results;
+  }
+
   async getBook(id: number): Promise<Book | undefined> {
     const [book] = await db.select().from(books).where(eq(books.id, id));
     return book;
@@ -175,7 +200,7 @@ export class DatabaseStorage implements IStorage {
         review: ratings.review,
         analysis: ratings.analysis,
         createdAt: ratings.createdAt,
-        featured: ratings.featured
+        featured: ratings.featured,
       })
       .from(ratings)
       .where(eq(ratings.bookId, bookId));
@@ -186,15 +211,18 @@ export class DatabaseStorage implements IStorage {
     return newRating;
   }
 
-  async getReadingStatus(userId: number, bookId: number): Promise<ReadingStatus | undefined> {
+  async getReadingStatus(
+    userId: number,
+    bookId: number,
+  ): Promise<ReadingStatus | undefined> {
     const [status] = await db
       .select()
       .from(reading_status)
       .where(
         and(
           eq(reading_status.userId, userId),
-          eq(reading_status.bookId, bookId)
-        )
+          eq(reading_status.bookId, bookId),
+        ),
       );
     return status;
   }
@@ -218,7 +246,10 @@ export class DatabaseStorage implements IStorage {
     return status;
   }
 
-  async markAsCompleted(userId: number, bookId: number): Promise<ReadingStatus> {
+  async markAsCompleted(
+    userId: number,
+    bookId: number,
+  ): Promise<ReadingStatus> {
     const existingStatus = await this.getReadingStatus(userId, bookId);
 
     if (existingStatus) {
@@ -227,7 +258,7 @@ export class DatabaseStorage implements IStorage {
         .set({
           isCompleted: true,
           completedAt: new Date(),
-          isWishlisted: false // Remove from wishlist when completed
+          isWishlisted: false, // Remove from wishlist when completed
         })
         .where(eq(reading_status.id, existingStatus.id))
         .returning();
@@ -240,7 +271,7 @@ export class DatabaseStorage implements IStorage {
         userId,
         bookId,
         isCompleted: true,
-        completedAt: new Date()
+        completedAt: new Date(),
       })
       .returning();
     return status;
@@ -255,8 +286,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(reading_status.bookId, books.id),
           eq(reading_status.userId, userId),
-          eq(reading_status.isWishlisted, true)
-        )
+          eq(reading_status.isWishlisted, true),
+        ),
       );
     return wishlistedBooks.map(({ books }) => books);
   }
@@ -270,8 +301,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(reading_status.bookId, books.id),
           eq(reading_status.userId, userId),
-          eq(reading_status.isCompleted, true)
-        )
+          eq(reading_status.isCompleted, true),
+        ),
       );
     return completedBooks.map(({ books }) => books);
   }
@@ -298,7 +329,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(followers.followerId, followerId),
           eq(followers.followingId, authorId),
-          isNull(followers.deletedAt)
+          isNull(followers.deletedAt),
         ),
       );
   }
@@ -311,7 +342,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(followers.followerId, followerId),
           eq(followers.followingId, authorId),
-          isNull(followers.deletedAt)
+          isNull(followers.deletedAt),
         ),
       );
     return !!result;
@@ -321,10 +352,9 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(followers)
-      .where(and(
-        eq(followers.followingId, authorId),
-        isNull(followers.deletedAt)
-      ));
+      .where(
+        and(eq(followers.followingId, authorId), isNull(followers.deletedAt)),
+      );
     return result?.count || 0;
   }
 
@@ -332,10 +362,9 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .select({ count: sql<number>`count(*)` })
       .from(followers)
-      .where(and(
-        eq(followers.followerId, userId),
-        isNull(followers.deletedAt)
-      ));
+      .where(
+        and(eq(followers.followerId, userId), isNull(followers.deletedAt)),
+      );
     return result?.count || 0;
   }
 
@@ -343,14 +372,14 @@ export class DatabaseStorage implements IStorage {
     bookId: number,
     userId: number | null,
     source: string,
-    context: string
+    context: string,
   ): Promise<BookImpression> {
     const [impression] = await db
       .insert(bookImpressions)
       .values({ bookId, userId, source, context })
       .returning();
 
-    await this.updateBookStats(bookId, 'impression');
+    await this.updateBookStats(bookId, "impression");
     return impression;
   }
 
@@ -358,25 +387,28 @@ export class DatabaseStorage implements IStorage {
     bookId: number,
     userId: number | null,
     source: string,
-    referrer: string
+    referrer: string,
   ): Promise<BookClickThrough> {
     const [clickThrough] = await db
       .insert(bookClickThroughs)
       .values({ bookId, userId, source, referrer })
       .returning();
 
-    await this.updateBookStats(bookId, 'click');
+    await this.updateBookStats(bookId, "click");
     return clickThrough;
   }
 
-  async updateBookStats(bookId: number, type: 'impression' | 'click'): Promise<void> {
+  async updateBookStats(
+    bookId: number,
+    type: "impression" | "click",
+  ): Promise<void> {
     const now = new Date();
-    if (type === 'impression') {
+    if (type === "impression") {
       await db
         .update(books)
         .set({
           impressionCount: sql`${books.impressionCount} + 1`,
-          lastImpressionAt: now
+          lastImpressionAt: now,
         })
         .where(eq(books.id, bookId));
     } else {
@@ -384,7 +416,7 @@ export class DatabaseStorage implements IStorage {
         .update(books)
         .set({
           clickThroughCount: sql`${books.clickThroughCount} + 1`,
-          lastClickThroughAt: now
+          lastClickThroughAt: now,
         })
         .where(eq(books.id, bookId));
     }

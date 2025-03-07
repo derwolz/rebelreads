@@ -5,10 +5,18 @@ import { Book } from "@shared/schema";
 export function SearchBooksPage() {
   const query = new URLSearchParams(window.location.search).get("q") || "";
 
-  const { data: searchResults, isLoading } = useQuery<{ books: Book[] }>({
+  const {
+    data: searchResults,
+    isLoading,
+    isError,
+  } = useQuery<{ books: Book[] }>({
     queryKey: ["/api/search/books", query],
-    enabled: query.length > 0,
+    queryFn: () =>
+      fetch(`/api/search/books?q=${query}`) // Correctly fetch the results using the API
+        .then((response) => response.json()),
+    enabled: true,
   });
+
   console.log(searchResults, "searchResults");
   console.log(query, "query");
   console.log(location, "location");
@@ -22,6 +30,10 @@ export function SearchBooksPage() {
               <div className="bg-muted h-[400px] rounded-lg" />
             </div>
           ))}
+        </div>
+      ) : isError ? (
+        <div className="text-center text-red-500">
+          There was an error fetching the results.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
