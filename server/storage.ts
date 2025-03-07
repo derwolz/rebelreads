@@ -186,7 +186,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRatings(bookId: number): Promise<Rating[]> {
-    // Only select the columns that we know exist in the ratings table
     return await db
       .select({
         id: ratings.id,
@@ -201,6 +200,8 @@ export class DatabaseStorage implements IStorage {
         analysis: ratings.analysis,
         createdAt: ratings.createdAt,
         featured: ratings.featured,
+        report_status: ratings.report_status,
+        report_reason: ratings.report_reason
       })
       .from(ratings)
       .where(eq(ratings.bookId, bookId));
