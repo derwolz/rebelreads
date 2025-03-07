@@ -27,7 +27,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 import type { Book } from "@shared/schema";
 
 interface BookPerformance {
@@ -67,6 +69,11 @@ export default function ProDashboard() {
   const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>(['impressions']);
   const [timeRange, setTimeRange] = useState("30"); // days
 
+  // Close sidebar when route changes
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location]);
+
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
     enabled: !!user?.isAuthor,
@@ -103,7 +110,6 @@ export default function ProDashboard() {
     }
   };
 
-  // Transform performance data for the chart
   const chartData = performanceData?.reduce((acc: any[], book) => {
     const dates = new Set(
       Object.values(book.metrics).flatMap(metric =>
@@ -147,7 +153,6 @@ export default function ProDashboard() {
     return acc;
   }, []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // Transform follower data for the chart
   const followerChartData = (() => {
     if (!followerData) return [];
 
@@ -177,7 +182,6 @@ export default function ProDashboard() {
       return <ProAuthorSettings />;
     }
 
-    // Default analytics view
     return (
       <div className="flex-1 space-y-8">
         <div className="flex items-center justify-between">
@@ -340,21 +344,35 @@ export default function ProDashboard() {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      {/* Mobile Menu Button */}
+      <div className="md:hidden mb-6">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+      </div>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetContent side="left" className="w-[240px] p-0">
+          <div className="h-full pt-8">
+            <ProDashboardSidebar />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <div className="flex gap-8">
-        <div className="hidden md:block">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-60">
           <ProDashboardSidebar />
         </div>
 
         <div className="flex-1 min-w-0">
           {renderContent()}
         </div>
-
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/20 z-40 md:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
       </div>
     </main>
   );
