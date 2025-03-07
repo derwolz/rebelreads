@@ -9,22 +9,17 @@ import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Megaphone, Star, LineChart } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
+import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
+  const [isAdBiddingOpen, setIsAdBiddingOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: books } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
   });
-
-  const handleAdManagement = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Ad management features will be available soon!",
-    });
-  };
 
   const handleCreateSurvey = () => {
     toast({
@@ -71,7 +66,7 @@ export default function ProActionPage() {
                   <li>• Track campaign performance</li>
                   <li>• Optimize your reach</li>
                 </ul>
-                <Button onClick={handleAdManagement} className="w-full">
+                <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full">
                   Manage Ads
                 </Button>
               </CardContent>
@@ -138,6 +133,12 @@ export default function ProActionPage() {
           <ReviewBoostWizard
             open={isReviewBoostOpen}
             onClose={() => setIsReviewBoostOpen(false)}
+            books={books || []}
+          />
+
+          <AdBiddingWizard
+            open={isAdBiddingOpen}
+            onClose={() => setIsAdBiddingOpen(false)}
             books={books || []}
           />
         </div>
