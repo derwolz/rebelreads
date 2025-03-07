@@ -45,13 +45,14 @@ export default function BookDetails() {
   // Record click-through when the page loads
   useEffect(() => {
     if (book?.id) {
-      apiRequest(`/api/books/${book.id}/click-through`, {
-        method: 'POST',
-        body: JSON.stringify({
+      apiRequest(
+        'POST', // method as first argument
+        `/api/books/${book.id}/click-through`, // url as second argument
+        { // data as third argument
           source: 'direct',
           referrer: document.referrer
-        })
-      });
+        }
+      );
     }
   }, [book?.id]);
 

@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { MainNav } from "@/components/main-nav";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -18,23 +19,26 @@ import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/search/books" component={SearchBooksPage} />
-      <Route path="/search/authors" component={SearchAuthorsPage} />
-      <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/books/:id" component={BookDetails} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/settings/account" component={SettingsPage} />
-      <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
-      <ProtectedRoute path="/dashboard" component={DashboardPage} />
-      <ProtectedRoute path="/pro" component={ProDashboard} />
-      <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
-      <ProtectedRoute path="/pro/reports" component={ProDashboard} />
-      <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
-      <Route path="/authors/:id" component={AuthorPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <MainNav />
+      <Switch>
+        <Route path="/search/books" component={SearchBooksPage} />
+        <Route path="/search/authors" component={SearchAuthorsPage} />
+        <ProtectedRoute path="/" component={HomePage} />
+        <ProtectedRoute path="/books/:id" component={BookDetails} />
+        <ProtectedRoute path="/settings" component={SettingsPage} />
+        <ProtectedRoute path="/settings/account" component={SettingsPage} />
+        <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
+        <ProtectedRoute path="/dashboard" component={DashboardPage} />
+        <ProtectedRoute path="/pro" component={ProDashboard} />
+        <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
+        <ProtectedRoute path="/pro/reports" component={ProDashboard} />
+        <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
+        <Route path="/authors/:id" component={AuthorPage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
