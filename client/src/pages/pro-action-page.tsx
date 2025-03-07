@@ -8,6 +8,7 @@ import { Book } from "@shared/schema";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Megaphone, Star, LineChart } from "lucide-react";
+import { CampaignTable } from "@/components/campaign-table";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
@@ -51,7 +52,9 @@ export default function ProActionPage() {
 
         <div className="flex-1">
           <h1 className="text-3xl font-bold mb-8">Actions</h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          {/* Action Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {/* Ad Management */}
             <Card>
               <CardHeader>
@@ -118,6 +121,19 @@ export default function ProActionPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Active Campaigns Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Campaigns</CardTitle>
+              <CardDescription>
+                Monitor and manage your ongoing promotional campaigns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CampaignTable />
+            </CardContent>
+          </Card>
 
           <ReviewBoostWizard
             open={isReviewBoostOpen}
