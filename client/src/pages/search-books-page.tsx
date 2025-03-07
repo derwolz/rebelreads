@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { BookGridCard } from "@/components/book-grid-card";
-import { Book } from "@shared/schema";
+import { Book, Rating } from "@shared/schema";
 import { FilterSidebar, type BookFilters } from "@/components/filter-sidebar";
 import { useState } from "react";
-import { format } from "date-fns";
 
 export function SearchBooksPage() {
   const query = new URLSearchParams(window.location.search).get("q") || "";
@@ -37,6 +36,13 @@ export function SearchBooksPage() {
     new Set(searchResults?.books.flatMap((book) => book.genres) || [])
   ).sort();
 
+  // Helper function to calculate average rating
+  const calculateAverageRating = (book: Book) => {
+    // For now return 0 since we don't have ratings data
+    // This will be updated when we implement the ratings feature
+    return 0;
+  };
+
   // Apply filters to search results
   const filteredBooks = searchResults?.books.filter((book) => {
     // Genre filter
@@ -60,9 +66,7 @@ export function SearchBooksPage() {
 
     // Rating filter
     if (filters.minRating > 0) {
-      const bookRating =
-        book.ratings.reduce((acc, r) => acc + r.overall, 0) /
-          book.ratings.length || 0;
+      const bookRating = calculateAverageRating(book);
       if (bookRating < filters.minRating) {
         return false;
       }
@@ -84,11 +88,6 @@ export function SearchBooksPage() {
       }
     }
 
-    // Sale status filter
-    if (filters.onSale && !book.onSale) {
-      return false;
-    }
-
     return true;
   });
 
@@ -96,29 +95,21 @@ export function SearchBooksPage() {
   const sortedBooks = [...(filteredBooks || [])].sort((a, b) => {
     switch (filters.sortBy) {
       case "rating":
-        const aRating =
-          a.ratings.reduce((acc, r) => acc + r.overall, 0) / a.ratings.length ||
-          0;
-        const bRating =
-          b.ratings.reduce((acc, r) => acc + r.overall, 0) / b.ratings.length ||
-          0;
-        return bRating - aRating;
+        return calculateAverageRating(b) - calculateAverageRating(a);
       case "newest":
         return (
-          new Date(b.publishedDate).getTime() -
-          new Date(a.publishedDate).getTime()
+          new Date(b.publishedDate || 0).getTime() -
+          new Date(a.publishedDate || 0).getTime()
         );
       case "oldest":
         return (
-          new Date(a.publishedDate).getTime() -
-          new Date(b.publishedDate).getTime()
+          new Date(a.publishedDate || 0).getTime() -
+          new Date(b.publishedDate || 0).getTime()
         );
       case "length":
         return (b.pageCount || 0) - (a.pageCount || 0);
       case "popularity":
-        return (b.views || 0) - (a.views || 0);
-      case "price":
-        return (b.price || 0) - (a.price || 0);
+        return (b.impressionCount || 0) - (a.impressionCount || 0);
       default:
         return 0;
     }
