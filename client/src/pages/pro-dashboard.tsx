@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { MainNav } from "@/components/main-nav";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import {
   LineChart,
@@ -340,26 +339,23 @@ export default function ProDashboard() {
   };
 
   return (
-    <div>
-      <MainNav />
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          <div className="hidden md:block">
-            <ProDashboardSidebar />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            {renderContent()}
-          </div>
-
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/20 z-40 md:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            />
-          )}
+    <main className="container mx-auto px-4 py-8">
+      <div className="flex gap-8">
+        <div className="hidden md:block">
+          <ProDashboardSidebar />
         </div>
-      </main>
-    </div>
+
+        <div className="flex-1 min-w-0">
+          {renderContent()}
+        </div>
+
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+      </div>
+    </main>
   );
 }

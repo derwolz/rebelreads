@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Book, UpdateProfile, ReferralLink, updateProfileSchema } from "@shared/schema";
-import { MainNav } from "@/components/main-nav";
 import { SettingsSidebar } from "@/components/settings-sidebar";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -578,43 +577,40 @@ export default function SettingsPage() {
   }
 
   return (
-    <div>
-      <MainNav />
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-8">Settings</h1>
-        <div className="flex gap-8">
-          {/* Desktop Sidebar */}
-          <div className="hidden md:block">
+    <main className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">Settings</h1>
+      <div className="flex gap-8">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block">
+          <SettingsSidebar />
+        </div>
+
+        {/* Mobile Swipeable Sidebar */}
+        <div
+          className={cn(
+            "fixed inset-y-0 right-0 w-64 bg-background border-l transform transition-transform duration-200 ease-in-out z-50 md:hidden",
+            isSidebarOpen ? "translate-x-0" : "translate-x-full"
+          )}
+        >
+          <div className="h-full overflow-y-auto pt-20 px-4">
             <SettingsSidebar />
           </div>
-
-          {/* Mobile Swipeable Sidebar */}
-          <div
-            className={cn(
-              "fixed inset-y-0 right-0 w-64 bg-background border-l transform transition-transform duration-200 ease-in-out z-50 md:hidden",
-              isSidebarOpen ? "translate-x-0" : "translate-x-full"
-            )}
-          >
-            <div className="h-full overflow-y-auto pt-20 px-4">
-              <SettingsSidebar />
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {content}
-          </div>
-
-          {/* Overlay */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/20 z-40 md:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            />
-          )}
         </div>
-      </main>
-    </div>
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          {content}
+        </div>
+
+        {/* Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+      </div>
+    </main>
   );
 }
 
