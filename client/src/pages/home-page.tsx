@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { BookCard } from "@/components/book-card";
@@ -83,6 +82,11 @@ export default function HomePage() {
         {/* Hero Carousel for Promoted Books */}
         <HeroCarousel />
 
+        {/* What's Hot Section - Horizontal for medium screens */}
+        <div className="hidden md:block lg:hidden mb-12">
+          <WhatsHotSidebar />
+        </div>
+
         {/* From Authors You Follow Section */}
         {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
           <section className="mb-12">
@@ -156,8 +160,10 @@ export default function HomePage() {
             />
           </div>
 
-          {/* What's Hot Sidebar */}
-          <WhatsHotSidebar />
+          {/* What's Hot Sidebar - Only visible on large screens */}
+          <div className="hidden lg:block">
+            <WhatsHotSidebar />
+          </div>
         </div>
       </main>
     </div>

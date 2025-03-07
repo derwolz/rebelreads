@@ -1,4 +1,3 @@
-
 import { Book, Rating } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { StarRating } from "@/components/star-rating";
@@ -23,7 +22,7 @@ function BookItemSkeleton() {
 
 export function WhatsHotSidebar() {
   const [, navigate] = useLocation();
-  
+
   const { data: books, isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
   });
@@ -46,10 +45,10 @@ export function WhatsHotSidebar() {
   .slice(0, 10);
 
   return (
-    <aside className="w-full lg:w-72 flex-shrink-0">
-      <div className="bg-muted/30 p-4 rounded-lg sticky top-20">
+    <div className="w-full lg:w-72 flex-shrink-0">
+      <div className="bg-muted/30 p-4 rounded-lg lg:sticky lg:top-20">
         <h2 className="text-xl font-bold mb-4 border-b pb-2">What's Hot</h2>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <BookItemSkeleton key={i} />
@@ -58,7 +57,7 @@ export function WhatsHotSidebar() {
             topBooks.map((book, index) => (
               <div 
                 key={book.id}
-                className="flex items-center gap-3 mb-4 cursor-pointer hover:bg-muted/30 p-2 rounded-md transition-colors"
+                className="flex items-center gap-3 cursor-pointer hover:bg-muted/30 p-2 rounded-md transition-colors"
                 onClick={() => navigate(`/books/${book.id}`)}
               >
                 <div className="font-bold text-lg w-6 text-center text-muted-foreground">{index + 1}</div>
@@ -82,6 +81,6 @@ export function WhatsHotSidebar() {
           )}
         </div>
       </div>
-    </aside>
+    </div>
   );
 }
