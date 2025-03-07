@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
-import { Search, Settings, Menu, X } from "lucide-react";
+import { Search, Settings, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -53,7 +53,7 @@ export function MainNav({ onSearch }: MainNavProps) {
   >({
     queryKey: [`/api/search/${activeFilter}`, debouncedSearch],
     queryFn: () =>
-      fetch(`/api/search/${activeFilter}?q=${debouncedSearch}`) // Correctly fetch the results using the API
+      fetch(`/api/search/${activeFilter}?q=${debouncedSearch}`)
         .then((response) => response.json()),
     enabled: debouncedSearch.length > 1,
   });
@@ -66,11 +66,7 @@ export function MainNav({ onSearch }: MainNavProps) {
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (searchQuery.trim()) {
-      if (activeFilter === "books") {
-        navigate(`/search/books?q=${encodeURIComponent(searchQuery)}`);
-      } else if (activeFilter === "authors") {
-        navigate(`/search/authors?q=${encodeURIComponent(searchQuery)}`);
-      }
+      navigate(`/search/${activeFilter}?q=${encodeURIComponent(searchQuery.trim())}`);
       setOpen(false);
     }
   };
@@ -92,7 +88,9 @@ export function MainNav({ onSearch }: MainNavProps) {
   ];
 
   const renderSearchResults = () => {
-    if (activeFilter === "books" && "books" in (searchResults || {})) {
+    if (!searchResults) return null;
+
+    if (activeFilter === "books" && "books" in searchResults) {
       return (
         <CommandGroup heading="Books">
           {searchResults.books.slice(0, 5).map((book) => (
@@ -100,6 +98,7 @@ export function MainNav({ onSearch }: MainNavProps) {
               <Link
                 href={`/books/${book.id}`}
                 className="flex items-center gap-2"
+                onClick={() => setOpen(false)}
               >
                 <img
                   src={book.coverUrl}
@@ -116,7 +115,7 @@ export function MainNav({ onSearch }: MainNavProps) {
             </CommandItem>
           ))}
           {searchResults.books.length > 0 && (
-            <CommandItem onSelect={() => handleSearchSubmit()}>
+            <CommandItem onSelect={handleSearchSubmit}>
               <div className="w-full text-center text-sm text-muted-foreground">
                 View all results →
               </div>
@@ -126,7 +125,7 @@ export function MainNav({ onSearch }: MainNavProps) {
       );
     }
 
-    if (activeFilter === "authors" && "authors" in (searchResults || {})) {
+    if (activeFilter === "authors" && "authors" in searchResults) {
       return (
         <CommandGroup heading="Authors">
           {searchResults.authors.slice(0, 5).map((author) => (
@@ -137,6 +136,7 @@ export function MainNav({ onSearch }: MainNavProps) {
               <Link
                 href={`/authors/${author.id}`}
                 className="flex items-center gap-2"
+                onClick={() => setOpen(false)}
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={author.authorImageUrl || undefined} />
@@ -156,7 +156,7 @@ export function MainNav({ onSearch }: MainNavProps) {
             </CommandItem>
           ))}
           {searchResults.authors.length > 0 && (
-            <CommandItem onSelect={() => handleSearchSubmit()}>
+            <CommandItem onSelect={handleSearchSubmit}>
               <div className="w-full text-center text-sm text-muted-foreground">
                 View all results →
               </div>
