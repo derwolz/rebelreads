@@ -11,6 +11,10 @@ import {
   BookImpression,
   bookClickThroughs,
   BookClickThrough,
+  Campaign,
+  InsertCampaign,
+  campaigns,
+  campaignBooks,
 } from "@shared/schema";
 import { users, books, ratings } from "@shared/schema";
 import { db } from "./db";
@@ -85,6 +89,12 @@ export interface IStorage {
     referrer: string,
   ): Promise<BookClickThrough>;
   updateBookStats(bookId: number, type: "impression" | "click"): Promise<void>;
+
+  // Add new campaign methods
+  getCampaigns(authorId: number): Promise<Campaign[]>;
+  createCampaign(campaign: InsertCampaign): Promise<Campaign>;
+  updateCampaignStatus(id: number, status: "active" | "completed" | "paused"): Promise<Campaign>;
+  updateCampaignMetrics(id: number, metrics: any): Promise<Campaign>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -505,6 +515,82 @@ export class DatabaseStorage implements IStorage {
       .from(ratings)
       .where(eq(ratings.userId, userId))
       .orderBy(desc(ratings.createdAt));
+  }
+
+  async getCampaigns(authorId: number): Promise<Campaign[]> {
+    const campaignResults = await db
+      .select({
+        campaign: campaigns,
+        books: sql<Pick<Book, "id" | "title">[]>`
+          json_agg(json_build_object('id', ${books.id}, 'title', ${books.title}))
+        `.as('books'),
+      })
+      .from(campaigns)
+      .leftJoin(campaignBooks, eq(campaigns.id, campaignBooks.campaignId))
+      .leftJoin(books, eq(campaignBooks.bookId, books.id))
+      .where(eq(campaigns.authorId, authorId))
+      .groupBy(campaigns.id);
+
+    return campaignResults.map(({ campaign, books }) => ({
+      ...campaign,
+      books: books || [],
+    }));
+  }
+
+  async createCampaign(data: InsertCampaign): Promise<Campaign> {
+    const { books: bookIds, ...campaignData } = data;
+
+    const [campaign] = await db.insert(campaigns)
+      .values(campaignData)
+      .returning();
+
+    // Insert book associations
+    await db.insert(campaignBooks)
+      .values(
+        bookIds.map(bookId => ({
+          campaignId: campaign.id,
+          bookId,
+        }))
+      );
+
+    const [result] = await db
+      .select({
+        campaign: campaigns,
+        books: sql<Pick<Book, "id" | "title">[]>`
+          json_agg(json_build_object('id', ${books.id}, 'title', ${books.title}))
+        `.as('books'),
+      })
+      .from(campaigns)
+      .leftJoin(campaignBooks, eq(campaigns.id, campaignBooks.campaignId))
+      .leftJoin(books, eq(campaignBooks.bookId, books.id))
+      .where(eq(campaigns.id, campaign.id))
+      .groupBy(campaigns.id);
+
+    return {
+      ...result.campaign,
+      books: result.books || [],
+    };
+  }
+
+  async updateCampaignStatus(
+    id: number,
+    status: "active" | "completed" | "paused"
+  ): Promise<Campaign> {
+    const [campaign] = await db
+      .update(campaigns)
+      .set({ status })
+      .where(eq(campaigns.id, id))
+      .returning();
+    return campaign;
+  }
+
+  async updateCampaignMetrics(id: number, metrics: any): Promise<Campaign> {
+    const [campaign] = await db
+      .update(campaigns)
+      .set({ metrics })
+      .where(eq(campaigns.id, id))
+      .returning();
+    return campaign;
   }
 }
 

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -275,6 +275,40 @@ export type InsertBookImpression = typeof bookImpressions.$inferInsert;
 export type InsertBookClickThrough = typeof bookClickThroughs.$inferInsert;
 export type InsertBook = typeof books.$inferInsert;
 
+
+export const campaigns = pgTable("campaigns", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // "ad", "survey", "review_boost"
+  status: text("status").notNull().default("active"), // "active", "completed", "paused"
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  spent: decimal("spent").notNull().default("0"),
+  budget: decimal("budget").notNull(),
+  keywords: text("keywords").array(),
+  adType: text("ad_type"), // "banner" or "feature" for ad campaigns
+  authorId: integer("author_id").notNull(),
+  metrics: jsonb("metrics").default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const campaignBooks = pgTable("campaign_books", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  bookId: integer("book_id").notNull(),
+});
+
+// Add campaign insert schema
+export const insertCampaignSchema = createInsertSchema(campaigns).extend({
+  books: z.array(z.number()).min(1, "At least one book must be selected"),
+  keywords: z.array(z.string()).optional(),
+  type: z.enum(["ad", "survey", "review_boost"]),
+  status: z.enum(["active", "completed", "paused"]).default("active"),
+  adType: z.enum(["banner", "feature"]).optional(),
+});
+
+export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 
 export function calculateWeightedRating(rating: Rating): number {
   return (
