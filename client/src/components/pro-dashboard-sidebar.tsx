@@ -44,8 +44,8 @@ export function ProDashboardSidebar() {
         Review Management
       </NavItem>
       <NavItem
-        href="/pro/reports"
-        active={location === "/pro/reports"}
+        href="/pro/action"
+        active={location === "/pro/action"}
         icon={<Flag className="h-4 w-4" />}
       >
         Take Action

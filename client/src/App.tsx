@@ -16,6 +16,8 @@ import ProDashboard from "@/pages/pro-dashboard";
 import { SearchBooksPage } from "@/pages/search-books-page";
 import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
+import ProActionPage from "@/pages/pro-action-page"; //Import added
+
 
 function Router() {
   return (
@@ -31,6 +33,7 @@ function Router() {
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />
+        <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/reports" component={ProDashboard} />
         <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
