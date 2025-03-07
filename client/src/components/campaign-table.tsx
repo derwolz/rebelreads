@@ -8,75 +8,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDistance } from "date-fns";
-import { Book } from "@shared/schema";
-
-interface Campaign {
-  id: number;
-  name: string;
-  type: "ad" | "survey" | "review_boost";
-  status: "active" | "completed" | "paused";
-  startDate: Date;
-  endDate: Date;
-  spent: number;
-  budget: number;
-  books: Pick<Book, "id" | "title">[];
-  metrics?: {
-    impressions?: number;
-    clicks?: number;
-    responses?: number;
-    reviews?: number;
-  };
-}
-
-// Mock data - this would come from the API in the real implementation
-const MOCK_CAMPAIGNS: Campaign[] = [
-  {
-    id: 1,
-    name: "Summer Reading Promotion",
-    type: "ad",
-    status: "active",
-    startDate: new Date("2025-03-01"),
-    endDate: new Date("2025-05-01"),
-    spent: 150.25,
-    budget: 500,
-    books: [{ id: 1, title: "The Great Adventure" }],
-    metrics: {
-      impressions: 1500,
-      clicks: 250,
-    },
-  },
-  {
-    id: 2,
-    name: "Reader Feedback Survey",
-    type: "survey",
-    status: "active",
-    startDate: new Date("2025-03-05"),
-    endDate: new Date("2025-04-05"),
-    spent: 75.50,
-    budget: 200,
-    books: [
-      { id: 2, title: "Mystery in the Dark" },
-      { id: 3, title: "Light of Dawn" },
-    ],
-    metrics: {
-      responses: 45,
-    },
-  },
-  {
-    id: 3,
-    name: "Launch Reviews Campaign",
-    type: "review_boost",
-    status: "active",
-    startDate: new Date("2025-03-07"),
-    endDate: new Date("2025-04-07"),
-    spent: 95.75,
-    budget: 300,
-    books: [{ id: 4, title: "New Horizons" }],
-    metrics: {
-      reviews: 12,
-    },
-  },
-];
+import { Book, Campaign } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 const campaignTypeLabels = {
   ad: "Advertisement",
@@ -85,6 +18,14 @@ const campaignTypeLabels = {
 };
 
 export function CampaignTable() {
+  const { data: campaigns, isLoading } = useQuery<Campaign[]>({
+    queryKey: ["/api/campaigns"],
+  });
+
+  if (isLoading) {
+    return <div>Loading campaigns...</div>;
+  }
+
   return (
     <div>
       <div className="rounded-md border">
@@ -101,12 +42,13 @@ export function CampaignTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {MOCK_CAMPAIGNS.map((campaign) => (
+            {campaigns?.map((campaign) => (
               <TableRow key={campaign.id}>
                 <TableCell className="font-medium">{campaign.name}</TableCell>
                 <TableCell>
                   <Badge variant="outline">
-                    {campaignTypeLabels[campaign.type]}
+                    {campaignTypeLabels[campaign.type as keyof typeof campaignTypeLabels]}
+                    {campaign.type === "ad" && ` (${campaign.adType})`}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -127,13 +69,13 @@ export function CampaignTable() {
                   <div className="text-sm">
                     <div>
                       Started:{" "}
-                      {formatDistance(campaign.startDate, new Date(), {
+                      {formatDistance(new Date(campaign.startDate), new Date(), {
                         addSuffix: true,
                       })}
                     </div>
                     <div className="text-muted-foreground">
                       Ends:{" "}
-                      {formatDistance(campaign.endDate, new Date(), {
+                      {formatDistance(new Date(campaign.endDate), new Date(), {
                         addSuffix: true,
                       })}
                     </div>
@@ -141,7 +83,7 @@ export function CampaignTable() {
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    {campaign.books.map((book) => (
+                    {campaign.books?.map((book) => (
                       <div key={book.id} className="text-sm">
                         {book.title}
                       </div>
@@ -151,16 +93,16 @@ export function CampaignTable() {
                 <TableCell>
                   <div className="space-y-1">
                     <div className="text-sm font-medium">
-                      ${campaign.spent.toFixed(2)} spent
+                      ${Number(campaign.spent).toFixed(2)} spent
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      of ${campaign.budget.toFixed(2)}
+                      of ${Number(campaign.budget).toFixed(2)}
                     </div>
                     <div className="h-2 w-full rounded-full bg-secondary">
                       <div
                         className="h-full rounded-full bg-primary"
                         style={{
-                          width: `${(campaign.spent / campaign.budget) * 100}%`,
+                          width: `${(Number(campaign.spent) / Number(campaign.budget)) * 100}%`,
                         }}
                       />
                     </div>
@@ -174,11 +116,9 @@ export function CampaignTable() {
                         <div>{campaign.metrics.clicks} clicks</div>
                         <div>
                           CTR:{" "}
-                          {(
-                            (campaign.metrics.clicks! /
-                              campaign.metrics.impressions!) *
-                            100
-                          ).toFixed(1)}
+                          {campaign.metrics.clicks && campaign.metrics.impressions
+                            ? ((campaign.metrics.clicks / campaign.metrics.impressions) * 100).toFixed(1)
+                            : 0}
                           %
                         </div>
                       </>

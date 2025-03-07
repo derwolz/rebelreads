@@ -46,48 +46,58 @@ export default function BookDetails() {
   useEffect(() => {
     if (book?.id) {
       apiRequest(
-        'POST', // method as first argument
+        "POST", // method as first argument
         `/api/books/${book.id}/click-through`, // url as second argument
-        { // data as third argument
-          source: 'direct',
-          referrer: document.referrer
-        }
+        {
+          // data as third argument
+          source: "direct",
+          referrer: document.referrer,
+        },
       );
     }
   }, [book?.id]);
 
   if (!book) return null;
 
-  const averageRatings = ratings?.length ? {
-    overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
-    enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-    writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
-    themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-    characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-    worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
-  } : null;
+  const averageRatings = ratings?.length
+    ? {
+        overall:
+          ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) /
+          ratings.length,
+        enjoyment:
+          ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
+        writing:
+          ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+        themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
+        characters:
+          ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
+        worldbuilding:
+          ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+      }
+    : null;
 
-  const filteredRatings = ratings?.filter(rating => {
-    const overallRating = calculateWeightedRating(rating);
-    switch (ratingFilter) {
-      case "5":
-        return overallRating >= 4.5;
-      case "4":
-        return overallRating >= 3.5 && overallRating < 4.5;
-      case "3":
-        return overallRating >= 2.5 && overallRating < 3.5;
-      case "2":
-        return overallRating >= 1.5 && overallRating < 2.5;
-      case "1":
-        return overallRating < 1.5;
-      default:
-        return true;
-    }
-  }).sort((a, b) => calculateWeightedRating(b) - calculateWeightedRating(a));
+  const filteredRatings = ratings
+    ?.filter((rating) => {
+      const overallRating = calculateWeightedRating(rating);
+      switch (ratingFilter) {
+        case "5":
+          return overallRating >= 4.5;
+        case "4":
+          return overallRating >= 3.5 && overallRating < 4.5;
+        case "3":
+          return overallRating >= 2.5 && overallRating < 3.5;
+        case "2":
+          return overallRating >= 1.5 && overallRating < 2.5;
+        case "1":
+          return overallRating < 1.5;
+        default:
+          return true;
+      }
+    })
+    .sort((a, b) => calculateWeightedRating(b) - calculateWeightedRating(a));
 
   return (
     <div>
-      <MainNav />
       <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
@@ -101,40 +111,47 @@ export default function BookDetails() {
               {user && (
                 <RatingDialog
                   bookId={book.id}
-                  trigger={<Button variant="outline" className="w-full">Rate this book</Button>}
+                  trigger={
+                    <Button variant="outline" className="w-full">
+                      Rate this book
+                    </Button>
+                  }
                 />
               )}
-              {Array.isArray(book.referralLinks) && book.referralLinks.length > 0 && (
-                <>
-                  {book.referralLinks.map((link: ReferralLink, index: number) => (
-                    <a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full"
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        // Record click-through before navigation
-                        await apiRequest(
-                          "POST",
-                          `/api/books/${book.id}/click-through`,
-                          {
-                            source: `referral_${link.retailer.toLowerCase()}`,
-                            referrer: window.location.pathname
-                          }
-                        );
-                        window.open(link.url, '_blank');
-                      }}
-                    >
-                      <Button variant="outline" className="w-full">
-                        {link.customName || link.retailer}
-                        <ExternalLink className="ml-2 h-4 w-4" />
-                      </Button>
-                    </a>
-                  ))}
-                </>
-              )}
+              {Array.isArray(book.referralLinks) &&
+                book.referralLinks.length > 0 && (
+                  <>
+                    {book.referralLinks.map(
+                      (link: ReferralLink, index: number) => (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            // Record click-through before navigation
+                            await apiRequest(
+                              "POST",
+                              `/api/books/${book.id}/click-through`,
+                              {
+                                source: `referral_${link.retailer.toLowerCase()}`,
+                                referrer: window.location.pathname,
+                              },
+                            );
+                            window.open(link.url, "_blank");
+                          }}
+                        >
+                          <Button variant="outline" className="w-full">
+                            {link.customName || link.retailer}
+                            <ExternalLink className="ml-2 h-4 w-4" />
+                          </Button>
+                        </a>
+                      ),
+                    )}
+                  </>
+                )}
             </div>
           </div>
 
@@ -168,7 +185,9 @@ export default function BookDetails() {
 
               {book.formats && book.formats.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold mb-2">Available Formats</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Available Formats
+                  </h3>
                   <div className="flex gap-4">
                     {book.formats.map((format, index) => (
                       <span
@@ -190,7 +209,9 @@ export default function BookDetails() {
                     <h2 className="text-2xl font-semibold">More Details</h2>
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm">
-                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`} />
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${isOpen ? "transform rotate-180" : ""}`}
+                        />
                         <span className="sr-only">Toggle details</span>
                       </Button>
                     </CollapsibleTrigger>
@@ -199,17 +220,20 @@ export default function BookDetails() {
                   <CollapsibleContent className="space-y-4 mt-4">
                     {book.originalTitle && (
                       <div>
-                        <span className="font-medium">Original Title:</span> {book.originalTitle}
+                        <span className="font-medium">Original Title:</span>{" "}
+                        {book.originalTitle}
                       </div>
                     )}
                     {book.series && (
                       <div>
-                        <span className="font-medium">Series:</span> {book.series}
+                        <span className="font-medium">Series:</span>{" "}
+                        {book.series}
                       </div>
                     )}
                     {book.setting && (
                       <div>
-                        <span className="font-medium">Setting:</span> {book.setting}
+                        <span className="font-medium">Setting:</span>{" "}
+                        {book.setting}
                       </div>
                     )}
                     {book.characters && book.characters.length > 0 && (
@@ -238,7 +262,8 @@ export default function BookDetails() {
                     )}
                     {book.pageCount && (
                       <div>
-                        <span className="font-medium">Pages:</span> {book.pageCount}
+                        <span className="font-medium">Pages:</span>{" "}
+                        {book.pageCount}
                       </div>
                     )}
                     {book.publishedDate && (
@@ -258,14 +283,17 @@ export default function BookDetails() {
                       </div>
                     )}
                     <div>
-                      <span className="font-medium">Language:</span> {book.language}
+                      <span className="font-medium">Language:</span>{" "}
+                      {book.language}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold">Ratings & Reviews</h2>
+                    <h2 className="text-2xl font-semibold">
+                      Ratings & Reviews
+                    </h2>
                     <Select
                       value={ratingFilter}
                       onValueChange={setRatingFilter}
@@ -286,31 +314,55 @@ export default function BookDetails() {
                   {averageRatings ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <StarRating rating={Math.round(averageRatings.overall)} readOnly />
+                        <StarRating
+                          rating={Math.round(averageRatings.overall)}
+                          readOnly
+                        />
                         <span className="text-sm text-muted-foreground">
-                          ({ratings?.length} {ratings?.length === 1 ? "review" : "reviews"})
+                          ({ratings?.length}{" "}
+                          {ratings?.length === 1 ? "review" : "reviews"})
                         </span>
                       </div>
                       <div className="grid gap-2">
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Enjoyment (30%)</span>
-                          <StarRating rating={Math.round(averageRatings.enjoyment)} readOnly size="sm" />
+                          <StarRating
+                            rating={Math.round(averageRatings.enjoyment)}
+                            readOnly
+                            size="sm"
+                          />
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Writing Style (30%)</span>
-                          <StarRating rating={Math.round(averageRatings.writing)} readOnly size="sm" />
+                          <StarRating
+                            rating={Math.round(averageRatings.writing)}
+                            readOnly
+                            size="sm"
+                          />
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Themes (20%)</span>
-                          <StarRating rating={Math.round(averageRatings.themes)} readOnly size="sm" />
+                          <StarRating
+                            rating={Math.round(averageRatings.themes)}
+                            readOnly
+                            size="sm"
+                          />
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Characters (10%)</span>
-                          <StarRating rating={Math.round(averageRatings.characters)} readOnly size="sm" />
+                          <StarRating
+                            rating={Math.round(averageRatings.characters)}
+                            readOnly
+                            size="sm"
+                          />
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">World Building (10%)</span>
-                          <StarRating rating={Math.round(averageRatings.worldbuilding)} readOnly size="sm" />
+                          <StarRating
+                            rating={Math.round(averageRatings.worldbuilding)}
+                            readOnly
+                            size="sm"
+                          />
                         </div>
                       </div>
                     </div>
