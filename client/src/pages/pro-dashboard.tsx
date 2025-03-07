@@ -29,7 +29,6 @@ import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
 import type { Book } from "@shared/schema";
 
 interface BookPerformance {
@@ -344,17 +343,6 @@ export default function ProDashboard() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      {/* Mobile Menu Button */}
-      <div className="md:hidden mb-6">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-      </div>
-
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[240px] p-0">
