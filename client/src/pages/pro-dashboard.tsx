@@ -12,7 +12,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,19 +53,21 @@ interface ProDashboardData {
 }
 
 const METRICS = [
-  { id: 'impressions', label: 'Impressions' },
-  { id: 'clicks', label: 'Clicks' },
-  { id: 'referrals', label: 'Referral Clicks' }
+  { id: "impressions", label: "Impressions" },
+  { id: "clicks", label: "Clicks" },
+  { id: "referrals", label: "Referral Clicks" },
 ] as const;
 
-type MetricType = typeof METRICS[number]['id'];
+type MetricType = (typeof METRICS)[number]["id"];
 
 export default function ProDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
-  const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>(['impressions']);
+  const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>([
+    "impressions",
+  ]);
   const [timeRange, setTimeRange] = useState("30"); // days
 
   // Close sidebar when route changes
@@ -75,6 +77,7 @@ export default function ProDashboard() {
 
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
+    queryFn: () => fetch("/api/pro/dashboard").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
 
@@ -84,92 +87,120 @@ export default function ProDashboard() {
   });
 
   const { data: performanceData } = useQuery<BookPerformance[]>({
-    queryKey: ["/api/pro/book-performance", selectedBookIds, selectedMetrics, timeRange],
+    queryKey: [
+      "/api/pro/book-performance",
+      selectedBookIds,
+      selectedMetrics,
+      timeRange,
+    ],
+    queryFn: () => fetch("/api/pro/book-performance").then((res) => res.json()),
     enabled: !!user?.isAuthor && selectedBookIds.length > 0,
   });
 
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-analytics", timeRange],
+    queryFn: () =>
+    fetch("/api/pro/follower-analytics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
-
+  console.log(
+    followerData,
+    "followerData",
+    performanceData,
+    "performanceData",
+    dashboardData,
+    "dashboardData",
+    books,
+    "books",
+  );
   const handleBookSelect = (bookId: number) => {
     if (selectedBookIds.includes(bookId)) {
-      setSelectedBookIds(selectedBookIds.filter(id => id !== bookId));
+      setSelectedBookIds(selectedBookIds.filter((id) => id !== bookId));
     } else if (selectedBookIds.length < 5) {
       setSelectedBookIds([...selectedBookIds, bookId]);
     }
   };
-
   const handleMetricToggle = (metric: MetricType) => {
     if (selectedMetrics.includes(metric)) {
-      setSelectedMetrics(selectedMetrics.filter(m => m !== metric));
+      setSelectedMetrics(selectedMetrics.filter((m) => m !== metric));
     } else {
       setSelectedMetrics([...selectedMetrics, metric]);
     }
   };
 
-  const chartData = performanceData?.reduce((acc: any[], book) => {
-    const dates = new Set(
-      Object.values(book.metrics).flatMap(metric =>
-        metric?.map(entry => entry.date) || []
-      )
-    );
+  const chartData = performanceData
+    ?.reduce((acc: any[], book) => {
+      const dates = new Set(
+        Object.values(book.metrics).flatMap(
+          (metric) => metric?.map((entry) => entry.date) || [],
+        ),
+      );
 
-    dates.forEach(date => {
-      const existingDate = acc.find(d => d.date === date);
-      if (existingDate) {
-        if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
-          existingDate[`${book.title}_impressions`] =
-            book.metrics.impressions.find(i => i.date === date)?.count || 0;
+      dates.forEach((date) => {
+        const existingDate = acc.find((d) => d.date === date);
+        if (existingDate) {
+          if (
+            book.metrics.impressions &&
+            selectedMetrics.includes("impressions")
+          ) {
+            existingDate[`${book.title}_impressions`] =
+              book.metrics.impressions.find((i) => i.date === date)?.count || 0;
+          }
+          if (book.metrics.clicks && selectedMetrics.includes("clicks")) {
+            existingDate[`${book.title}_clicks`] =
+              book.metrics.clicks.find((c) => c.date === date)?.count || 0;
+          }
+          if (book.metrics.referrals && selectedMetrics.includes("referrals")) {
+            existingDate[`${book.title}_referrals`] =
+              book.metrics.referrals.find((r) => r.date === date)?.count || 0;
+          }
+        } else {
+          const newEntry: any = { date };
+          if (
+            book.metrics.impressions &&
+            selectedMetrics.includes("impressions")
+          ) {
+            newEntry[`${book.title}_impressions`] =
+              book.metrics.impressions.find((i) => i.date === date)?.count || 0;
+          }
+          if (book.metrics.clicks && selectedMetrics.includes("clicks")) {
+            newEntry[`${book.title}_clicks`] =
+              book.metrics.clicks.find((c) => c.date === date)?.count || 0;
+          }
+          if (book.metrics.referrals && selectedMetrics.includes("referrals")) {
+            newEntry[`${book.title}_referrals`] =
+              book.metrics.referrals.find((r) => r.date === date)?.count || 0;
+          }
+          acc.push(newEntry);
         }
-        if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
-          existingDate[`${book.title}_clicks`] =
-            book.metrics.clicks.find(c => c.date === date)?.count || 0;
-        }
-        if (book.metrics.referrals && selectedMetrics.includes('referrals')) {
-          existingDate[`${book.title}_referrals`] =
-            book.metrics.referrals.find(r => r.date === date)?.count || 0;
-        }
-      } else {
-        const newEntry: any = { date };
-        if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
-          newEntry[`${book.title}_impressions`] =
-            book.metrics.impressions.find(i => i.date === date)?.count || 0;
-        }
-        if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
-          newEntry[`${book.title}_clicks`] =
-            book.metrics.clicks.find(c => c.date === date)?.count || 0;
-        }
-        if (book.metrics.referrals && selectedMetrics.includes('referrals')) {
-          newEntry[`${book.title}_referrals`] =
-            book.metrics.referrals.find(r => r.date === date)?.count || 0;
-        }
-        acc.push(newEntry);
-      }
-    });
+      });
 
-    return acc;
-  }, []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      return acc;
+    }, [])
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const followerChartData = (() => {
     if (!followerData) return [];
 
     const dates = new Set([
-      ...followerData.follows.map(f => f.date),
-      ...followerData.unfollows.map(u => u.date)
+      ...followerData.follows.map((f) => f.date),
+      ...followerData.unfollows.map((u) => u.date),
     ]);
 
-    return Array.from(dates).map(date => {
-      const follows = followerData.follows.find(f => f.date === date)?.count || 0;
-      const unfollows = followerData.unfollows.find(u => u.date === date)?.count || 0;
-      return {
-        date,
-        'New Followers': follows,
-        'Lost Followers': unfollows,
-        'Net Change': follows - unfollows
-      };
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return Array.from(dates)
+      .map((date) => {
+        const follows =
+          followerData.follows.find((f) => f.date === date)?.count || 0;
+        const unfollows =
+          followerData.unfollows.find((u) => u.date === date)?.count || 0;
+        return {
+          date,
+          "New Followers": follows,
+          "Lost Followers": unfollows,
+          "Net Change": follows - unfollows,
+        };
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   })();
 
   const renderContent = () => {
@@ -193,7 +224,9 @@ export default function ProDashboard() {
               <CardTitle>Total Reviews</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{dashboardData?.totalReviews}</p>
+              <p className="text-3xl font-bold">
+                {dashboardData?.totalReviews}
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -211,7 +244,9 @@ export default function ProDashboard() {
               <CardTitle>Recent Reports</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{dashboardData?.recentReports}</p>
+              <p className="text-3xl font-bold">
+                {dashboardData?.recentReports}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -239,7 +274,9 @@ export default function ProDashboard() {
                 {books?.map((book) => (
                   <Button
                     key={book.id}
-                    variant={selectedBookIds.includes(book.id) ? "default" : "outline"}
+                    variant={
+                      selectedBookIds.includes(book.id) ? "default" : "outline"
+                    }
                     onClick={() => handleBookSelect(book.id)}
                     className="text-sm"
                   >
@@ -276,13 +313,16 @@ export default function ProDashboard() {
                   <Tooltip />
                   <Legend />
                   {selectedBookIds.map((bookId) => {
-                    const book = books?.find(b => b.id === bookId);
+                    const book = books?.find((b) => b.id === bookId);
                     if (!book) return null;
 
-                    return selectedMetrics.map(metric => {
-                      const strokeStyle = metric === 'referrals' ? "5 5"
-                        : metric === 'impressions' ? "3 3"
-                        : undefined;
+                    return selectedMetrics.map((metric) => {
+                      const strokeStyle =
+                        metric === "referrals"
+                          ? "5 5"
+                          : metric === "impressions"
+                            ? "3 3"
+                            : undefined;
 
                       return (
                         <Line
@@ -303,40 +343,40 @@ export default function ProDashboard() {
         </Card>
 
         <Card>
-            <CardHeader>
-              <CardTitle>Follower Growth Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={followerChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      dataKey="New Followers"
-                      fill="hsl(145, 70%, 50%)"
-                      stackId="stack"
-                    />
-                    <Bar
-                      dataKey="Lost Followers"
-                      fill="hsl(0, 70%, 50%)"
-                      stackId="stack"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="Net Change"
-                      stroke="hsl(200, 70%, 50%)"
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(200, 70%, 50%)" }}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <CardHeader>
+            <CardTitle>Follower Growth Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={followerChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar
+                    dataKey="New Followers"
+                    fill="hsl(145, 70%, 50%)"
+                    stackId="stack"
+                  />
+                  <Bar
+                    dataKey="Lost Followers"
+                    fill="hsl(0, 70%, 50%)"
+                    stackId="stack"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Net Change"
+                    stroke="hsl(200, 70%, 50%)"
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(200, 70%, 50%)" }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -358,9 +398,7 @@ export default function ProDashboard() {
           <ProDashboardSidebar />
         </div>
 
-        <div className="flex-1 min-w-0">
-          {renderContent()}
-        </div>
+        <div className="flex-1 min-w-0">{renderContent()}</div>
       </div>
     </main>
   );
