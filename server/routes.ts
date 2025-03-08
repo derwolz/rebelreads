@@ -8,13 +8,14 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { users, books, bookshelves, replies, followers } from "@shared/schema"; // Added replies and followers imports
-import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
+import { users, books, replies, followers, publisherRegistrationSchema } from "@shared/schema"; 
+import { eq, and, inArray, desc, sql, ilike, or, isNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
 import { timingSafeEqual } from "crypto";
 import { format } from "date-fns";
+import { hashPassword } from "./auth"; 
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -151,8 +152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const coverUrl = `/uploads/covers/${req.file.filename}`;
-    const genres = JSON.parse(req.body.genres); // Parse the stringified genres array
-    const formats = JSON.parse(req.body.formats); // Parse the stringified formats array
+    const genres = JSON.parse(req.body.genres); 
+    const formats = JSON.parse(req.body.formats); 
     const characters = req.body.characters
       ? JSON.parse(req.body.characters)
       : [];
@@ -166,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       description: req.body.description,
       authorId: req.user!.id,
       coverUrl,
-      author: req.user!.authorName || req.user!.username, // Use authorName if available, fallback to username
+      author: req.user!.authorName || req.user!.username, 
       genres: genres,
       formats: formats,
       promoted: false,
@@ -185,19 +186,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     res.json(book);
   });
-
-  // Deprecate the following code
-  // app.post("/api/books/:id/promote", async (req, res) => {
-  //   if (!req.isAuthenticated()) return res.sendStatus(401);
-  //
-  //   const book = await dbStorage.getBook(parseInt(req.params.id));
-  //   if (!book || book.authorId !== req.user!.id) {
-  //     return res.sendStatus(403);
-  //   }
-  //
-  //   const updatedBook = await dbStorage.promoteBook(book.id);
-  //   res.json(updatedBook);
-  // });
 
   app.patch("/api/books/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -379,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         readingStats,
         averageRatings,
         recentReviews: ratings.slice(0, 5),
-        recommendations: [], // This will be implemented later with actual recommendations
+        recommendations: [], 
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -603,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bookInterest,
         totalReviews: allRatings.length,
         averageRating,
-        recentReports: 0, // Placeholder for review reports feature
+        recentReports: 0, 
       });
     } catch (error) {
       console.error("Error fetching pro dashboard data:", error);
@@ -1256,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(followers.followedId, authorId),
             sql`${followers.deletedAt} >= ${startDate}`,
             sql`${followers.deletedAt} <= ${endDate}`,
-            isNotNull(followers.deletedAt),
+            isNull(followers.deletedAt),
           ),
         )
         .groupBy(sql`DATE(${followers.deletedAt})`)
@@ -1368,6 +1356,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+  // Add publisher registration route
+  app.post("/api/register/publisher", async (req, res) => {
+    if (!publisherRegistrationSchema.safeParse(req.body).success) {
+      return res.status(400).send("Invalid publisher registration data");
+    }
+
+    try {
+      const {
+        publisherName,
+        description,
+        website,
+        businessEmail,
+        businessPhone,
+        businessAddress,
+        ...userData
+      } = req.body;
+
+      // Check if username or email already exists
+      const existingUser = await dbStorage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).send("Username already exists");
+      }
+
+      const existingEmail = await dbStorage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).send("Email already exists");
+      }
+
+      // Create the user with publisher role
+      const user = await dbStorage.createUser({
+        ...userData,
+        isPublisher: true,
+        publisherName,
+        publisherDescription: description,
+        website,
+        businessEmail,
+        businessPhone,
+        businessAddress,
+        password: await hashPassword(userData.password),
+      });
+
+      // Create associated publisher record
+      await dbStorage.createPublisher({
+        name: publisherName,
+        description,
+        website,
+      });
+
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) return res.status(500).send("Failed to login after registration");
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      console.error("Publisher registration error:", error);
+      res.status(500).send("Failed to register publisher");
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
