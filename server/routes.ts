@@ -1220,12 +1220,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const authorId = req.user!.id;
-      const days = parseInt(req.query.days as string) || 30;
+      const timeRange = parseInt(req.query.timeRange as string) || 30; // Default to 30 days
 
-      // Calculate date range
       const endDate = new Date();
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+      startDate.setDate(startDate.getDate() - timeRange);
 
       // Get follower history from followers table
       const followerHistory = await db
@@ -1262,9 +1261,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .groupBy(sql`${followers.deletedAt}::date`)
         .orderBy(sql`${followers.deletedAt}::date`);
 
+      // Fill in missing dates with zero counts
+      const dateMap = new Map();
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        dateMap.set(dateStr, { date: dateStr, count: "0" });
+      }
+
+      // Update with actual follow counts
+      followerHistory.forEach(({ date, count }) => {
+        if (dateMap.has(date)) {
+          dateMap.get(date).count = count.toString();
+        }
+      });
+
+      // Create array of follows with all dates
+      const follows = Array.from(dateMap.values());
+
+      // Reset dateMap for unfollows
+      dateMap.clear();
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        dateMap.set(dateStr, { date: dateStr, count: "0" });
+      }
+
+      // Update with actual unfollow counts
+      unfollowerHistory.forEach(({ date, count }) => {
+        if (dateMap.has(date)) {
+          dateMap.get(date).count = count.toString();
+        }
+      });
+
+      // Create array of unfollows with all dates
+      const unfollows = Array.from(dateMap.values());
+
       res.json({
-        follows: followerHistory,
-        unfollows: unfollowerHistory,
+        follows,
+        unfollows,
       });
     } catch (error) {
       console.error("Error fetching follower analytics:", error);

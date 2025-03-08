@@ -60,6 +60,13 @@ const METRICS = [
 
 type MetricType = (typeof METRICS)[number]["id"];
 
+const TIME_RANGES = [
+  { value: "7", label: "Last Week" },
+  { value: "30", label: "Last Month" },
+  { value: "90", label: "Last 3 Months" },
+  { value: "365", label: "Last Year" },
+] as const;
+
 export default function ProDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
@@ -68,7 +75,7 @@ export default function ProDashboard() {
   const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>([
     "impressions",
   ]);
-  const [timeRange, setTimeRange] = useState("30"); // days
+  const [timeRange, setTimeRange] = useState("30"); // Default to last month
 
   // Close sidebar when route changes
   useEffect(() => {
@@ -100,7 +107,7 @@ export default function ProDashboard() {
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-analytics", timeRange],
     queryFn: () =>
-    fetch("/api/pro/follower-analytics").then((res) => res.json()),
+      fetch("/api/pro/follower-analytics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
   console.log(
@@ -264,9 +271,11 @@ export default function ProDashboard() {
                     <SelectValue placeholder="Select time range" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="7">Last 7 days</SelectItem>
-                    <SelectItem value="30">Last 30 days</SelectItem>
-                    <SelectItem value="90">Last 90 days</SelectItem>
+                    {TIME_RANGES.map((range) => (
+                      <SelectItem key={range.value} value={range.value}>
+                        {range.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
