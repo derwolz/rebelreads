@@ -15,14 +15,18 @@ import {
   InsertCampaign,
   campaigns,
   campaignBooks,
+  publishers,
+  publishersAuthors,
+  InsertPublisher,
+  Publisher,
+  PublisherAuthor,
 } from "@shared/schema";
-import { users, books, ratings } from "@shared/schema";
+import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray, ilike, desc, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
-import { followers, Follower } from "@shared/schema";
 import { sql } from "drizzle-orm";
 
 const PostgresSessionStore = connectPg(session);
@@ -95,6 +99,15 @@ export interface IStorage {
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaignStatus(id: number, status: "active" | "completed" | "paused"): Promise<Campaign>;
   updateCampaignMetrics(id: number, metrics: any): Promise<Campaign>;
+
+  // Add new publisher methods
+  getPublishers(): Promise<Publisher[]>;
+  getPublisher(id: number): Promise<Publisher | undefined>;
+  createPublisher(publisher: InsertPublisher): Promise<Publisher>;
+  getPublisherAuthors(publisherId: number): Promise<User[]>;
+  addAuthorToPublisher(publisherId: number, authorId: number, contractStart: Date): Promise<PublisherAuthor>;
+  removeAuthorFromPublisher(publisherId: number, authorId: number): Promise<void>;
+  getAuthorPublisher(authorId: number): Promise<Publisher | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -159,7 +172,7 @@ export class DatabaseStorage implements IStorage {
       .from(books)
       .where(ilike(books.title, query))
       .limit(20);
-    console.log(results, "Filtered search results"); // Optional: Log the filtered results for debugging
+    console.log(results, "Filtered search results"); 
     return results;
   }
 
@@ -269,7 +282,7 @@ export class DatabaseStorage implements IStorage {
         .set({
           isCompleted: true,
           completedAt: new Date(),
-          isWishlisted: false, // Remove from wishlist when completed
+          isWishlisted: false, 
         })
         .where(eq(reading_status.id, existingStatus.id))
         .returning();
@@ -540,7 +553,6 @@ export class DatabaseStorage implements IStorage {
   async createCampaign(data: InsertCampaign): Promise<Campaign> {
     const { books: bookIds, ...campaignData } = data;
 
-    // Create campaign with proper date handling
     const [campaign] = await db.insert(campaigns)
       .values({
         ...campaignData,
@@ -549,7 +561,6 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
 
-    // Insert book associations
     await db.insert(campaignBooks)
       .values(
         bookIds.map(bookId => ({
@@ -596,6 +607,93 @@ export class DatabaseStorage implements IStorage {
       .where(eq(campaigns.id, id))
       .returning();
     return campaign;
+  }
+
+  async getPublishers(): Promise<Publisher[]> {
+    return await db.select().from(publishers);
+  }
+
+  async getPublisher(id: number): Promise<Publisher | undefined> {
+    const [publisher] = await db
+      .select()
+      .from(publishers)
+      .where(eq(publishers.id, id));
+    return publisher;
+  }
+
+  async createPublisher(publisher: InsertPublisher): Promise<Publisher> {
+    const [newPublisher] = await db
+      .insert(publishers)
+      .values(publisher)
+      .returning();
+    return newPublisher;
+  }
+
+  async getPublisherAuthors(publisherId: number): Promise<User[]> {
+    const result = await db
+      .select({
+        user: users,
+      })
+      .from(publishersAuthors)
+      .where(eq(publishersAuthors.publisherId, publisherId))
+      .innerJoin(users, eq(users.id, publishersAuthors.authorId))
+      .where(isNull(publishersAuthors.contractEnd));
+
+    return result.map(r => r.user);
+  }
+
+  async addAuthorToPublisher(
+    publisherId: number,
+    authorId: number,
+    contractStart: Date
+  ): Promise<PublisherAuthor> {
+    const [relation] = await db
+      .insert(publishersAuthors)
+      .values({
+        publisherId,
+        authorId,
+        contractStart,
+      })
+      .returning();
+    return relation;
+  }
+
+  async removeAuthorFromPublisher(
+    publisherId: number,
+    authorId: number
+  ): Promise<void> {
+    await db
+      .update(publishersAuthors)
+      .set({
+        contractEnd: new Date(),
+      })
+      .where(
+        and(
+          eq(publishersAuthors.publisherId, publisherId),
+          eq(publishersAuthors.authorId, authorId),
+          isNull(publishersAuthors.contractEnd)
+        )
+      );
+  }
+
+  async getAuthorPublisher(authorId: number): Promise<Publisher | undefined> {
+    const [result] = await db
+      .select({
+        publisher: publishers,
+      })
+      .from(publishersAuthors)
+      .where(
+        and(
+          eq(publishersAuthors.authorId, authorId),
+          isNull(publishersAuthors.contractEnd)
+        )
+      )
+      .innerJoin(
+        publishers,
+        eq(publishers.id, publishersAuthors.publisherId)
+      );
+
+    return result?.publisher;
   }
 }
 

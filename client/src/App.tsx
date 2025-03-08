@@ -17,6 +17,7 @@ import { SearchBooksPage } from "@/pages/search-books-page";
 import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
+import PublisherPage from "@/pages/publisher-page";
 
 
 function Router() {
@@ -38,6 +39,7 @@ function Router() {
         <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
         <Route path="/authors/:id" component={AuthorPage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/publishers/:id" component={PublisherPage} />
         <Route component={NotFound} />
       </Switch>
     </>

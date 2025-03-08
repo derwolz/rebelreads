@@ -1272,6 +1272,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Adding publisher routes
+  app.get("/api/publishers", async (_req, res) => {
+    try {
+      const publishers = await dbStorage.getPublishers();
+      res.json(publishers);
+    } catch (error) {
+      console.error("Error fetching publishers:", error);
+      res.status(500).json({ error: "Failed to fetch publishers" });
+    }
+  });
+
+  app.get("/api/publishers/:id", async (req, res) => {
+    try {
+      const publisherId = parseInt(req.params.id);
+      if (isNaN(publisherId)) {
+        return res.status(400).json({ error: "Invalid publisher ID" });
+      }
+
+      const publisher = await dbStorage.getPublisher(publisherId);
+      if (!publisher) {
+        return res.status(404).json({ error: "Publisher not found" });
+      }
+
+      // Get publisher's authors and their books
+      const authors = await dbStorage.getPublisherAuthors(publisherId);
+      const authorBooks = await Promise.all(
+        authors.map(async (author) => ({
+          author,
+          books: await dbStorage.getBooksByAuthor(author.id),
+        }))
+      );
+
+      res.json({
+        ...publisher,
+        authors: authorBooks,
+      });
+    } catch (error) {
+      console.error("Error fetching publisher details:", error);
+      res.status(500).json({ error: "Failed to fetch publisher details" });
+    }
+  });
+
+  app.post("/api/publishers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const publisher = await dbStorage.createPublisher(req.body);
+      res.json(publisher);
+    } catch (error) {
+      console.error("Error creating publisher:", error);
+      res.status(500).json({ error: "Failed to create publisher" });
+    }
+  });
+
+  app.post("/api/publishers/:id/authors/:authorId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const publisherId = parseInt(req.params.id);
+      const authorId = parseInt(req.params.authorId);
+
+      if (isNaN(publisherId) || isNaN(authorId)) {
+        return res.status(400).json({ error: "Invalid ID provided" });
+      }
+
+      const relation = await dbStorage.addAuthorToPublisher(
+        publisherId,
+        authorId,
+        new Date(req.body.contractStart || new Date())
+      );
+      res.json(relation);
+    } catch (error) {
+      console.error("Error adding author to publisher:", error);
+      res.status(500).json({ error: "Failed to add author to publisher" });
+    }
+  });
+
+  app.delete("/api/publishers/:id/authors/:authorId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const publisherId = parseInt(req.params.id);
+      const authorId = parseInt(req.params.authorId);
+
+      if (isNaN(publisherId) || isNaN(authorId)) {
+        return res.status(400).json({ error: "Invalid ID provided" });
+      }
+
+      await dbStorage.removeAuthorFromPublisher(publisherId, authorId);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error removing author from publisher:", error);
+      res.status(500).json({ error: "Failed to remove author from publisher" });
+    }
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
 }

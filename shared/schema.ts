@@ -187,6 +187,25 @@ export const bookClickThroughs = pgTable("book_click_throughs", {
   referrer: text("referrer"), // Previous page URL
 });
 
+export const publishers = pgTable("publishers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  website: text("website"),
+  logoUrl: text("logo_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const publishersAuthors = pgTable("publishers_authors", {
+  id: serial("id").primaryKey(),
+  publisherId: integer("publisher_id").notNull(),
+  authorId: integer("author_id").notNull(),
+  contractStart: timestamp("contract_start").notNull(),
+  contractEnd: timestamp("contract_end"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   username: true,
@@ -261,20 +280,12 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UpdateProfile = z.infer<typeof updateProfileSchema>;
-export type User = typeof users.$inferSelect;
-export type Book = typeof books.$inferSelect;
-export type Rating = typeof ratings.$inferSelect;
-export type ReadingStatus = typeof reading_status.$inferSelect;
-export type InsertReadingStatus = typeof reading_status.$inferInsert;
-export type Follower = typeof followers.$inferSelect;
-export type BookImpression = typeof bookImpressions.$inferSelect;
-export type BookClickThrough = typeof bookClickThroughs.$inferSelect;
-export type InsertBookImpression = typeof bookImpressions.$inferInsert;
-export type InsertBookClickThrough = typeof bookClickThroughs.$inferInsert;
-export type InsertBook = typeof books.$inferInsert;
-
+export const insertPublisherSchema = createInsertSchema(publishers, {
+  name: z.string().min(1, "Publisher name is required"),
+  description: z.string().optional(),
+  website: z.string().url("Please enter a valid URL").optional(),
+  logoUrl: z.string().optional(),
+});
 
 export const campaigns = pgTable("campaigns", {
   id: serial("id").primaryKey(),
@@ -310,8 +321,24 @@ export const insertCampaignSchema = createInsertSchema(campaigns, {
   adType: z.enum(["banner", "feature"]).optional(),
 });
 
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;
+export type User = typeof users.$inferSelect;
+export type Book = typeof books.$inferSelect;
+export type Rating = typeof ratings.$inferSelect;
+export type ReadingStatus = typeof reading_status.$inferSelect;
+export type InsertReadingStatus = typeof reading_status.$inferInsert;
+export type Follower = typeof followers.$inferSelect;
+export type BookImpression = typeof bookImpressions.$inferSelect;
+export type BookClickThrough = typeof bookClickThroughs.$inferSelect;
+export type InsertBookImpression = typeof bookImpressions.$inferInsert;
+export type InsertBookClickThrough = typeof bookClickThroughs.$inferInsert;
+export type InsertBook = typeof books.$inferInsert;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type Publisher = typeof publishers.$inferSelect;
+export type InsertPublisher = z.infer<typeof insertPublisherSchema>;
+export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
 
 export function calculateWeightedRating(rating: Rating): number {
   return (
