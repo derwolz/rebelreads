@@ -36,7 +36,6 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 
 interface AdBiddingWizardProps {
   open: boolean;
@@ -73,8 +72,12 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
 
   const createCampaign = useMutation({
     mutationFn: async (data: AdBiddingForm) => {
-      return apiRequest("/api/campaigns", {
+      // Convert to the expected API format
+      const response = await fetch("/api/campaigns", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: data.name,
           type: "ad",
@@ -84,8 +87,16 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
           endDate: data.endDate.toISOString(),
           budget: data.budget.toString(),
           keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
+          status: "active"
         }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create campaign");
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
@@ -95,11 +106,11 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
       });
       onClose();
     },
-    onError: (err:any) => {
+    onError: (err: Error) => {
       console.error("Error creating campaign:", err);
       toast({
         title: "Error",
-        description: "Failed to create campaign. Please try again.",
+        description: err.message || "Failed to create campaign. Please try again.",
         variant: "destructive",
       });
     },
