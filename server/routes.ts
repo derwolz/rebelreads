@@ -189,12 +189,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Deprecate the following code
   // app.post("/api/books/:id/promote", async (req, res) => {
   //   if (!req.isAuthenticated()) return res.sendStatus(401);
-
+  //
   //   const book = await dbStorage.getBook(parseInt(req.params.id));
   //   if (!book || book.authorId !== req.user!.id) {
   //     return res.sendStatus(403);
   //   }
-
+  //
   //   const updatedBook = await dbStorage.promoteBook(book.id);
   //   res.json(updatedBook);
   // });
@@ -608,6 +608,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching pro dashboard data:", error);
       res.status(500).json({ error: "Failed to fetch dashboard data" });
+    }
+  });
+
+  // Add after the /api/pro/dashboard endpoint
+  app.get("/api/campaigns", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const campaigns = await dbStorage.getCampaigns(req.user!.id);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching campaigns:", error);
+      res.status(500).json({ error: "Failed to fetch campaigns" });
+    }
+  });
+
+  app.post("/api/campaigns", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const campaign = await dbStorage.createCampaign({
+        ...req.body,
+        authorId: req.user!.id,
+      });
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      res.status(500).json({ error: "Failed to create campaign" });
+    }
+  });
+
+  app.patch("/api/campaigns/:id/status", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const campaign = await dbStorage.updateCampaignStatus(
+        parseInt(req.params.id),
+        req.body.status
+      );
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error updating campaign status:", error);
+      res.status(500).json({ error: "Failed to update campaign status" });
     }
   });
 

@@ -35,7 +35,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AdBiddingWizardProps {
   open: boolean;
@@ -44,7 +45,7 @@ interface AdBiddingWizardProps {
 }
 
 const adBiddingSchema = z.object({
-  campaignName: z.string().min(1, "Campaign name is required"),
+  name: z.string().min(1, "Campaign name is required"),
   adType: z.enum(["banner", "feature"]),
   books: z.array(z.number()).min(1, "Select at least one book"),
   startDate: z.date(),
@@ -57,6 +58,7 @@ type AdBiddingForm = z.infer<typeof adBiddingSchema>;
 
 export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
 
   const form = useForm<AdBiddingForm>({
@@ -69,23 +71,42 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
     },
   });
 
-  const onSubmit = async (data: AdBiddingForm) => {
-    try {
-      // TODO: Implement campaign creation
-      console.log("Campaign data:", data);
-      
+  const createCampaign = useMutation({
+    mutationFn: async (data: AdBiddingForm) => {
+      return apiRequest("/api/campaigns", {
+        method: "POST",
+        body: JSON.stringify({
+          name: data.name,
+          type: "ad",
+          adType: data.adType,
+          books: data.books,
+          startDate: data.startDate.toISOString(),
+          endDate: data.endDate.toISOString(),
+          budget: data.budget.toString(),
+          keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
+        }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
       toast({
         title: "Campaign Created",
         description: "Your ad campaign has been created successfully.",
       });
       onClose();
-    } catch (error) {
+    },
+    onError: (err:any) => {
+      console.error("Error creating campaign:", err);
       toast({
         title: "Error",
         description: "Failed to create campaign. Please try again.",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const onSubmit = (data: AdBiddingForm) => {
+    createCampaign.mutate(data);
   };
 
   const toggleBook = (bookId: number) => {
@@ -149,7 +170,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
 
             <FormField
               control={form.control}
-              name="campaignName"
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Campaign Name</FormLabel>
@@ -318,7 +339,9 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit">Create Campaign</Button>
+              <Button type="submit" disabled={createCampaign.isPending}>
+                {createCampaign.isPending ? "Creating..." : "Create Campaign"}
+              </Button>
             </div>
           </form>
         </Form>
