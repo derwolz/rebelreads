@@ -107,7 +107,7 @@ export default function ProDashboard() {
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-analytics", timeRange],
     queryFn: () =>
-      fetch(`/api/pro/follower-analytics?timeRange=${timeRange}`).then((res) => res.json()),
+      fetch("/api/pro/follower-analytics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
   console.log(
@@ -354,25 +354,6 @@ export default function ProDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Follower Growth Analytics</CardTitle>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-4">
-                <Select
-                  value={timeRange}
-                  onValueChange={(value) => setTimeRange(value)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select time range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_RANGES.map((range) => (
-                      <SelectItem key={range.value} value={range.value}>
-                        {range.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
           </CardHeader>
           <CardContent>
             <div className="h-[400px]">
