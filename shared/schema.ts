@@ -62,48 +62,42 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password"),
   newsletterOptIn: boolean("newsletter_opt_in").notNull().default(false),
-  provider: text("provider"),
-  providerId: text("provider_id"),
+  provider: text("provider"), // google, amazon, x, or null for email/password
+  providerId: text("provider_id"), // external provider's user ID
   isAuthor: boolean("is_author").notNull().default(false),
-  isPublisher: boolean("is_publisher").notNull().default(false),
-  authorName: text("author_name"),
+  authorName: text("author_name"), // Name to display for authored books
   authorBio: text("author_bio"),
-  authorImageUrl: text("author_image_url"),
-  profileImageUrl: text("profile_image_url"),
-  bio: text("bio"),
+  authorImageUrl: text("author_image_url"), // Author profile image
+  profileImageUrl: text("profile_image_url"), // General user profile image
+  bio: text("bio"), // General user bio
   birthDate: date("birth_date"),
   deathDate: date("death_date"),
   website: text("website"),
-  favoriteGenres: text("favorite_genres").array(),
-  displayName: text("display_name"),
+  favoriteGenres: text("favorite_genres").array(), // Updated to array
+  displayName: text("display_name"), // Added display name field
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
-  publisherName: text("publisher_name"),
-  publisherDescription: text("publisher_description"),
-  businessEmail: text("business_email"),
-  businessPhone: text("business_phone"),
-  businessAddress: text("business_address"),
 });
 
 export const followers = pgTable("followers", {
   id: serial("id").primaryKey(),
-  followerId: integer("follower_id").notNull(),
-  followingId: integer("following_id").notNull(),
+  followerId: integer("follower_id").notNull(), // The user who is following
+  followingId: integer("following_id").notNull(), // The author being followed
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  deletedAt: timestamp("deleted_at"),
+  deletedAt: timestamp("deleted_at"), // Add deletedAt field for tracking unfollows
 });
 
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   author: text("author").notNull(),
-  authorId: integer("author_id").notNull(),
+  authorId: integer("author_id").notNull(), // Reference to users table
   description: text("description").notNull(),
   coverUrl: text("cover_url").notNull(),
   authorImageUrl: text("author_image_url"),
   promoted: boolean("promoted").default(false),
-  genres: text("genres").array().notNull(),
+  genres: text("genres").array().notNull(), // Array of genre strings
   pageCount: integer("page_count"),
-  formats: text("formats").array().notNull(),
+  formats: text("formats").array().notNull(), // Array of formats (softback, hardback, etc)
   publishedDate: date("published_date"),
   awards: text("awards").array(),
   originalTitle: text("original_title"),
@@ -165,6 +159,7 @@ export const replies = pgTable("replies", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Replace bookshelves table with reading_status
 export const reading_status = pgTable("reading_status", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -177,19 +172,19 @@ export const reading_status = pgTable("reading_status", {
 export const bookImpressions = pgTable("book_impressions", {
   id: serial("id").primaryKey(),
   bookId: integer("book_id").notNull(),
-  userId: integer("user_id"),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  source: text("source").notNull(),
-  context: text("context").notNull(),
+  source: text("source").notNull(), // e.g., 'card', 'grid', 'carousel'
+  context: text("context").notNull(), // e.g., 'home', 'search', 'author-page'
 });
 
 export const bookClickThroughs = pgTable("book_click_throughs", {
   id: serial("id").primaryKey(),
   bookId: integer("book_id").notNull(),
-  userId: integer("user_id"),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  source: text("source").notNull(),
-  referrer: text("referrer"),
+  source: text("source").notNull(), // Where the click came from
+  referrer: text("referrer"), // Previous page URL
 });
 
 export const publishers = pgTable("publishers", {
@@ -210,12 +205,13 @@ export const publishersAuthors = pgTable("publishers_authors", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   username: true,
   password: true,
   newsletterOptIn: true,
-  isAuthor: true,
+  isAuthor: true, // Add isAuthor to the schema
 }).extend({
   email: z.string().email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -243,6 +239,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   confirmPassword: z.string().optional(),
   socialMediaLinks: z.array(socialMediaLinkSchema).max(4, "Maximum 4 social media links allowed").optional(),
 }).refine((data) => {
+  // If any password field is filled, all password fields must be filled
   if (data.newPassword || data.currentPassword || data.confirmPassword) {
     return data.newPassword && data.currentPassword && data.confirmPassword;
   }
@@ -250,6 +247,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
 }, {
   message: "All password fields are required when changing password",
 }).refine((data) => {
+  // Passwords must match if provided
   if (data.newPassword && data.confirmPassword) {
     return data.newPassword === data.confirmPassword;
   }
@@ -292,14 +290,14 @@ export const insertPublisherSchema = createInsertSchema(publishers, {
 export const campaigns = pgTable("campaigns", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type").notNull(),
-  status: text("status").notNull().default("active"),
+  type: text("type").notNull(), // "ad", "survey", "review_boost"
+  status: text("status").notNull().default("active"), // "active", "completed", "paused"
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   spent: decimal("spent").notNull().default("0"),
   budget: decimal("budget").notNull(),
   keywords: text("keywords").array(),
-  adType: text("ad_type"),
+  adType: text("ad_type"), // "banner" or "feature" for ad campaigns
   authorId: integer("author_id").notNull(),
   metrics: jsonb("metrics").default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -311,6 +309,7 @@ export const campaignBooks = pgTable("campaign_books", {
   bookId: integer("book_id").notNull(),
 });
 
+// Add campaign insert schema
 export const insertCampaignSchema = createInsertSchema(campaigns, {
   startDate: z.string().transform(str => new Date(str)),
   endDate: z.string().transform(str => new Date(str)),
@@ -341,34 +340,12 @@ export type Publisher = typeof publishers.$inferSelect;
 export type InsertPublisher = z.infer<typeof insertPublisherSchema>;
 export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
 
-export const publisherRegistrationSchema = createInsertSchema(users).pick({
-  email: true,
-  username: true,
-  password: true,
-  newsletterOptIn: true,
-}).extend({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  publisherName: z.string().min(2, "Publisher name must be at least 2 characters"),
-  description: z.string().optional(),
-  website: z.string().url("Please enter a valid URL").optional(),
-  businessEmail: z.string().email("Invalid business email format"),
-  businessPhone: z.string().optional(),
-  businessAddress: z.string().optional(),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
-export type PublisherRegistration = z.infer<typeof publisherRegistrationSchema>;
-
 export function calculateWeightedRating(rating: Rating): number {
   return (
-    rating.enjoyment * 0.3 +
-    rating.writing * 0.2 +
-    rating.themes * 0.2 +
-    rating.characters * 0.1 +
-    rating.worldbuilding * 0.1
+    rating.enjoyment * 0.3 +     // 30% weight for enjoyment
+    rating.writing * 0.2 +       // 20% weight for writing
+    rating.themes * 0.2 +        // 20% weight for themes
+    rating.characters * 0.1 +    // 10% weight for characters
+    rating.worldbuilding * 0.1   // 10% weight for worldbuilding
   );
 }

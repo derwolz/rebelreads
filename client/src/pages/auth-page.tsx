@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
-import { insertUserSchema, loginSchema, publisherRegistrationSchema } from "@shared/schema";
+import { insertUserSchema, loginSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,24 +19,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Redirect, useLocation } from "wouter";
 import { SiGoogle, SiAmazon, SiX } from "react-icons/si";
-import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-
-// Update the LoginData type definition
-type LoginData = {
-  email: string;
-  password: string;
-  username?: string;
-};
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loginForm = useForm<LoginData>({
+  const loginForm = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
@@ -52,52 +40,9 @@ export default function AuthPage() {
     },
   });
 
-  const publisherForm = useForm({
-    resolver: zodResolver(publisherRegistrationSchema),
-    defaultValues: {
-      email: "",
-      username: "",
-      password: "",
-      confirmPassword: "",
-      publisherName: "",
-      description: "",
-      website: "",
-      businessEmail: "",
-      businessPhone: "",
-      businessAddress: "",
-      newsletterOptIn: false,
-    },
-  });
-
   if (user) {
     return <Redirect to={user.isAuthor ? "/pro" : "/"} />;
   }
-
-  const handlePublisherRegistration = async (data: any) => {
-    setIsSubmitting(true);
-    try {
-      const response = await apiRequest("POST", "/api/register/publisher", data);
-      const user = await response.json();
-
-      if (response.ok) {
-        setLocation(user.isPublisher ? "/pro" : "/");
-      } else {
-        toast({
-          title: "Registration failed",
-          description: "Failed to register publisher account",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleSSOLogin = (provider: string) => {
     // Will implement SSO logic later
@@ -148,10 +93,9 @@ export default function AuthPage() {
             </div>
 
             <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
-                <TabsTrigger value="publisher">Publisher</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -306,167 +250,6 @@ export default function AuthPage() {
                   </form>
                 </Form>
               </TabsContent>
-
-              <TabsContent value="publisher">
-                <Form {...publisherForm}>
-                  <form onSubmit={publisherForm.handleSubmit(handlePublisherRegistration)}>
-                    <div className="space-y-4">
-                      <FormField
-                        control={publisherForm.control}
-                        name="publisherName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Publisher Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="website"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Website</FormLabel>
-                            <FormControl>
-                              <Input type="url" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="businessEmail"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="businessPhone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business Phone</FormLabel>
-                            <FormControl>
-                              <Input type="tel" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="businessAddress"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Business Address</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Personal Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="username"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Username</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Confirm Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={publisherForm.control}
-                        name="newsletterOptIn"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>
-                                Subscribe to newsletter
-                              </FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <Button className="w-full mt-6" type="submit" disabled={isSubmitting}>
-                      Register as Publisher
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
@@ -476,7 +259,7 @@ export default function AuthPage() {
         <h1 className="text-4xl font-bold mb-4">Welcome to BookNook</h1>
         <p className="text-lg text-muted-foreground">
           Your personal space to discover, track, and review your favorite books.
-          Join our community of readers, authors, and publishers today!
+          Join our community of readers and authors today!
         </p>
       </div>
     </div>
