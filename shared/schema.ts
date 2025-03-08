@@ -299,7 +299,10 @@ export const campaignBooks = pgTable("campaign_books", {
 });
 
 // Add campaign insert schema
-export const insertCampaignSchema = createInsertSchema(campaigns).extend({
+export const insertCampaignSchema = createInsertSchema(campaigns, {
+  startDate: z.string().transform(str => new Date(str)),
+  endDate: z.string().transform(str => new Date(str)),
+}).extend({
   books: z.array(z.number()).min(1, "At least one book must be selected"),
   keywords: z.array(z.string()).optional(),
   type: z.enum(["ad", "survey", "review_boost"]),

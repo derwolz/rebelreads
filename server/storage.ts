@@ -540,8 +540,13 @@ export class DatabaseStorage implements IStorage {
   async createCampaign(data: InsertCampaign): Promise<Campaign> {
     const { books: bookIds, ...campaignData } = data;
 
+    // Create campaign with proper date handling
     const [campaign] = await db.insert(campaigns)
-      .values(campaignData)
+      .values({
+        ...campaignData,
+        startDate: new Date(campaignData.startDate),
+        endDate: new Date(campaignData.endDate),
+      })
       .returning();
 
     // Insert book associations
