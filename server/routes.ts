@@ -1230,37 +1230,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get follower history from followers table
       const followerHistory = await db
         .select({
-          date: sql`DATE(${followers.createdAt})`,
+          date: sql`to_char(${followers.createdAt}::date, 'YYYY-MM-DD')`,
           count: sql`COUNT(*)`,
         })
         .from(followers)
         .where(
           and(
-            eq(followers.followedId, authorId),
-            sql`${followers.createdAt} >= ${startDate}`,
-            sql`${followers.createdAt} <= ${endDate}`,
+            eq(followers.followingId, authorId),
+            sql`${followers.createdAt} >= ${startDate}::date`,
+            sql`${followers.createdAt} <= ${endDate}::date`,
           ),
         )
-        .groupBy(sql`DATE(${followers.createdAt})`)
-        .orderBy(sql`DATE(${followers.createdAt})`);
+        .groupBy(sql`${followers.createdAt}::date`)
+        .orderBy(sql`${followers.createdAt}::date`);
 
-      // Get unfollower history (if we track unfollows)
+      // Get unfollower history
       const unfollowerHistory = await db
         .select({
-          date: sql`DATE(${followers.deletedAt})`,
+          date: sql`to_char(${followers.deletedAt}::date, 'YYYY-MM-DD')`,
           count: sql`COUNT(*)`,
         })
         .from(followers)
         .where(
           and(
-            eq(followers.followedId, authorId),
-            sql`${followers.deletedAt} >= ${startDate}`,
-            sql`${followers.deletedAt} <= ${endDate}`,
+            eq(followers.followingId, authorId),
+            sql`${followers.deletedAt} >= ${startDate}::date`,
+            sql`${followers.deletedAt} <= ${endDate}::date`,
             isNotNull(followers.deletedAt),
           ),
         )
-        .groupBy(sql`DATE(${followers.deletedAt})`)
-        .orderBy(sql`DATE(${followers.deletedAt})`);
+        .groupBy(sql`${followers.deletedAt}::date`)
+        .orderBy(sql`${followers.deletedAt}::date`);
 
       res.json({
         follows: followerHistory,
