@@ -10,23 +10,18 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Megaphone, Star, LineChart } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
 import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
+import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
   const [isAdBiddingOpen, setIsAdBiddingOpen] = useState(false);
+  const [isSurveyBuilderOpen, setIsSurveyBuilderOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: books } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
   });
-
-  const handleCreateSurvey = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Survey creation features will be available soon!",
-    });
-  };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -110,7 +105,7 @@ export default function ProActionPage() {
                   <li>• Analyze responses</li>
                   <li>• Make data-driven decisions</li>
                 </ul>
-                <Button onClick={handleCreateSurvey} className="w-full">
+                <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full">
                   Create Survey
                 </Button>
               </CardContent>
@@ -140,6 +135,11 @@ export default function ProActionPage() {
             open={isAdBiddingOpen}
             onClose={() => setIsAdBiddingOpen(false)}
             books={books || []}
+          />
+
+          <SurveyBuilderWizard
+            open={isSurveyBuilderOpen}
+            onClose={() => setIsSurveyBuilderOpen(false)}
           />
         </div>
       </div>
