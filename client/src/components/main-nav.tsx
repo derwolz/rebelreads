@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AuthDialog } from "@/components/auth-dialog";
 
 interface SearchAuthor {
   id: number;
@@ -225,9 +226,7 @@ export function MainNav({ onSearch }: MainNavProps) {
               </Button>
             </>
           ) : (
-            <Link href="/auth">
-              <Button>Login</Button>
-            </Link>
+            <AuthDialog />
           )}
         </div>
 
@@ -298,9 +297,7 @@ export function MainNav({ onSearch }: MainNavProps) {
                     </div>
                   </div>
                 ) : (
-                  <Link href="/auth">
-                    <Button className="w-full">Login</Button>
-                  </Link>
+                  <AuthDialog />
                 )}
               </div>
             </DrawerContent>
