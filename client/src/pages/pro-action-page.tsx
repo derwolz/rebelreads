@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Megaphone, Star, LineChart } from "lucide-react";
+import { Megaphone, Star, LineChart, Wallet } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
 import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
 import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
@@ -23,8 +23,26 @@ export default function ProActionPage() {
     queryKey: ["/api/my-books"],
   });
 
+  const { data: credits } = useQuery<string>({
+    queryKey: ["/api/credits"],
+  });
+
   return (
     <main className="container mx-auto px-4 py-8">
+      {/* Credit Balance Display */}
+      <div className="mb-8 flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Actions</h1>
+        <Card className="bg-primary/10">
+          <CardContent className="flex items-center gap-3 py-3">
+            <Wallet className="h-6 w-6 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Available Credits</p>
+              <p className="text-2xl font-bold">${credits || "0"}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[240px] p-0">
@@ -41,8 +59,6 @@ export default function ProActionPage() {
         </div>
 
         <div className="flex-1">
-          <h1 className="text-3xl font-bold mb-8">Actions</h1>
-
           {/* Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {/* Ad Management */}

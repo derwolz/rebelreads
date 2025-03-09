@@ -76,6 +76,7 @@ export const users = pgTable("users", {
   favoriteGenres: text("favorite_genres").array(), // Updated to array
   displayName: text("display_name"), // Added display name field
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
+  credits: decimal("credits").notNull().default("0"), // Add credits field
 });
 
 export const followers = pgTable("followers", {
@@ -205,6 +206,49 @@ export const publishersAuthors = pgTable("publishers_authors", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const creditTransactions = pgTable("credit_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  amount: decimal("amount").notNull(),
+  type: text("type").notNull(), // "deposit", "withdrawal", "campaign_spend"
+  description: text("description"),
+  campaignId: integer("campaign_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const campaigns = pgTable("campaigns", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // "ad", "survey", "review_boost"
+  status: text("status").notNull().default("active"), // "active", "completed", "paused"
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  spent: decimal("spent").notNull().default("0"),
+  budget: decimal("budget").notNull(),
+  keywords: text("keywords").array(),
+  adType: text("ad_type"), // "banner" or "feature" for ad campaigns
+  authorId: integer("author_id").notNull(),
+  metrics: jsonb("metrics").default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const campaignBooks = pgTable("campaign_books", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  bookId: integer("book_id").notNull(),
+});
+
+// Add campaign insert schema
+export const insertCampaignSchema = createInsertSchema(campaigns, {
+  startDate: z.string().transform(str => new Date(str)),
+  endDate: z.string().transform(str => new Date(str)),
+}).extend({
+  books: z.array(z.number()).min(1, "At least one book must be selected"),
+  keywords: z.array(z.string()).optional(),
+  type: z.enum(["ad", "survey", "review_boost"]),
+  status: z.enum(["active", "completed", "paused"]).default("active"),
+  adType: z.enum(["banner", "feature"]).optional(),
+});
 
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -289,40 +333,6 @@ export const insertPublisherSchema = createInsertSchema(publishers, {
   logoUrl: z.string().optional(),
 });
 
-export const campaigns = pgTable("campaigns", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  type: text("type").notNull(), // "ad", "survey", "review_boost"
-  status: text("status").notNull().default("active"), // "active", "completed", "paused"
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date").notNull(),
-  spent: decimal("spent").notNull().default("0"),
-  budget: decimal("budget").notNull(),
-  keywords: text("keywords").array(),
-  adType: text("ad_type"), // "banner" or "feature" for ad campaigns
-  authorId: integer("author_id").notNull(),
-  metrics: jsonb("metrics").default({}),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const campaignBooks = pgTable("campaign_books", {
-  id: serial("id").primaryKey(),
-  campaignId: integer("campaign_id").notNull(),
-  bookId: integer("book_id").notNull(),
-});
-
-// Add campaign insert schema
-export const insertCampaignSchema = createInsertSchema(campaigns, {
-  startDate: z.string().transform(str => new Date(str)),
-  endDate: z.string().transform(str => new Date(str)),
-}).extend({
-  books: z.array(z.number()).min(1, "At least one book must be selected"),
-  keywords: z.array(z.string()).optional(),
-  type: z.enum(["ad", "survey", "review_boost"]),
-  status: z.enum(["active", "completed", "paused"]).default("active"),
-  adType: z.enum(["banner", "feature"]).optional(),
-});
-
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
@@ -341,6 +351,8 @@ export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type Publisher = typeof publishers.$inferSelect;
 export type InsertPublisher = z.infer<typeof insertPublisherSchema>;
 export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
 
 export function calculateWeightedRating(rating: Rating): number {
   return (

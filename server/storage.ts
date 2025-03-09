@@ -20,6 +20,7 @@ import {
   InsertPublisher,
   Publisher,
   PublisherAuthor,
+  CreditTransaction, // Added import
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
@@ -108,6 +109,12 @@ export interface IStorage {
   addAuthorToPublisher(publisherId: number, authorId: number, contractStart: Date): Promise<PublisherAuthor>;
   removeAuthorFromPublisher(publisherId: number, authorId: number): Promise<void>;
   getAuthorPublisher(authorId: number): Promise<Publisher | undefined>;
+
+  // Add new credit methods
+  getUserCredits(userId: number): Promise<string>;
+  addCredits(userId: number, amount: string, description?: string): Promise<User>;
+  deductCredits(userId: number, amount: string, campaignId: number): Promise<User>;
+  getCreditTransactions(userId: number): Promise<CreditTransaction[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -172,7 +179,7 @@ export class DatabaseStorage implements IStorage {
       .from(books)
       .where(ilike(books.title, query))
       .limit(20);
-    console.log(results, "Filtered search results"); 
+    console.log(results, "Filtered search results");
     return results;
   }
 
@@ -282,7 +289,7 @@ export class DatabaseStorage implements IStorage {
         .set({
           isCompleted: true,
           completedAt: new Date(),
-          isWishlisted: false, 
+          isWishlisted: false,
         })
         .where(eq(reading_status.id, existingStatus.id))
         .returning();
@@ -694,6 +701,76 @@ export class DatabaseStorage implements IStorage {
       );
 
     return result?.publisher;
+  }
+
+  async getUserCredits(userId: number): Promise<string> {
+    const user = await this.getUser(userId);
+    return user?.credits || "0";
+  }
+
+  async addCredits(userId: number, amount: string, description?: string): Promise<User> {
+    await db.transaction(async (tx) => {
+      // Update user credits
+      const [user] = await tx
+        .update(users)
+        .set({
+          credits: sql`${users.credits} + ${amount}`,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      // Record transaction
+      await tx.insert(creditTransactions).values({
+        userId,
+        amount,
+        type: "deposit",
+        description: description || "Credit deposit",
+      });
+
+      return user;
+    });
+
+    return await this.getUser(userId);
+  }
+
+  async deductCredits(userId: number, amount: string, campaignId: number): Promise<User> {
+    await db.transaction(async (tx) => {
+      // Check balance
+      const user = await this.getUser(userId);
+      if (!user || parseFloat(user.credits) < parseFloat(amount)) {
+        throw new Error("Insufficient credits");
+      }
+
+      // Update user credits
+      const [updatedUser] = await tx
+        .update(users)
+        .set({
+          credits: sql`${users.credits} - ${amount}`,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      // Record transaction
+      await tx.insert(creditTransactions).values({
+        userId,
+        amount: `-${amount}`,
+        type: "campaign_spend",
+        campaignId,
+        description: "Campaign spending",
+      });
+
+      return updatedUser;
+    });
+
+    return await this.getUser(userId);
+  }
+
+  async getCreditTransactions(userId: number): Promise<CreditTransaction[]> {
+    return await db
+      .select()
+      .from(creditTransactions)
+      .where(eq(creditTransactions.userId, userId))
+      .orderBy(desc(creditTransactions.createdAt));
   }
 }
 
