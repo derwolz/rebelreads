@@ -280,6 +280,8 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export type LoginData = z.infer<typeof loginSchema>;
+
 export const insertPublisherSchema = createInsertSchema(publishers, {
   name: z.string().min(1, "Publisher name is required"),
   description: z.string().optional(),

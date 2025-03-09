@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { MainNav } from "@/components/main-nav";
+import { AuthModal } from "@/components/auth-modal";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -18,7 +19,7 @@ import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
-
+import { useAuthModal } from "@/hooks/use-auth-modal";
 
 function Router() {
   return (
@@ -47,11 +48,14 @@ function Router() {
 }
 
 function App() {
+  const { isOpen, setIsOpen } = useAuthModal();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <AuthProvider>
           <Router />
+          <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
           <Toaster />
         </AuthProvider>
       </ThemeProvider>
