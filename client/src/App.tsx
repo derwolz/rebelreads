@@ -18,7 +18,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 
-
 function Router() {
   return (
     <>
@@ -26,7 +25,7 @@ function Router() {
       <Switch>
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
-        <ProtectedRoute path="/" component={HomePage} />
+        <Route path="/" component={HomePage} />
         <ProtectedRoute path="/books/:id" component={BookDetails} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/settings/account" component={SettingsPage} />
