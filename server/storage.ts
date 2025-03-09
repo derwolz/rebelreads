@@ -21,15 +21,16 @@ import {
   Publisher,
   PublisherAuthor,
   CreditTransaction,
-  creditTransactions, // Added this import
+  creditTransactions,
 } from "@shared/schema";
-import { users, books, ratings, followers, Follower } from "@shared/schema";
+import { users, books, ratings, followers, Follower, reviewCopies, ReviewCopy } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, inArray, ilike, desc, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 import { sql } from "drizzle-orm";
+import { nanoid } from 'nanoid';
 
 const PostgresSessionStore = connectPg(session);
 
@@ -116,6 +117,14 @@ export interface IStorage {
   addCredits(userId: number, amount: string, description?: string): Promise<User>;
   deductCredits(userId: number, amount: string, campaignId: number): Promise<User>;
   getCreditTransactions(userId: number): Promise<CreditTransaction[]>;
+
+  // Add new review copy methods
+  createReviewCopies(campaignId: number, bookId: number, count: number, fileUrl: string, fileFormat: string): Promise<ReviewCopy[]>;
+  assignReviewCopy(userId: number, campaignId: number, bookId: number): Promise<ReviewCopy | null>;
+  completeReviewCopy(userId: number, reviewCopyId: number): Promise<ReviewCopy>;
+  getAvailableReviewCopies(campaignId: number): Promise<ReviewCopy[]>;
+  getAssignedReviewCopies(userId: number): Promise<ReviewCopy[]>;
+  validateReviewCopyAssignment(userId: number, reviewCopyId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -772,6 +781,121 @@ export class DatabaseStorage implements IStorage {
       .from(creditTransactions)
       .where(eq(creditTransactions.userId, userId))
       .orderBy(desc(creditTransactions.createdAt));
+  }
+
+  async createReviewCopies(
+    campaignId: number,
+    bookId: number,
+    count: number,
+    fileUrl: string,
+    fileFormat: string
+  ): Promise<ReviewCopy[]> {
+    const copies = [];
+    for (let i = 0; i < count; i++) {
+      const [copy] = await db.insert(reviewCopies)
+        .values({
+          campaignId,
+          bookId,
+          fileUrl,
+          fileFormat,
+          uniqueId: nanoid()
+        })
+        .returning();
+      copies.push(copy);
+    }
+
+    // Update campaign statistics
+    await db.update(campaigns)
+      .set({
+        totalReviewsPurchased: sql`${campaigns.totalReviewsPurchased} + ${count}`
+      })
+      .where(eq(campaigns.id, campaignId));
+
+    return copies;
+  }
+
+  async assignReviewCopy(
+    userId: number,
+    campaignId: number,
+    bookId: number
+  ): Promise<ReviewCopy | null> {
+    const [copy] = await db.update(reviewCopies)
+      .set({
+        assignedUserId: userId,
+        assignedAt: new Date(),
+        status: 'assigned'
+      })
+      .where(and(
+        eq(reviewCopies.campaignId, campaignId),
+        eq(reviewCopies.bookId, bookId),
+        eq(reviewCopies.status, 'available')
+      ))
+      .returning();
+
+    if (copy) {
+      await db.update(campaigns)
+        .set({
+          reviewsAssigned: sql`${campaigns.reviewsAssigned} + 1`
+        })
+        .where(eq(campaigns.id, campaignId));
+    }
+
+    return copy || null;
+  }
+
+  async completeReviewCopy(
+    userId: number,
+    reviewCopyId: number
+  ): Promise<ReviewCopy> {
+    const [copy] = await db.update(reviewCopies)
+      .set({
+        status: 'completed',
+        completedAt: new Date()
+      })
+      .where(and(
+        eq(reviewCopies.id, reviewCopyId),
+        eq(reviewCopies.assignedUserId, userId)
+      ))
+      .returning();
+
+    await db.update(campaigns)
+      .set({
+        reviewsCompleted: sql`${campaigns.reviewsCompleted} + 1`
+      })
+      .where(eq(campaigns.id, copy.campaignId));
+
+    return copy;
+  }
+
+  async getAvailableReviewCopies(campaignId: number): Promise<ReviewCopy[]> {
+    return await db.select()
+      .from(reviewCopies)
+      .where(and(
+        eq(reviewCopies.campaignId, campaignId),
+        eq(reviewCopies.status, 'available')
+      ));
+  }
+
+  async getAssignedReviewCopies(userId: number): Promise<ReviewCopy[]> {
+    return await db.select()
+      .from(reviewCopies)
+      .where(and(
+        eq(reviewCopies.assignedUserId, userId),
+        eq(reviewCopies.status, 'assigned')
+      ));
+  }
+
+  async validateReviewCopyAssignment(
+    userId: number,
+    reviewCopyId: number
+  ): Promise<boolean> {
+    const [copy] = await db.select()
+      .from(reviewCopies)
+      .where(and(
+        eq(reviewCopies.id, reviewCopyId),
+        eq(reviewCopies.assignedUserId, userId)
+      ));
+    return !!copy;
   }
 }
 
