@@ -28,14 +28,7 @@ import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProAuthorSettings } from "@/components/pro-author-settings";
 import { useState, useEffect } from "react";
-import { Menu } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Book } from "@shared/schema";
 
 interface BookPerformance {
@@ -77,6 +70,7 @@ const TIME_RANGES = [
 export default function ProDashboard() {
   const { user } = useAuth();
   const [location] = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>([
     "impressions",
@@ -85,7 +79,7 @@ export default function ProDashboard() {
 
   // Close sidebar when route changes
   useEffect(() => {
-    //setIsSidebarOpen(false); // Removed as SidebarProvider handles state
+    setIsSidebarOpen(false);
   }, [location]);
 
   const { data: dashboardData } = useQuery<ProDashboardData>({
@@ -397,30 +391,24 @@ export default function ProDashboard() {
   };
 
   return (
-    <SidebarProvider defaultOpen>
-      <main className="container mx-auto">
-        <div className="flex">
-          {/* Mobile Trigger */}
-          <div className="flex items-center md:hidden p-4">
-            <SidebarTrigger />
+    <main className="container mx-auto px-4 py-8">
+      {/* Mobile Sidebar */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetContent side="left" className="w-[240px] p-0">
+          <div className="h-full pt-8">
+            <ProDashboardSidebar />
           </div>
+        </SheetContent>
+      </Sheet>
 
-          {/* Sidebar with motion controls */}
-          <Sidebar>
-            <SidebarHeader className="p-4">
-              <h2 className="text-lg font-semibold">Author Dashboard</h2>
-            </SidebarHeader>
-            <SidebarContent>
-              <ProDashboardSidebar />
-            </SidebarContent>
-          </Sidebar>
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0 p-4 md:p-8">
-            {renderContent()}
-          </div>
+      <div className="flex gap-8">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-60">
+          <ProDashboardSidebar />
         </div>
-      </main>
-    </SidebarProvider>
+
+        <div className="flex-1 min-w-0">{renderContent()}</div>
+      </div>
+    </main>
   );
 }
