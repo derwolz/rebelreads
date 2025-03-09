@@ -20,7 +20,8 @@ import {
   InsertPublisher,
   Publisher,
   PublisherAuthor,
-  CreditTransaction, // Added import
+  CreditTransaction,
+  creditTransactions, // Added this import
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
