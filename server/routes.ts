@@ -1402,6 +1402,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Add this route with the other book-related routes
+  app.get("/api/books/wishlisted", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const books = await dbStorage.getWishlistedBooks(req.user!.id);
+      res.json(books);
+    } catch (error) {
+      console.error("Error fetching wishlisted books:", error);
+      res.status(500).json({ error: "Failed to fetch wishlisted books" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
