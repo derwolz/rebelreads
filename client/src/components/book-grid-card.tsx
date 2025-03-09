@@ -10,9 +10,11 @@ import { apiRequest } from "@/lib/queryClient";
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
+  if (!book.publishedDate) return false;
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  return new Date(book.publishedDate) > oneWeekAgo;
+  const publishDate = new Date(book.publishedDate);
+  return publishDate > oneWeekAgo;
 }
 
 export function BookGridCard({ book }: { book: Book }) {
