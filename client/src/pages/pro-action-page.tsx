@@ -7,16 +7,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Megaphone, Star, LineChart, Wallet } from "lucide-react";
+import { Megaphone, Star, LineChart, Wallet, Plus } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
 import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
 import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
+import { PurchaseCreditsModal } from "@/components/purchase-credits-modal";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
   const [isAdBiddingOpen, setIsAdBiddingOpen] = useState(false);
   const [isSurveyBuilderOpen, setIsSurveyBuilderOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: books } = useQuery<Book[]>({
@@ -32,15 +34,25 @@ export default function ProActionPage() {
       {/* Credit Balance Display */}
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Actions</h1>
-        <Card className="bg-primary/10">
-          <CardContent className="flex items-center gap-3 py-3">
-            <Wallet className="h-6 w-6 text-primary" />
-            <div>
-              <p className="text-sm font-medium">Available Credits</p>
-              <p className="text-2xl font-bold">${credits || "0"}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsPurchaseModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Credits
+          </Button>
+          <Card className="bg-primary/10">
+            <CardContent className="flex items-center gap-3 py-3">
+              <Wallet className="h-6 w-6 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Available Credits</p>
+                <p className="text-2xl font-bold">${credits || "0"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Mobile Sidebar */}
@@ -156,6 +168,11 @@ export default function ProActionPage() {
           <SurveyBuilderWizard
             open={isSurveyBuilderOpen}
             onClose={() => setIsSurveyBuilderOpen(false)}
+          />
+
+          <PurchaseCreditsModal
+            open={isPurchaseModalOpen}
+            onClose={() => setIsPurchaseModalOpen(false)}
           />
         </div>
       </div>

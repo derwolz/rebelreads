@@ -46,6 +46,32 @@ const upload = multer({ storage: fileStorage });
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  // Add near other API endpoints
+  app.get("/api/credits", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const credits = await dbStorage.getUserCredits(req.user!.id);
+      res.json(credits);
+    } catch (error) {
+      console.error("Error fetching credits:", error);
+      res.status(500).json({ error: "Failed to fetch credits" });
+    }
+  });
+
+  app.post("/api/credits/add", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { amount, description } = req.body;
+      const user = await dbStorage.addCredits(req.user!.id, amount, description);
+      res.json({ credits: user.credits });
+    } catch (error) {
+      console.error("Error adding credits:", error);
+      res.status(500).json({ error: "Failed to add credits" });
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", express.static("uploads"));
 
@@ -881,8 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get books and aggregate ratings for each author
       const authorsWithDetails = await Promise.all(
-        authors.map(async (author) => {
-          const authorBooks = await db
+        authors.map(async (author) => {          const authorBooks = await db
             .select()
             .from(books)
             .where(eq(books.authorId, author.id));
@@ -918,7 +943,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     authorRatings.length,
                   overall:
                     authorRatings.reduce(
-                      (acc, r) => acc + calculateWeightedRating(r),                      0,
+                      (acc, r) => acc + calculateWeightedRating(r),
+                      0,
                     ) / authorRatings.length,
                 }
               : undefined;
@@ -1387,7 +1413,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to remove author from publisher" });
     }
   });
-
 
   // Add this route with the other book-related routes
   app.get("/api/wishlist/books", async (req, res) => {
