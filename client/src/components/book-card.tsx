@@ -10,11 +10,9 @@ import { apiRequest } from "@/lib/queryClient";
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
-  if (!book.publishedDate) return false;
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const publishDate = new Date(book.publishedDate);
-  return publishDate > oneWeekAgo;
+  return new Date(book.publishedDate) > oneWeekAgo;
 }
 
 export function BookCard({ book }: { book: Book }) {
@@ -27,12 +25,13 @@ export function BookCard({ book }: { book: Book }) {
     queryKey: [`/api/books/${book.id}/ratings`],
   });
 
+  // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      { threshold: 0.5 },
+      { threshold: 0.5 } // Card must be 50% visible to count
     );
 
     const element = document.getElementById(`book-card-${book.id}`);
@@ -43,13 +42,18 @@ export function BookCard({ book }: { book: Book }) {
     return () => observer.disconnect();
   }, [book.id]);
 
+  // Record impression when card becomes visible
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
       const recordImpression = async () => {
-        await apiRequest("POST", `/api/books/${book.id}/impression`, {
-          source: "card",
-          context: window.location.pathname,
-        });
+        await apiRequest(
+          "POST",
+          `/api/books/${book.id}/impression`,
+          {
+            source: 'card',
+            context: window.location.pathname
+          }
+        );
         setHasRecordedImpression(true);
       };
       recordImpression();
@@ -74,13 +78,19 @@ export function BookCard({ book }: { book: Book }) {
     : null;
 
   const handleCardClick = async (e: React.MouseEvent) => {
+    // Don't navigate if clicking on the wishlist button
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    await apiRequest("POST", `/api/books/${book.id}/click-through`, {
-      source: "card",
-      referrer: window.location.pathname,
-    });
+    // Record click-through before navigation
+    await apiRequest(
+      "POST",
+      `/api/books/${book.id}/click-through`,
+      {
+        source: 'card',
+        referrer: window.location.pathname
+      }
+    );
     navigate(`/books/${book.id}`);
   };
 
@@ -90,7 +100,7 @@ export function BookCard({ book }: { book: Book }) {
         id={`book-card-${book.id}`}
         className={`
           overflow-visible cursor-pointer
-          transition-all duration-900 ease-in-out
+          transition-all duration-300 ease-in-out
           group-hover:scale-105 group-hover:shadow-xl
           ${showDetailed ? "z-50" : "z-10"}
           ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
@@ -100,6 +110,7 @@ export function BookCard({ book }: { book: Book }) {
         onMouseEnter={() => setShowDetailed(true)}
         onMouseLeave={() => setShowDetailed(false)}
       >
+        {/* New Book Banner */}
         {isNewBook(book) && (
           <div className="absolute -top-2 -left-2 z-20">
             <div className="bg-[#7fffd4] text-black text-xs px-2 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">

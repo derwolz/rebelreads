@@ -62,16 +62,7 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
-      animation: {
-        'pulse-shadow': 'pulse-shadow 1.5s infinite'
-      },
       keyframes: {
-        
-        'pulse-shadow' : {
-          '0%, 100%': {boxShadow: '0 0 0 0 hsla(var(--primary), 0.1)'},
-          '50%': {boxShadow: '0 0 0 10px hsla(var(--primary), 0.3)'}
-        } 
-    },
         "accordion-down": {
           from: {
             height: "0",
