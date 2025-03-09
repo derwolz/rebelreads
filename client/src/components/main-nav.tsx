@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Search, Settings, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 
 interface SearchAuthor {
   id: number;
@@ -42,6 +43,7 @@ type SearchFilter = "books" | "authors";
 
 export function MainNav({ onSearch }: MainNavProps) {
   const { user, logoutMutation } = useAuth();
+  const { setIsOpen } = useAuthModal();
   const [, navigate] = useLocation();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -225,9 +227,9 @@ export function MainNav({ onSearch }: MainNavProps) {
               </Button>
             </>
           ) : (
-            <Link href="/auth">
-              <Button>Login</Button>
-            </Link>
+            <Button onClick={() => setIsOpen(true)}>
+              Login
+            </Button>
           )}
         </div>
 
@@ -298,9 +300,12 @@ export function MainNav({ onSearch }: MainNavProps) {
                     </div>
                   </div>
                 ) : (
-                  <Link href="/auth">
-                    <Button className="w-full">Login</Button>
-                  </Link>
+                  <Button
+                    className="w-full"
+                    onClick={() => setIsOpen(true)}
+                  >
+                    Login
+                  </Button>
                 )}
               </div>
             </DrawerContent>

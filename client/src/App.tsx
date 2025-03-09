@@ -8,7 +8,6 @@ import { MainNav } from "@/components/main-nav";
 import { AuthModal } from "@/components/auth-modal";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import AuthPage from "@/pages/auth-page";
 import BookDetails from "@/pages/book-details";
 import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
@@ -33,7 +32,6 @@ function Router() {
         <Route path="/search/authors" component={SearchAuthorsPage} />
         <Route path="/authors/:id" component={AuthorPage} />
         <Route path="/publishers/:id" component={PublisherPage} />
-        <Route path="/auth" component={AuthPage} />
 
         {/* Protected routes */}
         <ProtectedRoute path="/settings" component={SettingsPage} />
