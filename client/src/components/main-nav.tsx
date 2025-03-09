@@ -222,7 +222,11 @@ export function MainNav({ onSearch }: MainNavProps) {
                   </span>
                 </Link>
               </div>
-              <Button variant="ghost" onClick={() => logoutMutation.mutate()}>
+              <Button variant="ghost" onClick={() => {
+                logoutMutation.mutate(undefined, {
+                  onSuccess: () => navigate("/")
+                });
+              }}>
                 Logout
               </Button>
             </>
@@ -293,7 +297,11 @@ export function MainNav({ onSearch }: MainNavProps) {
                       <Button
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => logoutMutation.mutate()}
+                        onClick={() => {
+                          logoutMutation.mutate(undefined, {
+                            onSuccess: () => navigate("/")
+                          });
+                        }}
                       >
                         Logout
                       </Button>
