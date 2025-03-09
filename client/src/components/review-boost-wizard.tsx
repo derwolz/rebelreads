@@ -42,10 +42,10 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
         formData.append('file', file);
       }
 
-      const response = await fetch('/api/review-boost', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
+      const response = await apiRequest('POST', '/api/review-boost', formData, {
+        headers: {
+          // Don't set Content-Type here, it will be set automatically for FormData
+        },
       });
 
       if (!response.ok) {
@@ -63,6 +63,11 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
         description: 'Review boost campaign created successfully',
       });
       onClose();
+      setStep(1);
+      setSelectedBooks([]);
+      setReviewCount(1);
+      setFile(null);
+      setAcceptedTerms(false);
     },
     onError: (error: Error) => {
       toast({
@@ -299,8 +304,8 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
               Back
             </Button>
           )}
-          <Button onClick={handleNext}>
-            {step === 4 ? "Submit" : "Next"}
+          <Button onClick={handleNext} disabled={reviewBoostMutation.isPending}>
+            {step === 4 ? (reviewBoostMutation.isPending ? "Creating..." : "Submit") : "Next"}
           </Button>
         </DialogFooter>
       </DialogContent>
