@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Book, Rating, calculateWeightedRating } from "@shared/schema";
+import { Heart } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
@@ -116,13 +117,22 @@ export default function BookDetails() {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left column with book cover and action buttons */}
           <div>
-            <img
-              src={book.coverUrl}
-              alt={book.title}
-              className="w-full rounded-lg shadow-lg"
-            />
+            <div className="relative">
+              <img
+                src={book.coverUrl}
+                alt={book.title}
+                className="w-full rounded-lg shadow-lg"
+              />
+              <div className="absolute top-2 left-2">
+                <WishlistButton
+                  bookId={book.id}
+                  variant="ghost"
+                  size="icon"
+                  className="bg-black/40 hover:bg-black/60 rounded-full w-10 h-10 text-white hover:text-white [&[data-wishlisted='true']]:text-red-500 [&[data-wishlisted='true']]:hover:text-red-600 transition-colors"
+                />
+              </div>
+            </div>
             <div className="mt-4 space-y-2">
-              <WishlistButton bookId={book.id} className="w-full" />
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>

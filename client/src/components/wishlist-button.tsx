@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, HeartOff } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -44,13 +43,14 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
       }}
       disabled={isPending}
       className={className}
+      data-wishlisted={readingStatus?.isWishlisted}
     >
       {readingStatus?.isWishlisted ? (
         size === "icon" ? (
-          <Heart fill="red" stroke="red" className="h-4 w-4" />
+          <Heart className="h-4 w-4" fill="currentColor" />
         ) : (
           <>
-            <Heart fill="red" stroke="red" className=" h-4 bg-red-200 w-4 mr-2" />
+            <Heart className="h-4 w-4 mr-2" fill="currentColor" />
             Remove from Wishlist
           </>
         )
