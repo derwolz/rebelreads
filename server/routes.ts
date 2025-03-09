@@ -8,9 +8,13 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { users, books, bookshelves, replies, followers } from "@shared/schema";
+import { users, books, bookshelves, replies, followers } from "@shared/schema"; // Added replies and followers imports
 import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
-import adminRouter from "./routes/admin";  // Add this import
+import { promisify } from "util";
+import { scrypt } from "crypto";
+import { randomBytes } from "crypto";
+import { timingSafeEqual } from "crypto";
+import { format } from "date-fns";
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -41,9 +45,6 @@ const upload = multer({ storage: fileStorage });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
-
-  // Add the admin routes
-  app.use("/api/admin", adminRouter);
 
   // Serve uploaded files
   app.use("/uploads", express.static("uploads"));
