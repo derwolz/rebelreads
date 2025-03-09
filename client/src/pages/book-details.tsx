@@ -108,16 +108,14 @@ export default function BookDetails() {
             />
             <div className="mt-4 space-y-2">
               <WishlistButton bookId={book.id} className="w-full" />
-              {user && (
-                <RatingDialog
-                  bookId={book.id}
-                  trigger={
-                    <Button variant="outline" className="w-full">
-                      Rate this book
-                    </Button>
-                  }
-                />
-              )}
+              <RatingDialog
+                bookId={book.id}
+                trigger={
+                  <Button variant="outline" className="w-full">
+                    Rate this book
+                  </Button>
+                }
+              />
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
@@ -378,14 +376,12 @@ export default function BookDetails() {
                       ))}
                     </div>
                   </div>
-                  {user && (
-                    <div className="mt-4">
-                      <RatingDialog
-                        bookId={book.id}
-                        trigger={<Button>Rate this book</Button>}
-                      />
-                    </div>
-                  )}
+                  <div className="mt-4">
+                    <RatingDialog
+                      bookId={book.id}
+                      trigger={<Button>Rate this book</Button>}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

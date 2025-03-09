@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StarRating } from "./star-rating";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { AuthDialog } from "./auth-dialog";
 import {
   Dialog,
   DialogContent,
@@ -97,6 +98,11 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
       setReview(value);
     }
   };
+
+  // If user is not authenticated, show auth dialog instead
+  if (!user) {
+    return <AuthDialog trigger={trigger} />;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
