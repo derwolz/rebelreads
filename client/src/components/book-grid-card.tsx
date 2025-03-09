@@ -103,21 +103,21 @@ export function BookGridCard({ book }: { book: Book }) {
       >
         {/* New Book Banner */}
         {isNewBook(book) && (
-          <div className="absolute -top-2 -left-2 z-20">
-            <div className="bg-[#7fffd4] text-black text-xs px-2 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
+          <div className="absolute -bottom-6 -right-9 z-20">
+            <div className="bg-[#7fffd4] text-black text-xs px-8 py-0.1 rotate-[-45deg] origin-top-left shadow-sm">
               New
             </div>
           </div>
         )}
         {/* Promoted Badge */}
         {book.promoted && (
-          <div className="absolute -top-2 -right-2 z-20">
-            <Badge variant="default" className="bg-primary/10 text-primary border border-primary/20 text-xs">
+          <div className="absolute -top-2 -right-1 z-20">
+            <Badge variant="default" className="bg-primary/10 text-primary border rounded-none rounded-bl-md border-primary/20 text-xs">
               Featured
             </Badge>
           </div>
         )}
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute bg-black/20 top-2 left-[40%] z-10">
           <WishlistButton bookId={book.id} variant="ghost" size="icon" />
         </div>
         <div className="flex h-full">
@@ -126,7 +126,7 @@ export function BookGridCard({ book }: { book: Book }) {
             alt={book.title}
             className="w-1/3 object-cover"
           />
-          <CardContent className="p-3 w-2/3">
+          <CardContent className="p-3 mt-16 w-2/3">
             <h3 className="text-sm font-semibold line-clamp-2 mb-1">{book.title}</h3>
             <Link
               href={`/authors/${book.authorId}`}

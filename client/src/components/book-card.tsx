@@ -31,7 +31,7 @@ export function BookCard({ book }: { book: Book }) {
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
-      { threshold: 0.5 } // Card must be 50% visible to count
+      { threshold: 0.5 }, // Card must be 50% visible to count
     );
 
     const element = document.getElementById(`book-card-${book.id}`);
@@ -46,14 +46,10 @@ export function BookCard({ book }: { book: Book }) {
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
       const recordImpression = async () => {
-        await apiRequest(
-          "POST",
-          `/api/books/${book.id}/impression`,
-          {
-            source: 'card',
-            context: window.location.pathname
-          }
-        );
+        await apiRequest("POST", `/api/books/${book.id}/impression`, {
+          source: "card",
+          context: window.location.pathname,
+        });
         setHasRecordedImpression(true);
       };
       recordImpression();
@@ -83,49 +79,57 @@ export function BookCard({ book }: { book: Book }) {
       return;
     }
     // Record click-through before navigation
-    await apiRequest(
-      "POST",
-      `/api/books/${book.id}/click-through`,
-      {
-        source: 'card',
-        referrer: window.location.pathname
-      }
-    );
+    await apiRequest("POST", `/api/books/${book.id}/click-through`, {
+      source: "card",
+      referrer: window.location.pathname,
+    });
     navigate(`/books/${book.id}`);
   };
+  // Inject keyframes into the document head once
+  useEffect(() => {
+    if (book.promoted) {
+      const styleSheet = document.createElement("style");
+      styleSheet.textContent = `
+        @keyframes pulse-shadow {
+          0%, 100% { box-shadow: 0 10px 15px -3px rgba(127, 255, 212, .10); }
+          50% { box-shadow: 0 10px 15px -3px rgba(127, 255, 212, 0.24); }
+        }
+      `;
+      document.head.appendChild(styleSheet);
 
+      // Cleanup to avoid duplicate styles
+      return () => {
+        document.head.removeChild(styleSheet);
+      };
+    }
+  }, [book.promoted]);
   return (
     <div className="relative group min-h-256" style={{ marginBottom: "10rem" }}>
       <Card
         id={`book-card-${book.id}`}
         className={`
           overflow-visible cursor-pointer
-          transition-all duration-300 ease-in-out
+          
           group-hover:scale-105 group-hover:shadow-xl
           ${showDetailed ? "z-50" : "z-10"}
-          ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
+          ${book.promoted ? "animate-pulse-shadow border-primary/20" : ""}
           relative
         `}
         onClick={handleCardClick}
         onMouseEnter={() => setShowDetailed(true)}
         onMouseLeave={() => setShowDetailed(false)}
       >
-        {/* New Book Banner */}
-        {isNewBook(book) && (
-          <div className="absolute -top-2 -left-2 z-20">
-            <div className="bg-[#7fffd4] text-black text-xs px-2 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
-              New
-            </div>
-          </div>
-        )}
         {book.promoted && (
-          <div className="absolute -top-2 -right-2 z-20">
-            <Badge variant="default" className="bg-primary/10 text-primary border border-primary/20 text-xs">
+          <div className="absolute -top-[2.9px] -right-0 z-20">
+            <Badge
+              variant="default"
+              className="bg-primary/10 text-primary rounded-md rounded-tr-md rounded-br-none  border-t-0 rounded-tl-none  border-l-1 border-r-0 border-b-1 border-primary/20 text-xs"
+            >
               Featured
             </Badge>
           </div>
         )}
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute bg-black/20 rounded top-2 left-2  z-10">
           <WishlistButton bookId={book.id} variant="ghost" size="icon" />
         </div>
         <img
@@ -133,8 +137,18 @@ export function BookCard({ book }: { book: Book }) {
           alt={book.title}
           className="w-full h-64 object-cover"
         />
-        <CardContent className="p-4">
-          <h3 className="text-lg font-semibold mb-2">{book.title}</h3>
+        <CardContent className="p-4 relative">
+          <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%] overflow-hidden">
+            {/* New Book Banner */}
+            {isNewBook(book) && (
+              <div className="absolute -bottom-8 -right-12 z-20">
+                <div className="bg-[#7fffd4] text-black text-xs px-16 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
+                  New
+                </div>
+              </div>
+            )}
+          </div>
+          <h3 className="text-lg font-semibold mb-2 ">{book.title}</h3>
           <Link
             href={`/authors/${book.authorId}`}
             className="text-sm text-muted-foreground hover:text-primary transition-colors"

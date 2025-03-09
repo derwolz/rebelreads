@@ -47,10 +47,10 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
     >
       {readingStatus?.isWishlisted ? (
         size === "icon" ? (
-          <HeartOff className="h-4 w-4" />
+          <Heart fill="red" stroke="red" className="h-4 w-4" />
         ) : (
           <>
-            <HeartOff className="h-4 w-4 mr-2" />
+            <Heart fill="red" stroke="red" className=" h-4 bg-red-200 w-4 mr-2" />
             Remove from Wishlist
           </>
         )

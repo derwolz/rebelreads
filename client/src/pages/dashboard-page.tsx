@@ -6,6 +6,9 @@ import { ReviewCard } from "@/components/review-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { SocialMediaLinks } from "@/components/social-media-links";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+import { Book } from "@shared/schema";
 
 interface DashboardData {
   user: {
@@ -34,10 +37,24 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [selectedGenre, setSelectedGenre] = useState<string>("all");
 
   const { data: dashboardData, isLoading } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard"],
   });
+
+  const { data: wishlistedBooks } = useQuery<Book[]>({
+    queryKey: ["/api/books/wishlisted"],
+    enabled: !!user,
+  });
+
+  const uniqueGenres = wishlistedBooks
+    ? Array.from(new Set(wishlistedBooks.flatMap(book => book.genres)))
+    : [];
+
+  const filteredBooks = wishlistedBooks?.filter(book =>
+    selectedGenre === "all" || book.genres.includes(selectedGenre)
+  );
 
   if (isLoading) {
     return (
@@ -60,7 +77,6 @@ export default function DashboardPage() {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="grid gap-8">
-        {/* User Profile Section */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
@@ -94,7 +110,41 @@ export default function DashboardPage() {
           </CardHeader>
         </Card>
 
-        {/* Reading Stats */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>My Wishlist</CardTitle>
+              <Select value={selectedGenre} onValueChange={setSelectedGenre}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by genre" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Genres</SelectItem>
+                  {uniqueGenres.map(genre => (
+                    <SelectItem key={genre} value={genre}>
+                      {genre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="relative">
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
+                {filteredBooks?.map((book) => (
+                  <div key={book.id} className="flex-none w-[250px] snap-start">
+                    <BookCard book={book} />
+                  </div>
+                ))}
+                {filteredBooks?.length === 0 && (
+                  <p className="text-muted-foreground">No books found in this genre.</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -114,7 +164,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Rating Stats */}
         {averageRatings && (
           <Card>
             <CardHeader>
@@ -167,7 +216,6 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Recent Reviews */}
         {recentReviews.length > 0 && (
           <Card>
             <CardHeader>
@@ -181,7 +229,6 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Recommendations */}
         {recommendations.length > 0 && (
           <Card>
             <CardHeader>

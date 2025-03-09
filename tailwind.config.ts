@@ -63,6 +63,7 @@ export default {
         },
       },
       keyframes: {
+
         "accordion-down": {
           from: {
             height: "0",
@@ -81,6 +82,7 @@ export default {
         },
       },
       animation: {
+        "pulse-shadow": "pulse-shadow 3s ease-in-out infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
