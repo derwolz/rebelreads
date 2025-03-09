@@ -1434,7 +1434,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { selectedBooks, reviewCount, file } = req.body;
+      // Parse the stringified JSON data from FormData
+      const selectedBooks = JSON.parse(req.body.selectedBooks);
+      const reviewCount = parseInt(req.body.reviewCount);
       const totalCost = reviewCount * 5; // $5 per review
 
       // Check if user has enough credits
@@ -1453,6 +1455,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         budget: totalCost.toString(),
         authorId: req.user!.id,
         books: selectedBooks,
+        metrics: {
+          targetReviews: reviewCount,
+          completedReviews: 0
+        }
       });
 
       // Deduct credits

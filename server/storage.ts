@@ -21,7 +21,7 @@ import {
   Publisher,
   PublisherAuthor,
   CreditTransaction,
-  creditTransactions, // Added this import
+  creditTransactions,
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
@@ -561,39 +561,52 @@ export class DatabaseStorage implements IStorage {
   async createCampaign(data: InsertCampaign): Promise<Campaign> {
     const { books: bookIds, ...campaignData } = data;
 
-    const [campaign] = await db.insert(campaigns)
-      .values({
-        ...campaignData,
-        startDate: new Date(campaignData.startDate),
-        endDate: new Date(campaignData.endDate),
-      })
-      .returning();
+    if (!bookIds || !Array.isArray(bookIds) || bookIds.length === 0) {
+      throw new Error("At least one book must be selected");
+    }
 
-    await db.insert(campaignBooks)
-      .values(
-        bookIds.map(bookId => ({
-          campaignId: campaign.id,
-          bookId,
-        }))
-      );
+    // Verify that all books exist and belong to the author
+    const selectedBooks = await db
+      .select()
+      .from(books)
+      .where(and(
+        inArray(books.id, bookIds),
+        eq(books.authorId, campaignData.authorId)
+      ));
 
-    const [result] = await db
-      .select({
-        campaign: campaigns,
-        books: sql<Pick<Book, "id" | "title">[]>`
-          json_agg(json_build_object('id', ${books.id}, 'title', ${books.title}))
-        `.as('books'),
-      })
-      .from(campaigns)
-      .leftJoin(campaignBooks, eq(campaigns.id, campaignBooks.campaignId))
-      .leftJoin(books, eq(campaignBooks.bookId, books.id))
-      .where(eq(campaigns.id, campaign.id))
-      .groupBy(campaigns.id);
+    if (selectedBooks.length !== bookIds.length) {
+      throw new Error("Some selected books are invalid or do not belong to you");
+    }
 
-    return {
-      ...result.campaign,
-      books: result.books || [],
-    };
+    return await db.transaction(async (tx) => {
+      // Create the campaign first
+      const [campaign] = await tx
+        .insert(campaigns)
+        .values({
+          ...campaignData,
+          startDate: new Date(campaignData.startDate),
+          endDate: new Date(campaignData.endDate),
+        })
+        .returning();
+
+      // Create campaign book associations
+      await tx
+        .insert(campaignBooks)
+        .values(
+          bookIds.map(bookId => ({
+            campaignId: campaign.id,
+            bookId,
+          }))
+        );
+
+      return {
+        ...campaign,
+        books: selectedBooks.map(book => ({
+          id: book.id,
+          title: book.title
+        })),
+      };
+    });
   }
 
   async updateCampaignStatus(
