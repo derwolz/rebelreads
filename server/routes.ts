@@ -916,7 +916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const authorRatings =
             bookIds.length > 0
               ? await db
-                                    .select()
+                  .select()
                   .from(ratings)
                   .where(inArray(ratings.bookId, bookIds))
               : [];
@@ -1424,50 +1424,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching wishlisted books:", error);
       res.status(500).json({ error: "Failed to fetch wishlisted books" });
-    }
-  });
-
-  // Add near other campaign-related endpoints
-  app.post("/api/review-boost", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
-    }
-
-    try {
-      // Parse the stringified JSON data from FormData
-      const selectedBooks = JSON.parse(req.body.selectedBooks);
-      const reviewCount = parseInt(req.body.reviewCount);
-      const totalCost = reviewCount * 5; // $5 per review
-
-      // Check if user has enough credits
-      const credits = await dbStorage.getUserCredits(req.user!.id);
-      if (parseFloat(credits) < totalCost) {
-        return res.status(400).json({ error: "Insufficient credits" });
-      }
-
-      // Create campaign
-      const campaign = await dbStorage.createCampaign({
-        name: `Review Boost Campaign - ${new Date().toLocaleDateString()}`,
-        type: "review_boost",
-        status: "active",
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        budget: totalCost.toString(),
-        authorId: req.user!.id,
-        books: selectedBooks,
-        metrics: {
-          targetReviews: reviewCount,
-          completedReviews: 0
-        }
-      });
-
-      // Deduct credits
-      await dbStorage.deductCredits(req.user!.id, totalCost.toString(), campaign.id);
-
-      res.json(campaign);
-    } catch (error: any) {
-      console.error("Error creating review boost:", error);
-      res.status(500).json({ error: error.message || "Failed to create review boost" });
     }
   });
 
