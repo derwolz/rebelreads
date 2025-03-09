@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Book } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { DragDropFile } from "@/components/drag-drop-file";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ReviewBoostWizardProps {
   open: boolean;
@@ -22,8 +24,54 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
   const [file, setFile] = useState<File | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const totalPrice = reviewCount * 5;
+
+  // Get user's credit balance
+  const { data: credits = "0" } = useQuery<string>({
+    queryKey: ["/api/credits"],
+  });
+
+  const reviewBoostMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append('selectedBooks', JSON.stringify(selectedBooks));
+      formData.append('reviewCount', reviewCount.toString());
+      if (file) {
+        formData.append('file', file);
+      }
+
+      const response = await fetch('/api/review-boost', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create review boost');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/credits'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/campaigns'] });
+      toast({
+        title: 'Success',
+        description: 'Review boost campaign created successfully',
+      });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleNext = () => {
     if (step === 1 && selectedBooks.length === 0) {
@@ -53,22 +101,31 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       return;
     }
 
-    if (step === 4 && !acceptedTerms) {
-      toast({
-        title: "Error",
-        description: "Please accept the terms and conditions",
-        variant: "destructive",
-      });
+    if (step === 4) {
+      if (!acceptedTerms) {
+        toast({
+          title: "Error",
+          description: "Please accept the terms and conditions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if user has enough credits
+      if (parseFloat(credits) < totalPrice) {
+        toast({
+          title: "Error",
+          description: "Insufficient credits. Please purchase more credits to continue.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      reviewBoostMutation.mutate();
       return;
     }
 
-    if (step < 4) {
-      setStep(step + 1);
-    } else {
-      // Handle submission - to be implemented
-      console.log("Submit:", { selectedBooks, reviewCount, file });
-      onClose();
-    }
+    setStep(step + 1);
   };
 
   const handleBookSelection = (bookId: number) => {
@@ -155,6 +212,9 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
               </div>
               <div className="text-right text-muted-foreground">
                 Total Price: ${totalPrice}
+              </div>
+              <div className="text-right text-muted-foreground">
+                Available Credits: ${credits}
               </div>
             </div>
           </>
