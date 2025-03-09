@@ -23,6 +23,13 @@ export default function HomePage() {
     queryKey: ["/api/books"],
   });
 
+  // Filter new books (added in the last 7 days)
+  const newBooks = books?.filter(book => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    return new Date(book.createdAt) > oneWeekAgo;
+  });
+
   const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<
     Book[]
   >({
@@ -77,6 +84,15 @@ export default function HomePage() {
     <main className="container mx-auto px-4 py-8">
       {/* Hero Carousel for Promoted Books */}
       <HeroCarousel />
+
+      {/* New Books Section */}
+      {newBooks && newBooks.length > 0 && (
+        <BookGrid
+          title="New Arrivals"
+          books={newBooks}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* What's Hot Section - Horizontal for medium screens */}
       <div className="hidden md:block lg:hidden mb-12">

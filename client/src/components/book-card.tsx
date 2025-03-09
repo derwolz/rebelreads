@@ -1,12 +1,19 @@
 import { Book, Rating, calculateWeightedRating } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
 import { WishlistButton } from "./wishlist-button";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
+
+// Helper function to check if a book is new (added within last 7 days)
+function isNewBook(book: Book) {
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  return new Date(book.createdAt) > oneWeekAgo;
+}
 
 export function BookCard({ book }: { book: Book }) {
   const [showDetailed, setShowDetailed] = useState(false);
@@ -103,6 +110,14 @@ export function BookCard({ book }: { book: Book }) {
         onMouseEnter={() => setShowDetailed(true)}
         onMouseLeave={() => setShowDetailed(false)}
       >
+        {/* New Book Banner */}
+        {isNewBook(book) && (
+          <div className="absolute -top-2 -left-2 z-20">
+            <div className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
+              New
+            </div>
+          </div>
+        )}
         {book.promoted && (
           <div className="absolute -top-2 -right-2 z-20">
             <Badge variant="default" className="bg-primary/10 text-primary border border-primary/20 text-xs">
