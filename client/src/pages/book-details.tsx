@@ -102,7 +102,13 @@ export default function BookDetails() {
           return true;
       }
     })
-    .sort((a, b) => calculateWeightedRating(b) - calculateWeightedRating(a));
+    .sort((a, b) => {
+      // First sort by featured status
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      // Then by rating
+      return calculateWeightedRating(b) - calculateWeightedRating(a);
+    });
 
   return (
     <div>

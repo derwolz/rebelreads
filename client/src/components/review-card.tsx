@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Rating, calculateWeightedRating } from "@shared/schema";
 import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 
@@ -24,7 +25,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
             <AvatarFallback>{review.user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
+              {review.featured && (
+                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                  Author Featured
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
               <span>•</span>
