@@ -26,10 +26,16 @@ function Router() {
     <>
       <MainNav />
       <Switch>
+        {/* Public routes */}
+        <Route path="/" component={HomePage} />
+        <Route path="/books/:id" component={BookDetails} />
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
-        <ProtectedRoute path="/" component={HomePage} />
-        <ProtectedRoute path="/books/:id" component={BookDetails} />
+        <Route path="/authors/:id" component={AuthorPage} />
+        <Route path="/publishers/:id" component={PublisherPage} />
+        <Route path="/auth" component={AuthPage} />
+
+        {/* Protected routes */}
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/settings/account" component={SettingsPage} />
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
@@ -38,9 +44,7 @@ function Router() {
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
-        <Route path="/authors/:id" component={AuthorPage} />
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/publishers/:id" component={PublisherPage} />
+
         <Route component={NotFound} />
       </Switch>
     </>
