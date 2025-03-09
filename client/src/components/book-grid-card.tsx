@@ -104,7 +104,7 @@ export function BookGridCard({ book }: { book: Book }) {
         {/* New Book Banner */}
         {isNewBook(book) && (
           <div className="absolute -top-2 -left-2 z-20">
-            <div className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
+            <div className="bg-[#7fffd4] text-black text-xs px-2 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
               New
             </div>
           </div>

@@ -256,7 +256,7 @@ export default function AuthPage() {
       </div>
 
       <div className="hidden md:flex flex-col justify-center p-8 bg-muted">
-        <h1 className="text-4xl font-bold mb-4">Welcome to BookNook</h1>
+        <h1 className="text-4xl font-bold mb-4">Answer the Call</h1>
         <p className="text-lg text-muted-foreground">
           Your personal space to discover, track, and review your favorite books.
           Join our community of readers and authors today!

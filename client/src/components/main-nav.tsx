@@ -174,7 +174,7 @@ export function MainNav({ onSearch }: MainNavProps) {
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
           <Link href="/">
-            <h1 className="text-2xl font-bold text-primary">BookNook</h1>
+            <h1 className="text-2xl font-bold text-primary">Sirened</h1>
           </Link>
 
           <div className="hidden md:flex items-center gap-2 relative">
