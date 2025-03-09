@@ -13,6 +13,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -56,9 +57,12 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
     console.log(`Login with ${provider}`);
   };
 
-  const handleSuccess = (user: any) => {
+  const handleSuccess = (user: any, isRegistration: boolean) => {
     onOpenChange(false);
-    setLocation(user.isAuthor ? "/pro" : "/");
+    // Only redirect to /pro if this is a new author registration
+    if (isRegistration && user.isAuthor) {
+      setLocation("/pro");
+    }
   };
 
   return (
@@ -120,7 +124,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
               <form
                 onSubmit={loginForm.handleSubmit((data) => {
                   loginMutation.mutate(data, {
-                    onSuccess: handleSuccess
+                    onSuccess: (user) => handleSuccess(user, false)
                   });
                 })}
               >
@@ -162,7 +166,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
               <form
                 onSubmit={registerForm.handleSubmit((data) => {
                   registerMutation.mutate(data, {
-                    onSuccess: handleSuccess
+                    onSuccess: (user) => handleSuccess(user, true)
                   });
                 })}
               >
