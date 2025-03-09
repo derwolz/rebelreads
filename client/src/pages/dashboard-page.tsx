@@ -44,7 +44,7 @@ export default function DashboardPage() {
   });
 
   const { data: wishlistedBooks } = useQuery<Book[]>({
-    queryKey: ["/api/books/wishlisted"],
+    queryKey: ["/api/wishlist/books"],
     enabled: !!user,
   });
 

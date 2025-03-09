@@ -186,18 +186,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(book);
   });
 
-  // Deprecate the following code
-  // app.post("/api/books/:id/promote", async (req, res) => {
-  //   if (!req.isAuthenticated()) return res.sendStatus(401);
-  //
-  //   const book = await dbStorage.getBook(parseInt(req.params.id));
-  //   if (!book || book.authorId !== req.user!.id) {
-  //     return res.sendStatus(403);
-  //   }
-  //
-  //   const updatedBook = await dbStorage.promoteBook(book.id);
-  //   res.json(updatedBook);
-  // });
 
   app.patch("/api/books/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -930,8 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     authorRatings.length,
                   overall:
                     authorRatings.reduce(
-                      (acc, r) => acc + calculateWeightedRating(r),
-                      0,
+                      (acc, r) => acc + calculateWeightedRating(r),                      0,
                     ) / authorRatings.length,
                 }
               : undefined;
@@ -1403,7 +1390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Add this route with the other book-related routes
-  app.get("/api/books/wishlisted", async (req, res) => {
+  app.get("/api/wishlist/books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
