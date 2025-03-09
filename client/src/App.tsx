@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { MainNav } from "@/components/main-nav";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
+import AuthPage from "@/pages/auth-page";
 import BookDetails from "@/pages/book-details";
 import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
@@ -18,6 +19,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 
+
 function Router() {
   return (
     <>
@@ -25,8 +27,8 @@ function Router() {
       <Switch>
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
-        <Route path="/" component={HomePage} />
-        <Route path="/books/:id" component={BookDetails} />
+        <ProtectedRoute path="/" component={HomePage} />
+        <ProtectedRoute path="/books/:id" component={BookDetails} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/settings/account" component={SettingsPage} />
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
@@ -36,6 +38,7 @@ function Router() {
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
         <Route path="/authors/:id" component={AuthorPage} />
+        <Route path="/auth" component={AuthPage} />
         <Route path="/publishers/:id" component={PublisherPage} />
         <Route component={NotFound} />
       </Switch>

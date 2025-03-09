@@ -24,10 +24,10 @@ export function ProtectedRoute({
   if (!user) {
     return (
       <Route path={path}>
-        <Redirect to="/" />
+        <Redirect to="/auth" />
       </Route>
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return <Component />
 }
