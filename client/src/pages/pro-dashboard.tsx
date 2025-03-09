@@ -35,6 +35,7 @@ import {
   SidebarHeader,
   SidebarProvider,
   SidebarTrigger,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import type { Book } from "@shared/schema";
 
@@ -397,26 +398,27 @@ export default function ProDashboard() {
   };
 
   return (
-    <SidebarProvider defaultOpen>
-      <main className="container mx-auto">
-        <div className="flex">
-          {/* Mobile Trigger */}
-          <div className="flex items-center md:hidden p-4">
-            <SidebarTrigger />
+    <SidebarProvider>
+      <main className="container mx-auto relative">
+        <div className="flex min-h-screen">
+          {/* Mobile Menu Trigger - Always visible on mobile */}
+          <div className="fixed top-4 left-4 z-50 md:hidden">
+            <SidebarTrigger className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" />
           </div>
 
-          {/* Sidebar with motion controls */}
-          <Sidebar>
+          {/* Sidebar */}
+          <Sidebar variant="floating" collapsible="offcanvas">
             <SidebarHeader className="p-4">
               <h2 className="text-lg font-semibold">Author Dashboard</h2>
             </SidebarHeader>
             <SidebarContent>
               <ProDashboardSidebar />
             </SidebarContent>
+            <SidebarRail />
           </Sidebar>
 
           {/* Main Content */}
-          <div className="flex-1 min-w-0 p-4 md:p-8">
+          <div className="flex-1 min-w-0 p-4 md:p-8 md:ml-4">
             {renderContent()}
           </div>
         </div>
