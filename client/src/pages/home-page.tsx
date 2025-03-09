@@ -23,11 +23,12 @@ export default function HomePage() {
     queryKey: ["/api/books"],
   });
 
-  // Filter new books (added in the last 7 days)
+  // Filter new books (published in the last 7 days)
   const newBooks = books?.filter(book => {
+    if (!book.publishedDate) return false;
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    return new Date(book.createdAt) > oneWeekAgo;
+    return new Date(book.publishedDate) > oneWeekAgo;
   });
 
   const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<

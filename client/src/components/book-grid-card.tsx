@@ -8,11 +8,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 
-// Helper function to check if a book is new (added within last 7 days)
+// Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  return new Date(book.createdAt) > oneWeekAgo;
+  return new Date(book.publishedDate) > oneWeekAgo;
 }
 
 export function BookGridCard({ book }: { book: Book }) {
