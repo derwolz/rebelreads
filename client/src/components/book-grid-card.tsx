@@ -1,5 +1,6 @@
 import { Book, Rating, calculateWeightedRating } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
 import { WishlistButton } from "./wishlist-button";
 import { Link, useLocation } from "wouter";
@@ -79,32 +80,40 @@ export function BookGridCard({ book }: { book: Book }) {
 
   return (
     <div className="relative group">
-      <Card 
+      <Card
         id={`book-grid-card-${book.id}`}
         className={`
           overflow-hidden cursor-pointer h-48
           transition-all duration-300 ease-in-out
           group-hover:scale-105 group-hover:shadow-xl
           ${showDetailed ? 'z-50' : 'z-0'}
+          ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
           relative
         `}
         onClick={handleCardClick}
         onMouseEnter={() => setShowDetailed(true)}
         onMouseLeave={() => setShowDetailed(false)}
       >
+        {book.promoted && (
+          <div className="absolute -top-2 -right-2 z-20">
+            <Badge variant="default" className="bg-primary/10 text-primary border border-primary/20 text-xs">
+              Featured
+            </Badge>
+          </div>
+        )}
         <div className="absolute top-2 right-2 z-10">
           <WishlistButton bookId={book.id} variant="ghost" size="icon" />
         </div>
         <div className="flex h-full">
-          <img 
-            src={book.coverUrl} 
+          <img
+            src={book.coverUrl}
             alt={book.title}
             className="w-1/3 object-cover"
           />
           <CardContent className="p-3 w-2/3">
             <h3 className="text-sm font-semibold line-clamp-2 mb-1">{book.title}</h3>
-            <Link 
-              href={`/authors/${book.authorId}`} 
+            <Link
+              href={`/authors/${book.authorId}`}
               className="text-xs text-muted-foreground hover:text-primary transition-colors line-clamp-1"
               onClick={e => e.stopPropagation()}
             >
@@ -123,7 +132,7 @@ export function BookGridCard({ book }: { book: Book }) {
         </div>
 
         {/* Expanded Rating Details */}
-        <div 
+        <div
           className={`
             absolute left-0 right-0 bg-background/95 backdrop-blur-sm
             transition-all duration-300 ease-in-out

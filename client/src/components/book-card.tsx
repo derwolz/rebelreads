@@ -96,12 +96,20 @@ export function BookCard({ book }: { book: Book }) {
           transition-all duration-300 ease-in-out
           group-hover:scale-105 group-hover:shadow-xl
           ${showDetailed ? "z-50" : "z-10"}
+          ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
           relative
         `}
         onClick={handleCardClick}
         onMouseEnter={() => setShowDetailed(true)}
         onMouseLeave={() => setShowDetailed(false)}
       >
+        {book.promoted && (
+          <div className="absolute -top-2 -right-2 z-20">
+            <Badge variant="default" className="bg-primary/10 text-primary border border-primary/20 text-xs">
+              Featured
+            </Badge>
+          </div>
+        )}
         <div className="absolute top-2 right-2 z-10">
           <WishlistButton bookId={book.id} variant="ghost" size="icon" />
         </div>
