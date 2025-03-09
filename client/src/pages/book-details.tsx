@@ -10,6 +10,7 @@ import { RatingDialog } from "@/components/rating-dialog";
 import { FollowButton } from "@/components/follow-button";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink } from "lucide-react";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ import { apiRequest } from "@/lib/queryClient";
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
   const { user } = useAuth();
+  const { setIsOpen: setAuthModalOpen } = useAuthModal();
   const [isOpen, setIsOpen] = useState(false);
   const [ratingFilter, setRatingFilter] = useState<string>("all");
 
@@ -46,10 +48,9 @@ export default function BookDetails() {
   useEffect(() => {
     if (book?.id) {
       apiRequest(
-        "POST", // method as first argument
-        `/api/books/${book.id}/click-through`, // url as second argument
+        "POST",
+        `/api/books/${book.id}/click-through`,
         {
-          // data as third argument
           source: "direct",
           referrer: document.referrer,
         },
@@ -76,6 +77,13 @@ export default function BookDetails() {
       }
     : null;
 
+  const handleRateClick = () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+  };
+
   const filteredRatings = ratings
     ?.filter((rating) => {
       const overallRating = calculateWeightedRating(rating);
@@ -100,6 +108,7 @@ export default function BookDetails() {
     <div>
       <main className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-8">
+          {/* Left column with book cover and action buttons */}
           <div>
             <img
               src={book.coverUrl}
@@ -108,16 +117,6 @@ export default function BookDetails() {
             />
             <div className="mt-4 space-y-2">
               <WishlistButton bookId={book.id} className="w-full" />
-              {user && (
-                <RatingDialog
-                  bookId={book.id}
-                  trigger={
-                    <Button variant="outline" className="w-full">
-                      Rate this book
-                    </Button>
-                  }
-                />
-              )}
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
@@ -131,7 +130,6 @@ export default function BookDetails() {
                           className="w-full"
                           onClick={async (e) => {
                             e.preventDefault();
-                            // Record click-through before navigation
                             await apiRequest(
                               "POST",
                               `/api/books/${book.id}/click-through`,
@@ -155,6 +153,7 @@ export default function BookDetails() {
             </div>
           </div>
 
+          {/* Right column with book details */}
           <div className="md:col-span-2 space-y-8">
             <div>
               <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
@@ -189,7 +188,7 @@ export default function BookDetails() {
                     Available Formats
                   </h3>
                   <div className="flex gap-4">
-                    {book.formats.map((format, index) => (
+                    {book.formats.map((format) => (
                       <span
                         key={format}
                         className="text-sm bg-muted px-4 py-2 rounded-md"
@@ -210,7 +209,9 @@ export default function BookDetails() {
                     <CollapsibleTrigger asChild>
                       <Button variant="ghost" size="sm">
                         <ChevronDown
-                          className={`h-4 w-4 transition-transform ${isOpen ? "transform rotate-180" : ""}`}
+                          className={`h-4 w-4 transition-transform ${
+                            isOpen ? "transform rotate-180" : ""
+                          }`}
                         />
                         <span className="sr-only">Toggle details</span>
                       </Button>
@@ -294,23 +295,34 @@ export default function BookDetails() {
                     <h2 className="text-2xl font-semibold">
                       Ratings & Reviews
                     </h2>
-                    <Select
-                      value={ratingFilter}
-                      onValueChange={setRatingFilter}
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filter by rating" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Ratings</SelectItem>
-                        <SelectItem value="5">5 Stars</SelectItem>
-                        <SelectItem value="4">4 Stars</SelectItem>
-                        <SelectItem value="3">3 Stars</SelectItem>
-                        <SelectItem value="2">2 Stars</SelectItem>
-                        <SelectItem value="1">1 Star</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-4">
+                      <RatingDialog
+                        bookId={book.id}
+                        trigger={
+                          <Button onClick={handleRateClick}>
+                            Rate this book
+                          </Button>
+                        }
+                      />
+                      <Select
+                        value={ratingFilter}
+                        onValueChange={setRatingFilter}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Filter by rating" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Ratings</SelectItem>
+                          <SelectItem value="5">5 Stars</SelectItem>
+                          <SelectItem value="4">4 Stars</SelectItem>
+                          <SelectItem value="3">3 Stars</SelectItem>
+                          <SelectItem value="2">2 Stars</SelectItem>
+                          <SelectItem value="1">1 Star</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+
                   {averageRatings ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
@@ -378,14 +390,6 @@ export default function BookDetails() {
                       ))}
                     </div>
                   </div>
-                  {user && (
-                    <div className="mt-4">
-                      <RatingDialog
-                        bookId={book.id}
-                        trigger={<Button>Rate this book</Button>}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

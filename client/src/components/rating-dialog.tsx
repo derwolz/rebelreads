@@ -59,12 +59,16 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
 
   const ratingMutation = useMutation({
     mutationFn: async () => {
+      if (!user) {
+        throw new Error("You must be logged in to rate books");
+      }
+
       const payload = {
         ...ratings,
         review: review.trim() || null,
         analysis: null, // Skip sentiment analysis for now
         bookId,
-        userId: user!.id,
+        userId: user.id,
       };
 
       const res = await apiRequest("POST", `/api/books/${bookId}/ratings`, payload);
