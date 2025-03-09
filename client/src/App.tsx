@@ -26,7 +26,7 @@ function Router() {
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
         <Route path="/" component={HomePage} />
-        <ProtectedRoute path="/books/:id" component={BookDetails} />
+        <Route path="/books/:id" component={BookDetails} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/settings/account" component={SettingsPage} />
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
