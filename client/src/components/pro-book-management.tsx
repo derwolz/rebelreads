@@ -48,6 +48,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { BookCsvUploadWizard } from "@/components/book-csv-upload-wizard";
 
 const RETAILER_OPTIONS = [
   "Amazon",
@@ -205,7 +206,10 @@ export function ProBookManagement() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <BookUploadDialog />
+        <div className="space-y-2">
+          <BookUploadDialog />
+          <BookCsvUploadWizard />
+        </div>
         <div className="mt-8 grid gap-6">
           {userBooks?.map((book) => {
             if (!editedReferralLinks[book.id]) {
