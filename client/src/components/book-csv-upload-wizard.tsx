@@ -43,42 +43,10 @@ export function BookCsvUploadWizard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const validateBook = (book: CsvBook): string | null => {
-    if (!book.title?.trim()) return "Title is required";
-    if (!book.description?.trim()) return "Description is required";
-    if (!book.cover_url?.trim()) return "Cover URL is required";
-
-    // Validate page count
-    if (book.page_count) {
-      const pageCount = parseInt(book.page_count.trim());
-      if (isNaN(pageCount) || pageCount <= 0) {
-        return "Page count must be a positive number";
-      }
-    }
-
-    // Validate date
-    if (book.published_date) {
-      const date = new Date(book.published_date);
-      if (isNaN(date.getTime())) {
-        return "Invalid published date format";
-      }
-    }
-
-    return null;
-  };
-
   const uploadMutation = useMutation({
     mutationFn: async (books: CsvBook[]) => {
       setIsProcessing(true);
       try {
-        // Validate all books first
-        for (const book of books) {
-          const error = validateBook(book);
-          if (error) {
-            throw new Error(`Validation error for book "${book.title}": ${error}`);
-          }
-        }
-
         // Download all cover images
         const formData = new FormData();
         const coverBlobs = await Promise.all(
@@ -92,7 +60,7 @@ export function BookCsvUploadWizard() {
               return blob;
             } catch (error) {
               console.error(`Error downloading cover for ${book.title}:`, error);
-              throw new Error(`Failed to download cover image for "${book.title}"`);
+              return null;
             }
           })
         );
@@ -107,10 +75,7 @@ export function BookCsvUploadWizard() {
           credentials: "include",
         });
 
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.error || 'Failed to upload books');
-        }
+        if (!res.ok) throw new Error(await res.text());
         return res.json();
       } finally {
         setIsProcessing(false);
@@ -183,19 +148,6 @@ export function BookCsvUploadWizard() {
       });
       return book as CsvBook;
     });
-
-    // Validate all books before setting state
-    for (const book of books) {
-      const error = validateBook(book);
-      if (error) {
-        toast({
-          title: "Invalid book data",
-          description: `Error in book "${book.title}": ${error}`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
 
     setCsvData(books);
   };

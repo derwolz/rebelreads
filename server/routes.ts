@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add near the other API endpoints
   app.get("/api/pro/reviews", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(403);
+      return res.sendStatus(401);
     }
 
     try {
@@ -1597,6 +1597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add bulk book upload endpoint
   app.post("/api/books/bulk", upload.array("covers"), async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
       return res.sendStatus(401);
@@ -1617,25 +1618,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const coverFile = coverFiles[index];
           const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
 
-          // Parse and validate numeric fields
-          const pageCount = book.page_count ? parseInt(book.page_count.trim()) : null;
-          if (book.page_count && isNaN(pageCount)) {
-            throw new Error(`Invalid page count for book: ${book.title}`);
-          }
-
-          // Parse and validate date
-          let publishedDate = null;
-          if (book.published_date) {
-            const date = new Date(book.published_date);
-            if (isNaN(date.getTime())) {
-              throw new Error(`Invalid published date for book: ${book.title}`);
-            }
-            publishedDate = date;
-          }
-
           return await dbStorage.createBook({
-            title: book.title.trim(),
-            description: book.description.trim(),
+            title: book.title,
+            description: book.description,
             authorId: req.user!.id,
             coverUrl,
             author: req.user!.authorName || req.user!.username,
@@ -1643,16 +1628,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             formats: book.formats ? book.formats.split(',').map((f: string) => f.trim()) : [],
             promoted: false,
             authorImageUrl: null,
-            pageCount,
-            publishedDate,
+            pageCount: book.page_count ? parseInt(book.page_count) : null,
+            publishedDate: book.published_date ? new Date(book.published_date) : null,
             awards: [],
             originalTitle: null,
             series: null,
             setting: null,
             characters: [],
-            isbn: book.isbn ? book.isbn.trim() : null,
+            isbn: book.isbn || null,
             asin: null,
-            language: book.language ? book.language.trim() : "English",
+            language: book.language || "English",
           });
         })
       );
@@ -1660,9 +1645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(createdBooks);
     } catch (error) {
       console.error("Error processing bulk book upload:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to process bulk upload" 
-      });
+      res.status(500).json({ error: "Failed to process bulk upload" });
     }
   });
 
