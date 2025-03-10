@@ -11,6 +11,37 @@ interface DragDropFileProps {
 
 export function DragDropFile({ file, onFileChange, accept = "*", maxSize }: DragDropFileProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const validateFile = (file: File): string | null => {
+    // Check file size
+    if (maxSize && file.size > maxSize) {
+      return `File size should be less than ${maxSize / (1024 * 1024)}MB`;
+    }
+
+    // If accept is "*", skip type validation
+    if (accept === "*") return null;
+
+    // Split accept string into array of accepted types
+    const acceptedTypes = accept.split(',').map(type => type.trim().toLowerCase());
+
+    // For .epub files, check both the extension and MIME type
+    if (acceptedTypes.includes('.epub')) {
+      const isEpub = file.name.toLowerCase().endsWith('.epub') || 
+                    file.type === 'application/epub+zip';
+      if (isEpub) return null;
+    }
+
+    // For .pdf files
+    if (acceptedTypes.includes('.pdf')) {
+      const isPdf = file.name.toLowerCase().endsWith('.pdf') || 
+                   file.type === 'application/pdf';
+      if (isPdf) return null;
+    }
+
+    // If none of the accepted types match
+    return `Please upload a ${accept} file`;
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -27,21 +58,16 @@ export function DragDropFile({ file, onFileChange, accept = "*", maxSize }: Drag
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
+      setError(null);
 
       const files = Array.from(e.dataTransfer.files);
       const validFile = files[0];
 
       if (!validFile) return;
 
-      // Check file type
-      if (accept !== "*" && !validFile.type.includes(accept.replace(".", ""))) {
-        alert(`Please upload a ${accept} file`);
-        return;
-      }
-
-      // Check file size
-      if (maxSize && validFile.size > maxSize) {
-        alert(`File size should be less than ${maxSize / (1024 * 1024)}MB`);
+      const validationError = validateFile(validFile);
+      if (validationError) {
+        setError(validationError);
         return;
       }
 
@@ -52,20 +78,21 @@ export function DragDropFile({ file, onFileChange, accept = "*", maxSize }: Drag
 
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      setError(null);
       const files = e.target.files;
       if (!files?.length) return;
 
       const validFile = files[0];
 
-      // Check file size
-      if (maxSize && validFile.size > maxSize) {
-        alert(`File size should be less than ${maxSize / (1024 * 1024)}MB`);
+      const validationError = validateFile(validFile);
+      if (validationError) {
+        setError(validationError);
         return;
       }
 
       onFileChange(validFile);
     },
-    [maxSize, onFileChange]
+    [accept, maxSize, onFileChange]
   );
 
   return (
@@ -104,6 +131,9 @@ export function DragDropFile({ file, onFileChange, accept = "*", maxSize }: Drag
           <p className="text-sm text-muted-foreground">
             Supports {accept} files up to {maxSize ? `${maxSize / (1024 * 1024)}MB` : "unlimited size"}
           </p>
+          {error && (
+            <p className="text-sm text-destructive mt-2">{error}</p>
+          )}
         </div>
       )}
     </div>
