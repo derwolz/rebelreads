@@ -8,7 +8,7 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { users, books, bookshelves, replies, followers } from "@shared/schema"; // Added replies and followers imports
+import { users, books, bookshelves, replies, followers, giftedBooks } from "@shared/schema"; // Added replies and followers imports
 import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
@@ -914,7 +914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
-            bookIds.length > 0
+            bookIds.length> 0
               ? await db
                   .select()
                   .from(ratings)
@@ -1424,6 +1424,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching wishlisted books:", error);
       res.status(500).json({ error: "Failed to fetch wishlisted books" });
+    }
+  });
+
+  app.post("/api/campaigns/boost", upload.any(), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const reviewCounts = JSON.parse(req.body.reviewCounts);
+      const totalCost = parseFloat(req.body.totalCost);
+      const files = req.files as Express.Multer.File[];
+
+      // Verify user has enough credits
+      const userCredits = await dbStorage.getUserCredits(req.user!.id);
+      if (parseFloat(userCredits) < totalCost) {
+        return res.status(400).json({ error: "Insufficient credits" });
+      }
+
+      // Create the campaign
+      const campaign = await dbStorage.createCampaign({
+        type: "review_boost",
+        name: `Review Boost Campaign - ${format(new Date(), "M/d/yyyy")}`,
+        status: "active",
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        spent: totalCost.toString(),
+        budget: totalCost.toString(),
+        authorId: req.user!.id,
+        metrics: { reviews: 0 },
+      });
+
+      // Generate and store gifted books
+      for (const [bookId, count] of Object.entries(reviewCounts)) {
+        const bookFile = files.find(f => f.fieldname === `files[${bookId}]`);
+        if (!bookFile) continue;
+
+        // Create unique codes for each review
+        for (let i = 0; i < parseInt(count as string); i++) {
+          const uniqueCode = `${campaign.id}-${bookId}-${randomBytes(8).toString('hex')}`;
+          await db.insert(giftedBooks).values({
+            uniqueCode,
+            bookId: parseInt(bookId),
+            campaignId: campaign.id,
+            status: "unclaimed",
+          });
+        }
+      }
+
+      // Deduct credits
+      await dbStorage.addCredits(req.user!.id, -totalCost, `Review boost campaign creation`);
+
+      res.json(campaign);
+    } catch (error) {
+      console.error("Error creating boost campaign:", error);
+      res.status(500).json({ error: "Failed to create boost campaign" });
     }
   });
 

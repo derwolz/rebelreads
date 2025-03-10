@@ -46,7 +46,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       totalCost: number 
     }) => {
       const formData = new FormData();
-      data.selectedBooks.forEach((book, index) => {
+      data.selectedBooks.forEach((book) => {
         if (book.file) {
           formData.append(`files[${book.bookId}]`, book.file);
         }
@@ -54,7 +54,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       });
       formData.append("totalCost", data.totalCost.toString());
 
-      return apiRequest("/api/boost/create", {
+      return apiRequest("/api/campaigns/boost", {
         method: "POST",
         body: formData,
       });
@@ -62,6 +62,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/credits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/books/review-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
       onClose();
       toast({
         title: "Success",
@@ -70,7 +71,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: "Error", 
         description: error.message || "Failed to create review boost campaign",
         variant: "destructive",
       });
