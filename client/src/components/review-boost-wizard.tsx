@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +35,11 @@ interface SelectedBookData {
   file: File | null;
 }
 
-export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardProps) {
+export function ReviewBoostWizard({
+  open,
+  onClose,
+  books,
+}: ReviewBoostWizardProps) {
   const [step, setStep] = useState(1);
   const [selectedBooks, setSelectedBooks] = useState<SelectedBookData[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -41,17 +52,27 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
   });
 
   const createBoostMutation = useMutation({
-    mutationFn: async (data: { 
-      selectedBooks: SelectedBookData[],
-      totalCost: number 
+    mutationFn: async (data: {
+      selectedBooks: SelectedBookData[];
+      totalCost: number;
     }) => {
       const formData = new FormData();
+
+      // Create a single object for review counts
+      const reviewCounts = Object.fromEntries(
+        data.selectedBooks.map(book => [book.bookId, book.reviewCount])
+      );
+
+      // Add review counts as a single JSON string
+      formData.append("reviewCounts", JSON.stringify(reviewCounts));
+
+      // Add files
       data.selectedBooks.forEach((book) => {
         if (book.file) {
           formData.append(`files[${book.bookId}]`, book.file);
         }
-        formData.append(`reviewCounts[${book.bookId}]`, book.reviewCount.toString());
       });
+
       formData.append("totalCost", data.totalCost.toString());
 
       return apiRequest("/api/boost/create", {
@@ -71,20 +92,23 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
     },
     onError: (error) => {
       toast({
-        title: "Error", 
+        title: "Error",
         description: error.message || "Failed to create review boost campaign",
         variant: "destructive",
       });
     },
   });
 
-  const totalPrice = selectedBooks.reduce((sum, book) => sum + book.reviewCount * 5, 0);
+  const totalPrice = selectedBooks.reduce(
+    (sum, book) => sum + book.reviewCount * 5,
+    0,
+  );
 
   const handleBookSelection = (bookId: number) => {
-    setSelectedBooks(prev => {
-      const isSelected = prev.find(b => b.bookId === bookId);
+    setSelectedBooks((prev) => {
+      const isSelected = prev.find((b) => b.bookId === bookId);
       if (isSelected) {
-        return prev.filter(b => b.bookId !== bookId);
+        return prev.filter((b) => b.bookId !== bookId);
       } else {
         return [...prev, { bookId, reviewCount: 1, file: null }];
       }
@@ -92,22 +116,18 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
   };
 
   const updateReviewCount = (bookId: number, count: number) => {
-    setSelectedBooks(prev => 
-      prev.map(book => 
-        book.bookId === bookId 
+    setSelectedBooks((prev) =>
+      prev.map((book) =>
+        book.bookId === bookId
           ? { ...book, reviewCount: Math.max(1, count) }
-          : book
-      )
+          : book,
+      ),
     );
   };
 
   const updateBookFile = (bookId: number, file: File | null) => {
-    setSelectedBooks(prev => 
-      prev.map(book => 
-        book.bookId === bookId 
-          ? { ...book, file }
-          : book
-      )
+    setSelectedBooks((prev) =>
+      prev.map((book) => (book.bookId === bookId ? { ...book, file } : book)),
     );
   };
 
@@ -121,7 +141,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       return;
     }
 
-    if (step === 2 && selectedBooks.some(book => book.reviewCount < 1)) {
+    if (step === 2 && selectedBooks.some((book) => book.reviewCount < 1)) {
       toast({
         title: "Error",
         description: "Please select at least one review for each book",
@@ -130,7 +150,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       return;
     }
 
-    if (step === 3 && selectedBooks.some(book => !book.file)) {
+    if (step === 3 && selectedBooks.some((book) => !book.file)) {
       toast({
         title: "Error",
         description: "Please upload files for all selected books",
@@ -172,25 +192,32 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
             </DialogHeader>
             <div className="grid gap-4 py-4">
               {books.map((book) => {
-                const counts = reviewCounts?.[book.id] || { purchased: 0, completed: 0 };
+                const counts = reviewCounts?.[book.id] || {
+                  purchased: 0,
+                  completed: 0,
+                };
                 return (
-                  <Card 
-                    key={book.id} 
+                  <Card
+                    key={book.id}
                     className={`cursor-pointer transition-colors ${
-                      selectedBooks.some(b => b.bookId === book.id) ? 'border-primary' : ''
+                      selectedBooks.some((b) => b.bookId === book.id)
+                        ? "border-primary"
+                        : ""
                     }`}
                     onClick={() => handleBookSelection(book.id)}
                   >
                     <CardContent className="flex items-center p-4">
                       <Checkbox
-                        checked={selectedBooks.some(b => b.bookId === book.id)}
+                        checked={selectedBooks.some(
+                          (b) => b.bookId === book.id,
+                        )}
                         onCheckedChange={() => handleBookSelection(book.id)}
                         className="mr-4"
                       />
                       <div className="flex items-center gap-4 flex-1">
-                        <img 
-                          src={book.coverUrl} 
-                          alt={book.title} 
+                        <img
+                          src={book.coverUrl}
+                          alt={book.title}
                           className="h-16 w-12 object-cover rounded"
                         />
                         <div className="flex-1">
@@ -218,20 +245,21 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
             <DialogHeader>
               <DialogTitle>Number of Reviews</DialogTitle>
               <DialogDescription>
-                How many reviews would you like to receive for each book? ($5 per review)
+                How many reviews would you like to receive for each book? ($5
+                per review)
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               {selectedBooks.map((selected) => {
-                const book = books.find(b => b.id === selected.bookId);
+                const book = books.find((b) => b.id === selected.bookId);
                 if (!book) return null;
 
                 return (
                   <div key={book.id} className="grid gap-2">
                     <div className="flex items-center gap-4">
-                      <img 
-                        src={book.coverUrl} 
-                        alt={book.title} 
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
                         className="h-16 w-12 object-cover rounded"
                       />
                       <div className="flex-1">
@@ -239,7 +267,10 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
                       </div>
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor={`reviews-${book.id}`} className="text-right">
+                      <Label
+                        htmlFor={`reviews-${book.id}`}
+                        className="text-right"
+                      >
                         Reviews
                       </Label>
                       <Input
@@ -248,7 +279,12 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
                         min="1"
                         className="col-span-3"
                         value={selected.reviewCount}
-                        onChange={(e) => updateReviewCount(book.id, parseInt(e.target.value) || 1)}
+                        onChange={(e) =>
+                          updateReviewCount(
+                            book.id,
+                            parseInt(e.target.value) || 1,
+                          )
+                        }
                       />
                     </div>
                   </div>
@@ -272,15 +308,15 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
             </DialogHeader>
             <div className="grid gap-6 py-4">
               {selectedBooks.map((selected) => {
-                const book = books.find(b => b.id === selected.bookId);
+                const book = books.find((b) => b.id === selected.bookId);
                 if (!book) return null;
 
                 return (
                   <div key={book.id} className="grid gap-2">
                     <div className="flex items-center gap-4 mb-2">
-                      <img 
-                        src={book.coverUrl} 
-                        alt={book.title} 
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
                         className="h-16 w-12 object-cover rounded"
                       />
                       <div>
@@ -313,20 +349,21 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
               <div className="space-y-4">
                 <h3 className="font-medium">Selected Books:</h3>
                 {selectedBooks.map((selected) => {
-                  const book = books.find(b => b.id === selected.bookId);
+                  const book = books.find((b) => b.id === selected.bookId);
                   if (!book) return null;
 
                   return (
                     <div key={book.id} className="flex items-center gap-4">
-                      <img 
-                        src={book.coverUrl} 
-                        alt={book.title} 
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
                         className="h-16 w-12 object-cover rounded"
                       />
                       <div>
                         <h4 className="font-medium">{book.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {selected.reviewCount} reviews × $5 = ${selected.reviewCount * 5}
+                          {selected.reviewCount} reviews × $5 = $
+                          {selected.reviewCount * 5}
                         </p>
                       </div>
                     </div>
@@ -336,16 +373,31 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
 
               <div className="text-sm text-muted-foreground space-y-4 mt-4">
                 <p>
-                  By participating in the Review Boost program, you agree to the following terms:
+                  By participating in the Review Boost program, you agree to the
+                  following terms:
                 </p>
                 <ul className="list-disc pl-4 space-y-2">
-                  <li>Your book will be distributed to users with high engagement rates</li>
+                  <li>
+                    Your book will be distributed to users with high engagement
+                    rates
+                  </li>
                   <li>Distribution of your book does not guarantee a review</li>
-                  <li>Users who consistently fail to provide reviews will be removed from the program</li>
-                  <li>The number of books distributed will equal the number of reviews purchased</li>
-                  <li>Our AI-powered algorithm will match your book with readers most likely to enjoy it</li>
+                  <li>
+                    Users who consistently fail to provide reviews will be
+                    removed from the program
+                  </li>
+                  <li>
+                    The number of books distributed will equal the number of
+                    reviews purchased
+                  </li>
+                  <li>
+                    Our AI-powered algorithm will match your book with readers
+                    most likely to enjoy it
+                  </li>
                   <li>Reviews will be honest and unbiased</li>
-                  <li>No refunds will be provided once the boost program begins</li>
+                  <li>
+                    No refunds will be provided once the boost program begins
+                  </li>
                 </ul>
               </div>
 
@@ -353,7 +405,9 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
                 <Checkbox
                   id="terms"
                   checked={acceptedTerms}
-                  onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setAcceptedTerms(checked as boolean)
+                  }
                 />
                 <label
                   htmlFor="terms"
@@ -386,11 +440,12 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
               Back
             </Button>
           )}
-          <Button 
-            onClick={handleNext}
-            disabled={createBoostMutation.isPending}
-          >
-            {step === 4 ? (createBoostMutation.isPending ? "Creating..." : "Submit") : "Next"}
+          <Button onClick={handleNext} disabled={createBoostMutation.isPending}>
+            {step === 4
+              ? createBoostMutation.isPending
+                ? "Creating..."
+                : "Submit"
+              : "Next"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -8,7 +8,14 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import { users, books, bookshelves, replies, followers, giftedBooks } from "@shared/schema"; // Added replies and followers imports
+import {
+  users,
+  books,
+  bookshelves,
+  replies,
+  followers,
+  giftedBooks,
+} from "@shared/schema"; // Added replies and followers imports
 import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
@@ -64,7 +71,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { amount, description } = req.body;
-      const user = await dbStorage.addCredits(req.user!.id, amount, description);
+      const user = await dbStorage.addCredits(
+        req.user!.id,
+        amount,
+        description,
+      );
       res.json({ credits: user.credits });
     } catch (error) {
       console.error("Error adding credits:", error);
@@ -211,7 +222,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     res.json(book);
   });
-
 
   app.patch("/api/books/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -665,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const campaign = await dbStorage.updateCampaignStatus(
         parseInt(req.params.id),
-        req.body.status
+        req.body.status,
       );
       res.json(campaign);
     } catch (error) {
@@ -907,15 +917,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get books and aggregate ratings for each author
       const authorsWithDetails = await Promise.all(
-        authors.map(async (author) => {          const authorBooks = await db
+        authors.map(async (author) => {
+          const authorBooks = await db
             .select()
             .from(books)
             .where(eq(books.authorId, author.id));
 
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
-            bookIds.length> 0
-                            ? await db
+            bookIds.length > 0
+              ? await db
                   .select()
                   .from(ratings)
                   .where(inArray(ratings.bookId, bookIds))
@@ -1276,8 +1287,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Fill in missing dates with zero counts
       const dateMap = new Map();
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+      for (
+        let d = new Date(startDate);
+        d <= endDate;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const dateStr = d.toISOString().split("T")[0];
         dateMap.set(dateStr, { date: dateStr, count: "0" });
       }
 
@@ -1293,8 +1308,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Reset dateMap for unfollows
       dateMap.clear();
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+      for (
+        let d = new Date(startDate);
+        d <= endDate;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const dateStr = d.toISOString().split("T")[0];
         dateMap.set(dateStr, { date: dateStr, count: "0" });
       }
 
@@ -1347,7 +1366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authors.map(async (author) => ({
           author,
           books: await dbStorage.getBooksByAuthor(author.id),
-        }))
+        })),
       );
 
       res.json({
@@ -1386,7 +1405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const relation = await dbStorage.addAuthorToPublisher(
         publisherId,
         authorId,
-        new Date(req.body.contractStart || new Date())
+        new Date(req.body.contractStart || new Date()),
       );
       res.json(relation);
     } catch (error) {
@@ -1427,13 +1446,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add after other book-related routes
   app.post("/api/boost/create", upload.any(), async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
       return res.sendStatus(401);
     }
 
     try {
+      // Parse the reviewCounts as a single JSON string
       const reviewCounts = JSON.parse(req.body.reviewCounts);
       const totalCost = parseFloat(req.body.totalCost);
       const files = req.files as Express.Multer.File[];
@@ -1455,6 +1474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         budget: totalCost.toString(),
         authorId: req.user!.id,
         metrics: { reviews: 0 },
+        books: Object.keys(reviewCounts).map(id => parseInt(id)), // Add selected book IDs
       });
 
       // Generate and store gifted books
@@ -1463,7 +1483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!bookFile) continue;
 
         // Create unique codes for each review
-        for (let i = 0; i < parseInt(count as string); i++) {
+        for (let i = 0; i < (count as number); i++) {
           const uniqueCode = `${campaign.id}-${bookId}-${randomBytes(8).toString('hex')}`;
           await db.insert(giftedBooks).values({
             uniqueCode,
