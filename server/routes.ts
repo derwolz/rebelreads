@@ -1740,7 +1740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
       const lines = csvData.split('\n');
 
-      // Validate headers
+      // Validate headers - add description as required
       const requiredHeaders = ['title', 'description', 'author', 'genres', 'formats'];
       const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
@@ -1757,6 +1757,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const values = lines[i].split(',').map(v => v.trim());
         const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+
+        // Validate required fields
+        if (!row.title || !row.description || !row.author) {
+          console.error(`Skipping row ${i}: Missing required fields`);
+          continue;
+        }
 
         try {
           // Create the book
