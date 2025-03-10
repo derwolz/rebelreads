@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Book } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { DragDropFile } from "@/components/drag-drop-file";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ReviewBoostWizardProps {
   open: boolean;
@@ -15,15 +17,98 @@ interface ReviewBoostWizardProps {
   books: Book[];
 }
 
+interface BookReviewCount {
+  purchased: number;
+  completed: number;
+}
+
+interface SelectedBookData {
+  bookId: number;
+  reviewCount: number;
+  file: File | null;
+}
+
 export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardProps) {
   const [step, setStep] = useState(1);
-  const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
-  const [reviewCount, setReviewCount] = useState(1);
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedBooks, setSelectedBooks] = useState<SelectedBookData[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const totalPrice = reviewCount * 5;
+  // Fetch existing review counts for books
+  const { data: reviewCounts } = useQuery<Record<number, BookReviewCount>>({
+    queryKey: ["/api/books/review-counts"],
+  });
+
+  const createBoostMutation = useMutation({
+    mutationFn: async (data: { 
+      selectedBooks: SelectedBookData[],
+      totalCost: number 
+    }) => {
+      const formData = new FormData();
+      data.selectedBooks.forEach((book, index) => {
+        if (book.file) {
+          formData.append(`files[${book.bookId}]`, book.file);
+        }
+        formData.append(`reviewCounts[${book.bookId}]`, book.reviewCount.toString());
+      });
+      formData.append("totalCost", data.totalCost.toString());
+
+      return apiRequest("/api/boost/create", {
+        method: "POST",
+        body: formData,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/credits"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/books/review-counts"] });
+      onClose();
+      toast({
+        title: "Success",
+        description: "Review boost campaign created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create review boost campaign",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const totalPrice = selectedBooks.reduce((sum, book) => sum + book.reviewCount * 5, 0);
+
+  const handleBookSelection = (bookId: number) => {
+    setSelectedBooks(prev => {
+      const isSelected = prev.find(b => b.bookId === bookId);
+      if (isSelected) {
+        return prev.filter(b => b.bookId !== bookId);
+      } else {
+        return [...prev, { bookId, reviewCount: 1, file: null }];
+      }
+    });
+  };
+
+  const updateReviewCount = (bookId: number, count: number) => {
+    setSelectedBooks(prev => 
+      prev.map(book => 
+        book.bookId === bookId 
+          ? { ...book, reviewCount: Math.max(1, count) }
+          : book
+      )
+    );
+  };
+
+  const updateBookFile = (bookId: number, file: File | null) => {
+    setSelectedBooks(prev => 
+      prev.map(book => 
+        book.bookId === bookId 
+          ? { ...book, file }
+          : book
+      )
+    );
+  };
 
   const handleNext = () => {
     if (step === 1 && selectedBooks.length === 0) {
@@ -35,48 +120,42 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       return;
     }
 
-    if (step === 2 && reviewCount < 1) {
+    if (step === 2 && selectedBooks.some(book => book.reviewCount < 1)) {
       toast({
         title: "Error",
-        description: "Please select at least one review",
+        description: "Please select at least one review for each book",
         variant: "destructive",
       });
       return;
     }
 
-    if (step === 3 && !file) {
+    if (step === 3 && selectedBooks.some(book => !book.file)) {
       toast({
         title: "Error",
-        description: "Please upload your book file",
+        description: "Please upload files for all selected books",
         variant: "destructive",
       });
       return;
     }
 
-    if (step === 4 && !acceptedTerms) {
-      toast({
-        title: "Error",
-        description: "Please accept the terms and conditions",
-        variant: "destructive",
+    if (step === 4) {
+      if (!acceptedTerms) {
+        toast({
+          title: "Error",
+          description: "Please accept the terms and conditions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      createBoostMutation.mutate({
+        selectedBooks,
+        totalCost: totalPrice,
       });
       return;
     }
 
-    if (step < 4) {
-      setStep(step + 1);
-    } else {
-      // Handle submission - to be implemented
-      console.log("Submit:", { selectedBooks, reviewCount, file });
-      onClose();
-    }
-  };
-
-  const handleBookSelection = (bookId: number) => {
-    setSelectedBooks(prev => 
-      prev.includes(bookId) 
-        ? prev.filter(id => id !== bookId)
-        : [...prev, bookId]
-    );
+    setStep(step + 1);
   };
 
   const renderStep = () => {
@@ -91,41 +170,43 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              {books.map((book) => (
-                <Card 
-                  key={book.id} 
-                  className={`cursor-pointer transition-colors ${
-                    selectedBooks.includes(book.id) ? 'border-primary' : ''
-                  }`}
-                  onClick={() => handleBookSelection(book.id)}
-                >
-                  <CardContent className="flex items-center p-4">
-                    <Checkbox
-                      checked={selectedBooks.includes(book.id)}
-                      onCheckedChange={() => handleBookSelection(book.id)}
-                      className="mr-4"
-                    />
-                    <div className="flex items-center gap-4">
-                      <img 
-                        src={book.coverUrl} 
-                        alt={book.title} 
-                        className="h-16 w-12 object-cover rounded"
+              {books.map((book) => {
+                const counts = reviewCounts?.[book.id] || { purchased: 0, completed: 0 };
+                return (
+                  <Card 
+                    key={book.id} 
+                    className={`cursor-pointer transition-colors ${
+                      selectedBooks.some(b => b.bookId === book.id) ? 'border-primary' : ''
+                    }`}
+                    onClick={() => handleBookSelection(book.id)}
+                  >
+                    <CardContent className="flex items-center p-4">
+                      <Checkbox
+                        checked={selectedBooks.some(b => b.bookId === book.id)}
+                        onCheckedChange={() => handleBookSelection(book.id)}
+                        className="mr-4"
                       />
-                      <div>
-                        <h3 className="font-medium">{book.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {book.genres.join(", ")}
-                        </p>
+                      <div className="flex items-center gap-4 flex-1">
+                        <img 
+                          src={book.coverUrl} 
+                          alt={book.title} 
+                          className="h-16 w-12 object-cover rounded"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-medium">{book.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {book.genres.join(", ")}
+                          </p>
+                        </div>
+                        <div className="text-right text-sm">
+                          <p>Reviews Purchased: {counts.purchased}</p>
+                          <p>Reviews Completed: {counts.completed}</p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {books.length === 0 && (
-                <div className="text-center text-muted-foreground py-8">
-                  No books available for review boost
-                </div>
-              )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </>
         );
@@ -136,23 +217,42 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
             <DialogHeader>
               <DialogTitle>Number of Reviews</DialogTitle>
               <DialogDescription>
-                How many reviews would you like to receive? ($5 per review)
+                How many reviews would you like to receive for each book? ($5 per review)
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="reviews" className="text-right">
-                  Reviews
-                </Label>
-                <Input
-                  id="reviews"
-                  type="number"
-                  min="1"
-                  className="col-span-3"
-                  value={reviewCount}
-                  onChange={(e) => setReviewCount(Math.max(1, parseInt(e.target.value) || 1))}
-                />
-              </div>
+              {selectedBooks.map((selected) => {
+                const book = books.find(b => b.id === selected.bookId);
+                if (!book) return null;
+
+                return (
+                  <div key={book.id} className="grid gap-2">
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={book.coverUrl} 
+                        alt={book.title} 
+                        className="h-16 w-12 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-medium">{book.title}</h3>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor={`reviews-${book.id}`} className="text-right">
+                        Reviews
+                      </Label>
+                      <Input
+                        id={`reviews-${book.id}`}
+                        type="number"
+                        min="1"
+                        className="col-span-3"
+                        value={selected.reviewCount}
+                        onChange={(e) => updateReviewCount(book.id, parseInt(e.target.value) || 1)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
               <div className="text-right text-muted-foreground">
                 Total Price: ${totalPrice}
               </div>
@@ -166,16 +266,35 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
             <DialogHeader>
               <DialogTitle>Upload Book Files</DialogTitle>
               <DialogDescription>
-                Upload your book in .epub format
+                Upload your books in .epub or .pdf format
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-              <DragDropFile
-                file={file}
-                onFileChange={setFile}
-                accept=".epub"
-                maxSize={100 * 1024 * 1024} // 100MB
-              />
+            <div className="grid gap-6 py-4">
+              {selectedBooks.map((selected) => {
+                const book = books.find(b => b.id === selected.bookId);
+                if (!book) return null;
+
+                return (
+                  <div key={book.id} className="grid gap-2">
+                    <div className="flex items-center gap-4 mb-2">
+                      <img 
+                        src={book.coverUrl} 
+                        alt={book.title} 
+                        className="h-16 w-12 object-cover rounded"
+                      />
+                      <div>
+                        <h3 className="font-medium">{book.title}</h3>
+                      </div>
+                    </div>
+                    <DragDropFile
+                      file={selected.file}
+                      onFileChange={(file) => updateBookFile(book.id, file)}
+                      accept=".epub,.pdf"
+                      maxSize={100 * 1024 * 1024} // 100MB
+                    />
+                  </div>
+                );
+              })}
             </div>
           </>
         );
@@ -184,13 +303,37 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
         return (
           <>
             <DialogHeader>
-              <DialogTitle>Terms and Conditions</DialogTitle>
+              <DialogTitle>Review and Confirm</DialogTitle>
               <DialogDescription>
-                Please review and accept our terms
+                Please review your selections and accept the terms
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="text-sm text-muted-foreground space-y-4">
+              <div className="space-y-4">
+                <h3 className="font-medium">Selected Books:</h3>
+                {selectedBooks.map((selected) => {
+                  const book = books.find(b => b.id === selected.bookId);
+                  if (!book) return null;
+
+                  return (
+                    <div key={book.id} className="flex items-center gap-4">
+                      <img 
+                        src={book.coverUrl} 
+                        alt={book.title} 
+                        className="h-16 w-12 object-cover rounded"
+                      />
+                      <div>
+                        <h4 className="font-medium">{book.title}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {selected.reviewCount} reviews × $5 = ${selected.reviewCount * 5}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="text-sm text-muted-foreground space-y-4 mt-4">
                 <p>
                   By participating in the Review Boost program, you agree to the following terms:
                 </p>
@@ -204,6 +347,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
                   <li>No refunds will be provided once the boost program begins</li>
                 </ul>
               </div>
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
@@ -217,6 +361,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
                   I accept the terms and conditions
                 </label>
               </div>
+
               <div className="text-right font-medium">
                 Total Price: ${totalPrice}
               </div>
@@ -228,19 +373,23 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         {renderStep()}
         <DialogFooter>
           {step > 1 && (
             <Button
               variant="outline"
               onClick={() => setStep(step - 1)}
+              disabled={createBoostMutation.isPending}
             >
               Back
             </Button>
           )}
-          <Button onClick={handleNext}>
-            {step === 4 ? "Submit" : "Next"}
+          <Button 
+            onClick={handleNext}
+            disabled={createBoostMutation.isPending}
+          >
+            {step === 4 ? (createBoostMutation.isPending ? "Creating..." : "Submit") : "Next"}
           </Button>
         </DialogFooter>
       </DialogContent>

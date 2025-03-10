@@ -354,6 +354,28 @@ export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
 
+export const giftedBooks = pgTable("gifted_books", {
+  id: serial("id").primaryKey(),
+  uniqueCode: text("unique_code").notNull().unique(),
+  bookId: integer("book_id").notNull(),
+  campaignId: integer("campaign_id").notNull(),
+  status: text("status").notNull().default("unclaimed"),
+  claimedByUserId: integer("claimed_by_user_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  claimedAt: timestamp("claimed_at"),
+});
+
+// Add the insert schema
+export const insertGiftedBookSchema = createInsertSchema(giftedBooks).omit({
+  id: true,
+  createdAt: true,
+  claimedAt: true,
+});
+
+// Add the type
+export type GiftedBook = typeof giftedBooks.$inferSelect;
+export type InsertGiftedBook = typeof giftedBooks.$inferInsert;
+
 export function calculateWeightedRating(rating: Rating): number {
   return (
     rating.enjoyment * 0.3 +     // 30% weight for enjoyment
