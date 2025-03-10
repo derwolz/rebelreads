@@ -54,7 +54,7 @@ export function ReviewBoostWizard({ open, onClose, books }: ReviewBoostWizardPro
       });
       formData.append("totalCost", data.totalCost.toString());
 
-      return apiRequest("/api/campaigns/boost", {
+      return apiRequest("/api/boost/create", {
         method: "POST",
         body: formData,
       });

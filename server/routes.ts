@@ -915,7 +915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
             bookIds.length> 0
-              ? await db
+                            ? await db
                   .select()
                   .from(ratings)
                   .where(inArray(ratings.bookId, bookIds))
@@ -1427,7 +1427,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/campaigns/boost", upload.any(), async (req, res) => {
+  // Add after other book-related routes
+  app.post("/api/boost/create", upload.any(), async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
       return res.sendStatus(401);
     }
