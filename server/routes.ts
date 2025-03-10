@@ -15,13 +15,14 @@ import {
   replies,
   followers,
   giftedBooks,
-} from "@shared/schema"; // Added replies and followers imports
+} from "@shared/schema";
 import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
 import { timingSafeEqual } from "crypto";
 import { format } from "date-fns";
+import { Request, Response, NextFunction } from "express";
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -49,6 +50,27 @@ const fileStorage = multer.diskStorage({
 });
 
 const upload = multer({ storage: fileStorage });
+
+function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    console.log("Admin auth failed: Not authenticated");
+    return res.sendStatus(401);
+  }
+
+  console.log("Admin auth check:", {
+    userEmail: req.user?.email,
+    adminEmail: process.env.ADMIN_EMAIL,
+    isMatch: req.user?.email === process.env.ADMIN_EMAIL
+  });
+
+  if (req.user?.email !== process.env.ADMIN_EMAIL) {
+    console.log("Admin auth failed: Not admin");
+    return res.sendStatus(403);
+  }
+
+  next();
+}
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -883,6 +905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fix the syntax error in the authors search query
   app.get("/api/search/authors", async (req, res) => {
     try {
       const query = req.query.q as string;
@@ -906,12 +929,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(users)
         .where(
           and(
-            users.isAuthor.equals(true),
+            eq(users.isAuthor, true),
             or(
               ilike(users.username, searchPattern),
-              ilike(users.authorName, searchPattern),
-            ),
-          ),
+              ilike(users.authorName, searchPattern)
+            )
+          )
         )
         .limit(10);
 
@@ -1530,9 +1553,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Fix the syntax error in the author search code
-
-
   // Update the gifted books routes to use storage interface
   app.get("/api/gifted-books/available", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -1593,6 +1613,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch wishlisted books" });
     }
   });
+
+  // Admin stats endpoint with improved logging
+  app.get("/api/admin/stats", isAdmin, async (_req, res) => {
+    try {
+      console.log("Fetching admin stats...");
+      const [totalUsers, totalBooks, totalReviews, activeUsers] = await Promise.all([
+        db
+          .select({ count: sql<number>`cast(count(*) as integer)` })
+          .from(users),
+        db
+          .select({ count: sql<number>`cast(count(*) as integer)` })
+          .from(books),
+        db
+          .select({ count: sql<number>`cast(count(*) as integer)` })
+          .from(ratings),
+        db
+          .select({ count: sql<number>`cast(count(*) as integer)` })
+          .from(users)
+          .where(sql`created_at > NOW() - INTERVAL '30 days'`)
+      ]);
+
+      const stats = {
+        totalUsers: Number(totalUsers[0].count),
+        totalBooks: Number(totalBooks[0].count),
+        totalReviews: Number(totalReviews[0].count),
+        activeUsers: Number(activeUsers[0].count)
+      };
+
+      console.log("Admin stats retrieved:", stats);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Add more admin routes here later as needed
 
   const httpServer = createServer(app);
   return httpServer;

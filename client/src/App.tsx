@@ -14,9 +14,11 @@ import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ProDashboard from "@/pages/pro-dashboard";
+import AdminPage from "@/pages/admin-page";
 import { SearchBooksPage } from "@/pages/search-books-page";
 import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
+import { AdminRoute } from "./lib/admin-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -43,6 +45,9 @@ function Router() {
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
+
+        {/* Admin routes */}
+        <AdminRoute path="/admin" component={AdminPage} />
 
         <Route component={NotFound} />
       </Switch>

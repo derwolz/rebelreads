@@ -45,6 +45,8 @@ export function setupAuth(app: Express) {
     new LocalStrategy({
       usernameField: 'email', // This will accept either email or username
     }, async (emailOrUsername, password, done) => {
+      console.log("Login attempt:", { emailOrUsername });
+
       // Try to find user by email first
       let user = await dbStorage.getUserByEmail(emailOrUsername);
 
@@ -54,8 +56,14 @@ export function setupAuth(app: Express) {
       }
 
       if (!user || !(await comparePasswords(password, user.password!))) {
+        console.log("Login failed: Invalid credentials");
         return done(null, false);
       } else {
+        console.log("Login successful:", { 
+          userId: user.id,
+          email: user.email,
+          isAdmin: user.email === process.env.ADMIN_EMAIL 
+        });
         return done(null, user);
       }
     }),
@@ -83,6 +91,12 @@ export function setupAuth(app: Express) {
     const user = await dbStorage.createUser({
       ...req.body,
       password: await hashPassword(req.body.password),
+    });
+
+    console.log("User registered:", {
+      userId: user.id,
+      email: user.email,
+      isAdmin: user.email === process.env.ADMIN_EMAIL
     });
 
     req.login(user, (err) => {
