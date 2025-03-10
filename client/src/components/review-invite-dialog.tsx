@@ -11,23 +11,25 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 export function ReviewInviteDialog() {
   const [open, setOpen] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Check for available gifted books
   const { data: availableBook } = useQuery({
     queryKey: ["/api/gifted-books/available"],
-    enabled: open, // Only fetch when dialog is open
+    enabled: !!user, // Only fetch when user is logged in
   });
 
   // Mutation to claim a book
   const claimBookMutation = useMutation({
     mutationFn: async () => {
-      return fetch("/api/gifted-books/claim", {
+      return apiRequest("/api/gifted-books/claim", {
         method: "POST",
         body: JSON.stringify({ bookId: availableBook?.id }),
       });
@@ -49,17 +51,12 @@ export function ReviewInviteDialog() {
     },
   });
 
-  // Check for available books when user logs in
+  // Show dialog when an available book is found
   useEffect(() => {
-    const checkForBooks = async () => {
-      const response = await fetch("/api/gifted-books/available");
-      const data = await response.json();
-      if (data?.id) {
-        setOpen(true);
-      }
-    };
-    checkForBooks();
-  }, []);
+    if (availableBook) {
+      setOpen(true);
+    }
+  }, [availableBook]);
 
   const handleAccept = () => {
     if (!acceptedTerms) {
@@ -117,8 +114,8 @@ export function ReviewInviteDialog() {
                 both the author and future book buyers
               </li>
               <li>
-                Failure to leave an adequate review may result in removal from the
-                program
+                Failure to leave an adequate review may result in removal from
+                the program
               </li>
             </ul>
           </div>
@@ -127,7 +124,9 @@ export function ReviewInviteDialog() {
             <Checkbox
               id="terms"
               checked={acceptedTerms}
-              onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+              onCheckedChange={(checked) =>
+                setAcceptedTerms(checked as boolean)
+              }
             />
             <label
               htmlFor="terms"
