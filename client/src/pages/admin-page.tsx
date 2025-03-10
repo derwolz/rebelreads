@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MainNav } from "@/components/main-nav";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface AdminStats {
   totalUsers: number;
@@ -37,7 +39,8 @@ export default function AdminPage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="books">Books</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            <TabsTrigger value="bulk-upload">Bulk Upload</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -96,6 +99,91 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="bulk-upload" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Bulk Review Upload</CardTitle>
+                <CardDescription>
+                  Upload reviews in CSV format. Please ensure your CSV matches the required format.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertDescription>
+                    Your CSV file should include the following columns:
+                  </AlertDescription>
+                </Alert>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Column</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Required</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>user_id</TableCell>
+                      <TableCell>number</TableCell>
+                      <TableCell>The ID of the user who wrote the review</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>book_id</TableCell>
+                      <TableCell>number</TableCell>
+                      <TableCell>The ID of the book being reviewed</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>enjoyment</TableCell>
+                      <TableCell>number (1-5)</TableCell>
+                      <TableCell>Overall enjoyment rating</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>writing</TableCell>
+                      <TableCell>number (1-5)</TableCell>
+                      <TableCell>Writing quality rating</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>themes</TableCell>
+                      <TableCell>number (1-5)</TableCell>
+                      <TableCell>Theme development rating</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>characters</TableCell>
+                      <TableCell>number (1-5)</TableCell>
+                      <TableCell>Character development rating</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>worldbuilding</TableCell>
+                      <TableCell>number (1-5)</TableCell>
+                      <TableCell>World-building rating</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>review</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>Written review content</TableCell>
+                      <TableCell>No</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>analysis</TableCell>
+                      <TableCell>json</TableCell>
+                      <TableCell>Analysis data in JSON format</TableCell>
+                      <TableCell>No</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                {/* File upload component will be added here */}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="users" className="space-y-4">
             <Card>
               <CardHeader>
@@ -126,17 +214,17 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-4">
+          <TabsContent value="reviews" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Report Management</CardTitle>
+                <CardTitle>Review Management</CardTitle>
                 <CardDescription>
-                  Handle user reports and content moderation
+                  Handle user reviews and content moderation
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Report management content will be implemented later */}
-                <p>Report management features coming soon...</p>
+                {/* Review management content will be implemented later */}
+                <p>Review management features coming soon...</p>
               </CardContent>
             </Card>
           </TabsContent>
