@@ -9,9 +9,7 @@ import { User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {
-      isAdmin: boolean;
-    }
+    interface User extends SelectUser {}
   }
 }
 
@@ -47,8 +45,6 @@ export function setupAuth(app: Express) {
     new LocalStrategy({
       usernameField: 'email', // This will accept either email or username
     }, async (emailOrUsername, password, done) => {
-      console.log("Login attempt:", { emailOrUsername });
-
       // Try to find user by email first
       let user = await dbStorage.getUserByEmail(emailOrUsername);
 
@@ -58,17 +54,9 @@ export function setupAuth(app: Express) {
       }
 
       if (!user || !(await comparePasswords(password, user.password!))) {
-        console.log("Login failed: Invalid credentials");
         return done(null, false);
       } else {
-        // Add isAdmin flag based on email match
-        const isAdmin = user.email === process.env.ADMIN_EMAIL;
-        console.log("Login successful:", { 
-          userId: user.id,
-          email: user.email,
-          isAdmin
-        });
-        return done(null, { ...user, isAdmin });
+        return done(null, user);
       }
     }),
   );
@@ -76,18 +64,7 @@ export function setupAuth(app: Express) {
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
     const user = await dbStorage.getUser(id);
-    if (user) {
-      // Add isAdmin flag during deserialization as well
-      const isAdmin = user.email === process.env.ADMIN_EMAIL;
-      console.log("Deserializing user:", {
-        userId: user.id,
-        email: user.email,
-        isAdmin,
-      });
-      done(null, { ...user, isAdmin });
-    } else {
-      done(new Error('User not found'));
-    }
+    done(null, user);
   });
 
   app.post("/api/register", async (req, res, next) => {
@@ -108,22 +85,13 @@ export function setupAuth(app: Express) {
       password: await hashPassword(req.body.password),
     });
 
-    // Add isAdmin flag for the response
-    const isAdmin = user.email === process.env.ADMIN_EMAIL;
-    console.log("User registered:", {
-      userId: user.id,
-      email: user.email,
-      isAdmin
-    });
-
-    req.login({ ...user, isAdmin }, (err) => {
+    req.login(user, (err) => {
       if (err) return next(err);
-      res.status(201).json({ ...user, isAdmin });
+      res.status(201).json(user);
     });
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    console.log("Login response:", { user: req.user });
     res.status(200).json(req.user);
   });
 
@@ -136,7 +104,6 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    console.log("Current user:", { user: req.user });
     res.json(req.user);
   });
 }

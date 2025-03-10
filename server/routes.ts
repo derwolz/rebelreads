@@ -15,14 +15,13 @@ import {
   replies,
   followers,
   giftedBooks,
-} from "@shared/schema";
+} from "@shared/schema"; // Added replies and followers imports
 import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
 import { timingSafeEqual } from "crypto";
 import { format } from "date-fns";
-import { Request, Response, NextFunction } from "express";
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -50,27 +49,6 @@ const fileStorage = multer.diskStorage({
 });
 
 const upload = multer({ storage: fileStorage });
-
-function isAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
-    console.log("Admin auth failed: Not authenticated");
-    return res.sendStatus(401);
-  }
-
-  console.log("Admin auth check:", {
-    userEmail: req.user?.email,
-    adminEmail: process.env.ADMIN_EMAIL,
-    isMatch: req.user?.email === process.env.ADMIN_EMAIL
-  });
-
-  if (req.user?.email !== process.env.ADMIN_EMAIL) {
-    console.log("Admin auth failed: Not admin");
-    return res.sendStatus(403);
-  }
-
-  next();
-}
-
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -905,7 +883,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Remove the erroneous typescript block and fix the author search query
   app.get("/api/search/authors", async (req, res) => {
     try {
       const query = req.query.q as string;
@@ -929,12 +906,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(users)
         .where(
           and(
-            eq(users.isAuthor, true),
+            users.isAuthor.equals(true),
             or(
               ilike(users.username, searchPattern),
-              ilike(users.authorName, searchPattern)
-            )
-          )
+              ilike(users.authorName, searchPattern),
+            ),
+          ),
         )
         .limit(10);
 
@@ -1553,6 +1530,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fix the syntax error in the author search code
+
+
   // Update the gifted books routes to use storage interface
   app.get("/api/gifted-books/available", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -1601,7 +1581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add after other book-related routes
+  // Add near other book-related routes
   app.get("/api/wishlist/books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -1613,255 +1593,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch wishlisted books" });
     }
   });
-
-  // Admin stats endpoint with improved logging
-  app.get("/api/admin/stats", isAdmin, async (_req, res) => {
-    try {
-      console.log("Fetching admin stats...");
-      const [totalUsers, totalBooks, totalReviews, activeUsers] = await Promise.all([
-        db
-          .select({ count: sql<number>`cast(count(*) as integer)` })
-          .from(users),
-        db
-          .select({ count: sql<number>`cast(count(*) as integer)` })
-          .from(books),
-        db
-          .select({ count: sql<number>`cast(count(*) as integer)` })
-          .from(ratings),
-        db
-          .select({ count: sql<number>`cast(count(*) as integer)` })
-          .from(users)
-          .where(sql`created_at > NOW() - INTERVAL '30 days'`)
-      ]);
-
-      const stats = {
-        totalUsers: Number(totalUsers[0].count),
-        totalBooks: Number(totalBooks[0].count),
-        totalReviews: Number(totalReviews[0].count),
-        activeUsers: Number(activeUsers[0].count)
-      };
-
-      console.log("Admin stats retrieved:", stats);
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching admin stats:", error);
-      res.status(500).json({ error: "Failed to fetch admin stats" });
-    }
-  });
-
-  // Add after other admin routes
-  app.post("/api/admin/bulk-upload-reviews", isAdmin, upload.single("csv"), async (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No CSV file provided" });
-    }
-
-    try {
-      const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
-      const lines = csvData.split('\n').map(line => line.trim()).filter(line => line); // Remove empty lines
-
-      if (lines.length < 2) {
-        return res.status(400).json({ error: "CSV file must contain at least a header row and one data row" });
-      }
-
-      // Validate headers
-      const requiredHeaders = ['book_title'];
-      const optionalHeaders = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding', 'review', 'analysis'];
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-      if (missingHeaders.length > 0) {
-        return res.status(400).json({
-          error: `Missing required headers: ${missingHeaders.join(', ')}`
-        });
-      }
-
-      const reviews = [];
-      const errors = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-
-        // Skip if row doesn't have enough columns
-        if (values.length !== headers.length) {
-          errors.push(`Row ${i + 1}: Invalid number of columns`);
-          continue;
-        }
-
-        const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
-
-        // Validate required fields
-        if (!row.book_title) {
-          errors.push(`Row ${i + 1}: Missing book title`);
-          continue;
-        }
-
-        // Find book by title
-        const [book] = await db
-          .select()
-          .from(books)
-          .where(eq(books.title, row.book_title))
-          .limit(1);
-
-        if (!book) {
-          errors.push(`Row ${i + 1}: Book not found: ${row.book_title}`);
-          continue;
-        }
-
-        // Validate rating values if present
-        const ratingFields = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'];
-        for (const field of ratingFields) {
-          if (row[field] && (isNaN(row[field]) || row[field] < 1 || row[field] > 5)) {
-            errors.push(`Row ${i + 1}: Invalid ${field} rating (must be between 1-5)`);
-            continue;
-          }
-        }
-
-        // Validate JSON analysis if present
-        if (row.analysis) {
-          try {
-            JSON.parse(row.analysis);
-          } catch {
-            errors.push(`Row ${i + 1}: Invalid JSON format in analysis field`);
-            continue;
-          }
-        }
-
-        try {
-          // Create the review
-          const [review] = await db
-            .insert(ratings)
-            .values({
-              userId: 9, // Public domain user
-              bookId: book.id,
-              enjoyment: row.enjoyment ? parseInt(row.enjoyment) : null,
-              writing: row.writing ? parseInt(row.writing) : null,
-              themes: row.themes ? parseInt(row.themes) : null,
-              characters: row.characters ? parseInt(row.characters) : null,
-              worldbuilding: row.worldbuilding ? parseInt(row.worldbuilding) : null,
-              review: row.review || null,
-              analysis: row.analysis ? JSON.parse(row.analysis) : null,
-              createdAt: new Date(),
-              featured: false,
-              report_status: null,
-              report_reason: null
-            })
-            .returning();
-
-          reviews.push(review);
-        } catch (err) {
-          errors.push(`Row ${i + 1}: Failed to create review: ${err.message}`);
-        }
-      }
-
-      // Clean up the uploaded file
-      await fs.promises.unlink(req.file.path);
-
-      res.json({
-        message: `Successfully processed ${reviews.length} reviews`,
-        reviews,
-        errors: errors.length > 0 ? errors : undefined
-      });
-    } catch (error) {
-      console.error("Error processing review CSV upload:", error);
-      res.status(500).json({ error: "Failed to process CSV file" });
-    }
-  });
-
-  // Add after other admin routes
-  app.post("/api/admin/bulk-upload-books", isAdmin, upload.single("csv"), async (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ error: "No CSV file provided" });
-    }
-
-    try {
-      const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
-      const lines = csvData.split('\n').map(line => line.trim()).filter(line => line); // Remove empty lines
-
-      if (lines.length < 2) {
-        return res.status(400).json({ error: "CSV file must contain at least a header row and one data row" });
-      }
-
-      // Validate headers
-      const requiredHeaders = ['title', 'description', 'cover_url', 'author', 'genres', 'formats'];
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-      if (missingHeaders.length > 0) {
-        return res.status(400).json({
-          error: `Missing required headers: ${missingHeaders.join(', ')}`
-        });
-      }
-
-      const books = [];
-      const errors = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-
-        // Skip if row doesn't have enough columns
-        if (values.length !== headers.length) {
-          errors.push(`Row ${i + 1}: Invalid number of columns`);
-          continue;
-        }
-
-        const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
-
-        // Validate required fields
-        const missingFields = requiredHeaders.filter(h => !row[h]);
-        if (missingFields.length > 0) {
-          errors.push(`Row ${i + 1}: Missing required fields: ${missingFields.join(', ')}`);
-          continue;
-        }
-
-        // Validate URL format for cover_url
-        try {
-          new URL(row.cover_url);
-        } catch {
-          errors.push(`Row ${i + 1}: Invalid cover_url format`);
-          continue;
-        }
-
-        try {
-          // Create the book
-          const [book] = await db
-            .insert(books)
-            .values({
-              title: row.title,
-              description: row.description,
-              author: row.author,
-              coverUrl: row.cover_url,
-              genres: row.genres.split(',').map(g => g.trim()),
-              formats: row.formats.split(',').map(f => f.trim()),
-              pageCount: row.page_count ? parseInt(row.page_count) : null,
-              publishedDate: row.published_date ? new Date(row.published_date) : null,
-              language: row.language || 'English',
-              isbn: row.isbn || null,
-              promoted: false,
-              authorImageUrl: null,
-            })
-            .returning();
-
-          books.push(book);
-        } catch (err) {
-          errors.push(`Row ${i + 1}: Failed to create book: ${err.message}`);
-        }
-      }
-
-      // Clean up the uploaded file
-      await fs.promises.unlink(req.file.path);
-
-      res.json({
-        message: `Successfully processed ${books.length} books`,
-        books,
-        errors: errors.length > 0 ? errors : undefined
-      });
-    } catch (error) {
-      console.error("Error processing book CSV upload:", error);
-      res.status(500).json({ error: "Failed to process CSV file" });
-    }
-  });
-
-  // Add more admin routes here later as needed
 
   const httpServer = createServer(app);
   return httpServer;
