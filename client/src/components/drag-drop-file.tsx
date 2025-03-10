@@ -25,18 +25,29 @@ export function DragDropFile({ file, onFileChange, accept = "*", maxSize }: Drag
     // Split accept string into array of accepted types
     const acceptedTypes = accept.split(',').map(type => type.trim().toLowerCase());
 
+    // For CSV files
+    if (acceptedTypes.includes('.csv')) {
+      const isCsv = file.name.toLowerCase().endsWith('.csv') || 
+                   file.type === 'text/csv' ||
+                   file.type === 'application/csv' ||
+                   file.type === 'application/vnd.ms-excel' ||
+                   file.type === 'text/plain'; // Some systems may use text/plain
+      if (!isCsv) return `Please upload a valid CSV file`;
+      return null;
+    }
+
     // For .epub files, check both the extension and MIME type
     if (acceptedTypes.includes('.epub')) {
       const isEpub = file.name.toLowerCase().endsWith('.epub') || 
                     file.type === 'application/epub+zip';
-      if (isEpub) return null;
+      if (!isEpub) return `Please upload a valid EPUB file`;
     }
 
     // For .pdf files
     if (acceptedTypes.includes('.pdf')) {
       const isPdf = file.name.toLowerCase().endsWith('.pdf') || 
                    file.type === 'application/pdf';
-      if (isPdf) return null;
+      if (!isPdf) return `Please upload a valid PDF file`;
     }
 
     // If none of the accepted types match

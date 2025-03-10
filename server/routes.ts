@@ -905,7 +905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Fix the syntax error in the authors search query
+  // Remove the erroneous typescript block and fix the author search query
   app.get("/api/search/authors", async (req, res) => {
     try {
       const query = req.query.q as string;
@@ -921,7 +921,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           id: users.id,
           username: users.username,
-          authorName: users.authorName,          authorBio: users.authorBio,
+          authorName: users.authorName,
+          authorBio: users.authorBio,
           authorImageUrl: users.profileImageUrl,
           socialMediaLinks: users.socialMediaLinks,
         })
@@ -1656,7 +1657,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
-      const lines = csvData.split('\n');
+      const lines = csvData.split('\n').map(line => line.trim()).filter(line => line); // Remove empty lines
+
+      if (lines.length < 2) {
+        return res.status(400).json({ error: "CSV file must contain at least a header row and one data row" });
+      }
 
       // Validate headers
       const requiredHeaders = ['book_title'];
@@ -1671,11 +1676,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const reviews = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
+      const errors = [];
 
+      for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
+
+        // Skip if row doesn't have enough columns
+        if (values.length !== headers.length) {
+          errors.push(`Row ${i + 1}: Invalid number of columns`);
+          continue;
+        }
+
         const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+
+        // Validate required fields
+        if (!row.book_title) {
+          errors.push(`Row ${i + 1}: Missing book title`);
+          continue;
+        }
 
         // Find book by title
         const [book] = await db
@@ -1685,35 +1703,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .limit(1);
 
         if (!book) {
-          console.error(`Book not found: ${row.book_title}`);
+          errors.push(`Row ${i + 1}: Book not found: ${row.book_title}`);
           continue;
         }
 
-        // Create the review
-        const review = {
-          userId: 9, // Public domain user
-          bookId: book.id,
-          enjoyment: row.enjoyment ? parseInt(row.enjoyment) : null,
-          writing: row.writing ? parseInt(row.writing) : null,
-          themes: row.themes ? parseInt(row.themes) : null,
-          characters: row.characters ? parseInt(row.characters) : null,
-          worldbuilding: row.worldbuilding ? parseInt(row.worldbuilding) : null,
-          review: row.review || null,
-          analysis: row.analysis ? JSON.parse(row.analysis) : null,
-          createdAt: new Date(),
-          featured: false,
-          report_status: null,
-          report_reason: null
-        };
+        // Validate rating values if present
+        const ratingFields = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'];
+        for (const field of ratingFields) {
+          if (row[field] && (isNaN(row[field]) || row[field] < 1 || row[field] > 5)) {
+            errors.push(`Row ${i + 1}: Invalid ${field} rating (must be between 1-5)`);
+            continue;
+          }
+        }
+
+        // Validate JSON analysis if present
+        if (row.analysis) {
+          try {
+            JSON.parse(row.analysis);
+          } catch {
+            errors.push(`Row ${i + 1}: Invalid JSON format in analysis field`);
+            continue;
+          }
+        }
 
         try {
-          const [createdReview] = await db
+          // Create the review
+          const [review] = await db
             .insert(ratings)
-            .values(review)
+            .values({
+              userId: 9, // Public domain user
+              bookId: book.id,
+              enjoyment: row.enjoyment ? parseInt(row.enjoyment) : null,
+              writing: row.writing ? parseInt(row.writing) : null,
+              themes: row.themes ? parseInt(row.themes) : null,
+              characters: row.characters ? parseInt(row.characters) : null,
+              worldbuilding: row.worldbuilding ? parseInt(row.worldbuilding) : null,
+              review: row.review || null,
+              analysis: row.analysis ? JSON.parse(row.analysis) : null,
+              createdAt: new Date(),
+              featured: false,
+              report_status: null,
+              report_reason: null
+            })
             .returning();
-          reviews.push(createdReview);
+
+          reviews.push(review);
         } catch (err) {
-          console.error(`Failed to create review for book: ${row.book_title}`, err);
+          errors.push(`Row ${i + 1}: Failed to create review: ${err.message}`);
         }
       }
 
@@ -1722,10 +1758,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         message: `Successfully processed ${reviews.length} reviews`,
-        reviews
+        reviews,
+        errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
-      console.error("Error processing CSV upload:", error);
+      console.error("Error processing review CSV upload:", error);
       res.status(500).json({ error: "Failed to process CSV file" });
     }
   });
@@ -1738,10 +1775,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
-      const lines = csvData.split('\n');
+      const lines = csvData.split('\n').map(line => line.trim()).filter(line => line); // Remove empty lines
 
-      // Validate headers - add description as required
-      const requiredHeaders = ['title', 'description', 'author', 'genres', 'formats'];
+      if (lines.length < 2) {
+        return res.status(400).json({ error: "CSV file must contain at least a header row and one data row" });
+      }
+
+      // Validate headers
+      const requiredHeaders = ['title', 'description', 'cover_url', 'author', 'genres', 'formats'];
       const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
 
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
@@ -1752,15 +1793,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const books = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
+      const errors = [];
 
+      for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
+
+        // Skip if row doesn't have enough columns
+        if (values.length !== headers.length) {
+          errors.push(`Row ${i + 1}: Invalid number of columns`);
+          continue;
+        }
+
         const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
 
         // Validate required fields
-        if (!row.title || !row.description || !row.author) {
-          console.error(`Skipping row ${i}: Missing required fields`);
+        const missingFields = requiredHeaders.filter(h => !row[h]);
+        if (missingFields.length > 0) {
+          errors.push(`Row ${i + 1}: Missing required fields: ${missingFields.join(', ')}`);
+          continue;
+        }
+
+        // Validate URL format for cover_url
+        try {
+          new URL(row.cover_url);
+        } catch {
+          errors.push(`Row ${i + 1}: Invalid cover_url format`);
           continue;
         }
 
@@ -1772,13 +1829,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               title: row.title,
               description: row.description,
               author: row.author,
+              coverUrl: row.cover_url,
               genres: row.genres.split(',').map(g => g.trim()),
               formats: row.formats.split(',').map(f => f.trim()),
               pageCount: row.page_count ? parseInt(row.page_count) : null,
               publishedDate: row.published_date ? new Date(row.published_date) : null,
               language: row.language || 'English',
               isbn: row.isbn || null,
-              coverUrl: '/uploads/covers/default-cover.jpg', // Use a default cover
               promoted: false,
               authorImageUrl: null,
             })
@@ -1786,7 +1843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           books.push(book);
         } catch (err) {
-          console.error(`Failed to create book: ${row.title}`, err);
+          errors.push(`Row ${i + 1}: Failed to create book: ${err.message}`);
         }
       }
 
@@ -1795,7 +1852,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         message: `Successfully processed ${books.length} books`,
-        books
+        books,
+        errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
       console.error("Error processing book CSV upload:", error);

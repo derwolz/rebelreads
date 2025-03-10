@@ -37,7 +37,11 @@ export default function AdminPage() {
       const formData = new FormData();
       formData.append("csv", file);
       const res = await apiRequest("POST", "/api/admin/bulk-upload-reviews", formData);
-      return res.json();
+      const data = await res.json();
+      if (data.errors) {
+        throw new Error(data.errors.join('\n'));
+      }
+      return data;
     },
     onSuccess: (data) => {
       toast({
@@ -60,7 +64,11 @@ export default function AdminPage() {
       const formData = new FormData();
       formData.append("csv", file);
       const res = await apiRequest("POST", "/api/admin/bulk-upload-books", formData);
-      return res.json();
+      const data = await res.json();
+      if (data.errors) {
+        throw new Error(data.errors.join('\n'));
+      }
+      return data;
     },
     onSuccess: (data) => {
       toast({
@@ -297,6 +305,12 @@ export default function AdminPage() {
                       <TableCell>description</TableCell>
                       <TableCell>text</TableCell>
                       <TableCell>Book description</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>cover_url</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>URL to book cover image</TableCell>
                       <TableCell>Yes</TableCell>
                     </TableRow>
                     <TableRow>
