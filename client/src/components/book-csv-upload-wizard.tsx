@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Upload } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 interface CsvBook {
   title: string;
@@ -39,19 +40,47 @@ export function BookCsvUploadWizard() {
   const [open, setOpen] = useState(false);
   const [csvData, setCsvData] = useState<CsvBook[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const uploadMutation = useMutation({
     mutationFn: async (books: CsvBook[]) => {
-      const res = await fetch("/api/books/bulk", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ books }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+      setIsProcessing(true);
+      try {
+        // Download all cover images
+        const formData = new FormData();
+        const coverBlobs = await Promise.all(
+          books.map(async (book, index) => {
+            try {
+              const response = await fetch(book.cover_url);
+              if (!response.ok) throw new Error(`Failed to fetch image ${index + 1}`);
+              const blob = await response.blob();
+              formData.append('covers', blob, `cover-${index}.${blob.type.split('/')[1]}`);
+              setUploadProgress((index + 1) / books.length * 100);
+              return blob;
+            } catch (error) {
+              console.error(`Error downloading cover for ${book.title}:`, error);
+              return null;
+            }
+          })
+        );
+
+        // Add CSV data
+        formData.append('csvData', JSON.stringify(books));
+
+        // Upload to server
+        const res = await fetch("/api/books/bulk", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+      } finally {
+        setIsProcessing(false);
+        setUploadProgress(0);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
@@ -97,11 +126,11 @@ export function BookCsvUploadWizard() {
     const text = await file.text();
     const lines = text.split('\n');
     const headers = lines[0].toLowerCase().trim().split(',');
-    
+
     // Validate headers
     const requiredHeaders = ['title', 'description', 'cover_url', 'author', 'genres', 'formats', 'page_count', 'published_date', 'language', 'isbn'];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-    
+
     if (missingHeaders.length > 0) {
       toast({
         title: "Invalid CSV format",
@@ -135,7 +164,7 @@ export function BookCsvUploadWizard() {
         <DialogHeader>
           <DialogTitle>Bulk Upload Books</DialogTitle>
         </DialogHeader>
-        
+
         {csvData.length === 0 ? (
           <div
             className={`
@@ -183,19 +212,29 @@ export function BookCsvUploadWizard() {
                 </TableBody>
               </Table>
             </ScrollArea>
-            
+
+            {isProcessing && (
+              <div className="space-y-2">
+                <Progress value={uploadProgress} />
+                <p className="text-sm text-muted-foreground text-center">
+                  Processing images... {Math.round(uploadProgress)}%
+                </p>
+              </div>
+            )}
+
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
                 onClick={() => setCsvData([])}
+                disabled={isProcessing}
               >
                 Clear
               </Button>
               <Button
                 onClick={() => uploadMutation.mutate(csvData)}
-                disabled={uploadMutation.isPending}
+                disabled={uploadMutation.isPending || isProcessing}
               >
-                {uploadMutation.isPending && (
+                {(uploadMutation.isPending || isProcessing) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
                 Upload {csvData.length} Books

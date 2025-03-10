@@ -22,6 +22,9 @@ import { scrypt } from "crypto";
 import { randomBytes } from "crypto";
 import { timingSafeEqual } from "crypto";
 import { format } from "date-fns";
+import csv from 'csv-parse';
+import { promisify as promisify2 } from 'util';
+import { Readable } from 'stream';
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -1591,6 +1594,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching wishlisted books:", error);
       res.status(500).json({ error: "Failed to fetch wishlisted books" });
+    }
+  });
+
+  // Add bulk book upload endpoint
+  app.post("/api/books/bulk", upload.array("covers"), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      if (!req.files || !req.body.csvData) {
+        return res.status(400).json({ message: "Missing required files" });
+      }
+
+      // Parse CSV data
+      const csvData = JSON.parse(req.body.csvData);
+      const coverFiles = req.files as Express.Multer.File[];
+
+      // Create books with processed cover images
+      const createdBooks = await Promise.all(
+        csvData.map(async (book: any, index: number) => {
+          const coverFile = coverFiles[index];
+          const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
+
+          return await dbStorage.createBook({
+            title: book.title,
+            description: book.description,
+            authorId: req.user!.id,
+            coverUrl,
+            author: req.user!.authorName || req.user!.username,
+            genres: book.genres ? book.genres.split(',').map((g: string) => g.trim()) : [],
+            formats: book.formats ? book.formats.split(',').map((f: string) => f.trim()) : [],
+            promoted: false,
+            authorImageUrl: null,
+            pageCount: book.page_count ? parseInt(book.page_count) : null,
+            publishedDate: book.published_date ? new Date(book.published_date) : null,
+            awards: [],
+            originalTitle: null,
+            series: null,
+            setting: null,
+            characters: [],
+            isbn: book.isbn || null,
+            asin: null,
+            language: book.language || "English",
+          });
+        })
+      );
+
+      res.json(createdBooks);
+    } catch (error) {
+      console.error("Error processing bulk book upload:", error);
+      res.status(500).json({ error: "Failed to process bulk upload" });
     }
   });
 
