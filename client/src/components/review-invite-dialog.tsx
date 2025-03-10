@@ -27,7 +27,7 @@ export function ReviewInviteDialog() {
   // Mutation to claim a book
   const claimBookMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/gifted-books/claim", {
+      return fetch("/api/gifted-books/claim", {
         method: "POST",
         body: JSON.stringify({ bookId: availableBook?.id }),
       });

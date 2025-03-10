@@ -1533,34 +1533,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Fix the syntax error in the author search code
 
 
-  // Add near other book-related routes
+  // Update the gifted books routes to use storage interface
   app.get("/api/gifted-books/available", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      // Find an unclaimed book
-      const [giftedBook] = await db
-        .select({
-          giftedBook: giftedBooks,
-          book: books,
-        })
-        .from(giftedBooks)
-        .where(eq(giftedBooks.status, "unclaimed"))
-        .leftJoin(books, eq(books.id, giftedBooks.bookId))
-        .limit(1);
+      // Find an unclaimed book using storage interface
+      const giftedBook = await dbStorage.getAvailableGiftedBook();
 
       if (!giftedBook) {
         return res.json(null);
       }
 
-      // Return book details along with gifted book info
-      res.json({
-        id: giftedBook.giftedBook.id,
-        uniqueCode: giftedBook.giftedBook.uniqueCode,
-        title: giftedBook.book.title,
-        author: giftedBook.book.author,
-        coverUrl: giftedBook.book.coverUrl,
-      });
+      res.json(giftedBook);
     } catch (error) {
       console.error("Error checking for available books:", error);
       res.status(500).json({ error: "Failed to check for available books" });
@@ -1571,35 +1556,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
     try {
-      const giftedBookId = parseInt(req.body.bookId);
-      if (isNaN(giftedBookId)) {
-        return res.status(400).json({ error: "Invalid book ID" });
+      const { uniqueCode } = req.body;
+      if (!uniqueCode) {
+        return res.status(400).json({ error: "Missing unique code" });
       }
 
-      // Verify book is unclaimed and claim it atomically
-      const [claimedBook] = await db
-        .update(giftedBooks)
-        .set({
-          status: "claimed",
-          claimedByUserId: req.user!.id,
-          claimedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(giftedBooks.id, giftedBookId),
-            eq(giftedBooks.status, "unclaimed"),
-          ),
-        )
-        .returning();
+      // Use storage interface to claim the book
+      const claimedBook = await dbStorage.claimGiftedBook(uniqueCode, req.user!.id);
 
       if (!claimedBook) {
         return res.status(400).json({ error: "Book is no longer available" });
       }
 
-      res.json(claimedBook);
+      // Get full book details
+      const book = await dbStorage.getBook(claimedBook.bookId);
+
+      res.json({
+        giftedBook: claimedBook,
+        book
+      });
     } catch (error) {
       console.error("Error claiming book:", error);
       res.status(500).json({ error: "Failed to claim book" });
+    }
+  });
+
+  // Add near other book-related routes
+  app.get("/api/wishlist/books", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const books = await dbStorage.getWishlistedBooks(req.user!.id);
+      res.json(books);
+    } catch (error) {
+      console.error("Error fetching wishlisted books:", error);
+      res.status(500).json({ error: "Failed to fetch wishlisted books" });
     }
   });
 

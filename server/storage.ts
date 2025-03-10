@@ -21,10 +21,10 @@ import {
   Publisher,
   PublisherAuthor,
   CreditTransaction,
-  creditTransactions, // Added this import
-  GiftedBook, // Added this import
-  InsertGiftedBook, // Added this import
-  giftedBooks, // Added this import
+  creditTransactions,
+  GiftedBook,
+  InsertGiftedBook,
+  giftedBooks,
 
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
@@ -125,6 +125,7 @@ export interface IStorage {
   getGiftedBooks(campaignId: number): Promise<GiftedBook[]>;
   createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook>;
   claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
+  getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -798,17 +799,55 @@ export class DatabaseStorage implements IStorage {
     return giftedBook;
   }
 
-  async claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook> {
-    const [giftedBook] = await db
-      .update(giftedBooks)
-      .set({
-        status: "claimed",
-        claimedByUserId: userId,
-        claimedAt: new Date(),
+  async getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null> {
+    const [result] = await db
+      .select({
+        giftedBook: giftedBooks,
+        book: books,
       })
-      .where(eq(giftedBooks.uniqueCode, uniqueCode))
-      .returning();
-    return giftedBook;
+      .from(giftedBooks)
+      .where(eq(giftedBooks.status, "unclaimed"))
+      .leftJoin(books, eq(books.id, giftedBooks.bookId))
+      .limit(1);
+
+    return result || null;
+  }
+
+  async claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook> {
+    // Use a transaction to ensure atomicity
+    const [claimedBook] = await db.transaction(async (tx) => {
+      // First check if the book is available
+      const [book] = await tx
+        .select()
+        .from(giftedBooks)
+        .where(
+          and(
+            eq(giftedBooks.uniqueCode, uniqueCode),
+            eq(giftedBooks.status, "unclaimed")
+          )
+        );
+
+      if (!book) {
+        throw new Error("Book is no longer available");
+      }
+
+      // Update the book status
+      return await tx
+        .update(giftedBooks)
+        .set({
+          status: "claimed",
+          claimedByUserId: userId,
+          claimedAt: new Date(),
+        })
+        .where(eq(giftedBooks.uniqueCode, uniqueCode))
+        .returning();
+    });
+
+    if (!claimedBook) {
+      throw new Error("Failed to claim book");
+    }
+
+    return claimedBook;
   }
 }
 
