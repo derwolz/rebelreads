@@ -31,7 +31,7 @@ export function ReviewInviteDialog() {
     mutationFn: async () => {
       return apiRequest("/api/gifted-books/claim", {
         method: "POST",
-        body: JSON.stringify({ bookId: availableBook?.id }),
+        body: JSON.stringify({ uniqueCode: availableBook?.giftedBook.uniqueCode }),
       });
     },
     onSuccess: () => {
@@ -91,13 +91,13 @@ export function ReviewInviteDialog() {
         <div className="grid gap-6 py-4">
           <div className="flex items-center gap-4">
             <img
-              src={availableBook.coverUrl}
-              alt={availableBook.title}
+              src={availableBook.book.coverUrl}
+              alt={availableBook.book.title}
               className="h-32 w-24 object-cover rounded"
             />
             <div>
-              <h3 className="font-medium text-lg">{availableBook.title}</h3>
-              <p className="text-muted-foreground">{availableBook.author}</p>
+              <h3 className="font-medium text-lg">{availableBook.book.title}</h3>
+              <p className="text-muted-foreground">{availableBook.book.author}</p>
             </div>
           </div>
 
