@@ -24,14 +24,15 @@ interface AdminStats {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [reviewCsvFile, setReviewCsvFile] = useState<File | null>(null);
+  const [bookCsvFile, setBookCsvFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   const { data: stats } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
   });
 
-  const uploadMutation = useMutation({
+  const uploadReviewsMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("csv", file);
@@ -43,7 +44,7 @@ export default function AdminPage() {
         title: "Upload Successful",
         description: data.message,
       });
-      setCsvFile(null);
+      setReviewCsvFile(null);
     },
     onError: (error: Error) => {
       toast({
@@ -54,9 +55,38 @@ export default function AdminPage() {
     },
   });
 
-  const handleUpload = () => {
-    if (csvFile) {
-      uploadMutation.mutate(csvFile);
+  const uploadBooksMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("csv", file);
+      const res = await apiRequest("POST", "/api/admin/bulk-upload-books", formData);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Upload Successful",
+        description: data.message,
+      });
+      setBookCsvFile(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleReviewUpload = () => {
+    if (reviewCsvFile) {
+      uploadReviewsMutation.mutate(reviewCsvFile);
+    }
+  };
+
+  const handleBookUpload = () => {
+    if (bookCsvFile) {
+      uploadBooksMutation.mutate(bookCsvFile);
     }
   };
 
@@ -74,7 +104,8 @@ export default function AdminPage() {
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="books">Books</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            <TabsTrigger value="bulk-upload">Bulk Upload</TabsTrigger>
+            <TabsTrigger value="bulk-review-upload">Bulk Review Upload</TabsTrigger>
+            <TabsTrigger value="bulk-book-upload">Bulk Book Upload</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -133,7 +164,7 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="bulk-upload" className="space-y-4">
+          <TabsContent value="bulk-review-upload" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Bulk Review Upload</CardTitle>
@@ -211,18 +242,121 @@ export default function AdminPage() {
                 </Table>
                 <div className="mt-6">
                   <DragDropFile
-                    file={csvFile}
-                    onFileChange={setCsvFile}
+                    file={reviewCsvFile}
+                    onFileChange={setReviewCsvFile}
                     accept=".csv"
                     maxSize={5 * 1024 * 1024} // 5MB max
                   />
-                  {csvFile && (
+                  {reviewCsvFile && (
                     <button
                       className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                      onClick={handleUpload}
-                      disabled={uploadMutation.isPending}
+                      onClick={handleReviewUpload}
+                      disabled={uploadReviewsMutation.isPending}
                     >
-                      {uploadMutation.isPending ? "Uploading..." : "Upload Reviews"}
+                      {uploadReviewsMutation.isPending ? "Uploading..." : "Upload Reviews"}
+                    </button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="bulk-book-upload" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Bulk Book Upload</CardTitle>
+                <CardDescription>
+                  Upload books in CSV format. The system will automatically:
+                  - Generate unique IDs for new books
+                  - Convert arrays (genres, formats) from comma-separated strings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Alert>
+                  <AlertDescription>
+                    Your CSV file should include the following columns:
+                  </AlertDescription>
+                </Alert>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Column</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Required</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>title</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>Book title</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>description</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>Book description</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>author</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>Author name</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>genres</TableCell>
+                      <TableCell>comma-separated text</TableCell>
+                      <TableCell>Book genres (e.g. "Fantasy,Adventure")</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>formats</TableCell>
+                      <TableCell>comma-separated text</TableCell>
+                      <TableCell>Available formats (e.g. "Hardcover,eBook")</TableCell>
+                      <TableCell>Yes</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>page_count</TableCell>
+                      <TableCell>number</TableCell>
+                      <TableCell>Number of pages</TableCell>
+                      <TableCell>No</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>published_date</TableCell>
+                      <TableCell>date (YYYY-MM-DD)</TableCell>
+                      <TableCell>Publication date</TableCell>
+                      <TableCell>No</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>language</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>Book language</TableCell>
+                      <TableCell>No</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>isbn</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>ISBN number</TableCell>
+                      <TableCell>No</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                <div className="mt-6">
+                  <DragDropFile
+                    file={bookCsvFile}
+                    onFileChange={setBookCsvFile}
+                    accept=".csv"
+                    maxSize={5 * 1024 * 1024} // 5MB max
+                  />
+                  {bookCsvFile && (
+                    <button
+                      className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                      onClick={handleBookUpload}
+                      disabled={uploadBooksMutation.isPending}
+                    >
+                      {uploadBooksMutation.isPending ? "Uploading..." : "Upload Books"}
                     </button>
                   )}
                 </div>
@@ -239,7 +373,6 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* User management content will be implemented later */}
                 <p>User management features coming soon...</p>
               </CardContent>
             </Card>
@@ -254,7 +387,6 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Book management content will be implemented later */}
                 <p>Book management features coming soon...</p>
               </CardContent>
             </Card>
@@ -269,7 +401,6 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Review management content will be implemented later */}
                 <p>Review management features coming soon...</p>
               </CardContent>
             </Card>

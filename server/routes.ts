@@ -1657,7 +1657,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
       const lines = csvData.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
+
+      // Validate headers
+      const requiredHeaders = ['book_title'];
+      const optionalHeaders = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding', 'review', 'analysis'];
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        return res.status(400).json({
+          error: `Missing required headers: ${missingHeaders.join(', ')}`
+        });
+      }
 
       const reviews = [];
       for (let i = 1; i < lines.length; i++) {
@@ -1689,6 +1700,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           worldbuilding: row.worldbuilding ? parseInt(row.worldbuilding) : null,
           review: row.review || null,
           analysis: row.analysis ? JSON.parse(row.analysis) : null,
+          createdAt: new Date(),
+          featured: false,
+          report_status: null,
+          report_reason: null
         };
 
         try {
@@ -1711,6 +1726,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error processing CSV upload:", error);
+      res.status(500).json({ error: "Failed to process CSV file" });
+    }
+  });
+
+  // Add after other admin routes
+  app.post("/api/admin/bulk-upload-books", isAdmin, upload.single("csv"), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No CSV file provided" });
+    }
+
+    try {
+      const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
+      const lines = csvData.split('\n');
+
+      // Validate headers
+      const requiredHeaders = ['title', 'description', 'author', 'genres', 'formats'];
+      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        return res.status(400).json({
+          error: `Missing required headers: ${missingHeaders.join(', ')}`
+        });
+      }
+
+      const books = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+
+        const values = lines[i].split(',').map(v => v.trim());
+        const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+
+        try {
+          // Create the book
+          const [book] = await db
+            .insert(books)
+            .values({
+              title: row.title,
+              description: row.description,
+              author: row.author,
+              genres: row.genres.split(',').map(g => g.trim()),
+              formats: row.formats.split(',').map(f => f.trim()),
+              pageCount: row.page_count ? parseInt(row.page_count) : null,
+              publishedDate: row.published_date ? new Date(row.published_date) : null,
+              language: row.language || 'English',
+              isbn: row.isbn || null,
+              coverUrl: '/uploads/covers/default-cover.jpg', // Use a default cover
+              promoted: false,
+              authorImageUrl: null,
+            })
+            .returning();
+
+          books.push(book);
+        } catch (err) {
+          console.error(`Failed to create book: ${row.title}`, err);
+        }
+      }
+
+      // Clean up the uploaded file
+      await fs.promises.unlink(req.file.path);
+
+      res.json({
+        message: `Successfully processed ${books.length} books`,
+        books
+      });
+    } catch (error) {
+      console.error("Error processing book CSV upload:", error);
       res.status(500).json({ error: "Failed to process CSV file" });
     }
   });
