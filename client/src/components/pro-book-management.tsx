@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Book, ReferralLink } from "@shared/schema";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { BookUploadDialog } from "@/components/book-upload-wizard";
@@ -32,18 +38,23 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 
-const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"] as const;
+const RETAILER_OPTIONS = [
+  "Amazon",
+  "Barnes & Noble",
+  "IndieBound",
+  "Custom",
+] as const;
 
 interface SortableReferralLinkProps {
   link: ReferralLink;
@@ -52,14 +63,14 @@ interface SortableReferralLinkProps {
   onRemove: () => void;
 }
 
-function SortableReferralLink({ link, index, onChange, onRemove }: SortableReferralLinkProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: index });
+function SortableReferralLink({
+  link,
+  index,
+  onChange,
+  onRemove,
+}: SortableReferralLinkProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: index });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -67,11 +78,7 @@ function SortableReferralLink({ link, index, onChange, onRemove }: SortableRefer
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2"
-    >
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
       <button
         {...attributes}
         {...listeners}
@@ -85,22 +92,20 @@ function SortableReferralLink({ link, index, onChange, onRemove }: SortableRefer
         onChange={(e) => onChange(e.target.value)}
         className="text-sm h-8"
       />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onRemove}
-      >
+      <Button variant="ghost" size="sm" onClick={onRemove}>
         ×
       </Button>
     </div>
   );
 }
 
-export function ProAuthorSettings() {
+export function ProBookManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
+  const [editedReferralLinks, setEditedReferralLinks] = useState<{
+    [bookId: number]: ReferralLink[];
+  }>({});
 
   const { data: userBooks } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
@@ -165,19 +170,22 @@ export function ProAuthorSettings() {
     },
   });
 
-  const initializeBookReferralLinks = (bookId: number, links: ReferralLink[] = []) => {
+  const initializeBookReferralLinks = (
+    bookId: number,
+    links: ReferralLink[] = [],
+  ) => {
     if (!editedReferralLinks[bookId]) {
-      setEditedReferralLinks(prev => ({
+      setEditedReferralLinks((prev) => ({
         ...prev,
-        [bookId]: links
+        [bookId]: links,
       }));
     }
   };
 
   const updateBookReferralLinks = (bookId: number, links: ReferralLink[]) => {
-    setEditedReferralLinks(prev => ({
+    setEditedReferralLinks((prev) => ({
       ...prev,
-      [bookId]: links
+      [bookId]: links,
     }));
   };
 
@@ -185,13 +193,13 @@ export function ProAuthorSettings() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Author Settings</CardTitle>
+        <CardTitle>Book Management</CardTitle>
         <CardDescription>
           Manage your published books and upload new ones
         </CardDescription>
@@ -201,7 +209,10 @@ export function ProAuthorSettings() {
         <div className="mt-8 grid gap-6">
           {userBooks?.map((book) => {
             if (!editedReferralLinks[book.id]) {
-              initializeBookReferralLinks(book.id, book.referralLinks as ReferralLink[]);
+              initializeBookReferralLinks(
+                book.id,
+                book.referralLinks as ReferralLink[],
+              );
             }
 
             return (
@@ -230,13 +241,19 @@ export function ProAuthorSettings() {
                           if (over && active.id !== over.id) {
                             const oldIndex = Number(active.id);
                             const newIndex = Number(over.id);
-                            const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
+                            const newLinks = arrayMove(
+                              editedReferralLinks[book.id],
+                              oldIndex,
+                              newIndex,
+                            );
                             updateBookReferralLinks(book.id, newLinks);
                           }
                         }}
                       >
                         <SortableContext
-                          items={editedReferralLinks[book.id]?.map((_, i) => i) || []}
+                          items={
+                            editedReferralLinks[book.id]?.map((_, i) => i) || []
+                          }
                           strategy={verticalListSortingStrategy}
                         >
                           {editedReferralLinks[book.id]?.map((link, index) => (
@@ -245,12 +262,16 @@ export function ProAuthorSettings() {
                               link={link}
                               index={index}
                               onChange={(newUrl) => {
-                                const newLinks = [...editedReferralLinks[book.id]];
+                                const newLinks = [
+                                  ...editedReferralLinks[book.id],
+                                ];
                                 newLinks[index] = { ...link, url: newUrl };
                                 updateBookReferralLinks(book.id, newLinks);
                               }}
                               onRemove={() => {
-                                const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
+                                const newLinks = editedReferralLinks[
+                                  book.id
+                                ].filter((_, i) => i !== index);
                                 updateBookReferralLinks(book.id, newLinks);
                               }}
                             />
@@ -287,7 +308,9 @@ export function ProAuthorSettings() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => updateBookReferralLinks(book.id, [])}
+                              onClick={() =>
+                                updateBookReferralLinks(book.id, [])
+                              }
                             >
                               Clear All
                             </Button>
@@ -325,8 +348,8 @@ export function ProAuthorSettings() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your book
-                          and remove it from our servers.
+                          This action cannot be undone. This will permanently
+                          delete your book and remove it from our servers.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

@@ -51,11 +51,11 @@ export function ProDashboardSidebar() {
         Take Action
       </NavItem>
       <NavItem
-        href="/pro/author-settings"
-        active={location === "/pro/author-settings"}
+        href="/pro/book-management"
+        active={location === "/pro/book-management"}
         icon={<User className="h-4 w-4" />}
       >
-        Author Settings
+        Book Management
       </NavItem>
     </nav>
   );

@@ -26,7 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
-import { ProAuthorSettings } from "@/components/pro-author-settings";
+import { ProBookManagement } from "@/components/pro-book-management";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Book } from "@shared/schema";
@@ -215,8 +215,8 @@ export default function ProDashboard() {
       return <ReviewManagement />;
     }
 
-    if (location === "/pro/author-settings") {
-      return <ProAuthorSettings />;
+    if (location === "/pro/book-management") {
+      return <ProBookManagement />;
     }
 
     return (

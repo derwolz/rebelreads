@@ -42,7 +42,7 @@ function Router() {
         <ProtectedRoute path="/pro" component={ProDashboard} />
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
-        <ProtectedRoute path="/pro/author-settings" component={ProDashboard} />
+        <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
 
         <Route component={NotFound} />
       </Switch>
