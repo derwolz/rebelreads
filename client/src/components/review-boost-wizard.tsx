@@ -60,10 +60,10 @@ export function ReviewBoostWizard({
 
       // Create a single object for review counts
       const reviewCounts = Object.fromEntries(
-        data.selectedBooks.map(book => [book.bookId, book.reviewCount])
+        data.selectedBooks.map((book) => [book.bookId, book.reviewCount])
       );
 
-      // Add review counts as a single JSON string
+      console.log('Sending reviewCounts:', reviewCounts);
       formData.append("reviewCounts", JSON.stringify(reviewCounts));
 
       // Add files
@@ -75,10 +75,17 @@ export function ReviewBoostWizard({
 
       formData.append("totalCost", data.totalCost.toString());
 
-      return apiRequest("/api/boost/create", {
+      const response = await fetch("/api/boost/create", {
         method: "POST",
         body: formData,
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create boost campaign');
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/credits"] });

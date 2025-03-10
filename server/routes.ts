@@ -1452,10 +1452,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Parse the reviewCounts as a single JSON string
-      const reviewCounts = JSON.parse(req.body.reviewCounts);
+      console.log('Raw request body:', req.body);
+      console.log('Raw reviewCounts:', req.body.reviewCounts);
+
+      // Parse the reviewCounts from the form data
+      let reviewCounts;
+      try {
+        reviewCounts = JSON.parse(req.body.reviewCounts);
+      } catch (parseError) {
+        console.error('Failed to parse reviewCounts:', parseError);
+        return res.status(400).json({ error: 'Invalid review counts data' });
+      }
+
       const totalCost = parseFloat(req.body.totalCost);
       const files = req.files as Express.Multer.File[];
+
+      console.log('Parsed reviewCounts:', reviewCounts);
+      console.log('Files received:', files.map(f => ({ fieldname: f.fieldname, originalname: f.originalname })));
 
       // Verify user has enough credits
       const userCredits = await dbStorage.getUserCredits(req.user!.id);
@@ -1474,35 +1487,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         budget: totalCost.toString(),
         authorId: req.user!.id,
         metrics: { reviews: 0 },
-        books: Object.keys(reviewCounts).map(id => parseInt(id)), // Add selected book IDs
+        books: Object.keys(reviewCounts).map(id => parseInt(id)),
       });
 
       // Generate and store gifted books
-      for (const [bookId, count] of Object.entries(reviewCounts)) {
-        const bookFile = files.find(f => f.fieldname === `files[${bookId}]`);
-        if (!bookFile) continue;
+      const createdGiftedBooks = await Promise.all(
+        Object.entries(reviewCounts).map(async ([bookId, count]) => {
+          const bookFile = files.find(f => f.fieldname === `files[${bookId}]`);
+          if (!bookFile) {
+            console.error(`No file found for book ${bookId}`);
+            return [];
+          }
 
-        // Create unique codes for each review
-        for (let i = 0; i < (count as number); i++) {
-          const uniqueCode = `${campaign.id}-${bookId}-${randomBytes(8).toString('hex')}`;
-          await db.insert(giftedBooks).values({
-            uniqueCode,
-            bookId: parseInt(bookId),
-            campaignId: campaign.id,
-            status: "unclaimed",
+          // Create unique codes for each review
+          const giftedBooksPromises = Array.from({ length: count as number }, async () => {
+            const uniqueCode = `${campaign.id}-${bookId}-${randomBytes(8).toString('hex')}`;
+            return dbStorage.createGiftedBook({
+              uniqueCode,
+              bookId: parseInt(bookId),
+              campaignId: campaign.id,
+              status: "unclaimed",
+            });
           });
-        }
-      }
+
+          return Promise.all(giftedBooksPromises);
+        })
+      );
+
+      // Flatten the array of arrays into a single array of gifted books
+      const allGiftedBooks = createdGiftedBooks.flat();
 
       // Deduct credits
-      await dbStorage.addCredits(req.user!.id, -totalCost, `Review boost campaign creation`);
+      await dbStorage.deductCredits(req.user!.id, totalCost.toString(), campaign.id);
 
-      res.json(campaign);
+      res.json({
+        campaign,
+        giftedBooksCount: allGiftedBooks.length
+      });
+
     } catch (error) {
       console.error("Error creating boost campaign:", error);
       res.status(500).json({ error: "Failed to create boost campaign" });
     }
   });
+
+  // Fix the syntax error in the author search code
+  
 
   const httpServer = createServer(app);
   return httpServer;

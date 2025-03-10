@@ -22,6 +22,10 @@ import {
   PublisherAuthor,
   CreditTransaction,
   creditTransactions, // Added this import
+  GiftedBook, // Added this import
+  InsertGiftedBook, // Added this import
+  giftedBooks, // Added this import
+
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
@@ -116,6 +120,11 @@ export interface IStorage {
   addCredits(userId: number, amount: string, description?: string): Promise<User>;
   deductCredits(userId: number, amount: string, campaignId: number): Promise<User>;
   getCreditTransactions(userId: number): Promise<CreditTransaction[]>;
+
+  // Add new gifted books methods
+  getGiftedBooks(campaignId: number): Promise<GiftedBook[]>;
+  createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook>;
+  claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -772,6 +781,34 @@ export class DatabaseStorage implements IStorage {
       .from(creditTransactions)
       .where(eq(creditTransactions.userId, userId))
       .orderBy(desc(creditTransactions.createdAt));
+  }
+
+  async getGiftedBooks(campaignId: number): Promise<GiftedBook[]> {
+    return await db
+      .select()
+      .from(giftedBooks)
+      .where(eq(giftedBooks.campaignId, campaignId));
+  }
+
+  async createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook> {
+    const [giftedBook] = await db
+      .insert(giftedBooks)
+      .values(data)
+      .returning();
+    return giftedBook;
+  }
+
+  async claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook> {
+    const [giftedBook] = await db
+      .update(giftedBooks)
+      .set({
+        status: "claimed",
+        claimedByUserId: userId,
+        claimedAt: new Date(),
+      })
+      .where(eq(giftedBooks.uniqueCode, uniqueCode))
+      .returning();
+    return giftedBook;
   }
 }
 
