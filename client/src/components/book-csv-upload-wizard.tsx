@@ -50,9 +50,7 @@ export function BookCsvUploadWizard() {
 
     // Validate page count
     if (book.page_count) {
-      const trimmedCount = book.page_count.trim();
-      console.log("Validating page count:", trimmedCount);
-      const pageCount = parseInt(trimmedCount, 10);
+      const pageCount = parseInt(book.page_count.trim());
       if (isNaN(pageCount) || pageCount <= 0) {
         return "Page count must be a positive number";
       }
