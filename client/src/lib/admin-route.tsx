@@ -22,7 +22,7 @@ export function AdminRoute({
   }
 
   // Check if user is logged in and is an admin
-  if (!user || user.email !== process.env.ADMIN_EMAIL) {
+  if (!user?.isAdmin) {
     return (
       <Route path={path}>
         <Redirect to="/" />
@@ -30,5 +30,5 @@ export function AdminRoute({
     );
   }
 
-  return <Component />;
+  return <Route path={path} component={Component} />;
 }

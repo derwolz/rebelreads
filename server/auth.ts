@@ -9,7 +9,9 @@ import { User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser {
+      isAdmin: boolean;
+    }
   }
 }
 
@@ -59,12 +61,14 @@ export function setupAuth(app: Express) {
         console.log("Login failed: Invalid credentials");
         return done(null, false);
       } else {
+        // Add isAdmin flag based on email match
+        const isAdmin = user.email === process.env.ADMIN_EMAIL;
         console.log("Login successful:", { 
           userId: user.id,
           email: user.email,
-          isAdmin: user.email === process.env.ADMIN_EMAIL 
+          isAdmin
         });
-        return done(null, user);
+        return done(null, { ...user, isAdmin });
       }
     }),
   );
@@ -72,7 +76,18 @@ export function setupAuth(app: Express) {
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
     const user = await dbStorage.getUser(id);
-    done(null, user);
+    if (user) {
+      // Add isAdmin flag during deserialization as well
+      const isAdmin = user.email === process.env.ADMIN_EMAIL;
+      console.log("Deserializing user:", {
+        userId: user.id,
+        email: user.email,
+        isAdmin,
+      });
+      done(null, { ...user, isAdmin });
+    } else {
+      done(new Error('User not found'));
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {
@@ -93,19 +108,22 @@ export function setupAuth(app: Express) {
       password: await hashPassword(req.body.password),
     });
 
+    // Add isAdmin flag for the response
+    const isAdmin = user.email === process.env.ADMIN_EMAIL;
     console.log("User registered:", {
       userId: user.id,
       email: user.email,
-      isAdmin: user.email === process.env.ADMIN_EMAIL
+      isAdmin
     });
 
-    req.login(user, (err) => {
+    req.login({ ...user, isAdmin }, (err) => {
       if (err) return next(err);
-      res.status(201).json(user);
+      res.status(201).json({ ...user, isAdmin });
     });
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    console.log("Login response:", { user: req.user });
     res.status(200).json(req.user);
   });
 
@@ -118,6 +136,7 @@ export function setupAuth(app: Express) {
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
+    console.log("Current user:", { user: req.user });
     res.json(req.user);
   });
 }
