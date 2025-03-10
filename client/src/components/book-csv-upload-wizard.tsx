@@ -193,20 +193,30 @@ export function BookCsvUploadWizard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Cover URL</TableHead>
                     <TableHead>Author</TableHead>
-                    <TableHead>ISBN</TableHead>
                     <TableHead>Genres</TableHead>
                     <TableHead>Formats</TableHead>
+                    <TableHead>Page Count</TableHead>
+                    <TableHead>Published Date</TableHead>
+                    <TableHead>Language</TableHead>
+                    <TableHead>ISBN</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {csvData.map((book, index) => (
                     <TableRow key={index}>
                       <TableCell>{book.title}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{book.description}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{book.cover_url}</TableCell>
                       <TableCell>{book.author}</TableCell>
-                      <TableCell>{book.isbn}</TableCell>
                       <TableCell>{book.genres}</TableCell>
                       <TableCell>{book.formats}</TableCell>
+                      <TableCell>{book.page_count}</TableCell>
+                      <TableCell>{book.published_date}</TableCell>
+                      <TableCell>{book.language}</TableCell>
+                      <TableCell>{book.isbn}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
