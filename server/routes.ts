@@ -922,7 +922,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .select()
             .from(books)
             .where(eq(books.authorId, author.id));
-
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
             bookIds.length > 0
@@ -1532,7 +1531,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fix the syntax error in the author search code
-  
+
+
+  // Add near other book-related routes
+  app.get("/api/gifted-books/available", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Find an unclaimed book
+      const [giftedBook] = await db
+        .select({
+          giftedBook: giftedBooks,
+          book: books,
+        })
+        .from(giftedBooks)
+        .where(eq(giftedBooks.status, "unclaimed"))
+        .leftJoin(books, eq(books.id, giftedBooks.bookId))
+        .limit(1);
+
+      if (!giftedBook) {
+        return res.json(null);
+      }
+
+      // Return book details along with gifted book info
+      res.json({
+        id: giftedBook.giftedBook.id,
+        uniqueCode: giftedBook.giftedBook.uniqueCode,
+        title: giftedBook.book.title,
+        author: giftedBook.book.author,
+        coverUrl: giftedBook.book.coverUrl,
+      });
+    } catch (error) {
+      console.error("Error checking for available books:", error);
+      res.status(500).json({ error: "Failed to check for available books" });
+    }
+  });
+
+  app.post("/api/gifted-books/claim", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const giftedBookId = parseInt(req.body.bookId);
+      if (isNaN(giftedBookId)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+
+      // Verify book is unclaimed and claim it atomically
+      const [claimedBook] = await db
+        .update(giftedBooks)
+        .set({
+          status: "claimed",
+          claimedByUserId: req.user!.id,
+          claimedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(giftedBooks.id, giftedBookId),
+            eq(giftedBooks.status, "unclaimed"),
+          ),
+        )
+        .returning();
+
+      if (!claimedBook) {
+        return res.status(400).json({ error: "Book is no longer available" });
+      }
+
+      res.json(claimedBook);
+    } catch (error) {
+      console.error("Error claiming book:", error);
+      res.status(500).json({ error: "Failed to claim book" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
