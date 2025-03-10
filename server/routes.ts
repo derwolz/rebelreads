@@ -1435,7 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add this route with the other book-related routes
+  // Add near other book-related routes
   app.get("/api/wishlist/books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -1617,16 +1617,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const coverFile = coverFiles[index];
           const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
 
-          // Parse and validate numeric fields
-          const pageCount = book.page_count ? parseInt(book.page_count.trim()) : null;
-          if (book.page_count && isNaN(pageCount)) {
-            throw new Error(`Invalid page count for book: ${book.title}`);
+          // Parse and validate page count
+          let pageCount = null;
+          if (book.page_count && book.page_count.trim() !== '') {
+            console.log("Processing page count:", book.page_count, "for book:", book.title);
+            pageCount = parseInt(book.page_count.trim(), 10);
+            if (isNaN(pageCount)) {
+              throw new Error(`Invalid page count for book: ${book.title}`);
+            }
           }
 
           // Parse and validate date
           let publishedDate = null;
-          if (book.published_date) {
-            const date = new Date(book.published_date);
+          if (book.published_date && book.published_date.trim() !== '') {
+            const date = new Date(book.published_date.trim());
             if (isNaN(date.getTime())) {
               throw new Error(`Invalid published date for book: ${book.title}`);
             }
