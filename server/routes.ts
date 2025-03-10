@@ -921,8 +921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           id: users.id,
           username: users.username,
-          authorName: users.authorName,
-          authorBio: users.authorBio,
+          authorName: users.authorName,          authorBio: users.authorBio,
           authorImageUrl: users.profileImageUrl,
           socialMediaLinks: users.socialMediaLinks,
         })
@@ -1601,7 +1600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add near other book-related routes
+  // Add after other book-related routes
   app.get("/api/wishlist/books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -1646,6 +1645,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Add after other admin routes
+  app.post("/api/admin/bulk-upload-reviews", isAdmin, upload.single("csv"), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No CSV file provided" });
+    }
+
+    try {
+      const csvData = await fs.promises.readFile(req.file.path, 'utf-8');
+      const lines = csvData.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+
+      const reviews = [];
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+
+        const values = lines[i].split(',').map(v => v.trim());
+        const row = Object.fromEntries(headers.map((h, i) => [h, values[i]]));
+
+        // Find book by title
+        const [book] = await db
+          .select()
+          .from(books)
+          .where(eq(books.title, row.book_title))
+          .limit(1);
+
+        if (!book) {
+          console.error(`Book not found: ${row.book_title}`);
+          continue;
+        }
+
+        // Create the review
+        const review = {
+          userId: 9, // Public domain user
+          bookId: book.id,
+          enjoyment: row.enjoyment ? parseInt(row.enjoyment) : null,
+          writing: row.writing ? parseInt(row.writing) : null,
+          themes: row.themes ? parseInt(row.themes) : null,
+          characters: row.characters ? parseInt(row.characters) : null,
+          worldbuilding: row.worldbuilding ? parseInt(row.worldbuilding) : null,
+          review: row.review || null,
+          analysis: row.analysis ? JSON.parse(row.analysis) : null,
+        };
+
+        try {
+          const [createdReview] = await db
+            .insert(ratings)
+            .values(review)
+            .returning();
+          reviews.push(createdReview);
+        } catch (err) {
+          console.error(`Failed to create review for book: ${row.book_title}`, err);
+        }
+      }
+
+      // Clean up the uploaded file
+      await fs.promises.unlink(req.file.path);
+
+      res.json({
+        message: `Successfully processed ${reviews.length} reviews`,
+        reviews
+      });
+    } catch (error) {
+      console.error("Error processing CSV upload:", error);
+      res.status(500).json({ error: "Failed to process CSV file" });
     }
   });
 

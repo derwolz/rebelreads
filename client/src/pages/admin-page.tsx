@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MainNav } from "@/components/main-nav";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DragDropFile } from "@/components/drag-drop-file";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AdminStats {
   totalUsers: number;
@@ -21,10 +24,41 @@ interface AdminStats {
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const { toast } = useToast();
 
   const { data: stats } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
   });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("csv", file);
+      const res = await apiRequest("POST", "/api/admin/bulk-upload-reviews", formData);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Upload Successful",
+        description: data.message,
+      });
+      setCsvFile(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpload = () => {
+    if (csvFile) {
+      uploadMutation.mutate(csvFile);
+    }
+  };
 
   return (
     <div>
@@ -104,7 +138,9 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle>Bulk Review Upload</CardTitle>
                 <CardDescription>
-                  Upload reviews in CSV format. Please ensure your CSV matches the required format.
+                  Upload reviews in CSV format. The system will automatically:
+                  - Use the public domain user (ID: 9) as the reviewer
+                  - Determine the book ID based on the book title
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -124,46 +160,40 @@ export default function AdminPage() {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>user_id</TableCell>
-                      <TableCell>number</TableCell>
-                      <TableCell>The ID of the user who wrote the review</TableCell>
-                      <TableCell>Yes</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>book_id</TableCell>
-                      <TableCell>number</TableCell>
-                      <TableCell>The ID of the book being reviewed</TableCell>
+                      <TableCell>book_title</TableCell>
+                      <TableCell>text</TableCell>
+                      <TableCell>Title of the book to review</TableCell>
                       <TableCell>Yes</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>enjoyment</TableCell>
                       <TableCell>number (1-5)</TableCell>
                       <TableCell>Overall enjoyment rating</TableCell>
-                      <TableCell>Yes</TableCell>
+                      <TableCell>No</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>writing</TableCell>
                       <TableCell>number (1-5)</TableCell>
                       <TableCell>Writing quality rating</TableCell>
-                      <TableCell>Yes</TableCell>
+                      <TableCell>No</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>themes</TableCell>
                       <TableCell>number (1-5)</TableCell>
                       <TableCell>Theme development rating</TableCell>
-                      <TableCell>Yes</TableCell>
+                      <TableCell>No</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>characters</TableCell>
                       <TableCell>number (1-5)</TableCell>
                       <TableCell>Character development rating</TableCell>
-                      <TableCell>Yes</TableCell>
+                      <TableCell>No</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>worldbuilding</TableCell>
                       <TableCell>number (1-5)</TableCell>
                       <TableCell>World-building rating</TableCell>
-                      <TableCell>Yes</TableCell>
+                      <TableCell>No</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>review</TableCell>
@@ -179,7 +209,23 @@ export default function AdminPage() {
                     </TableRow>
                   </TableBody>
                 </Table>
-                {/* File upload component will be added here */}
+                <div className="mt-6">
+                  <DragDropFile
+                    file={csvFile}
+                    onFileChange={setCsvFile}
+                    accept=".csv"
+                    maxSize={5 * 1024 * 1024} // 5MB max
+                  />
+                  {csvFile && (
+                    <button
+                      className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                      onClick={handleUpload}
+                      disabled={uploadMutation.isPending}
+                    >
+                      {uploadMutation.isPending ? "Uploading..." : "Upload Reviews"}
+                    </button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
