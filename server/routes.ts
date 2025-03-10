@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add near the other API endpoints
   app.get("/api/pro/reviews", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -923,7 +923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authors.map(async (author) => {
           const authorBooks = await db
             .select()
-            .from(books)
+            .from            .from(books)
             .where(eq(books.authorId, author.id));
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
@@ -1624,8 +1624,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             authorId: req.user!.id,
             coverUrl,
             author: req.user!.authorName || req.user!.username,
-            genres: book.genres ? book.genres.split(',').map((g: string) => g.trim()) : [],
-            formats: book.formats ? book.formats.split(',').map((f: string) => f.trim()) : [],
+            genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
+            formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
             promoted: false,
             authorImageUrl: null,
             pageCount: book.page_count ? parseInt(book.page_count) : null,

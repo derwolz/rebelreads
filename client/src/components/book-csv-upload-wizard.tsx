@@ -109,6 +109,28 @@ export function BookCsvUploadWizard() {
     setIsDragging(false);
   };
 
+  const parseCSVLine = (line: string): string[] => {
+    const values: string[] = [];
+    let currentValue = '';
+    let insideQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+
+      if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === ',' && !insideQuotes) {
+        values.push(currentValue.trim());
+        currentValue = '';
+      } else {
+        currentValue += char;
+      }
+    }
+
+    values.push(currentValue.trim());
+    return values.map(value => value.replace(/^"|"$/g, ''));
+  };
+
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
@@ -124,8 +146,8 @@ export function BookCsvUploadWizard() {
     }
 
     const text = await file.text();
-    const lines = text.split('\n');
-    const headers = lines[0].toLowerCase().trim().split(',');
+    const lines = text.split('\n').filter(line => line.trim());
+    const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
 
     // Validate headers
     const requiredHeaders = ['title', 'description', 'cover_url', 'author', 'genres', 'formats', 'page_count', 'published_date', 'language', 'isbn'];
@@ -140,11 +162,12 @@ export function BookCsvUploadWizard() {
       return;
     }
 
-    const books = lines.slice(1).filter(line => line.trim()).map(line => {
-      const values = line.split(',').map(v => v.trim());
+    const books = lines.slice(1).map(line => {
+      const values = parseCSVLine(line);
       const book: any = {};
       headers.forEach((header, index) => {
-        book[header] = values[index] || '';
+        // Remove quotes and trim
+        book[header] = values[index] ? values[index].trim() : '';
       });
       return book as CsvBook;
     });
@@ -183,7 +206,7 @@ export function BookCsvUploadWizard() {
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               Your CSV should include the following columns:<br />
-              title, description, cover_url, author, genres, formats, page_count, published_date, language, isbn
+              title, description, cover_url, author, genres (semicolon-separated), formats (semicolon-separated), page_count, published_date, language, isbn
             </p>
           </div>
         ) : (
