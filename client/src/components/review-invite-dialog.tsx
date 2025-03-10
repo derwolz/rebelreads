@@ -29,13 +29,17 @@ export function ReviewInviteDialog() {
   // Mutation to claim a book
   const claimBookMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/gifted-books/claim", {
+      return fetch("/api/gifted-books/claim", {
         method: "POST",
-        body: JSON.stringify({ uniqueCode: availableBook?.giftedBook.uniqueCode }),
+        body: JSON.stringify({
+          uniqueCode: availableBook?.giftedBook.uniqueCode,
+        }),
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/gifted-books/available"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/gifted-books/available"],
+      });
       toast({
         title: "Success",
         description: "You've claimed your free book! Happy reading!",
@@ -96,8 +100,12 @@ export function ReviewInviteDialog() {
               className="h-32 w-24 object-cover rounded"
             />
             <div>
-              <h3 className="font-medium text-lg">{availableBook.book.title}</h3>
-              <p className="text-muted-foreground">{availableBook.book.author}</p>
+              <h3 className="font-medium text-lg">
+                {availableBook.book.title}
+              </h3>
+              <p className="text-muted-foreground">
+                {availableBook.book.author}
+              </p>
             </div>
           </div>
 
