@@ -1,7 +1,6 @@
 import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { nanoid } from 'nanoid';
 
 export const SOCIAL_MEDIA_PLATFORMS = [
   "Twitter",
@@ -38,7 +37,6 @@ export const referralLinkSchema = z.object({
 export type ReferralLink = z.infer<typeof referralLinkSchema>;
 
 export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] as const;
-export const ALLOWED_BOOK_FORMATS = ["pdf", "epub"] as const;
 
 export const AVAILABLE_GENRES = [
   "Fantasy",
@@ -218,20 +216,6 @@ export const creditTransactions = pgTable("credit_transactions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const reviewCopies = pgTable("review_copies", {
-  id: serial("id").primaryKey(),
-  uniqueId: text("unique_id").notNull().unique(), // Unique identifier for each review copy
-  campaignId: integer("campaign_id").notNull(),
-  bookId: integer("book_id").notNull(),
-  assignedUserId: integer("assigned_user_id"), // null until claimed
-  status: text("status").notNull().default("available"), // available, assigned, completed
-  fileUrl: text("file_url").notNull(),
-  fileFormat: text("file_format").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  assignedAt: timestamp("assigned_at"),
-  completedAt: timestamp("completed_at"),
-});
-
 export const campaigns = pgTable("campaigns", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -246,12 +230,6 @@ export const campaigns = pgTable("campaigns", {
   authorId: integer("author_id").notNull(),
   metrics: jsonb("metrics").default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  reviewsPerBook: jsonb("reviews_per_book").$type<Record<number, number>>(), // bookId -> number of reviews
-  totalReviewsPurchased: integer("total_reviews_purchased").notNull().default(0),
-  reviewsAssigned: integer("reviews_assigned").notNull().default(0),
-  reviewsCompleted: integer("reviews_completed").notNull().default(0),
-  fileUrls: jsonb("file_urls").$type<Record<number, string>>(), // bookId -> file URL
-  fileFormats: jsonb("file_formats").$type<Record<number, string>>(), // bookId -> file format
 });
 
 export const campaignBooks = pgTable("campaign_books", {
@@ -270,11 +248,6 @@ export const insertCampaignSchema = createInsertSchema(campaigns, {
   type: z.enum(["ad", "survey", "review_boost"]),
   status: z.enum(["active", "completed", "paused"]).default("active"),
   adType: z.enum(["banner", "feature"]).optional(),
-  reviewsPerBook: z.record(z.string(), z.number().min(1)).optional(),
-  bookFiles: z.record(z.string(), z.object({
-    url: z.string(),
-    format: z.enum(ALLOWED_BOOK_FORMATS)
-  })).optional(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -345,13 +318,6 @@ export const insertReadingStatusSchema = createInsertSchema(reading_status);
 export const insertFollowerSchema = createInsertSchema(followers);
 export const insertImpressionSchema = createInsertSchema(bookImpressions);
 export const insertClickThroughSchema = createInsertSchema(bookClickThroughs);
-export const insertReviewCopySchema = createInsertSchema(reviewCopies, {
-  uniqueId: z.string().default(() => nanoid()),
-}).omit({ 
-  assignedUserId: true,
-  assignedAt: true,
-  completedAt: true
-});
 
 export const loginSchema = z.object({
   email: z.string().min(1, "Email or username is required"),
@@ -387,14 +353,6 @@ export type InsertPublisher = z.infer<typeof insertPublisherSchema>;
 export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
-export type ReviewCopy = typeof reviewCopies.$inferSelect;
-export type InsertReviewCopy = z.infer<typeof insertReviewCopySchema>;
-
-export interface BookFile {
-  url: string;
-  format: typeof ALLOWED_BOOK_FORMATS[number];
-}
-
 
 export function calculateWeightedRating(rating: Rating): number {
   return (
