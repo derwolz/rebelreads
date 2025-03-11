@@ -25,6 +25,8 @@ import { format } from "date-fns";
 import csv from 'csv-parse';
 import { promisify as promisify2 } from 'util';
 import { Readable } from 'stream';
+import { adminAuthMiddleware } from './middleware/admin-auth'; // Added import
+
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -923,7 +925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         authors.map(async (author) => {
           const authorBooks = await db
             .select()
-            .from            .from(books)
+            .from(books)
             .where(eq(books.authorId, author.id));
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
@@ -1646,6 +1648,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing bulk book upload:", error);
       res.status(500).json({ error: "Failed to process bulk upload" });
+    }
+  });
+
+  app.get("/api/admin/check", adminAuthMiddleware, (req, res) => {
+    res.json({ isAdmin: true });
+  });
+
+  app.get("/api/admin/users", adminAuthMiddleware, async (req, res) => {
+    try {
+      const users = await db.select().from(users);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/reports", adminAuthMiddleware, async (req, res) => {
+    try {
+      // This will be implemented later when we add the reports feature
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ error: "Failed to fetch reports" });
+    }
+  });
+
+  app.get("/api/admin/settings", adminAuthMiddleware, async (req, res) => {
+    try {
+      // This will be implemented later when we add site settings
+      res.json({});
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ error: "Failed to fetch settings" });
     }
   });
 

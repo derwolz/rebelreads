@@ -20,6 +20,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import AdminPanel from "@/pages/admin-panel";
 
 function Router() {
   return (
@@ -43,6 +44,12 @@ function Router() {
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
+
+        {/* Admin routes */}
+        <ProtectedRoute path="/admin" component={AdminPanel} />
+        <ProtectedRoute path="/admin/users" component={AdminPanel} />
+        <ProtectedRoute path="/admin/settings" component={AdminPanel} />
+        <ProtectedRoute path="/admin/reports" component={AdminPanel} />
 
         <Route component={NotFound} />
       </Switch>
