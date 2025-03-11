@@ -917,8 +917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ilike(users.authorName, searchPattern),
             ),
           ),
-        )
-        .limit(10);
+        )        .limit(10);
 
       // Get books and aggregate ratings for each author
       const authorsWithDetails = await Promise.all(
@@ -1600,11 +1599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add bulk book upload endpoint
-  app.post("/api/books/bulk", upload.array("covers"), async (req, res) => {
-    if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
-    }
-
+  app.post("/api/admin/books/bulk", adminAuthMiddleware, upload.array("covers"), async (req, res) => {
     try {
       if (!req.files || !req.body.csvData) {
         return res.status(400).json({ message: "Missing required files" });
@@ -1623,9 +1618,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return await dbStorage.createBook({
             title: book.title,
             description: book.description,
-            authorId: req.user!.id,
+            authorId: req.user!.id, // This will be the admin's ID
             coverUrl,
-            author: req.user!.authorName || req.user!.username,
+            author: book.author_name, // Use the author_name from CSV
             genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
             formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
             promoted: false,
@@ -1646,7 +1641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(createdBooks);
     } catch (error) {
-      console.error("Error processing bulk book upload:", error);
+      console.error("Error processing admin bulk book upload:", error);
       res.status(500).json({ error: "Failed to process bulk upload" });
     }
   });
