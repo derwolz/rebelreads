@@ -17,10 +17,8 @@ import ProDashboard from "@/pages/pro-dashboard";
 import { SearchBooksPage } from "@/pages/search-books-page";
 import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
-import { ProtectedAdminRoute } from "./lib/protected-admin-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
-import AdminBooksPage from "@/pages/admin/books-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 
 function Router() {
@@ -45,9 +43,6 @@ function Router() {
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
-
-        {/* Admin routes */}
-        <ProtectedAdminRoute path="/admin/books" component={AdminBooksPage} />
 
         <Route component={NotFound} />
       </Switch>
