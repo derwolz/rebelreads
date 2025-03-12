@@ -11,19 +11,22 @@ import { ratings, calculateWeightedRating } from "@shared/schema";
 import {
   users,
   books,
+  bookshelves,
   replies,
   followers,
   giftedBooks,
-} from "@shared/schema";
-import { eq, and, inArray, desc, sql, ilike, or } from "drizzle-orm";
+} from "@shared/schema"; // Added replies and followers imports
+import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt } from "crypto";
+import { randomBytes } from "crypto";
+import { timingSafeEqual } from "crypto";
 import { format } from "date-fns";
 import csv from 'csv-parse';
+import { promisify as promisify2 } from 'util';
 import { Readable } from 'stream';
-import { adminAuthMiddleware } from './middleware/admin-auth';
+import { adminAuthMiddleware } from './middleware/admin-auth'; // Added import
 
-const scryptAsync = promisify(scrypt);
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -266,6 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await dbStorage.getUser(req.user!.id);
 
       // Verify current password
+      const scryptAsync = promisify(scrypt);
       const [salt, hash] = user!.password!.split(":");
       const hashBuffer = (await scryptAsync(
         currentPassword,
@@ -1532,105 +1536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Fix the syntax error in the author search code
-  app.post("/api/admin/books/bulk", adminAuthMiddleware, upload.array("covers"), async (req, res) => {
-    try {
-      if (!req.files || !req.body.csvData) {
-        return res.status(400).json({ message: "Missing required files" });
-      }
 
-      // Parse CSV data
-      const csvData = JSON.parse(req.body.csvData);
-      const coverFiles = req.files as Express.Multer.File[];
-
-      // Create books with processed cover images
-      const createdBooks = await Promise.all(
-        csvData.map(async (book: any, index: number) => {
-          try {
-            // First try to find the author by their name
-            const existingAuthor = await db
-              .select()
-              .from(users)
-              .where(eq(users.authorName, book.author_name))
-              .limit(1);
-
-            let authorId;
-            let authorUser;
-
-            if (existingAuthor.length > 0) {
-              console.log(`Found existing author: ${book.author_name}`);
-              authorUser = existingAuthor[0];
-              authorId = authorUser.id;
-            } else {
-              console.log(`Creating new author: ${book.author_name}`);
-              // Create new author account
-              const names = book.author_name.split(' ');
-              const firstName = names[0].toLowerCase();
-              const lastName = names[names.length - 1].toLowerCase();
-              const email = `public.${firstName}.${lastName}@sirened.com`;
-              const password = `${lastName}_6647`;
-
-              // Hash the password
-              const salt = randomBytes(16).toString("hex");
-              const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-              const hashedPassword = `${salt}:${buf.toString("hex")}`;
-
-              // Create the new author
-              try {
-                authorUser = await dbStorage.createUser({
-                  email,
-                  username: `${firstName}.${lastName}`,
-                  password: hashedPassword,
-                  isAuthor: true,
-                  authorName: book.author_name,
-                });
-                authorId = authorUser.id;
-                console.log(`Successfully created author account for: ${book.author_name}`);
-              } catch (createError) {
-                console.error(`Failed to create author account for: ${book.author_name}`, createError);
-                throw new Error(`Failed to create author account: ${createError.message}`);
-              }
-            }
-
-            const coverFile = coverFiles[index];
-            const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
-
-            const newBook = await dbStorage.createBook({
-              title: book.title,
-              description: book.description,
-              authorId: authorId,
-              coverUrl,
-              author: book.author_name,
-              genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
-              formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
-              promoted: false,
-              authorImageUrl: null,
-              pageCount: book.page_count ? parseInt(book.page_count) : null,
-              publishedDate: book.published_date ? new Date(book.published_date) : null,
-              awards: [],
-              originalTitle: null,
-              series: null,
-              setting: null,
-              characters: [],
-              isbn: book.isbn || null,
-              asin: null,
-              language: book.language || "English",
-            });
-
-            console.log(`Successfully created book: ${book.title} for author: ${book.author_name}`);
-            return newBook;
-          } catch (error) {
-            console.error(`Error processing book ${book.title}:`, error);
-            throw error;
-          }
-        })
-      );
-
-      res.json({ books: createdBooks });
-    } catch (error) {
-      console.error("Error processing admin bulk book upload:", error);
-      res.status(500).json({ error: "Failed to process bulk upload" });
-    }
-  });
 
   // Update the gifted books routes to use storage interface
   app.get("/api/gifted-books/available", async (req, res) => {
@@ -1694,7 +1600,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add bulk book upload endpoint
-  app.post("/api/admin/books/bulk", adminAuthMiddleware, upload.array("covers"), async (req, res) => {
+  app.post("/api/books/bulk", upload.array("covers"), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
     try {
       if (!req.files || !req.body.csvData) {
         return res.status(400).json({ message: "Missing required files" });
@@ -1707,89 +1617,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create books with processed cover images
       const createdBooks = await Promise.all(
         csvData.map(async (book: any, index: number) => {
-          try {
-            // First try to find the author by their name
-            const existingAuthor = await db
-              .select()
-              .from(users)
-              .where(eq(users.authorName, book.author_name))
-              .limit(1);
+          const coverFile = coverFiles[index];
+          const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
 
-            let authorId;
-            let authorUser;
-
-            if (existingAuthor.length > 0) {
-              console.log(`Found existing author: ${book.author_name}`);
-              authorUser = existingAuthor[0];
-              authorId = authorUser.id;
-            } else {
-              console.log(`Creating new author: ${book.author_name}`);
-              // Create new author account
-              const names = book.author_name.split(' ');
-              const firstName = names[0].toLowerCase();
-              const lastName = names[names.length - 1].toLowerCase();
-              const email = `public.${firstName}.${lastName}@sirened.com`;
-              const password = `${lastName}_6647`;
-
-              // Hash the password
-              const salt = randomBytes(16).toString("hex");
-              const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-              const hashedPassword = `${salt}:${buf.toString("hex")}`;
-
-              // Create the new author
-              try {
-                authorUser = await dbStorage.createUser({
-                  email,
-                  username: `${firstName}.${lastName}`,
-                  password: hashedPassword,
-                  isAuthor: true,
-                  authorName: book.author_name,
-                });
-                authorId = authorUser.id;
-                console.log(`Successfully created author account for: ${book.author_name}`);
-              } catch (createError) {
-                console.error(`Failed to create author account for: ${book.author_name}`, createError);
-                throw new Error(`Failed to create author account: ${createError.message}`);
-              }
-            }
-
-            const coverFile = coverFiles[index];
-            const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
-
-            const newBook = await dbStorage.createBook({
-              title: book.title,
-              description: book.description,
-              authorId: authorId,
-              coverUrl,
-              author: book.author_name,
-              genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
-              formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
-              promoted: false,
-              authorImageUrl: null,
-              pageCount: book.page_count ? parseInt(book.page_count) : null,
-              publishedDate: book.published_date ? new Date(book.published_date) : null,
-              awards: [],
-              originalTitle: null,
-              series: null,
-              setting: null,
-              characters: [],
-              isbn: book.isbn || null,
-              asin: null,
-              language: book.language || "English",
-            });
-
-            console.log(`Successfully created book: ${book.title} for author: ${book.author_name}`);
-            return newBook;
-          } catch (error) {
-            console.error(`Error processing book ${book.title}:`, error);
-            throw error;
-          }
+          return await dbStorage.createBook({
+            title: book.title,
+            description: book.description,
+            authorId: req.user!.id,
+            coverUrl,
+            author: req.user!.authorName || req.user!.username,
+            genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
+            formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
+            promoted: false,
+            authorImageUrl: null,
+            pageCount: book.page_count ? parseInt(book.page_count) : null,
+            publishedDate: book.published_date ? new Date(book.published_date) : null,
+            awards: [],
+            originalTitle: null,
+            series: null,
+            setting: null,
+            characters: [],
+            isbn: book.isbn || null,
+            asin: null,
+            language: book.language || "English",
+          });
         })
       );
 
-      res.json({ books: createdBooks });
+      res.json(createdBooks);
     } catch (error) {
-      console.error("Error processing admin bulk book upload:", error);
+      console.error("Error processing bulk book upload:", error);
       res.status(500).json({ error: "Failed to process bulk upload" });
     }
   });
