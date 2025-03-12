@@ -8,25 +8,18 @@ import fs from "fs";
 import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
-import {
-  users,
-  books,
-  bookshelves,
-  replies,
-  followers,
-  giftedBooks,
-} from "@shared/schema"; // Added replies and followers imports
-import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
+import { users, books, replies, followers } from "@shared/schema";
+import { eq, and, inArray, desc, sql, ilike, or } from "drizzle-orm";
 import { promisify } from "util";
-import { scrypt } from "crypto";
-import { randomBytes } from "crypto";
-import { timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { format } from "date-fns";
 import csv from 'csv-parse';
 import { promisify as promisify2 } from 'util';
 import { Readable } from 'stream';
-import { adminAuthMiddleware } from './middleware/admin-auth'; // Added import
+import { adminAuthMiddleware } from './middleware/admin-auth';
 
+// Define scryptAsync at the top level
+const scryptAsync = promisify(scrypt);
 
 // Ensure uploads directories exist
 const uploadsDir = "./uploads";
@@ -269,7 +262,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await dbStorage.getUser(req.user!.id);
 
       // Verify current password
-      const scryptAsync = promisify(scrypt);
       const [salt, hash] = user!.password!.split(":");
       const hashBuffer = (await scryptAsync(
         currentPassword,
