@@ -1627,15 +1627,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (existingAuthor.length > 0) {
             authorId = existingAuthor[0].id;
           } else {
+            // Process author name
+            const nameParts = book.author.trim().split(' ');
+            const firstName = nameParts[0].toLowerCase();
+            const lastName = nameParts[nameParts.length - 1].toLowerCase();
+            const username = `public.${firstName}.${lastName}@sirened.com`;
+            const password = `${lastName}_6647`;
+
+            // Hash the password
+            const salt = randomBytes(16).toString("hex");
+            const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+            const hashedPassword = `${salt}:${buf.toString("hex")}`;
+
             // Create new author account
             const [newAuthor] = await db
               .insert(users)
               .values({
-                username: book.author,
+                username,
+                email: username,
                 authorName: book.author,
                 isAuthor: true,
-                email: `${book.author.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Temporary email
-                password: '', // Empty password as this is an admin-created account
+                password: hashedPassword,
               })
               .returning();
             authorId = newAuthor.id;
