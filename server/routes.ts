@@ -9,7 +9,7 @@ import express from "express";
 import { db } from "./db";
 import { ratings, calculateWeightedRating } from "@shared/schema";
 import { users, books, replies, followers } from "@shared/schema";
-import { eq, and, inArray, desc, sql, ilike, or } from "drizzle-orm";
+import { eq, and, inArray, desc, sql, ilike, or, isNotNull } from "drizzle-orm";
 import { promisify } from "util";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { format } from "date-fns";
@@ -918,7 +918,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const authorBooks = await db
             .select()
             .from(books)
-            .where(eq(books.authorId, author.id));
+            .where(eq(books.authorId, author.id))
+            .limit(10);
           const bookIds = authorBooks.map((book) => book.id);
           const authorRatings =
             bookIds.length > 0
@@ -1233,99 +1234,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this after the /api/pro/book-performance endpoint
   app.get("/api/pro/follower-analytics", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
       const authorId = req.user!.id;
-      const timeRange = parseInt(req.query.timeRange as string) || 30; // Default to 30 days
 
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - timeRange);
-
-      // Get follower history from followers table
-      const followerHistory = await db
+      // Get followers over time
+      const followerData = await db
         .select({
-          date: sql`to_char(${followers.createdAt}::date, 'YYYY-MM-DD')`,
-          count: sql`COUNT(*)`,
+          id: followers.id,
+          followerId: followers.followerId,
+          createdAt: followers.createdAt,
         })
         .from(followers)
-        .where(
-          and(
-            eq(followers.followingId, authorId),
-            sql`${followers.createdAt} >= ${startDate}::date`,
-            sql`${followers.createdAt} <= ${endDate}::date`,
-          ),
-        )
-        .groupBy(sql`${followers.createdAt}::date`)
-        .orderBy(sql`${followers.createdAt}::date`);
+        .where(eq(followers.authorId, authorId))
+        .orderBy(followers.createdAt);
 
-      // Get unfollower history
-      const unfollowerHistory = await db
-        .select({
-          date: sql`to_char(${followers.deletedAt}::date, 'YYYY-MM-DD')`,
-          count: sql`COUNT(*)`,
-        })
+      // Get current follower count
+      const followerCount = await db
+        .select({ count: sql<number>`count(*)` })
         .from(followers)
-        .where(
-          and(
-            eq(followers.followingId, authorId),
-            sql`${followers.deletedAt} >= ${startDate}::date`,
-            sql`${followers.deletedAt} <= ${endDate}::date`,
-            isNotNull(followers.deletedAt),
-          ),
-        )
-        .groupBy(sql`${followers.deletedAt}::date`)
-        .orderBy(sql`${followers.deletedAt}::date`);
-
-      // Fill in missing dates with zero counts
-      const dateMap = new Map();
-      for (
-        let d = new Date(startDate);
-        d <= endDate;
-        d.setDate(d.getDate() + 1)
-      ) {
-        const dateStr = d.toISOString().split("T")[0];
-        dateMap.set(dateStr, { date: dateStr, count: "0" });
-      }
-
-      // Update with actual follow counts
-      followerHistory.forEach(({ date, count }) => {
-        if (dateMap.has(date)) {
-          dateMap.get(date).count = count.toString();
-        }
-      });
-
-      // Create array of follows with all dates
-      const follows = Array.from(dateMap.values());
-
-      // Reset dateMap for unfollows
-      dateMap.clear();
-      for (
-        let d = new Date(startDate);
-        d <= endDate;
-        d.setDate(d.getDate() + 1)
-      ) {
-        const dateStr = d.toISOString().split("T")[0];
-        dateMap.set(dateStr, { date: dateStr, count: "0" });
-      }
-
-      // Update with actual unfollow counts
-      unfollowerHistory.forEach(({ date, count }) => {
-        if (dateMap.has(date)) {
-          dateMap.get(date).count = count.toString();
-        }
-      });
-
-      // Create array of unfollows with all dates
-      const unfollows = Array.from(dateMap.values());
+        .where(eq(followers.authorId, authorId));
 
       res.json({
-        follows,
-        unfollows,
+        follows: followerData,
+        totalFollowers: followerCount[0].count,
       });
     } catch (error) {
       console.error("Error fetching follower analytics:", error);
