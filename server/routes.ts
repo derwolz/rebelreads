@@ -1251,14 +1251,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdAt: followers.createdAt,
         })
         .from(followers)
-        .where(eq(followers.authorId, authorId))
+        .where(eq(followers.followingId, authorId))
         .orderBy(followers.createdAt);
 
       // Get current follower count
       const followerCount = await db
         .select({ count: sql<number>`count(*)` })
         .from(followers)
-        .where(eq(followers.authorId, authorId));
+        .where(eq(followers.followingId, authorId));
 
       res.json({
         follows: followerData,
@@ -1366,7 +1366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add this route with the other book-related routes
+  // Add this near other book-related routes
   app.get("/api/wishlist/books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
