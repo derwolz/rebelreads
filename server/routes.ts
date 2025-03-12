@@ -922,7 +922,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get books and aggregate ratings for each author
       const authorsWithDetails = await Promise.all(
-        authors.map(async (author) =>{
+        authors.map(async (author) => {
           const authorBooks = await db
             .select()
             .from(books)
@@ -1600,7 +1600,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add bulk book upload endpoint
-  app.post("/api/books/bulk", adminAuthMiddleware, upload.array("covers"), async (req, res) => {
+  app.post("/api/books/bulk", upload.array("covers"), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user!.isAuthor) {
+      return res.sendStatus(401);
+    }
+
     try {
       if (!req.files || !req.body.csvData) {
         return res.status(400).json({ message: "Missing required files" });
@@ -1613,59 +1617,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create books with processed cover images
       const createdBooks = await Promise.all(
         csvData.map(async (book: any, index: number) => {
-          // Process author name
-          const authorNames = book.author.split(' ');
-          const firstName = authorNames[0];
-          const lastName = authorNames[authorNames.length - 1];
-
-          // Search for existing author
-          let author = await db
-            .select()
-            .from(users)
-            .where(eq(users.authorName, book.author))
-            .limit(1);
-
-          let authorId;
-
-          if (author.length === 0) {
-            // Create new author account
-            const email = `public.${firstName.toLowerCase()}.${lastName.toLowerCase()}@sirened.com`;
-            const password = `${lastName}_6647`;
-            const username = `public.${firstName.toLowerCase()}.${lastName.toLowerCase()}`;
-
-            // Hash the password
-            const salt = randomBytes(16).toString("hex");
-            const hashBuffer = (await scryptAsync(password, salt, 64)) as Buffer;
-            const hashedPassword = `${salt}:${hashBuffer.toString("hex")}`;
-
-            const [newAuthor] = await db
-              .insert(users)
-              .values({
-                email,
-                username,
-                password: hashedPassword,
-                isAuthor: true,
-                authorName: book.author,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                credits: 0,
-              })
-              .returning();
-
-            authorId = newAuthor.id;
-          } else {
-            authorId = author[0].id;
-          }
-
           const coverFile = coverFiles[index];
           const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
 
           return await dbStorage.createBook({
             title: book.title,
             description: book.description,
-            authorId,
+            authorId: req.user!.id,
             coverUrl,
-            author: book.author,
+            author: req.user!.authorName || req.user!.username,
             genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
             formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
             promoted: false,
