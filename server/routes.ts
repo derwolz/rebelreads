@@ -1600,11 +1600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add bulk book upload endpoint
-  app.post("/api/books/bulk", upload.array("covers"), async (req, res) => {
-    if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
-    }
-
+  app.post("/api/admin/books/bulk", adminAuthMiddleware, upload.array("covers"), async (req, res) => {
     try {
       if (!req.files || !req.body.csvData) {
         return res.status(400).json({ message: "Missing required files" });
@@ -1620,12 +1616,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const coverFile = coverFiles[index];
           const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
 
+          // Find or create author
+          const existingAuthor = await db
+            .select()
+            .from(users)
+            .where(sql`LOWER(${users.username}) = ${book.author.toLowerCase()}`)
+            .limit(1);
+
+          let authorId;
+          if (existingAuthor.length > 0) {
+            authorId = existingAuthor[0].id;
+          } else {
+            // Create new author account
+            const [newAuthor] = await db
+              .insert(users)
+              .values({
+                username: book.author,
+                authorName: book.author,
+                isAuthor: true,
+                email: `${book.author.toLowerCase().replace(/\s+/g, '.')}@example.com`, // Temporary email
+                password: '', // Empty password as this is an admin-created account
+              })
+              .returning();
+            authorId = newAuthor.id;
+          }
+
           return await dbStorage.createBook({
             title: book.title,
             description: book.description,
-            authorId: req.user!.id,
+            authorId,
             coverUrl,
-            author: req.user!.authorName || req.user!.username,
+            author: book.author,
             genres: book.genres ? book.genres.split(';').map((g: string) => g.trim()) : [],
             formats: book.formats ? book.formats.split(';').map((f: string) => f.trim()) : [],
             promoted: false,
@@ -1646,7 +1667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(createdBooks);
     } catch (error) {
-      console.error("Error processing bulk book upload:", error);
+      console.error("Error processing admin bulk book upload:", error);
       res.status(500).json({ error: "Failed to process bulk upload" });
     }
   });

@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
+import { AdminBookCsvUploadWizard } from "@/components/admin-book-csv-upload-wizard";
 
 export default function AdminPanel() {
   const { user } = useAuth();
-  
+
   // Check if user is admin
   const { data: isAdmin, isLoading: checkingAdmin } = useQuery({
     queryKey: ['/api/admin/check'],
@@ -38,7 +39,7 @@ export default function AdminPanel() {
           <CardDescription>Manage your website settings and content</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="users">
+          <Tabs defaultValue="books">
             <TabsList>
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="books">Books</TabsTrigger>
@@ -51,7 +52,7 @@ export default function AdminPanel() {
             </TabsContent>
             <TabsContent value="books">
               <h3 className="text-lg font-semibold mb-4">Book Management</h3>
-              {/* Book management content will go here */}
+              <AdminBookCsvUploadWizard />
             </TabsContent>
             <TabsContent value="reports">
               <h3 className="text-lg font-semibold mb-4">Report Management</h3>
