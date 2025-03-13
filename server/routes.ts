@@ -580,7 +580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add near the other API endpoints
   app.get("/api/pro/dashboard", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -635,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add after the /api/pro/dashboard endpoint
   app.get("/api/campaigns", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -649,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/campaigns", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -666,7 +666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/campaigns/:id/status", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
@@ -1234,7 +1234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add this after the /api/pro/book-performance endpoint
+  // Add after the /api/pro/book-performance endpoint
   app.get("/api/pro/follower-analytics", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
       return res.sendStatus(403);
@@ -1242,27 +1242,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const authorId = req.user!.id;
+      const timeRange = parseInt(req.query.timeRange as string) || 30; // Default to 30 days
 
-      // Get followers over time
-      const followerData = await db
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - timeRange);
+
+      // Get follower history
+      const followerHistory = await db
         .select({
-          id: followers.id,
-          followerId: followers.followerId,
-          createdAt: followers.createdAt,
+          date: sql`to_char(${followers.createdAt}::date, 'YYYY-MM-DD')`,
+          count: sql`COUNT(*)`,
         })
         .from(followers)
-        .where(eq(followers.followingId, authorId))
-        .orderBy(followers.createdAt);
+        .where(
+          and(
+            eq(followers.followingId, authorId),
+            sql`${followers.createdAt} >= ${startDate}::date`,
+            sql`${followers.createdAt} <= ${endDate}::date`,
+          ),
+        )
+        .groupBy(sql`${followers.createdAt}::date`)
+        .orderBy(sql`${followers.createdAt}::date`);
 
-      // Get current follower count
-      const followerCount = await db
+      // Fill in missing dates with zero counts for follows
+      const dateMap = new Map();
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        dateMap.set(dateStr, { date: dateStr, count: "0" });
+      }
+
+      // Update with actual follow counts
+      followerHistory.forEach(({ date, count }) => {
+        if (dateMap.has(date)) {
+          dateMap.get(date).count = count.toString();
+        }
+      });
+
+      // Create arrays with all dates
+      const follows = Array.from(dateMap.values());
+
+      // For now, we'll set unfollows to be empty counts since we don't track unfollows yet
+      const unfollows = follows.map(({ date }) => ({
+        date,
+        count: "0"
+      }));
+
+      // Get total follower count
+      const [{ count: totalFollowers }] = await db
         .select({ count: sql<number>`count(*)` })
         .from(followers)
         .where(eq(followers.followingId, authorId));
 
       res.json({
-        follows: followerData,
-        totalFollowers: followerCount[0].count,
+        follows,
+        unfollows,
+        totalFollowers
       });
     } catch (error) {
       console.error("Error fetching follower analytics:", error);
@@ -1366,7 +1401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add this near other book-related routes
+  // Add near other book-related routes
   app.get("/api/wishlist/books", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
