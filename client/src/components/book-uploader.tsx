@@ -5,9 +5,88 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, GripVertical } from "lucide-react";
 import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+const RETAILER_OPTIONS = [
+  "Amazon",
+  "Barnes & Noble",
+  "IndieBound",
+  "Custom",
+] as const;
+
+interface ReferralLink {
+  retailer: typeof RETAILER_OPTIONS[number];
+  url: string;
+  customName?: string;
+}
+
+interface SortableReferralLinkProps {
+  link: ReferralLink;
+  index: number;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+}
+
+function SortableReferralLink({
+  link,
+  index,
+  onChange,
+  onRemove,
+}: SortableReferralLinkProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: index });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab hover:text-primary"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="text-sm">{link.customName || link.retailer}:</span>
+      <Input
+        value={link.url}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-sm h-8"
+      />
+      <Button variant="ghost" size="sm" onClick={onRemove}>
+        ×
+      </Button>
+    </div>
+  );
+}
 
 export function BookUploader() {
   const { toast } = useToast();
@@ -18,6 +97,14 @@ export function BookUploader() {
   const [awards, setAwards] = useState<string[]>([]);
   const [characterInput, setCharacterInput] = useState("");
   const [awardInput, setAwardInput] = useState("");
+  const [referralLinks, setReferralLinks] = useState<ReferralLink[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -46,6 +133,7 @@ export function BookUploader() {
       setSelectedFormats([]);
       setSelectedCharacters([]);
       setAwards([]);
+      setReferralLinks([]);
     },
     onError: (error: Error) => {
       toast({
@@ -91,6 +179,7 @@ export function BookUploader() {
     formData.set("formats", JSON.stringify(selectedFormats));
     formData.set("characters", JSON.stringify(selectedCharacters));
     formData.set("awards", JSON.stringify(awards));
+    formData.set("referralLinks", JSON.stringify(referralLinks));
 
     uploadMutation.mutate(formData);
   };
@@ -283,6 +372,76 @@ export function BookUploader() {
                 </span>
               )}
             </p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">Referral Links</label>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => {
+            const { active, over } = event;
+            if (over && active.id !== over.id) {
+              const oldIndex = Number(active.id);
+              const newIndex = Number(over.id);
+              setReferralLinks(arrayMove(referralLinks, oldIndex, newIndex));
+            }
+          }}
+        >
+          <SortableContext
+            items={referralLinks.map((_, i) => i)}
+            strategy={verticalListSortingStrategy}
+          >
+            {referralLinks.map((link, index) => (
+              <SortableReferralLink
+                key={index}
+                link={link}
+                index={index}
+                onChange={(newUrl) => {
+                  const newLinks = [...referralLinks];
+                  newLinks[index] = { ...link, url: newUrl };
+                  setReferralLinks(newLinks);
+                }}
+                onRemove={() => {
+                  setReferralLinks(referralLinks.filter((_, i) => i !== index));
+                }}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+        <div className="flex gap-2 mt-2">
+          <Select
+            onValueChange={(value) => {
+              const newLink: ReferralLink = {
+                retailer: value as typeof RETAILER_OPTIONS[number],
+                url: "",
+                customName: value === "Custom" ? "" : undefined,
+              };
+              setReferralLinks([...referralLinks, newLink]);
+            }}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Add retailer..." />
+            </SelectTrigger>
+            <SelectContent>
+              {RETAILER_OPTIONS.map((retailer) => (
+                <SelectItem key={retailer} value={retailer}>
+                  {retailer}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {referralLinks.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setReferralLinks([])}
+            >
+              Clear All
+            </Button>
           )}
         </div>
       </div>
