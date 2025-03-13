@@ -8,12 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
-import { DragDropCover } from "@/components/drag-drop-cover";
+import { cn } from "@/lib/utils";
+import type { ReferralLink } from "@shared/schema";
+import { BookCard } from "./book-card";
+import {DragDropCover} from "@/components/drag-drop-cover";
 import { GenreTagInput } from "@/components/genre-tag-input";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -34,7 +36,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Edit } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -42,7 +44,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Book, ReferralLink } from "@shared/schema";
+import {Edit} from "lucide-react";
+import type { Book } from "@shared/schema";
+
+
+// Keep all the existing interfaces and type definitions
 
 const RETAILER_OPTIONS = [
   "Amazon",
@@ -52,22 +58,30 @@ const RETAILER_OPTIONS = [
 ] as const;
 
 interface FormData {
+  // Basic Info
   title: string;
   cover: File | null;
   description: string;
+  // Details
   series: string;
   setting: string;
   characters: string[];
+  // Awards
   hasAwards: boolean;
   awards: string[];
+  // Formats
   formats: string[];
+  // Publication
   pageCount: number;
   publishedDate: string;
   isbn: string;
   asin: string;
   language: string;
+  // Genres
   genres: string[];
+  // Additional
   originalTitle: string;
+  // Referral Links
   referralLinks: ReferralLink[];
 }
 
@@ -79,7 +93,7 @@ const STEPS = [
   "Publication",
   "Genres",
   "Referral Links",
-  "Preview",
+  "Preview"
 ] as const;
 
 interface SortableReferralLinkProps {
@@ -127,7 +141,7 @@ function SortableReferralLink({
 
 interface BookUploadWizardProps {
   onSuccess?: () => void;
-  book?: Book;
+  book?: Book;  // Add this prop for editing existing books
 }
 
 export function BookUploadDialog({ book }: { book?: Book }) {
@@ -150,11 +164,6 @@ export function BookUploadDialog({ book }: { book?: Book }) {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
-          {book && (
-            <DialogDescription>
-              Only changed fields will be updated
-            </DialogDescription>
-          )}
         </DialogHeader>
         <BookUploadWizard onSuccess={() => setOpen(false)} book={book} />
       </DialogContent>
@@ -169,7 +178,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
     if (book) {
       return {
         title: book.title,
-        cover: null,
+        cover: null, // Can't pre-fill File object
         description: book.description,
         series: book.series || "",
         setting: book.setting || "",
@@ -209,7 +218,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   });
   const [characterInput, setCharacterInput] = useState("");
   const [awardInput, setAwardInput] = useState("");
-  const [initialData] = useState(book ? { ...formData } : null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -221,36 +229,15 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const uploadMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const formDataToSend = new FormData();
-
-      // Only send changed fields when editing
-      if (book) {
-        Object.entries(data).forEach(([key, value]) => {
-          if (key === 'cover' && value instanceof File) {
-            formDataToSend.append(key, value);
-          } else if (Array.isArray(value)) {
-            // Compare arrays
-            const initialValue = (initialData as any)[key];
-            if (JSON.stringify(value) !== JSON.stringify(initialValue)) {
-              formDataToSend.append(key, JSON.stringify(value));
-            }
-          } else if (value !== (initialData as any)[key]) {
-            if (value !== null) {
-              formDataToSend.append(key, value.toString());
-            }
-          }
-        });
-      } else {
-        // For new books, send all fields
-        Object.entries(data).forEach(([key, value]) => {
-          if (key === 'cover' && value instanceof File) {
-            formDataToSend.append(key, value);
-          } else if (Array.isArray(value)) {
-            formDataToSend.append(key, JSON.stringify(value));
-          } else if (value !== null) {
-            formDataToSend.append(key, value.toString());
-          }
-        });
-      }
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === "cover" && value instanceof File) {
+          formDataToSend.append(key, value);
+        } else if (Array.isArray(value)) {
+          formDataToSend.append(key, JSON.stringify(value));
+        } else if (value !== null) {
+          formDataToSend.append(key, value.toString());
+        }
+      });
 
       const url = book ? `/api/books/${book.id}` : "/api/books";
       const method = book ? "PUT" : "POST";
@@ -260,7 +247,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         body: formDataToSend,
         credentials: "include",
       });
-
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -270,29 +256,26 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         title: "Success",
         description: book ? "Book updated successfully." : "Book uploaded successfully.",
       });
-      if (!book) {
-        // Only reset form for new books
-        setFormData({
-          title: "",
-          cover: null,
-          description: "",
-          series: "",
-          setting: "",
-          characters: [],
-          hasAwards: false,
-          awards: [],
-          formats: [],
-          pageCount: 0,
-          publishedDate: "",
-          isbn: "",
-          asin: "",
-          language: "English",
-          genres: [],
-          originalTitle: "",
-          referralLinks: []
-        });
-        setCurrentStep(0);
-      }
+      setFormData({
+        title: "",
+        cover: null,
+        description: "",
+        series: "",
+        setting: "",
+        characters: [],
+        hasAwards: false,
+        awards: [],
+        formats: [],
+        pageCount: 0,
+        publishedDate: "",
+        isbn: "",
+        asin: "",
+        language: "English",
+        genres: [],
+        originalTitle: "",
+        referralLinks: []
+      });
+      setCurrentStep(0);
       onSuccess?.();
     },
     onError: (error: Error) => {
@@ -343,27 +326,22 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   };
 
   const canProceed = () => {
-    if (book) {
-      // When editing, always allow proceeding
-      return true;
-    }
-
     switch (currentStep) {
       case 0: 
-        return formData.title && formData.description;
+        return formData.title && formData.cover && formData.description;
       case 1: 
-        return true;
+        return true; 
       case 2: 
         return !formData.hasAwards || (formData.hasAwards && formData.awards.length > 0);
       case 3: 
         return formData.formats.length > 0;
       case 4: 
-        return formData.publishedDate !== "";
+        return formData.publishedDate !== ""; 
       case 5: 
         return formData.genres.length > 0;
-      case 6:
-        return true;
-      case 7:
+      case 6: 
+        return true; 
+      case 7: 
         return true;
       default:
         return false;
