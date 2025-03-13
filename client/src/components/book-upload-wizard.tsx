@@ -20,8 +20,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Keep all the existing interfaces and type definitions
+
+const RETAILER_OPTIONS = [
+  "Amazon",
+  "Barnes & Noble",
+  "IndieBound",
+  "Custom",
+] as const;
 
 interface FormData {
   // Basic Info
@@ -47,6 +78,7 @@ interface FormData {
   genres: string[];
   // Additional
   originalTitle: string;
+  // Referral Links
   referralLinks: ReferralLink[];
 }
 
@@ -57,8 +89,52 @@ const STEPS = [
   "Formats",
   "Publication",
   "Genres",
+  "Referral Links",
   "Preview"
 ] as const;
+
+interface SortableReferralLinkProps {
+  link: ReferralLink;
+  index: number;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+}
+
+function SortableReferralLink({
+  link,
+  index,
+  onChange,
+  onRemove,
+}: SortableReferralLinkProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: index });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab hover:text-primary"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="text-sm">{link.customName || link.retailer}:</span>
+      <Input
+        value={link.url}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-sm h-8"
+      />
+      <Button variant="ghost" size="sm" onClick={onRemove}>
+        ×
+      </Button>
+    </div>
+  );
+}
 
 export function BookUploadDialog() {
   const [open, setOpen] = useState(false);
@@ -109,6 +185,13 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
   const [characterInput, setCharacterInput] = useState("");
   const [awardInput, setAwardInput] = useState("");
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
   const uploadMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const formDataToSend = new FormData();
@@ -136,7 +219,6 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
         title: "Success",
         description: "Your book has been uploaded successfully.",
       });
-      // Reset form
       setFormData({
         title: "",
         cover: null,
@@ -157,7 +239,7 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
         referralLinks: []
       });
       setCurrentStep(0);
-      onSuccess?.(); // Call onSuccess callback if provided
+      onSuccess?.();
     },
     onError: (error: Error) => {
       toast({
@@ -208,19 +290,21 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: // Basic Info
+      case 0: 
         return formData.title && formData.cover && formData.description;
-      case 1: // Details
-        return true; // Optional fields
-      case 2: // Awards
+      case 1: 
+        return true; 
+      case 2: 
         return !formData.hasAwards || (formData.hasAwards && formData.awards.length > 0);
-      case 3: // Formats
+      case 3: 
         return formData.formats.length > 0;
-      case 4: // Publication
-        return formData.publishedDate !== ""; // Only require date
-      case 5: // Genres
+      case 4: 
+        return formData.publishedDate !== ""; 
+      case 5: 
         return formData.genres.length > 0;
-      case 6: // Preview
+      case 6: 
+        return true; 
+      case 7: 
         return true;
       default:
         return false;
@@ -436,7 +520,93 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
           </div>
         );
 
-      case 6:
+      case 6: 
+        return (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Referral Links</h2>
+            <p className="text-sm text-muted-foreground">
+              Add links where readers can purchase your book
+            </p>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(event) => {
+                const { active, over } = event;
+                if (over && active.id !== over.id) {
+                  const oldIndex = Number(active.id);
+                  const newIndex = Number(over.id);
+                  setFormData(prev => ({
+                    ...prev,
+                    referralLinks: arrayMove(prev.referralLinks, oldIndex, newIndex)
+                  }));
+                }
+              }}
+            >
+              <SortableContext
+                items={formData.referralLinks.map((_, i) => i)}
+                strategy={verticalListSortingStrategy}
+              >
+                {formData.referralLinks.map((link, index) => (
+                  <SortableReferralLink
+                    key={index}
+                    link={link}
+                    index={index}
+                    onChange={(newUrl) => {
+                      const newLinks = [...formData.referralLinks];
+                      newLinks[index] = { ...link, url: newUrl };
+                      setFormData(prev => ({ ...prev, referralLinks: newLinks }));
+                    }}
+                    onRemove={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        referralLinks: prev.referralLinks.filter((_, i) => i !== index)
+                      }));
+                    }}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+
+            <div className="flex gap-2 mt-2">
+              <Select
+                onValueChange={(value) => {
+                  const newLink: ReferralLink = {
+                    retailer: value as typeof RETAILER_OPTIONS[number],
+                    url: "",
+                    customName: value === "Custom" ? "" : undefined,
+                  };
+                  setFormData(prev => ({
+                    ...prev,
+                    referralLinks: [...prev.referralLinks, newLink]
+                  }));
+                }}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Add retailer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {RETAILER_OPTIONS.map((retailer) => (
+                    <SelectItem key={retailer} value={retailer}>
+                      {retailer}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formData.referralLinks.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData(prev => ({ ...prev, referralLinks: [] }))}
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
+          </div>
+        );
+
+      case 7: 
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Preview</h2>
@@ -533,6 +703,19 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
                   ))}
                 </div>
               </Card>
+              {formData.referralLinks.length > 0 && (
+                <Card className="p-4">
+                  <h3 className="font-medium mb-2">Referral Links</h3>
+                  <dl className="space-y-1">
+                    {formData.referralLinks.map((link, i) => (
+                      <div key={i} className="text-sm">
+                        <dt className="font-medium">{link.customName || link.retailer}</dt>
+                        <dd className="text-muted-foreground truncate">{link.url}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Card>
+              )}
             </div>
           </div>
         );
