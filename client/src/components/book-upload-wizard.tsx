@@ -224,24 +224,23 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       if (book) {
         // Only send changed fields when updating
         Object.entries(data).forEach(([key, value]) => {
-          // Handle arrays and objects differently
+          // Skip if value hasn't changed from original book data
+          if (book && key in book && book[key as keyof Book] === value) {
+            return;
+          }
+
           if (key === 'cover') {
             // Only include cover if it's a new file
             if (value instanceof File) {
               formDataToSend.append(key, value);
             }
           } else if (Array.isArray(value)) {
-            const bookValue = book[key as keyof Book] as unknown[];
-            // Ensure both are arrays and compare them as strings
-            if (bookValue && (!Array.isArray(bookValue) || JSON.stringify(value) !== JSON.stringify(bookValue))) {
-              formDataToSend.append(key, JSON.stringify(value));
-            }
-          } else if (typeof value === 'object' && value !== null) {
+            // Compare arrays before sending
             const bookValue = book[key as keyof Book];
             if (JSON.stringify(value) !== JSON.stringify(bookValue)) {
               formDataToSend.append(key, JSON.stringify(value));
             }
-          } else if (value !== null && value !== undefined && value !== book[key as keyof Book]) {
+          } else if (value !== null && value !== undefined) {
             formDataToSend.append(key, value.toString());
           }
         });
@@ -250,7 +249,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         Object.entries(data).forEach(([key, value]) => {
           if (key === 'cover' && value instanceof File) {
             formDataToSend.append(key, value);
-          } else if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+          } else if (Array.isArray(value)) {
             formDataToSend.append(key, JSON.stringify(value));
           } else if (value !== null && value !== undefined) {
             formDataToSend.append(key, value.toString());
@@ -261,18 +260,14 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       const url = book ? `/api/books/${book.id}` : "/api/books";
       const method = book ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const res = await fetch(url, {
         method,
         body: formDataToSend,
         credentials: "include",
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
-      }
-
-      return response.json();
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
