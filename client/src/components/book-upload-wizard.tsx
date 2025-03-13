@@ -367,7 +367,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               <DragDropCover
                 title={formData.title}
                 value={formData.cover}
-                defaultPreviewUrl={book?.coverUrl}
                 onChange={(file) => setFormData(prev => ({ ...prev, cover: file }))}
               />
             </div>
