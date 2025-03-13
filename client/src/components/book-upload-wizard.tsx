@@ -220,15 +220,42 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const uploadMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const formDataToSend = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === "cover" && value instanceof File) {
-          formDataToSend.append(key, value);
-        } else if (Array.isArray(value)) {
-          formDataToSend.append(key, JSON.stringify(value));
-        } else if (value !== null) {
-          formDataToSend.append(key, value.toString());
-        }
-      });
+
+      if (book) {
+        // Only send changed fields when updating
+        Object.entries(data).forEach(([key, value]) => {
+          // Skip if value hasn't changed from original book data
+          if (book && key in book && book[key as keyof Book] === value) {
+            return;
+          }
+
+          if (key === 'cover') {
+            // Only include cover if it's a new file
+            if (value instanceof File) {
+              formDataToSend.append(key, value);
+            }
+          } else if (Array.isArray(value)) {
+            // Compare arrays before sending
+            const bookValue = book[key as keyof Book];
+            if (JSON.stringify(value) !== JSON.stringify(bookValue)) {
+              formDataToSend.append(key, JSON.stringify(value));
+            }
+          } else if (value !== null && value !== undefined) {
+            formDataToSend.append(key, value.toString());
+          }
+        });
+      } else {
+        // For new books, include all fields
+        Object.entries(data).forEach(([key, value]) => {
+          if (key === 'cover' && value instanceof File) {
+            formDataToSend.append(key, value);
+          } else if (Array.isArray(value)) {
+            formDataToSend.append(key, JSON.stringify(value));
+          } else if (value !== null && value !== undefined) {
+            formDataToSend.append(key, value.toString());
+          }
+        });
+      }
 
       const url = book ? `/api/books/${book.id}` : "/api/books";
       const method = book ? "PUT" : "POST";
@@ -238,6 +265,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         body: formDataToSend,
         credentials: "include",
       });
+
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
