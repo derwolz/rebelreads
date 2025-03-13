@@ -219,55 +219,91 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const formDataToSend = new FormData();
-
       if (book) {
-        // Only send changed fields when updating
-        Object.entries(data).forEach(([key, value]) => {
-          // Skip if value hasn't changed from original book data
-          if (book && key in book && book[key as keyof Book] === value) {
-            return;
-          }
+        // For updates, send only changed fields as JSON
+        const changedFields: Record<string, any> = {};
 
-          if (key === 'cover') {
-            // Only include cover if it's a new file
-            if (value instanceof File) {
-              formDataToSend.append(key, value);
-            }
-          } else if (Array.isArray(value)) {
-            // Compare arrays before sending
-            const bookValue = book[key as keyof Book];
-            if (JSON.stringify(value) !== JSON.stringify(bookValue)) {
-              formDataToSend.append(key, JSON.stringify(value));
-            }
-          } else if (value !== null && value !== undefined) {
-            formDataToSend.append(key, value.toString());
-          }
-        });
-      } else {
-        // For new books, include all fields
         Object.entries(data).forEach(([key, value]) => {
-          if (key === 'cover' && value instanceof File) {
-            formDataToSend.append(key, value);
+          const bookValue = book[key as keyof Book];
+
+          // Skip unchanged values
+          if (value === bookValue) return;
+
+          // Skip empty strings
+          if (value === "") return;
+
+          // Handle special cases
+          if (key === "cover" && value instanceof File) {
+            changedFields[key] = value;
           } else if (Array.isArray(value)) {
-            formDataToSend.append(key, JSON.stringify(value));
+            if (JSON.stringify(value) !== JSON.stringify(bookValue)) {
+              changedFields[key] = value;
+            }
           } else if (value !== null && value !== undefined) {
-            formDataToSend.append(key, value.toString());
+            changedFields[key] = value;
           }
         });
+
+        // If we have a new cover, use FormData
+        if (changedFields.cover instanceof File) {
+          const formData = new FormData();
+
+          // Add the cover file
+          formData.append("cover", changedFields.cover);
+
+          // Add other changed fields
+          Object.entries(changedFields).forEach(([key, value]) => {
+            if (key !== "cover") {
+              formData.append(key, 
+                Array.isArray(value) ? JSON.stringify(value) : String(value)
+              );
+            }
+          });
+
+          const response = await fetch(`/api/books/${book.id}`, {
+            method: "PUT",
+            body: formData,
+            credentials: "include"
+          });
+
+          if (!response.ok) throw new Error(await response.text());
+          return response.json();
+        }
+
+        // If no new cover, send as JSON
+        const response = await fetch(`/api/books/${book.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify(changedFields)
+        });
+
+        if (!response.ok) throw new Error(await response.text());
+        return response.json();
       }
 
-      const url = book ? `/api/books/${book.id}` : "/api/books";
-      const method = book ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        body: formDataToSend,
-        credentials: "include",
+      // For new books, keep existing FormData logic
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === "cover" && value instanceof File) {
+          formData.append(key, value);
+        } else if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else if (value !== null && value !== undefined && value !== "") {
+          formData.append(key, value.toString());
+        }
       });
 
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
+      const response = await fetch("/api/books", {
+        method: "POST",
+        body: formData,
+        credentials: "include"
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
