@@ -11,7 +11,7 @@ import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
-import {DragDropCover} from "@/components/drag-drop-cover";
+import { DragDropCover } from "@/components/drag-drop-cover";
 import { GenreTagInput } from "@/components/genre-tag-input";
 import {
   Dialog,
@@ -44,9 +44,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {Edit} from "lucide-react";
+import { Edit } from "lucide-react";
 import type { Book } from "@shared/schema";
-
 
 const RETAILER_OPTIONS = [
   "Amazon",
@@ -83,7 +82,7 @@ const STEPS = [
   "Publication",
   "Genres",
   "Referral Links",
-  "Preview"
+  "Preview",
 ] as const;
 
 interface SortableReferralLinkProps {
@@ -146,9 +145,7 @@ export function BookUploadDialog({ book }: { book?: Book }) {
             Edit
           </Button>
         ) : (
-          <Button className="w-full">
-            Add Book
-          </Button>
+          <Button className="w-full">Add Book</Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -184,7 +181,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         language: book.language,
         genres: book.genres,
         originalTitle: book.originalTitle || "",
-        referralLinks: book.referralLinks || []
+        referralLinks: book.referralLinks || [],
       };
     }
     return {
@@ -204,7 +201,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       language: "English",
       genres: [],
       originalTitle: "",
-      referralLinks: []
+      referralLinks: [],
     };
   });
   const [characterInput, setCharacterInput] = useState("");
@@ -254,16 +251,17 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           // Add other changed fields
           Object.entries(changedFields).forEach(([key, value]) => {
             if (key !== "cover") {
-              formData.append(key, 
-                Array.isArray(value) ? JSON.stringify(value) : String(value)
+              formData.append(
+                key,
+                Array.isArray(value) ? JSON.stringify(value) : String(value),
               );
             }
           });
 
           const response = await fetch(`/api/books/${book.id}`, {
-            method: "PUT",
+            method: "PATCH",
             body: formData,
-            credentials: "include"
+            credentials: "include",
           });
 
           if (!response.ok) throw new Error(await response.text());
@@ -272,12 +270,12 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
 
         // If no new cover, send as JSON
         const response = await fetch(`/api/books/${book.id}`, {
-          method: "PUT",
+          method: "PATCH",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify(changedFields)
+          body: JSON.stringify(changedFields),
         });
 
         if (!response.ok) throw new Error(await response.text());
@@ -299,7 +297,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       const response = await fetch("/api/books", {
         method: "POST",
         body: formData,
-        credentials: "include"
+        credentials: "include",
       });
 
       if (!response.ok) throw new Error(await response.text());
@@ -309,7 +307,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
       toast({
         title: "Success",
-        description: book ? "Book updated successfully." : "Book uploaded successfully.",
+        description: book
+          ? "Book updated successfully."
+          : "Book uploaded successfully.",
       });
       setFormData({
         title: "",
@@ -328,7 +328,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         language: "English",
         genres: [],
         originalTitle: "",
-        referralLinks: []
+        referralLinks: [],
       });
       setCurrentStep(0);
       onSuccess?.();
@@ -344,9 +344,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
 
   const handleAddCharacter = () => {
     if (characterInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        characters: [...prev.characters, characterInput.trim()]
+        characters: [...prev.characters, characterInput.trim()],
       }));
       setCharacterInput("");
     }
@@ -354,49 +354,52 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
 
   const handleAddAward = () => {
     if (awardInput.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        awards: [...prev.awards, awardInput.trim()]
+        awards: [...prev.awards, awardInput.trim()],
       }));
       setAwardInput("");
     }
   };
 
   const handleFormatToggle = (format: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       formats: prev.formats.includes(format)
-        ? prev.formats.filter(f => f !== format)
-        : [...prev.formats, format]
+        ? prev.formats.filter((f) => f !== format)
+        : [...prev.formats, format],
     }));
   };
 
   const handleGenreToggle = (genre: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       genres: prev.genres.includes(genre)
-        ? prev.genres.filter(g => g !== genre)
-        : [...prev.genres, genre]
+        ? prev.genres.filter((g) => g !== genre)
+        : [...prev.genres, genre],
     }));
   };
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: 
+      case 0:
         return formData.title && formData.description;
-      case 1: 
-        return true; 
-      case 2: 
-        return !formData.hasAwards || (formData.hasAwards && formData.awards.length > 0);
-      case 3: 
+      case 1:
+        return true;
+      case 2:
+        return (
+          !formData.hasAwards ||
+          (formData.hasAwards && formData.awards.length > 0)
+        );
+      case 3:
         return formData.formats.length > 0;
-      case 4: 
-        return formData.publishedDate !== ""; 
-      case 5: 
+      case 4:
+        return formData.publishedDate !== "";
+      case 5:
         return formData.genres.length > 0;
-      case 6: 
-        return true; 
-      case 7: 
+      case 6:
+        return true;
+      case 7:
         return true;
       default:
         return false;
@@ -410,15 +413,21 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Basic Information</h2>
             <div>
-              <label className="block text-sm font-medium mb-1">Book Title</label>
+              <label className="block text-sm font-medium mb-1">
+                Book Title
+              </label>
               <Input
                 value={formData.title}
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Book Cover</label>
+              <label className="block text-sm font-medium mb-1">
+                Book Cover
+              </label>
               {book && !showCoverUpload ? (
                 <div className="space-y-4">
                   <div className="relative w-32">
@@ -441,17 +450,24 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   title={formData.title}
                   value={formData.cover}
                   onChange={(file) => {
-                    setFormData(prev => ({ ...prev, cover: file }));
+                    setFormData((prev) => ({ ...prev, cover: file }));
                     setShowCoverUpload(false);
                   }}
                 />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
               <Textarea
                 value={formData.description}
-                onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 required
               />
             </div>
@@ -463,10 +479,14 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Book Details</h2>
             <div>
-              <label className="block text-sm font-medium mb-1">Series (if part of one)</label>
+              <label className="block text-sm font-medium mb-1">
+                Series (if part of one)
+              </label>
               <Input
                 value={formData.series}
-                onChange={e => setFormData(prev => ({ ...prev, series: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, series: e.target.value }))
+                }
                 placeholder="Name of the series"
               />
             </div>
@@ -474,20 +494,28 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               <label className="block text-sm font-medium mb-1">Setting</label>
               <Input
                 value={formData.setting}
-                onChange={e => setFormData(prev => ({ ...prev, setting: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, setting: e.target.value }))
+                }
                 placeholder="Where/when does the story take place?"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Characters</label>
+              <label className="block text-sm font-medium mb-1">
+                Characters
+              </label>
               <div className="flex gap-2 mb-2">
                 <Input
                   value={characterInput}
-                  onChange={e => setCharacterInput(e.target.value)}
+                  onChange={(e) => setCharacterInput(e.target.value)}
                   placeholder="Add a character"
-                  onKeyPress={e => e.key === 'Enter' && handleAddCharacter()}
+                  onKeyPress={(e) => e.key === "Enter" && handleAddCharacter()}
                 />
-                <Button type="button" variant="outline" onClick={handleAddCharacter}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddCharacter}
+                >
                   Add
                 </Button>
               </div>
@@ -497,10 +525,15 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                     key={index}
                     variant="secondary"
                     className="cursor-pointer"
-                    onClick={() => setFormData(prev => ({
-                      ...prev,
-                      characters: prev.characters.filter((_, i) => i !== index)
-                    }))}>
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        characters: prev.characters.filter(
+                          (_, i) => i !== index,
+                        ),
+                      }))
+                    }
+                  >
                     {char} ×
                   </Badge>
                 ))}
@@ -514,11 +547,18 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Awards</h2>
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Has this book won any awards?</label>
+              <label className="text-sm font-medium">
+                Has this book won any awards?
+              </label>
               <input
                 type="checkbox"
                 checked={formData.hasAwards}
-                onChange={e => setFormData(prev => ({ ...prev, hasAwards: e.target.checked }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    hasAwards: e.target.checked,
+                  }))
+                }
               />
             </div>
             {formData.hasAwards && (
@@ -526,11 +566,15 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={awardInput}
-                    onChange={e => setAwardInput(e.target.value)}
+                    onChange={(e) => setAwardInput(e.target.value)}
                     placeholder="Add an award"
-                    onKeyPress={e => e.key === 'Enter' && handleAddAward()}
+                    onKeyPress={(e) => e.key === "Enter" && handleAddAward()}
                   />
-                  <Button type="button" variant="outline" onClick={handleAddAward}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddAward}
+                  >
                     Add
                   </Button>
                 </div>
@@ -540,10 +584,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                       key={index}
                       variant="secondary"
                       className="cursor-pointer"
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        awards: prev.awards.filter((_, i) => i !== index)
-                      }))}>
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          awards: prev.awards.filter((_, i) => i !== index),
+                        }))
+                      }
+                    >
                       {award} ×
                     </Badge>
                   ))}
@@ -561,7 +608,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               {FORMAT_OPTIONS.map((format) => (
                 <Button
                   key={format}
-                  variant={formData.formats.includes(format) ? "default" : "outline"}
+                  variant={
+                    formData.formats.includes(format) ? "default" : "outline"
+                  }
                   className="h-24 text-lg"
                   onClick={() => handleFormatToggle(format)}
                 >
@@ -577,28 +626,44 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Publication Information</h2>
             <div>
-              <label className="block text-sm font-medium mb-1">Publication Date</label>
+              <label className="block text-sm font-medium mb-1">
+                Publication Date
+              </label>
               <Input
                 type="date"
                 value={formData.publishedDate}
-                onChange={e => setFormData(prev => ({ ...prev, publishedDate: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    publishedDate: e.target.value,
+                  }))
+                }
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Number of Pages</label>
+              <label className="block text-sm font-medium mb-1">
+                Number of Pages
+              </label>
               <Input
                 type="number"
                 min="1"
                 value={formData.pageCount || ""}
-                onChange={e => setFormData(prev => ({ ...prev, pageCount: parseInt(e.target.value) || 0 }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    pageCount: parseInt(e.target.value) || 0,
+                  }))
+                }
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">ISBN</label>
               <Input
                 value={formData.isbn}
-                onChange={e => setFormData(prev => ({ ...prev, isbn: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, isbn: e.target.value }))
+                }
                 placeholder="ISBN number"
               />
             </div>
@@ -606,7 +671,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               <label className="block text-sm font-medium mb-1">ASIN</label>
               <Input
                 value={formData.asin}
-                onChange={e => setFormData(prev => ({ ...prev, asin: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, asin: e.target.value }))
+                }
                 placeholder="Amazon ASIN (for Kindle editions)"
               />
             </div>
@@ -614,7 +681,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               <label className="block text-sm font-medium mb-1">Language</label>
               <Input
                 value={formData.language}
-                onChange={e => setFormData(prev => ({ ...prev, language: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, language: e.target.value }))
+                }
               />
             </div>
           </div>
@@ -625,16 +694,19 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Genres</h2>
             <p className="text-sm text-muted-foreground">
-              Select existing genres or create new ones to accurately categorize your book.
+              Select existing genres or create new ones to accurately categorize
+              your book.
             </p>
             <GenreTagInput
               selectedGenres={formData.genres}
-              onGenresChange={(genres) => setFormData(prev => ({ ...prev, genres }))}
+              onGenresChange={(genres) =>
+                setFormData((prev) => ({ ...prev, genres }))
+              }
             />
           </div>
         );
 
-      case 6: 
+      case 6:
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Referral Links</h2>
@@ -650,9 +722,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 if (over && active.id !== over.id) {
                   const oldIndex = Number(active.id);
                   const newIndex = Number(over.id);
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
-                    referralLinks: arrayMove(prev.referralLinks, oldIndex, newIndex)
+                    referralLinks: arrayMove(
+                      prev.referralLinks,
+                      oldIndex,
+                      newIndex,
+                    ),
                   }));
                 }
               }}
@@ -669,12 +745,17 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                     onChange={(newUrl) => {
                       const newLinks = [...formData.referralLinks];
                       newLinks[index] = { ...link, url: newUrl };
-                      setFormData(prev => ({ ...prev, referralLinks: newLinks }));
+                      setFormData((prev) => ({
+                        ...prev,
+                        referralLinks: newLinks,
+                      }));
                     }}
                     onRemove={() => {
-                      setFormData(prev => ({
+                      setFormData((prev) => ({
                         ...prev,
-                        referralLinks: prev.referralLinks.filter((_, i) => i !== index)
+                        referralLinks: prev.referralLinks.filter(
+                          (_, i) => i !== index,
+                        ),
                       }));
                     }}
                   />
@@ -686,13 +767,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               <Select
                 onValueChange={(value) => {
                   const newLink: ReferralLink = {
-                    retailer: value as typeof RETAILER_OPTIONS[number],
+                    retailer: value as (typeof RETAILER_OPTIONS)[number],
                     url: "",
                     customName: value === "Custom" ? "" : undefined,
                   };
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
-                    referralLinks: [...prev.referralLinks, newLink]
+                    referralLinks: [...prev.referralLinks, newLink],
                   }));
                 }}
               >
@@ -711,7 +792,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setFormData(prev => ({ ...prev, referralLinks: [] }))}
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, referralLinks: [] }))
+                  }
                 >
                   Clear All
                 </Button>
@@ -720,7 +803,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           </div>
         );
 
-      case 7: 
+      case 7:
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Preview</h2>
@@ -732,9 +815,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 <h3 className="font-medium mb-2">Basic Information</h3>
                 <dl className="space-y-1">
                   <dt className="text-sm font-medium">Title</dt>
-                  <dd className="text-sm text-muted-foreground">{formData.title}</dd>
+                  <dd className="text-sm text-muted-foreground">
+                    {formData.title}
+                  </dd>
                   <dt className="text-sm font-medium mt-2">Description</dt>
-                  <dd className="text-sm text-muted-foreground">{formData.description}</dd>
+                  <dd className="text-sm text-muted-foreground">
+                    {formData.description}
+                  </dd>
                 </dl>
               </Card>
               <Card className="p-4">
@@ -743,13 +830,17 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   {formData.series && (
                     <>
                       <dt className="text-sm font-medium">Series</dt>
-                      <dd className="text-sm text-muted-foreground">{formData.series}</dd>
+                      <dd className="text-sm text-muted-foreground">
+                        {formData.series}
+                      </dd>
                     </>
                   )}
                   {formData.setting && (
                     <>
                       <dt className="text-sm font-medium mt-2">Setting</dt>
-                      <dd className="text-sm text-muted-foreground">{formData.setting}</dd>
+                      <dd className="text-sm text-muted-foreground">
+                        {formData.setting}
+                      </dd>
                     </>
                   )}
                   {formData.characters.length > 0 && (
@@ -757,7 +848,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                       <dt className="text-sm font-medium mt-2">Characters</dt>
                       <dd className="flex flex-wrap gap-1">
                         {formData.characters.map((char, i) => (
-                          <Badge key={i} variant="secondary">{char}</Badge>
+                          <Badge key={i} variant="secondary">
+                            {char}
+                          </Badge>
                         ))}
                       </dd>
                     </>
@@ -769,7 +862,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   <h3 className="font-medium mb-2">Awards</h3>
                   <div className="flex flex-wrap gap-1">
                     {formData.awards.map((award, i) => (
-                      <Badge key={i} variant="secondary">{award}</Badge>
+                      <Badge key={i} variant="secondary">
+                        {award}
+                      </Badge>
                     ))}
                   </div>
                 </Card>
@@ -792,19 +887,25 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   {formData.pageCount > 0 && (
                     <>
                       <dt className="text-sm font-medium mt-2">Pages</dt>
-                      <dd className="text-sm text-muted-foreground">{formData.pageCount}</dd>
+                      <dd className="text-sm text-muted-foreground">
+                        {formData.pageCount}
+                      </dd>
                     </>
                   )}
                   {formData.isbn && (
                     <>
                       <dt className="text-sm font-medium mt-2">ISBN</dt>
-                      <dd className="text-sm text-muted-foreground">{formData.isbn}</dd>
+                      <dd className="text-sm text-muted-foreground">
+                        {formData.isbn}
+                      </dd>
                     </>
                   )}
                   {formData.asin && (
                     <>
                       <dt className="text-sm font-medium mt-2">ASIN</dt>
-                      <dd className="text-sm text-muted-foreground">{formData.asin}</dd>
+                      <dd className="text-sm text-muted-foreground">
+                        {formData.asin}
+                      </dd>
                     </>
                   )}
                 </dl>
@@ -813,7 +914,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 <h3 className="font-medium mb-2">Genres</h3>
                 <div className="flex flex-wrap gap-1">
                   {formData.genres.map((genre, i) => (
-                    <Badge key={i} variant="secondary">{genre}</Badge>
+                    <Badge key={i} variant="secondary">
+                      {genre}
+                    </Badge>
                   ))}
                 </div>
               </Card>
@@ -823,8 +926,12 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   <dl className="space-y-1">
                     {formData.referralLinks.map((link, i) => (
                       <div key={i} className="text-sm">
-                        <dt className="font-medium">{link.customName || link.retailer}</dt>
-                        <dd className="text-muted-foreground truncate">{link.url}</dd>
+                        <dt className="font-medium">
+                          {link.customName || link.retailer}
+                        </dt>
+                        <dd className="text-muted-foreground truncate">
+                          {link.url}
+                        </dd>
                       </div>
                     ))}
                   </dl>
@@ -846,7 +953,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 variant={currentStep === index ? "default" : "ghost"}
                 className={cn(
                   "h-8",
-                  index > currentStep && "opacity-50 cursor-not-allowed"
+                  index > currentStep && "opacity-50 cursor-not-allowed",
                 )}
                 onClick={() => index <= currentStep && setCurrentStep(index)}
                 disabled={index > currentStep}
@@ -861,14 +968,12 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         </div>
       </div>
 
-      <div className="min-h-[400px]">
-        {renderStep()}
-      </div>
+      <div className="min-h-[400px]">{renderStep()}</div>
 
       <div className="flex justify-between">
         <Button
           variant="outline"
-          onClick={() => setCurrentStep(prev => prev - 1)}
+          onClick={() => setCurrentStep((prev) => prev - 1)}
           disabled={currentStep === 0}
         >
           Previous
@@ -878,14 +983,17 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
             onClick={() => uploadMutation.mutate(formData)}
             disabled={uploadMutation.isPending || !canProceed()}
           >
-            {uploadMutation.isPending ? 
-              book ? "Updating..." : "Uploading..." 
-              : book ? "Update" : "Submit"
-            }
+            {uploadMutation.isPending
+              ? book
+                ? "Updating..."
+                : "Uploading..."
+              : book
+                ? "Update"
+                : "Submit"}
           </Button>
         ) : (
           <Button
-            onClick={() => setCurrentStep(prev => prev + 1)}
+            onClick={() => setCurrentStep((prev) => prev + 1)}
             disabled={!canProceed()}
           >
             Next
