@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { BookCsvUploadWizard } from "@/components/book-csv-upload-wizard";
+import { Edit } from "lucide-react";
 
 export function ProBookManagement() {
   const { user } = useAuth();
@@ -32,23 +33,6 @@ export function ProBookManagement() {
   const { data: userBooks } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
     enabled: user?.isAuthor,
-  });
-
-  const promoteBookMutation = useMutation({
-    mutationFn: async (bookId: number) => {
-      const res = await fetch(`/api/books/${bookId}/promote`, {
-        method: "POST",
-        credentials: "include",
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
-      toast({
-        title: "Book promoted",
-        description: "Your book promotion request has been submitted.",
-      });
-    },
   });
 
   const deleteBookMutation = useMutation({
@@ -98,19 +82,10 @@ export function ProBookManagement() {
                 />
                 <div>
                   <h3 className="font-semibold">{book.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {book.promoted ? "Promoted" : "Not promoted"}
-                  </p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => promoteBookMutation.mutate(book.id)}
-                  disabled={book.promoted || false}
-                >
-                  Promote Book
-                </Button>
+                <BookUploadDialog book={book} />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive">Delete</Button>

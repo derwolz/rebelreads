@@ -44,6 +44,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {Edit} from "lucide-react";
+import type { Book } from "@shared/schema";
+
 
 // Keep all the existing interfaces and type definitions
 
@@ -136,51 +139,82 @@ function SortableReferralLink({
   );
 }
 
-export function BookUploadDialog() {
+interface BookUploadWizardProps {
+  onSuccess?: () => void;
+  book?: Book;  // Add this prop for editing existing books
+}
+
+export function BookUploadDialog({ book }: { book?: Book }) {
   const [open, setOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full">
-          Add Book
-        </Button>
+        {book ? (
+          <Button variant="outline" size="sm">
+            <Edit className="w-4 h-4 mr-2" />
+            Edit
+          </Button>
+        ) : (
+          <Button className="w-full">
+            Add Book
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Book</DialogTitle>
+          <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
         </DialogHeader>
-        <BookUploadWizard onSuccess={() => setOpen(false)} />
+        <BookUploadWizard onSuccess={() => setOpen(false)} book={book} />
       </DialogContent>
     </Dialog>
   );
 }
 
-interface BookUploadWizardProps {
-  onSuccess?: () => void;
-}
-
-export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
+export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>({
-    title: "",
-    cover: null,
-    description: "",
-    series: "",
-    setting: "",
-    characters: [],
-    hasAwards: false,
-    awards: [],
-    formats: [],
-    pageCount: 0,
-    publishedDate: "",
-    isbn: "",
-    asin: "",
-    language: "English",
-    genres: [],
-    originalTitle: "",
-    referralLinks: []
+  const [formData, setFormData] = useState<FormData>(() => {
+    if (book) {
+      return {
+        title: book.title,
+        cover: null, // Can't pre-fill File object
+        description: book.description,
+        series: book.series || "",
+        setting: book.setting || "",
+        characters: book.characters || [],
+        hasAwards: (book.awards || []).length > 0,
+        awards: book.awards || [],
+        formats: book.formats,
+        pageCount: book.pageCount,
+        publishedDate: book.publishedDate,
+        isbn: book.isbn || "",
+        asin: book.asin || "",
+        language: book.language,
+        genres: book.genres,
+        originalTitle: book.originalTitle || "",
+        referralLinks: book.referralLinks || []
+      };
+    }
+    return {
+      title: "",
+      cover: null,
+      description: "",
+      series: "",
+      setting: "",
+      characters: [],
+      hasAwards: false,
+      awards: [],
+      formats: [],
+      pageCount: 0,
+      publishedDate: "",
+      isbn: "",
+      asin: "",
+      language: "English",
+      genres: [],
+      originalTitle: "",
+      referralLinks: []
+    };
   });
   const [characterInput, setCharacterInput] = useState("");
   const [awardInput, setAwardInput] = useState("");
@@ -205,8 +239,11 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
         }
       });
 
-      const res = await fetch("/api/books", {
-        method: "POST",
+      const url = book ? `/api/books/${book.id}` : "/api/books";
+      const method = book ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         body: formDataToSend,
         credentials: "include",
       });
@@ -217,7 +254,7 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/my-books"] });
       toast({
         title: "Success",
-        description: "Your book has been uploaded successfully.",
+        description: book ? "Book updated successfully." : "Book uploaded successfully.",
       });
       setFormData({
         title: "",
@@ -764,7 +801,10 @@ export function BookUploadWizard({ onSuccess }: BookUploadWizardProps) {
             onClick={() => uploadMutation.mutate(formData)}
             disabled={uploadMutation.isPending || !canProceed()}
           >
-            {uploadMutation.isPending ? "Uploading..." : "Submit"}
+            {uploadMutation.isPending ? 
+              book ? "Updating..." : "Uploading..." 
+              : book ? "Update" : "Submit"
+            }
           </Button>
         ) : (
           <Button
