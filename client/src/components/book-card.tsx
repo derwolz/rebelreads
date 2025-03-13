@@ -137,7 +137,7 @@ export function BookCard({ book }: { book: Book }) {
                   </Badge>
                 </div>
               )}
-              <div className="absolute bg-black/20 rounded top-2 left-2  z-10">
+              <div className="absolute bg-black/20 rounded-full top-2 left-2  z-10">
                 <WishlistButton bookId={book.id} variant="ghost" size="icon" />
               </div>
               <img

@@ -11,7 +11,12 @@ interface WishlistButtonProps {
   className?: string;
 }
 
-export function WishlistButton({ bookId, variant = "outline", size = "default", className }: WishlistButtonProps) {
+export function WishlistButton({
+  bookId,
+  variant = "outline",
+  size = "default",
+  className,
+}: WishlistButtonProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -22,11 +27,13 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
 
   const { mutate: toggleWishlist, isPending } = useMutation({
     mutationFn: async () => {
-      const method = readingStatus?.isWishlisted ? 'DELETE' : 'POST';
+      const method = readingStatus?.isWishlisted ? "DELETE" : "POST";
       return apiRequest(method, `/api/books/${bookId}/wishlist`, { bookId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/books/${bookId}/reading-status`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/books/${bookId}/reading-status`],
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     },
   });
@@ -47,22 +54,18 @@ export function WishlistButton({ bookId, variant = "outline", size = "default", 
     >
       {readingStatus?.isWishlisted ? (
         size === "icon" ? (
-          <Heart className="h-4 w-4" fill="currentColor" />
+          <Heart className="h-4 w-4" fill="#f00" stroke="#f00" />
         ) : (
           <>
-            <Heart className="h-4 w-4 mr-2" fill="currentColor" />
-            Remove from Wishlist
+            <Heart className="h-4 w-4 mr-2" fill="#f00" />
           </>
         )
+      ) : size === "icon" ? (
+        <Heart className="h-4 w-4" />
       ) : (
-        size === "icon" ? (
-          <Heart className="h-4 w-4" />
-        ) : (
-          <>
-            <Heart className="h-4 w-4 mr-2" />
-            Add to Wishlist
-          </>
-        )
+        <>
+          <Heart className="h-4 w-4 mr-2" />
+        </>
       )}
     </Button>
   );
