@@ -48,8 +48,6 @@ import {Edit} from "lucide-react";
 import type { Book } from "@shared/schema";
 
 
-// Keep all the existing interfaces and type definitions
-
 const RETAILER_OPTIONS = [
   "Amazon",
   "Barnes & Noble",
@@ -58,30 +56,22 @@ const RETAILER_OPTIONS = [
 ] as const;
 
 interface FormData {
-  // Basic Info
   title: string;
   cover: File | null;
   description: string;
-  // Details
   series: string;
   setting: string;
   characters: string[];
-  // Awards
   hasAwards: boolean;
   awards: string[];
-  // Formats
   formats: string[];
-  // Publication
   pageCount: number;
   publishedDate: string;
   isbn: string;
   asin: string;
   language: string;
-  // Genres
   genres: string[];
-  // Additional
   originalTitle: string;
-  // Referral Links
   referralLinks: ReferralLink[];
 }
 
@@ -141,7 +131,7 @@ function SortableReferralLink({
 
 interface BookUploadWizardProps {
   onSuccess?: () => void;
-  book?: Book;  // Add this prop for editing existing books
+  book?: Book;
 }
 
 export function BookUploadDialog({ book }: { book?: Book }) {
@@ -174,11 +164,12 @@ export function BookUploadDialog({ book }: { book?: Book }) {
 export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
+  const [showCoverUpload, setShowCoverUpload] = useState(!book);
   const [formData, setFormData] = useState<FormData>(() => {
     if (book) {
       return {
         title: book.title,
-        cover: null, // Can't pre-fill File object
+        cover: null,
         description: book.description,
         series: book.series || "",
         setting: book.setting || "",
@@ -328,7 +319,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const canProceed = () => {
     switch (currentStep) {
       case 0: 
-        return formData.title && formData.cover && formData.description;
+        return formData.title && formData.description;
       case 1: 
         return true; 
       case 2: 
@@ -364,11 +355,33 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Book Cover</label>
-              <DragDropCover
-                title={formData.title}
-                value={formData.cover}
-                onChange={(file) => setFormData(prev => ({ ...prev, cover: file }))}
-              />
+              {book && !showCoverUpload ? (
+                <div className="space-y-4">
+                  <div className="relative w-32">
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowCoverUpload(true)}
+                  >
+                    Change Cover
+                  </Button>
+                </div>
+              ) : (
+                <DragDropCover
+                  title={formData.title}
+                  value={formData.cover}
+                  onChange={(file) => {
+                    setFormData(prev => ({ ...prev, cover: file }));
+                    setShowCoverUpload(false);
+                  }}
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Description</label>
