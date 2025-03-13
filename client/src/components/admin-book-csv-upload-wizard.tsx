@@ -33,6 +33,10 @@ interface CsvBook {
   published_date: string;
   language: string;
   isbn: string;
+  amazon_link: string;
+  barnes_noble_link: string;
+  indieBound_link: string;
+  custom_link: string;
 }
 
 export function AdminBookCsvUploadWizard() {
@@ -150,7 +154,11 @@ export function AdminBookCsvUploadWizard() {
     const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
 
     // Validate headers
-    const requiredHeaders = ['title', 'description', 'cover_url', 'author', 'genres', 'formats', 'page_count', 'published_date', 'language', 'isbn'];
+    const requiredHeaders = [
+      'title', 'description', 'cover_url', 'author', 'genres', 'formats', 
+      'page_count', 'published_date', 'language', 'isbn', 'amazon_link',
+      'barnes_noble_link', 'indiebound_link', 'custom_link'
+    ];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
     if (missingHeaders.length > 0) {
@@ -183,7 +191,7 @@ export function AdminBookCsvUploadWizard() {
           Upload Books CSV (Admin)
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-[90vw] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Bulk Upload Books (Admin)</DialogTitle>
         </DialogHeader>
@@ -206,7 +214,8 @@ export function AdminBookCsvUploadWizard() {
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               Your CSV should include the following columns:<br />
-              title, description, cover_url, author, genres (semicolon-separated), formats (semicolon-separated), page_count, published_date, language, isbn
+              title, description, cover_url, author, genres (semicolon-separated), formats (semicolon-separated),<br />
+              page_count, published_date, language, isbn, amazon_link, barnes_noble_link, indiebound_link, custom_link
             </p>
           </div>
         ) : (
@@ -225,6 +234,10 @@ export function AdminBookCsvUploadWizard() {
                     <TableHead>Published Date</TableHead>
                     <TableHead>Language</TableHead>
                     <TableHead>ISBN</TableHead>
+                    <TableHead>Amazon</TableHead>
+                    <TableHead>Barnes & Noble</TableHead>
+                    <TableHead>IndieBound</TableHead>
+                    <TableHead>Custom Link</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -240,6 +253,10 @@ export function AdminBookCsvUploadWizard() {
                       <TableCell>{book.published_date}</TableCell>
                       <TableCell>{book.language}</TableCell>
                       <TableCell>{book.isbn}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{book.amazon_link}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{book.barnes_noble_link}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{book.indieBound_link}</TableCell>
+                      <TableCell className="max-w-[150px] truncate">{book.custom_link}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

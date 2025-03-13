@@ -1570,40 +1570,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required files" });
       }
 
-      // Parse CSV data
-      const csvData = JSON.parse(req.body.csvData);
       const coverFiles = req.files as Express.Multer.File[];
+      const books = JSON.parse(req.body.csvData);
 
-      // Create books with processed cover images
+      // Process each book
       const createdBooks = await Promise.all(
-        csvData.map(async (book: any, index: number) => {
+        books.map(async (book: any, index: number) => {
           const coverFile = coverFiles[index];
           const coverUrl = coverFile ? `/uploads/covers/${coverFile.filename}` : book.cover_url;
 
           // Find or create author
+          const nameParts = book.author.trim().split(' ');
+          const firstName = nameParts[0].toLowerCase();
+          const lastName = nameParts[nameParts.length - 1].toLowerCase();
+          const username = `public.${firstName}.${lastName}@sirened.com`;
+
           const existingAuthor = await db
             .select()
             .from(users)
-            .where(sql`LOWER(${users.username}) = ${book.author.toLowerCase()}`)
+            .where(sql`LOWER(${users.username}) = ${username}`)
             .limit(1);
 
           let authorId;
           if (existingAuthor.length > 0) {
             authorId = existingAuthor[0].id;
           } else {
-            // Process author name
-            const nameParts = book.author.trim().split(' ');
-            const firstName = nameParts[0].toLowerCase();
-            const lastName = nameParts[nameParts.length - 1].toLowerCase();
-            const username = `public.${firstName}.${lastName}@sirened.com`;
-            const password = `${lastName}_6647`;
-
-            // Hash the password
+            // Create new author account
             const salt = randomBytes(16).toString("hex");
-            const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+            const buf = (await scryptAsync(`${lastName}_6647`, salt, 64)) as Buffer;
             const hashedPassword = `${salt}:${buf.toString("hex")}`;
 
-            // Create new author account
             const [newAuthor] = await db
               .insert(users)
               .values({
@@ -1628,15 +1624,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             promoted: false,
             authorImageUrl: null,
             pageCount: book.page_count ? parseInt(book.page_count) : null,
-            publishedDate: book.published_date ? new Date(book.published_date) : null,
-            awards: [],
-            originalTitle: null,
-            series: null,
-            setting: null,
-            characters: [],
+            publishedDate: book.published_date || null,
+            language: book.language || 'English',
             isbn: book.isbn || null,
-            asin: null,
-            language: book.language || "English",
+            amazonLink: book.amazon_link || null,
+            barnesNobleLink: book.barnes_noble_link || null,
+            indieBoundLink: book.indibound_link || null,
+            customLink: book.custom_link || null,
           });
         })
       );
