@@ -130,7 +130,7 @@ export function LandingPage() {
                 onClick={handleUserTypeChange}
                 className={`text-2xl font-bold transition-all duration-500 hover:bg-transparent hover:text-primary focus:bg-transparent border-b-2 ${
                   isAuthor ? 'text-primary border-primary' : 'text-muted-foreground border-muted-foreground'
-                } rounded-none px-0`}
+                } rounded-none px-0 animate-pulse-shadow`}
               >
                 {isAuthor ? 'Author' : 'Reader'}
               </Button>
