@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { ChevronDown } from "lucide-react";
 
 export function LandingPage() {
   const [isAuthor, setIsAuthor] = useState(false);
   const [email, setEmail] = useState("");
+  const [activePanel, setActivePanel] = useState(0);
   const { setTheme } = useTheme();
   const { toast } = useToast();
 
@@ -55,19 +57,68 @@ export function LandingPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1 container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Transform Your Story Journey
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Where authors and readers unite to create unforgettable literary experiences.
-          </p>
-        </div>
+  // Story panels content based on user type
+  const panels = isAuthor ? [
+    {
+      title: "Your Story Begins Here",
+      description: "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
+    },
+    {
+      title: "Craft Your Masterpiece",
+      description: "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
+    },
+    {
+      title: "Connect With Your Audience",
+      description: "Build a loyal readership, engage with your fans, and create a community around your stories.",
+    },
+    {
+      title: "Grow Your Author Brand",
+      description: "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
+    },
+    {
+      title: "Shape Literary Futures",
+      description: "Join a new generation of authors who are redefining storytelling in the digital age.",
+    }
+  ] : [
+    {
+      title: "Discover Your Next Adventure",
+      description: "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
+    },
+    {
+      title: "Connect With Stories",
+      description: "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
+    },
+    {
+      title: "Join the Conversation",
+      description: "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
+    },
+    {
+      title: "Support Your Favorite Authors",
+      description: "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
+    },
+    {
+      title: "Your Reading Journey Awaits",
+      description: "Start your literary adventure today and become part of something bigger.",
+    }
+  ];
 
-        <div className="flex justify-center mb-16">
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const newActivePanel = Math.floor((scrollPosition + windowHeight / 2) / windowHeight);
+      setActivePanel(Math.min(newActivePanel, panels.length - 1));
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [panels.length]);
+
+  return (
+    <div className="min-h-screen">
+      {/* Fixed header with user type toggle */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-center items-center">
           <div className="flex flex-col items-center gap-2">
             <span className="text-lg font-medium">I am a</span>
             <div className="flex items-center gap-2">
@@ -81,52 +132,53 @@ export function LandingPage() {
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4">For Readers</h2>
-            <ul className="space-y-4 mb-6">
-              <li>✨ Discover your next favorite book</li>
-              <li>📚 Connect with passionate readers</li>
-              <li>🎯 Get personalized recommendations</li>
-              <li>💬 Engage with authors directly</li>
-            </ul>
-          </Card>
+      {/* Story panels */}
+      {panels.map((panel, index) => (
+        <section
+          key={index}
+          className="min-h-screen flex items-center justify-center relative snap-start"
+          style={{
+            opacity: activePanel === index ? 1 : 0.3,
+            transition: 'opacity 0.5s ease-in-out'
+          }}
+        >
+          <div className="container mx-auto px-4 py-16">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-4xl md:text-6xl font-bold mb-6">{panel.title}</h2>
+              <p className="text-xl text-muted-foreground">{panel.description}</p>
+            </div>
+          </div>
 
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4">For Authors</h2>
-            <ul className="space-y-4 mb-6">
-              <li>📈 Grow your readership</li>
-              <li>🎯 Target your ideal audience</li>
-              <li>📊 Track your book's performance</li>
-              <li>🤝 Build a loyal community</li>
-            </ul>
-          </Card>
-        </div>
+          {/* Show scroll indicator on all panels except the last */}
+          {index < panels.length - 1 && (
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+              <ChevronDown className="w-8 h-8 text-muted-foreground" />
+            </div>
+          )}
+        </section>
+      ))}
 
-        <div className="max-w-md mx-auto">
-          <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-4 text-center">
-              Sign Up for Updates
-            </h2>
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                Keep Me Updated
+      {/* Fixed signup form at the bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <Card className="max-w-md mx-auto">
+            <form onSubmit={handleSignup} className="p-4 flex gap-2">
+              <Input
+                type="email"
+                placeholder="Enter your email for updates"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit">
+                Sign Up
               </Button>
             </form>
           </Card>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
