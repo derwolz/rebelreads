@@ -123,14 +123,14 @@ export function LandingPage() {
             Where Stories Come Alive
           </h1>
           <div className="flex flex-col items-center gap-6">
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex items-center space-x-4">
               <span className="text-xl text-muted-foreground font-medium">I am a</span>
               <Button
                 variant="ghost"
                 onClick={handleUserTypeChange}
-                className={`text-2xl font-bold transition-all duration-500 hover:bg-transparent hover:text-primary focus:bg-transparent ${
-                  isAuthor ? 'text-primary border-b-2 border-primary rounded-none px-0' : 'text-muted-foreground'
-                }`}
+                className={`text-2xl font-bold transition-all duration-500 hover:bg-transparent hover:text-primary focus:bg-transparent border-b-2 ${
+                  isAuthor ? 'text-primary border-primary' : 'text-muted-foreground border-muted-foreground'
+                } rounded-none px-0`}
               >
                 {isAuthor ? 'Author' : 'Reader'}
               </Button>
