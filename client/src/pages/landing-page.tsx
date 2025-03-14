@@ -11,6 +11,7 @@ export function LandingPage() {
   const [isAuthor, setIsAuthor] = useState(false);
   const [email, setEmail] = useState("");
   const [activePanel, setActivePanel] = useState(0);
+  const [prevPanel, setPrevPanel] = useState(0);
   const { setTheme } = useTheme();
   const { toast } = useToast();
 
@@ -107,15 +108,16 @@ export function LandingPage() {
       const scrollPosition = window.scrollY;
       const windowHeight = window.innerHeight;
       const newActivePanel = Math.floor((scrollPosition + windowHeight / 2) / windowHeight);
+      setPrevPanel(activePanel);
       setActivePanel(Math.min(newActivePanel, panels.length - 1));
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [panels.length]);
+  }, [panels.length, activePanel]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen perspective-1000">
       {/* Hero section with toggle */}
       <div className="min-h-[50vh] relative flex items-center justify-center bg-gradient-to-b from-background to-transparent">
         <div className="text-center space-y-8">
@@ -143,10 +145,16 @@ export function LandingPage() {
       {panels.map((panel, index) => (
         <section
           key={index}
-          className="min-h-screen flex items-center justify-center relative snap-start"
+          className={`min-h-screen flex items-center justify-center relative snap-start transition-all duration-1000 transform-gpu ${
+            activePanel === index
+              ? 'animate-page-turn opacity-100'
+              : prevPanel === index
+              ? 'animate-page-out opacity-0'
+              : 'opacity-0'
+          }`}
           style={{
-            opacity: activePanel === index ? 1 : 0.3,
-            transition: 'opacity 0.5s ease-in-out'
+            perspective: '1000px',
+            transformStyle: 'preserve-3d',
           }}
         >
           <div className="container mx-auto px-4 py-16">
