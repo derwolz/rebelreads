@@ -8,6 +8,30 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
+const FloatingShape = ({ className }: { className?: string }) => (
+  <div className={`absolute transition-all duration-20000 ease-in-out animate-float ${className}`}>
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M60 10L110 95H10L60 10Z" />
+    </svg>
+  </div>
+);
+
+const CircleShape = ({ className }: { className?: string }) => (
+  <div className={`absolute transition-all duration-25000 ease-in-out animate-float-delayed ${className}`}>
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="40" />
+    </svg>
+  </div>
+);
+
+const SquareShape = ({ className }: { className?: string }) => (
+  <div className={`absolute transition-all duration-22000 ease-in-out animate-float-reverse ${className}`}>
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="60" height="60" transform="rotate(45 40 40)" />
+    </svg>
+  </div>
+);
+
 export function LandingPage() {
   const [isAuthor, setIsAuthor] = useState(false);
   const [email, setEmail] = useState("");
@@ -115,10 +139,20 @@ export function LandingPage() {
   }, [panels.length]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated background shapes */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <FloatingShape className="text-primary/20 top-1/4 left-1/4" />
+        <CircleShape className="text-primary/10 top-1/3 right-1/4" />
+        <SquareShape className="text-primary/15 bottom-1/4 left-1/3" />
+        <FloatingShape className="text-primary/10 bottom-1/3 right-1/3 rotate-180" />
+        <CircleShape className="text-primary/20 top-2/3 left-1/2" />
+        <SquareShape className="text-primary/15 top-1/2 right-1/2 rotate-45" />
+      </div>
+
       {/* Hero section with toggle */}
-      <div className="min-h-[50vh] relative flex items-center justify-center bg-gradient-to-b from-background to-transparent">
-        <div className="text-center space-y-8">
+      <div className="min-h-[50vh] relative flex items-center justify-center">
+        <div className="text-center space-y-8 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
           <h1 className="text-5xl md:text-7xl font-bold mb-12">
             Where Stories Come Alive
           </h1>
@@ -159,7 +193,7 @@ export function LandingPage() {
           }}
         >
           <div className="container mx-auto px-4 py-16">
-            <div className="max-w-3xl mx-auto text-center">
+            <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
               <h2 className="text-4xl md:text-6xl font-bold mb-6">{panel.title}</h2>
               <p className="text-xl text-muted-foreground">{panel.description}</p>
             </div>

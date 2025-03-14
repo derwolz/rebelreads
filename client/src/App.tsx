@@ -22,19 +22,22 @@ import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
+  const [location] = useLocation();
 
-  // If showLandingPage is true and we're not already on /landing, redirect to landing
-  if (showLandingPage && window.location.pathname !== "/landing") {
+  // Only redirect if we're not already on /landing and not on an API route
+  if (showLandingPage && location !== "/landing" && !location.startsWith("/api")) {
     return <Redirect to="/landing" />;
   }
 
   return (
     <>
-      <MainNav />
+      {/* Only show MainNav when not on landing page */}
+      {location !== "/landing" && <MainNav />}
+
       <Switch>
         {/* Public routes */}
         <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
