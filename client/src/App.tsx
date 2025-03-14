@@ -22,9 +22,15 @@ import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
+import { Redirect } from "wouter";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
+
+  // If showLandingPage is true and we're not already on /landing, redirect to landing
+  if (showLandingPage && window.location.pathname !== "/landing") {
+    return <Redirect to="/landing" />;
+  }
 
   return (
     <>
