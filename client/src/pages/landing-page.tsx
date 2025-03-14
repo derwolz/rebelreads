@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
@@ -55,9 +54,9 @@ const LandingPage = () => {
   const { setTheme } = useTheme();
   const { toast } = useToast();
 
-  const handleUserTypeChange = (checked: boolean) => {
-    setIsAuthor(checked);
-    setTheme(checked ? "dark" : "light");
+  const handleUserTypeChange = (isAuthor: boolean) => {
+    setIsAuthor(isAuthor);
+    setTheme(isAuthor ? "dark" : "light");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -182,6 +181,39 @@ const LandingPage = () => {
       </div>
 
       <div className="fixed inset-0 backdrop-blur-[20px] pointer-events-none" />
+
+      {/* Hero section with text buttons */}
+      <section className="min-h-screen flex items-center justify-center relative">
+        <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+          <h1 className="text-5xl md:text-7xl font-bold">
+            Where Stories Come Alive
+          </h1>
+          <div className="flex flex-col items-center gap-8">
+            <span className="text-xl text-muted-foreground">I am a</span>
+            <div className="flex gap-12 items-center">
+              <button
+                onClick={() => handleUserTypeChange(false)}
+                className={`text-2xl font-bold relative ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}
+              >
+                Reader
+                {!isAuthor && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 to-[#40E0D0]/50 rounded-full blur-sm" />
+                )}
+              </button>
+              <div className="text-2xl text-muted-foreground">or</div>
+              <button
+                onClick={() => handleUserTypeChange(true)}
+                className={`text-2xl font-bold relative ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}
+              >
+                Author
+                {isAuthor && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#40E0D0]/50 to-primary/50 rounded-full blur-sm" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {panels.map((panel, index) => (
         <section
