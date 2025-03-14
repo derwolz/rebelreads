@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
 const FloatingShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-18000 ease-in-out animate-float ${className}`}>
+  <div className={`absolute transition-all duration-12000 ease-in-out animate-float ${className}`}>
     <svg width="180" height="180" viewBox="0 0 120 120" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M60 10L110 95H10L60 10Z" />
     </svg>
@@ -16,7 +16,7 @@ const FloatingShape = ({ className }: { className?: string }) => (
 );
 
 const CircleShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-22500 ease-in-out animate-float-delayed ${className}`}>
+  <div className={`absolute transition-all duration-15000 ease-in-out animate-float-delayed ${className}`}>
     <svg width="160" height="160" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="40" />
     </svg>
@@ -24,7 +24,7 @@ const CircleShape = ({ className }: { className?: string }) => (
 );
 
 const SquareShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-19800 ease-in-out animate-float-reverse ${className}`}>
+  <div className={`absolute transition-all duration-13500 ease-in-out animate-float-reverse ${className}`}>
     <svg width="140" height="140" viewBox="0 0 80 80" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <rect x="10" y="10" width="60" height="60" transform="rotate(45 40 40)" />
     </svg>
@@ -32,7 +32,7 @@ const SquareShape = ({ className }: { className?: string }) => (
 );
 
 const StarShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-20700 ease-in-out animate-float ${className}`}>
+  <div className={`absolute transition-all duration-14000 ease-in-out animate-float ${className}`}>
     <svg width="160" height="160" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M50 5L61 39H97L68 61L79 95L50 73L21 95L32 61L3 39H39L50 5Z" />
     </svg>
@@ -40,7 +40,7 @@ const StarShape = ({ className }: { className?: string }) => (
 );
 
 const HexagonShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-21600 ease-in-out animate-float-delayed ${className}`}>
+  <div className={`absolute transition-all duration-15500 ease-in-out animate-float-delayed ${className}`}>
     <svg width="170" height="170" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M50 5L90 27.5V72.5L50 95L10 72.5V27.5L50 5Z" />
     </svg>
