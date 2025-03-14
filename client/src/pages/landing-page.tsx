@@ -143,12 +143,15 @@ export function LandingPage() {
       {/* Animated background shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <FloatingShape className="text-primary/20 top-1/4 left-1/4" />
-        <CircleShape className="text-primary/10 top-1/3 right-1/4" />
+        <CircleShape className="text-[#40E0D0]/30 top-1/3 right-1/4" />
         <SquareShape className="text-primary/15 bottom-1/4 left-1/3" />
-        <FloatingShape className="text-primary/10 bottom-1/3 right-1/3 rotate-180" />
+        <FloatingShape className="text-[#40E0D0]/20 bottom-1/3 right-1/3 rotate-180" />
         <CircleShape className="text-primary/20 top-2/3 left-1/2" />
         <SquareShape className="text-primary/15 top-1/2 right-1/2 rotate-45" />
       </div>
+
+      {/* Add blur overlay */}
+      <div className="fixed inset-0 backdrop-blur-[20px] pointer-events-none" />
 
       {/* Hero section with toggle */}
       <div className="min-h-[50vh] relative flex items-center justify-center">
