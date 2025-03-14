@@ -116,19 +116,33 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Fixed header with user type toggle */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-center items-center">
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-lg font-medium">I am a</span>
-            <div className="flex items-center gap-2">
-              <span className={!isAuthor ? "font-bold" : "text-muted-foreground"}>Reader</span>
-              <Switch
-                checked={isAuthor}
-                onCheckedChange={handleUserTypeChange}
-                className="data-[state=checked]:bg-primary"
+      {/* Hero section with toggle */}
+      <div className="min-h-[50vh] relative flex items-center justify-center bg-gradient-to-b from-background to-transparent">
+        <div className="text-center space-y-8">
+          <h1 className="text-5xl md:text-7xl font-bold mb-12">
+            Where Stories Come Alive
+          </h1>
+          <div className="flex flex-col items-center gap-6">
+            <span className="text-xl text-muted-foreground font-medium">I am a</span>
+            <div className="relative">
+              <div className="absolute -inset-3 bg-gradient-to-r from-primary/50 to-primary rounded-lg blur opacity-75 transition-all duration-500"
+                style={{
+                  transform: isAuthor ? 'translateX(100%)' : 'translateX(0)',
+                }}
               />
-              <span className={isAuthor ? "font-bold" : "text-muted-foreground"}>Author</span>
+              <div className="relative flex items-center gap-6 bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-xl">
+                <span className={`text-2xl font-bold transition-colors duration-500 ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
+                  Reader
+                </span>
+                <Switch
+                  checked={isAuthor}
+                  onCheckedChange={handleUserTypeChange}
+                  className="h-12 w-12 data-[state=checked]:bg-primary"
+                />
+                <span className={`text-2xl font-bold transition-colors duration-500 ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
+                  Author
+                </span>
+              </div>
             </div>
           </div>
         </div>
