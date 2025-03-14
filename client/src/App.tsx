@@ -24,21 +24,15 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 import { Redirect } from "wouter";
 
-function Router() {
-  const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
-
-  // If showLandingPage is true and we're not already on /landing, redirect to landing
-  if (showLandingPage && window.location.pathname !== "/landing") {
-    return <Redirect to="/landing" />;
-  }
+function AuthenticatedApp() {
+  const { isOpen, setIsOpen } = useAuthModal();
 
   return (
-    <>
+    <AuthProvider>
       <MainNav />
       <Switch>
         {/* Public routes */}
-        <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
-        <Route path="/landing" component={LandingPage} />
+        <Route path="/" component={HomePage} />
         <Route path="/books/:id" component={BookDetails} />
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
@@ -63,22 +57,31 @@ function Router() {
 
         <Route component={NotFound} />
       </Switch>
-    </>
+      <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
+      <ReviewInviteDialog />
+    </AuthProvider>
   );
 }
 
 function App() {
-  const { isOpen, setIsOpen } = useAuthModal();
+  const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <AuthProvider>
-          <Router />
-          <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
-          <ReviewInviteDialog />
-          <Toaster />
-        </AuthProvider>
+        {showLandingPage ? (
+          <>
+            <Switch>
+              <Route path="/landing" component={LandingPage} />
+              <Route>
+                <Redirect to="/landing" />
+              </Route>
+            </Switch>
+          </>
+        ) : (
+          <AuthenticatedApp />
+        )}
+        <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   );

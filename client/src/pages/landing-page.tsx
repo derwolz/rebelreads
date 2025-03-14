@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
@@ -16,9 +15,10 @@ export function LandingPage() {
   const { toast } = useToast();
 
   // Switch theme based on user type
-  const handleUserTypeChange = (checked: boolean) => {
-    setIsAuthor(checked);
-    setTheme(checked ? "dark" : "light");
+  const handleUserTypeChange = () => {
+    const newIsAuthor = !isAuthor;
+    setIsAuthor(newIsAuthor);
+    setTheme(newIsAuthor ? "dark" : "light");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -123,26 +123,17 @@ export function LandingPage() {
             Where Stories Come Alive
           </h1>
           <div className="flex flex-col items-center gap-6">
-            <span className="text-xl text-muted-foreground font-medium">I am a</span>
-            <div className="relative">
-              <div className="absolute -inset-3 bg-gradient-to-r from-primary/50 to-primary rounded-lg blur opacity-75 transition-all duration-500"
-                style={{
-                  transform: isAuthor ? 'translateX(100%)' : 'translateX(0)',
-                }}
-              />
-              <div className="relative flex items-center gap-6 bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-xl">
-                <span className={`text-2xl font-bold transition-colors duration-500 ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
-                  Reader
-                </span>
-                <Switch
-                  checked={isAuthor}
-                  onCheckedChange={handleUserTypeChange}
-                  className="h-12 w-12 data-[state=checked]:bg-primary"
-                />
-                <span className={`text-2xl font-bold transition-colors duration-500 ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
-                  Author
-                </span>
-              </div>
+            <div className="flex flex-col items-center space-y-4">
+              <span className="text-xl text-muted-foreground font-medium">I am a</span>
+              <Button
+                variant="ghost"
+                onClick={handleUserTypeChange}
+                className={`text-2xl font-bold transition-all duration-500 hover:bg-transparent hover:text-primary focus:bg-transparent ${
+                  isAuthor ? 'text-primary border-b-2 border-primary rounded-none px-0' : 'text-muted-foreground'
+                }`}
+              >
+                {isAuthor ? 'Author' : 'Reader'}
+              </Button>
             </div>
           </div>
         </div>
