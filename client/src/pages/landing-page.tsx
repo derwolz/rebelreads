@@ -115,31 +115,37 @@ export function LandingPage() {
   }, [panels.length]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated background */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 dark:from-blue-500 dark:via-blue-700 dark:to-blue-900 bg-300% animate-gradient-shift" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(0,100,255,0.3),transparent_70%)] animate-pulse" />
+      </div>
+
       {/* Hero section with toggle */}
-      <div className="min-h-[50vh] relative flex items-center justify-center bg-gradient-to-b from-background to-transparent">
-        <div className="text-center space-y-8">
-          <h1 className="text-5xl md:text-7xl font-bold mb-12">
+      <div className="min-h-[50vh] relative flex items-center justify-center">
+        <div className="text-center space-y-8 z-10">
+          <h1 className="text-5xl md:text-7xl font-bold mb-12 text-white dark:text-white/90 drop-shadow-lg">
             Where Stories Come Alive
           </h1>
           <div className="flex flex-col items-center gap-6">
-            <span className="text-xl text-muted-foreground font-medium">I am a</span>
+            <span className="text-xl text-white/70 dark:text-white/50 font-medium">I am a</span>
             <div className="relative">
-              <div className="absolute -inset-3 bg-gradient-to-r from-primary/50 to-primary rounded-lg blur opacity-75 transition-all duration-500"
+              <div className="absolute -inset-3 bg-gradient-to-r from-blue-400/50 to-blue-300 dark:from-blue-600/50 dark:to-blue-500 rounded-lg blur opacity-75 transition-all duration-500"
                 style={{
                   transform: isAuthor ? 'translateX(100%)' : 'translateX(0)',
                 }}
               />
-              <div className="relative flex items-center gap-6 bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-xl">
-                <span className={`text-2xl font-bold transition-colors duration-500 ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
+              <div className="relative flex items-center gap-6 bg-white/10 dark:bg-black/10 backdrop-blur-md p-6 rounded-lg shadow-xl border border-white/20 dark:border-white/10">
+                <span className={`text-2xl font-bold transition-colors duration-500 ${!isAuthor ? 'text-blue-300 dark:text-blue-400' : 'text-white/50'}`}>
                   Reader
                 </span>
                 <Switch
                   checked={isAuthor}
                   onCheckedChange={handleUserTypeChange}
-                  className="h-12 w-12 data-[state=checked]:bg-primary"
+                  className="h-12 w-12 data-[state=checked]:bg-blue-500 dark:data-[state=checked]:bg-blue-400"
                 />
-                <span className={`text-2xl font-bold transition-colors duration-500 ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
+                <span className={`text-2xl font-bold transition-colors duration-500 ${isAuthor ? 'text-blue-300 dark:text-blue-400' : 'text-white/50'}`}>
                   Author
                 </span>
               </div>
@@ -158,35 +164,35 @@ export function LandingPage() {
             transition: 'opacity 0.5s ease-in-out'
           }}
         >
-          <div className="container mx-auto px-4 py-16">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-4xl md:text-6xl font-bold mb-6">{panel.title}</h2>
-              <p className="text-xl text-muted-foreground">{panel.description}</p>
+          <div className="container mx-auto px-4 py-16 z-10">
+            <div className="max-w-3xl mx-auto text-center bg-white/5 dark:bg-black/5 backdrop-blur-sm p-8 rounded-xl border border-white/10 dark:border-white/5">
+              <h2 className="text-4xl md:text-6xl font-bold mb-6 text-white dark:text-white/90">{panel.title}</h2>
+              <p className="text-xl text-white/70 dark:text-white/50">{panel.description}</p>
             </div>
           </div>
 
           {/* Show scroll indicator on all panels except the last */}
           {index < panels.length - 1 && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-              <ChevronDown className="w-8 h-8 text-muted-foreground" />
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
+              <ChevronDown className="w-8 h-8 text-white/50" />
             </div>
           )}
         </section>
       ))}
 
       {/* Fixed signup form at the bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/5 dark:bg-black/5 backdrop-blur-md border-t border-white/10 dark:border-white/5">
         <div className="container mx-auto px-4 py-4">
-          <Card className="max-w-md mx-auto">
+          <Card className="max-w-md mx-auto bg-white/10 dark:bg-black/10">
             <form onSubmit={handleSignup} className="p-4 flex gap-2">
               <Input
                 type="email"
                 placeholder="Enter your email for updates"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1"
+                className="flex-1 bg-white/20 dark:bg-black/20 border-white/10 dark:border-white/5 text-white placeholder:text-white/50"
               />
-              <Button type="submit">
+              <Button type="submit" className="bg-blue-500 dark:bg-blue-400 hover:bg-blue-600 dark:hover:bg-blue-500 text-white">
                 Sign Up
               </Button>
             </form>
