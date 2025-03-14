@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
 const FloatingShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-20000 ease-in-out animate-float ${className}`}>
+  <div className={`absolute transition-all duration-18000 ease-in-out animate-float ${className}`}>
     <svg width="180" height="180" viewBox="0 0 120 120" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M60 10L110 95H10L60 10Z" />
     </svg>
@@ -17,7 +17,7 @@ const FloatingShape = ({ className }: { className?: string }) => (
 );
 
 const CircleShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-25000 ease-in-out animate-float-delayed ${className}`}>
+  <div className={`absolute transition-all duration-22500 ease-in-out animate-float-delayed ${className}`}>
     <svg width="160" height="160" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="40" />
     </svg>
@@ -25,7 +25,7 @@ const CircleShape = ({ className }: { className?: string }) => (
 );
 
 const SquareShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-22000 ease-in-out animate-float-reverse ${className}`}>
+  <div className={`absolute transition-all duration-19800 ease-in-out animate-float-reverse ${className}`}>
     <svg width="140" height="140" viewBox="0 0 80 80" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <rect x="10" y="10" width="60" height="60" transform="rotate(45 40 40)" />
     </svg>
@@ -33,7 +33,7 @@ const SquareShape = ({ className }: { className?: string }) => (
 );
 
 const StarShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-23000 ease-in-out animate-float ${className}`}>
+  <div className={`absolute transition-all duration-20700 ease-in-out animate-float ${className}`}>
     <svg width="160" height="160" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M50 5L61 39H97L68 61L79 95L50 73L21 95L32 61L3 39H39L50 5Z" />
     </svg>
@@ -41,14 +41,14 @@ const StarShape = ({ className }: { className?: string }) => (
 );
 
 const HexagonShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-24000 ease-in-out animate-float-delayed ${className}`}>
+  <div className={`absolute transition-all duration-21600 ease-in-out animate-float-delayed ${className}`}>
     <svg width="170" height="170" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M50 5L90 27.5V72.5L50 95L10 72.5V27.5L50 5Z" />
     </svg>
   </div>
 );
 
-export function LandingPage() {
+const LandingPage = () => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [email, setEmail] = useState("");
   const [activePanel, setActivePanel] = useState(0);
@@ -158,14 +158,14 @@ export function LandingPage() {
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated background shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <FloatingShape className="text-primary/20 top-1/4 left-1/4" />
-        <CircleShape className="text-[#40E0D0]/30 top-1/3 right-1/4" />
-        <SquareShape className="text-primary/15 bottom-1/4 left-1/3" />
-        <FloatingShape className="text-[#40E0D0]/20 bottom-1/3 right-1/3 rotate-180" />
-        <CircleShape className="text-primary/20 top-2/3 left-1/2" />
-        <SquareShape className="text-primary/15 top-1/2 right-1/2 rotate-45" />
-        <StarShape className="text-[#40E0D0]/25 bottom-1/4 right-1/4" />
-        <HexagonShape className="text-primary/20 top-1/3 left-1/3" />
+        <FloatingShape className="text-primary/20 top-1/4 left-1/5" />
+        <CircleShape className="text-[#40E0D0]/30 top-1/3 right-1/6" />
+        <SquareShape className="text-primary/15 bottom-1/5 left-1/3" />
+        <FloatingShape className="text-[#40E0D0]/20 bottom-1/4 right-2/5 rotate-180" />
+        <CircleShape className="text-primary/20 top-3/4 left-1/2" />
+        <SquareShape className="text-primary/15 top-2/5 right-1/3 rotate-45" />
+        <StarShape className="text-[#40E0D0]/25 bottom-1/3 right-1/5" />
+        <HexagonShape className="text-primary/20 top-1/4 left-2/5" />
       </div>
 
       {/* Add blur overlay */}
@@ -250,6 +250,6 @@ export function LandingPage() {
       </div>
     </div>
   );
-}
+};
 
 export default LandingPage;
