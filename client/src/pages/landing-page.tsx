@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
@@ -15,10 +16,9 @@ export function LandingPage() {
   const { toast } = useToast();
 
   // Switch theme based on user type
-  const handleUserTypeChange = () => {
-    const newIsAuthor = !isAuthor;
-    setIsAuthor(newIsAuthor);
-    setTheme(newIsAuthor ? "dark" : "light");
+  const handleUserTypeChange = (checked: boolean) => {
+    setIsAuthor(checked);
+    setTheme(checked ? "dark" : "light");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -60,24 +60,24 @@ export function LandingPage() {
   // Story panels content based on user type
   const panels = isAuthor ? [
     {
-      title: "You are the protagonist",
-      description: "Every great author started with a single spark, a story burning to be told. Your journey to true independent publishing starts now.",
+      title: "Your Story Begins Here",
+      description: "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
     },
     {
-      title: "Every hero finds troubled waters",
-      description: "Industry monsters lurk around every corner, looking to engorge themselves on your work. Your stories are buffeted by gale-force winds, unable to find sales.",
+      title: "Craft Your Masterpiece",
+      description: "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
     },
     {
-      title: "A song pierces the chaos",
-      description: "Sirened beckons you to find true independence in our marketplace. With no hidden fees and access to our expert readership.",
+      title: "Connect With Your Audience",
+      description: "Build a loyal readership, engage with your fans, and create a community around your stories.",
     },
     {
-      title: "Your first step into the indie town square",
-      description: "Sirened guides readers to your storefront of choice allowing You keep up to 100% of your profits. Enable yourself to become a full time author.",
+      title: "Grow Your Author Brand",
+      description: "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
     },
     {
-      title: "Team up and Shape your Literary Future",
-      description: "Sirened puts you in charge—our recommendation engine delivers your books to readers’ hands, and analytics pave your path to success. Sign up to join the indie revolution.",
+      title: "Shape Literary Futures",
+      description: "Join a new generation of authors who are redefining storytelling in the digital age.",
     }
   ] : [
     {
@@ -120,20 +120,29 @@ export function LandingPage() {
       <div className="min-h-[50vh] relative flex items-center justify-center bg-gradient-to-b from-background to-transparent">
         <div className="text-center space-y-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-12">
-            A song beckons, will you heed its call? 
+            Where Stories Come Alive
           </h1>
           <div className="flex flex-col items-center gap-6">
-            <div className="flex items-center space-x-4">
-              <span className="text-xl text-muted-foreground font-medium">I am a</span>
-              <Button
-                variant="ghost"
-                onClick={handleUserTypeChange}
-                className={`text-2xl font-bold transition-all duration-500 hover:bg-transparent hover:text-primary focus:bg-transparent border-b-2 ${
-                  isAuthor ? 'text-primary border-primary' : 'text-muted-foreground border-muted-foreground'
-                } rounded-none px-0 animate-pulse-shadow`}
-              >
-                {isAuthor ? 'Author' : 'Reader'}
-              </Button>
+            <span className="text-xl text-muted-foreground font-medium">I am a</span>
+            <div className="relative">
+              <div className="absolute -inset-3 bg-gradient-to-r from-primary/50 to-primary rounded-lg blur opacity-75 transition-all duration-500"
+                style={{
+                  transform: isAuthor ? 'translateX(100%)' : 'translateX(0)',
+                }}
+              />
+              <div className="relative flex items-center gap-6 bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-xl">
+                <span className={`text-2xl font-bold transition-colors duration-500 ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
+                  Reader
+                </span>
+                <Switch
+                  checked={isAuthor}
+                  onCheckedChange={handleUserTypeChange}
+                  className="h-12 w-12 data-[state=checked]:bg-primary"
+                />
+                <span className={`text-2xl font-bold transition-colors duration-500 ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
+                  Author
+                </span>
+              </div>
             </div>
           </div>
         </div>
