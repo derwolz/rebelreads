@@ -60,24 +60,24 @@ export function LandingPage() {
   // Story panels content based on user type
   const panels = isAuthor ? [
     {
-      title: "Your Story Begins Here",
-      description: "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
+      title: "You are the protagonist",
+      description: "Every great author started with a single spark, a story burning to be told. Your journey to true independent publishing starts now.",
     },
     {
-      title: "Craft Your Masterpiece",
-      description: "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
+      title: "Every hero finds troubled waters",
+      description: "Industry monsters lurk around every corner, looking to engorge themselves on your work. Your stories are buffeted by gale-force winds, unable to find sales.",
     },
     {
-      title: "Connect With Your Audience",
-      description: "Build a loyal readership, engage with your fans, and create a community around your stories.",
+      title: "A song pierces the chaos",
+      description: "Sirened beckons you to find true independence in our marketplace. With no hidden fees and access to our expert readership.",
     },
     {
-      title: "Grow Your Author Brand",
-      description: "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
+      title: "Your first step into the indie town square",
+      description: "Sirened guides readers to your storefront of choice allowing You keep up to 100% of your profits. Enable yourself to become a full time author.",
     },
     {
-      title: "Shape Literary Futures",
-      description: "Join a new generation of authors who are redefining storytelling in the digital age.",
+      title: "Team up and Shape your Literary Future",
+      description: "Sirened puts you in charge—our recommendation engine delivers your books to readers’ hands, and analytics pave your path to success. Sign up to join the indie revolution.",
     }
   ] : [
     {
@@ -120,7 +120,7 @@ export function LandingPage() {
       <div className="min-h-[50vh] relative flex items-center justify-center bg-gradient-to-b from-background to-transparent">
         <div className="text-center space-y-8">
           <h1 className="text-5xl md:text-7xl font-bold mb-12">
-            Where Stories Come Alive
+            A song beckons, will you heed its call? 
           </h1>
           <div className="flex flex-col items-center gap-6">
             <div className="flex items-center space-x-4">
