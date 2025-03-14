@@ -55,7 +55,6 @@ const LandingPage = () => {
   const { setTheme } = useTheme();
   const { toast } = useToast();
 
-  // Switch theme based on user type
   const handleUserTypeChange = (checked: boolean) => {
     setIsAuthor(checked);
     setTheme(checked ? "dark" : "light");
@@ -97,7 +96,6 @@ const LandingPage = () => {
     }
   };
 
-  // Story panels content based on user type
   const panels = isAuthor ? [
     {
       title: "Your Story Begins Here",
@@ -144,19 +142,34 @@ const LandingPage = () => {
 
   useEffect(() => {
     const handleScroll = () => {
+      const sections = document.querySelectorAll('section');
+      const viewportHeight = window.innerHeight;
       const scrollPosition = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const newActivePanel = Math.floor((scrollPosition + windowHeight / 2) / windowHeight);
-      setActivePanel(Math.min(newActivePanel, panels.length - 1));
+
+      sections.forEach((section, index) => {
+        const rect = section.getBoundingClientRect();
+        const sectionTop = rect.top + scrollPosition;
+
+        const distanceFromTop = rect.top;
+        let opacity = 1;
+        if (distanceFromTop < 0) {
+          opacity = Math.max(0, 1 + (distanceFromTop / (viewportHeight * 0.3)));
+        }
+
+        section.style.opacity = opacity.toString();
+
+        if (Math.abs(distanceFromTop) < viewportHeight / 2) {
+          setActivePanel(index);
+        }
+      });
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [panels.length]);
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated background shapes */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <FloatingShape className="text-primary/20 top-1/4 left-1/5" />
         <CircleShape className="text-[#40E0D0]/30 top-1/3 right-1/6" />
@@ -168,50 +181,13 @@ const LandingPage = () => {
         <HexagonShape className="text-primary/20 top-1/4 left-2/5" />
       </div>
 
-      {/* Add blur overlay */}
       <div className="fixed inset-0 backdrop-blur-[20px] pointer-events-none" />
 
-      {/* Hero section with toggle */}
-      <div className="min-h-[50vh] relative flex items-center justify-center">
-        <div className="text-center space-y-8 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
-          <h1 className="text-5xl md:text-7xl font-bold mb-12">
-            Where Stories Come Alive
-          </h1>
-          <div className="flex flex-col items-center gap-6">
-            <span className="text-xl text-muted-foreground font-medium">I am a</span>
-            <div className="relative">
-              <div className="absolute -inset-3 bg-gradient-to-r from-primary/50 to-primary rounded-lg blur opacity-75 transition-all duration-500"
-                style={{
-                  transform: isAuthor ? 'translateX(100%)' : 'translateX(0)',
-                }}
-              />
-              <div className="relative flex items-center gap-6 bg-background/80 backdrop-blur-sm p-6 rounded-lg shadow-xl">
-                <span className={`text-2xl font-bold transition-colors duration-500 ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
-                  Reader
-                </span>
-                <Switch
-                  checked={isAuthor}
-                  onCheckedChange={handleUserTypeChange}
-                  className="h-12 w-12 data-[state=checked]:bg-primary"
-                />
-                <span className={`text-2xl font-bold transition-colors duration-500 ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}>
-                  Author
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Story panels */}
       {panels.map((panel, index) => (
         <section
           key={index}
-          className="min-h-screen flex items-center justify-center relative snap-start"
-          style={{
-            opacity: activePanel === index ? 1 : 0.3,
-            transition: 'opacity 0.5s ease-in-out'
-          }}
+          className="min-h-screen flex items-center justify-center relative snap-start transition-opacity duration-500"
+          style={{ opacity: 1 }}
         >
           <div className="container mx-auto px-4 py-16">
             <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
@@ -220,7 +196,6 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Show scroll indicator on all panels except the last */}
           {index < panels.length - 1 && (
             <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
               <ChevronDown className="w-8 h-8 text-muted-foreground" />
@@ -229,7 +204,6 @@ const LandingPage = () => {
         </section>
       ))}
 
-      {/* Fixed signup form at the bottom */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <Card className="max-w-md mx-auto">
