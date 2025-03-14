@@ -9,6 +9,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
+import LandingPage from "@/pages/landing-page";
 import BookDetails from "@/pages/book-details";
 import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
@@ -23,12 +24,15 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 
 function Router() {
+  const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
+
   return (
     <>
       <MainNav />
       <Switch>
         {/* Public routes */}
-        <Route path="/" component={HomePage} />
+        <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
+        <Route path="/landing" component={LandingPage} />
         <Route path="/books/:id" component={BookDetails} />
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />

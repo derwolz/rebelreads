@@ -51,6 +51,26 @@ const upload = multer({ storage: fileStorage });
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  app.post("/api/signup-interest", async (req, res) => {
+    try {
+      const { email, isAuthor } = req.body;
+
+      // Basic validation
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // In a real app, we would store this in the database
+      // For now, just log and return success
+      console.log("Signup interest received:", { email, isAuthor });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error handling signup interest:", error);
+      res.status(500).json({ error: "Failed to process signup" });
+    }
+  });
+
   // Add near other API endpoints
   app.get("/api/credits", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -1420,7 +1440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/boost/create", upload.any(), async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {
