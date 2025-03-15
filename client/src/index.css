@@ -12,6 +12,22 @@
   }
 }
 
+.scroll-container {
+  height: 100vh; /* Full viewport height */
+  overflow-y: auto; /* Vertical scrolling */
+  scroll-snap-type: y mandatory; /* Enforce snap points */
+  scroll-behavior: smooth; /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch; /* Better mobile support */
+}
+
+.snap-section {
+  min-height: 100vh; /* Ensure each section takes full viewport height */
+  scroll-snap-align: center; /* Center each section in the viewport */
+  scroll-snap-stop: always; /* Force stop at each snap point */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 @keyframes cardRotateOut {
   from {
     transform: rotate3d(2, 1, 0.5, 0deg) translateZ(0);

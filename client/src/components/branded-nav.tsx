@@ -1,6 +1,7 @@
 import { Link } from "wouter";
-
+import { useState } from "react";
 export function BrandedNav() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
     <nav className="bg-background border-b">
       <div className="container mx-auto px-4">
@@ -10,13 +11,36 @@ export function BrandedNav() {
               <span className="text-2xl font-bold text-primary">Sirened</span>
             </Link>
           </div>
-          
-          <div className="hidden md:flex items-center space-x-8">
-            <Link href="/how-it-works" className="text-foreground/80 hover:text-foreground transition-colors">
+
+          <div className="md:hidden">
+            <button
+              className="text-foreground/80 hover:text-foreground transition-colors focus:outline-none"
+              aria-label="Toggle menu"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              ☰
+            </button>
+          </div>
+          <div
+            className={`md:flex items-center space-x-8 ${isMenuOpen ? "block" : "hidden"}`}
+          >
+            <Link
+              href="/how-it-works"
+              className="text-foreground/80 hover:text-foreground transition-colors"
+            >
               How It Works
             </Link>
-            <Link href="/partner" className="text-foreground/80 hover:text-foreground transition-colors">
+            <Link
+              href="/partner"
+              className="text-foreground/80 hover:text-foreground transition-colors"
+            >
               Partner With Us
+            </Link>
+            <Link
+              href="/landing"
+              className="text-foreground/80 hover:text-foreground transition-colors"
+            >
+              Landing Page
             </Link>
           </div>
         </div>

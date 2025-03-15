@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
+import { BrandedNav } from "@/components/branded-nav";
 
 interface PanelData {
   title: string;
@@ -19,7 +20,7 @@ interface PanelData {
 
 const FloatingShape = ({ className }: { className?: string }) => (
   <div
-    style={{transition: "all 0.1s ease-in-out"}}
+    style={{ transition: "all 0.1s ease-in-out" }}
     className={`absolute  animate-float ${className}`}
   >
     <svg
@@ -109,14 +110,14 @@ const LandingPage = () => {
   const handleUserTypeChange = (isAuthor: boolean) => {
     setIsAuthor(isAuthor);
     setTheme(isAuthor ? "dark" : "light");
-    window.history.replaceState(null, '', `#${isAuthor ? 'author' : 'reader'}`);
+    window.history.replaceState(null, "", `#${isAuthor ? "author" : "reader"}`);
   };
 
   useEffect(() => {
     const hash = window.location.hash.toLowerCase();
-    if (hash === '#author') {
+    if (hash === "#author") {
       handleUserTypeChange(true);
-    } else if (hash === '#reader') {
+    } else if (hash === "#reader") {
       handleUserTypeChange(false);
     }
   }, []);
@@ -165,8 +166,8 @@ const LandingPage = () => {
             "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
           image: {
             src: "/images/author-journey.svg",
-            alt: "Author writing at desk"
-          }
+            alt: "Author writing at desk",
+          },
         },
         {
           title: "Craft Your Masterpiece",
@@ -174,8 +175,8 @@ const LandingPage = () => {
             "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
           image: {
             src: "/images/manuscript.svg",
-            alt: "Manuscript with editing tools"
-          }
+            alt: "Manuscript with editing tools",
+          },
         },
         {
           title: "Connect With Your Audience",
@@ -183,8 +184,8 @@ const LandingPage = () => {
             "Build a loyal readership, engage with your fans, and create a community around your stories.",
           image: {
             src: "/images/community.svg",
-            alt: "Author connecting with readers"
-          }
+            alt: "Author connecting with readers",
+          },
         },
         {
           title: "Grow Your Author Brand",
@@ -192,8 +193,8 @@ const LandingPage = () => {
             "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
           image: {
             src: "/images/analytics.svg",
-            alt: "Author analytics dashboard"
-          }
+            alt: "Author analytics dashboard",
+          },
         },
         {
           title: "Shape Literary Futures",
@@ -201,8 +202,8 @@ const LandingPage = () => {
             "Join a new generation of authors who are redefining storytelling in the digital age.",
           image: {
             src: "/images/future.svg",
-            alt: "Future of storytelling"
-          }
+            alt: "Future of storytelling",
+          },
         },
       ]
     : [
@@ -212,8 +213,8 @@ const LandingPage = () => {
             "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
           image: {
             src: "/images/book-discovery.svg",
-            alt: "Book discovery journey"
-          }
+            alt: "Book discovery journey",
+          },
         },
         {
           title: "Connect With Stories",
@@ -221,8 +222,8 @@ const LandingPage = () => {
             "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
           image: {
             src: "/images/book-connection.svg",
-            alt: "Reader connecting with books"
-          }
+            alt: "Reader connecting with books",
+          },
         },
         {
           title: "Join the Conversation",
@@ -230,8 +231,8 @@ const LandingPage = () => {
             "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
           image: {
             src: "/images/reader-community.svg",
-            alt: "Reader community discussion"
-          }
+            alt: "Reader community discussion",
+          },
         },
         {
           title: "Support Your Favorite Authors",
@@ -239,8 +240,8 @@ const LandingPage = () => {
             "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
           image: {
             src: "/images/author-support.svg",
-            alt: "Supporting favorite authors"
-          }
+            alt: "Supporting favorite authors",
+          },
         },
         {
           title: "Your Reading Journey Awaits",
@@ -248,16 +249,16 @@ const LandingPage = () => {
             "Start your literary adventure today and become part of something bigger.",
           image: {
             src: "/images/reading-journey.svg",
-            alt: "Reading journey visualization"
-          }
+            alt: "Reading journey visualization",
+          },
         },
       ];
   const getRotationAndTranslate = (index: number) => {
-    const rotationValue = index * 20; 
-    const translateZValue = 100; 
+    const rotationValue = index * 20;
+    const translateZValue = 100;
     return {
-      '--rotation': `${rotationValue}deg`,
-      '--translate-z': `${translateZValue}px`,
+      "--rotation": `${rotationValue}deg`,
+      "--translate-z": `${translateZValue}px`,
     };
   };
 
@@ -276,8 +277,8 @@ const LandingPage = () => {
 
       <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
 
-      <div className="h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory">
-        <section className="min-h-screen flex items-center justify-center relative snap-start">
+      <div className="scroll-container h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory scroll-snap-align:center">
+        <section className="snap-section min-h-screen flex items-center justify-center relative snap-start ">
           <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
             <h1 className="text-5xl md:text-7xl font-bold">
               Where Stories Come Alive
@@ -317,33 +318,40 @@ const LandingPage = () => {
               const observer = new IntersectionObserver(
                 ([entry]) => {
                   if (entry.isIntersecting) {
-                    el.classList.remove('card-animate-out');
-                    el.classList.add('card-animate-in');
+                    el.classList.remove("card-animate-out");
+                    el.classList.add("card-animate-in");
+                    el.scrollTo({
+                      Top: el.offsetTop - 500,
+                      behavior: "smooth",
+                    });
                   } else {
-                    el.classList.remove('card-animate-in');
-                    el.classList.add('card-animate-out');
+                    el.classList.remove("card-animate-in");
+                    el.classList.add("card-animate-out");
                   }
                 },
-                { threshold: 0.5 }
+                { threshold: 0.5 },
               );
               observer.observe(el);
             }}
-            className="h-screen flex items-center justify-center relative snap-start transition-all duration-500"
-            style={{ 
+            className="snap-section overflow-none min-h-screen flex items-center justify-between  relative snap-start transition-all duration-500"
+            style={{
               opacity: 1,
               perspective: "2000px",
               transformStyle: "preserve-3d",
-              willChange: "transform"
-            }}>
-            <div 
-              className="container mx-auto px-4 py-16 relative"
+              willChange: "transform",
+              height: "100vh",
+            }}
+          >
+            <div
+              className="container mx-auto  px-4 py-16 relative"
               style={{
                 transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
+
                 transformOrigin: "85% 15%",
                 transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+              <div className="max-w-3xl min-h-full mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
                 {panel.image && (
                   <div className="mb-8 relative w-full aspect-[3/2] rounded-lg overflow-hidden">
                     <img
@@ -369,23 +377,6 @@ const LandingPage = () => {
             )}
           </section>
         ))}
-
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-4">
-            <Card className="max-w-md mx-auto">
-              <form onSubmit={handleSignup} className="p-4 flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="Enter your email for updates"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit">Sign Up</Button>
-              </form>
-            </Card>
-          </div>
-        </div>
       </div>
     </div>
   );
