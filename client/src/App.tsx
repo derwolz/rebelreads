@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { MainNav } from "@/components/main-nav";
 import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
+import { FloatingSignup } from "@/components/floating-signup";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import LandingPage from "@/pages/landing-page";
@@ -71,6 +72,10 @@ function Router() {
 
         <Route component={NotFound} />
       </Switch>
+
+      {(location === "/landing" || 
+        location === "/how-it-works" || 
+        location === "/partner") && <FloatingSignup />}
     </>
   );
 }

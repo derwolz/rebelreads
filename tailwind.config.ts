@@ -79,6 +79,18 @@ export default {
           "50%": { transform: "translate(-15px, 5px) rotate(-2deg)" },
           "75%": { transform: "translate(15px, 10px) rotate(2deg)" },
         },
+        "ping-slow": {
+          "75%, 100%": {
+            transform: "scale(2)",
+            opacity: "0",
+          },
+        },
+        "ping-slower": {
+          "75%, 100%": {
+            transform: "scale(2.5)",
+            opacity: "0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -86,6 +98,8 @@ export default {
         "float": "float 12s ease-in-out infinite",
         "float-delayed": "float 15s ease-in-out infinite 2s",
         "float-reverse": "float 13.5s ease-in-out infinite reverse",
+        "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "ping-slower": "ping-slower 2.5s cubic-bezier(0, 0, 0.2, 1) infinite",
       },
     },
   },
