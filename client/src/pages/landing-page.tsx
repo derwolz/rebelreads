@@ -106,21 +106,63 @@ const LandingPage = () => {
   const { setTheme } = useTheme();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [sessionId] = useState(() => crypto.randomUUID());
+
+  useEffect(() => {
+    // Initialize session
+    fetch("/api/landing/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          screenSize: `${window.screen.width}x${window.screen.height}`,
+        },
+      }),
+    });
+
+    // Track session end
+    const trackEndSession = async () => {
+      try {
+        await fetch(`/api/landing/session/${sessionId}/end`, {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error("Failed to track session end:", error);
+      }
+    };
+
+    window.addEventListener("beforeunload", trackEndSession);
+    return () => {
+      window.removeEventListener("beforeunload", trackEndSession);
+      trackEndSession();
+    };
+  }, [sessionId]);
+
+  const trackEvent = async (type: string, data = {}) => {
+    try {
+      await fetch("/api/landing/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          type,
+          data,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to track event:", error);
+    }
+  };
 
   const handleUserTypeChange = (isAuthor: boolean) => {
     setIsAuthor(isAuthor);
     setTheme(isAuthor ? "dark" : "light");
     window.history.replaceState(null, "", `#${isAuthor ? "author" : "reader"}`);
+    trackEvent("theme_change", { theme: isAuthor ? "author" : "reader" });
   };
-
-  useEffect(() => {
-    const hash = window.location.hash.toLowerCase();
-    if (hash === "#author") {
-      handleUserTypeChange(true);
-    } else if (hash === "#reader") {
-      handleUserTypeChange(false);
-    }
-  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +175,8 @@ const LandingPage = () => {
       return;
     }
 
+    trackEvent("signup_click");
+
     try {
       const response = await fetch("/api/signup-interest", {
         method: "POST",
@@ -141,6 +185,7 @@ const LandingPage = () => {
       });
 
       if (response.ok) {
+        trackEvent("signup_complete");
         toast({
           title: "Success!",
           description: "Thank you for signing up. We'll keep you updated!",
@@ -261,6 +306,27 @@ const LandingPage = () => {
       "--translate-z": `${translateZValue}px`,
     };
   };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const sectionIndex = parseInt(entry.target.getAttribute("data-section-index") || "0");
+            trackEvent("section_view", { sectionIndex });
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    document.querySelectorAll('.snap-section').forEach((section, index) => {
+      section.setAttribute('data-section-index', index.toString());
+      observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">

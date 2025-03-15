@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BrandedNav } from "@/components/branded-nav";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,40 +14,134 @@ export default function PartnerWithUs() {
     message: "",
   });
   const { toast } = useToast();
+  const [sessionId] = useState(() => {
+    // Try to reuse existing session ID from landing page
+    const existingId = localStorage.getItem('landing_session_id');
+    if (existingId) return existingId;
+
+    // Create new session ID if none exists
+    const newId = crypto.randomUUID();
+    localStorage.setItem('landing_session_id', newId);
+    return newId;
+  });
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  useEffect(() => {
+    // Initialize or update session for partner page
+    fetch("/api/landing/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          screenSize: `${window.screen.width}x${window.screen.height}`,
+        },
+      }),
+    });
+
+    // Track session end
+    const trackEndSession = async () => {
+      try {
+        await fetch(`/api/landing/session/${sessionId}/end`, {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error("Failed to track session end:", error);
+      }
+    };
+
+    window.addEventListener("beforeunload", trackEndSession);
+    return () => {
+      window.removeEventListener("beforeunload", trackEndSession);
+      trackEndSession();
+    };
+  }, [sessionId]);
+
+  const trackEvent = async (type: string, data = {}) => {
+    try {
+      await fetch("/api/landing/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          type,
+          data,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to track event:", error);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (!hasInteracted) {
+      setHasInteracted(true);
+      trackEvent("partner_form_start");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Form submission logic will be implemented later
-    toast({
-      title: "Message Sent",
-      description: "Thank you for your interest. We'll be in touch soon!",
-    });
+
+    try {
+      // Track form submission attempt
+      trackEvent("partner_form_submit", {
+        hasName: !!formData.name,
+        hasEmail: !!formData.email,
+        hasCompany: !!formData.company,
+        hasMessage: !!formData.message,
+      });
+
+      // Form submission logic will be implemented later
+      toast({
+        title: "Message Sent",
+        description: "Thank you for your interest. We'll be in touch soon!",
+      });
+
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        message: "",
+      });
+      setHasInteracted(false);
+    } catch (error) {
+      console.error("Failed to submit form:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <BrandedNav />
-      
+
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">
             Partner With Sirened
           </h1>
-          
+
           <div className="prose prose-lg dark:prose-invert mx-auto mb-16">
             <p>
               At Sirened, we're revolutionizing the way stories are discovered and shared. 
               Our mission is to create a vibrant ecosystem where authors and readers connect, 
               collaborate, and celebrate the art of storytelling.
             </p>
-            
+
             <h2>Our Vision</h2>
             <p>
               We envision a future where every story finds its perfect audience, 
               where data-driven insights empower authors to create better content, 
               and where the joy of reading is enhanced through community engagement.
             </p>
-            
+
             <h2>Partnership Goals</h2>
             <ul>
               <li>Enhance the author-reader connection through innovative technology</li>
@@ -68,10 +162,11 @@ export default function PartnerWithUs() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onFocus={handleInputFocus}
                   required
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1">
                   Email
@@ -81,10 +176,11 @@ export default function PartnerWithUs() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onFocus={handleInputFocus}
                   required
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="company" className="block text-sm font-medium mb-1">
                   Company
@@ -93,9 +189,10 @@ export default function PartnerWithUs() {
                   id="company"
                   value={formData.company}
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  onFocus={handleInputFocus}
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="message" className="block text-sm font-medium mb-1">
                   Message
@@ -104,11 +201,12 @@ export default function PartnerWithUs() {
                   id="message"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  onFocus={handleInputFocus}
                   required
                   rows={5}
                 />
               </div>
-              
+
               <Button type="submit" className="w-full">
                 Send Message
               </Button>

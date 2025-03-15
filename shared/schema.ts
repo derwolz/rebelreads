@@ -385,3 +385,62 @@ export function calculateWeightedRating(rating: Rating): number {
     rating.worldbuilding * 0.1   // 10% weight for worldbuilding
   );
 }
+
+export const landing_sessions = pgTable("landing_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  startTime: timestamp("start_time").notNull().defaultNow(),
+  endTime: timestamp("end_time"),
+  lastSectionViewed: integer("last_section_viewed").default(0),
+  totalSectionsViewed: integer("total_sections_viewed").default(0),
+  selectedTheme: text("selected_theme"), // "reader" or "author"
+  clickedHowItWorks: boolean("clicked_how_it_works").default(false),
+  clickedSignup: boolean("clicked_signup").default(false),
+  completedSignup: boolean("completed_signup").default(false),
+  startedPartnerForm: boolean("started_partner_form").default(false),
+  submittedPartnerForm: boolean("submitted_partner_form").default(false),
+  timeSpentSeconds: integer("time_spent_seconds"),
+  deviceInfo: jsonb("device_info").default({}),
+});
+
+export const landing_events = pgTable("landing_events", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  eventType: text("event_type").notNull(),
+  eventData: jsonb("event_data").default({}),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+// Add insert schemas
+export const insertLandingSessionSchema = createInsertSchema(landing_sessions).omit({
+  id: true,
+  startTime: true,
+});
+
+export const insertLandingEventSchema = createInsertSchema(landing_events).omit({
+  id: true,
+  timestamp: true,
+});
+
+// Add types
+export type LandingSession = typeof landing_sessions.$inferSelect;
+export type InsertLandingSession = typeof landing_sessions.$inferInsert;
+export type LandingEvent = typeof landing_events.$inferSelect;
+export type InsertLandingEvent = typeof landing_events.$inferInsert;
+
+// Event type enum for type safety
+export const LANDING_EVENT_TYPES = [
+  "section_view",
+  "theme_change",
+  "how_it_works_click",
+  "signup_click",
+  "signup_complete",
+  "partner_form_start",
+  "partner_form_submit",
+  "exit"
+] as const;
+
+export const landingEventSchema = z.object({
+  type: z.enum(LANDING_EVENT_TYPES),
+  data: z.record(z.unknown()).optional(),
+});
