@@ -126,6 +126,14 @@ export interface IStorage {
   createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook>;
   claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
   getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null>;
+
+  // Add new method
+  getBooksMetrics(bookIds: number[], days: number): Promise<{
+    bookId: number;
+    impressions: number;
+    clicks: number;
+    referrers: { [key: string]: number };
+  }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -848,6 +856,66 @@ export class DatabaseStorage implements IStorage {
     }
 
     return claimedBook;
+  }
+  async getBooksMetrics(bookIds: number[], days: number = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const results = await db.transaction(async (tx) => {
+      const impressionsPromise = tx
+        .select({
+          bookId: bookImpressions.bookId,
+          count: sql<number>`count(*)`,
+        })
+        .from(bookImpressions)
+        .where(
+          and(
+            inArray(bookImpressions.bookId, bookIds),
+            sql`${bookImpressions.createdAt} > ${startDate}`
+          )
+        )
+        .groupBy(bookImpressions.bookId);
+
+      const clicksPromise = tx
+        .select({
+          bookId: bookClickThroughs.bookId,
+          count: sql<number>`count(*)`,
+          referrers: sql<{ [key: string]: number }>`
+            jsonb_object_agg(
+              COALESCE(${bookClickThroughs.referrer}, 'direct'),
+              COUNT(*)
+            )
+          `,
+        })
+        .from(bookClickThroughs)
+        .where(
+          and(
+            inArray(bookClickThroughs.bookId, bookIds),
+            sql`${bookClickThroughs.createdAt} > ${startDate}`
+          )
+        )
+        .groupBy(bookClickThroughs.bookId);
+
+      const [impressions, clicks] = await Promise.all([
+        impressionsPromise,
+        clicksPromise,
+      ]);
+
+      // Combine the results
+      return bookIds.map((bookId) => {
+        const bookImpressions = impressions.find((i) => i.bookId === bookId);
+        const bookClicks = clicks.find((c) => c.bookId === bookId);
+
+        return {
+          bookId,
+          impressions: bookImpressions?.count || 0,
+          clicks: bookClicks?.count || 0,
+          referrers: bookClicks?.referrers || {},
+        };
+      });
+    });
+
+    return results;
   }
 }
 

@@ -1731,6 +1731,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add new metrics endpoint
+  app.post("/api/findmetrics", async (req, res) => {
+    try {
+      const { days = 30, bookIds } = req.body;
+
+      if (!Array.isArray(bookIds) || bookIds.length === 0) {
+        return res.status(400).json({ error: "bookIds must be a non-empty array" });
+      }
+
+      // Convert string IDs to numbers and validate
+      const numericBookIds = bookIds.map(id => {
+        const numId = parseInt(id);
+        if (isNaN(numId)) {
+          throw new Error(`Invalid book ID: ${id}`);
+        }
+        return numId;
+      });
+
+      const metrics = await dbStorage.getBooksMetrics(numericBookIds, days);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching book metrics:", error);
+      res.status(500).json({ error: "Failed to fetch book metrics" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
