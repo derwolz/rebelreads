@@ -203,7 +203,14 @@ const LandingPage = () => {
             "Start your literary adventure today and become part of something bigger.",
         },
       ];
-
+  const getRotationAndTranslate = (index: number) => {
+    const rotationValue = index * 20; // Example rotation value
+    const translateZValue = 100; // Example translate value
+    return {
+      '--rotation': `${rotationValue}deg`,
+      '--translate-z': `${translateZValue}px`,
+    };
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -260,8 +267,10 @@ const LandingPage = () => {
             style={{ 
               opacity: 1,
               perspective: "2000px",
-              transformStyle: "preserve-3d"
-            }}
+              transformStyle: "preserve-3d",
+              ...getRotationAndTranslate(index)}
+            }
+            
           >
             <div 
               className="container mx-auto px-4 py-16 relative"
