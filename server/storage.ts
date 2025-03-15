@@ -856,7 +856,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBookImpressionsByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>> {
-    return await db.execute(sql`
+    const result = await db.execute(sql`
       WITH dates AS (
         SELECT generate_series(
           date_trunc('day', NOW() - INTERVAL '${days} days'),
@@ -874,10 +874,11 @@ export class DatabaseStorage implements IStorage {
       GROUP BY dates.date
       ORDER BY dates.date ASC
     `);
+    return result.rows as Array<{date: string, count: string}>;
   }
 
   async getBookClicksByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>> {
-    return await db.execute(sql`
+    const result = await db.execute(sql`
       WITH dates AS (
         SELECT generate_series(
           date_trunc('day', NOW() - INTERVAL '${days} days'),
@@ -895,10 +896,11 @@ export class DatabaseStorage implements IStorage {
       GROUP BY dates.date
       ORDER BY dates.date ASC
     `);
+    return result.rows as Array<{date: string, count: string}>;
   }
 
   async getBookReferralsByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>> {
-    return await db.execute(sql`
+    const result = await db.execute(sql`
       WITH dates AS (
         SELECT generate_series(
           date_trunc('day', NOW() - INTERVAL '${days} days'),
@@ -917,6 +919,7 @@ export class DatabaseStorage implements IStorage {
       GROUP BY dates.date
       ORDER BY dates.date ASC
     `);
+    return result.rows as Array<{date: string, count: string}>;
   }
 }
 
