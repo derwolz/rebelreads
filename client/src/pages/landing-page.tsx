@@ -344,7 +344,7 @@ const LandingPage = () => {
           </div>
 
           {index < panels.length - 1 && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
               <ChevronDown className="w-8 h-8 text-muted-foreground" />
             </div>
           )}
