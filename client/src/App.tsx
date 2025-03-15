@@ -31,16 +31,16 @@ function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
   const [location] = useLocation();
 
-  if (showLandingPage && location !== "/landing" && !location.startsWith("/api")) {
+  const allowedPaths = ["/landing", "/how-it-works", "/partner"];
+  const isApiPath = location.startsWith("/api");
+
+  if (showLandingPage && !allowedPaths.includes(location) && !isApiPath) {
     return <Redirect to="/landing" />;
   }
 
   return (
     <>
-      {location !== "/landing" && 
-       location !== "/how-it-works" && 
-       location !== "/partner" && 
-       <MainNav />}
+      {!allowedPaths.includes(location) && <MainNav />}
 
       <Switch>
         {/* Public routes */}
@@ -73,9 +73,7 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
 
-      {(location === "/landing" || 
-        location === "/how-it-works" || 
-        location === "/partner") && <FloatingSignup />}
+      {allowedPaths.includes(location) && <FloatingSignup />}
     </>
   );
 }
