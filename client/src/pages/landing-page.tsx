@@ -11,8 +11,7 @@ const FloatingShape = ({ className }: { className?: string }) => (
   <div
     style={{transition: "all 0.1s ease-in-out"}}
     className={`absolute  animate-float ${className}`}
-    
-    >
+  >
     <svg
       width="380"
       height="380"
@@ -195,31 +194,60 @@ const LandingPage = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = document.querySelectorAll("section");
+      const sections = document.querySelectorAll('section');
       const viewportHeight = window.innerHeight;
       const scrollPosition = window.scrollY;
 
       sections.forEach((section, index) => {
         const rect = section.getBoundingClientRect();
-        const sectionTop = rect.top + scrollPosition;
-
         const distanceFromTop = rect.top;
-        let opacity = 1;
-        if (distanceFromTop < 0) {
-          opacity = Math.max(0, 1 + distanceFromTop / (viewportHeight * 0.3));
+        const container = section.querySelector('.container');
+
+        if (!container) return;
+
+        let rotation = 0;
+        let translateZ = 0;
+        const isLastSection = index === sections.length - 1;
+
+        // Calculate rotation based on viewport position
+        if (distanceFromTop <= viewportHeight && distanceFromTop >= -viewportHeight) {
+          // Card coming into view
+          if (distanceFromTop > 0) {
+            rotation = Math.min(45, (distanceFromTop / viewportHeight) * 90);
+            translateZ = Math.min(500, (distanceFromTop / viewportHeight) * 1000);
+          } 
+          // Card in view
+          else if (distanceFromTop > -viewportHeight) {
+            rotation = Math.max(-45, (distanceFromTop / viewportHeight) * 90);
+            translateZ = Math.max(-500, (distanceFromTop / viewportHeight) * 1000);
+          }
+
+          // Keep last card centered
+          if (isLastSection && distanceFromTop < viewportHeight / 2) {
+            rotation = 0;
+            translateZ = 0;
+          }
         }
 
-        section.style.opacity = opacity.toString();
+        // Apply the transforms
+        container.style.setProperty('--rotation', `${rotation}deg`);
+        container.style.setProperty('--translate-z', `${translateZ}px`);
 
+        // Set opacity based on rotation
+        const opacity = Math.max(0, 1 - Math.abs(rotation) / 90);
+        container.style.opacity = opacity.toString();
+
+        // Update active panel
         if (Math.abs(distanceFromTop) < viewportHeight / 2) {
           setActivePanel(index);
         }
       });
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial call to set up first card
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [panels.length]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -272,10 +300,21 @@ const LandingPage = () => {
       {panels.map((panel, index) => (
         <section
           key={index}
-          className="min-h-screen flex items-center justify-center relative snap-start transition-opacity duration-500"
-          style={{ opacity: 1 }}
+          className="min-h-screen flex items-center justify-center relative snap-start transition-all duration-500"
+          style={{ 
+            opacity: 1,
+            perspective: "1500px",
+            transformStyle: "preserve-3d"
+          }}
         >
-          <div className="container mx-auto px-4 py-16">
+          <div 
+            className="container mx-auto px-4 py-16 relative"
+            style={{
+              transform: `rotate3d(1, 1, 0, var(--rotation)) translateZ(var(--translate-z))`,
+              transformOrigin: "top right",
+              transition: "all 0.8s ease-out",
+            }}
+          >
             <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
               <h2 className="text-4xl md:text-6xl font-bold mb-6">
                 {panel.title}
