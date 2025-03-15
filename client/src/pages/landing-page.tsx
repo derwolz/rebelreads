@@ -233,8 +233,24 @@ const LandingPage = () => {
         container.style.setProperty('--rotation', `${rotation}deg`);
         container.style.setProperty('--translate-z', `${translateZ}px`);
 
-        // Set opacity based on rotation
-        const opacity = Math.max(0, 1 - Math.abs(rotation) / 90);
+        // Calculate opacity based on distance from center viewport
+        let opacity = 0;
+        const centerViewport = viewportHeight / 2;
+        const distanceFromCenter = Math.abs(distanceFromTop + centerViewport);
+
+        if (distanceFromTop <= 0 && distanceFromTop >= -viewportHeight) {
+          // Fade in as card approaches center
+          opacity = Math.max(0, 1 - (distanceFromCenter / (viewportHeight * 0.5)));
+        } else if (distanceFromTop > 0 && distanceFromTop <= viewportHeight) {
+          // Start fading in from off-screen
+          opacity = Math.max(0, 1 - (distanceFromTop / (viewportHeight * 0.5)));
+        }
+
+        // Ensure last card stays visible when centered
+        if (isLastSection && distanceFromTop < viewportHeight / 3) {
+          opacity = 1;
+        }
+
         container.style.opacity = opacity.toString();
 
         // Update active panel
