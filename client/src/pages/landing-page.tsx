@@ -323,7 +323,8 @@ const LandingPage = () => {
                     const content = el.querySelector(".section-content");
                     if (content) {
                       content.classList.remove("card-animate-out");
-                      content.classList.add("card-animate, card-animate-in");
+                      content.classList.add("card-animate");
+                      content.classList.add("card-animate-in");
                     }
                   } else {
                     const content = el.querySelector(".section-content");
