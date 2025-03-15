@@ -263,15 +263,26 @@ const LandingPage = () => {
         {panels.map((panel, index) => (
           <section
             key={index}
-            className="min-h-screen flex items-center justify-center relative snap-start transition-all duration-500"
+            ref={(el) => {
+              if (!el) return;
+              const observer = new IntersectionObserver(
+                ([entry]) => {
+                  if (entry.isIntersecting) {
+                    el.style.animation = "cardRotateIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards";
+                  } else {
+                    el.style.animation = "cardRotateOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards";
+                  }
+                },
+                { threshold: 0.5 }
+              );
+              observer.observe(el);
+            }}
+            className="min-h-screen flex items-center justify-center relative snap-start"
             style={{ 
               opacity: 1,
               perspective: "2000px",
-              transformStyle: "preserve-3d",
-              ...getRotationAndTranslate(index)}
-            }
-            
-          >
+              transformStyle: "preserve-3d"
+            }}
             <div 
               className="container mx-auto px-4 py-16 relative"
               style={{

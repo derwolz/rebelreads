@@ -1,5 +1,27 @@
 @tailwind base;
 @tailwind components;
+
+@keyframes cardRotateIn {
+  from {
+    transform: rotate3d(2, 1, 0.5, 60deg) translateZ(100px);
+    opacity: 0;
+  }
+  to {
+    transform: rotate3d(2, 1, 0.5, 0deg) translateZ(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cardRotateOut {
+  from {
+    transform: rotate3d(2, 1, 0.5, 0deg) translateZ(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate3d(2, 1, 0.5, -60deg) translateZ(-100px);
+    opacity: 0;
+  }
+}
 @tailwind utilities;
 
 @layer base {
