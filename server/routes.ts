@@ -155,25 +155,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/signup-interest", async (req, res) => {
     try {
-      const { email, isAuthor } = req.body;
+      const { email, isAuthor, sessionId } = req.body;
 
       // Basic validation
-      if (!email) {
-        return res.status(400).json({ error: "Email is required" });
+      if (!email || sessionId === undefined) {
+        return res.status(400).json({ error: "Email and session ID are required" });
       }
 
-      // In a real app, we would store this in the database
-      // For now, just log and return success
-      console.log("Signup interest received:", { email, isAuthor });
+      // Create signup interest record
+      const signupInterest = await dbStorage.createSignupInterest({
+        email,
+        isAuthor,
+        sessionId,
+      });
 
-      res.json({ success: true });
+      // Record this as an event in the landing session
+      await dbStorage.recordLandingEvent({
+        sessionId,
+        eventType: "signup_complete",
+        eventData: { isAuthor },
+      });
+
+      // Update session
+      await dbStorage.updateLandingSession(sessionId, {
+        completedSignup: true,
+      });
+
+      res.json({ success: true, data: signupInterest });
     } catch (error) {
       console.error("Error handling signup interest:", error);
       res.status(500).json({ error: "Failed to process signup" });
     }
   });
 
-  // Add near other API endpoints
+  app.post("/api/partnership-inquiry", async (req, res) => {
+    try {
+      const { name, email, company, message, sessionId } = req.body;
+
+      // Basic validation
+      if (!name || !email || !message || !sessionId) {
+        return res.status(400).json({ 
+          error: "Name, email, message, and session ID are required" 
+        });
+      }
+
+      // Create partnership inquiry record
+      const inquiry = await dbStorage.createPartnershipInquiry({
+        name,
+        email,
+        company,
+        message,
+        sessionId,
+      });
+
+      // Record this as an event in the landing session
+      await dbStorage.recordLandingEvent({
+        sessionId,
+        eventType: "partner_form_submit",
+        eventData: { hasCompany: !!company },
+      });
+
+      // Update session
+      await dbStorage.updateLandingSession(sessionId, {
+        submittedPartnerForm: true,
+      });
+
+      res.json({ success: true, data: inquiry });
+    } catch (error) {
+      console.error("Error handling partnership inquiry:", error);
+      res.status(500).json({ error: "Failed to process partnership inquiry" });
+    }
+  });
+
   app.get("/api/credits", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -1824,7 +1877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/settings", adminAuthMiddleware, async (req, res) => {
     try {
-      // This will be implemented later when we add site settings
+      //      // This will be implemented later when we add site settings
       res.json({});
     } catch (error) {
       console.error("Error fetching settings:", error);

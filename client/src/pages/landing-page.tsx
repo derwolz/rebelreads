@@ -181,7 +181,11 @@ const LandingPage = () => {
       const response = await fetch("/api/signup-interest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, isAuthor }),
+        body: JSON.stringify({
+          email,
+          isAuthor,
+          sessionId,
+        }),
       });
 
       if (response.ok) {

@@ -29,8 +29,13 @@ import {
   InsertLandingEvent,
   landing_sessions,
   landing_events,
-  LandingEvent
-
+  LandingEvent,
+  SignupInterest,
+  InsertSignupInterest,
+  PartnershipInquiry,
+  InsertPartnershipInquiry,
+  signup_interests,
+  partnership_inquiries,
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
@@ -146,6 +151,14 @@ export interface IStorage {
   endLandingSession(sessionId: string): Promise<LandingSession>;
   recordLandingEvent(event: InsertLandingEvent): Promise<LandingEvent>;
   getLandingSession(sessionId: string): Promise<LandingSession | undefined>;
+
+  // Add new signup interest methods
+  createSignupInterest(data: InsertSignupInterest): Promise<SignupInterest>;
+  getSignupInterests(): Promise<SignupInterest[]>;
+
+  // Add new partnership inquiry methods
+  createPartnershipInquiry(data: InsertPartnershipInquiry): Promise<PartnershipInquiry>;
+  getPartnershipInquiries(): Promise<PartnershipInquiry[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -979,6 +992,36 @@ export class DatabaseStorage implements IStorage {
       .from(landing_sessions)
       .where(eq(landing_sessions.sessionId, sessionId));
     return session;
+  }
+
+  async createSignupInterest(data: InsertSignupInterest): Promise<SignupInterest> {
+    const [interest] = await db
+      .insert(signup_interests)
+      .values(data)
+      .returning();
+    return interest;
+  }
+
+  async getSignupInterests(): Promise<SignupInterest[]> {
+    return await db
+      .select()
+      .from(signup_interests)
+      .orderBy(desc(signup_interests.createdAt));
+  }
+
+  async createPartnershipInquiry(data: InsertPartnershipInquiry): Promise<PartnershipInquiry> {
+    const [inquiry] = await db
+      .insert(partnership_inquiries)
+      .values(data)
+      .returning();
+    return inquiry;
+  }
+
+  async getPartnershipInquiries(): Promise<PartnershipInquiry[]> {
+    return await db
+      .select()
+      .from(partnership_inquiries)
+      .orderBy(desc(partnership_inquiries.createdAt));
   }
 }
 

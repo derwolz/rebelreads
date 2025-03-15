@@ -242,7 +242,7 @@ export const campaignBooks = pgTable("campaign_books", {
 export const insertCampaignSchema = createInsertSchema(campaigns, {
   startDate: z.string().transform(str => new Date(str)),
   endDate: z.string().transform(str => new Date(str)),
-}).extend({
+} ).extend({
   books: z.array(z.number()).min(1, "At least one book must be selected"),
   keywords: z.array(z.string()).optional(),
   type: z.enum(["ad", "survey", "review_boost"]),
@@ -410,6 +410,42 @@ export const landing_events = pgTable("landing_events", {
   eventData: jsonb("event_data").default({}),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
+
+// Add after landing_events table
+export const signup_interests = pgTable("signup_interests", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  isAuthor: boolean("is_author").notNull(),
+  sessionId: text("session_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const partnership_inquiries = pgTable("partnership_inquiries", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  company: text("company"),
+  message: text("message").notNull(),
+  sessionId: text("session_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Add insert schemas
+export const insertSignupInterestSchema = createInsertSchema(signup_interests).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPartnershipInquirySchema = createInsertSchema(partnership_inquiries).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Add types
+export type SignupInterest = typeof signup_interests.$inferSelect;
+export type InsertSignupInterest = typeof signup_interests.$inferInsert;
+export type PartnershipInquiry = typeof partnership_inquiries.$inferSelect;
+export type InsertPartnershipInquiry = typeof partnership_inquiries.$inferInsert;
 
 // Add insert schemas
 export const insertLandingSessionSchema = createInsertSchema(landing_sessions).omit({
