@@ -318,32 +318,40 @@ const LandingPage = () => {
               const observer = new IntersectionObserver(
                 ([entry]) => {
                   if (entry.isIntersecting) {
-                    el.classList.remove("card-animate-out");
-                    el.classList.add("card-animate-in");
-                    el.scrollTo({
-                      Top: el.offsetTop - 500,
-                      behavior: "smooth",
-                    });
+                    el.classList.remove("section-hidden");
+                    el.classList.add("section-visible");
+                    const content = el.querySelector(".section-content");
+                    if (content) {
+                      content.classList.remove("card-animate-out");
+                      content.classList.add("card-animate, card-animate-in");
+                    }
                   } else {
-                    el.classList.remove("card-animate-in");
-                    el.classList.add("card-animate-out");
+                    const content = el.querySelector(".section-content");
+                    if (content) {
+                      content.classList.remove("card-animate-in");
+                      content.classList.add("card-animate-out");
+                    }
+                    setTimeout(() => {
+                      if (!entry.isIntersecting) {
+                        el.classList.remove("section-visible");
+                        el.classList.add("section-hidden");
+                      }
+                    }, 500);
                   }
                 },
                 { threshold: 0.5 },
               );
               observer.observe(el);
             }}
-            className="snap-section overflow-none min-h-screen flex items-center justify-between  relative snap-start transition-all duration-500"
+            className="snap-section overflow-none min-h-screen flex items-center justify-between relative snap-start section-hidden"
             style={{
-              opacity: 1,
-              perspective: "2000px",
               transformStyle: "preserve-3d",
               willChange: "transform",
               height: "100vh",
             }}
           >
             <div
-              className="container mx-auto  px-4 py-16 relative"
+              className="container mx-auto px-4 py-16 relative section-content"
               style={{
                 transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
 
