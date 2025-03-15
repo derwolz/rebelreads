@@ -33,14 +33,15 @@ function Router() {
 
   const allowedPaths = ["/landing", "/how-it-works", "/partner"];
   const isApiPath = location.startsWith("/api");
+  const [path, hash] = location.split("#");
 
-  if (showLandingPage && !allowedPaths.includes(location) && !isApiPath) {
-    return <Redirect to="/landing" />;
+  if (showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
+    return <Redirect to={`/landing${hash ? '#' + hash : ''}`} />;
   }
 
   return (
     <>
-      {!allowedPaths.includes(location) && <MainNav />}
+      {!allowedPaths.includes(path) && <MainNav />}
 
       <Switch>
         {/* Public routes */}
@@ -73,7 +74,7 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
 
-      {allowedPaths.includes(location) && <FloatingSignup />}
+      {allowedPaths.includes(path) && <FloatingSignup />}
     </>
   );
 }
