@@ -22,26 +22,31 @@ import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
+import HowItWorks from "@/pages/how-it-works";
+import PartnerWithUs from "@/pages/partner";
 import { Redirect, useLocation } from "wouter";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
   const [location] = useLocation();
 
-  // Only redirect if we're not already on /landing and not on an API route
   if (showLandingPage && location !== "/landing" && !location.startsWith("/api")) {
     return <Redirect to="/landing" />;
   }
 
   return (
     <>
-      {/* Only show MainNav when not on landing page */}
-      {location !== "/landing" && <MainNav />}
+      {location !== "/landing" && 
+       location !== "/how-it-works" && 
+       location !== "/partner" && 
+       <MainNav />}
 
       <Switch>
         {/* Public routes */}
         <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
         <Route path="/landing" component={LandingPage} />
+        <Route path="/how-it-works" component={HowItWorks} />
+        <Route path="/partner" component={PartnerWithUs} />
         <Route path="/books/:id" component={BookDetails} />
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
