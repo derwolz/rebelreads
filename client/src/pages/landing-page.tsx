@@ -8,40 +8,80 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 
 const FloatingShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-12000 ease-in-out animate-float ${className}`}>
-    <svg width="180" height="180" viewBox="0 0 120 120" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <div
+    className={`absolute transition-all duration-12000 ease-in-out animate-float ${className}`}
+  >
+    <svg
+      width="380"
+      height="380"
+      viewBox="0 0 120 120"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path d="M60 10L110 95H10L60 10Z" />
     </svg>
   </div>
 );
 
 const CircleShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-15000 ease-in-out animate-float-delayed ${className}`}>
-    <svg width="160" height="160" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <div
+    className={`absolute transition-all duration-15000 ease-in-out animate-float-delayed ${className}`}
+  >
+    <svg
+      width="360"
+      height="360"
+      viewBox="0 0 100 100"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <circle cx="50" cy="50" r="40" />
     </svg>
   </div>
 );
 
 const SquareShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-13500 ease-in-out animate-float-reverse ${className}`}>
-    <svg width="140" height="140" viewBox="0 0 80 80" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <rect x="10" y="10" width="60" height="60" transform="rotate(45 40 40)" />
+  <div
+    className={`absolute transition-all duration-13500 ease-in-out animate-float-reverse ${className}`}
+  >
+    <svg
+      width="340"
+      height="340"
+      viewBox="0 0 80 80"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="10" y="10" width="80" height="80" transform="rotate(45 40 40)" />
     </svg>
   </div>
 );
 
 const StarShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-14000 ease-in-out animate-float ${className}`}>
-    <svg width="160" height="160" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <div
+    className={`absolute transition-all duration-14000 ease-in-out animate-float ${className}`}
+  >
+    <svg
+      width="320"
+      height="320"
+      viewBox="0 0 100 100"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path d="M50 5L61 39H97L68 61L79 95L50 73L21 95L32 61L3 39H39L50 5Z" />
     </svg>
   </div>
 );
 
 const HexagonShape = ({ className }: { className?: string }) => (
-  <div className={`absolute transition-all duration-15500 ease-in-out animate-float-delayed ${className}`}>
-    <svg width="170" height="170" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <div
+    className={`absolute transition-all duration-15500 ease-in-out animate-float-delayed ${className}`}
+  >
+    <svg
+      width="370"
+      height="370"
+      viewBox="0 0 100 100"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path d="M50 5L90 27.5V72.5L50 95L10 72.5V27.5L50 5Z" />
     </svg>
   </div>
@@ -95,53 +135,65 @@ const LandingPage = () => {
     }
   };
 
-  const panels = isAuthor ? [
-    {
-      title: "Your Story Begins Here",
-      description: "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
-    },
-    {
-      title: "Craft Your Masterpiece",
-      description: "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
-    },
-    {
-      title: "Connect With Your Audience",
-      description: "Build a loyal readership, engage with your fans, and create a community around your stories.",
-    },
-    {
-      title: "Grow Your Author Brand",
-      description: "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
-    },
-    {
-      title: "Shape Literary Futures",
-      description: "Join a new generation of authors who are redefining storytelling in the digital age.",
-    }
-  ] : [
-    {
-      title: "Discover Your Next Adventure",
-      description: "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
-    },
-    {
-      title: "Connect With Stories",
-      description: "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
-    },
-    {
-      title: "Join the Conversation",
-      description: "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
-    },
-    {
-      title: "Support Your Favorite Authors",
-      description: "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
-    },
-    {
-      title: "Your Reading Journey Awaits",
-      description: "Start your literary adventure today and become part of something bigger.",
-    }
-  ];
+  const panels = isAuthor
+    ? [
+        {
+          title: "Your Story Begins Here",
+          description:
+            "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
+        },
+        {
+          title: "Craft Your Masterpiece",
+          description:
+            "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
+        },
+        {
+          title: "Connect With Your Audience",
+          description:
+            "Build a loyal readership, engage with your fans, and create a community around your stories.",
+        },
+        {
+          title: "Grow Your Author Brand",
+          description:
+            "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
+        },
+        {
+          title: "Shape Literary Futures",
+          description:
+            "Join a new generation of authors who are redefining storytelling in the digital age.",
+        },
+      ]
+    : [
+        {
+          title: "Discover Your Next Adventure",
+          description:
+            "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
+        },
+        {
+          title: "Connect With Stories",
+          description:
+            "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
+        },
+        {
+          title: "Join the Conversation",
+          description:
+            "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
+        },
+        {
+          title: "Support Your Favorite Authors",
+          description:
+            "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
+        },
+        {
+          title: "Your Reading Journey Awaits",
+          description:
+            "Start your literary adventure today and become part of something bigger.",
+        },
+      ];
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = document.querySelectorAll('section');
+      const sections = document.querySelectorAll("section");
       const viewportHeight = window.innerHeight;
       const scrollPosition = window.scrollY;
 
@@ -152,7 +204,7 @@ const LandingPage = () => {
         const distanceFromTop = rect.top;
         let opacity = 1;
         if (distanceFromTop < 0) {
-          opacity = Math.max(0, 1 + (distanceFromTop / (viewportHeight * 0.3)));
+          opacity = Math.max(0, 1 + distanceFromTop / (viewportHeight * 0.3));
         }
 
         section.style.opacity = opacity.toString();
@@ -163,24 +215,24 @@ const LandingPage = () => {
       });
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <FloatingShape className="text-primary/20 top-1/4 left-1/5" />
-        <CircleShape className="text-[#40E0D0]/30 top-1/3 right-1/6" />
-        <SquareShape className="text-primary/15 bottom-1/5 left-1/3" />
-        <FloatingShape className="text-[#40E0D0]/20 bottom-1/4 right-2/5 rotate-180" />
-        <CircleShape className="text-primary/20 top-3/4 left-1/2" />
-        <SquareShape className="text-primary/15 top-2/5 right-1/3 rotate-45" />
-        <StarShape className="text-[#40E0D0]/25 bottom-1/3 right-1/5" />
-        <HexagonShape className="text-primary/20 top-1/4 left-2/5" />
+        <FloatingShape className="text-primary/20 top-1/3 left-[35%]" />
+        <CircleShape className="text-[#40E0D0]/30 top-1/4 right-[40%]" />
+        <SquareShape className="text-primary/15 bottom-[45%] left-[45%]" />
+        <FloatingShape className="text-[#40E0D0]/20 bottom-[40%] right-[35%] rotate-180" />
+        <CircleShape className="text-primary/20 top-[45%] left-[30%]" />
+        <SquareShape className="text-primary/15 top-[35%] right-[45%] rotate-45" />
+        <StarShape className="text-[#40E0D0]/25 bottom-[35%] right-[30%]" />
+        <HexagonShape className="text-primary/20 top-[40%] left-[40%]" />
       </div>
 
-      <div className="fixed inset-0 backdrop-blur-[20px] pointer-events-none" />
+      <div className="fixed inset-0 backdrop-blur-[0px] pointer-events-none" />
 
       {/* Hero section with text buttons */}
       <section className="min-h-screen flex items-center justify-center relative">
@@ -193,7 +245,7 @@ const LandingPage = () => {
             <div className="flex gap-12 items-center">
               <button
                 onClick={() => handleUserTypeChange(false)}
-                className={`text-2xl font-bold relative ${!isAuthor ? 'text-primary' : 'text-muted-foreground'}`}
+                className={`text-2xl font-bold relative ${!isAuthor ? "text-primary" : "text-muted-foreground"}`}
               >
                 Reader
                 {!isAuthor && (
@@ -203,7 +255,7 @@ const LandingPage = () => {
               <div className="text-2xl text-muted-foreground">or</div>
               <button
                 onClick={() => handleUserTypeChange(true)}
-                className={`text-2xl font-bold relative ${isAuthor ? 'text-primary' : 'text-muted-foreground'}`}
+                className={`text-2xl font-bold relative ${isAuthor ? "text-primary" : "text-muted-foreground"}`}
               >
                 Author
                 {isAuthor && (
@@ -223,8 +275,12 @@ const LandingPage = () => {
         >
           <div className="container mx-auto px-4 py-16">
             <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
-              <h2 className="text-4xl md:text-6xl font-bold mb-6">{panel.title}</h2>
-              <p className="text-xl text-muted-foreground">{panel.description}</p>
+              <h2 className="text-4xl md:text-6xl font-bold mb-6">
+                {panel.title}
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                {panel.description}
+              </p>
             </div>
           </div>
 
@@ -247,9 +303,7 @@ const LandingPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1"
               />
-              <Button type="submit">
-                Sign Up
-              </Button>
+              <Button type="submit">Sign Up</Button>
             </form>
           </Card>
         </div>
