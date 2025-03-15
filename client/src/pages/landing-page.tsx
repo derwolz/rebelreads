@@ -9,8 +9,10 @@ import { ChevronDown } from "lucide-react";
 
 const FloatingShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-12000 ease-in-out animate-float ${className}`}
-  >
+    style={{transition: "all 0.1s ease-in-out"}}
+    className={`absolute  animate-float ${className}`}
+    
+    >
     <svg
       width="380"
       height="380"
@@ -25,11 +27,11 @@ const FloatingShape = ({ className }: { className?: string }) => (
 
 const CircleShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-15000 ease-in-out animate-float-delayed ${className}`}
+    className={`absolute transition-all duration-800 ease-in-out animate-float-delayed ${className}`}
   >
     <svg
-      width="360"
-      height="360"
+      width="560"
+      height="560"
       viewBox="0 0 100 100"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
@@ -41,11 +43,11 @@ const CircleShape = ({ className }: { className?: string }) => (
 
 const SquareShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-13500 ease-in-out animate-float-reverse ${className}`}
+    className={`absolute transition-all duration-1350 ease-in-out animate-float-reverse ${className}`}
   >
     <svg
-      width="340"
-      height="340"
+      width="540"
+      height="540"
       viewBox="0 0 80 80"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
@@ -57,11 +59,11 @@ const SquareShape = ({ className }: { className?: string }) => (
 
 const StarShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-14000 ease-in-out animate-float ${className}`}
+    className={`absolute transition-all duration-1400 ease-in-out animate-float ${className}`}
   >
     <svg
-      width="320"
-      height="320"
+      width="520"
+      height="520"
       viewBox="0 0 100 100"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
@@ -73,11 +75,11 @@ const StarShape = ({ className }: { className?: string }) => (
 
 const HexagonShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-15500 ease-in-out animate-float-delayed ${className}`}
+    className={`absolute transition-all duration-1550 ease-in-out animate-float-delayed ${className}`}
   >
     <svg
-      width="370"
-      height="370"
+      width="570"
+      height="570"
       viewBox="0 0 100 100"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
@@ -222,17 +224,17 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <FloatingShape className="text-primary/20 top-1/3 left-[35%]" />
+        <FloatingShape className="text-primary/30 top-1/3 left-[35%]" />
         <CircleShape className="text-[#40E0D0]/30 top-1/4 right-[40%]" />
-        <SquareShape className="text-primary/15 bottom-[45%] left-[45%]" />
+        <SquareShape className="text-primary/35 bottom-[45%] left-[45%]" />
         <FloatingShape className="text-[#40E0D0]/20 bottom-[40%] right-[35%] rotate-180" />
-        <CircleShape className="text-primary/20 top-[45%] left-[30%]" />
+        <CircleShape className="text-primary/20 top-[05%] left-[20%]" />
         <SquareShape className="text-primary/15 top-[35%] right-[45%] rotate-45" />
-        <StarShape className="text-[#40E0D0]/25 bottom-[35%] right-[30%]" />
-        <HexagonShape className="text-primary/20 top-[40%] left-[40%]" />
+        <StarShape className="text-[#40E0D0]/20 bottom-[35%] right-[30%]" />
+        <HexagonShape className="text-[#40E0D0]/20 top-[40%] left-[40%]" />
       </div>
 
-      <div className="fixed inset-0 backdrop-blur-[0px] pointer-events-none" />
+      <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
 
       {/* Hero section with text buttons */}
       <section className="min-h-screen flex items-center justify-center relative">
