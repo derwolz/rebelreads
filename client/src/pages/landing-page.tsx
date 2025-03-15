@@ -8,6 +8,15 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 
+interface PanelData {
+  title: string;
+  description: string;
+  image?: {
+    src: string;
+    alt: string;
+  };
+}
+
 const FloatingShape = ({ className }: { className?: string }) => (
   <div
     style={{transition: "all 0.1s ease-in-out"}}
@@ -148,32 +157,52 @@ const LandingPage = () => {
     }
   };
 
-  const panels = isAuthor
+  const panels: PanelData[] = isAuthor
     ? [
         {
           title: "Your Story Begins Here",
           description:
             "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
+          image: {
+            src: "/images/author-journey.svg",
+            alt: "Author writing at desk"
+          }
         },
         {
           title: "Craft Your Masterpiece",
           description:
             "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
+          image: {
+            src: "/images/manuscript.svg",
+            alt: "Manuscript with editing tools"
+          }
         },
         {
           title: "Connect With Your Audience",
           description:
             "Build a loyal readership, engage with your fans, and create a community around your stories.",
+          image: {
+            src: "/images/community.svg",
+            alt: "Author connecting with readers"
+          }
         },
         {
           title: "Grow Your Author Brand",
           description:
             "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
+          image: {
+            src: "/images/analytics.svg",
+            alt: "Author analytics dashboard"
+          }
         },
         {
           title: "Shape Literary Futures",
           description:
             "Join a new generation of authors who are redefining storytelling in the digital age.",
+          image: {
+            src: "/images/future.svg",
+            alt: "Future of storytelling"
+          }
         },
       ]
     : [
@@ -181,31 +210,51 @@ const LandingPage = () => {
           title: "Discover Your Next Adventure",
           description:
             "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
+          image: {
+            src: "/images/book-discovery.svg",
+            alt: "Book discovery journey"
+          }
         },
         {
           title: "Connect With Stories",
           description:
             "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
+          image: {
+            src: "/images/book-connection.svg",
+            alt: "Reader connecting with books"
+          }
         },
         {
           title: "Join the Conversation",
           description:
             "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
+          image: {
+            src: "/images/reader-community.svg",
+            alt: "Reader community discussion"
+          }
         },
         {
           title: "Support Your Favorite Authors",
           description:
             "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
+          image: {
+            src: "/images/author-support.svg",
+            alt: "Supporting favorite authors"
+          }
         },
         {
           title: "Your Reading Journey Awaits",
           description:
             "Start your literary adventure today and become part of something bigger.",
+          image: {
+            src: "/images/reading-journey.svg",
+            alt: "Reading journey visualization"
+          }
         },
       ];
   const getRotationAndTranslate = (index: number) => {
-    const rotationValue = index * 20; // Example rotation value
-    const translateZValue = 100; // Example translate value
+    const rotationValue = index * 20; 
+    const translateZValue = 100; 
     return {
       '--rotation': `${rotationValue}deg`,
       '--translate-z': `${translateZValue}px`,
@@ -279,7 +328,7 @@ const LandingPage = () => {
               );
               observer.observe(el);
             }}
-            className="h-screen flex items-center justify-center relative snap-start"
+            className="h-screen flex items-center justify-center relative snap-start transition-all duration-500"
             style={{ 
               opacity: 1,
               perspective: "2000px",
@@ -295,6 +344,15 @@ const LandingPage = () => {
               }}
             >
               <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+                {panel.image && (
+                  <div className="mb-8 relative w-full aspect-[3/2] rounded-lg overflow-hidden">
+                    <img
+                      src={panel.image.src}
+                      alt={panel.image.alt}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                )}
                 <h2 className="text-4xl md:text-6xl font-bold mb-6">
                   {panel.title}
                 </h2>
