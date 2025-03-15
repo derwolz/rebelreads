@@ -22,6 +22,14 @@
     opacity: 0;
   }
 }
+
+.card-animate-in {
+  animation: cardRotateIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.card-animate-out {
+  animation: cardRotateOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 @tailwind utilities;
 
 @layer base {

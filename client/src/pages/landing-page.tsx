@@ -268,20 +268,23 @@ const LandingPage = () => {
               const observer = new IntersectionObserver(
                 ([entry]) => {
                   if (entry.isIntersecting) {
-                    el.style.animation = "cardRotateIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards";
+                    el.classList.remove('card-animate-out');
+                    el.classList.add('card-animate-in');
                   } else {
-                    el.style.animation = "cardRotateOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards";
+                    el.classList.remove('card-animate-in');
+                    el.classList.add('card-animate-out');
                   }
                 },
                 { threshold: 0.5 }
               );
               observer.observe(el);
             }}
-            className="min-h-screen flex items-center justify-center relative snap-start"
+            className="h-screen flex items-center justify-center relative snap-start"
             style={{ 
               opacity: 1,
               perspective: "2000px",
-              transformStyle: "preserve-3d"
+              transformStyle: "preserve-3d",
+              willChange: "transform"
             }}>
             <div 
               className="container mx-auto px-4 py-16 relative"
