@@ -204,70 +204,6 @@ const LandingPage = () => {
         },
       ];
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = document.querySelectorAll('section');
-      const viewportHeight = window.innerHeight;
-      const emailSignupHeight = 80; 
-      const adjustedViewportHeight = viewportHeight - emailSignupHeight;
-      const scrollPosition = window.scrollY;
-
-      sections.forEach((section, index) => {
-        const rect = section.getBoundingClientRect();
-        const distanceFromTop = rect.top;
-        const container = section.querySelector('.container');
-
-        if (!container) return;
-
-        let rotation = 0;
-        let translateZ = 0;
-        const isLastSection = index === sections.length - 1;
-
-        if (distanceFromTop <= viewportHeight && distanceFromTop >= -viewportHeight) {
-          if (distanceFromTop > 0) {
-            rotation = Math.min(45, (distanceFromTop / viewportHeight) * 90);
-            translateZ = Math.min(500, (distanceFromTop / viewportHeight) * 1000);
-          } 
-          else if (distanceFromTop > -viewportHeight) {
-            rotation = Math.max(-45, (distanceFromTop / viewportHeight) * 90);
-            translateZ = Math.max(-500, (distanceFromTop / viewportHeight) * 1000);
-          }
-
-          if (isLastSection && distanceFromTop < viewportHeight / 2) {
-            rotation = 0;
-            translateZ = 0;
-          }
-        }
-
-        container.style.setProperty('--rotation', `${rotation}deg`);
-        container.style.setProperty('--translate-z', `${translateZ}px`);
-
-        let opacity = 0;
-        const centerViewport = adjustedViewportHeight / 2;
-        const distanceFromCenter = Math.abs(distanceFromTop + centerViewport);
-
-        if (distanceFromTop <= 0 && distanceFromTop >= -adjustedViewportHeight) {
-          opacity = Math.max(0, 1 - (distanceFromCenter / (adjustedViewportHeight * 0.5)));
-        } else if (distanceFromTop > 0 && distanceFromTop <= adjustedViewportHeight) {
-          opacity = Math.max(0, 1 - (distanceFromTop / (adjustedViewportHeight * 0.5)));
-        }
-
-        if (isLastSection && distanceFromTop < adjustedViewportHeight / 3) {
-          opacity = 1;
-        }
-
-        container.style.opacity = opacity.toString();
-
-        if (Math.abs(distanceFromTop) < adjustedViewportHeight / 2) {
-          setActivePanel(index);
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [panels.length]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -284,88 +220,90 @@ const LandingPage = () => {
 
       <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
 
-      <section className="min-h-screen flex items-center justify-center relative">
-        <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
-          <h1 className="text-5xl md:text-7xl font-bold">
-            Where Stories Come Alive
-          </h1>
-          <div className="flex flex-col items-center gap-8">
-            <span className="text-xl text-muted-foreground">I am a</span>
-            <div className="flex gap-12 items-center">
-              <button
-                onClick={() => handleUserTypeChange(false)}
-                className={`text-2xl font-bold relative ${!isAuthor ? "text-primary" : "text-muted-foreground"}`}
-              >
-                Reader
-                {!isAuthor && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 to-[#40E0D0]/50 rounded-full blur-sm" />
-                )}
-              </button>
-              <div className="text-2xl text-muted-foreground">or</div>
-              <button
-                onClick={() => handleUserTypeChange(true)}
-                className={`text-2xl font-bold relative ${isAuthor ? "text-primary" : "text-muted-foreground"}`}
-              >
-                Author
-                {isAuthor && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#40E0D0]/50 to-primary/50 rounded-full blur-sm" />
-                )}
-              </button>
+      <div className="h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory">
+        <section className="min-h-screen flex items-center justify-center relative snap-start">
+          <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+            <h1 className="text-5xl md:text-7xl font-bold">
+              Where Stories Come Alive
+            </h1>
+            <div className="flex flex-col items-center gap-8">
+              <span className="text-xl text-muted-foreground">I am a</span>
+              <div className="flex gap-12 items-center">
+                <button
+                  onClick={() => handleUserTypeChange(false)}
+                  className={`text-2xl font-bold relative ${!isAuthor ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  Reader
+                  {!isAuthor && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/50 to-[#40E0D0]/50 rounded-full blur-sm" />
+                  )}
+                </button>
+                <div className="text-2xl text-muted-foreground">or</div>
+                <button
+                  onClick={() => handleUserTypeChange(true)}
+                  className={`text-2xl font-bold relative ${isAuthor ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  Author
+                  {isAuthor && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#40E0D0]/50 to-primary/50 rounded-full blur-sm" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {panels.map((panel, index) => (
-        <section
-          key={index}
-          className="min-h-screen flex items-center justify-center relative snap-start transition-all duration-500"
-          style={{ 
-            opacity: 1,
-            perspective: "1500px",
-            transformStyle: "preserve-3d"
-          }}
-        >
-          <div 
-            className="container mx-auto px-4 py-16 relative"
-            style={{
-              transform: `rotate3d(1, 1, 0, var(--rotation)) translateZ(var(--translate-z))`,
-              transformOrigin: "top right",
-              transition: "all 0.8s ease-out",
+        {panels.map((panel, index) => (
+          <section
+            key={index}
+            className="min-h-screen flex items-center justify-center relative snap-start transition-all duration-500"
+            style={{ 
+              opacity: 1,
+              perspective: "1500px",
+              transformStyle: "preserve-3d"
             }}
           >
-            <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
-              <h2 className="text-4xl md:text-6xl font-bold mb-6">
-                {panel.title}
-              </h2>
-              <p className="text-xl text-muted-foreground">
-                {panel.description}
-              </p>
+            <div 
+              className="container mx-auto px-4 py-16 relative"
+              style={{
+                transform: `rotate3d(1, 1, 0, var(--rotation)) translateZ(var(--translate-z))`,
+                transformOrigin: "top right",
+                transition: "all 0.8s ease-out",
+              }}
+            >
+              <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+                <h2 className="text-4xl md:text-6xl font-bold mb-6">
+                  {panel.title}
+                </h2>
+                <p className="text-xl text-muted-foreground">
+                  {panel.description}
+                </p>
+              </div>
             </div>
+
+            {index < panels.length - 1 && (
+              <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <ChevronDown className="w-8 h-8 text-muted-foreground" />
+              </div>
+            )}
+          </section>
+        ))}
+
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <Card className="max-w-md mx-auto">
+              <form onSubmit={handleSignup} className="p-4 flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email for updates"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="submit">Sign Up</Button>
+              </form>
+            </Card>
           </div>
-
-          {index < panels.length - 1 && (
-            <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
-              <ChevronDown className="w-8 h-8 text-muted-foreground" />
-            </div>
-          )}
-        </section>
-      ))}
-
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Card className="max-w-md mx-auto">
-            <form onSubmit={handleSignup} className="p-4 flex gap-2">
-              <Input
-                type="email"
-                placeholder="Enter your email for updates"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1"
-              />
-              <Button type="submit">Sign Up</Button>
-            </form>
-          </Card>
         </div>
       </div>
     </div>
