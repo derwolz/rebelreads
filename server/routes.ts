@@ -48,8 +48,110 @@ const fileStorage = multer.diskStorage({
 
 const upload = multer({ storage: fileStorage });
 
+interface LandingSession {
+  sessionId: string;
+  deviceInfo: any;
+  lastSectionViewed?: number;
+  totalSectionsViewed?: number;
+  selectedTheme?: string;
+  clickedHowItWorks?: boolean;
+  clickedSignup?: boolean;
+  completedSignup?: boolean;
+  startedPartnerForm?: boolean;
+  submittedPartnerForm?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  endedAt?: Date;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  app.post("/api/landing/session", async (req, res) => {
+    try {
+      const { sessionId, deviceInfo } = req.body;
+
+      // Check if session exists
+      let session = await dbStorage.getLandingSession(sessionId);
+
+      if (!session) {
+        // Create new session if it doesn't exist
+        session = await dbStorage.createLandingSession(sessionId, deviceInfo);
+      }
+
+      res.json(session);
+    } catch (error) {
+      console.error("Error creating/updating landing session:", error);
+      res.status(500).json({ error: "Failed to handle landing session" });
+    }
+  });
+
+  app.post("/api/landing/event", async (req, res) => {
+    try {
+      const { sessionId, type, data } = req.body;
+
+      // First ensure session exists
+      const session = await dbStorage.getLandingSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+
+      // Record the event
+      const event = await dbStorage.recordLandingEvent({
+        sessionId,
+        eventType: type,
+        eventData: data,
+      });
+
+      // Update session based on event type
+      const sessionUpdates: Partial<LandingSession> = {};
+
+      switch (type) {
+        case "section_view":
+          sessionUpdates.lastSectionViewed = data.sectionIndex;
+          sessionUpdates.totalSectionsViewed = session.totalSectionsViewed + 1;
+          break;
+        case "theme_change":
+          sessionUpdates.selectedTheme = data.theme;
+          break;
+        case "how_it_works_click":
+          sessionUpdates.clickedHowItWorks = true;
+          break;
+        case "signup_click":
+          sessionUpdates.clickedSignup = true;
+          break;
+        case "signup_complete":
+          sessionUpdates.completedSignup = true;
+          break;
+        case "partner_form_start":
+          sessionUpdates.startedPartnerForm = true;
+          break;
+        case "partner_form_submit":
+          sessionUpdates.submittedPartnerForm = true;
+          break;
+      }
+
+      if (Object.keys(sessionUpdates).length > 0) {
+        await dbStorage.updateLandingSession(sessionId, sessionUpdates);
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error("Error recording landing event:", error);
+      res.status(500).json({ error: "Failed to record landing event" });
+    }
+  });
+
+  app.post("/api/landing/session/:sessionId/end", async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const session = await dbStorage.endLandingSession(sessionId);
+      res.json(session);
+    } catch (error) {
+      console.error("Error ending landing session:", error);
+      res.status(500).json({ error: "Failed to end landing session" });
+    }
+  });
 
   app.post("/api/signup-interest", async (req, res) => {
     try {
@@ -813,7 +915,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const reviewId = parseInt(req.params.id);
       const { content } = req.body;
-
       // Verify the review belongs to one of the author's books
       const review = await db
         .select()
@@ -1257,7 +1358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add after the /api/pro/book-performance endpoint
   app.get("/api/pro/follower-analytics", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(403);
+      return res.sendStatus(401);
     }
 
     try {
@@ -1737,11 +1838,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { days = 30, bookIds } = req.body;
 
       if (!Array.isArray(bookIds) || bookIds.length === 0) {
-        return res.status(400).json({ error: "bookIds must be a non-empty array" });
+        return res
+          .status(400)
+          .json({ error: "bookIds must be a non-empty array" });
       }
 
       // Convert string IDs to numbers and validate
-      const numericBookIds = bookIds.map(id => {
+      const numericBookIds = bookIds.map((id) => {
         const numId = parseInt(id);
         if (isNaN(numId)) {
           throw new Error(`Invalid book ID: ${id}`);

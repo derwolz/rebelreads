@@ -25,6 +25,11 @@ import {
   GiftedBook,
   InsertGiftedBook,
   giftedBooks,
+  LandingSession,
+  InsertLandingEvent,
+  landing_sessions,
+  landing_events,
+  LandingEvent
 
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
@@ -134,6 +139,13 @@ export interface IStorage {
     clicks: number;
     referrers: { [key: string]: number };
   }[]>;
+
+  // Landing session methods
+  createLandingSession(sessionId: string, deviceInfo: any): Promise<LandingSession>;
+  updateLandingSession(sessionId: string, data: Partial<LandingSession>): Promise<LandingSession>;
+  endLandingSession(sessionId: string): Promise<LandingSession>;
+  recordLandingEvent(event: InsertLandingEvent): Promise<LandingEvent>;
+  getLandingSession(sessionId: string): Promise<LandingSession | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -916,6 +928,57 @@ export class DatabaseStorage implements IStorage {
     });
 
     return results;
+  }
+
+  async createLandingSession(sessionId: string, deviceInfo: any): Promise<LandingSession> {
+    const [session] = await db
+      .insert(landing_sessions)
+      .values({
+        sessionId,
+        deviceInfo,
+      })
+      .returning();
+    return session;
+  }
+
+  async updateLandingSession(
+    sessionId: string,
+    data: Partial<LandingSession>
+  ): Promise<LandingSession> {
+    const [session] = await db
+      .update(landing_sessions)
+      .set(data)
+      .where(eq(landing_sessions.sessionId, sessionId))
+      .returning();
+    return session;
+  }
+
+  async endLandingSession(sessionId: string): Promise<LandingSession> {
+    const [session] = await db
+      .update(landing_sessions)
+      .set({
+        endTime: new Date(),
+        timeSpentSeconds: sql`EXTRACT(EPOCH FROM (NOW() - ${landing_sessions.startTime}))::integer`,
+      })
+      .where(eq(landing_sessions.sessionId, sessionId))
+      .returning();
+    return session;
+  }
+
+  async recordLandingEvent(event: InsertLandingEvent): Promise<LandingEvent> {
+    const [newEvent] = await db
+      .insert(landing_events)
+      .values(event)
+      .returning();
+    return newEvent;
+  }
+
+  async getLandingSession(sessionId: string): Promise<LandingSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(landing_sessions)
+      .where(eq(landing_sessions.sessionId, sessionId));
+    return session;
   }
 }
 

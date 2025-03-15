@@ -25,16 +25,7 @@ const features = [
 ];
 
 export default function HowItWorks() {
-  const [sessionId] = useState(() => {
-    // Try to reuse existing session ID from landing page
-    const existingId = localStorage.getItem('landing_session_id');
-    if (existingId) return existingId;
-
-    // Create new session ID if none exists
-    const newId = crypto.randomUUID();
-    localStorage.setItem('landing_session_id', newId);
-    return newId;
-  });
+  const [sessionId] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     // Track that user visited how-it-works page
@@ -58,7 +49,7 @@ export default function HowItWorks() {
 
     trackEvent();
 
-    // Initialize or update session
+    // Initialize session
     fetch("/api/landing/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
