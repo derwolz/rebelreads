@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -99,11 +100,11 @@ const HexagonShape = ({ className }: { className?: string }) => (
 
 const LandingPage = () => {
   const [isAuthor, setIsAuthor] = useState(false);
+  const [email, setEmail] = useState("");
   const [activePanel, setActivePanel] = useState(0);
   const { setTheme } = useTheme();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
+  const [, setLocation] = useLocation();
 
   const handleUserTypeChange = (isAuthor: boolean) => {
     setIsAuthor(isAuthor);
@@ -368,6 +369,23 @@ const LandingPage = () => {
             )}
           </section>
         ))}
+
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <Card className="max-w-md mx-auto">
+              <form onSubmit={handleSignup} className="p-4 flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email for updates"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="submit">Sign Up</Button>
+              </form>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
