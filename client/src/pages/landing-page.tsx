@@ -282,7 +282,7 @@ const LandingPage = () => {
               opacity: 1,
               perspective: "2000px",
               transformStyle: "preserve-3d"
-            }}
+            }}>
             <div 
               className="container mx-auto px-4 py-16 relative"
               style={{
