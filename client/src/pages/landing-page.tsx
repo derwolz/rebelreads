@@ -319,6 +319,9 @@ const LandingPage = () => {
                   if (entry.isIntersecting) {
                     el.classList.remove('card-animate-out');
                     el.classList.add('card-animate-in');
+                    setTimeout(() => {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
                   } else {
                     el.classList.remove('card-animate-in');
                     el.classList.add('card-animate-out');
