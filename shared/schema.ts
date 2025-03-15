@@ -115,24 +115,6 @@ export const books = pgTable("books", {
   lastClickThroughAt: timestamp("last_click_through_at"),
 });
 
-export const bookImpressions = pgTable("book_impressions", {
-  id: serial("id").primaryKey(),
-  bookId: integer("book_id").notNull(),
-  userId: integer("user_id"), // Optional, as not all users might be logged in
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
-  source: text("source").notNull(), // e.g., 'card', 'grid', 'carousel'
-  context: text("context").notNull(), // e.g., 'home', 'search', 'author-page'
-});
-
-export const bookClickThroughs = pgTable("book_click_throughs", {
-  id: serial("id").primaryKey(),
-  bookId: integer("book_id").notNull(),
-  userId: integer("user_id"), // Optional, as not all users might be logged in
-  timestamp: timestamp("timestamp").notNull().defaultNow(),
-  source: text("source").notNull(), // Where the click came from
-  referrer: text("referrer"), // Previous page URL
-});
-
 export interface ReviewAnalysis {
   sentiment: {
     label: string;
@@ -186,6 +168,24 @@ export const reading_status = pgTable("reading_status", {
   isWishlisted: boolean("is_wishlisted").notNull().default(false),
   isCompleted: boolean("is_completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
+});
+
+export const bookImpressions = pgTable("book_impressions", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull(),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  source: text("source").notNull(), // e.g., 'card', 'grid', 'carousel'
+  context: text("context").notNull(), // e.g., 'home', 'search', 'author-page'
+});
+
+export const bookClickThroughs = pgTable("book_click_throughs", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull(),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  source: text("source").notNull(), // Where the click came from
+  referrer: text("referrer"), // Previous page URL
 });
 
 export const publishers = pgTable("publishers", {

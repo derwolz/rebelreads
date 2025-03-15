@@ -652,52 +652,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/pro/books/:id/metrics", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(403);
-    }
-
-    try {
-      const bookId = parseInt(req.params.id);
-      if (isNaN(bookId)) {
-        return res.status(400).json({ error: "Invalid book ID" });
-      }
-
-      // Verify the book exists and belongs to the author
-      const book = await dbStorage.getBook(bookId);
-      if (!book || book.authorId !== req.user!.id) {
-        return res.status(404).json({ error: "Book not found" });
-      }
-
-      const days = parseInt(req.query.days as string) || 30;
-      if (isNaN(days) || days < 1 || days > 365) {
-        return res.status(400).json({ error: "Invalid days parameter" });
-      }
-
-      console.log(`Fetching metrics for book ${bookId} over ${days} days`);
-
-      // Fetch all metrics in parallel
-      const [impressions, clicks, referrals] = await Promise.all([
-        dbStorage.getBookImpressionsByDay(bookId, days),
-        dbStorage.getBookClicksByDay(bookId, days),
-        dbStorage.getBookReferralsByDay(bookId, days)
-      ]);
-
-      console.log('Metrics results:', { impressions, clicks, referrals });
-
-      res.json({
-        impressions,
-        clicks,
-        referrals,
-        timeframe: days,
-        bookId
-      });
-    } catch (error) {
-      console.error("Error fetching book metrics:", error);
-      res.status(500).json({ error: "Failed to fetch book metrics" });
-    }
-  });
-
   // Add after the /api/pro/dashboard endpoint
   app.get("/api/campaigns", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
@@ -1303,7 +1257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add after the /api/pro/book-performance endpoint
   app.get("/api/pro/follower-analytics", async (req, res) => {
     if (!req.isAuthenticated() || !req.user!.isAuthor) {
-      return res.sendStatus(401);
+      return res.sendStatus(403);
     }
 
     try {

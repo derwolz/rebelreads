@@ -19,7 +19,7 @@ interface PanelData {
 
 const FloatingShape = ({ className }: { className?: string }) => (
   <div
-    style={{ transition: "all 0.1s ease-in-out" }}
+    style={{transition: "all 0.1s ease-in-out"}}
     className={`absolute  animate-float ${className}`}
   >
     <svg
@@ -109,14 +109,14 @@ const LandingPage = () => {
   const handleUserTypeChange = (isAuthor: boolean) => {
     setIsAuthor(isAuthor);
     setTheme(isAuthor ? "dark" : "light");
-    window.history.replaceState(null, "", `#${isAuthor ? "author" : "reader"}`);
+    window.history.replaceState(null, '', `#${isAuthor ? 'author' : 'reader'}`);
   };
 
   useEffect(() => {
     const hash = window.location.hash.toLowerCase();
-    if (hash === "#author") {
+    if (hash === '#author') {
       handleUserTypeChange(true);
-    } else if (hash === "#reader") {
+    } else if (hash === '#reader') {
       handleUserTypeChange(false);
     }
   }, []);
@@ -160,104 +160,104 @@ const LandingPage = () => {
   const panels: PanelData[] = isAuthor
     ? [
         {
-          title: "You are the protagonist",
+          title: "Your Story Begins Here",
           description:
-            "Every great author starts with a spark — yours ignites here.",
+            "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
           image: {
             src: "/images/author-journey.svg",
-            alt: "Author writing at desk",
-          },
+            alt: "Author writing at desk"
+          }
         },
         {
-          title: "Every hero finds troubled waters",
+          title: "Craft Your Masterpiece",
           description:
-            "Industry giants drown your business in fees, drowning your dreams. But, A new shore crests the horizon.",
+            "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
           image: {
             src: "/images/manuscript.svg",
-            alt: "Manuscript with editing tools",
-          },
+            alt: "Manuscript with editing tools"
+          }
         },
         {
-          title: "A song pierces the chaos",
+          title: "Connect With Your Audience",
           description:
-            "Sirened calls you to a marketplace that’s yours—no fees, no paid rankings, just readers ready for your voice.",
+            "Build a loyal readership, engage with your fans, and create a community around your stories.",
           image: {
             src: "/images/community.svg",
-            alt: "Author connecting with readers",
-          },
+            alt: "Author connecting with readers"
+          }
         },
         {
-          title: "Your first step into the indie town square",
+          title: "Grow Your Author Brand",
           description:
-            "Step into Sirened’s indie square. Readers reach your books and you keep 100% of every sale.",
+            "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
           image: {
             src: "/images/analytics.svg",
-            alt: "Author analytics dashboard",
-          },
+            alt: "Author analytics dashboard"
+          }
         },
         {
-          title: "Reclaim your Literary Future",
+          title: "Shape Literary Futures",
           description:
-            "Team up with Sirened, our analytics tools and organic engine lift your books from obscurity. Sign up and shape the future of indie publishing.",
+            "Join a new generation of authors who are redefining storytelling in the digital age.",
           image: {
             src: "/images/future.svg",
-            alt: "Future of storytelling",
-          },
+            alt: "Future of storytelling"
+          }
         },
       ]
     : [
         {
-          title: "You are the Hero",
+          title: "Discover Your Next Adventure",
           description:
             "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
           image: {
             src: "/images/book-discovery.svg",
-            alt: "Book discovery journey",
-          },
+            alt: "Book discovery journey"
+          }
         },
         {
-          title: "Spellbound by a False Tune",
+          title: "Connect With Stories",
           description:
-            "You crave adventure, but industry giants only offer a bargain bin. The storytellers you love, suffer in obscurity.",
+            "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
           image: {
             src: "/images/book-connection.svg",
-            alt: "Reader connecting with books",
-          },
+            alt: "Reader connecting with books"
+          }
         },
         {
-          title: "A Song Breaks the Charm",
+          title: "Join the Conversation",
           description:
-            "Discover a realm where your storytellers thrive, a place where quality trumps quantity. Sirened cuts through the chaos",
+            "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
           image: {
             src: "/images/reader-community.svg",
-            alt: "Reader community discussion",
-          },
+            alt: "Reader community discussion"
+          }
         },
         {
-          title: "Step into the indie square",
+          title: "Support Your Favorite Authors",
           description:
-            "Enter Sirened’s marketplace. Find stories worth their weight, sent straight from the creators’ doors.",
+            "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
           image: {
             src: "/images/author-support.svg",
-            alt: "Supporting favorite authors",
-          },
+            alt: "Supporting favorite authors"
+          }
         },
         {
-          title: "Support your storytellers",
+          title: "Your Reading Journey Awaits",
           description:
-            "Join Sirened — back indie authors directly, not the giants who bind them. Sign up and rewrite the ending",
+            "Start your literary adventure today and become part of something bigger.",
           image: {
             src: "/images/reading-journey.svg",
-            alt: "Reading journey visualization",
-          },
+            alt: "Reading journey visualization"
+          }
         },
       ];
   const getRotationAndTranslate = (index: number) => {
-    const rotationValue = index * 20;
-    const translateZValue = 100;
+    const rotationValue = index * 20; 
+    const translateZValue = 100; 
     return {
-      "--rotation": `${rotationValue}deg`,
-      "--translate-z": `${translateZValue}px`,
+      '--rotation': `${rotationValue}deg`,
+      '--translate-z': `${translateZValue}px`,
     };
   };
 
@@ -278,8 +278,8 @@ const LandingPage = () => {
 
       <div className="h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory">
         <section className="min-h-screen flex items-center justify-center relative snap-start">
-          <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 w-screen shadow-xl">
-            <h1 className="text-5xl shadow-2xl  md:text-7xl font-bold">
+          <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+            <h1 className="text-5xl md:text-7xl font-bold">
               Where Stories Come Alive
             </h1>
             <div className="flex flex-col items-center gap-8">
@@ -317,29 +317,25 @@ const LandingPage = () => {
               const observer = new IntersectionObserver(
                 ([entry]) => {
                   if (entry.isIntersecting) {
-                    el.classList.remove("card-animate-out");
-                    el.classList.add("card-animate-in");
-                    setTimeout(() => {
-                      el.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }, 100);
+                    el.classList.remove('card-animate-out');
+                    el.classList.add('card-animate-in');
                   } else {
-                    el.classList.remove("card-animate-in");
-                    el.classList.add("card-animate-out");
+                    el.classList.remove('card-animate-in');
+                    el.classList.add('card-animate-out');
                   }
                 },
-                { threshold: 0.5 },
+                { threshold: 0.5 }
               );
               observer.observe(el);
             }}
             className="h-screen flex items-center justify-center relative snap-start transition-all duration-500"
-            style={{
+            style={{ 
               opacity: 1,
               perspective: "2000px",
               transformStyle: "preserve-3d",
-              willChange: "transform",
-            }}
-          >
-            <div
+              willChange: "transform"
+            }}>
+            <div 
               className="container mx-auto px-4 py-16 relative"
               style={{
                 transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
@@ -380,7 +376,7 @@ const LandingPage = () => {
               <form onSubmit={handleSignup} className="p-4 flex gap-2">
                 <Input
                   type="email"
-                  placeholder="Heed the call"
+                  placeholder="Enter your email for updates"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="flex-1"

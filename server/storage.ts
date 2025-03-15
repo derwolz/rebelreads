@@ -126,11 +126,6 @@ export interface IStorage {
   createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook>;
   claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
   getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null>;
-
-  // Add new methods
-  getBookImpressionsByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>>;
-  getBookClicksByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>>;
-  getBookReferralsByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -854,80 +849,6 @@ export class DatabaseStorage implements IStorage {
 
     return claimedBook;
   }
-
-  async getBookImpressionsByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>> {
-    const result = await db.execute(sql`
-      WITH dates AS (
-        SELECT generate_series(
-          date_trunc('day', NOW() - INTERVAL '${days} days'),
-          date_trunc('day', NOW()),
-          '1 day'::interval
-        )::date as date
-      )
-      SELECT 
-        dates.date::text as date,
-        COUNT(bi.id)::text as count
-      FROM dates
-      LEFT JOIN ${bookImpressions} bi 
-        ON date_trunc('day', bi."timestamp") = dates.date 
-        AND bi."book_id" = ${bookId}
-      GROUP BY dates.date
-      ORDER BY dates.date ASC
-    `);
-
-    console.log('Impression query result:', result);
-    return result.rows as Array<{date: string, count: string}>;
-  }
-
-  async getBookClicksByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>> {
-    const result = await db.execute(sql`
-      WITH dates AS (
-        SELECT generate_series(
-          date_trunc('day', NOW() - INTERVAL '${days} days'),
-          date_trunc('day', NOW()),
-          '1 day'::interval
-        )::date as date
-      )
-      SELECT 
-        dates.date::text as date,
-        COUNT(bc.id)::text as count
-      FROM dates
-      LEFT JOIN ${bookClickThroughs} bc 
-        ON date_trunc('day', bc."timestamp") = dates.date 
-        AND bc."book_id" = ${bookId}
-      GROUP BY dates.date
-      ORDER BY dates.date ASC
-    `);
-
-    console.log('Clicks query result:', result);
-    return result.rows as Array<{date: string, count: string}>;
-  }
-
-  async getBookReferralsByDay(bookId: number, days: number): Promise<Array<{date: string, count: string}>> {
-    const result = await db.execute(sql`
-      WITH dates AS (
-        SELECT generate_series(
-          date_trunc('day', NOW() - INTERVAL '${days} days'),
-          date_trunc('day', NOW()),
-          '1 day'::interval
-        )::date as date
-      )
-      SELECT 
-        dates.date::text as date,
-        COUNT(DISTINCT bc.referrer)::text as count
-      FROM dates
-      LEFT JOIN ${bookClickThroughs} bc 
-        ON date_trunc('day', bc."timestamp") = dates.date 
-        AND bc."book_id" = ${bookId}
-        AND bc.referrer IS NOT NULL
-      GROUP BY dates.date
-      ORDER BY dates.date ASC
-    `);
-
-    console.log('Referrals query result:', result);
-    return result.rows as Array<{date: string, count: string}>;
-  }
-
 }
 
 export const dbStorage = new DatabaseStorage();
