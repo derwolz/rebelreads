@@ -343,7 +343,7 @@ const LandingPage = () => {
                 transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              <div className={`mx-auto text-center backdrop-blur-lg bg-background/70 ${panel.image ? 'p-12' : 'p-8'} rounded-2xl shadow-xl ${panel.image ? 'max-w-3xl' : 'max-w-2xl'}`}>
+              <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
                 {panel.image && (
                   <div className="mb-8 relative w-full aspect-[3/2] rounded-lg overflow-hidden">
                     <img
@@ -353,7 +353,7 @@ const LandingPage = () => {
                     />
                   </div>
                 )}
-                <h2 className={`text-4xl md:text-6xl font-bold ${panel.image ? 'mb-6' : 'mb-4'}`}>
+                <h2 className="text-4xl md:text-6xl font-bold mb-6">
                   {panel.title}
                 </h2>
                 <p className="text-xl text-muted-foreground">
