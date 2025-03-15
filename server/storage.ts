@@ -869,11 +869,13 @@ export class DatabaseStorage implements IStorage {
         COUNT(bi.id)::text as count
       FROM dates
       LEFT JOIN ${bookImpressions} bi 
-        ON date_trunc('day', bi.timestamp) = dates.date 
-        AND bi.bookId = ${bookId}
+        ON date_trunc('day', bi."timestamp") = dates.date 
+        AND bi."book_id" = ${bookId}
       GROUP BY dates.date
       ORDER BY dates.date ASC
     `);
+
+    console.log('Impression query result:', result);
     return result.rows as Array<{date: string, count: string}>;
   }
 
@@ -891,11 +893,13 @@ export class DatabaseStorage implements IStorage {
         COUNT(bc.id)::text as count
       FROM dates
       LEFT JOIN ${bookClickThroughs} bc 
-        ON date_trunc('day', bc.timestamp) = dates.date 
-        AND bc.bookId = ${bookId}
+        ON date_trunc('day', bc."timestamp") = dates.date 
+        AND bc."book_id" = ${bookId}
       GROUP BY dates.date
       ORDER BY dates.date ASC
     `);
+
+    console.log('Clicks query result:', result);
     return result.rows as Array<{date: string, count: string}>;
   }
 
@@ -913,14 +917,17 @@ export class DatabaseStorage implements IStorage {
         COUNT(DISTINCT bc.referrer)::text as count
       FROM dates
       LEFT JOIN ${bookClickThroughs} bc 
-        ON date_trunc('day', bc.timestamp) = dates.date 
-        AND bc.bookId = ${bookId}
+        ON date_trunc('day', bc."timestamp") = dates.date 
+        AND bc."book_id" = ${bookId}
         AND bc.referrer IS NOT NULL
       GROUP BY dates.date
       ORDER BY dates.date ASC
     `);
+
+    console.log('Referrals query result:', result);
     return result.rows as Array<{date: string, count: string}>;
   }
+
 }
 
 export const dbStorage = new DatabaseStorage();

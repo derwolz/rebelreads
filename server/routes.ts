@@ -659,7 +659,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const bookId = parseInt(req.params.id);
-      const days = parseInt(req.query.days as string) || 30; // Default to 30 days
+      if (isNaN(bookId)) {
+        return res.status(400).json({ error: "Invalid book ID" });
+      }
+
+      // Verify the book exists and belongs to the author
+      const book = await dbStorage.getBook(bookId);
+      if (!book || book.authorId !== req.user!.id) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+
+      const days = parseInt(req.query.days as string) || 30;
+      if (isNaN(days) || days < 1 || days > 365) {
+        return res.status(400).json({ error: "Invalid days parameter" });
+      }
+
+      console.log(`Fetching metrics for book ${bookId} over ${days} days`);
 
       // Fetch all metrics in parallel
       const [impressions, clicks, referrals] = await Promise.all([
@@ -668,10 +683,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dbStorage.getBookReferralsByDay(bookId, days)
       ]);
 
+      console.log('Metrics results:', { impressions, clicks, referrals });
+
       res.json({
         impressions,
         clicks,
-        referrals
+        referrals,
+        timeframe: days,
+        bookId
       });
     } catch (error) {
       console.error("Error fetching book metrics:", error);
