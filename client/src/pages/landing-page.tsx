@@ -196,6 +196,8 @@ const LandingPage = () => {
     const handleScroll = () => {
       const sections = document.querySelectorAll('section');
       const viewportHeight = window.innerHeight;
+      const emailSignupHeight = 80; // Height of the email signup bar
+      const adjustedViewportHeight = viewportHeight - emailSignupHeight;
       const scrollPosition = window.scrollY;
 
       sections.forEach((section, index) => {
@@ -233,28 +235,28 @@ const LandingPage = () => {
         container.style.setProperty('--rotation', `${rotation}deg`);
         container.style.setProperty('--translate-z', `${translateZ}px`);
 
-        // Calculate opacity based on distance from center viewport
+        // Calculate opacity based on distance from adjusted center viewport
         let opacity = 0;
-        const centerViewport = viewportHeight / 2;
+        const centerViewport = adjustedViewportHeight / 2;
         const distanceFromCenter = Math.abs(distanceFromTop + centerViewport);
 
-        if (distanceFromTop <= 0 && distanceFromTop >= -viewportHeight) {
+        if (distanceFromTop <= 0 && distanceFromTop >= -adjustedViewportHeight) {
           // Fade in as card approaches center
-          opacity = Math.max(0, 1 - (distanceFromCenter / (viewportHeight * 0.5)));
-        } else if (distanceFromTop > 0 && distanceFromTop <= viewportHeight) {
+          opacity = Math.max(0, 1 - (distanceFromCenter / (adjustedViewportHeight * 0.5)));
+        } else if (distanceFromTop > 0 && distanceFromTop <= adjustedViewportHeight) {
           // Start fading in from off-screen
-          opacity = Math.max(0, 1 - (distanceFromTop / (viewportHeight * 0.5)));
+          opacity = Math.max(0, 1 - (distanceFromTop / (adjustedViewportHeight * 0.5)));
         }
 
         // Ensure last card stays visible when centered
-        if (isLastSection && distanceFromTop < viewportHeight / 3) {
+        if (isLastSection && distanceFromTop < adjustedViewportHeight / 3) {
           opacity = 1;
         }
 
         container.style.opacity = opacity.toString();
 
         // Update active panel
-        if (Math.abs(distanceFromTop) < viewportHeight / 2) {
+        if (Math.abs(distanceFromTop) < adjustedViewportHeight / 2) {
           setActivePanel(index);
         }
       });
