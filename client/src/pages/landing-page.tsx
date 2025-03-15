@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
-import { v4 as uuidv4 } from 'uuid';
 
 interface PanelData {
   title: string;
@@ -107,87 +106,11 @@ const LandingPage = () => {
   const { setTheme } = useTheme();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [sessionId] = useState(() => uuidv4());
-  const [startTime] = useState(() => new Date());
-  const [maxSectionViewed, setMaxSectionViewed] = useState(0);
 
-  const trackPageVisit = async (path: string) => {
-    try {
-      await fetch('/api/analytics/page-visit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          path,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to track page visit:', error);
-    }
-  };
-
-  const trackFormInteraction = async (formType: string, status: string) => {
-    try {
-      await fetch('/api/analytics/form-interaction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          formType,
-          status,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to track form interaction:', error);
-    }
-  };
-
-  const updateSession = async (endSession: boolean = false) => {
-    const now = new Date();
-    const timeSpent = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-
-    try {
-      await fetch('/api/analytics/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          userType: isAuthor ? 'author' : 'reader',
-          maxSectionReached: maxSectionViewed,
-          timeSpent,
-          endTime: endSession ? now.toISOString() : null,
-          exitPath: window.location.pathname + window.location.hash,
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to update session:', error);
-    }
-  };
-
-  useEffect(() => {
-    // Initialize session
-    updateSession();
-    trackPageVisit(window.location.pathname);
-
-    // Set up exit tracking
-    const handleBeforeUnload = () => {
-      updateSession(true);
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      updateSession(true);
-    };
-  }, []);
-
-  const handleUserTypeChange = (authorValue: boolean) => {
-    setIsAuthor(authorValue);
-    setTheme(authorValue ? "dark" : "light");
-    window.history.replaceState(null, "", `#${authorValue ? "author" : "reader"}`);
-    updateSession();
+  const handleUserTypeChange = (isAuthor: boolean) => {
+    setIsAuthor(isAuthor);
+    setTheme(isAuthor ? "dark" : "light");
+    window.history.replaceState(null, "", `#${isAuthor ? "author" : "reader"}`);
   };
 
   useEffect(() => {
@@ -201,15 +124,12 @@ const LandingPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    trackFormInteraction('signup', 'started');
-
     if (!email) {
       toast({
         title: "Email required",
         description: "Please enter your email to sign up for updates.",
         variant: "destructive",
       });
-      trackFormInteraction('signup', 'abandoned');
       return;
     }
 
@@ -225,7 +145,6 @@ const LandingPage = () => {
           title: "Success!",
           description: "Thank you for signing up. We'll keep you updated!",
         });
-        trackFormInteraction('signup', 'completed');
         setEmail("");
       } else {
         throw new Error("Failed to sign up");
@@ -236,7 +155,6 @@ const LandingPage = () => {
         description: "Failed to sign up. Please try again later.",
         variant: "destructive",
       });
-      trackFormInteraction('signup', 'abandoned');
     }
   };
 
@@ -401,8 +319,6 @@ const LandingPage = () => {
               const observer = new IntersectionObserver(
                 ([entry]) => {
                   if (entry.isIntersecting) {
-                    setMaxSectionViewed(prev => Math.max(prev, index + 1));
-                    updateSession();
                     el.classList.remove("section-hidden");
                     el.classList.add("section-visible");
                     const content = el.querySelector(".section-content");
