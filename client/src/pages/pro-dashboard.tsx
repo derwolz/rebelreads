@@ -4,9 +4,6 @@ import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
-  ComposedChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -25,31 +22,15 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
-import { ReviewManagement } from "@/components/review-management";
-import { ProBookManagement } from "@/components/pro-book-management";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Book } from "@shared/schema";
 
-interface BookPerformance {
+interface MetricsResponse {
   bookId: number;
-  title: string;
-  metrics: {
-    impressions?: Array<{ date: string; count: number }>;
-    clicks?: Array<{ date: string; count: number }>;
-    referrals?: Array<{ date: string; count: number }>;
-  };
-}
-
-interface FollowerAnalytics {
-  follows: Array<{ date: string; count: number }>;
-  unfollows: Array<{ date: string; count: number }>;
-}
-
-interface ProDashboardData {
-  totalReviews: number;
-  averageRating: number;
-  recentReports: number;
+  impressions: number;
+  clicks: number;
+  referrers: { [key: string]: number };
 }
 
 const METRICS = [
@@ -72,15 +53,39 @@ export default function ProDashboard() {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
-  const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>([
-    "impressions",
-  ]);
-  const [timeRange, setTimeRange] = useState("30"); // Default to last month
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["impressions"]);
+  const [timeRange, setTimeRange] = useState("30");
 
   // Close sidebar when route changes
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location]);
+
+  const { data: books } = useQuery<Book[]>({
+    queryKey: ["/api/my-books"],
+    enabled: !!user?.isAuthor,
+  });
+
+  const { data: performanceData } = useQuery<MetricsResponse[]>({
+    queryKey: ["/api/findmetrics", selectedBookIds, timeRange],
+    queryFn: async () => {
+      const response = await fetch("/api/findmetrics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookIds: selectedBookIds,
+          days: parseInt(timeRange),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch metrics");
+      }
+      return response.json();
+    },
+    enabled: !!user?.isAuthor && selectedBookIds.length > 0,
+  });
 
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
@@ -88,21 +93,6 @@ export default function ProDashboard() {
     enabled: !!user?.isAuthor,
   });
 
-  const { data: books } = useQuery<Book[]>({
-    queryKey: ["/api/my-books"],
-    enabled: !!user?.isAuthor,
-  });
-
-  const { data: performanceData } = useQuery<BookPerformance[]>({
-    queryKey: [
-      "/api/pro/book-performance",
-      selectedBookIds,
-      selectedMetrics,
-      timeRange,
-    ],
-    queryFn: () => fetch("/api/pro/book-performance").then((res) => res.json()),
-    enabled: !!user?.isAuthor && selectedBookIds.length > 0,
-  });
 
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-analytics", timeRange],
@@ -136,55 +126,13 @@ export default function ProDashboard() {
   };
 
   const chartData = performanceData
-    ?.reduce((acc: any[], book) => {
-      const dates = new Set(
-        Object.values(book.metrics).flatMap(
-          (metric) => metric?.map((entry) => entry.date) || [],
-        ),
-      );
-
-      dates.forEach((date) => {
-        const existingDate = acc.find((d) => d.date === date);
-        if (existingDate) {
-          if (
-            book.metrics.impressions &&
-            selectedMetrics.includes("impressions")
-          ) {
-            existingDate[`${book.title}_impressions`] =
-              book.metrics.impressions.find((i) => i.date === date)?.count || 0;
-          }
-          if (book.metrics.clicks && selectedMetrics.includes("clicks")) {
-            existingDate[`${book.title}_clicks`] =
-              book.metrics.clicks.find((c) => c.date === date)?.count || 0;
-          }
-          if (book.metrics.referrals && selectedMetrics.includes("referrals")) {
-            existingDate[`${book.title}_referrals`] =
-              book.metrics.referrals.find((r) => r.date === date)?.count || 0;
-          }
-        } else {
-          const newEntry: any = { date };
-          if (
-            book.metrics.impressions &&
-            selectedMetrics.includes("impressions")
-          ) {
-            newEntry[`${book.title}_impressions`] =
-              book.metrics.impressions.find((i) => i.date === date)?.count || 0;
-          }
-          if (book.metrics.clicks && selectedMetrics.includes("clicks")) {
-            newEntry[`${book.title}_clicks`] =
-              book.metrics.clicks.find((c) => c.date === date)?.count || 0;
-          }
-          if (book.metrics.referrals && selectedMetrics.includes("referrals")) {
-            newEntry[`${book.title}_referrals`] =
-              book.metrics.referrals.find((r) => r.date === date)?.count || 0;
-          }
-          acc.push(newEntry);
-        }
-      });
-
-      return acc;
-    }, [])
+    ?.map((item) => ({
+      date: new Date().toLocaleDateString(), // Placeholder - needs actual date logic from API response
+      [`Book ${item.bookId}_impressions`]: item.impressions,
+      [`Book ${item.bookId}_clicks`]: item.clicks,
+    }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
 
   const followerChartData = (() => {
     if (!followerData) return [];
@@ -321,30 +269,17 @@ export default function ProDashboard() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  {selectedBookIds.map((bookId) => {
-                    const book = books?.find((b) => b.id === bookId);
-                    if (!book) return null;
-
-                    return selectedMetrics.map((metric) => {
-                      const strokeStyle =
-                        metric === "referrals"
-                          ? "5 5"
-                          : metric === "impressions"
-                            ? "3 3"
-                            : undefined;
-
-                      return (
-                        <Line
-                          key={`${book.id}_${metric}`}
-                          type="monotone"
-                          dataKey={`${book.title}_${metric}`}
-                          name={`${book.title} (${metric})`}
-                          stroke={`hsl(${bookId * 30}, 70%, 50%)`}
-                          strokeDasharray={strokeStyle}
-                        />
-                      );
-                    });
-                  })}
+                  {selectedBookIds.map((bookId) =>
+                    selectedMetrics.map((metric) => (
+                      <Line
+                        key={`${bookId}_${metric}`}
+                        type="monotone"
+                        dataKey={`Book ${bookId}_${metric}`}
+                        name={`Book ${bookId} (${metric})`}
+                        stroke={`hsl(${bookId * 30}, 70%, 50%)`}
+                      />
+                    ))
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -411,4 +346,25 @@ export default function ProDashboard() {
       </div>
     </main>
   );
+}
+
+interface BookPerformance {
+  bookId: number;
+  title: string;
+  metrics: {
+    impressions?: Array<{ date: string; count: number }>;
+    clicks?: Array<{ date: string; count: number }>;
+    referrals?: Array<{ date: string; count: number }>;
+  };
+}
+
+interface FollowerAnalytics {
+  follows: Array<{ date: string; count: number }>;
+  unfollows: Array<{ date: string; count: number }>;
+}
+
+interface ProDashboardData {
+  totalReviews: number;
+  averageRating: number;
+  recentReports: number;
 }
