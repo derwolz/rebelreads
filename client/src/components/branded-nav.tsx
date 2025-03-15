@@ -3,7 +3,7 @@ import { useState } from "react";
 export function BrandedNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
-    <nav className="bg-background border-b">
+    <nav className="bg-background border-b block fixed w-screen h-16 z-10">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
@@ -22,7 +22,7 @@ export function BrandedNav() {
             </button>
           </div>
           <div
-            className={`md:flex items-center space-x-8 ${isMenuOpen ? "block" : "hidden"}`}
+            className={`hidden md:flex items-center space-x-8 ${isMenuOpen ? "block" : "hidden"}`}
           >
             <Link
               href="/how-it-works"

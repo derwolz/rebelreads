@@ -264,6 +264,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <BrandedNav />
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <FloatingShape className="text-primary/30 top-1/3 left-[35%]" />
         <CircleShape className="text-[#40E0D0]/30 top-1/4 right-[40%]" />
