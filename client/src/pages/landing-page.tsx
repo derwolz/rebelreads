@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
+import { useLocation } from "wouter";
 
 const FloatingShape = ({ className }: { className?: string }) => (
   <div
@@ -94,11 +95,22 @@ const LandingPage = () => {
   const [activePanel, setActivePanel] = useState(0);
   const { setTheme } = useTheme();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleUserTypeChange = (isAuthor: boolean) => {
     setIsAuthor(isAuthor);
     setTheme(isAuthor ? "dark" : "light");
+    window.history.replaceState(null, '', `#${isAuthor ? 'author' : 'reader'}`);
   };
+
+  useEffect(() => {
+    const hash = window.location.hash.toLowerCase();
+    if (hash === '#author') {
+      handleUserTypeChange(true);
+    } else if (hash === '#reader') {
+      handleUserTypeChange(false);
+    }
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,7 +208,7 @@ const LandingPage = () => {
     const handleScroll = () => {
       const sections = document.querySelectorAll('section');
       const viewportHeight = window.innerHeight;
-      const emailSignupHeight = 80; // Height of the email signup bar
+      const emailSignupHeight = 80; 
       const adjustedViewportHeight = viewportHeight - emailSignupHeight;
       const scrollPosition = window.scrollY;
 
@@ -211,51 +223,41 @@ const LandingPage = () => {
         let translateZ = 0;
         const isLastSection = index === sections.length - 1;
 
-        // Calculate rotation based on viewport position
         if (distanceFromTop <= viewportHeight && distanceFromTop >= -viewportHeight) {
-          // Card coming into view
           if (distanceFromTop > 0) {
             rotation = Math.min(45, (distanceFromTop / viewportHeight) * 90);
             translateZ = Math.min(500, (distanceFromTop / viewportHeight) * 1000);
           } 
-          // Card in view
           else if (distanceFromTop > -viewportHeight) {
             rotation = Math.max(-45, (distanceFromTop / viewportHeight) * 90);
             translateZ = Math.max(-500, (distanceFromTop / viewportHeight) * 1000);
           }
 
-          // Keep last card centered
           if (isLastSection && distanceFromTop < viewportHeight / 2) {
             rotation = 0;
             translateZ = 0;
           }
         }
 
-        // Apply the transforms
         container.style.setProperty('--rotation', `${rotation}deg`);
         container.style.setProperty('--translate-z', `${translateZ}px`);
 
-        // Calculate opacity based on distance from adjusted center viewport
         let opacity = 0;
         const centerViewport = adjustedViewportHeight / 2;
         const distanceFromCenter = Math.abs(distanceFromTop + centerViewport);
 
         if (distanceFromTop <= 0 && distanceFromTop >= -adjustedViewportHeight) {
-          // Fade in as card approaches center
           opacity = Math.max(0, 1 - (distanceFromCenter / (adjustedViewportHeight * 0.5)));
         } else if (distanceFromTop > 0 && distanceFromTop <= adjustedViewportHeight) {
-          // Start fading in from off-screen
           opacity = Math.max(0, 1 - (distanceFromTop / (adjustedViewportHeight * 0.5)));
         }
 
-        // Ensure last card stays visible when centered
         if (isLastSection && distanceFromTop < adjustedViewportHeight / 3) {
           opacity = 1;
         }
 
         container.style.opacity = opacity.toString();
 
-        // Update active panel
         if (Math.abs(distanceFromTop) < adjustedViewportHeight / 2) {
           setActivePanel(index);
         }
@@ -263,7 +265,7 @@ const LandingPage = () => {
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial call to set up first card
+    handleScroll(); 
     return () => window.removeEventListener('scroll', handleScroll);
   }, [panels.length]);
 
@@ -282,7 +284,6 @@ const LandingPage = () => {
 
       <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
 
-      {/* Hero section with text buttons */}
       <section className="min-h-screen flex items-center justify-center relative">
         <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
           <h1 className="text-5xl md:text-7xl font-bold">
