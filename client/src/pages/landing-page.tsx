@@ -97,6 +97,57 @@ const LandingPage = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  const handleUserTypeChange = (isAuthor: boolean) => {
+    setIsAuthor(isAuthor);
+    setTheme(isAuthor ? "dark" : "light");
+    window.history.replaceState(null, '', `#${isAuthor ? 'author' : 'reader'}`);
+  };
+
+  useEffect(() => {
+    const hash = window.location.hash.toLowerCase();
+    if (hash === '#author') {
+      handleUserTypeChange(true);
+    } else if (hash === '#reader') {
+      handleUserTypeChange(false);
+    }
+  }, []);
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email to sign up for updates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/signup-interest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, isAuthor }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: "Thank you for signing up. We'll keep you updated!",
+        });
+        setEmail("");
+      } else {
+        throw new Error("Failed to sign up");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign up. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const panels = isAuthor
     ? [
         {
@@ -153,121 +204,6 @@ const LandingPage = () => {
         },
       ];
 
-  const handleUserTypeChange = (isAuthor: boolean) => {
-    setIsAuthor(isAuthor);
-    setTheme(isAuthor ? "dark" : "light");
-    window.history.replaceState(null, '', `#${isAuthor ? 'author' : 'reader'}`);
-  };
-
-  useEffect(() => {
-    const hash = window.location.hash.toLowerCase();
-    if (hash === '#author') {
-      handleUserTypeChange(true);
-    } else if (hash === '#reader') {
-      handleUserTypeChange(false);
-    }
-  }, []);
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email to sign up for updates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/signup-interest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, isAuthor }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Success!",
-          description: "Thank you for signing up. We'll keep you updated!",
-        });
-        setEmail("");
-      } else {
-        throw new Error("Failed to sign up");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign up. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = document.querySelectorAll('section');
-      const viewportHeight = window.innerHeight;
-      const emailSignupHeight = 80; 
-      const adjustedViewportHeight = viewportHeight - emailSignupHeight;
-      const scrollPosition = window.scrollY;
-
-      sections.forEach((section, index) => {
-        const rect = section.getBoundingClientRect();
-        const distanceFromTop = rect.top;
-        const container = section.querySelector('.container');
-
-        if (!container) return;
-
-        let rotation = 0;
-        let translateZ = 0;
-        const isLastSection = index === sections.length - 1;
-
-        if (distanceFromTop <= viewportHeight && distanceFromTop >= -viewportHeight) {
-          if (distanceFromTop > 0) {
-            rotation = Math.min(45, (distanceFromTop / viewportHeight) * 90);
-            translateZ = Math.min(500, (distanceFromTop / viewportHeight) * 1000);
-          } 
-          else if (distanceFromTop > -viewportHeight) {
-            rotation = Math.max(-45, (distanceFromTop / viewportHeight) * 90);
-            translateZ = Math.max(-500, (distanceFromTop / viewportHeight) * 1000);
-          }
-
-          if (isLastSection && distanceFromTop < viewportHeight / 2) {
-            rotation = 0;
-            translateZ = 0;
-          }
-        }
-
-        container.style.setProperty('--rotation', `${rotation}deg`);
-        container.style.setProperty('--translate-z', `${translateZ}px`);
-
-        let opacity = 0;
-        const centerViewport = adjustedViewportHeight / 2;
-        const distanceFromCenter = Math.abs(distanceFromTop + centerViewport);
-
-        if (distanceFromTop <= 0 && distanceFromTop >= -adjustedViewportHeight) {
-          opacity = Math.max(0, 1 - (distanceFromCenter / (adjustedViewportHeight * 0.5)));
-        } else if (distanceFromTop > 0 && distanceFromTop <= adjustedViewportHeight) {
-          opacity = Math.max(0, 1 - (distanceFromTop / (adjustedViewportHeight * 0.5)));
-        }
-
-        if (isLastSection && distanceFromTop < adjustedViewportHeight / 3) {
-          opacity = 1;
-        }
-
-        container.style.opacity = opacity.toString();
-
-        if (Math.abs(distanceFromTop) < adjustedViewportHeight / 2) {
-          setActivePanel(index);
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [panels.length]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
