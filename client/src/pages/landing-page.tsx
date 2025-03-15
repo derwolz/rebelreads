@@ -9,10 +9,8 @@ import { ChevronDown } from "lucide-react";
 
 const FloatingShape = ({ className }: { className?: string }) => (
   <div
-    style={{transition: "all 0.1s ease-in-out"}}
-    className={`absolute  animate-float ${className}`}
-    
-    >
+    className={`absolute  transition-all duration-400 animate-pulse animate-float ${className}`}
+  >
     <svg
       width="380"
       height="380"
@@ -27,7 +25,7 @@ const FloatingShape = ({ className }: { className?: string }) => (
 
 const CircleShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-800 ease-in-out animate-float-delayed ${className}`}
+    className={`absolute transition-all duration-14000 ease-in-out animate-float-delayed ${className}`}
   >
     <svg
       width="560"
@@ -43,7 +41,7 @@ const CircleShape = ({ className }: { className?: string }) => (
 
 const SquareShape = ({ className }: { className?: string }) => (
   <div
-    className={`absolute transition-all duration-1350 ease-in-out animate-float-reverse ${className}`}
+    className={`absolute  transition-all duration-1350 ease-in-out animate-float-reverse ${className}`}
   >
     <svg
       width="540"
@@ -195,34 +193,51 @@ const LandingPage = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = document.querySelectorAll("section");
+      const sections = document.querySelectorAll('section');
       const viewportHeight = window.innerHeight;
       const scrollPosition = window.scrollY;
 
       sections.forEach((section, index) => {
         const rect = section.getBoundingClientRect();
-        const sectionTop = rect.top + scrollPosition;
 
-        const distanceFromTop = rect.top;
-        let opacity = 1;
-        if (distanceFromTop < 0) {
-          opacity = Math.max(0, 1 + distanceFromTop / (viewportHeight * 0.3));
+        // Calculate how far the section is from the center of the viewport
+        const distanceFromCenter = Math.abs(rect.top + rect.height / 2 - viewportHeight / 2);
+
+        // If this section is closest to the center, make it active
+        if (distanceFromCenter < viewportHeight / 2) {
+          setActivePanel(index);
+
+          // Add class for centered effect
+          section.classList.add('section-centered');
+
+          // Calculate progress through this section
+          const progress = -rect.top / (viewportHeight - rect.height);
+
+          if (progress > 0.7) { // Starting to leave viewport
+            section.style.opacity = Math.max(0, 1 - (progress - 0.7) * 3);
+          } else {
+            section.style.opacity = "1";
+          }
+        } else {
+          section.classList.remove('section-centered');
         }
 
-        section.style.opacity = opacity.toString();
-
-        if (Math.abs(distanceFromTop) < viewportHeight / 2) {
-          setActivePanel(index);
+        // Add entrance animation class when section comes into view
+        if (rect.top < viewportHeight && rect.bottom > 0) {
+          section.classList.add('section-visible');
+        } else {
+          section.classList.remove('section-visible');
         }
       });
     };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial call
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden scroll-smooth">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <FloatingShape className="text-primary/30 top-1/3 left-[35%]" />
         <CircleShape className="text-[#40E0D0]/30 top-1/4 right-[40%]" />
@@ -234,10 +249,10 @@ const LandingPage = () => {
         <HexagonShape className="text-[#40E0D0]/20 top-[40%] left-[40%]" />
       </div>
 
-      <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
+      <div className="fixed inset-0 backdrop-blur-[80px] pointer-events-none" />
 
-      {/* Hero section with text buttons */}
-      <section className="min-h-screen flex items-center justify-center relative">
+      {/* Hero section */}
+      <section className="min-h-screen flex items-center justify-center relative snap-center transition-transform duration-700 ease-in-out section-visible">
         <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
           <h1 className="text-5xl md:text-7xl font-bold">
             Where Stories Come Alive
@@ -269,11 +284,17 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Content panels */}
       {panels.map((panel, index) => (
         <section
           key={index}
-          className="min-h-screen flex items-center justify-center relative snap-start transition-opacity duration-500"
-          style={{ opacity: 1 }}
+          className={`
+            min-h-screen flex items-center justify-center relative 
+            snap-center transition-all duration-700 ease-in-out
+            transform translate-y-0 opacity-0
+            section-visible:opacity-100 section-visible:translate-y-0
+            section-centered:scale-105
+          `}
         >
           <div className="container mx-auto px-4 py-16">
             <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
@@ -294,6 +315,7 @@ const LandingPage = () => {
         </section>
       ))}
 
+      {/* Email signup form */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <Card className="max-w-md mx-auto">
