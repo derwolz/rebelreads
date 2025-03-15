@@ -259,16 +259,16 @@ const LandingPage = () => {
             className="min-h-screen flex items-center justify-center relative snap-start transition-all duration-500"
             style={{ 
               opacity: 1,
-              perspective: "1500px",
+              perspective: "2000px",
               transformStyle: "preserve-3d"
             }}
           >
             <div 
               className="container mx-auto px-4 py-16 relative"
               style={{
-                transform: `rotate3d(1, 1, 0, var(--rotation)) translateZ(var(--translate-z))`,
-                transformOrigin: "top right",
-                transition: "all 0.8s ease-out",
+                transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
+                transformOrigin: "85% 15%",
+                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
               <div className="max-w-3xl mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
