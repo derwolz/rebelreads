@@ -317,7 +317,6 @@ const LandingPage = () => {
     navigate(`/how-it-works#section-${index}`);
   };
 
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -391,6 +390,7 @@ const LandingPage = () => {
         {panels.map((panel, index) => (
           <section
             key={index}
+            id={`card-${index}`}
             ref={(el) => {
               if (!el) return;
               const observer = new IntersectionObserver(
