@@ -108,7 +108,7 @@ export default function HowItWorks() {
     }).catch(console.error);
 
     // Navigate back to the landing page with the specific card index
-    navigate(`/#card-${index}`);
+    navigate(`/landing#card-${index}`);
   };
 
   return (
