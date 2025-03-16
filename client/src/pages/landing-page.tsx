@@ -114,7 +114,6 @@ const LandingPage = () => {
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
 
   useEffect(() => {
-    // Initialize session
     fetch("/api/landing/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -128,7 +127,6 @@ const LandingPage = () => {
       }),
     });
 
-    // Track session end
     const trackEndSession = async () => {
       try {
         await fetch(`/api/landing/session/${sessionId}/end`, {
@@ -223,7 +221,16 @@ const LandingPage = () => {
             alt: "Author writing at desk",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about being a protagonist...",
+          exploreContent: `<h3>Your Journey as an Author</h3>
+          <p>Begin your authorial journey with us. We provide the tools, community, and support you need to bring your stories to life.</p>
+          <h4>What You'll Find</h4>
+          <ul>
+            <li>Professional writing tools</li>
+            <li>Community support</li>
+            <li>Marketing assistance</li>
+            <li>Publishing guidance</li>
+          </ul>
+          <p>Take the first step towards becoming a published author today.</p>`,
         },
         {
           title: "Every hero finds troubled waters",
@@ -234,7 +241,11 @@ const LandingPage = () => {
             alt: "Manuscript with editing tools",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about troubled waters...",
+          exploreContent: `<h3>Troubled Waters</h3>
+          <p>The publishing industry can be challenging for authors. High fees and complex processes can make it difficult to get your work published.</p>
+          <h4>Our Solution</h4>
+          <p>We offer a simple, affordable, and efficient way to publish your books. Our platform provides all the tools you need to publish and market your work.</p>
+          <p>Let us help you navigate the troubled waters of the publishing industry.</p>`,
         },
         {
           title: "A song pierces the chaos",
@@ -245,7 +256,11 @@ const LandingPage = () => {
             alt: "Author connecting with readers",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about piercing the chaos...",
+          exploreContent: `<h3>A Song Pierces the Chaos</h3>
+          <p>In the midst of the noise, Sirened stands out. It's your marketplace, free from fees and rankings. We are here to get your voice to readers.</p>
+          <h4>Our Community</h4>
+          <p>Join a thriving community of authors and readers who share a passion for storytelling. We're focused on fostering a supportive environment where creators can thrive.</p>
+          <p>Break through the noise with Sirened.</p>`,
         },
         {
           title: "Your first step into the indie town square",
@@ -256,7 +271,16 @@ const LandingPage = () => {
             alt: "Author analytics dashboard",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about the indie town square...",
+          exploreContent: `<h3>Indie Town Square</h3>
+          <p>Sirened provides a direct-to-reader marketplace, cutting out the middleman and ensuring you keep 100% of your sales.</p>
+          <h4>What We Offer</h4>
+          <ul>
+            <li>Direct sales</li>
+            <li>No fees</li>
+            <li>Reader interaction</li>
+            <li>Marketing support</li>
+          </ul>
+          <p>Start your journey in the indie town square today.</p>`,
         },
         {
           title: "Reclaim your Literary Future",
@@ -267,7 +291,16 @@ const LandingPage = () => {
             alt: "Future of storytelling",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about reclaiming the literary future...",
+          exploreContent: `<h3>Reclaim Your Literary Future</h3>
+          <p>Join Sirened and take control of your literary future. Our tools and community are designed to help you succeed.</p>
+          <h4>How We Help</h4>
+          <ul>
+            <li>Analytics tracking</li>
+            <li>Organic marketing support</li>
+            <li>Reader engagement</li>
+            <li>Community building</li>
+          </ul>
+          <p>Shape the future of indie publishing with Sirened.</p>`,
         },
       ]
     : [
@@ -280,7 +313,16 @@ const LandingPage = () => {
             alt: "Book discovery journey",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about being a hero...",
+          exploreContent: `<h3>Your Hero's Journey</h3>
+          <p>Embark on a literary adventure.  Discover books that captivate, move, and inspire.</p>
+          <h4>Why Sirened?</h4>
+          <ul>
+            <li>Diverse selection of books</li>
+            <li>Easy discovery tools</li>
+            <li>Direct support for authors</li>
+            <li>Engaging community</li>
+          </ul>
+          <p>Find your next favorite book today.</p>`,
         },
         {
           title: "Spellbound by a False Tune",
@@ -291,7 +333,11 @@ const LandingPage = () => {
             alt: "Reader connecting with books",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about being spellbound...",
+          exploreContent: `<h3>Spellbound by a False Tune</h3>
+          <p>Many readers feel lost in the maze of traditional publishing. The industry giants often prioritize profit over quality, leaving amazing stories unheard.</p>
+          <h4>A Better Way</h4>
+          <p>Sirened is changing the narrative. Our platform provides a more direct connection between readers and independent authors, ensuring that quality stories get the attention they deserve.</p>
+          <p>Discover something new with Sirened.</p>`,
         },
         {
           title: "A Song Breaks the Charm",
@@ -302,7 +348,11 @@ const LandingPage = () => {
             alt: "Reader community discussion",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about a song breaking the charm...",
+          exploreContent: `<h3>A Song Breaks the Charm</h3>
+          <p>Sirened is a sanctuary for quality storytelling. We focus on fostering a supportive community where authors and readers connect directly.</p>
+          <h4>Our Mission</h4>
+          <p>To provide an independent publishing platform that celebrates originality, fosters connection, and provides authors the tools they need to share their stories with the world.</p>
+          <p>Join the Sirened community.</p>`,
         },
         {
           title: "Step into the indie square",
@@ -313,7 +363,16 @@ const LandingPage = () => {
             alt: "Supporting favorite authors",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about the indie square...",
+          exploreContent: `<h3>The Indie Square</h3>
+          <p>Discover books you'll love directly from independent authors. Sirened cuts out the middleman, allowing creators to connect with their audience directly.</p>
+          <h4>What to Expect</h4>
+          <ul>
+            <li>Unique stories</li>
+            <li>Direct author support</li>
+            <li>A welcoming community</li>
+            <li>High-quality writing</li>
+          </ul>
+          <p>Explore the Indie Square today.</p>`,
         },
         {
           title: "Support your storytellers",
@@ -324,7 +383,16 @@ const LandingPage = () => {
             alt: "Reading journey visualization",
           },
           hasExploreMore: true,
-          exploreContent: "Detailed content about supporting storytellers...",
+          exploreContent: `<h3>Support Your Storytellers</h3>
+          <p>By supporting independent authors, you're not just buying a book; you're investing in their creativity and helping them share their unique voices with the world.</p>
+          <h4>Why Support Indies?</h4>
+          <ul>
+            <li>Support independent artists</li>
+            <li>Discover unique stories</li>
+            <li>Connect with authors</li>
+            <li>Foster creativity</li>
+          </ul>
+          <p>Join us in supporting independent authors.</p>`,
         },
       ];
 
@@ -473,22 +541,21 @@ const LandingPage = () => {
                     />
                   </div>
                 )}
-                <h2 className="text-4xl md:text-6xl font-bold mb-6">
-                  {panel.title}
-                </h2>
-                <p className="text-xl text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
+                  {panel.hasExploreMore && (
+                    <button
+                      onClick={() => setSelectedPanel(panel.title)}
+                      className="p-2 hover:bg-accent rounded-full transition-colors"
+                      aria-label="Explore more"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xl text-muted-foreground mt-6">
                   {panel.description}
                 </p>
-                {panel.hasExploreMore && (
-                  <Button
-                    variant="ghost"
-                    className="mt-6"
-                    onClick={() => setSelectedPanel(panel.title)}
-                  >
-                    Explore More
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
               </div>
             </div>
 
