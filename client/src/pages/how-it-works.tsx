@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { BrandedNav } from "@/components/branded-nav";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 const features = [
   {
@@ -26,6 +29,7 @@ const features = [
 
 export default function HowItWorks() {
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     // Scroll to section if hash exists
@@ -91,6 +95,22 @@ export default function HowItWorks() {
     };
   }, [sessionId]);
 
+  const handleBackToLanding = (index: number) => {
+    // Track the navigation event
+    fetch("/api/landing/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        type: "back_to_landing_navigation",
+        data: { fromSection: index },
+      }),
+    }).catch(console.error);
+
+    // Navigate back to the landing page with the specific card index
+    navigate(`/#card-${index}`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <BrandedNav />
@@ -108,9 +128,19 @@ export default function HowItWorks() {
               className="flex flex-col md:flex-row items-center gap-8 md:gap-12 scroll-mt-24"
             >
               <div className="flex-1 text-center md:text-left">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                  {feature.title}
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl md:text-3xl font-bold">
+                    {feature.title}
+                  </h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="transition-transform hover:-translate-x-1"
+                    onClick={() => handleBackToLanding(index)}
+                  >
+                    <ChevronLeft className="h-8 w-8" />
+                  </Button>
+                </div>
                 <p className="text-lg text-muted-foreground">
                   {feature.description}
                 </p>
