@@ -36,6 +36,9 @@ import {
   InsertPartnershipInquiry,
   signup_interests,
   partnership_inquiries,
+  ReviewPurchase,
+  InsertReviewPurchase,
+  reviewPurchases
 } from "@shared/schema";
 import { users, books, ratings, followers, Follower } from "@shared/schema";
 import { db } from "./db";
@@ -159,6 +162,11 @@ export interface IStorage {
   // Add new partnership inquiry methods
   createPartnershipInquiry(data: InsertPartnershipInquiry): Promise<PartnershipInquiry>;
   getPartnershipInquiries(): Promise<PartnershipInquiry[]>;
+
+  // Add new review purchase methods
+  createReviewPurchase(data: InsertReviewPurchase): Promise<ReviewPurchase>;
+  getReviewPurchasesByCampaign(campaignId: number): Promise<ReviewPurchase[]>;
+  updateReviewPurchaseStatus(id: number, status: string, completedAt?: Date): Promise<ReviewPurchase>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1022,6 +1030,37 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(partnership_inquiries)
       .orderBy(desc(partnership_inquiries.createdAt));
+  }
+
+  async createReviewPurchase(data: InsertReviewPurchase): Promise<ReviewPurchase> {
+    const [purchase] = await db
+      .insert(reviewPurchases)
+      .values(data)
+      .returning();
+    return purchase;
+  }
+
+  async getReviewPurchasesByCampaign(campaignId: number): Promise<ReviewPurchase[]> {
+    return await db
+      .select()
+      .from(reviewPurchases)
+      .where(eq(reviewPurchases.campaignId, campaignId));
+  }
+
+  async updateReviewPurchaseStatus(
+    id: number,
+    status: string,
+    completedAt?: Date
+  ): Promise<ReviewPurchase> {
+    const [purchase] = await db
+      .update(reviewPurchases)
+      .set({
+        status,
+        completedAt: completedAt || null,
+      })
+      .where(eq(reviewPurchases.id, id))
+      .returning();
+    return purchase;
   }
 }
 

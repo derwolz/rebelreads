@@ -175,7 +175,7 @@ router.post("/reviews/:id/reply", async (req, res) => {
   try {
     const reviewId = parseInt(req.params.id);
     const { content } = req.body;
-    
+
     // Verify the review belongs to one of the author's books
     const review = await db
       .select()
@@ -268,5 +268,52 @@ function calculateWeightedRating(rating: any) {
     rating.worldbuilding * 0.15
   );
 }
+
+// Add review purchase route
+router.post("/purchase-review", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user!.isAuthor) {
+    return res.sendStatus(403);
+  }
+
+  try {
+    const { campaignId, bookId, credits } = req.body;
+
+    // Verify campaign exists and belongs to user
+    const campaigns = await dbStorage.getCampaigns(req.user!.id);
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    // Verify book exists and belongs to user
+    const book = await dbStorage.getBook(bookId);
+    if (!book || book.authorId !== req.user!.id) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+
+    // Verify user has enough credits
+    const userCredits = await dbStorage.getUserCredits(req.user!.id);
+    if (parseFloat(userCredits) < parseFloat(credits)) {
+      return res.status(400).json({ error: "Insufficient credits" });
+    }
+
+    // Create review purchase
+    const purchase = await dbStorage.createReviewPurchase({
+      campaignId,
+      userId: req.user!.id,
+      bookId,
+      credits,
+      status: "pending"
+    });
+
+    // Deduct credits from user
+    await dbStorage.deductCredits(req.user!.id, credits, campaignId);
+
+    res.json(purchase);
+  } catch (error) {
+    console.error("Error purchasing review:", error);
+    res.status(500).json({ error: "Failed to purchase review" });
+  }
+});
 
 export default router;

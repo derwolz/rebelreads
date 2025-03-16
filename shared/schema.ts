@@ -480,3 +480,26 @@ export const landingEventSchema = z.object({
   type: z.enum(LANDING_EVENT_TYPES),
   data: z.record(z.unknown()).optional(),
 });
+
+// Add after creditTransactions table
+export const reviewPurchases = pgTable("review_purchases", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  userId: integer("user_id").notNull(),
+  bookId: integer("book_id").notNull(),
+  status: text("status").notNull().default("pending"), // pending, completed, cancelled
+  credits: decimal("credits").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+// Add the insert schema
+export const insertReviewPurchaseSchema = createInsertSchema(reviewPurchases).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+// Add the type
+export type ReviewPurchase = typeof reviewPurchases.$inferSelect;
+export type InsertReviewPurchase = typeof reviewPurchases.$inferInsert;
