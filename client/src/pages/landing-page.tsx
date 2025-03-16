@@ -5,7 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
 
@@ -317,6 +317,7 @@ const LandingPage = () => {
     navigate(`/how-it-works#section-${index}`);
   };
 
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -447,20 +448,6 @@ const LandingPage = () => {
                   </div>
                 )}
                 <div className="flex items-center justify-between mb-6">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="transition-transform hover:-translate-x-1"
-                    onClick={() => {
-                      if (index > 0) {
-                        const prevSection = document.querySelector(`section:nth-child(${index})`);
-                        if (prevSection) prevSection.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    disabled={index === 0}
-                  >
-                    <ChevronLeft className="h-8 w-8" />
-                  </Button>
                   <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
                   <Button
                     variant="ghost"
