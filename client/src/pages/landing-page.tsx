@@ -5,7 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
 
@@ -107,6 +107,7 @@ const LandingPage = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     // Initialize session
@@ -301,9 +302,6 @@ const LandingPage = () => {
             alt: "Reading journey visualization",
           },
         },
-
-
-        
       ];
   const getRotationAndTranslate = (index: number) => {
     const rotationValue = index * 20;
@@ -313,6 +311,12 @@ const LandingPage = () => {
       "--translate-z": `${translateZValue}px`,
     };
   };
+
+  const handleHowItWorksNavigation = (index: number) => {
+    trackEvent("how_it_works_navigation", { panelIndex: index });
+    navigate(`/how-it-works#section-${index}`);
+  };
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -429,7 +433,6 @@ const LandingPage = () => {
               className="container mx-auto px-4 py-16 relative section-content"
               style={{
                 transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
-
                 transformOrigin: "85% 15%",
                 transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
@@ -444,12 +447,18 @@ const LandingPage = () => {
                     />
                   </div>
                 )}
-                <h2 className="text-4xl md:text-6xl font-bold mb-6">
-                  {panel.title}
-                </h2>
-                <p className="text-xl text-muted-foreground">
-                  {panel.description}
-                </p>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="transition-transform hover:translate-x-1"
+                    onClick={() => handleHowItWorksNavigation(index)}
+                  >
+                    <ChevronRight className="h-8 w-8" />
+                  </Button>
+                </div>
+                <p className="text-xl text-muted-foreground">{panel.description}</p>
               </div>
             </div>
 
