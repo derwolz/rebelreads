@@ -85,7 +85,20 @@ export default function PartnerWithUs() {
         hasMessage: !!formData.message,
       });
 
-      // Form submission logic will be implemented later
+      // Submit to partnership inquiry endpoint
+      const response = await fetch("/api/partnership-inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          sessionId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit partnership inquiry");
+      }
+
       toast({
         title: "Message Sent",
         description: "Thank you for your interest. We'll be in touch soon!",
