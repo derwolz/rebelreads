@@ -66,6 +66,10 @@ router.post("/event", async (req, res) => {
       case "partner_form_submit":
         sessionUpdates.submittedPartnerForm = true;
         break;
+      case "sidebar_view":
+        sessionUpdates.lastSidebarViewed = data.panelTitle;
+        sessionUpdates.totalSidebarViews = (session.totalSidebarViews || 0) + 1;
+        break;
     }
 
     if (Object.keys(sessionUpdates).length > 0) {

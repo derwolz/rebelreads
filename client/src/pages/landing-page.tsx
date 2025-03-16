@@ -210,6 +210,11 @@ const LandingPage = () => {
     }
   };
 
+  const handleSidebarOpen = (panelTitle: string) => {
+    setSelectedPanel(panelTitle);
+    trackEvent("sidebar_view", { panelTitle });
+  };
+
   const panels: PanelData[] = isAuthor
     ? [
         {
@@ -545,7 +550,7 @@ const LandingPage = () => {
                   <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
                   {panel.hasExploreMore && (
                     <button
-                      onClick={() => setSelectedPanel(panel.title)}
+                      onClick={() => handleSidebarOpen(panel.title)}
                       className="p-2 hover:bg-accent rounded-full transition-colors"
                       aria-label="Explore more"
                     >

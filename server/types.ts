@@ -9,6 +9,8 @@ export interface LandingSession {
   completedSignup?: boolean;
   startedPartnerForm?: boolean;
   submittedPartnerForm?: boolean;
+  lastSidebarViewed?: string;
+  totalSidebarViews?: number;
   createdAt: Date;
   updatedAt: Date;
   endedAt?: Date;
