@@ -131,8 +131,8 @@ router.post("/partnership-inquiry", async (req, res) => {
 
     // Basic validation
     if (!name || !email || !message || !sessionId) {
-      return res.status(400).json({ 
-        error: "Name, email, message, and session ID are required" 
+      return res.status(400).json({
+        error: "Name, email, message, and session ID are required",
       });
     }
 
@@ -161,6 +161,29 @@ router.post("/partnership-inquiry", async (req, res) => {
   } catch (error) {
     console.error("Error handling partnership inquiry:", error);
     res.status(500).json({ error: "Failed to process partnership inquiry" });
+  }
+});
+
+router.post("/section-content", async (req, res) => {
+  try {
+    const { title, content } = req.body;
+
+    if (!title || content === undefined) {
+      return res.status(400).json({
+        error: "Title and content are required",
+      });
+    }
+
+    // Store the section content
+    const sectionContent = await dbStorage.updateSectionContent({
+      title,
+      content,
+    });
+
+    res.json({ success: true, data: sectionContent });
+  } catch (error) {
+    console.error("Error updating section content:", error);
+    res.status(500).json({ error: "Failed to update section content" });
   }
 });
 

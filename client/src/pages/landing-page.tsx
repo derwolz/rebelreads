@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
+import { HowItWorksSidebar } from "@/components/how-it-works-sidebar";
+import { ChevronRight } from "lucide-react";
 
 interface PanelData {
   title: string;
@@ -16,6 +18,8 @@ interface PanelData {
     src: string;
     alt: string;
   };
+  hasExploreMore?: boolean;
+  exploreContent?: string;
 }
 
 const FloatingShape = ({ className }: { className?: string }) => (
@@ -107,6 +111,7 @@ const LandingPage = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize session
@@ -217,6 +222,8 @@ const LandingPage = () => {
             src: "/images/author-journey.svg",
             alt: "Author writing at desk",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about being a protagonist...",
         },
         {
           title: "Every hero finds troubled waters",
@@ -226,6 +233,8 @@ const LandingPage = () => {
             src: "/images/manuscript.svg",
             alt: "Manuscript with editing tools",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about troubled waters...",
         },
         {
           title: "A song pierces the chaos",
@@ -235,6 +244,8 @@ const LandingPage = () => {
             src: "/images/community.svg",
             alt: "Author connecting with readers",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about piercing the chaos...",
         },
         {
           title: "Your first step into the indie town square",
@@ -244,6 +255,8 @@ const LandingPage = () => {
             src: "/images/analytics.svg",
             alt: "Author analytics dashboard",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about the indie town square...",
         },
         {
           title: "Reclaim your Literary Future",
@@ -253,6 +266,8 @@ const LandingPage = () => {
             src: "/images/future.svg",
             alt: "Future of storytelling",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about reclaiming the literary future...",
         },
       ]
     : [
@@ -264,6 +279,8 @@ const LandingPage = () => {
             src: "/images/book-discovery.svg",
             alt: "Book discovery journey",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about being a hero...",
         },
         {
           title: "Spellbound by a False Tune",
@@ -273,6 +290,8 @@ const LandingPage = () => {
             src: "/images/book-connection.svg",
             alt: "Reader connecting with books",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about being spellbound...",
         },
         {
           title: "A Song Breaks the Charm",
@@ -282,6 +301,8 @@ const LandingPage = () => {
             src: "/images/reader-community.svg",
             alt: "Reader community discussion",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about a song breaking the charm...",
         },
         {
           title: "Step into the indie square",
@@ -291,6 +312,8 @@ const LandingPage = () => {
             src: "/images/author-support.svg",
             alt: "Supporting favorite authors",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about the indie square...",
         },
         {
           title: "Support your storytellers",
@@ -300,11 +323,11 @@ const LandingPage = () => {
             src: "/images/reading-journey.svg",
             alt: "Reading journey visualization",
           },
+          hasExploreMore: true,
+          exploreContent: "Detailed content about supporting storytellers...",
         },
-
-
-        
       ];
+
   const getRotationAndTranslate = (index: number) => {
     const rotationValue = index * 20;
     const translateZValue = 100;
@@ -319,7 +342,9 @@ const LandingPage = () => {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const sectionIndex = parseInt(entry.target.getAttribute("data-section-index") || "0");
+            const sectionIndex = parseInt(
+              entry.target.getAttribute("data-section-index") || "0"
+            );
             trackEvent("section_view", { sectionIndex });
           }
         });
@@ -327,8 +352,8 @@ const LandingPage = () => {
       { threshold: 0.5 }
     );
 
-    document.querySelectorAll('.snap-section').forEach((section, index) => {
-      section.setAttribute('data-section-index', index.toString());
+    document.querySelectorAll(".snap-section").forEach((section, index) => {
+      section.setAttribute("data-section-index", index.toString());
       observer.observe(section);
     });
 
@@ -362,7 +387,9 @@ const LandingPage = () => {
               <div className="flex gap-12 items-center">
                 <button
                   onClick={() => handleUserTypeChange(false)}
-                  className={`text-2xl font-bold relative ${!isAuthor ? "text-primary" : "text-muted-foreground"}`}
+                  className={`text-2xl font-bold relative ${
+                    !isAuthor ? "text-primary" : "text-muted-foreground"
+                  }`}
                 >
                   Reader
                   {!isAuthor && (
@@ -372,7 +399,9 @@ const LandingPage = () => {
                 <div className="text-2xl text-muted-foreground">or</div>
                 <button
                   onClick={() => handleUserTypeChange(true)}
-                  className={`text-2xl font-bold relative ${isAuthor ? "text-primary" : "text-muted-foreground"}`}
+                  className={`text-2xl font-bold relative ${
+                    isAuthor ? "text-primary" : "text-muted-foreground"
+                  }`}
                 >
                   Author
                   {isAuthor && (
@@ -450,6 +479,16 @@ const LandingPage = () => {
                 <p className="text-xl text-muted-foreground">
                   {panel.description}
                 </p>
+                {panel.hasExploreMore && (
+                  <Button
+                    variant="ghost"
+                    className="mt-6"
+                    onClick={() => setSelectedPanel(panel.title)}
+                  >
+                    Explore More
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -461,6 +500,17 @@ const LandingPage = () => {
           </section>
         ))}
       </div>
+
+      {selectedPanel && (
+        <HowItWorksSidebar
+          isOpen={!!selectedPanel}
+          onClose={() => setSelectedPanel(null)}
+          title={selectedPanel}
+          content={panels.find((p) => p.title === selectedPanel)
+            ?.exploreContent}
+          isEditable={true}
+        />
+      )}
     </div>
   );
 };
