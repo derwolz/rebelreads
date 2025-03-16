@@ -5,16 +5,13 @@ import { useTheme } from "@/hooks/use-theme";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface PanelData {
   title: string;
   description: string;
-  showExploreMore?: boolean;
-  detailedContent?: React.ReactNode;
   image?: {
     src: string;
     alt: string;
@@ -106,8 +103,6 @@ const LandingPage = () => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [email, setEmail] = useState("");
   const [activePanel, setActivePanel] = useState(0);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedPanelIndex, setSelectedPanelIndex] = useState<number | null>(null);
   const { setTheme } = useTheme();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -216,22 +211,8 @@ const LandingPage = () => {
     ? [
         {
           title: "You are the protagonist",
-          description: "Every great author starts with a spark — yours ignites here.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/author-journey.svg" 
-                alt="Author writing at desk"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Every journey begins with a single step. For authors, that step is often
-                the courage to put their stories into words. Here at Sirened, we provide
-                the platform and tools you need to take that first step with confidence.
-              </p>
-            </div>
-          ),
+          description:
+            "Every great author starts with a spark — yours ignites here.",
           image: {
             src: "/images/author-journey.svg",
             alt: "Author writing at desk",
@@ -239,23 +220,8 @@ const LandingPage = () => {
         },
         {
           title: "Every hero finds troubled waters",
-          description: "Industry giants drown your business in fees, drowning your dreams. But, A new shore crests the horizon.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/manuscript.svg" 
-                alt="Manuscript with editing tools"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Traditional publishing has long been dominated by industry giants who
-                take substantial cuts from authors' earnings. We're changing that
-                narrative by providing a platform where authors retain control of their
-                work and their earnings.
-              </p>
-            </div>
-          ),
+          description:
+            "Industry giants drown your business in fees, drowning your dreams. But, A new shore crests the horizon.",
           image: {
             src: "/images/manuscript.svg",
             alt: "Manuscript with editing tools",
@@ -265,20 +231,6 @@ const LandingPage = () => {
           title: "A song pierces the chaos",
           description:
             "Sirened calls you to a marketplace that’s yours—no fees, no paid rankings, just readers ready for your voice.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/community.svg" 
-                alt="Author connecting with readers"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Connect directly with your readers and build a loyal following without
-                the constraints and fees of traditional publishing.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/community.svg",
             alt: "Author connecting with readers",
@@ -288,19 +240,6 @@ const LandingPage = () => {
           title: "Your first step into the indie town square",
           description:
             "Step into Sirened’s indie square. Readers reach your books and you keep 100% of every sale.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/analytics.svg" 
-                alt="Author analytics dashboard"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Gain valuable insights into your book's performance and understand what resonates with your readers.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/analytics.svg",
             alt: "Author analytics dashboard",
@@ -310,19 +249,6 @@ const LandingPage = () => {
           title: "Reclaim your Literary Future",
           description:
             "Team up with Siren, our analytics tools and organic engine lift your books from obscurity. Sign up and shape the future of indie publishing.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/future.svg" 
-                alt="Future of storytelling"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Be a part of a vibrant community of authors and readers who are shaping the future of indie publishing.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/future.svg",
             alt: "Future of storytelling",
@@ -334,19 +260,6 @@ const LandingPage = () => {
           title: "You are the Hero",
           description:
             "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/book-discovery.svg" 
-                alt="Book discovery journey"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Discover a world of diverse and captivating stories from authors around the globe.  Find your next favorite read.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/book-discovery.svg",
             alt: "Book discovery journey",
@@ -356,19 +269,6 @@ const LandingPage = () => {
           title: "Spellbound by a False Tune",
           description:
             "You crave adventure, but industry giants only offer a bargain bin. The storytellers you love, suffer in obscurity.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/book-connection.svg" 
-                alt="Reader connecting with books"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Traditional publishing often prioritizes profit over quality, leaving many talented authors struggling to be heard.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/book-connection.svg",
             alt: "Reader connecting with books",
@@ -378,19 +278,6 @@ const LandingPage = () => {
           title: "A Song Breaks the Charm",
           description:
             "Discover a realm where your storytellers thrive, a place where quality trumps quantity. Sirened cuts through the chaos",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/reader-community.svg" 
-                alt="Reader community discussion"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Discover a diverse range of high-quality books from independent authors who are passionate about their craft.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/reader-community.svg",
             alt: "Reader community discussion",
@@ -400,19 +287,6 @@ const LandingPage = () => {
           title: "Step into the indie square",
           description:
             "Enter Sirened’s marketplace. Find stories worth their weight, sent straight from the creators’ doors.",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/author-support.svg" 
-                alt="Supporting favorite authors"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Support authors directly and help them share their stories with the world.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/author-support.svg",
             alt: "Supporting favorite authors",
@@ -422,26 +296,15 @@ const LandingPage = () => {
           title: "Support your storytellers",
           description:
             "Join Sirened — back indie authors directly, not the giants who bind them. Sign up and rewrite the ending",
-          showExploreMore: true,
-          detailedContent: (
-            <div className="space-y-6">
-              <img 
-                src="/images/reading-journey.svg" 
-                alt="Reading journey visualization"
-                className="w-full rounded-lg"
-              />
-              <p className="text-lg">
-                Join our community of readers and authors who are passionate about storytelling.
-              </p>
-            </div>
-          ),
           image: {
             src: "/images/reading-journey.svg",
             alt: "Reading journey visualization",
           },
         },
-      ];
 
+
+        
+      ];
   const getRotationAndTranslate = (index: number) => {
     const rotationValue = index * 20;
     const translateZValue = 100;
@@ -449,11 +312,6 @@ const LandingPage = () => {
       "--rotation": `${rotationValue}deg`,
       "--translate-z": `${translateZValue}px`,
     };
-  };
-
-  const handleDetailOpen = (index: number) => {
-    setSelectedPanelIndex(index);
-    setIsDetailOpen(true);
   };
 
   useEffect(() => {
@@ -529,7 +387,37 @@ const LandingPage = () => {
         {panels.map((panel, index) => (
           <section
             key={index}
-            id={`card-${index}`}
+            ref={(el) => {
+              if (!el) return;
+              const observer = new IntersectionObserver(
+                ([entry]) => {
+                  if (entry.isIntersecting) {
+                    el.classList.remove("section-hidden");
+                    el.classList.add("section-visible");
+                    const content = el.querySelector(".section-content");
+                    if (content) {
+                      content.classList.remove("card-animate-out");
+                      content.classList.add("card-animate");
+                      content.classList.add("card-animate-in");
+                    }
+                  } else {
+                    const content = el.querySelector(".section-content");
+                    if (content) {
+                      content.classList.remove("card-animate-in");
+                      content.classList.add("card-animate-out");
+                    }
+                    setTimeout(() => {
+                      if (!entry.isIntersecting) {
+                        el.classList.remove("section-visible");
+                        el.classList.add("section-hidden");
+                      }
+                    }, 500);
+                  }
+                },
+                { threshold: 0.5 },
+              );
+              observer.observe(el);
+            }}
             className="snap-section overflow-none min-h-screen flex items-center justify-between relative snap-start section-hidden"
             style={{
               transformStyle: "preserve-3d",
@@ -541,6 +429,7 @@ const LandingPage = () => {
               className="container mx-auto px-4 py-16 relative section-content"
               style={{
                 transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
+
                 transformOrigin: "85% 15%",
                 transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
@@ -555,22 +444,15 @@ const LandingPage = () => {
                     />
                   </div>
                 )}
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
-                  {panel.showExploreMore && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="transition-transform hover:translate-x-1"
-                      onClick={() => handleDetailOpen(index)}
-                    >
-                      <ChevronRight className="h-8 w-8" />
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xl text-muted-foreground">{panel.description}</p>
+                <h2 className="text-4xl md:text-6xl font-bold mb-6">
+                  {panel.title}
+                </h2>
+                <p className="text-xl text-muted-foreground">
+                  {panel.description}
+                </p>
               </div>
             </div>
+
             {index < panels.length - 1 && (
               <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
                 <ChevronDown className="w-8 h-8 text-muted-foreground" />
@@ -579,19 +461,6 @@ const LandingPage = () => {
           </section>
         ))}
       </div>
-
-      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {selectedPanelIndex !== null && panels[selectedPanelIndex].title}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="py-6">
-            {selectedPanelIndex !== null && panels[selectedPanelIndex].detailedContent}
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 };
