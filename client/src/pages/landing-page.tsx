@@ -301,6 +301,9 @@ const LandingPage = () => {
             alt: "Reading journey visualization",
           },
         },
+
+
+        
       ];
   const getRotationAndTranslate = (index: number) => {
     const rotationValue = index * 20;
