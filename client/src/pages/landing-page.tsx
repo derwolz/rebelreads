@@ -210,45 +210,45 @@ const LandingPage = () => {
   const panels: PanelData[] = isAuthor
     ? [
         {
-          title: "Your Story Begins Here",
+          title: "You are the protagonist",
           description:
-            "Every great author started with a dream. A story burning to be told. Your journey to becoming a published author starts now.",
+            "Every great author starts with a spark — yours ignites here.",
           image: {
             src: "/images/author-journey.svg",
             alt: "Author writing at desk",
           },
         },
         {
-          title: "Craft Your Masterpiece",
+          title: "Every hero finds troubled waters",
           description:
-            "Our platform provides the tools and community you need to transform your ideas into polished manuscripts ready for the world.",
+            "Industry giants drown your business in fees, drowning your dreams. But, A new shore crests the horizon.",
           image: {
             src: "/images/manuscript.svg",
             alt: "Manuscript with editing tools",
           },
         },
         {
-          title: "Connect With Your Audience",
+          title: "A song pierces the chaos",
           description:
-            "Build a loyal readership, engage with your fans, and create a community around your stories.",
+            "Sirened calls you to a marketplace that’s yours—no fees, no paid rankings, just readers ready for your voice.",
           image: {
             src: "/images/community.svg",
             alt: "Author connecting with readers",
           },
         },
         {
-          title: "Grow Your Author Brand",
+          title: "Your first step into the indie town square",
           description:
-            "Track your performance, understand your readers, and make data-driven decisions to expand your reach.",
+            "Step into Sirened’s indie square. Readers reach your books and you keep 100% of every sale.",
           image: {
             src: "/images/analytics.svg",
             alt: "Author analytics dashboard",
           },
         },
         {
-          title: "Shape Literary Futures",
+          title: "Reclaim your Literary Future",
           description:
-            "Join a new generation of authors who are redefining storytelling in the digital age.",
+            "Team up with Siren, our analytics tools and organic engine lift your books from obscurity. Sign up and shape the future of indie publishing.",
           image: {
             src: "/images/future.svg",
             alt: "Future of storytelling",
@@ -257,7 +257,7 @@ const LandingPage = () => {
       ]
     : [
         {
-          title: "Discover Your Next Adventure",
+          title: "You are the Hero",
           description:
             "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
           image: {
@@ -266,41 +266,44 @@ const LandingPage = () => {
           },
         },
         {
-          title: "Connect With Stories",
+          title: "Spellbound by a False Tune",
           description:
-            "Find books that speak to your soul, curated just for you based on your unique tastes and interests.",
+            "You crave adventure, but industry giants only offer a bargain bin. The storytellers you love, suffer in obscurity.",
           image: {
             src: "/images/book-connection.svg",
             alt: "Reader connecting with books",
           },
         },
         {
-          title: "Join the Conversation",
+          title: "A Song Breaks the Charm",
           description:
-            "Share your thoughts, connect with fellow readers, and be part of a vibrant literary community.",
+            "Discover a realm where your storytellers thrive, a place where quality trumps quantity. Sirened cuts through the chaos",
           image: {
             src: "/images/reader-community.svg",
             alt: "Reader community discussion",
           },
         },
         {
-          title: "Support Your Favorite Authors",
+          title: "Step into the indie square",
           description:
-            "Follow authors you love, get updates on their latest works, and help shape the future of storytelling.",
+            "Enter Sirened’s marketplace. Find stories worth their weight, sent straight from the creators’ doors.",
           image: {
             src: "/images/author-support.svg",
             alt: "Supporting favorite authors",
           },
         },
         {
-          title: "Your Reading Journey Awaits",
+          title: "Support your storytellers",
           description:
-            "Start your literary adventure today and become part of something bigger.",
+            "Join Sirened — back indie authors directly, not the giants who bind them. Sign up and rewrite the ending",
           image: {
             src: "/images/reading-journey.svg",
             alt: "Reading journey visualization",
           },
         },
+
+
+        
       ];
   const getRotationAndTranslate = (index: number) => {
     const rotationValue = index * 20;
