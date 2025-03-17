@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { ReviewManagement } from "@/components/review-management";
 import { ProBookManagement } from "@/components/pro-book-management";
+import { motion, useAnimation, PanInfo } from "framer-motion";
 import {
   LineChart,
   Line,
@@ -57,6 +58,7 @@ export default function ProDashboard() {
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["impressions"]);
   const [timeRange, setTimeRange] = useState("30");
+  const controls = useAnimation();
 
   // Close sidebar when route changes
   useEffect(() => {
@@ -327,15 +329,31 @@ export default function ProDashboard() {
     );
   };
 
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const threshold = 50; // minimum distance to trigger open/close
+    if (info.offset.x > threshold && !isSidebarOpen) {
+      setIsSidebarOpen(true);
+    } else if (info.offset.x < -threshold && isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  };
+
   return (
     <main className="container mx-auto px-4 py-8">
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar with Swipe */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[240px] p-0">
-          <div className="h-full pt-8">
-            <ProDashboardSidebar />
-          </div>
-        </SheetContent>
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 50 }}
+          onDragEnd={handleDragEnd}
+          className="touch-pan-right md:hidden"
+        >
+          <SheetContent side="left" className="w-[240px] p-0">
+            <div className="h-full pt-8">
+              <ProDashboardSidebar />
+            </div>
+          </SheetContent>
+        </motion.div>
       </Sheet>
 
       <div className="flex gap-8">
