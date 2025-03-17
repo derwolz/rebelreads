@@ -32,7 +32,7 @@ import type { Book } from "@shared/schema";
 
 interface MetricsResponse {
   date: string;
-  [key: string]: number | string;
+  metrics?: { [key: string]: number | string };
 }
 
 const METRICS = [
@@ -102,7 +102,7 @@ export default function ProDashboard() {
     queryFn: () => fetch("/api/pro/follower-metrics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
-  
+
   const handleBookSelect = (bookId: number) => {
     if (selectedBookIds.includes(bookId)) {
       setSelectedBookIds(selectedBookIds.filter((id) => id !== bookId));
@@ -125,16 +125,12 @@ export default function ProDashboard() {
       date: item.date,
     };
 
-    // For each selected book and metric combination
-    selectedBookIds.forEach((bookId) => {
-      selectedMetrics.forEach((metric) => {
-        const key = `Book ${bookId}_${metric}`;
-        // Convert string values to numbers and default to 0 if missing
-        processedData[key] = item[key]
-          ? parseFloat(item[key] as string) || 0
-          : 0;
+    // Add all metrics from the metrics object
+    if (item.metrics) {
+      Object.entries(item.metrics).forEach(([key, value]) => {
+        processedData[key] = typeof value === 'string' ? parseFloat(value) : value;
       });
-    });
+    }
 
     return processedData;
   });
@@ -279,7 +275,7 @@ export default function ProDashboard() {
                       <Line
                         key={`${bookId}_${metric}`}
                         type="monotone"
-                        dataKey={`Book ${bookId}_${metric}`}
+                        dataKey={`${bookId}_${metric}`}
                         name={`Book ${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
