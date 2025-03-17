@@ -120,42 +120,12 @@ export default function ProDashboard() {
     }
   };
 
-  const chartData = performanceData?.map((item) => {
-    // Start with the date
-    const processedData = {
-      date: item.date,
-      data: Object.entries(item).reduce((acc, [key, value]) => {
-        // Include only the book-related keys and calculate their values
-        if (key !== "date" && selectedMetrics.includes(key)) {
-          const bookAndMetric = key.split("_");
-          if (
-            bookAndMetric.length === 2 &&
-            selectedBookIds.includes(
-              parseInt(bookAndMetric[0].replace("Book ", "")),
-            )
-          ) {
-            acc[key] = value ? parseFloat(value as string) : 0;
-          }
-        }
-        return acc;
-      }, {}),
-    };
+  const chartData = performanceData?.map((item) => ({
+    date: item.date,
+    ...item.metrics
+  }));
 
-    // For each selected book and metric combination
-    // selectedBookIds.forEach((bookId) => {
-    //   selectedMetrics.forEach((metric) => {
-    //     const key = `Book ${bookId}_${metric}`;
-    //     // Convert string values to numbers and default to 0 if missing
-    //     processedData[key] = item[key]
-    //       ? parseFloat(item[key] as string) || 0
-    //       : 0;
-    //   });
-    // });
-
-    return processedData;
-  });
-
-  console.log(chartData, "chartData");
+  console.log("chartData", chartData);
   const followerChartData = (() => {
     if (!followerData) return [];
 
@@ -296,8 +266,8 @@ export default function ProDashboard() {
                       <Line
                         key={`${bookId}_${metric}`}
                         type="monotone"
-                        dataKey={`Book ${bookId}_${metric}`}
-                        name={`Book ${bookId} (${metric})`}
+                        dataKey={`${bookId}_${metric}`}
+                        name={`${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
                     )),
