@@ -968,7 +968,10 @@ export class DatabaseStorage implements IStorage {
   ): Promise<LandingSession> {
     const [session] = await db
       .update(landing_sessions)
-      .set(data)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
       .where(eq(landing_sessions.sessionId, sessionId))
       .returning();
     return session;
