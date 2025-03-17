@@ -25,7 +25,7 @@ export interface IBookStorage {
   ): Promise<Array<{
     date: string;
     metrics: {
-      [key: string]: string | number;
+      [key: string]: number;
     };
   }>>;
 }
@@ -109,7 +109,7 @@ export class BookStorage implements IBookStorage {
   ): Promise<Array<{
     date: string;
     metrics: {
-      [key: string]: string | number;
+      [key: string]: number;
     };
   }>> {
     const result = await analyticsStorage.getBooksMetrics(bookIds, days, metrics);
