@@ -4,10 +4,11 @@ import {
   bookImpressions,
   bookClickThroughs,
   books,
+  followers
 } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, inArray, sql } from "drizzle-orm";
-import { subDays } from "date-fns";
+import { eq, and, inArray, sql, isNull } from "drizzle-orm";
+import { subDays, format } from "date-fns";
 
 export interface IAnalyticsStorage {
   recordBookImpression(
@@ -33,6 +34,10 @@ export interface IAnalyticsStorage {
       [key: string]: number;
     };
   }[]>;
+  getFollowerMetrics(authorId: number, days: number): Promise<{
+    follows: Array<{ date: string; count: number }>;
+    unfollows: Array<{ date: string; count: number }>;
+  }>;
 }
 
 export class AnalyticsStorage implements IAnalyticsStorage {
@@ -198,5 +203,55 @@ export class AnalyticsStorage implements IAnalyticsStorage {
     });
 
     return result;
+  }
+
+  async getFollowerMetrics(authorId: number, days: number): Promise<{
+    follows: Array<{ date: string; count: number }>;
+    unfollows: Array<{ date: string; count: number }>;
+  }> {
+    const startDate = subDays(new Date(), days);
+
+    // Get new follows
+    const follows = await db
+      .select({
+        date: sql<string>`DATE(${followers.createdAt})`.as('date'),
+        count: sql<number>`count(*)`.as('count'),
+      })
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followingId, authorId),
+          isNull(followers.deletedAt),
+          sql`${followers.createdAt} > ${startDate}`
+        )
+      )
+      .groupBy(sql`DATE(${followers.createdAt})`);
+
+    // Get unfollows
+    const unfollows = await db
+      .select({
+        date: sql<string>`DATE(${followers.deletedAt})`.as('date'),
+        count: sql<number>`count(*)`.as('count'),
+      })
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followingId, authorId),
+          sql`${followers.deletedAt} IS NOT NULL`,
+          sql`${followers.deletedAt} > ${startDate}`
+        )
+      )
+      .groupBy(sql`DATE(${followers.deletedAt})`);
+
+    return {
+      follows: follows.map(f => ({
+        date: format(new Date(f.date), 'yyyy-MM-dd'),
+        count: Number(f.count)
+      })),
+      unfollows: unfollows.map(u => ({
+        date: format(new Date(u.date), 'yyyy-MM-dd'),
+        count: Number(u.count)
+      }))
+    };
   }
 }
