@@ -140,14 +140,6 @@ export interface IStorage {
   claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
   getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null>;
 
-  // Add new method
-  getBooksMetrics(bookIds: number[], days: number): Promise<{
-    bookId: number;
-    impressions: number;
-    clicks: number;
-    referrers: { [key: string]: number };
-  }[]>;
-
   // Landing session methods
   createLandingSession(sessionId: string, deviceInfo: any): Promise<LandingSession>;
   updateLandingSession(sessionId: string, data: Partial<LandingSession>): Promise<LandingSession>;
@@ -166,7 +158,11 @@ export interface IStorage {
   // Add new review purchase methods
   createReviewPurchase(data: InsertReviewPurchase): Promise<ReviewPurchase>;
   getReviewPurchasesByCampaign(campaignId: number): Promise<ReviewPurchase[]>;
-  updateReviewPurchaseStatus(id: number, status: string, completedAt?: Date): Promise<ReviewPurchase>;
+  updateReviewPurchaseStatus(
+    id: number,
+    status: string,
+    completedAt?: Date
+  ): Promise<ReviewPurchase>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -890,65 +886,112 @@ export class DatabaseStorage implements IStorage {
 
     return claimedBook;
   }
-  async getBooksMetrics(bookIds: number[], days: number = 30) {
+  async getBooksMetrics(
+    bookIds: number[],
+    days: number = 30,
+    metrics: ("impressions" | "clicks" | "ctr")[] = ["impressions", "clicks"]
+  ): Promise<{
+    date: string;
+    metrics: {
+      [key: string]: number;
+    };
+  }[]> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const results = await db.transaction(async (tx) => {
-      const impressionsPromise = tx
-        .select({
-          bookId: bookImpressions.bookId,
-          count: sql<number>`count(*)`,
-        })
-        .from(bookImpressions)
-        .where(
-          and(
-            inArray(bookImpressions.bookId, bookIds),
-            sql`${bookImpressions.createdAt} > ${startDate}`
-          )
-        )
-        .groupBy(bookImpressions.bookId);
-
-      const clicksPromise = tx
-        .select({
-          bookId: bookClickThroughs.bookId,
-          count: sql<number>`count(*)`,
-          referrers: sql<{ [key: string]: number }>`
-            jsonb_object_agg(
-              COALESCE(${bookClickThroughs.referrer}, 'direct'),
-              COUNT(*)
+    return await db.transaction(async (tx) => {
+      // Get daily impressions if requested
+      const impressionsPromise = metrics.includes("impressions") || metrics.includes("ctr")
+        ? tx
+            .select({
+              bookId: bookImpressions.bookId,
+              date: sql<string>`DATE(${bookImpressions.timestamp})`,
+              count: sql<number>`count(*)`,
+            })
+            .from(bookImpressions)
+            .where(
+              and(
+                inArray(bookImpressions.bookId, bookIds),
+                sql`${bookImpressions.timestamp} > ${startDate}`
+              )
             )
-          `,
-        })
-        .from(bookClickThroughs)
-        .where(
-          and(
-            inArray(bookClickThroughs.bookId, bookIds),
-            sql`${bookClickThroughs.createdAt} > ${startDate}`
-          )
-        )
-        .groupBy(bookClickThroughs.bookId);
+            .groupBy(bookImpressions.bookId, sql`DATE(${bookImpressions.timestamp})`)
+        : Promise.resolve([]);
+
+      // Get daily clicks if requested
+      const clicksPromise = metrics.includes("clicks") || metrics.includes("ctr")
+        ? tx
+            .select({
+              bookId: bookClickThroughs.bookId,
+              date: sql<string>`DATE(${bookClickThroughs.timestamp})`,
+              count: sql<number>`count(*)`,
+            })
+            .from(bookClickThroughs)
+            .where(
+              and(
+                inArray(bookClickThroughs.bookId, bookIds),
+                sql`${bookClickThroughs.timestamp} > ${startDate}`
+              )
+            )
+            .groupBy(bookClickThroughs.bookId, sql`DATE(${bookClickThroughs.timestamp})`)
+        : Promise.resolve([]);
 
       const [impressions, clicks] = await Promise.all([
         impressionsPromise,
         clicksPromise,
       ]);
 
-      // Combine the results
-      return bookIds.map((bookId) => {
-        const bookImpressions = impressions.find((i) => i.bookId === bookId);
-        const bookClicks = clicks.find((c) => c.bookId === bookId);
+      // Create a map of all dates in the range
+      const dateMap = new Map<string, { [key: string]: number }>();
+      const currentDate = new Date(startDate);
+      const endDate = new Date();
 
-        return {
-          bookId,
-          impressions: bookImpressions?.count || 0,
-          clicks: bookClicks?.count || 0,
-          referrers: bookClicks?.referrers || {},
-        };
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        dateMap.set(dateStr, {});
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Fill in the metrics for each date and book
+      bookIds.forEach((bookId) => {
+        if (metrics.includes("impressions") || metrics.includes("ctr")) {
+          impressions
+            .filter((imp) => imp.bookId === bookId)
+            .forEach((imp) => {
+              const dateMetrics = dateMap.get(imp.date) || {};
+              dateMetrics[`Book ${bookId}_impressions`] = imp.count;
+              dateMap.set(imp.date, dateMetrics);
+            });
+        }
+
+        if (metrics.includes("clicks") || metrics.includes("ctr")) {
+          clicks
+            .filter((click) => click.bookId === bookId)
+            .forEach((click) => {
+              const dateMetrics = dateMap.get(click.date) || {};
+              dateMetrics[`Book ${bookId}_clicks`] = click.count;
+              dateMap.set(click.date, dateMetrics);
+            });
+        }
+
+        // Calculate CTR if requested
+        if (metrics.includes("ctr")) {
+          dateMap.forEach((dateMetrics, date) => {
+            const impressionCount = dateMetrics[`Book ${bookId}_impressions`] || 0;
+            const clickCount = dateMetrics[`Book ${bookId}_clicks`] || 0;
+            dateMetrics[`Book ${bookId}_ctr`] = impressionCount > 0
+              ? (clickCount / impressionCount) * 100
+              : 0;
+          });
+        }
       });
-    });
 
-    return results;
+      // Convert the map to an array and ensure all metrics exist for all dates
+      return Array.from(dateMap.entries()).map(([date, metrics]) => ({
+        date,
+        ...metrics,
+      }));
+    });
   }
 
   async createLandingSession(sessionId: string, deviceInfo: any): Promise<LandingSession> {

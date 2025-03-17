@@ -29,10 +29,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Book } from "@shared/schema";
 
 interface MetricsResponse {
-  bookId: number;
-  impressions: number;
-  clicks: number;
-  referrers: { [key: string]: number };
+  date: string;
+  [key: string]: number | string;
 }
 
 const METRICS = [
@@ -69,7 +67,7 @@ export default function ProDashboard() {
   });
 
   const { data: performanceData } = useQuery<MetricsResponse[]>({
-    queryKey: ["/api/findmetrics", selectedBookIds, timeRange],
+    queryKey: ["/api/findmetrics", selectedBookIds, timeRange, selectedMetrics],
     queryFn: async () => {
       const response = await fetch("/api/findmetrics", {
         method: "POST",
@@ -79,6 +77,7 @@ export default function ProDashboard() {
         body: JSON.stringify({
           bookIds: selectedBookIds,
           days: parseInt(timeRange),
+          metrics: selectedMetrics,
         }),
       });
       if (!response.ok) {
@@ -129,9 +128,11 @@ export default function ProDashboard() {
 
   const chartData = performanceData
     ?.map((item) => ({
-      date: new Date().toLocaleDateString(), // Placeholder - needs actual date logic from API response
-      [`Book ${item.bookId}_impressions`]: item.impressions,
-      [`Book ${item.bookId}_clicks`]: item.clicks,
+      date: item.date, 
+      ...selectedMetrics.reduce((acc, metric) => ({
+        ...acc,
+        [`${item.bookId}_${metric}`]: item[metric]
+      }), {}),
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -276,7 +277,7 @@ export default function ProDashboard() {
                       <Line
                         key={`${bookId}_${metric}`}
                         type="monotone"
-                        dataKey={`Book ${bookId}_${metric}`}
+                        dataKey={`${bookId}_${metric}`}
                         name={`Book ${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
