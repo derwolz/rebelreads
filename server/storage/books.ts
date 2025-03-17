@@ -24,7 +24,9 @@ export interface IBookStorage {
     metrics: ("impressions" | "clicks" | "ctr")[]
   ): Promise<Array<{
     date: string;
-    [key: string]: string | number;
+    metrics: {
+      [key: string]: string | number;
+    };
   }>>;
 }
 
@@ -106,22 +108,16 @@ export class BookStorage implements IBookStorage {
     metrics: ("impressions" | "clicks" | "ctr")[]
   ): Promise<Array<{
     date: string;
-    [key: string]: string | number;
+    metrics: {
+      [key: string]: string | number;
+    };
   }>> {
     const result = await analyticsStorage.getBooksMetrics(bookIds, days, metrics);
 
     // Transform the data to match the expected format for the chart
-    return result.map(day => {
-      const formattedDay: { [key: string]: string | number } = {
-        date: day.date
-      };
-
-      // Add metrics for each book
-      Object.entries(day.metrics).forEach(([key, value]) => {
-        formattedDay[key] = value;
-      });
-
-      return formattedDay;
-    });
+    return result.map(day => ({
+      date: day.date,
+      metrics: day.metrics // Keep the metrics object as is
+    }));
   }
 }
