@@ -120,7 +120,7 @@ export function ProBookManagement() {
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                 <StarRating
                                   rating={Math.round(averageRatings.overall)}
                                   readOnly
@@ -163,7 +163,7 @@ export function ProBookManagement() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                   <BookUploadDialog book={book} />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
