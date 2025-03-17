@@ -1,11 +1,11 @@
-import { 
-  User, 
-  Rating, 
-  ReadingStatus, 
-  InsertUser, 
-  UpdateProfile, 
-  users, 
-  ratings, 
+import {
+  User,
+  Rating,
+  ReadingStatus,
+  InsertUser,
+  UpdateProfile,
+  users,
+  ratings,
   reading_status,
   followers,
   Follower,
@@ -13,10 +13,11 @@ import {
   Book,
 } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "../db";
+import { subDays, format } from "date-fns";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -33,7 +34,10 @@ export interface IAccountStorage {
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
   getUserRatings(userId: number): Promise<Rating[]>;
 
-  getReadingStatus(userId: number, bookId: number): Promise<ReadingStatus | undefined>;
+  getReadingStatus(
+    userId: number,
+    bookId: number,
+  ): Promise<ReadingStatus | undefined>;
   toggleWishlist(userId: number, bookId: number): Promise<ReadingStatus>;
   markAsCompleted(userId: number, bookId: number): Promise<ReadingStatus>;
   getWishlistedBooks(userId: number): Promise<Book[]>;
@@ -44,6 +48,14 @@ export interface IAccountStorage {
   isFollowing(followerId: number, authorId: number): Promise<boolean>;
   getFollowerCount(authorId: number): Promise<number>;
   getFollowingCount(userId: number): Promise<number>;
+
+  getFollowerMetrics(
+    authorId: number,
+    days: number,
+  ): Promise<{
+    follows: Array<{ date: string; count: number }>;
+    unfollows: Array<{ date: string; count: number }>;
+  }>;
 }
 
 export class AccountStorage implements IAccountStorage {
@@ -114,10 +126,72 @@ export class AccountStorage implements IAccountStorage {
         createdAt: ratings.createdAt,
         featured: ratings.featured,
         report_status: ratings.report_status,
-        report_reason: ratings.report_reason
+        report_reason: ratings.report_reason,
       })
       .from(ratings)
       .where(eq(ratings.bookId, bookId));
+  }
+
+  async getFollowerMetrics(authorId: number, days: number = 30) {
+    const startDate = subDays(new Date(), days);
+
+    // Get daily follow counts
+    const follows = await db
+      .select({
+        date: sql<string>`DATE(${followers.createdAt})`,
+        count: sql<number>`count(*)`,
+      })
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followingId, authorId),
+          sql`${followers.createdAt} >= ${startDate}`,
+          sql`${followers.deletedAt} IS NULL`,
+        ),
+      )
+      .groupBy(sql`DATE(${followers.createdAt})`);
+
+    // Get daily unfollow counts
+    const unfollows = await db
+      .select({
+        date: sql<string>`DATE(${followers.deletedAt})`,
+        count: sql<number>`count(*)`,
+      })
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followingId, authorId),
+          sql`${followers.deletedAt} >= ${startDate}`,
+          sql`${followers.deletedAt} IS NOT NULL`,
+        ),
+      )
+      .groupBy(sql`DATE(${followers.deletedAt})`);
+
+    // Generate all dates in range and ensure 0 counts for missing dates
+    const dateRange = [];
+    const currentDate = new Date(startDate);
+    const endDate = new Date();
+
+    while (currentDate <= endDate) {
+      const dateStr = format(currentDate, "yyyy-MM-dd");
+      dateRange.push(dateStr);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Create final response with 0s for missing dates
+    const followsMap = new Map(follows.map((f) => [f.date, f.count]));
+    const unfollowsMap = new Map(unfollows.map((u) => [u.date, u.count]));
+
+    return {
+      follows: dateRange.map((date) => ({
+        date,
+        count: followsMap.get(date) || 0,
+      })),
+      unfollows: dateRange.map((date) => ({
+        date,
+        count: unfollowsMap.get(date) || 0,
+      })),
+    };
   }
 
   async createRating(rating: Omit<Rating, "id">): Promise<Rating> {

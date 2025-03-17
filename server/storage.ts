@@ -35,6 +35,7 @@ export const dbStorage = {
   isFollowing: accountStorage.isFollowing.bind(accountStorage),
   getFollowerCount: accountStorage.getFollowerCount.bind(accountStorage),
   getFollowingCount: accountStorage.getFollowingCount.bind(accountStorage),
+  getFollowerMetrics: accountStorage.getFollowerMetrics.bind(accountStorage),
 
   // Book management
   getBooks: bookStorage.getBooks.bind(bookStorage),
@@ -46,46 +47,66 @@ export const dbStorage = {
   deleteBook: bookStorage.deleteBook.bind(bookStorage),
   getAuthorGenres: bookStorage.getAuthorGenres.bind(bookStorage),
   selectBooks: bookStorage.selectBooks.bind(bookStorage),
-
+  getBookMetrics: bookStorage.getBookMetrics.bind(bookStorage),
+  
   // Analytics
-  recordBookImpression: analyticsStorage.recordBookImpression.bind(analyticsStorage),
-  recordBookClickThrough: analyticsStorage.recordBookClickThrough.bind(analyticsStorage),
+  recordBookImpression:
+    analyticsStorage.recordBookImpression.bind(analyticsStorage),
+  recordBookClickThrough:
+    analyticsStorage.recordBookClickThrough.bind(analyticsStorage),
   updateBookStats: analyticsStorage.updateBookStats.bind(analyticsStorage),
   getBooksMetrics: analyticsStorage.getBooksMetrics.bind(analyticsStorage),
 
   // Landing page
-  createLandingSession: landingPageStorage.createLandingSession.bind(landingPageStorage),
-  updateLandingSession: landingPageStorage.updateLandingSession.bind(landingPageStorage),
-  endLandingSession: landingPageStorage.endLandingSession.bind(landingPageStorage),
-  recordLandingEvent: landingPageStorage.recordLandingEvent.bind(landingPageStorage),
-  getLandingSession: landingPageStorage.getLandingSession.bind(landingPageStorage),
-  createSignupInterest: landingPageStorage.createSignupInterest.bind(landingPageStorage),
-  getSignupInterests: landingPageStorage.getSignupInterests.bind(landingPageStorage),
-  createPartnershipInquiry: landingPageStorage.createPartnershipInquiry.bind(landingPageStorage),
-  getPartnershipInquiries: landingPageStorage.getPartnershipInquiries.bind(landingPageStorage),
+  createLandingSession:
+    landingPageStorage.createLandingSession.bind(landingPageStorage),
+  updateLandingSession:
+    landingPageStorage.updateLandingSession.bind(landingPageStorage),
+  endLandingSession:
+    landingPageStorage.endLandingSession.bind(landingPageStorage),
+  recordLandingEvent:
+    landingPageStorage.recordLandingEvent.bind(landingPageStorage),
+  getLandingSession:
+    landingPageStorage.getLandingSession.bind(landingPageStorage),
+  createSignupInterest:
+    landingPageStorage.createSignupInterest.bind(landingPageStorage),
+  getSignupInterests:
+    landingPageStorage.getSignupInterests.bind(landingPageStorage),
+  createPartnershipInquiry:
+    landingPageStorage.createPartnershipInquiry.bind(landingPageStorage),
+  getPartnershipInquiries:
+    landingPageStorage.getPartnershipInquiries.bind(landingPageStorage),
 
   // Campaigns
   getCampaigns: campaignStorage.getCampaigns.bind(campaignStorage),
   createCampaign: campaignStorage.createCampaign.bind(campaignStorage),
-  updateCampaignStatus: campaignStorage.updateCampaignStatus.bind(campaignStorage),
-  updateCampaignMetrics: campaignStorage.updateCampaignMetrics.bind(campaignStorage),
+  updateCampaignStatus:
+    campaignStorage.updateCampaignStatus.bind(campaignStorage),
+  updateCampaignMetrics:
+    campaignStorage.updateCampaignMetrics.bind(campaignStorage),
   getUserCredits: campaignStorage.getUserCredits.bind(campaignStorage),
   addCredits: campaignStorage.addCredits.bind(campaignStorage),
   deductCredits: campaignStorage.deductCredits.bind(campaignStorage),
-  getCreditTransactions: campaignStorage.getCreditTransactions.bind(campaignStorage),
+  getCreditTransactions:
+    campaignStorage.getCreditTransactions.bind(campaignStorage),
   getGiftedBooks: campaignStorage.getGiftedBooks.bind(campaignStorage),
   createGiftedBook: campaignStorage.createGiftedBook.bind(campaignStorage),
   claimGiftedBook: campaignStorage.claimGiftedBook.bind(campaignStorage),
-  getAvailableGiftedBook: campaignStorage.getAvailableGiftedBook.bind(campaignStorage),
+  getAvailableGiftedBook:
+    campaignStorage.getAvailableGiftedBook.bind(campaignStorage),
 
   // Publisher
   getPublishers: publisherStorage.getPublishers.bind(publisherStorage),
   getPublisher: publisherStorage.getPublisher.bind(publisherStorage),
   createPublisher: publisherStorage.createPublisher.bind(publisherStorage),
-  getPublisherAuthors: publisherStorage.getPublisherAuthors.bind(publisherStorage),
-  addAuthorToPublisher: publisherStorage.addAuthorToPublisher.bind(publisherStorage),
-  removeAuthorFromPublisher: publisherStorage.removeAuthorFromPublisher.bind(publisherStorage),
-  getAuthorPublisher: publisherStorage.getAuthorPublisher.bind(publisherStorage),
+  getPublisherAuthors:
+    publisherStorage.getPublisherAuthors.bind(publisherStorage),
+  addAuthorToPublisher:
+    publisherStorage.addAuthorToPublisher.bind(publisherStorage),
+  removeAuthorFromPublisher:
+    publisherStorage.removeAuthorFromPublisher.bind(publisherStorage),
+  getAuthorPublisher:
+    publisherStorage.getAuthorPublisher.bind(publisherStorage),
 
   // Session store for auth
   sessionStore: accountStorage.sessionStore,

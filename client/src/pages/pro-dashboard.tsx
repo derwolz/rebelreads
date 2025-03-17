@@ -55,7 +55,9 @@ export default function ProDashboard() {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
-  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(["impressions"]);
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([
+    "impressions",
+  ]);
   const [timeRange, setTimeRange] = useState("30");
 
   // Close sidebar when route changes
@@ -89,7 +91,7 @@ export default function ProDashboard() {
     },
     enabled: !!user?.isAuthor && selectedBookIds.length > 0,
   });
-
+  console.log("performanceData", performanceData);
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
     enabled: !!user?.isAuthor,
@@ -97,11 +99,10 @@ export default function ProDashboard() {
 
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-metrics", timeRange],
-    queryFn: () =>
-      fetch("/api/pro/follower-metrics").then((res) => res.json()),
+    queryFn: () => fetch("/api/pro/follower-metrics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
-
+  
   const handleBookSelect = (bookId: number) => {
     if (selectedBookIds.includes(bookId)) {
       setSelectedBookIds(selectedBookIds.filter((id) => id !== bookId));
@@ -129,7 +130,9 @@ export default function ProDashboard() {
       selectedMetrics.forEach((metric) => {
         const key = `Book ${bookId}_${metric}`;
         // Convert string values to numbers and default to 0 if missing
-        processedData[key] = item[key] ? parseFloat(item[key] as string) || 0 : 0;
+        processedData[key] = item[key]
+          ? parseFloat(item[key] as string) || 0
+          : 0;
       });
     });
 
@@ -280,7 +283,7 @@ export default function ProDashboard() {
                         name={`Book ${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
-                    ))
+                    )),
                   )}
                 </LineChart>
               </ResponsiveContainer>
