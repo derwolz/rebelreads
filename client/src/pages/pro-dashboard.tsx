@@ -94,9 +94,9 @@ export default function ProDashboard() {
   });
 
   const { data: followerData } = useQuery<FollowerAnalytics>({
-    queryKey: ["/api/pro/follower-analytics", timeRange],
+    queryKey: ["/api/pro/follower-metrics", timeRange],
     queryFn: () =>
-      fetch("/api/pro/follower-analytics").then((res) => res.json()),
+      fetch("/api/pro/follower-metrics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
 
