@@ -10,7 +10,18 @@ export interface IStorage extends
   BookStorage,
   SocialStorage,
   CampaignStorage,
-  LandingStorage {}
+  LandingStorage {
+    getBooksMetrics(
+      bookIds: number[],
+      days?: number,
+      metrics?: ("impressions" | "clicks" | "ctr")[]
+    ): Promise<{
+      date: string;
+      metrics: {
+        [key: string]: number;
+      };
+    }[]>;
+}
 
 // Create a combined storage class that implements all interfaces
 class DatabaseStorage implements IStorage {
@@ -155,6 +166,8 @@ class DatabaseStorage implements IStorage {
     this.createGiftedBook = this.campaign.createGiftedBook.bind(this.campaign);
     this.claimGiftedBook = this.campaign.claimGiftedBook.bind(this.campaign);
     this.getAvailableGiftedBook = this.campaign.getAvailableGiftedBook.bind(this.campaign);
+    this.getBooksMetrics = this.campaign.getBooksMetrics.bind(this.campaign);
+
 
     // Landing Storage
     this.createLandingSession = this.landing.createLandingSession.bind(this.landing);

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { dbStorage } from "../storage";
 import { db } from "../db";
-import { ratings, users, replies, books, followers } from "@shared/schema";
+import { ratings, users, replies, books, followers, reviewPurchases } from "@shared/schema";
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
 import { format, subDays } from "date-fns";
 
@@ -329,13 +329,16 @@ router.post("/purchase-review", async (req, res) => {
     }
 
     // Create review purchase
-    const purchase = await dbStorage.createReviewPurchase({
-      campaignId,
-      userId: req.user!.id,
-      bookId,
-      credits,
-      status: "pending"
-    });
+    const [purchase] = await db
+      .insert(reviewPurchases)
+      .values({
+        campaignId,
+        authorId: req.user!.id,
+        bookId,
+        credits,
+        status: "pending"
+      })
+      .returning();
 
     // Deduct credits from user
     await dbStorage.deductCredits(req.user!.id, credits, campaignId);
@@ -344,6 +347,39 @@ router.post("/purchase-review", async (req, res) => {
   } catch (error) {
     console.error("Error purchasing review:", error);
     res.status(500).json({ error: "Failed to purchase review" });
+  }
+});
+
+// Book metrics endpoint
+router.get("/book-metrics", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user!.isAuthor) {
+    return res.sendStatus(403);
+  }
+
+  try {
+    const bookIds = (req.query.bookIds as string).split(',').map(Number);
+    const days = parseInt(req.query.days as string) || 30;
+    const metrics = (req.query.metrics as string || "impressions,clicks").split(',') as ("impressions" | "clicks" | "ctr")[];
+
+    // Basic validation
+    if (!Array.isArray(bookIds) || bookIds.some(isNaN)) {
+      return res.status(400).json({ error: "Invalid book IDs" });
+    }
+
+    // Verify all books belong to the author
+    const authorBooks = await dbStorage.getBooksByAuthor(req.user!.id);
+    const authorBookIds = authorBooks.map(book => book.id);
+    const validBookIds = bookIds.filter(id => authorBookIds.includes(id));
+
+    if (validBookIds.length === 0) {
+      return res.status(403).json({ error: "No valid books provided" });
+    }
+
+    const metricsData = await dbStorage.getBooksMetrics(validBookIds, days, metrics);
+    res.json(metricsData);
+  } catch (error) {
+    console.error("Error fetching book metrics:", error);
+    res.status(500).json({ error: "Failed to fetch book metrics" });
   }
 });
 

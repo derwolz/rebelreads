@@ -18,11 +18,15 @@ import {
   creditTransactions,
   giftedBooks,
   books,
-  users
+  users,
+  bookImpressions,
+  bookClickThroughs
 } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, isNull, sql, desc } from "drizzle-orm";
+import { eq, and, isNull, sql, desc, inArray } from "drizzle-orm";
 import { BaseStorage } from "./base";
+import { subDays, format } from 'date-fns'; // Added import
+
 
 export interface ICampaignStorage {
   // Campaign methods
@@ -51,6 +55,18 @@ export interface ICampaignStorage {
   createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook>;
   claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
   getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null>;
+
+  // Book metrics
+  getBooksMetrics(
+    bookIds: number[],
+    days?: number,
+    metrics?: ("impressions" | "clicks" | "ctr")[]
+  ): Promise<{
+    date: string;
+    metrics: {
+      [key: string]: number;
+    };
+  }[]>;
 }
 
 export class CampaignStorage extends BaseStorage implements ICampaignStorage {
@@ -354,6 +370,90 @@ export class CampaignStorage extends BaseStorage implements ICampaignStorage {
       .limit(1);
 
     return result || null;
+  }
+
+  async getBooksMetrics(
+    bookIds: number[],
+    days: number = 30,
+    metrics: ("impressions" | "clicks" | "ctr")[] = ["impressions", "clicks"]
+  ): Promise<{
+    date: string;
+    metrics: {
+      [key: string]: number;
+    };
+  }[]> {
+    const startDate = subDays(new Date(), days);
+
+    const results = await Promise.all([
+      // Get impressions if requested
+      metrics.includes("impressions") || metrics.includes("ctr")
+        ? db
+            .select({
+              date: sql<string>`DATE(${bookImpressions.timestamp})`,
+              count: sql<number>`count(*)`,
+              bookId: bookImpressions.bookId,
+            })
+            .from(bookImpressions)
+            .where(
+              and(
+                inArray(bookImpressions.bookId, bookIds),
+                sql`${bookImpressions.timestamp} >= ${startDate}`
+              )
+            )
+            .groupBy(sql`DATE(${bookImpressions.timestamp})`, bookImpressions.bookId)
+        : Promise.resolve([]),
+
+      // Get clicks if requested
+      metrics.includes("clicks") || metrics.includes("ctr")
+        ? db
+            .select({
+              date: sql<string>`DATE(${bookClickThroughs.timestamp})`,
+              count: sql<number>`count(*)`,
+              bookId: bookClickThroughs.bookId,
+            })
+            .from(bookClickThroughs)
+            .where(
+              and(
+                inArray(bookClickThroughs.bookId, bookIds),
+                sql`${bookClickThroughs.timestamp} >= ${startDate}`
+              )
+            )
+            .groupBy(sql`DATE(${bookClickThroughs.timestamp})`, bookClickThroughs.bookId)
+        : Promise.resolve([]),
+    ]);
+
+    const [impressions, clicks] = results;
+
+    // Create a map of dates to metrics
+    const dateMetrics = new Map<string, { [key: string]: number }>();
+
+    // Process impressions
+    impressions.forEach((imp) => {
+      const date = format(new Date(imp.date), 'yyyy-MM-dd');
+      const metrics = dateMetrics.get(date) || {};
+      metrics[`impressions_${imp.bookId}`] = imp.count;
+      dateMetrics.set(date, metrics);
+    });
+
+    // Process clicks
+    clicks.forEach((click) => {
+      const date = format(new Date(click.date), 'yyyy-MM-dd');
+      const metrics = dateMetrics.get(date) || {};
+      metrics[`clicks_${click.bookId}`] = click.count;
+
+      // Calculate CTR if both metrics are available
+      if (metrics[`impressions_${click.bookId}`]) {
+        metrics[`ctr_${click.bookId}`] = 
+          (click.count / metrics[`impressions_${click.bookId}`]) * 100;
+      }
+
+      dateMetrics.set(date, metrics);
+    });
+
+    // Convert map to sorted array
+    return Array.from(dateMetrics.entries())
+      .map(([date, metrics]) => ({ date, metrics }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   }
 }
 
