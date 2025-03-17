@@ -43,6 +43,12 @@ export function ProBookManagement() {
     enabled: user?.isAuthor,
   });
 
+  // Fetch all ratings for user's books
+  const { data: allRatings } = useQuery<Rating[]>({
+    queryKey: ["/api/my-books/ratings"],
+    enabled: !!userBooks?.length,
+  });
+
   const deleteBookMutation = useMutation({
     mutationFn: async (bookId: number) => {
       const res = await fetch(`/api/books/${bookId}`, {
@@ -71,6 +77,14 @@ export function ProBookManagement() {
     navigate(`/books/${bookId}`);
   };
 
+  // Process ratings data
+  const bookRatings = new Map<number, Rating[]>();
+  allRatings?.forEach(rating => {
+    const ratings = bookRatings.get(rating.bookId) || [];
+    ratings.push(rating);
+    bookRatings.set(rating.bookId, ratings);
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -86,13 +100,9 @@ export function ProBookManagement() {
         </div>
         <div className="mt-8 grid gap-6">
           {userBooks?.map((book) => {
-            // Query ratings for each book
-            const { data: ratings } = useQuery<Rating[]>({
-              queryKey: [`/api/books/${book.id}/ratings`],
-            });
+            const ratings = bookRatings.get(book.id) || [];
 
-            // Calculate average ratings
-            const averageRatings = ratings?.length ? {
+            const averageRatings = ratings.length ? {
               overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
               enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
               writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
@@ -127,7 +137,7 @@ export function ProBookManagement() {
                                   size="sm"
                                 />
                                 <span className="text-sm text-muted-foreground">
-                                  ({ratings?.length || 0})
+                                  ({ratings.length || 0})
                                 </span>
                               </div>
                             </TooltipTrigger>
