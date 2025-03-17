@@ -61,6 +61,37 @@ router.get("/dashboard", async (req, res) => {
   }
 });
 
+// Book metrics endpoint
+router.post("/metrics", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user!.isAuthor) {
+    return res.sendStatus(403);
+  }
+
+  try {
+    const { bookIds, days, metrics } = req.body;
+
+    // Basic validation
+    if (!Array.isArray(bookIds) || !days || !Array.isArray(metrics)) {
+      return res.status(400).json({ error: "Invalid parameters" });
+    }
+
+    // Verify all books belong to the author
+    const authorBooks = await dbStorage.getBooksByAuthor(req.user!.id);
+    const authorBookIds = authorBooks.map(book => book.id);
+    const validBookIds = bookIds.filter(id => authorBookIds.includes(id));
+
+    if (validBookIds.length === 0) {
+      return res.status(403).json({ error: "No valid books provided" });
+    }
+
+    const metricsData = await dbStorage.getBooksMetrics(validBookIds, days, metrics);
+    res.json(metricsData);
+  } catch (error) {
+    console.error("Error fetching book metrics:", error);
+    res.status(500).json({ error: "Failed to fetch book metrics" });
+  }
+});
+
 // Reviews management
 router.get("/reviews", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {

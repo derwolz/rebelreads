@@ -36,7 +36,7 @@ interface MetricsResponse {
 const METRICS = [
   { id: "impressions", label: "Impressions" },
   { id: "clicks", label: "Clicks" },
-  { id: "referrals", label: "Referral Clicks" },
+  { id: "ctr", label: "CTR" },
 ] as const;
 
 type MetricType = (typeof METRICS)[number]["id"];
@@ -67,9 +67,9 @@ export default function ProDashboard() {
   });
 
   const { data: performanceData } = useQuery<MetricsResponse[]>({
-    queryKey: ["/api/findmetrics", selectedBookIds, timeRange, selectedMetrics],
+    queryKey: ["/api/pro/metrics", selectedBookIds, timeRange, selectedMetrics],
     queryFn: async () => {
-      const response = await fetch("/api/findmetrics", {
+      const response = await fetch("/api/pro/metrics", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,23 +94,13 @@ export default function ProDashboard() {
     enabled: !!user?.isAuthor,
   });
 
-
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-analytics", timeRange],
     queryFn: () =>
       fetch("/api/pro/follower-analytics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
-  console.log(
-    followerData,
-    "followerData",
-    performanceData,
-    "performanceData",
-    dashboardData,
-    "dashboardData",
-    books,
-    "books",
-  );
+
   const handleBookSelect = (bookId: number) => {
     if (selectedBookIds.includes(bookId)) {
       setSelectedBookIds(selectedBookIds.filter((id) => id !== bookId));
@@ -118,6 +108,7 @@ export default function ProDashboard() {
       setSelectedBookIds([...selectedBookIds, bookId]);
     }
   };
+
   const handleMetricToggle = (metric: MetricType) => {
     if (selectedMetrics.includes(metric)) {
       setSelectedMetrics(selectedMetrics.filter((m) => m !== metric));
@@ -126,16 +117,15 @@ export default function ProDashboard() {
     }
   };
 
-  const chartData = performanceData
-    ?.map((item) => ({
-      date: item.date, 
-      ...selectedMetrics.reduce((acc, metric) => ({
+  const chartData = performanceData?.map((item) => ({
+    date: item.date,
+    ...Object.keys(item)
+      .filter(key => key !== 'date')
+      .reduce((acc, key) => ({
         ...acc,
-        [`${item.bookId}_${metric}`]: item[metric]
+        [key]: item[key]
       }), {}),
-    }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
+  }));
 
   const followerChartData = (() => {
     if (!followerData) return [];
@@ -160,6 +150,7 @@ export default function ProDashboard() {
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   })();
+
 
   const renderContent = () => {
     if (location === "/pro/reviews") {
