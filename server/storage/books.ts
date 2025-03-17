@@ -117,7 +117,11 @@ export class BookStorage implements IBookStorage {
     // Transform the data to match the expected format for the chart
     return result.map(day => ({
       date: day.date,
-      metrics: day.metrics // Keep the metrics object as is
+      metrics: Object.entries(day.metrics).reduce((acc, [key, value]) => {
+        // Convert string values to numbers
+        acc[key] = typeof value === 'string' ? parseFloat(value) : value;
+        return acc;
+      }, {} as { [key: string]: number })
     }));
   }
 }

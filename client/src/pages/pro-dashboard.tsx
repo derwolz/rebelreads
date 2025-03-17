@@ -92,6 +92,7 @@ export default function ProDashboard() {
     enabled: !!user?.isAuthor && selectedBookIds.length > 0,
   });
   console.log("performanceData", performanceData);
+  console.log("selectedBookIds", selectedBookIds);
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
     enabled: !!user?.isAuthor,
@@ -102,7 +103,7 @@ export default function ProDashboard() {
     queryFn: () => fetch("/api/pro/follower-metrics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
-  
+
   const handleBookSelect = (bookId: number) => {
     if (selectedBookIds.includes(bookId)) {
       setSelectedBookIds(selectedBookIds.filter((id) => id !== bookId));
@@ -121,24 +122,40 @@ export default function ProDashboard() {
 
   const chartData = performanceData?.map((item) => {
     // Start with the date
-    const processedData: { [key: string]: string | number } = {
+    const processedData = {
       date: item.date,
+      data: Object.entries(item).reduce((acc, [key, value]) => {
+        // Include only the book-related keys and calculate their values
+        if (key !== "date" && selectedMetrics.includes(key)) {
+          const bookAndMetric = key.split("_");
+          if (
+            bookAndMetric.length === 2 &&
+            selectedBookIds.includes(
+              parseInt(bookAndMetric[0].replace("Book ", "")),
+            )
+          ) {
+            acc[key] = value ? parseFloat(value as string) : 0;
+          }
+        }
+        return acc;
+      }, {}),
     };
 
     // For each selected book and metric combination
-    selectedBookIds.forEach((bookId) => {
-      selectedMetrics.forEach((metric) => {
-        const key = `Book ${bookId}_${metric}`;
-        // Convert string values to numbers and default to 0 if missing
-        processedData[key] = item[key]
-          ? parseFloat(item[key] as string) || 0
-          : 0;
-      });
-    });
+    // selectedBookIds.forEach((bookId) => {
+    //   selectedMetrics.forEach((metric) => {
+    //     const key = `Book ${bookId}_${metric}`;
+    //     // Convert string values to numbers and default to 0 if missing
+    //     processedData[key] = item[key]
+    //       ? parseFloat(item[key] as string) || 0
+    //       : 0;
+    //   });
+    // });
 
     return processedData;
   });
 
+  console.log(chartData, "chartData");
   const followerChartData = (() => {
     if (!followerData) return [];
 
