@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
+import { ReviewManagement } from "@/components/review-management";
+import { ProBookManagement } from "@/components/pro-book-management";
 import {
   LineChart,
   Line,
