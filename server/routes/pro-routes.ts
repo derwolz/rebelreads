@@ -355,67 +355,8 @@ router.get("/follower-metrics", async (req, res) => {
 
   try {
     const days = parseInt(req.query.days as string) || 30;
-    const startDate = subDays(new Date(), days);
-
-    // Get daily follow counts
-    const follows = await db
-      .select({
-        date: sql<string>`DATE(${followers.createdAt})`,
-        count: sql<number>`count(*)`,
-      })
-      .from(followers)
-      .where(
-        and(
-          eq(followers.followingId, req.user!.id),
-          sql`${followers.createdAt} >= ${startDate}`,
-          sql`${followers.deletedAt} IS NULL`
-        )
-      )
-      .groupBy(sql`DATE(${followers.createdAt})`);
-
-    // Get daily unfollow counts
-    const unfollows = await db
-      .select({
-        date: sql<string>`DATE(${followers.deletedAt})`,
-        count: sql<number>`count(*)`,
-      })
-      .from(followers)
-      .where(
-        and(
-          eq(followers.followingId, req.user!.id),
-          sql`${followers.deletedAt} >= ${startDate}`,
-          sql`${followers.deletedAt} IS NOT NULL`
-        )
-      )
-      .groupBy(sql`DATE(${followers.deletedAt})`);
-
-    // Generate all dates in range and ensure 0 counts for missing dates
-    const dateRange = [];
-    const currentDate = new Date(startDate);
-    const endDate = new Date();
-
-    while (currentDate <= endDate) {
-      const dateStr = format(currentDate, "yyyy-MM-dd");
-      dateRange.push(dateStr);
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    // Create final response with 0s for missing dates
-    const followsMap = new Map(follows.map(f => [f.date, f.count]));
-    const unfollowsMap = new Map(unfollows.map(u => [u.date, u.count]));
-
-    const response = {
-      follows: dateRange.map(date => ({
-        date,
-        count: followsMap.get(date) || 0
-      })),
-      unfollows: dateRange.map(date => ({
-        date,
-        count: unfollowsMap.get(date) || 0
-      }))
-    };
-
-    res.json(response);
+    const metrics = await dbStorage.getFollowerMetrics(req.user!.id, days);
+    res.json(metrics);
   } catch (error) {
     console.error("Error fetching follower metrics:", error);
     res.status(500).json({ error: "Failed to fetch follower metrics" });

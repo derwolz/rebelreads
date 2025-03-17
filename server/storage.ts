@@ -38,15 +38,18 @@ import {
   partnership_inquiries,
   ReviewPurchase,
   InsertReviewPurchase,
-  reviewPurchases
+  reviewPurchases,
+  followers,
+  Follower,
 } from "@shared/schema";
-import { users, books, ratings, followers, Follower } from "@shared/schema";
+import { users, books, ratings,  } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray, ilike, desc, isNull } from "drizzle-orm";
+import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
-import { sql } from "drizzle-orm";
+import { subDays, format } from "date-fns";
+
 
 const PostgresSessionStore = connectPg(session);
 
@@ -163,6 +166,11 @@ export interface IStorage {
     status: string,
     completedAt?: Date
   ): Promise<ReviewPurchase>;
+
+  getFollowerMetrics(authorId: number, days: number): Promise<{
+    follows: Array<{ date: string; count: number }>;
+    unfollows: Array<{ date: string; count: number }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1107,6 +1115,67 @@ export class DatabaseStorage implements IStorage {
       .where(eq(reviewPurchases.id, id))
       .returning();
     return purchase;
+  }
+  async getFollowerMetrics(authorId: number, days: number = 30) {
+    const startDate = subDays(new Date(), days);
+
+    // Get daily follow counts
+    const follows = await db
+      .select({
+        date: sql<string>`DATE(${followers.createdAt})`,
+        count: sql<number>`count(*)`,
+      })
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followingId, authorId),
+          sql`${followers.createdAt} >= ${startDate}`,
+          sql`${followers.deletedAt} IS NULL`
+        )
+      )
+      .groupBy(sql`DATE(${followers.createdAt})`);
+
+    // Get daily unfollow counts
+    const unfollows = await db
+      .select({
+        date: sql<string>`DATE(${followers.deletedAt})`,
+        count: sql<number>`count(*)`,
+      })
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followingId, authorId),
+          sql`${followers.deletedAt} >= ${startDate}`,
+          sql`${followers.deletedAt} IS NOT NULL`
+        )
+      )
+      .groupBy(sql`DATE(${followers.deletedAt})`);
+
+    // Generate all dates in range and ensure 0 counts for missing dates
+    const dateRange = [];
+    const currentDate = new Date(startDate);
+    const endDate = new Date();
+
+    while (currentDate <= endDate) {
+      const dateStr = format(currentDate, "yyyy-MM-dd");
+      dateRange.push(dateStr);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Create final response with 0s for missing dates
+    const followsMap = new Map(follows.map(f => [f.date, f.count]));
+    const unfollowsMap = new Map(unfollows.map(u => [u.date, u.count]));
+
+    return {
+      follows: dateRange.map(date => ({
+        date,
+        count: followsMap.get(date) || 0
+      })),
+      unfollows: dateRange.map(date => ({
+        date,
+        count: unfollowsMap.get(date) || 0
+      }))
+    };
   }
 }
 
