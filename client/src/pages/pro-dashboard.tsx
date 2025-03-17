@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
@@ -24,8 +25,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { Book } from "@shared/schema";
 
 interface MetricsResponse {
@@ -90,7 +89,6 @@ export default function ProDashboard() {
 
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
-    queryFn: () => fetch("/api/pro/dashboard").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
 
@@ -117,15 +115,23 @@ export default function ProDashboard() {
     }
   };
 
-  const chartData = performanceData?.map((item) => ({
-    date: item.date,
-    ...Object.keys(item)
-      .filter(key => key !== 'date')
-      .reduce((acc, key) => ({
-        ...acc,
-        [key]: item[key]
-      }), {}),
-  }));
+  const chartData = performanceData?.map((item) => {
+    // Start with the date
+    const processedData: { [key: string]: string | number } = {
+      date: item.date,
+    };
+
+    // For each selected book and metric combination
+    selectedBookIds.forEach((bookId) => {
+      selectedMetrics.forEach((metric) => {
+        const key = `Book ${bookId}_${metric}`;
+        // Convert string values to numbers and default to 0 if missing
+        processedData[key] = item[key] ? parseFloat(item[key] as string) || 0 : 0;
+      });
+    });
+
+    return processedData;
+  });
 
   const followerChartData = (() => {
     if (!followerData) return [];
@@ -150,7 +156,6 @@ export default function ProDashboard() {
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   })();
-
 
   const renderContent = () => {
     if (location === "/pro/reviews") {
@@ -268,7 +273,7 @@ export default function ProDashboard() {
                       <Line
                         key={`${bookId}_${metric}`}
                         type="monotone"
-                        dataKey={`${bookId}_${metric}`}
+                        dataKey={`Book ${bookId}_${metric}`}
                         name={`Book ${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
