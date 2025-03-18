@@ -120,10 +120,21 @@ export default function ProDashboard() {
     }
   };
 
-  const chartData = performanceData?.map((item) => ({
-    date: item.date,
-    ...item.metrics
-  }));
+  const chartData = performanceData?.map((item) => {
+    // Start with the date
+    const processedData = {
+      date: item.date,
+    };
+
+    // Expand metrics into the main object
+    Object.entries(item).forEach(([key, value]) => {
+      if(key !== 'date'){
+        processedData[key] = typeof value === 'string' ? parseFloat(value) : value;
+      }
+    });
+
+    return processedData;
+  });
 
   console.log("chartData", chartData);
   const followerChartData = (() => {
@@ -266,8 +277,8 @@ export default function ProDashboard() {
                       <Line
                         key={`${bookId}_${metric}`}
                         type="monotone"
-                        dataKey={`${bookId}_${metric}`}
-                        name={`${bookId} (${metric})`}
+                        dataKey={`Book ${bookId}_${metric}`}
+                        name={`Book ${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
                     )),
