@@ -23,10 +23,10 @@ export interface IBookStorage {
     days: number,
     metrics: ("impressions" | "clicks" | "ctr")[]
   ): Promise<Array<{
-    date: string;
-    metrics: {
-      [key: string]: number;
-    };
+    date: string,
+    book: Book,
+    impressions: number
+    
   }>>;
 }
 
@@ -108,20 +108,18 @@ export class BookStorage implements IBookStorage {
     metrics: ("impressions" | "clicks" | "ctr")[]
   ): Promise<Array<{
     date: string;
-    metrics: {
-      [key: string]: number;
-    };
+    book: Book;
+    impressions: number;
+    
   }>> {
     const result = await analyticsStorage.getBooksMetrics(bookIds, days, metrics);
 
     // Transform the data to match the expected format for the chart
     return result.map(day => ({
       date: day.date,
-      metrics: Object.entries(day.metrics).reduce((acc, [key, value]) => {
-        // Convert string values to numbers
-        acc[key] = typeof value === 'string' ? parseFloat(value) : value;
-        return acc;
-      }, {} as { [key: string]: number })
+      book: day.metrics,
+      impressions: day.impressions,
+      
     }));
   }
 }

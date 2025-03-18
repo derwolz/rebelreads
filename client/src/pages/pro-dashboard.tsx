@@ -126,17 +126,10 @@ export default function ProDashboard() {
       date: item.date,
     };
 
-    // Expand metrics into the main object
-    Object.entries(item).forEach(([key, value]) => {
-      if(key !== 'date'){
-        processedData[key] = typeof value === 'string' ? parseFloat(value) : value;
-      }
-    });
-
     return processedData;
   });
 
-  console.log("chartData", chartData);
+  console.log(chartData, "chartData");
   const followerChartData = (() => {
     if (!followerData) return [];
 
@@ -160,7 +153,7 @@ export default function ProDashboard() {
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   })();
-
+  console.log(followerChartData, "followerChartData");
   const renderContent = () => {
     if (location === "/pro/reviews") {
       return <ReviewManagement />;
