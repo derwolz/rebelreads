@@ -28,30 +28,40 @@ export class BookStorage implements IBookStorage {
       return [];
     }
 
-    // Use full text search with ranking across title, author, description, and internal_details
+    // Create the search vector SQL once to avoid repetition
+    const searchVector = sql`
+      setweight(to_tsvector('english', coalesce(${books.title}, '')), 'A') ||
+      setweight(to_tsvector('english', coalesce(${books.author}, '')), 'A') ||
+      setweight(to_tsvector('english', coalesce(${books.description}, '')), 'B') ||
+      setweight(to_tsvector('english', coalesce(${books.internal_details}, '')), 'B')
+    `;
+
+    const searchQuery = sql`plainto_tsquery('english', ${query})`;
+
     const results = await db
       .select({
-        ...books,
-        rank: sql<number>`ts_rank(
-          setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-          setweight(to_tsvector('english', coalesce(author, '')), 'A') ||
-          setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-          setweight(to_tsvector('english', coalesce(internal_details, '')), 'B'),
-          plainto_tsquery('english', ${query})
-        )`,
+        id: books.id,
+        title: books.title,
+        author: books.author,
+        description: books.description,
+        internal_details: books.internal_details,
+        genres: books.genres,
+        coverUrl: books.coverUrl,
+        publishedDate: books.publishedDate,
+        promoted: books.promoted,
+        authorId: books.authorId,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        search_rank: sql<number>`ts_rank(${searchVector}, ${searchQuery})`
       })
       .from(books)
-      .where(sql`
-        setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
-        setweight(to_tsvector('english', coalesce(author, '')), 'A') ||
-        setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
-        setweight(to_tsvector('english', coalesce(internal_details, '')), 'B')
-        @@ plainto_tsquery('english', ${query})
-      `)
-      .orderBy(sql`rank DESC`)
+      .where(sql`${searchVector} @@ ${searchQuery}`)
+      .orderBy(sql`search_rank DESC`)
       .limit(20);
 
-    return results.map(({ rank, ...book }) => book);
+    return results.map(({ search_rank, ...book }) => book);
   }
 
   async getBook(id: number): Promise<Book | undefined> {
