@@ -4,9 +4,6 @@ import {
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike } from "drizzle-orm";
-import { AnalyticsStorage } from "./analytics";
-
-const analyticsStorage = new AnalyticsStorage();
 
 export interface IBookStorage {
   getBooks(): Promise<Book[]>;
@@ -18,16 +15,6 @@ export interface IBookStorage {
   deleteBook(id: number, authorId: number): Promise<void>;
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   selectBooks(query: string): Promise<Book[]>;
-  getBookMetrics(
-    bookIds: number[],
-    days: number,
-    metrics: ("impressions" | "clicks" | "ctr")[]
-  ): Promise<Array<{
-    date: string,
-    book: Book,
-    impressions: number
-    
-  }>>;
 }
 
 export class BookStorage implements IBookStorage {
@@ -100,26 +87,5 @@ export class BookStorage implements IBookStorage {
         count,
       }))
       .sort((a, b) => b.count - a.count);
-  }
-
-  async getBookMetrics(
-    bookIds: number[],
-    days: number,
-    metrics: ("impressions" | "clicks" | "ctr")[]
-  ): Promise<Array<{
-    date: string;
-    book: Book;
-    impressions: number;
-    
-  }>> {
-    const result = await analyticsStorage.getBooksMetrics(bookIds, days, metrics);
-
-    // Transform the data to match the expected format for the chart
-    return result.map(day => ({
-      date: day.date,
-      book: day.metrics,
-      impressions: day.impressions,
-      
-    }));
   }
 }

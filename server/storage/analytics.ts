@@ -101,9 +101,9 @@ export class AnalyticsStorage implements IAnalyticsStorage {
     metrics: ("impressions" | "clicks" | "ctr")[] = ["impressions", "clicks"]
   ): Promise<{
     date: string;
-    book:book;
-    impressions:number;
-
+    metrics: {
+      [key: string]: number;
+    };
   }[]> {
     const startDate = subDays(new Date(), days);
 
