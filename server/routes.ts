@@ -9,6 +9,7 @@ import landingRoutes from "./routes/landing-routes";
 import accountRoutes from "./routes/account-routes";
 import proRoutes from "./routes/pro-routes";
 import homeRoutes from "./routes/home-routes";
+import searchRoutes from "./routes/search-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -22,6 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", accountRoutes);
   app.use("/api/pro", proRoutes);
   app.use("/api", homeRoutes);
+  app.use("/api/search", searchRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
