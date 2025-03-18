@@ -3,7 +3,7 @@ import {
   books,
 } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, ilike, sql } from "drizzle-orm";
 
 export interface IBookStorage {
   getBooks(): Promise<Book[]>;
@@ -24,12 +24,22 @@ export class BookStorage implements IBookStorage {
   }
 
   async selectBooks(query: string): Promise<Book[]> {
+    if (!query) {
+      return [];
+    }
+
+    // Use full text search with ranking
     const results = await db
-      .select()
+      .select({
+        ...books,
+        rank: sql<number>`ts_rank(search_vector, plainto_tsquery('english', ${query}))`,
+      })
       .from(books)
-      .where(ilike(books.title, query))
+      .where(sql`search_vector @@ plainto_tsquery('english', ${query})`)
+      .orderBy(sql`ts_rank(search_vector, plainto_tsquery('english', ${query})) DESC`)
       .limit(20);
-    return results;
+
+    return results.map(({ rank, ...book }) => book);
   }
 
   async getBook(id: number): Promise<Book | undefined> {
@@ -89,6 +99,7 @@ export class BookStorage implements IBookStorage {
       }))
       .sort((a, b) => b.count - a.count);
   }
+
   async updateInternalDetails(id: number, details: string): Promise<Book> {
     const [book] = await db
       .update(books)
