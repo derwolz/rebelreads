@@ -54,11 +54,11 @@ export class BookStorage implements IBookStorage {
         clickThroughCount: books.clickThroughCount,
         lastImpressionAt: books.lastImpressionAt,
         lastClickThroughAt: books.lastClickThroughAt,
-        search_rank: sql<number>`ts_rank(${searchVector}, ${searchQuery})`
+        search_rank: sql<number>`ts_rank(${searchVector}, ${searchQuery})`.as('search_rank')
       })
       .from(books)
       .where(sql`${searchVector} @@ ${searchQuery}`)
-      .orderBy(sql`search_rank DESC`)
+      .orderBy(sql`ts_rank(${searchVector}, ${searchQuery}) DESC`)
       .limit(20);
 
     return results.map(({ search_rank, ...book }) => book);
