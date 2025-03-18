@@ -60,7 +60,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
-
+console.log(searchResults, "searchResults");
   const renderSearchResults = () => {
     if (!searchResults?.books) return null;
 

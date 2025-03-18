@@ -28,15 +28,27 @@ export class BookStorage implements IBookStorage {
       return [];
     }
 
-    // Use full text search with ranking
+    // Use full text search with ranking across title, author, description, and internal_details
     const results = await db
       .select({
         ...books,
-        rank: sql<number>`ts_rank(search_vector, plainto_tsquery('english', ${query}))`,
+        rank: sql<number>`ts_rank(
+          setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+          setweight(to_tsvector('english', coalesce(author, '')), 'A') ||
+          setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
+          setweight(to_tsvector('english', coalesce(internal_details, '')), 'B'),
+          plainto_tsquery('english', ${query})
+        )`,
       })
       .from(books)
-      .where(sql`search_vector @@ plainto_tsquery('english', ${query})`)
-      .orderBy(sql`ts_rank(search_vector, plainto_tsquery('english', ${query})) DESC`)
+      .where(sql`
+        setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(author, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
+        setweight(to_tsvector('english', coalesce(internal_details, '')), 'B')
+        @@ plainto_tsquery('english', ${query})
+      `)
+      .orderBy(sql`rank DESC`)
       .limit(20);
 
     return results.map(({ rank, ...book }) => book);
