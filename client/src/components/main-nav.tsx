@@ -55,7 +55,7 @@ export function MainNav({ onSearch }: MainNavProps) {
   >({
     queryKey: [`/api/search/${activeFilter}`, debouncedSearch],
     queryFn: () =>
-      fetch(`/api/search/${activeFilter}?q=${debouncedSearch}`)
+      fetch(`/api/search/${activeFilter}?q=${encodeURIComponent(debouncedSearch)}`)
         .then((response) => response.json()),
     enabled: debouncedSearch.length > 1,
   });
@@ -112,6 +112,11 @@ export function MainNav({ onSearch }: MainNavProps) {
                   <div className="text-sm text-muted-foreground">
                     by {book.author}
                   </div>
+                  {book.description && (
+                    <div className="text-xs text-muted-foreground line-clamp-1">
+                      {book.description}
+                    </div>
+                  )}
                 </div>
               </Link>
             </CommandItem>
