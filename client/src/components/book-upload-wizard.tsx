@@ -72,6 +72,7 @@ interface FormData {
   genres: string[];
   originalTitle: string;
   referralLinks: ReferralLink[];
+  internal_details: string; // Added new field
 }
 
 const STEPS = [
@@ -182,6 +183,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         genres: book.genres,
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
+        internal_details: book.internal_details || "", // Initialize from book data
       };
     }
     return {
@@ -202,6 +204,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       genres: [],
       originalTitle: "",
       referralLinks: [],
+      internal_details: "", // Initialize empty for new books
     };
   });
   const [characterInput, setCharacterInput] = useState("");
@@ -329,6 +332,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         genres: [],
         originalTitle: "",
         referralLinks: [],
+        internal_details: "",
       });
       setCurrentStep(0);
       onSuccess?.();
@@ -469,6 +473,24 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   }))
                 }
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Internal Details
+              </label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Write about the themes, details and characters of your book. We will use this to match and suggest books.
+              </p>
+              <Textarea
+                value={formData.internal_details}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    internal_details: e.target.value,
+                  }))
+                }
+                className="min-h-[200px]"
               />
             </div>
           </div>
@@ -821,6 +843,10 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   <dt className="text-sm font-medium mt-2">Description</dt>
                   <dd className="text-sm text-muted-foreground">
                     {formData.description}
+                  </dd>
+                  <dt className="text-sm font-medium mt-2">Internal Details</dt>
+                  <dd className="text-sm text-muted-foreground">
+                    {formData.internal_details}
                   </dd>
                 </dl>
               </Card>
