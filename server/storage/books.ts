@@ -15,6 +15,7 @@ export interface IBookStorage {
   deleteBook(id: number, authorId: number): Promise<void>;
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   selectBooks(query: string): Promise<Book[]>;
+  updateInternalDetails(id: number, details: string): Promise<Book>;
 }
 
 export class BookStorage implements IBookStorage {
@@ -87,5 +88,13 @@ export class BookStorage implements IBookStorage {
         count,
       }))
       .sort((a, b) => b.count - a.count);
+  }
+  async updateInternalDetails(id: number, details: string): Promise<Book> {
+    const [book] = await db
+      .update(books)
+      .set({ internal_details: details })
+      .where(eq(books.id, id))
+      .returning();
+    return book;
   }
 }

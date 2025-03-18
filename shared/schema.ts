@@ -113,6 +113,7 @@ export const books = pgTable("books", {
   clickThroughCount: integer("click_through_count").notNull().default(0),
   lastImpressionAt: timestamp("last_impression_at"),
   lastClickThroughAt: timestamp("last_click_through_at"),
+  internal_details: text("internal_details"), // Added new field
 });
 
 export interface ReviewAnalysis {
@@ -311,6 +312,7 @@ export const insertBookSchema = createInsertSchema(books).extend({
   referralLinks: z.array(referralLinkSchema).optional(),
   impressionCount: z.number().int().min(0).default(0),
   clickThroughCount: z.number().int().min(0).default(0),
+  internal_details: z.string().optional(),
 });
 
 export const insertRatingSchema = createInsertSchema(ratings);
