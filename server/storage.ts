@@ -47,7 +47,8 @@ export const dbStorage = {
   deleteBook: bookStorage.deleteBook.bind(bookStorage),
   getAuthorGenres: bookStorage.getAuthorGenres.bind(bookStorage),
   selectBooks: bookStorage.selectBooks.bind(bookStorage),
-  
+  updateInternalDetails: bookStorage.updateInternalDetails.bind(bookStorage),
+
   // Analytics
   recordBookImpression:
     analyticsStorage.recordBookImpression.bind(analyticsStorage),
