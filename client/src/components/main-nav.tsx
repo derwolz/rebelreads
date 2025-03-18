@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { Search, Settings, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandDialog,
@@ -27,48 +26,26 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 
-interface SearchAuthor {
-  id: number;
-  username: string;
-  authorName: string | null;
-  authorBio: string | null;
-  authorImageUrl: string | null;
-}
-
-interface MainNavProps {
-  onSearch?: (query: string, type: string) => void;
-}
-
-type SearchFilter = "books" | "authors";
-
-export function MainNav({ onSearch }: MainNavProps) {
+export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const { user, logoutMutation } = useAuth();
   const { setIsOpen } = useAuthModal();
   const [, navigate] = useLocation();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<SearchFilter>("books");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: searchResults } = useQuery<
-    { books: Book[] } | { authors: SearchAuthor[] }
-  >({
-    queryKey: [`/api/search/${activeFilter}`, debouncedSearch],
+  const { data: searchResults } = useQuery<{ books: Book[], metadata: { total: number, query: string } }>({
+    queryKey: ["/api/search", debouncedSearch],
     queryFn: () =>
-      fetch(`/api/search/${activeFilter}?q=${encodeURIComponent(debouncedSearch)}`)
+      fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`)
         .then((response) => response.json()),
     enabled: debouncedSearch.length > 1,
   });
 
-  const handleFilterChange = (filter: SearchFilter) => {
-    setActiveFilter(filter);
-    onSearch?.(searchQuery, filter);
-  };
-
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search/${activeFilter}?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setOpen(false);
     }
   };
@@ -84,96 +61,44 @@ export function MainNav({ onSearch }: MainNavProps) {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const filters: { value: SearchFilter; label: string }[] = [
-    { value: "books", label: "Books" },
-    { value: "authors", label: "Authors" },
-  ];
-
   const renderSearchResults = () => {
-    if (!searchResults) return null;
+    if (!searchResults?.books) return null;
 
-    if (activeFilter === "books" && "books" in searchResults) {
-      return (
-        <CommandGroup heading="Books">
-          {searchResults.books.slice(0, 5).map((book) => (
-            <CommandItem key={book.id} value={book.title}>
-              <Link
-                href={`/books/${book.id}`}
-                className="flex items-center gap-2"
-                onClick={() => setOpen(false)}
-              >
-                <img
-                  src={book.coverUrl}
-                  alt={book.title}
-                  className="w-8 h-12 object-cover rounded"
-                />
-                <div>
-                  <div className="font-medium">{book.title}</div>
-                  <div className="text-sm text-muted-foreground">
-                    by {book.author}
-                  </div>
-                  {book.description && (
-                    <div className="text-xs text-muted-foreground line-clamp-1">
-                      {book.description}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            </CommandItem>
-          ))}
-          {searchResults.books.length > 0 && (
-            <CommandItem onSelect={handleSearchSubmit}>
-              <div className="w-full text-center text-sm text-muted-foreground">
-                View all results →
-              </div>
-            </CommandItem>
-          )}
-        </CommandGroup>
-      );
-    }
-
-    if (activeFilter === "authors" && "authors" in searchResults) {
-      return (
-        <CommandGroup heading="Authors">
-          {searchResults.authors.slice(0, 5).map((author) => (
-            <CommandItem
-              key={author.id}
-              value={author.authorName || author.username}
+    return (
+      <CommandGroup heading="Search Results">
+        {searchResults.books.slice(0, 5).map((book) => (
+          <CommandItem key={book.id} value={book.title}>
+            <Link
+              href={`/books/${book.id}`}
+              className="flex items-center gap-2"
+              onClick={() => setOpen(false)}
             >
-              <Link
-                href={`/authors/${author.id}`}
-                className="flex items-center gap-2"
-                onClick={() => setOpen(false)}
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={author.authorImageUrl || undefined} />
-                  <AvatarFallback>👤</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">
-                    {author.authorName || author.username}
-                  </div>
-                  {author.authorBio && (
-                    <div className="text-sm text-muted-foreground line-clamp-1">
-                      {author.authorBio}
-                    </div>
-                  )}
+              <img
+                src={book.coverUrl}
+                alt={book.title}
+                className="w-8 h-12 object-cover rounded"
+              />
+              <div>
+                <div className="font-medium">{book.title}</div>
+                <div className="text-sm text-muted-foreground">
+                  by {book.author}
                 </div>
-              </Link>
-            </CommandItem>
-          ))}
-          {searchResults.authors.length > 0 && (
-            <CommandItem onSelect={handleSearchSubmit}>
-              <div className="w-full text-center text-sm text-muted-foreground">
-                View all results →
+                <div className="text-xs text-muted-foreground line-clamp-1">
+                  {book.description}
+                </div>
               </div>
-            </CommandItem>
-          )}
-        </CommandGroup>
-      );
-    }
-
-    return null;
+            </Link>
+          </CommandItem>
+        ))}
+        {searchResults.books.length > 0 && (
+          <CommandItem onSelect={handleSearchSubmit}>
+            <div className="w-full text-center text-sm text-muted-foreground">
+              View all results →
+            </div>
+          </CommandItem>
+        )}
+      </CommandGroup>
+    );
   };
 
   return (
@@ -191,7 +116,7 @@ export function MainNav({ onSearch }: MainNavProps) {
               onClick={() => setOpen(true)}
             >
               <Search className="mr-2 h-4 w-4" />
-              Search...
+              Search books...
               <kbd className="pointer-events-none absolute right-2 top-2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
                 <span className="text-xs">⌘</span>K
               </kbd>
@@ -328,20 +253,8 @@ export function MainNav({ onSearch }: MainNavProps) {
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <form onSubmit={handleSearchSubmit}>
-          <div className="flex items-center gap-2 p-2 border-b">
-            {filters.map((filter) => (
-              <Badge
-                key={filter.value}
-                variant={activeFilter === filter.value ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => handleFilterChange(filter.value)}
-              >
-                {filter.label}
-              </Badge>
-            ))}
-          </div>
           <CommandInput
-            placeholder={`Search ${activeFilter}...`}
+            placeholder="Search books..."
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
