@@ -11,7 +11,10 @@ import {
   books,
   users,
   User,
-  Book
+  Book,
+  keywordBids,
+  KeywordBid,
+  InsertKeywordBid,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
@@ -34,6 +37,13 @@ export interface ICampaignStorage {
   createGiftedBook(data: InsertGiftedBook): Promise<GiftedBook>;
   claimGiftedBook(uniqueCode: string, userId: number): Promise<GiftedBook>;
   getAvailableGiftedBook(): Promise<{ giftedBook: GiftedBook; book: Book } | null>;
+
+  // Keyword bidding methods
+  createKeywordBid(bid: InsertKeywordBid): Promise<KeywordBid>;
+  updateKeywordBid(id: number, bid: Partial<InsertKeywordBid>): Promise<KeywordBid>;
+  getKeywordBids(campaignId: number): Promise<KeywordBid[]>;
+  updateBidMetrics(id: number, impressions: number, clicks: number, spend: string): Promise<KeywordBid>;
+  adjustAutomaticBids(campaignId: number): Promise<void>;
 }
 
 export class CampaignStorage implements ICampaignStorage {
@@ -262,5 +272,95 @@ export class CampaignStorage implements ICampaignStorage {
     }
 
     return claimedBook;
+  }
+
+  async createKeywordBid(bid: InsertKeywordBid): Promise<KeywordBid> {
+    const [keywordBid] = await db
+      .insert(keywordBids)
+      .values(bid)
+      .returning();
+    return keywordBid;
+  }
+
+  async updateKeywordBid(
+    id: number,
+    bid: Partial<InsertKeywordBid>
+  ): Promise<KeywordBid> {
+    const [keywordBid] = await db
+      .update(keywordBids)
+      .set({
+        ...bid,
+        updatedAt: new Date(),
+      })
+      .where(eq(keywordBids.id, id))
+      .returning();
+    return keywordBid;
+  }
+
+  async getKeywordBids(campaignId: number): Promise<KeywordBid[]> {
+    return await db
+      .select()
+      .from(keywordBids)
+      .where(eq(keywordBids.campaignId, campaignId))
+      .orderBy(desc(keywordBids.currentBid));
+  }
+
+  async updateBidMetrics(
+    id: number,
+    impressions: number,
+    clicks: number,
+    spend: string
+  ): Promise<KeywordBid> {
+    const [keywordBid] = await db
+      .update(keywordBids)
+      .set({
+        impressions: sql`${keywordBids.impressions} + ${impressions}`,
+        clicks: sql`${keywordBids.clicks} + ${clicks}`,
+        spend: sql`${keywordBids.spend} + ${spend}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(keywordBids.id, id))
+      .returning();
+    return keywordBid;
+  }
+
+  async adjustAutomaticBids(campaignId: number): Promise<void> {
+    // Get campaign details
+    const [campaign] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.id, campaignId));
+
+    if (!campaign || campaign.biddingStrategy !== "automatic") {
+      return;
+    }
+
+    // Get all keyword bids for this campaign
+    const bids = await this.getKeywordBids(campaignId);
+
+    // Adjust bids based on performance and campaign settings
+    for (const bid of bids) {
+      const cpc = bid.clicks > 0 ? Number(bid.spend) / bid.clicks : 0;
+      let newBid = Number(bid.currentBid);
+
+      // Adjust bid based on target CPC
+      if (campaign.targetCPC) {
+        if (cpc > Number(campaign.targetCPC)) {
+          newBid *= 0.95; // Decrease bid by 5%
+        } else if (cpc < Number(campaign.targetCPC)) {
+          newBid *= 1.05; // Increase bid by 5%
+        }
+      }
+
+      // Ensure bid doesn't exceed max bid amount
+      if (campaign.maxBidAmount) {
+        newBid = Math.min(newBid, Number(campaign.maxBidAmount));
+      }
+
+      // Update the bid
+      await this.updateKeywordBid(bid.id, {
+        currentBid: newBid.toString(),
+      });
+    }
   }
 }

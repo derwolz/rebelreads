@@ -217,6 +217,21 @@ export const creditTransactions = pgTable("credit_transactions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Add after campaigns table definition (line 220)
+export const keywordBids = pgTable("keyword_bids", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  keyword: text("keyword").notNull(),
+  maxBid: decimal("max_bid").notNull(),
+  currentBid: decimal("current_bid").notNull(),
+  impressions: integer("impressions").notNull().default(0),
+  clicks: integer("clicks").notNull().default(0),
+  spend: decimal("spend").notNull().default("0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Update campaigns table (around line 220)
 export const campaigns = pgTable("campaigns", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -227,10 +242,15 @@ export const campaigns = pgTable("campaigns", {
   spent: decimal("spent").notNull().default("0"),
   budget: decimal("budget").notNull(),
   keywords: text("keywords").array(),
-  adType: text("ad_type"), // "banner" or "feature" for ad campaigns
+  adType: text("ad_type"), // "banner", "feature", or "keyword" for ad campaigns
   authorId: integer("author_id").notNull(),
   metrics: jsonb("metrics").default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  biddingStrategy: text("bidding_strategy").default("manual"), // "manual", "automatic"
+  dailyBudget: decimal("daily_budget"),
+  maxBidAmount: decimal("max_bid_amount"),
+  targetCPC: decimal("target_cpc"), // Target cost per click
+  targetPosition: integer("target_position"), // Target position in search results
 });
 
 export const campaignBooks = pgTable("campaign_books", {
@@ -239,16 +259,31 @@ export const campaignBooks = pgTable("campaign_books", {
   bookId: integer("book_id").notNull(),
 });
 
-// Add campaign insert schema
+// Add after insertGiftedBookSchema (around line 370)
+export const insertKeywordBidSchema = createInsertSchema(keywordBids).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  impressions: true,
+  clicks: true,
+  spend: true,
+});
+
+// Update insertCampaignSchema (around line 243)
 export const insertCampaignSchema = createInsertSchema(campaigns, {
   startDate: z.string().transform(str => new Date(str)),
   endDate: z.string().transform(str => new Date(str)),
-} ).extend({
+}).extend({
   books: z.array(z.number()).min(1, "At least one book must be selected"),
   keywords: z.array(z.string()).optional(),
   type: z.enum(["ad", "survey", "review_boost"]),
   status: z.enum(["active", "completed", "paused"]).default("active"),
-  adType: z.enum(["banner", "feature"]).optional(),
+  adType: z.enum(["banner", "feature", "keyword"]).optional(),
+  biddingStrategy: z.enum(["manual", "automatic"]).default("manual"),
+  dailyBudget: z.number().optional(),
+  maxBidAmount: z.number().optional(),
+  targetCPC: z.number().optional(),
+  targetPosition: z.number().optional(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -367,12 +402,17 @@ export const giftedBooks = pgTable("gifted_books", {
   claimedAt: timestamp("claimed_at"),
 });
 
-// Add the insert schema
+// Add after insertGiftedBookSchema (around line 370)
 export const insertGiftedBookSchema = createInsertSchema(giftedBooks).omit({
   id: true,
   createdAt: true,
   claimedAt: true,
 });
+
+// Add after Campaign type (around line 351)
+export type KeywordBid = typeof keywordBids.$inferSelect;
+export type InsertKeywordBid = typeof keywordBids.$inferInsert;
+
 
 // Add the type
 export type GiftedBook = typeof giftedBooks.$inferSelect;

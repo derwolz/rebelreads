@@ -45,12 +45,17 @@ interface AdBiddingWizardProps {
 
 const adBiddingSchema = z.object({
   name: z.string().min(1, "Campaign name is required"),
-  adType: z.enum(["banner", "feature"]),
+  adType: z.enum(["banner", "feature", "keyword"]),
   books: z.array(z.number()).min(1, "Select at least one book"),
   startDate: z.date(),
   endDate: z.date(),
   budget: z.number().min(50, "Minimum budget is $50"),
   keywords: z.string(),
+  biddingStrategy: z.enum(["manual", "automatic"]).default("manual"),
+  dailyBudget: z.number().optional(),
+  maxBidAmount: z.number().optional(),
+  targetCPC: z.number().optional(),
+  targetPosition: z.number().optional(),
 });
 
 type AdBiddingForm = z.infer<typeof adBiddingSchema>;
@@ -67,6 +72,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
       books: [],
       budget: 50,
       keywords: "",
+      biddingStrategy: "manual",
     },
   });
 
@@ -87,7 +93,14 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
           endDate: data.endDate.toISOString(),
           budget: data.budget.toString(),
           keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
-          status: "active"
+          status: "active",
+          biddingStrategy: data.biddingStrategy,
+          ...(data.biddingStrategy === "automatic" && {
+            dailyBudget: data.dailyBudget,
+            maxBidAmount: data.maxBidAmount,
+            targetCPC: data.targetCPC,
+            targetPosition: data.targetPosition,
+          }),
         }),
       });
 
@@ -117,7 +130,17 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
   });
 
   const onSubmit = (data: AdBiddingForm) => {
-    createCampaign.mutate(data);
+    createCampaign.mutate({
+      ...data,
+      keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
+      biddingStrategy: data.biddingStrategy,
+      ...(data.biddingStrategy === "automatic" && {
+        dailyBudget: data.dailyBudget,
+        maxBidAmount: data.maxBidAmount,
+        targetCPC: data.targetCPC,
+        targetPosition: data.targetPosition,
+      }),
+    });
   };
 
   const toggleBook = (bookId: number) => {
@@ -136,6 +159,10 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
     feature: {
       title: "Feature Highlight",
       description: "Subtle highlighting with a colored border around your book in natural search results. Limited to 5 advertised results per 50 to maintain a natural browsing experience.",
+    },
+    keyword: {
+      title: "Keyword Bidding",
+      description: "Bid on specific keywords to show your books when readers search for those terms. Perfect for targeting specific audiences and genres.",
     },
   };
 
@@ -169,6 +196,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                     <SelectContent>
                       <SelectItem value="banner">Banner Ad</SelectItem>
                       <SelectItem value="feature">Feature Highlight</SelectItem>
+                      <SelectItem value="keyword">Keyword Bidding</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -345,6 +373,131 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="biddingStrategy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bidding Strategy</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select bidding strategy" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="manual">Manual Bidding</SelectItem>
+                      <SelectItem value="automatic">Automatic Bidding</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose how you want to manage your keyword bids
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.watch("biddingStrategy") === "automatic" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="dailyBudget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Daily Budget (USD)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={5}
+                          step={1}
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Maximum amount to spend per day
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="maxBidAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Bid Amount (USD)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0.1}
+                          step={0.1}
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Maximum amount to bid per keyword
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="targetCPC"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Cost per Click (USD)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0.1}
+                          step={0.1}
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Target cost per click for automatic bidding
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="targetPosition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Target Position</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          step={1}
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Target position in search results (1-10)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" onClick={onClose}>
