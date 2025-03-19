@@ -78,24 +78,26 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
   });
 
   const createCampaign = useMutation({
-    mutationFn: async (data: AdBiddingForm) => {
-      return await apiRequest('/api/campaigns', {
-        method: 'POST',
-        data: {
-          name: data.name,
-          type: "ad",
-          adType: data.adType,
-          books: data.books,
-          startDate: data.startDate.toISOString(),
-          endDate: data.endDate.toISOString(),
-          budget: data.budget.toString(),
-          keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
-          status: "active",
-          biddingStrategy: "automatic",
-          dailyBudget: data.dailyBudget,
-          maxBidAmount: data.maxBidAmount,
-          targetCPC: data.targetCPC,
-        }
+    mutationFn: async (values: AdBiddingForm) => {
+      const formattedData = {
+        name: values.name,
+        type: "ad",
+        adType: values.adType,
+        books: values.books,
+        startDate: values.startDate.toISOString(),
+        endDate: values.endDate.toISOString(),
+        budget: values.budget.toString(),
+        keywords: values.keywords.split(",").map(k => k.trim()).filter(Boolean),
+        status: "active",
+        biddingStrategy: "automatic",
+        dailyBudget: values.dailyBudget.toString(),
+        maxBidAmount: values.maxBidAmount.toString(),
+        targetCPC: values.targetCPC.toString(),
+      };
+
+      return await apiRequest("campaigns", {
+        method: "POST",
+        data: formattedData,
       });
     },
     onSuccess: () => {
