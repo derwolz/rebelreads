@@ -95,10 +95,12 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
         targetCPC: values.targetCPC.toString(),
       };
 
-      return await apiRequest("/api/campaigns", {
+      const response = await apiRequest("/api/create-campaign", {
         method: "POST",
         data: formattedData,
       });
+
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
