@@ -36,6 +36,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AdBiddingWizardProps {
   open: boolean;
@@ -51,11 +52,9 @@ const adBiddingSchema = z.object({
   endDate: z.date(),
   budget: z.number().min(50, "Minimum budget is $50"),
   keywords: z.string(),
-  biddingStrategy: z.enum(["manual", "automatic"]).default("manual"),
-  dailyBudget: z.number().optional(),
-  maxBidAmount: z.number().optional(),
-  targetCPC: z.number().optional(),
-  targetPosition: z.number().optional(),
+  dailyBudget: z.number().min(5, "Minimum daily budget is $5"),
+  maxBidAmount: z.number().min(0.1, "Minimum bid amount is $0.10"),
+  targetCPC: z.number().min(0.1, "Minimum target CPC is $0.10"),
 });
 
 type AdBiddingForm = z.infer<typeof adBiddingSchema>;
@@ -72,19 +71,17 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
       books: [],
       budget: 50,
       keywords: "",
-      biddingStrategy: "manual",
+      dailyBudget: 10,
+      maxBidAmount: 0.5,
+      targetCPC: 0.2,
     },
   });
 
   const createCampaign = useMutation({
     mutationFn: async (data: AdBiddingForm) => {
-      // Convert to the expected API format
-      const response = await fetch("/api/campaigns", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      return await apiRequest('/api/campaigns', {
+        method: 'POST',
+        data: {
           name: data.name,
           type: "ad",
           adType: data.adType,
@@ -94,22 +91,12 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
           budget: data.budget.toString(),
           keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
           status: "active",
-          biddingStrategy: data.biddingStrategy,
-          ...(data.biddingStrategy === "automatic" && {
-            dailyBudget: data.dailyBudget,
-            maxBidAmount: data.maxBidAmount,
-            targetCPC: data.targetCPC,
-            targetPosition: data.targetPosition,
-          }),
-        }),
+          biddingStrategy: "automatic",
+          dailyBudget: data.dailyBudget,
+          maxBidAmount: data.maxBidAmount,
+          targetCPC: data.targetCPC,
+        }
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create campaign");
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
@@ -130,17 +117,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
   });
 
   const onSubmit = (data: AdBiddingForm) => {
-    createCampaign.mutate({
-      ...data,
-      keywords: data.keywords.split(",").map(k => k.trim()).filter(Boolean),
-      biddingStrategy: data.biddingStrategy,
-      ...(data.biddingStrategy === "automatic" && {
-        dailyBudget: data.dailyBudget,
-        maxBidAmount: data.maxBidAmount,
-        targetCPC: data.targetCPC,
-        targetPosition: data.targetPosition,
-      }),
-    });
+    createCampaign.mutate(data);
   };
 
   const toggleBook = (bookId: number) => {
@@ -376,128 +353,72 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
 
             <FormField
               control={form.control}
-              name="biddingStrategy"
+              name="dailyBudget"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bidding Strategy</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select bidding strategy" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="manual">Manual Bidding</SelectItem>
-                      <SelectItem value="automatic">Automatic Bidding</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Daily Budget (USD)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={5}
+                      step={1}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
                   <FormDescription>
-                    Choose how you want to manage your keyword bids
+                    Maximum amount to spend per day
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {form.watch("biddingStrategy") === "automatic" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="dailyBudget"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Daily Budget (USD)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={5}
-                          step={1}
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Maximum amount to spend per day
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="maxBidAmount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maximum Bid Amount (USD)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Maximum amount to bid per keyword
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="maxBidAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Maximum Bid Amount (USD)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0.1}
-                          step={0.1}
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Maximum amount to bid per keyword
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="targetCPC"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Cost per Click (USD)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0.1}
-                          step={0.1}
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Target cost per click for automatic bidding
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="targetPosition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Target Position</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={10}
-                          step={1}
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Target position in search results (1-10)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
+            <FormField
+              control={form.control}
+              name="targetCPC"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Target Cost per Click (USD)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0.1}
+                      step={0.1}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Target cost per click for automatic bidding
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" onClick={onClose}>
