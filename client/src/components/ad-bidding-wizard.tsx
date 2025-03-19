@@ -95,7 +95,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
         targetCPC: values.targetCPC.toString(),
       };
 
-      return await apiRequest("campaigns", {
+      return await apiRequest("/api/campaigns", {
         method: "POST",
         data: formattedData,
       });
