@@ -37,6 +37,7 @@ import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { PurchaseCreditsModal } from "./purchase-credits-modal";
 
 interface AdBiddingWizardProps {
   open: boolean;
@@ -63,6 +64,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
+  const [showPurchaseCredits, setShowPurchaseCredits] = useState(false);
 
   const form = useForm<AdBiddingForm>({
     resolver: zodResolver(adBiddingSchema),
@@ -79,6 +81,8 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
 
   const createCampaign = useMutation({
     mutationFn: async (values: AdBiddingForm) => {
+      console.log("Creating campaign with values:", values);
+
       const formattedData = {
         name: values.name,
         type: "ad",
@@ -95,15 +99,19 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
         targetCPC: values.targetCPC.toString(),
       };
 
-      const response = await apiRequest("/api/create-campaign", {
-        method: "POST",
-        data: formattedData,
-      });
-
-      return response;
+      try {
+        return await apiRequest("/api/pro/create-campaign", {
+          method: "POST",
+          data: formattedData,
+        });
+      } catch (error: any) {
+        console.error("Campaign creation error:", error);
+        throw new Error(error.response?.data?.message || error.message);
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pro/campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/credits"] });
       toast({
         title: "Campaign Created",
         description: "Your ad campaign has been created successfully.",
@@ -112,11 +120,21 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
     },
     onError: (err: Error) => {
       console.error("Error creating campaign:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to create campaign. Please try again.",
-        variant: "destructive",
-      });
+      if (err.message.includes("Insufficient credits")) {
+        setShowPurchaseCredits(true);
+      } else if (err.message.includes("Unauthorized") || err.message.includes("403")) {
+        toast({
+          title: "Authorization Error",
+          description: "You must be an author to create campaigns.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: err.message || "Failed to create campaign. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -148,122 +166,56 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create Ad Campaign</DialogTitle>
-          <DialogDescription>
-            Set up your advertising campaign to reach more readers
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Ad Campaign</DialogTitle>
+            <DialogDescription>
+              Set up your advertising campaign to reach more readers
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="adType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Advertisement Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="adType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Advertisement Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select ad type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="banner">Banner Ad</SelectItem>
+                        <SelectItem value="feature">Feature Highlight</SelectItem>
+                        <SelectItem value="keyword">Keyword Bidding</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      {field.value && adTypeInfo[field.value as keyof typeof adTypeInfo].description}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign Name</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select ad type" />
-                      </SelectTrigger>
+                      <Input placeholder="Spring Reading Promotion" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="banner">Banner Ad</SelectItem>
-                      <SelectItem value="feature">Feature Highlight</SelectItem>
-                      <SelectItem value="keyword">Keyword Bidding</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    {field.value && adTypeInfo[field.value as keyof typeof adTypeInfo].description}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Campaign Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Spring Reading Promotion" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="books"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Select Books</FormLabel>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {books.map((book) => (
-                      <Button
-                        key={book.id}
-                        type="button"
-                        variant={selectedBooks.includes(book.id) ? "default" : "outline"}
-                        className="justify-start"
-                        onClick={() => toggleBook(book.id)}
-                      >
-                        {book.title}
-                      </Button>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Start Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -271,170 +223,243 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
 
               <FormField
                 control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>End Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                name="books"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Select Books</FormLabel>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {books.map((book) => (
+                        <Button
+                          key={book.id}
+                          type="button"
+                          variant={selectedBooks.includes(book.id) ? "default" : "outline"}
+                          className="justify-start"
+                          onClick={() => toggleBook(book.id)}
+                        >
+                          {book.title}
+                        </Button>
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="budget"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Campaign Budget (USD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={50}
-                      step={10}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Minimum budget is $50. Recommended budget depends on campaign duration and reach.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Start Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="keywords"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Target Keywords</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter keywords separated by commas (e.g., fantasy, magic, adventure)"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Keywords help target your ads to readers interested in specific themes or genres
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>End Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <FormField
-              control={form.control}
-              name="dailyBudget"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Daily Budget (USD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={5}
-                      step={1}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Maximum amount to spend per day
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign Budget (USD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={50}
+                        step={10}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum budget is $50. Recommended budget depends on campaign duration and reach.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="maxBidAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Bid Amount (USD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0.1}
-                      step={0.1}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Maximum amount to bid per keyword
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="keywords"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Keywords</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter keywords separated by commas (e.g., fantasy, magic, adventure)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Keywords help target your ads to readers interested in specific themes or genres
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="targetCPC"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Target Cost per Click (USD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0.1}
-                      step={0.1}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Target cost per click for automatic bidding
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="dailyBudget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Daily Budget (USD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={5}
+                        step={1}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Maximum amount to spend per day
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createCampaign.isPending}>
-                {createCampaign.isPending ? "Creating..." : "Create Campaign"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              <FormField
+                control={form.control}
+                name="maxBidAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Maximum Bid Amount (USD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Maximum amount to bid per keyword
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetCPC"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Cost per Click (USD)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0.1}
+                        step={0.1}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Target cost per click for automatic bidding
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end space-x-4">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createCampaign.isPending}>
+                  {createCampaign.isPending ? "Creating..." : "Create Campaign"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <PurchaseCreditsModal 
+        open={showPurchaseCredits} 
+        onClose={() => setShowPurchaseCredits(false)} 
+      />
+    </>
   );
 }

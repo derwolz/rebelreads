@@ -19,7 +19,7 @@ const campaignTypeLabels = {
 
 export function CampaignTable() {
   const { data: campaigns, isLoading } = useQuery<Campaign[]>({
-    queryKey: ["/api/campaigns"],
+    queryKey: ["/api/pro/campaigns"],
   });
 
   if (isLoading) {
