@@ -242,26 +242,11 @@ router.post("/reviews/:id/reply", async (req, res) => {
 });
 
 // Campaign management routes
-router.get("/campaigns", async (req, res) => {
-  if (!req.isAuthenticated() || !req.user!.isAuthor) {
-    return res.sendStatus(403);
-  }
-
-  try {
-    const campaigns = await dbStorage.getCampaigns(req.user!.id);
-    res.json(campaigns);
-  } catch (error) {
-    console.error("Error fetching campaigns:", error);
-    res.status(500).json({ error: "Failed to fetch campaigns" });
-  }
-});
-
-// Campaign creation route with credit check
 router.post("/create-campaign", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
-    console.log("Authorization failed:", {
-      isAuthenticated: req.isAuthenticated(),
-      isAuthor: req.user?.isAuthor
+    console.log("Authorization failed:", { 
+      isAuthenticated: req.isAuthenticated(), 
+      isAuthor: req.user?.isAuthor 
     });
     return res.status(403).json({
       error: "Unauthorized",
@@ -276,16 +261,16 @@ router.post("/create-campaign", async (req, res) => {
     const availableCredits = await dbStorage.getUserCredits(req.user!.id);
     const campaignBudget = parseFloat(req.body.budget);
 
-    console.log("Credit check:", {
-      availableCredits,
-      campaignBudget,
-      sufficient: parseFloat(availableCredits) >= campaignBudget
+    console.log("Credit check:", { 
+      availableCredits, 
+      campaignBudget, 
+      sufficient: parseFloat(availableCredits) >= campaignBudget 
     });
 
     if (parseFloat(availableCredits) < campaignBudget) {
-      return res.status(400).json({
+      return res.status(400).json({ 
         error: "Insufficient credits",
-        message: "You don't have enough credits for this campaign."
+        message: "You don't have enough credits for this campaign." 
       });
     }
 
@@ -305,6 +290,7 @@ router.post("/create-campaign", async (req, res) => {
     // If this is a keyword bidding campaign, create the initial bids
     if (req.body.adType === "keyword" && req.body.keywords?.length > 0) {
       const initialBid = Number(req.body.maxBidAmount) || 0.5;
+
       console.log("Setting up keyword bids with initial bid:", initialBid);
 
       for (const keyword of req.body.keywords) {
@@ -320,7 +306,7 @@ router.post("/create-campaign", async (req, res) => {
     res.json(campaign);
   } catch (error) {
     console.error("Error creating campaign:", error);
-    res.status(500).json({
+    res.status(500).json({ 
       error: "Failed to create campaign",
       message: error instanceof Error ? error.message : "Unknown error occurred"
     });

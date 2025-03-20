@@ -325,6 +325,7 @@ export class CampaignStorage implements ICampaignStorage {
   }
 
   async adjustAutomaticBids(campaignId: number): Promise<void> {
+    // Get campaign details
     const [campaign] = await db
       .select()
       .from(campaigns)
@@ -334,12 +335,15 @@ export class CampaignStorage implements ICampaignStorage {
       return;
     }
 
+    // Get all keyword bids for this campaign
     const bids = await this.getKeywordBids(campaignId);
 
+    // Adjust bids based on performance and campaign settings
     for (const bid of bids) {
       const cpc = bid.clicks > 0 ? Number(bid.spend) / bid.clicks : 0;
       let newBid = Number(bid.currentBid);
 
+      // Adjust bid based on target CPC
       if (campaign.targetCPC) {
         if (cpc > Number(campaign.targetCPC)) {
           newBid *= 0.95; // Decrease bid by 5%
@@ -348,10 +352,12 @@ export class CampaignStorage implements ICampaignStorage {
         }
       }
 
+      // Ensure bid doesn't exceed max bid amount
       if (campaign.maxBidAmount) {
         newBid = Math.min(newBid, Number(campaign.maxBidAmount));
       }
 
+      // Update the bid
       await this.updateKeywordBid(bid.id, {
         currentBid: newBid.toString(),
       });
