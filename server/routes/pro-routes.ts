@@ -246,21 +246,6 @@ router.post("/reviews/:id/reply", async (req, res) => {
 });
 
 // Campaign management routes
-router.get("/campaigns", async (req, res) => {
-  if (!req.isAuthenticated() || !req.user!.isAuthor) {
-    return res.sendStatus(403);
-  }
-  try {
-    const campaigns = await dbStorage.getCampaigns(req.user!.id);
-
-    res.json(campaigns);
-  } catch (error) {
-    console.error("Error fetching campaigns:", error);
-    res.status(500).json({ error: "Failed to fetch campaigns" });
-  }
-});
-
-// Campaign management routes
 router.post("/create-campaign", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
     console.log("Authorization failed:", {
@@ -330,6 +315,20 @@ router.post("/create-campaign", async (req, res) => {
       message:
         error instanceof Error ? error.message : "Unknown error occurred",
     });
+  }
+});
+
+router.get("/campaigns", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user!.isAuthor) {
+    return res.sendStatus(403);
+  }
+  try {
+    const campaigns = await dbStorage.getCampaigns(req.user!.id);
+
+    res.json(campaigns);
+  } catch (error) {
+    console.error("Error fetching campaigns:", error);
+    res.status(500).json({ error: "Failed to fetch campaigns" });
   }
 });
 
