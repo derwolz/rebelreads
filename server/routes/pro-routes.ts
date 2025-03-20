@@ -78,14 +78,18 @@ router.post("/metrics", async (req, res) => {
 
     // Verify all books belong to the author
     const authorBooks = await dbStorage.getBooksByAuthor(req.user!.id);
-    const authorBookIds = authorBooks.map(book => book.id);
-    const validBookIds = bookIds.filter(id => authorBookIds.includes(id));
+    const authorBookIds = authorBooks.map((book) => book.id);
+    const validBookIds = bookIds.filter((id) => authorBookIds.includes(id));
 
     if (validBookIds.length === 0) {
       return res.status(403).json({ error: "No valid books provided" });
     }
 
-    const metricsData = await dbStorage.getBooksMetrics(validBookIds, days, metrics);
+    const metricsData = await dbStorage.getBooksMetrics(
+      validBookIds,
+      days,
+      metrics,
+    );
     res.json(metricsData);
   } catch (error) {
     console.error("Error fetching book metrics:", error);
@@ -242,15 +246,30 @@ router.post("/reviews/:id/reply", async (req, res) => {
 });
 
 // Campaign management routes
+router.get("/campaigns", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user!.isAuthor) {
+    return res.sendStatus(403);
+  }
+  try {
+    const campaigns = await dbStorage.getCampaigns(req.user!.id);
+
+    res.json(campaigns);
+  } catch (error) {
+    console.error("Error fetching campaigns:", error);
+    res.status(500).json({ error: "Failed to fetch campaigns" });
+  }
+});
+
+// Campaign management routes
 router.post("/create-campaign", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
-    console.log("Authorization failed:", { 
-      isAuthenticated: req.isAuthenticated(), 
-      isAuthor: req.user?.isAuthor 
+    console.log("Authorization failed:", {
+      isAuthenticated: req.isAuthenticated(),
+      isAuthor: req.user?.isAuthor,
     });
     return res.status(403).json({
       error: "Unauthorized",
-      message: "You must be an author to create campaigns"
+      message: "You must be an author to create campaigns",
     });
   }
 
@@ -261,16 +280,16 @@ router.post("/create-campaign", async (req, res) => {
     const availableCredits = await dbStorage.getUserCredits(req.user!.id);
     const campaignBudget = parseFloat(req.body.budget);
 
-    console.log("Credit check:", { 
-      availableCredits, 
-      campaignBudget, 
-      sufficient: parseFloat(availableCredits) >= campaignBudget 
+    console.log("Credit check:", {
+      availableCredits,
+      campaignBudget,
+      sufficient: parseFloat(availableCredits) >= campaignBudget,
     });
 
     if (parseFloat(availableCredits) < campaignBudget) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Insufficient credits",
-        message: "You don't have enough credits for this campaign." 
+        message: "You don't have enough credits for this campaign.",
       });
     }
 
@@ -284,7 +303,7 @@ router.post("/create-campaign", async (req, res) => {
     await dbStorage.deductCredits(
       req.user!.id,
       campaignBudget.toString(),
-      campaign.id
+      campaign.id,
     );
 
     // If this is a keyword bidding campaign, create the initial bids
@@ -306,9 +325,10 @@ router.post("/create-campaign", async (req, res) => {
     res.json(campaign);
   } catch (error) {
     console.error("Error creating campaign:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to create campaign",
-      message: error instanceof Error ? error.message : "Unknown error occurred"
+      message:
+        error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 });
