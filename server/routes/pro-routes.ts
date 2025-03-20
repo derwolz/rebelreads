@@ -4,6 +4,7 @@ import { db } from "../db";
 import { ratings, users, replies, books, followers } from "@shared/schema";
 import { eq, and, inArray, desc, sql } from "drizzle-orm";
 import { format, subDays } from "date-fns";
+import { calculateWeightedRating } from "@shared/schema";
 
 const router = Router();
 
@@ -240,7 +241,7 @@ router.post("/reviews/:id/reply", async (req, res) => {
   }
 });
 
-// Campaign management
+// Campaign management routes
 router.get("/campaigns", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
     return res.sendStatus(403);
@@ -255,16 +256,35 @@ router.get("/campaigns", async (req, res) => {
   }
 });
 
-router.post("/campaigns", async (req, res) => {
+router.post("/create-campaign", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
     return res.sendStatus(403);
   }
 
   try {
+    console.log("Creating campaign with data:", req.body);
+
     const campaign = await dbStorage.createCampaign({
       ...req.body,
       authorId: req.user!.id,
     });
+
+    // If this is a keyword bidding campaign, create the initial bids
+    if (req.body.adType === "keyword" && req.body.keywords?.length > 0) {
+      const initialBid = Number(req.body.maxBidAmount) || 0.5;
+
+      console.log("Setting up keyword bids with initial bid:", initialBid);
+
+      for (const keyword of req.body.keywords) {
+        await dbStorage.createKeywordBid({
+          campaignId: campaign.id,
+          keyword,
+          maxBid: initialBid.toString(),
+          currentBid: initialBid.toString(),
+        });
+      }
+    }
+
     res.json(campaign);
   } catch (error) {
     console.error("Error creating campaign:", error);
