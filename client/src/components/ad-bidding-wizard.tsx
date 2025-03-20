@@ -30,13 +30,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Book } from "@shared/schema";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { PurchaseCreditsModal } from "./purchase-credits-modal";
 
 interface AdBiddingWizardProps {
@@ -60,7 +63,11 @@ const adBiddingSchema = z.object({
 
 type AdBiddingForm = z.infer<typeof adBiddingSchema>;
 
-export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) {
+export function AdBiddingWizard({
+  open,
+  onClose,
+  books,
+}: AdBiddingWizardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedBooks, setSelectedBooks] = useState<number[]>([]);
@@ -91,7 +98,10 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
         startDate: values.startDate.toISOString(),
         endDate: values.endDate.toISOString(),
         budget: values.budget.toString(),
-        keywords: values.keywords.split(",").map(k => k.trim()).filter(Boolean),
+        keywords: values.keywords
+          .split(",")
+          .map((k) => k.trim())
+          .filter(Boolean),
         status: "active",
         biddingStrategy: "automatic",
         dailyBudget: values.dailyBudget.toString(),
@@ -121,8 +131,15 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
     onError: (err: Error) => {
       console.error("Error creating campaign:", err);
       if (err.message.includes("Insufficient credits")) {
+        toast({
+          title: "Insufficient Credits",
+          description: "You don't have enough credits to create a campaign.",
+        });
         setShowPurchaseCredits(true);
-      } else if (err.message.includes("Unauthorized") || err.message.includes("403")) {
+      } else if (
+        err.message.includes("Unauthorized") ||
+        err.message.includes("403")
+      ) {
         toast({
           title: "Authorization Error",
           description: "You must be an author to create campaigns.",
@@ -131,7 +148,8 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
       } else {
         toast({
           title: "Error",
-          description: err.message || "Failed to create campaign. Please try again.",
+          description:
+            err.message || "Failed to create campaign. Please try again.",
           variant: "destructive",
         });
       }
@@ -153,15 +171,18 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
   const adTypeInfo = {
     banner: {
       title: "Banner Advertisement",
-      description: "Premium placement at the top of the home page and special sidebar placement in search results. Maximum visibility for your books.",
+      description:
+        "Premium placement at the top of the home page and special sidebar placement in search results. Maximum visibility for your books.",
     },
     feature: {
       title: "Feature Highlight",
-      description: "Subtle highlighting with a colored border around your book in natural search results. Limited to 5 advertised results per 50 to maintain a natural browsing experience.",
+      description:
+        "Subtle highlighting with a colored border around your book in natural search results. Limited to 5 advertised results per 50 to maintain a natural browsing experience.",
     },
     keyword: {
       title: "Keyword Bidding",
-      description: "Bid on specific keywords to show your books when readers search for those terms. Perfect for targeting specific audiences and genres.",
+      description:
+        "Bid on specific keywords to show your books when readers search for those terms. Perfect for targeting specific audiences and genres.",
     },
   };
 
@@ -195,12 +216,16 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="banner">Banner Ad</SelectItem>
-                        <SelectItem value="feature">Feature Highlight</SelectItem>
+                        <SelectItem value="feature">
+                          Feature Highlight
+                        </SelectItem>
                         <SelectItem value="keyword">Keyword Bidding</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {field.value && adTypeInfo[field.value as keyof typeof adTypeInfo].description}
+                      {field.value &&
+                        adTypeInfo[field.value as keyof typeof adTypeInfo]
+                          .description}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -214,7 +239,10 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                   <FormItem>
                     <FormLabel>Campaign Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Spring Reading Promotion" {...field} />
+                      <Input
+                        placeholder="Spring Reading Promotion"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -232,7 +260,11 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                         <Button
                           key={book.id}
                           type="button"
-                          variant={selectedBooks.includes(book.id) ? "default" : "outline"}
+                          variant={
+                            selectedBooks.includes(book.id)
+                              ? "default"
+                              : "outline"
+                          }
                           className="justify-start"
                           onClick={() => toggleBook(book.id)}
                         >
@@ -259,7 +291,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                               variant="outline"
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-muted-foreground",
                               )}
                             >
                               {field.value ? (
@@ -301,7 +333,7 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                               variant="outline"
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
+                                !field.value && "text-muted-foreground",
                               )}
                             >
                               {field.value ? (
@@ -347,7 +379,8 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                       />
                     </FormControl>
                     <FormDescription>
-                      Minimum budget is $50. Recommended budget depends on campaign duration and reach.
+                      Minimum budget is $50. Recommended budget depends on
+                      campaign duration and reach.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -367,7 +400,8 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
                       />
                     </FormControl>
                     <FormDescription>
-                      Keywords help target your ads to readers interested in specific themes or genres
+                      Keywords help target your ads to readers interested in
+                      specific themes or genres
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -456,9 +490,9 @@ export function AdBiddingWizard({ open, onClose, books }: AdBiddingWizardProps) 
         </DialogContent>
       </Dialog>
 
-      <PurchaseCreditsModal 
-        open={showPurchaseCredits} 
-        onClose={() => setShowPurchaseCredits(false)} 
+      <PurchaseCreditsModal
+        open={showPurchaseCredits}
+        onClose={() => setShowPurchaseCredits(false)}
       />
     </>
   );
