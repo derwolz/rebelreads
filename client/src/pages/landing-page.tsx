@@ -621,7 +621,7 @@ const VideoCardSection = ({ panel, index, isLastPanel, onExploreMore }: VideoCar
     <section
       ref={sectionRef}
       className="snap-section min-h-screen flex items-center justify-center relative snap-start"
-      style={{ height: '100vh' }}
+      style={{ height: '100vh', position: 'relative' }}
     >
       <motion.div
         className="relative z-10 max-w-3xl w-full aspect-video rounded-2xl overflow-hidden shadow-2xl"
