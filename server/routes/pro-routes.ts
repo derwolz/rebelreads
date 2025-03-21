@@ -260,7 +260,7 @@ router.get("/campaigns", async (req, res) => {
   }
 });
 
-router.post("/create-campaign", async (req, res) => {
+router.post("/campaigns", async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
     console.log("Authorization failed:", {
       isAuthenticated: req.isAuthenticated(),
@@ -321,7 +321,7 @@ router.post("/create-campaign", async (req, res) => {
       }
     }
 
-    res.json(campaign);
+    res.status(201).json(campaign);
   } catch (error) {
     console.error("Error creating campaign:", error);
     res.status(500).json({
