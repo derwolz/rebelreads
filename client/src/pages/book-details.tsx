@@ -29,6 +29,7 @@ import type { ReferralLink } from "@shared/schema";
 import { ReviewCard } from "@/components/review-card";
 import { WishlistButton } from "@/components/wishlist-button";
 import { apiRequest } from "@/lib/queryClient";
+import { HorizontalBannerAd } from "@/components/banner-ads";
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
@@ -398,6 +399,22 @@ export default function BookDetails() {
                     <p className="text-muted-foreground">No ratings yet</p>
                   )}
 
+                  {/* Horizontal Banner Ad */}
+                  {book.id && (
+                    <div className="my-8">
+                      <HorizontalBannerAd
+                        campaignId={1}
+                        bookId={book.id}
+                        imageSrc={book.coverUrl}
+                        title={`Readers also enjoyed: ${book.title}`}
+                        description="More from this author and similar titles you might enjoy."
+                        ctaText="Explore More"
+                        source="book-details"
+                        position="before-reviews"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="space-y-4 mt-8">
                     <h3 className="text-xl font-semibold">Reviews</h3>
                     <div className="max-w-3xl space-y-4">

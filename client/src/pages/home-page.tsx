@@ -13,6 +13,7 @@ import {
 import { HeroCarousel } from "@/components/hero-carousel";
 import { BookGrid } from "@/components/book-grid";
 import { WhatsHotSidebar } from "@/components/whats-hot-sidebar";
+import { HeroBannerAd, VerticalBannerAd, HorizontalBannerAd } from "@/components/banner-ads";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -81,10 +82,29 @@ export default function HomePage() {
     }
   });
 
+  // Get featured book for hero ad if available
+  const featuredBook = books?.find(book => book.promoted === true) || 
+                      (books && books.length > 0 ? books[0] : null);
+
   return (
     <main className="container mx-auto px-4 py-8">
       {/* Hero Carousel for Promoted Books */}
       <HeroCarousel />
+
+      {/* Hero Banner Ad */}
+      {featuredBook && (
+        <div className="my-8">
+          <HeroBannerAd
+            campaignId={1}
+            bookId={featuredBook.id}
+            imageSrc={featuredBook.coverUrl}
+            title={featuredBook.title}
+            description={featuredBook.description?.substring(0, 120) + '...'}
+            ctaText="Discover Now"
+            source="home"
+          />
+        </div>
+      )}
 
       {/* New Books Section */}
       {newBooks && newBooks.length > 0 && (
@@ -165,6 +185,21 @@ export default function HomePage() {
             </Carousel>
           </section>
 
+          {/* Horizontal Banner Ad */}
+          {books && books.length > 2 && (
+            <div className="mb-12">
+              <HorizontalBannerAd
+                campaignId={1}
+                bookId={books[2].id}
+                imageSrc={books[2].coverUrl}
+                title={books[2].title}
+                description={books[2].description?.substring(0, 100) + '...'}
+                source="home-mid-content"
+                position="between-sections"
+              />
+            </div>
+          )}
+
           {/* All Books Grid */}
           <BookGrid
             title="Explore More Books"
@@ -174,8 +209,20 @@ export default function HomePage() {
         </div>
 
         {/* What's Hot Sidebar - Only visible on large screens */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block space-y-8">
           <WhatsHotSidebar />
+          
+          {/* Vertical Banner Ad in Sidebar */}
+          {books && books.length > 1 && (
+            <VerticalBannerAd
+              campaignId={1}
+              bookId={books[1].id}
+              imageSrc={books[1].coverUrl}
+              title={books[1].title}
+              description={books[1].description?.substring(0, 80) + '...'}
+              source="home-sidebar"
+            />
+          )}
         </div>
       </div>
     </main>

@@ -25,6 +25,7 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
+import AdShowcasePage from "@/pages/ad-showcase-page";
 import { Redirect, useLocation } from "wouter";
 
 function Router() {
@@ -54,6 +55,7 @@ function Router() {
         <Route path="/search/authors" component={SearchAuthorsPage} />
         <Route path="/authors/:id" component={AuthorPage} />
         <Route path="/publishers/:id" component={PublisherPage} />
+        <Route path="/ad-showcase" component={AdShowcasePage} />
 
         {/* Protected routes */}
         <ProtectedRoute path="/settings" component={SettingsPage} />
