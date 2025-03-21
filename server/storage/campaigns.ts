@@ -15,6 +15,9 @@ import {
   keywordBids,
   KeywordBid,
   InsertKeywordBid,
+  adImpressions,
+  AdImpression,
+  InsertAdImpression,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
@@ -44,6 +47,18 @@ export interface ICampaignStorage {
   getKeywordBids(campaignId: number): Promise<KeywordBid[]>;
   updateBidMetrics(id: number, impressions: number, clicks: number, spend: string): Promise<KeywordBid>;
   adjustAutomaticBids(campaignId: number): Promise<void>;
+  
+  // Ad impressions and tracking methods
+  recordAdImpression(data: InsertAdImpression): Promise<AdImpression>;
+  recordAdClick(id: number): Promise<AdImpression>;
+  getAdImpressions(campaignId: number): Promise<AdImpression[]>;
+  getAdImpressionsByBook(bookId: number): Promise<AdImpression[]>; 
+  getAdMetrics(campaignId: number, days?: number): Promise<{ 
+    impressions: number, 
+    clicks: number, 
+    ctr: number,
+    dailyStats: Array<{ date: string, impressions: number, clicks: number, ctr: number }>
+  }>;
 }
 
 export class CampaignStorage implements ICampaignStorage {
@@ -362,5 +377,158 @@ export class CampaignStorage implements ICampaignStorage {
         currentBid: newBid.toString(),
       });
     }
+  }
+
+  // Ad impression tracking methods
+  async recordAdImpression(data: InsertAdImpression): Promise<AdImpression> {
+    const [impression] = await db
+      .insert(adImpressions)
+      .values(data)
+      .returning();
+    
+    // Update campaign metrics as well
+    await this.updateCampaignMetrics(data.campaignId, {
+      lastUpdated: new Date().toISOString(),
+      totalImpressions: sql`COALESCE((campaigns.metrics->>'totalImpressions')::integer, 0) + 1`
+    });
+    
+    return impression;
+  }
+
+  async recordAdClick(id: number): Promise<AdImpression> {
+    const [impression] = await db
+      .update(adImpressions)
+      .set({
+        clicked: true,
+        clickedAt: new Date(),
+      })
+      .where(eq(adImpressions.id, id))
+      .returning();
+    
+    // Update campaign metrics
+    await this.updateCampaignMetrics(impression.campaignId, {
+      lastUpdated: new Date().toISOString(),
+      totalClicks: sql`COALESCE((campaigns.metrics->>'totalClicks')::integer, 0) + 1`
+    });
+    
+    return impression;
+  }
+
+  async getAdImpressions(campaignId: number): Promise<AdImpression[]> {
+    return await db
+      .select()
+      .from(adImpressions)
+      .where(eq(adImpressions.campaignId, campaignId))
+      .orderBy(desc(adImpressions.timestamp));
+  }
+
+  async getAdImpressionsByBook(bookId: number): Promise<AdImpression[]> {
+    return await db
+      .select()
+      .from(adImpressions)
+      .where(eq(adImpressions.bookId, bookId))
+      .orderBy(desc(adImpressions.timestamp));
+  }
+
+  async getAdMetrics(campaignId: number, days: number = 30): Promise<{
+    impressions: number;
+    clicks: number;
+    ctr: number;
+    dailyStats: Array<{ date: string; impressions: number; clicks: number; ctr: number }>;
+  }> {
+    // Get overall metrics for the time period
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Get total impressions and clicks
+    const impressions = await db
+      .select({ count: sql`count(*)` })
+      .from(adImpressions)
+      .where(
+        and(
+          eq(adImpressions.campaignId, campaignId),
+          sql`${adImpressions.timestamp} >= ${startDate}`
+        )
+      );
+    
+    const clicks = await db
+      .select({ count: sql`count(*)` })
+      .from(adImpressions)
+      .where(
+        and(
+          eq(adImpressions.campaignId, campaignId),
+          eq(adImpressions.clicked, true),
+          sql`${adImpressions.timestamp} >= ${startDate}`
+        )
+      );
+
+    // Get daily stats
+    const dailyQueryResult = await db.execute(sql`
+      SELECT 
+        TO_CHAR(date_trunc('day', timestamp), 'YYYY-MM-DD') as date,
+        COUNT(*) as impressions,
+        SUM(CASE WHEN clicked = true THEN 1 ELSE 0 END) as clicks
+      FROM ad_impressions
+      WHERE campaign_id = ${campaignId}
+      AND timestamp >= ${startDate}
+      GROUP BY date_trunc('day', timestamp)
+      ORDER BY date_trunc('day', timestamp)
+    `);
+
+    const totalImpressions = Number(impressions[0]?.count || 0);
+    const totalClicks = Number(clicks[0]?.count || 0);
+    const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
+    // Format daily stats - convert query result to array
+    const dailyStats: Array<{ date: string; impressions: number; clicks: number; ctr: number }> = [];
+    
+    if (dailyQueryResult.rows) {
+      for (const row of dailyQueryResult.rows) {
+        const dailyImpressions = Number(row.impressions);
+        const dailyClicks = Number(row.clicks);
+        const dailyCtr = dailyImpressions > 0 ? (dailyClicks / dailyImpressions) * 100 : 0;
+        
+        dailyStats.push({
+          date: row.date,
+          impressions: dailyImpressions,
+          clicks: dailyClicks,
+          ctr: dailyCtr
+        });
+      }
+    }
+
+    // Fill in missing days with zeros
+    const allDays: Array<{ date: string; impressions: number; clicks: number; ctr: number }> = [];
+    const currentDate = new Date(startDate);
+    const endDate = new Date();
+    
+    // Create map of existing data for quick lookup
+    const dataByDate = dailyStats.reduce((acc: Record<string, any>, day) => {
+      acc[day.date] = day;
+      return acc;
+    }, {});
+    
+    // Fill in all days
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      if (dataByDate[dateStr]) {
+        allDays.push(dataByDate[dateStr]);
+      } else {
+        allDays.push({
+          date: dateStr,
+          impressions: 0,
+          clicks: 0,
+          ctr: 0
+        });
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return {
+      impressions: totalImpressions,
+      clicks: totalClicks,
+      ctr: ctr,
+      dailyStats: allDays
+    };
   }
 }

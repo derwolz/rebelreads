@@ -10,6 +10,7 @@ import accountRoutes from "./routes/account-routes";
 import proRoutes from "./routes/pro-routes";
 import homeRoutes from "./routes/home-routes";
 import searchRoutes from "./routes/search-routes";
+import adsRoutes from "./routes/ads-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -24,6 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/pro", proRoutes);
   app.use("/api", homeRoutes);
   app.use("/api/search", searchRoutes);
+  app.use("/api/ads", adsRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

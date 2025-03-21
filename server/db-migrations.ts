@@ -52,9 +52,45 @@ async function addReportStatusColumnToRatings() {
   }
 }
 
+async function createAdImpressionsTable() {
+  try {
+    // Check if table exists first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'ad_impressions'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Creating 'ad_impressions' table...");
+      await db.execute(sql`
+        CREATE TABLE ad_impressions (
+          id SERIAL PRIMARY KEY,
+          campaign_id INTEGER NOT NULL,
+          book_id INTEGER NOT NULL,
+          user_id INTEGER,
+          ad_type TEXT NOT NULL,
+          position TEXT,
+          timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+          clicked BOOLEAN NOT NULL DEFAULT FALSE,
+          clicked_at TIMESTAMP,
+          source TEXT NOT NULL
+        )
+      `);
+      console.log("Table 'ad_impressions' created successfully");
+    } else {
+      console.log("Table 'ad_impressions' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating 'ad_impressions' table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
   await addReportStatusColumnToRatings();
+  await createAdImpressionsTable();
   console.log("Migrations completed");
 }

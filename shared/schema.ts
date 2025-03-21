@@ -418,6 +418,28 @@ export type InsertKeywordBid = typeof keywordBids.$inferInsert;
 export type GiftedBook = typeof giftedBooks.$inferSelect;
 export type InsertGiftedBook = typeof giftedBooks.$inferInsert;
 
+// Ad Tracking Table
+export const adImpressions = pgTable("ad_impressions", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull(),
+  bookId: integer("book_id").notNull(),
+  userId: integer("user_id"), // Optional, as not all users might be logged in
+  adType: text("ad_type").notNull(), // "ad", "review_boost", "featured"
+  position: text("position"), // position on the page where the ad was shown
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  clicked: boolean("clicked").notNull().default(false),
+  clickedAt: timestamp("clicked_at"),
+  source: text("source").notNull(), // e.g., 'home', 'search', 'author-page'
+});
+
+export const insertAdImpressionSchema = createInsertSchema(adImpressions).omit({
+  id: true,
+  clickedAt: true,
+});
+
+export type AdImpression = typeof adImpressions.$inferSelect;
+export type InsertAdImpression = typeof adImpressions.$inferInsert;
+
 export function calculateWeightedRating(rating: Rating): number {
   return (
     rating.enjoyment * 0.3 +     // 30% weight for enjoyment

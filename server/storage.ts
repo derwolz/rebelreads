@@ -94,6 +94,13 @@ export const dbStorage = {
   claimGiftedBook: campaignStorage.claimGiftedBook.bind(campaignStorage),
   getAvailableGiftedBook:
     campaignStorage.getAvailableGiftedBook.bind(campaignStorage),
+  
+  // Ad impressions tracking
+  recordAdImpression: campaignStorage.recordAdImpression.bind(campaignStorage),
+  recordAdClick: campaignStorage.recordAdClick.bind(campaignStorage),
+  getAdImpressions: campaignStorage.getAdImpressions.bind(campaignStorage),
+  getAdImpressionsByBook: campaignStorage.getAdImpressionsByBook.bind(campaignStorage),
+  getAdMetrics: campaignStorage.getAdMetrics.bind(campaignStorage),
 
   // Publisher
   getPublishers: publisherStorage.getPublishers.bind(publisherStorage),
