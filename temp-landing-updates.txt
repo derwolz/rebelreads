@@ -1,0 +1,57 @@
+// Find and replace the fourth reader panel:
+{
+  title: "Step into the indie square",
+  description:
+    "Enter Sirened's marketplace. Find stories worth their weight, sent straight from the creators' doors.",
+  videoUrl: "/videos/reader-video-4.mp4", // Added video URL
+  image: {
+    src: "/images/author-support.svg",
+    alt: "Supporting favorite authors",
+  },
+  hasExploreMore: true,
+  exploreContent: `<h3>The Indie Square</h3>
+  <p>Discover books you'll love directly from independent authors. Sirened cuts out the middleman, allowing creators to connect with their audience directly.</p>
+  <h4>What to Expect</h4>
+  <ul>
+    <li>Unique stories</li>
+    <li>Direct author support</li>
+    <li>A welcoming community</li>
+    <li>High-quality writing</li>
+  </ul>
+  <p>Explore the Indie Square today.</p>`,
+},
+
+// Find and replace the fifth reader panel:
+{
+  title: "Support your storytellers",
+  description:
+    "Join Sirened — back indie authors directly, not the giants who bind them. Sign up and rewrite the ending",
+  videoUrl: "/videos/reader-video-5.mp4", // Added video URL
+  image: {
+    src: "/images/reading-journey.svg",
+    alt: "Reading journey visualization",
+  },
+  hasExploreMore: true,
+  exploreContent: `<h3>Support Your Storytellers</h3>
+  <p>By supporting independent authors, you're not just buying a book; you're investing in their creativity and helping them share their unique voices with the world.</p>
+  <h4>Why Support Indies?</h4>
+  <ul>
+    <li>Support independent artists</li>
+    <li>Discover unique stories</li>
+    <li>Connect with authors</li>
+    <li>Foster creativity</li>
+  </ul>
+  <p>Join us in supporting independent authors.</p>`,
+},
+
+// Also fix possible container positioning issue (from console errors)
+// Add this CSS fix to the scroll-container div:
+<div className="scroll-container h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory scroll-snap-align:center relative">
+
+// Ensure the VideoCardSection component's warning is addressed:
+// Modify the section ref in VideoCardSection:
+<section
+  ref={sectionRef}
+  className="snap-section min-h-screen flex items-center justify-center relative snap-start"
+  style={{ height: '100vh', position: 'relative' }}
+>
