@@ -11,11 +11,16 @@ import { BrandedNav } from "@/components/branded-nav";
 import { HowItWorksSidebar } from "@/components/how-it-works-sidebar";
 import { ChevronRight } from "lucide-react";
 import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
-
+import author_1 from "@/public/videos/author_1.mp4";
+import author_2 from "@/public/videos/author_2.mp4";
+import author_3 from "@/public/videos/author_3.mp4";
+import author_4 from "@/public/videos/author_4.mp4";
+import author_5 from "@/public/videos/author_1.mp4";
+import reader_1 from "@/public/videos/author_1.mp4";
 interface PanelData {
   title: string;
   description: string;
-  videoUrl?: string; // For the video that progresses with scroll
+  videoUrl?: string | any; // For the video that progresses with scroll
   image?: {
     src: string;
     alt: string;
@@ -223,7 +228,7 @@ const LandingPage = () => {
           title: "You are the protagonist",
           description:
             "Every great author starts with a spark — yours ignites here.",
-          videoUrl: "/videos/author-video-1.mp4", // Placeholder - would be replaced with actual videos
+          videoUrl: author_1, // Placeholder - would be replaced with actual videos
           image: {
             src: "/images/author-journey.svg",
             alt: "Author writing at desk",
@@ -244,7 +249,7 @@ const LandingPage = () => {
           title: "Every hero finds troubled waters",
           description:
             "Industry giants drown your business in fees, drowning your dreams. But, A new shore crests the horizon.",
-          videoUrl: "/videos/author-video-2.mp4", // Placeholder
+          videoUrl: author_2, // Placeholder
           image: {
             src: "/images/manuscript.svg",
             alt: "Manuscript with editing tools",
@@ -260,6 +265,7 @@ const LandingPage = () => {
           title: "A song pierces the chaos",
           description:
             "Sirened calls you to a marketplace that’s yours—no fees, no paid rankings, just readers ready for your voice.",
+          videoUrl: author_3, // Placeholder
           image: {
             src: "/images/community.svg",
             alt: "Author connecting with readers",
@@ -275,6 +281,7 @@ const LandingPage = () => {
           title: "Your first step into the indie town square",
           description:
             "Step into Sirened’s indie square. Readers reach your books and you keep 100% of every sale.",
+          videoUrl: author_4, // Placeholder
           image: {
             src: "/images/analytics.svg",
             alt: "Author analytics dashboard",
@@ -295,6 +302,7 @@ const LandingPage = () => {
           title: "Reclaim your Literary Future",
           description:
             "Team up with Siren, our analytics tools and organic engine lift your books from obscurity. Sign up and shape the future of indie publishing.",
+          videoUrl: author_5, // Placeholder
           image: {
             src: "/images/future.svg",
             alt: "Future of storytelling",
@@ -432,7 +440,7 @@ const LandingPage = () => {
       { threshold: 0.5 }
     );
 
-    document.querySelectorAll(".snap-section").forEach((section, index) => {
+    document.querySelectorAll("section").forEach((section, index) => {
       section.setAttribute("data-section-index", index.toString());
       observer.observe(section);
     });
@@ -456,8 +464,8 @@ const LandingPage = () => {
 
       <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
 
-      <div className="scroll-container h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory scroll-snap-align:center relative">
-        <section className="snap-section min-h-screen flex items-center justify-center relative snap-start ">
+      <div className="scroll-container h-screen overflow-y-auto scroll-smooth relative">
+        <section className="min-h-screen flex items-center justify-center relative">
           <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
             <h1 className="text-5xl md:text-7xl font-bold">
               Where Stories Come Alive
@@ -620,7 +628,7 @@ const VideoCardSection = ({ panel, index, isLastPanel, onExploreMore }: VideoCar
   return (
     <section
       ref={sectionRef}
-      className="snap-section min-h-screen flex items-center justify-center relative snap-start"
+      className="min-h-screen flex items-center justify-center relative"
       style={{ height: '100vh', position: 'relative' }}
     >
       <motion.div
