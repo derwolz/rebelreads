@@ -104,8 +104,9 @@ const HexagonShape = ({ className }: { className?: string }) => (
 );
 
 // Video background component
-const VideoBackground = ({ isPlaying }: { isPlaying: boolean }) => {
+const VideoBackground = ({ isPlaying, posterImage }: { isPlaying: boolean; posterImage?: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -119,21 +120,30 @@ const VideoBackground = ({ isPlaying }: { isPlaying: boolean }) => {
     }
   }, [isPlaying]);
 
+  // For demo purposes, we'll use a placeholder background color transition
+  // In production, you would replace this with your actual video
   return (
-    <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+    <div className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
+      {/* For demo: using a colored background transition until actual video is added */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
+      
+      {/* Actual video element - uncomment when you have a video file */}
+      {/* 
       <video 
         ref={videoRef}
         className="w-full h-full object-cover"
         muted
         loop
         playsInline
-        poster="/images/book-discovery.svg"
+        poster={posterImage || "/images/book-discovery.svg"}
+        onLoadedData={() => setIsVideoLoaded(true)}
       >
-        {/* The video will be loaded dynamically */}
         <source src="/videos/landing-background.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+      */}
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     </div>
   );
 };
@@ -149,31 +159,50 @@ const ExpandingCard = ({
   onExpand: () => void
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [visible, setVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isActive && !expanded) {
-      // Animate card entering from side
-      const timer = setTimeout(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (isActive && !visible) {
+      // First make card visible (slide in from right)
+      setVisible(true);
+      // Then expand after delay
+      timer = setTimeout(() => {
         setExpanded(true);
         onExpand();
       }, 800); // Time before card expands
-      return () => clearTimeout(timer);
     }
     
     if (!isActive) {
       setExpanded(false);
+      // Slight delay before removing from view
+      timer = setTimeout(() => {
+        setVisible(false);
+      }, 300);
     }
-  }, [isActive, expanded, onExpand]);
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isActive, expanded, visible, onExpand]);
 
   return (
     <div 
       ref={cardRef}
       className={`
-        relative overflow-hidden transition-all duration-700 ease-in-out
-        ${isActive ? 'opacity-100' : 'opacity-0 translate-x-full'}
-        ${expanded ? 'w-full h-full' : 'w-[80%] h-[80%] rounded-xl m-8'}
+        relative overflow-hidden
+        transition-all duration-700 ease-in-out
+        ${visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${expanded ? 'scale-100 w-full h-full rounded-none' : 'scale-95 w-[85%] h-[85%] rounded-xl shadow-2xl'}
       `}
+      style={{
+        transform: `
+          translateX(${visible ? '0' : '100%'}) 
+          scale(${expanded ? '1' : '0.95'})
+        `,
+      }}
     >
       {children}
     </div>
@@ -488,6 +517,21 @@ const LandingPage = () => {
     };
   };
 
+  // Reset video playback state when active panel changes
+  useEffect(() => {
+    // When the active panel changes, reset the video playing state
+    setIsVideoPlaying(false);
+    
+    // Then after a short delay, start playing the video for the new panel
+    const timer = setTimeout(() => {
+      if (activePanel > 0) { // Don't play video on the intro panel
+        setIsVideoPlaying(true);
+      }
+    }, 1000); // Wait for the card to fully expand
+    
+    return () => clearTimeout(timer);
+  }, [activePanel]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -593,35 +637,43 @@ const LandingPage = () => {
               isActive={activePanel === index}
               onExpand={() => setIsVideoPlaying(true)}
             >
-              <div className="w-full h-full relative">
-                {/* Content container with gradient overlay */}
+              <div className="w-full h-full relative overflow-hidden">
+                {/* Content container with poster image */}
                 <div className="absolute inset-0 overflow-hidden rounded-xl">
                   {panel.image && !isVideoPlaying && (
                     <img
                       src={panel.image.src}
                       alt={panel.image.alt}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-500"
+                      style={{ opacity: isVideoPlaying ? 0 : 1 }}
                     />
                   )}
                 </div>
                 
-                {/* Text content with gradient overlay */}
-                <div className="absolute inset-x-0 bottom-0 p-8 z-10 bg-gradient-to-t from-black to-transparent">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-4xl md:text-6xl font-bold text-white">{panel.title}</h2>
-                    {panel.hasExploreMore && (
-                      <button
-                        onClick={() => handleSidebarOpen(panel.title)}
-                        className="p-2 hover:bg-accent/30 rounded-full transition-colors"
-                        aria-label="Explore more"
-                      >
-                        <ChevronRight className="h-6 w-6 text-white" />
-                      </button>
-                    )}
+                {/* Text content with enhanced gradient overlay */}
+                <div 
+                  className="absolute inset-x-0 bottom-0 p-8 z-10 gradient-overlay"
+                  style={{
+                    height: '70%'
+                  }}
+                >
+                  <div className="absolute inset-0 flex flex-col justify-end p-8">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white">{panel.title}</h2>
+                      {panel.hasExploreMore && (
+                        <button
+                          onClick={() => handleSidebarOpen(panel.title)}
+                          className="p-2 hover:bg-accent/30 rounded-full transition-colors"
+                          aria-label="Explore more"
+                        >
+                          <ChevronRight className="h-6 w-6 text-white" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-lg md:text-xl text-gray-200 mt-6 max-w-3xl">
+                      {panel.description}
+                    </p>
                   </div>
-                  <p className="text-xl text-gray-200 mt-6">
-                    {panel.description}
-                  </p>
                 </div>
               </div>
             </ExpandingCard>
