@@ -189,22 +189,23 @@ const ExpandingCard = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [slideIn, setSlideIn] = useState(false);
+  const [slidePosition, setSlidePosition] = useState<'right' | 'center' | 'left'>('right');
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let timers: NodeJS.Timeout[] = [];
     
     if (isActive && !visible) {
-      // Sequence of animations:
-      // 1. Start slide in from the right
+      // Animation sequence for entering:
+      // 1. Make card visible (starting from right side)
       setVisible(true);
+      setSlidePosition('right');
       
-      // 2. Complete the slide-in before starting expansion 
-      const slideTimer = setTimeout(() => {
-        setSlideIn(true);
+      // 2. Slide to center
+      const slideInTimer = setTimeout(() => {
+        setSlidePosition('center');
       }, 100);
-      timers.push(slideTimer);
+      timers.push(slideInTimer);
       
       // 3. After slide completes, expand the card
       const expandTimer = setTimeout(() => {
@@ -219,25 +220,46 @@ const ExpandingCard = ({
       timers.push(contentTimer);
     }
     
-    if (!isActive) {
-      // Reverse sequence for leaving
+    if (!isActive && visible) {
+      // Animation sequence for leaving:
+      // 1. First shrink back to card size
       setExpanded(false);
       
-      const slideOutTimer = setTimeout(() => {
-        setSlideIn(false);
+      // 2. Then slide to the left (off screen)
+      const slideLeftTimer = setTimeout(() => {
+        setSlidePosition('left');
       }, 300);
-      timers.push(slideOutTimer);
+      timers.push(slideLeftTimer);
       
+      // 3. Finally hide the card
       const hideTimer = setTimeout(() => {
         setVisible(false);
-      }, 600);
+        // Reset position for next time
+        setSlidePosition('right');
+      }, 800);
       timers.push(hideTimer);
     }
     
     return () => {
       timers.forEach(timer => clearTimeout(timer));
     };
-  }, [isActive, onExpand]);
+  }, [isActive, visible, onExpand]);
+
+  // Calculate transform value based on slide position
+  const getTransform = () => {
+    if (!visible) return 'translateX(100%) scale(0.97)';
+    
+    switch (slidePosition) {
+      case 'right':
+        return 'translateX(5%) scale(0.97)';
+      case 'center':
+        return `translateX(0) scale(${expanded ? '1' : '0.97'})`;
+      case 'left':
+        return 'translateX(-105%) scale(0.97)';
+      default:
+        return 'translateX(0) scale(0.97)';
+    }
+  };
 
   return (
     <div 
@@ -252,10 +274,7 @@ const ExpandingCard = ({
         height: expanded ? '100%' : '85%',
         borderRadius: expanded ? '0' : '0.75rem',
         boxShadow: expanded ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        transform: `
-          translateX(${!visible ? '100%' : slideIn ? '0' : '5%'}) 
-          scale(${expanded ? '1' : '0.97'})
-        `,
+        transform: getTransform(),
         transition: 'transform 800ms cubic-bezier(0.17, 0.67, 0.3, 0.96), width 700ms ease-out, height 700ms ease-out, border-radius 700ms ease-out, box-shadow 700ms ease-out, opacity 500ms ease-out',
       }}
     >
@@ -574,17 +593,34 @@ const LandingPage = () => {
 
   // Reset video playback state when active panel changes
   useEffect(() => {
-    // When the active panel changes, reset the video playing state
-    setIsVideoPlaying(false);
-    
-    // Then after a short delay, start playing the video for the new panel
-    const timer = setTimeout(() => {
-      if (activePanel > 0) { // Don't play video on the intro panel
+    // When the active panel changes
+    if (activePanel > 0) { // Only play on content sections, not intro
+      // After a short delay for the card to expand, start the video
+      const startTimer = setTimeout(() => {
         setIsVideoPlaying(true);
-      }
-    }, 1000); // Wait for the card to fully expand
+      }, 1200); // Wait for the card to fully expand
+      
+      return () => clearTimeout(startTimer);
+    } else {
+      // Stop video immediately when leaving a section
+      setIsVideoPlaying(false);
+    }
+  }, [activePanel]);
+  
+  // Watch for panel changes to handle exit animations properly
+  const prevPanelRef = useRef(activePanel);
+  useEffect(() => {
+    // If moving away from a section (not the intro), stop video with a slight delay
+    // This ensures the video fades out as the card starts to shrink
+    if (prevPanelRef.current !== 0 && prevPanelRef.current !== activePanel) {
+      const stopTimer = setTimeout(() => {
+        setIsVideoPlaying(false);
+      }, 100);
+      
+      return () => clearTimeout(stopTimer);
+    }
     
-    return () => clearTimeout(timer);
+    prevPanelRef.current = activePanel;
   }, [activePanel]);
 
   useEffect(() => {
