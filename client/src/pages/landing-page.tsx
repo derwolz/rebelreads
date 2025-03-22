@@ -107,8 +107,10 @@ const HexagonShape = ({ className }: { className?: string }) => (
 const VideoBackground = ({ isPlaying, posterImage }: { isPlaying: boolean; posterImage?: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
+    // Control video playback
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.play().catch(err => {
@@ -118,14 +120,41 @@ const VideoBackground = ({ isPlaying, posterImage }: { isPlaying: boolean; poste
         videoRef.current.pause();
       }
     }
+    
+    // Delay fade-in for smoother transition
+    if (isPlaying) {
+      const timer = setTimeout(() => {
+        setFadeIn(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setFadeIn(false);
+    }
   }, [isPlaying]);
 
-  // For demo purposes, we'll use a placeholder background color transition
-  // In production, you would replace this with your actual video
   return (
-    <div className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
-      {/* For demo: using a colored background transition until actual video is added */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
+    <div 
+      className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-all duration-1000 ease-in-out
+        ${isPlaying ? 'opacity-100' : 'opacity-0'}
+        ${fadeIn ? 'scale-100' : 'scale-110'}`}
+    >
+      {/* For demo: Gradient background that animates when "video" would play */}
+      <div 
+        className={`absolute inset-0 transition-opacity duration-1000 
+          ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
+        
+        {/* Create a simulated video animation effect */}
+        <div 
+          className="absolute inset-0 bg-black/40 overflow-hidden"
+          style={{
+            backgroundImage: 'radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)',
+            backgroundSize: '200% 200%',
+            animation: isPlaying ? 'gradientSlide 15s ease infinite' : 'none'
+          }}
+        ></div>
+      </div>
       
       {/* Actual video element - uncomment when you have a video file */}
       {/* 
@@ -160,48 +189,74 @@ const ExpandingCard = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [slideIn, setSlideIn] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timers: NodeJS.Timeout[] = [];
     
     if (isActive && !visible) {
-      // First make card visible (slide in from right)
+      // Sequence of animations:
+      // 1. Start slide in from the right
       setVisible(true);
-      // Then expand after delay
-      timer = setTimeout(() => {
+      
+      // 2. Complete the slide-in before starting expansion 
+      const slideTimer = setTimeout(() => {
+        setSlideIn(true);
+      }, 100);
+      timers.push(slideTimer);
+      
+      // 3. After slide completes, expand the card
+      const expandTimer = setTimeout(() => {
         setExpanded(true);
+      }, 800);
+      timers.push(expandTimer);
+      
+      // 4. After expansion, trigger the video/content transition
+      const contentTimer = setTimeout(() => {
         onExpand();
-      }, 800); // Time before card expands
+      }, 1200);
+      timers.push(contentTimer);
     }
     
     if (!isActive) {
+      // Reverse sequence for leaving
       setExpanded(false);
-      // Slight delay before removing from view
-      timer = setTimeout(() => {
-        setVisible(false);
+      
+      const slideOutTimer = setTimeout(() => {
+        setSlideIn(false);
       }, 300);
+      timers.push(slideOutTimer);
+      
+      const hideTimer = setTimeout(() => {
+        setVisible(false);
+      }, 600);
+      timers.push(hideTimer);
     }
     
     return () => {
-      if (timer) clearTimeout(timer);
+      timers.forEach(timer => clearTimeout(timer));
     };
-  }, [isActive, expanded, visible, onExpand]);
+  }, [isActive, onExpand]);
 
   return (
     <div 
       ref={cardRef}
       className={`
         relative overflow-hidden
-        transition-all duration-700 ease-in-out
-        ${visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-        ${expanded ? 'scale-100 w-full h-full rounded-none' : 'scale-95 w-[85%] h-[85%] rounded-xl shadow-2xl'}
+        transition-all duration-700 ease-out
+        ${visible ? 'opacity-100' : 'opacity-0'}
       `}
       style={{
+        width: expanded ? '100%' : '85%',
+        height: expanded ? '100%' : '85%',
+        borderRadius: expanded ? '0' : '0.75rem',
+        boxShadow: expanded ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         transform: `
-          translateX(${visible ? '0' : '100%'}) 
-          scale(${expanded ? '1' : '0.95'})
+          translateX(${!visible ? '100%' : slideIn ? '0' : '5%'}) 
+          scale(${expanded ? '1' : '0.97'})
         `,
+        transition: 'transform 800ms cubic-bezier(0.17, 0.67, 0.3, 0.96), width 700ms ease-out, height 700ms ease-out, border-radius 700ms ease-out, box-shadow 700ms ease-out, opacity 500ms ease-out',
       }}
     >
       {children}
