@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useState } from "react";
-import Logo from "@/public/images/logo.svg";
+
 export function BrandedNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -10,7 +10,6 @@ export function BrandedNav() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <img src={Logo} alt="Logo" className="w-12 h-12" />
               <span className="text-2xl font-bold text-primary">Sirened</span>
             </Link>
           </div>

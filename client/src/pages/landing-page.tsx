@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
@@ -10,17 +10,10 @@ import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
 import { HowItWorksSidebar } from "@/components/how-it-works-sidebar";
 import { ChevronRight } from "lucide-react";
-import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
-import author_1 from "@/public/videos/author_1.mp4";
-import author_2 from "@/public/videos/author_2.mp4";
-import author_3 from "@/public/videos/author_3.mp4";
-import author_4 from "@/public/videos/author_4.mp4";
-import author_5 from "@/public/videos/author_1.mp4";
-import reader_1 from "@/public/videos/author_1.mp4";
+
 interface PanelData {
   title: string;
   description: string;
-  videoUrl?: string | any; // For the video that progresses with scroll
   image?: {
     src: string;
     alt: string;
@@ -228,7 +221,6 @@ const LandingPage = () => {
           title: "You are the protagonist",
           description:
             "Every great author starts with a spark — yours ignites here.",
-          videoUrl: author_1, // Placeholder - would be replaced with actual videos
           image: {
             src: "/images/author-journey.svg",
             alt: "Author writing at desk",
@@ -249,7 +241,6 @@ const LandingPage = () => {
           title: "Every hero finds troubled waters",
           description:
             "Industry giants drown your business in fees, drowning your dreams. But, A new shore crests the horizon.",
-          videoUrl: author_2, // Placeholder
           image: {
             src: "/images/manuscript.svg",
             alt: "Manuscript with editing tools",
@@ -265,7 +256,6 @@ const LandingPage = () => {
           title: "A song pierces the chaos",
           description:
             "Sirened calls you to a marketplace that’s yours—no fees, no paid rankings, just readers ready for your voice.",
-          videoUrl: author_3, // Placeholder
           image: {
             src: "/images/community.svg",
             alt: "Author connecting with readers",
@@ -281,7 +271,6 @@ const LandingPage = () => {
           title: "Your first step into the indie town square",
           description:
             "Step into Sirened’s indie square. Readers reach your books and you keep 100% of every sale.",
-          videoUrl: author_4, // Placeholder
           image: {
             src: "/images/analytics.svg",
             alt: "Author analytics dashboard",
@@ -302,7 +291,6 @@ const LandingPage = () => {
           title: "Reclaim your Literary Future",
           description:
             "Team up with Siren, our analytics tools and organic engine lift your books from obscurity. Sign up and shape the future of indie publishing.",
-          videoUrl: author_5, // Placeholder
           image: {
             src: "/images/future.svg",
             alt: "Future of storytelling",
@@ -325,7 +313,6 @@ const LandingPage = () => {
           title: "You are the Hero",
           description:
             "Step into a world of endless possibilities. Your next favorite book is waiting to be discovered.",
-          videoUrl: "/videos/reader-video-1.mp4", // Placeholder
           image: {
             src: "/images/book-discovery.svg",
             alt: "Book discovery journey",
@@ -346,7 +333,6 @@ const LandingPage = () => {
           title: "Spellbound by a False Tune",
           description:
             "You crave adventure, but industry giants only offer a bargain bin. The storytellers you love, suffer in obscurity.",
-          videoUrl: "/videos/reader-video-2.mp4", // Placeholder
           image: {
             src: "/images/book-connection.svg",
             alt: "Reader connecting with books",
@@ -362,7 +348,6 @@ const LandingPage = () => {
           title: "A Song Breaks the Charm",
           description:
             "Discover a realm where your storytellers thrive, a place where quality trumps quantity. Sirened cuts through the chaos",
-          videoUrl: "/videos/reader-video-3.mp4", // Placeholder
           image: {
             src: "/images/reader-community.svg",
             alt: "Reader community discussion",
@@ -440,7 +425,7 @@ const LandingPage = () => {
       { threshold: 0.5 }
     );
 
-    document.querySelectorAll("section").forEach((section, index) => {
+    document.querySelectorAll(".snap-section").forEach((section, index) => {
       section.setAttribute("data-section-index", index.toString());
       observer.observe(section);
     });
@@ -464,8 +449,8 @@ const LandingPage = () => {
 
       <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
 
-      <div className="scroll-container h-screen overflow-y-auto scroll-smooth relative">
-        <section className="min-h-screen flex items-center justify-center relative">
+      <div className="scroll-container h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory scroll-snap-align:center">
+        <section className="snap-section min-h-screen flex items-center justify-center relative snap-start ">
           <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
             <h1 className="text-5xl md:text-7xl font-bold">
               Where Stories Come Alive
@@ -501,17 +486,91 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {panels.map((panel, index) => {
-          return (
-            <VideoCardSection 
-              key={index}
-              panel={panel}
-              index={index}
-              isLastPanel={index === panels.length - 1}
-              onExploreMore={() => handleSidebarOpen(panel.title)}
-            />
-          );
-        })}
+        {panels.map((panel, index) => (
+          <section
+            key={index}
+            ref={(el) => {
+              if (!el) return;
+              const observer = new IntersectionObserver(
+                ([entry]) => {
+                  if (entry.isIntersecting) {
+                    el.classList.remove("section-hidden");
+                    el.classList.add("section-visible");
+                    const content = el.querySelector(".section-content");
+                    if (content) {
+                      content.classList.remove("card-animate-out");
+                      content.classList.add("card-animate");
+                      content.classList.add("card-animate-in");
+                    }
+                  } else {
+                    const content = el.querySelector(".section-content");
+                    if (content) {
+                      content.classList.remove("card-animate-in");
+                      content.classList.add("card-animate-out");
+                    }
+                    setTimeout(() => {
+                      if (!entry.isIntersecting) {
+                        el.classList.remove("section-visible");
+                        el.classList.add("section-hidden");
+                      }
+                    }, 500);
+                  }
+                },
+                { threshold: 0.5 },
+              );
+              observer.observe(el);
+            }}
+            className="snap-section overflow-none min-h-screen flex items-center justify-between relative snap-start section-hidden"
+            style={{
+              transformStyle: "preserve-3d",
+              willChange: "transform",
+              height: "100vh",
+            }}
+          >
+            <div
+              className="container mx-auto px-4 py-16 relative section-content"
+              style={{
+                transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
+
+                transformOrigin: "85% 15%",
+                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            >
+              <div className="max-w-3xl min-h-full mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
+                {panel.image && (
+                  <div className="mb-8 relative w-full aspect-[3/2] rounded-lg overflow-hidden">
+                    <img
+                      src={panel.image.src}
+                      alt={panel.image.alt}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
+                  {panel.hasExploreMore && (
+                    <button
+                      onClick={() => handleSidebarOpen(panel.title)}
+                      className="p-2 hover:bg-accent rounded-full transition-colors"
+                      aria-label="Explore more"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xl text-muted-foreground mt-6">
+                  {panel.description}
+                </p>
+              </div>
+            </div>
+
+            {index < panels.length - 1 && (
+              <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
+                <ChevronDown className="w-8 h-8 text-muted-foreground" />
+              </div>
+            )}
+          </section>
+        ))}
       </div>
 
       {selectedPanel && (
@@ -521,205 +580,10 @@ const LandingPage = () => {
           title={selectedPanel}
           content={panels.find((p) => p.title === selectedPanel)
             ?.exploreContent}
+          isEditable={true}
         />
       )}
     </div>
-  );
-};
-
-interface VideoCardSectionProps {
-  panel: PanelData;
-  index: number;
-  isLastPanel: boolean;
-  onExploreMore: () => void;
-}
-
-const VideoCardSection = ({ panel, index, isLastPanel, onExploreMore }: VideoCardSectionProps) => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [cardState, setCardState] = useState<'entering' | 'center' | 'fullsize' | 'exiting' | 'hidden'>('hidden');
-  
-  // For scrolling video playback
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"]
-  });
-
-  // For controlling card animations
-  useEffect(() => {
-    const sequence = async () => {
-      // Wait for section to be visible
-      await new Promise(resolve => {
-        const observer = new IntersectionObserver((entries) => {
-          if (entries[0].isIntersecting) {
-            observer.disconnect();
-            resolve(null);
-          }
-        }, { threshold: 0.5 });
-        
-        if (sectionRef.current) {
-          observer.observe(sectionRef.current);
-        }
-      });
-
-      // Start animation sequence
-      setCardState('entering');
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setCardState('center');
-      await new Promise(resolve => setTimeout(resolve, 400));
-      setCardState('fullsize');
-    };
-
-    sequence();
-  }, []);
-
-  // Video progress based on scroll
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (videoRef.current && latest >= 0 && latest <= 1) {
-      // Calculate the video progress based on scroll position
-      const video = videoRef.current;
-      const duration = video.duration || 10; // Fallback duration if not loaded
-      const targetTime = duration * latest;
-      
-      if (!isNaN(duration) && Math.abs(video.currentTime - targetTime) > 0.1) {
-        video.currentTime = targetTime;
-      }
-    }
-  });
-
-  // Handle card exit animation
-  useEffect(() => {
-    const exitObserver = new IntersectionObserver((entries) => {
-      if (!entries[0].isIntersecting && cardState === 'fullsize') {
-        setCardState('exiting');
-        setTimeout(() => setCardState('hidden'), 800);
-      }
-    }, { threshold: 0.2 });
-    
-    if (sectionRef.current) {
-      exitObserver.observe(sectionRef.current);
-    }
-    
-    return () => exitObserver.disconnect();
-  }, [cardState]);
-
-  // Card animation variants
-  const cardVariants = {
-    hidden: { scale: 0, x: '100%', opacity: 0 },
-    entering: { scale: 0.3, x: '40%', opacity: 1, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } },
-    center: { scale: 0.5, x: '0%', opacity: 1, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-    fullsize: { scale: 1, x: '0%', opacity: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
-    exiting: { scale: 0.3, x: '-40%', opacity: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
-  };
-
-  // Content animation variants
-  const contentVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { delay: 0.4, duration: 0.6 } }
-  };
-
-  // Details panel animation variants
-  const detailsVariants = {
-    closed: { height: 0, opacity: 0 },
-    open: { height: 'auto', opacity: 1, transition: { duration: 0.4 } }
-  };
-
-  return (
-    <section
-      ref={sectionRef}
-      className="min-h-screen flex items-center justify-center relative"
-      style={{ height: '100vh', position: 'relative' }}
-    >
-      <motion.div
-        className="relative z-10 max-w-3xl w-full aspect-video rounded-2xl overflow-hidden shadow-2xl"
-        variants={cardVariants}
-        initial="hidden"
-        animate={cardState}
-      >
-        {/* Video Element */}
-        {panel.videoUrl ? (
-          <video 
-            ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover"
-            src={panel.videoUrl}
-            muted
-            playsInline
-          />
-        ) : (
-          // Fallback to image if video not available
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-primary/20 to-accent/20">
-            {panel.image && (
-              <img
-                src={panel.image.src}
-                alt={panel.image.alt}
-                className="w-full h-full object-cover"
-              />
-            )}
-          </div>
-        )}
-
-        {/* Content Overlay */}
-        {cardState === 'fullsize' && (
-          <motion.div 
-            className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-8 flex flex-col justify-end"
-            variants={contentVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl md:text-4xl font-bold text-white">{panel.title}</h2>
-              {panel.hasExploreMore && (
-                <button
-                  onClick={onExploreMore}
-                  className="p-2 bg-black/30 hover:bg-black/50 rounded-full transition-colors text-white"
-                  aria-label="Explore more"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </button>
-              )}
-            </div>
-            <p className="text-md md:text-xl text-white/80 mt-4">
-              {panel.description}
-            </p>
-
-            {/* Expandable Details Section */}
-            <motion.div 
-              className="mt-4 overflow-hidden"
-              variants={detailsVariants}
-              initial="closed"
-              animate={detailsOpen ? "open" : "closed"}
-            >
-              <div className="pt-4">
-                <p className="text-white/90">
-                  {panel.exploreContent ? (
-                    <span 
-                      dangerouslySetInnerHTML={{ 
-                        __html: panel.exploreContent.split('</h3>')[1]?.split('</p>')[0] + '</p>' || '' 
-                      }} 
-                    />
-                  ) : 'Learn more about our platform and how we can help you succeed.'}
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Details Toggle Button */}
-            <button 
-              onClick={() => setDetailsOpen(!detailsOpen)}
-              className="self-center mt-4 p-2 bg-black/30 hover:bg-black/50 rounded-full transition-colors"
-            >
-              <ChevronDown className={`h-6 w-6 text-white transition-transform ${detailsOpen ? 'rotate-180' : ''}`} />
-            </button>
-          </motion.div>
-        )}
-      </motion.div>
-
-      {!isLastPanel && cardState === 'fullsize' && (
-        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <ChevronDown className="w-8 h-8 text-white" />
-        </div>
-      )}
-    </section>
   );
 };
 

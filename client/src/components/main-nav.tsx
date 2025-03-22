@@ -25,7 +25,7 @@ import { Book } from "@shared/schema";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthModal } from "@/hooks/use-auth-modal";
-import Logo from "@/public/images/logo.svg";
+
 export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const { user, logoutMutation } = useAuth();
   const { setIsOpen } = useAuthModal();
@@ -34,15 +34,11 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: searchResults } = useQuery<{
-    books: Book[];
-    metadata: { total: number; query: string };
-  }>({
+  const { data: searchResults } = useQuery<{ books: Book[], metadata: { total: number, query: string } }>({
     queryKey: ["/api/search", debouncedSearch],
     queryFn: () =>
-      fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`).then(
-        (response) => response.json(),
-      ),
+      fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`)
+        .then((response) => response.json()),
     enabled: debouncedSearch.length > 1,
   });
 
@@ -64,7 +60,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
-  console.log(searchResults, "searchResults");
+console.log(searchResults, "searchResults");
   const renderSearchResults = () => {
     if (!searchResults?.books) return null;
 
@@ -110,7 +106,6 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
           <Link href="/">
-            <img src={Logo} alt="Logo" className="w-12 h-12" />
             <h1 className="text-2xl font-bold text-primary">Sirened</h1>
           </Link>
 
@@ -157,19 +152,18 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                   </span>
                 </Link>
               </div>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  logoutMutation.mutate(undefined, {
-                    onSuccess: () => navigate("/"),
-                  });
-                }}
-              >
+              <Button variant="ghost" onClick={() => {
+                logoutMutation.mutate(undefined, {
+                  onSuccess: () => navigate("/")
+                });
+              }}>
                 Logout
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsOpen(true)}>Login</Button>
+            <Button onClick={() => setIsOpen(true)}>
+              Login
+            </Button>
           )}
         </div>
 
@@ -235,7 +229,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                         className="w-full justify-start"
                         onClick={() => {
                           logoutMutation.mutate(undefined, {
-                            onSuccess: () => navigate("/"),
+                            onSuccess: () => navigate("/")
                           });
                         }}
                       >
@@ -244,7 +238,10 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                     </div>
                   </div>
                 ) : (
-                  <Button className="w-full" onClick={() => setIsOpen(true)}>
+                  <Button
+                    className="w-full"
+                    onClick={() => setIsOpen(true)}
+                  >
                     Login
                   </Button>
                 )}
