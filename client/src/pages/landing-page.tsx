@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/hooks/use-theme";
@@ -103,6 +103,83 @@ const HexagonShape = ({ className }: { className?: string }) => (
   </div>
 );
 
+// Video background component
+const VideoBackground = ({ isPlaying }: { isPlaying: boolean }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch(err => {
+          console.error("Error playing video:", err);
+        });
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  return (
+    <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+      <video 
+        ref={videoRef}
+        className="w-full h-full object-cover"
+        muted
+        loop
+        playsInline
+        poster="/images/book-discovery.svg"
+      >
+        {/* The video will be loaded dynamically */}
+        <source src="/videos/landing-background.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+    </div>
+  );
+};
+
+// Card component that scrolls from side and expands
+const ExpandingCard = ({ 
+  children, 
+  isActive, 
+  onExpand 
+}: { 
+  children: React.ReactNode, 
+  isActive: boolean,
+  onExpand: () => void
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isActive && !expanded) {
+      // Animate card entering from side
+      const timer = setTimeout(() => {
+        setExpanded(true);
+        onExpand();
+      }, 800); // Time before card expands
+      return () => clearTimeout(timer);
+    }
+    
+    if (!isActive) {
+      setExpanded(false);
+    }
+  }, [isActive, expanded, onExpand]);
+
+  return (
+    <div 
+      ref={cardRef}
+      className={`
+        relative overflow-hidden transition-all duration-700 ease-in-out
+        ${isActive ? 'opacity-100' : 'opacity-0 translate-x-full'}
+        ${expanded ? 'w-full h-full' : 'w-[80%] h-[80%] rounded-xl m-8'}
+      `}
+    >
+      {children}
+    </div>
+  );
+};
+
 const LandingPage = () => {
   const [isAuthor, setIsAuthor] = useState(false);
   const [email, setEmail] = useState("");
@@ -112,6 +189,7 @@ const LandingPage = () => {
   const [, setLocation] = useLocation();
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   useEffect(() => {
     fetch("/api/landing/session", {
@@ -494,79 +572,63 @@ const LandingPage = () => {
               const observer = new IntersectionObserver(
                 ([entry]) => {
                   if (entry.isIntersecting) {
-                    el.classList.remove("section-hidden");
-                    el.classList.add("section-visible");
-                    const content = el.querySelector(".section-content");
-                    if (content) {
-                      content.classList.remove("card-animate-out");
-                      content.classList.add("card-animate");
-                      content.classList.add("card-animate-in");
-                    }
-                  } else {
-                    const content = el.querySelector(".section-content");
-                    if (content) {
-                      content.classList.remove("card-animate-in");
-                      content.classList.add("card-animate-out");
-                    }
-                    setTimeout(() => {
-                      if (!entry.isIntersecting) {
-                        el.classList.remove("section-visible");
-                        el.classList.add("section-hidden");
-                      }
-                    }, 500);
+                    setActivePanel(index);
                   }
                 },
-                { threshold: 0.5 },
+                { threshold: 0.6 },
               );
               observer.observe(el);
             }}
-            className="snap-section overflow-none min-h-screen flex items-center justify-between relative snap-start section-hidden"
+            className="snap-section min-h-screen flex items-center justify-center relative snap-start"
             style={{
-              transformStyle: "preserve-3d",
-              willChange: "transform",
               height: "100vh",
             }}
           >
-            <div
-              className="container mx-auto px-4 py-16 relative section-content"
-              style={{
-                transform: `rotate3d(2, 1, 0.5, var(--rotation)) translateZ(var(--translate-z))`,
-
-                transformOrigin: "85% 15%",
-                transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
+            {/* Video background that starts playing when expanded */}
+            {activePanel === index && (
+              <VideoBackground isPlaying={isVideoPlaying} />
+            )}
+            
+            <ExpandingCard 
+              isActive={activePanel === index}
+              onExpand={() => setIsVideoPlaying(true)}
             >
-              <div className="max-w-3xl min-h-full mx-auto text-center backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">
-                {panel.image && (
-                  <div className="mb-8 relative w-full aspect-[3/2] rounded-lg overflow-hidden">
+              <div className="w-full h-full relative">
+                {/* Content container with gradient overlay */}
+                <div className="absolute inset-0 overflow-hidden rounded-xl">
+                  {panel.image && !isVideoPlaying && (
                     <img
                       src={panel.image.src}
                       alt={panel.image.alt}
-                      className="object-cover w-full h-full"
+                      className="w-full h-full object-cover"
                     />
-                  </div>
-                )}
-                <div className="flex items-center justify-between">
-                  <h2 className="text-4xl md:text-6xl font-bold">{panel.title}</h2>
-                  {panel.hasExploreMore && (
-                    <button
-                      onClick={() => handleSidebarOpen(panel.title)}
-                      className="p-2 hover:bg-accent rounded-full transition-colors"
-                      aria-label="Explore more"
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </button>
                   )}
                 </div>
-                <p className="text-xl text-muted-foreground mt-6">
-                  {panel.description}
-                </p>
+                
+                {/* Text content with gradient overlay */}
+                <div className="absolute inset-x-0 bottom-0 p-8 z-10 bg-gradient-to-t from-black to-transparent">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-4xl md:text-6xl font-bold text-white">{panel.title}</h2>
+                    {panel.hasExploreMore && (
+                      <button
+                        onClick={() => handleSidebarOpen(panel.title)}
+                        className="p-2 hover:bg-accent/30 rounded-full transition-colors"
+                        aria-label="Explore more"
+                      >
+                        <ChevronRight className="h-6 w-6 text-white" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xl text-gray-200 mt-6">
+                    {panel.description}
+                  </p>
+                </div>
               </div>
-            </div>
+            </ExpandingCard>
 
             {index < panels.length - 1 && (
               <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 animate-bounce">
-                <ChevronDown className="w-8 h-8 text-muted-foreground" />
+                <ChevronDown className="w-8 h-8 text-white" />
               </div>
             )}
           </section>
@@ -580,7 +642,6 @@ const LandingPage = () => {
           title={selectedPanel}
           content={panels.find((p) => p.title === selectedPanel)
             ?.exploreContent}
-          isEditable={true}
         />
       )}
     </div>
