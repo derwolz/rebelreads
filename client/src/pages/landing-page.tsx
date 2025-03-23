@@ -10,7 +10,10 @@ import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
 import { HowItWorksSidebar } from "@/components/how-it-works-sidebar";
 import { ChevronRight } from "lucide-react";
-
+import author_1 from "@/public/videos/author_1.mp4";
+import author_2 from "@/public/videos/author_2.mp4";
+import author_3 from "@/public/videos/author_3.mp4";
+import author_4 from "@/public/videos/author_4.mp4";
 interface PanelData {
   title: string;
   description: string;
@@ -104,7 +107,15 @@ const HexagonShape = ({ className }: { className?: string }) => (
 );
 
 // Video background component
-const VideoBackground = ({ isPlaying, posterImage }: { isPlaying: boolean; posterImage?: string }) => {
+const VideoBackground = ({ 
+  isPlaying, 
+  posterImage,
+  videoSrc
+}: { 
+  isPlaying: boolean; 
+  posterImage?: string;
+  videoSrc?: string;
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
@@ -138,39 +149,41 @@ const VideoBackground = ({ isPlaying, posterImage }: { isPlaying: boolean; poste
         ${isPlaying ? 'opacity-100' : 'opacity-0'}
         ${fadeIn ? 'scale-100' : 'scale-110'}`}
     >
-      {/* For demo: Gradient background that animates when "video" would play */}
-      <div 
-        className={`absolute inset-0 transition-opacity duration-1000 
-          ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
-        
-        {/* Create a simulated video animation effect */}
+      {!videoSrc && (
+        // Fallback gradient background when no video is available
         <div 
-          className="absolute inset-0 bg-black/40 overflow-hidden"
-          style={{
-            backgroundImage: 'radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)',
-            backgroundSize: '200% 200%',
-            animation: isPlaying ? 'gradientSlide 15s ease infinite' : 'none'
-          }}
-        ></div>
-      </div>
+          className={`absolute inset-0 transition-opacity duration-1000 
+            ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
+          
+          {/* Create a simulated video animation effect */}
+          <div 
+            className="absolute inset-0 bg-black/40 overflow-hidden"
+            style={{
+              backgroundImage: 'radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)',
+              backgroundSize: '200% 200%',
+              animation: isPlaying ? 'gradientSlide 15s ease infinite' : 'none'
+            }}
+          ></div>
+        </div>
+      )}
       
-      {/* Actual video element - uncomment when you have a video file */}
-      {/* 
-      <video 
-        ref={videoRef}
-        className="w-full h-full object-cover"
-        muted
-        loop
-        playsInline
-        poster={posterImage || "/images/book-discovery.svg"}
-        onLoadedData={() => setIsVideoLoaded(true)}
-      >
-        <source src="/videos/landing-background.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-      */}
+      {/* Actual video element */}
+      {videoSrc && (
+        <video 
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          muted
+          loop
+          playsInline
+          poster={posterImage}
+          onLoadedData={() => setIsVideoLoaded(true)}
+        >
+          <source src={videoSrc} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      )}
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     </div>
@@ -721,7 +734,11 @@ const LandingPage = () => {
           >
             {/* Video background that starts playing when expanded */}
             {activePanel === index && (
-              <VideoBackground isPlaying={isVideoPlaying} />
+              <VideoBackground 
+                isPlaying={isVideoPlaying} 
+                videoSrc={isAuthor && index > 0 && index <= 4 ? `/videos/author_${index}.mp4` : undefined}
+                posterImage={panel.image?.src}
+              />
             )}
             
             <ExpandingCard 
