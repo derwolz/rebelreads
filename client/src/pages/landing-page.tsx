@@ -14,6 +14,7 @@ import author_1 from "@/public/videos/author_1.mp4";
 import author_2 from "@/public/videos/author_2.mp4";
 import author_3 from "@/public/videos/author_3.mp4";
 import author_4 from "@/public/videos/author_4.mp4";
+const authorVids = [author_1, author_2, author_3, author_4];
 interface PanelData {
   title: string;
   description: string;
@@ -107,13 +108,13 @@ const HexagonShape = ({ className }: { className?: string }) => (
 );
 
 // Video background component
-const VideoBackground = ({ 
-  isPlaying, 
+const VideoBackground = ({
+  isPlaying,
   posterImage,
   videoSrc,
-  opacity = 1
-}: { 
-  isPlaying: boolean; 
+  opacity = 1,
+}: {
+  isPlaying: boolean;
   posterImage?: string;
   videoSrc?: string;
   opacity?: number;
@@ -128,17 +129,18 @@ const VideoBackground = ({
       if (isPlaying) {
         const playPromise = videoRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch(err => {
+          playPromise.catch((err) => {
             console.error("Error playing video:", err);
           });
         }
       } else {
-        if (videoRef.current.readyState > 2) { // Only pause if video is actually loaded
+        if (videoRef.current.readyState > 2) {
+          // Only pause if video is actually loaded
           videoRef.current.pause();
         }
       }
     }
-    
+
     // Delay fade-in for smoother transition
     if (isPlaying) {
       const timer = setTimeout(() => {
@@ -151,31 +153,32 @@ const VideoBackground = ({
   }, [isPlaying]);
 
   return (
-    <div 
+    <div
       className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-all duration-1000 ease-in-out
-        ${fadeIn ? 'scale-100' : 'scale-110'}`}
+        ${fadeIn ? "scale-100" : "scale-110"}`}
       style={{ opacity: isPlaying ? opacity : 0 }}
     >
       {!videoSrc && (
         // Fallback gradient background when no video is available
         <div className="absolute inset-0 transition-opacity duration-1000">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
-          
+
           {/* Create a simulated video animation effect */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/40 overflow-hidden"
             style={{
-              backgroundImage: 'radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)',
-              backgroundSize: '200% 200%',
-              animation: isPlaying ? 'gradientSlide 15s ease infinite' : 'none'
+              backgroundImage:
+                "radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)",
+              backgroundSize: "200% 200%",
+              animation: isPlaying ? "gradientSlide 15s ease infinite" : "none",
             }}
           ></div>
         </div>
       )}
-      
+
       {/* Actual video element */}
       {videoSrc && (
-        <video 
+        <video
           ref={videoRef}
           className="w-full h-full object-cover"
           muted
@@ -189,45 +192,47 @@ const VideoBackground = ({
           Your browser does not support the video tag.
         </video>
       )}
-      
+
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     </div>
   );
 };
 
 // Card component that scrolls from side and expands
-const ExpandingCard = ({ 
-  children, 
-  isActive, 
-  onExpand 
-}: { 
-  children: React.ReactNode, 
-  isActive: boolean,
-  onExpand: () => void
+const ExpandingCard = ({
+  children,
+  isActive,
+  onExpand,
+}: {
+  children: React.ReactNode;
+  isActive: boolean;
+  onExpand: () => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [slidePosition, setSlidePosition] = useState<'right' | 'center' | 'left'>('right');
+  const [slidePosition, setSlidePosition] = useState<
+    "right" | "center" | "left"
+  >("right");
   const [darkenAmount, setDarkenAmount] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let timers: NodeJS.Timeout[] = [];
-    
+
     if (isActive && !visible) {
       // Animation sequence for entering:
       // 1. Make card visible (starting from right side)
       setVisible(true);
-      setSlidePosition('right');
-      
+      setSlidePosition("right");
+
       // 2. Slide to center
       const slideInTimer = setTimeout(() => {
-        setSlidePosition('center');
+        setSlidePosition("center");
         // Start darkening the background
         setDarkenAmount(0.2);
       }, 100);
       timers.push(slideInTimer);
-      
+
       // 3. After slide completes, expand the card
       const expandTimer = setTimeout(() => {
         setExpanded(true);
@@ -235,86 +240,89 @@ const ExpandingCard = ({
         setDarkenAmount(0.7);
       }, 800);
       timers.push(expandTimer);
-      
+
       // 4. After expansion, trigger the video/content transition
       const contentTimer = setTimeout(() => {
         onExpand();
       }, 1200);
       timers.push(contentTimer);
     }
-    
+
     if (!isActive && visible) {
       // Animation sequence for leaving:
       // 1. First shrink back to card size and start undarken
       setExpanded(false);
       setDarkenAmount(0.2);
-      
+
       // 2. Then slide to the left (off screen) and continue undarkening
       const slideLeftTimer = setTimeout(() => {
-        setSlidePosition('left');
+        setSlidePosition("left");
         setDarkenAmount(0);
       }, 300);
       timers.push(slideLeftTimer);
-      
+
       // 3. Finally hide the card
       const hideTimer = setTimeout(() => {
         setVisible(false);
         // Reset position for next time
-        setSlidePosition('right');
+        setSlidePosition("right");
       }, 800);
       timers.push(hideTimer);
     }
-    
+
     return () => {
-      timers.forEach(timer => clearTimeout(timer));
+      timers.forEach((timer) => clearTimeout(timer));
     };
   }, [isActive, visible, onExpand]);
 
   // Calculate transform value based on slide position
   const getTransform = () => {
-    if (!visible) return 'translateX(100%) scale(0.97)';
-    
+    if (!visible) return "translateX(100%) scale(0.97)";
+
     switch (slidePosition) {
-      case 'right':
-        return 'translateX(5%) scale(0.97)';
-      case 'center':
-        return `translateX(0) scale(${expanded ? '1' : '0.97'})`;
-      case 'left':
-        return 'translateX(-105%) scale(0.97)';
+      case "right":
+        return "translateX(5%) scale(0.97)";
+      case "center":
+        return `translateX(0) scale(${expanded ? "1" : "0.97"})`;
+      case "left":
+        return "translateX(-105%) scale(0.97)";
       default:
-        return 'translateX(0) scale(0.97)';
+        return "translateX(0) scale(0.97)";
     }
   };
 
   return (
     <>
       {/* Background darkening overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-black pointer-events-none transition-opacity duration-1000"
-        style={{ 
+        style={{
           opacity: darkenAmount,
-          zIndex: visible ? 5 : -1
+          zIndex: visible ? 5 : -1,
         }}
       />
-      
+
       {/* The card itself */}
-      <div 
+      <div
         ref={cardRef}
         className={`
           relative overflow-hidden z-10
           transition-all duration-700 ease-out
-          ${visible ? 'opacity-100' : 'opacity-0'}
+          ${visible ? "opacity-100" : "opacity-0"}
         `}
         style={{
-          width: expanded ? '100vw' : '85%',  // Use 100vw to match viewport width
-          height: expanded ? '100vh' : '85%', // Use 100vh to match viewport height
-          borderRadius: expanded ? '0' : '0.75rem',
-          boxShadow: expanded ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          width: expanded ? "100vw" : "85%", // Use 100vw to match viewport width
+          height: expanded ? "100vh" : "85%", // Use 100vh to match viewport height
+          borderRadius: expanded ? "0" : "0.75rem",
+          boxShadow: expanded
+            ? "none"
+            : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           transform: getTransform(),
-          transition: 'transform 800ms cubic-bezier(0.17, 0.67, 0.3, 0.96), width 700ms ease-out, height 700ms ease-out, border-radius 700ms ease-out, box-shadow 700ms ease-out, opacity 500ms ease-out',
-          position: expanded ? 'fixed' : 'relative',
-          left: expanded ? '0' : 'auto',
-          top: expanded ? '0' : 'auto',
+          transition:
+            "transform 800ms cubic-bezier(0.17, 0.67, 0.3, 0.96), width 700ms ease-out, height 700ms ease-out, border-radius 700ms ease-out, box-shadow 700ms ease-out, opacity 500ms ease-out",
+          position: expanded ? "fixed" : "relative",
+          left: expanded ? "0" : "auto",
+          top: expanded ? "0" : "auto",
         }}
       >
         {children}
@@ -333,7 +341,7 @@ const LandingPage = () => {
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  
+
   // This hook was merged with the more detailed one below
 
   useEffect(() => {
@@ -636,19 +644,20 @@ const LandingPage = () => {
   // Reset video playback state when active panel changes
   useEffect(() => {
     // When the active panel changes
-    if (activePanel > 0) { // Only play on content sections, not intro
+    if (activePanel > 0) {
+      // Only play on content sections, not intro
       // After a short delay for the card to expand, start the video
       const startTimer = setTimeout(() => {
         setIsVideoPlaying(true);
       }, 1200); // Wait for the card to fully expand
-      
+
       return () => clearTimeout(startTimer);
     } else {
       // Stop video immediately when leaving a section
       setIsVideoPlaying(false);
     }
   }, [activePanel]);
-  
+
   // Watch for panel changes to handle exit animations properly
   const prevPanelRef = useRef(activePanel);
   useEffect(() => {
@@ -658,10 +667,10 @@ const LandingPage = () => {
       const stopTimer = setTimeout(() => {
         setIsVideoPlaying(false);
       }, 100);
-      
+
       return () => clearTimeout(stopTimer);
     }
-    
+
     prevPanelRef.current = activePanel;
   }, [activePanel]);
 
@@ -671,13 +680,13 @@ const LandingPage = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const sectionIndex = parseInt(
-              entry.target.getAttribute("data-section-index") || "0"
+              entry.target.getAttribute("data-section-index") || "0",
             );
             trackEvent("section_view", { sectionIndex });
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
 
     document.querySelectorAll(".snap-section").forEach((section, index) => {
@@ -761,7 +770,9 @@ const LandingPage = () => {
               height: "100vh",
             }}
           >
-            <ExpandingCard 
+            {authorVids[index]}
+            {activePanel}
+            <ExpandingCard
               isActive={activePanel === index}
               onExpand={() => {
                 /* Video will be triggered to play by the useEffect */
@@ -770,14 +781,18 @@ const LandingPage = () => {
               <div className="w-full h-full relative overflow-hidden">
                 {/* Video background inside the card */}
                 {activePanel === index && (
-                  <VideoBackground 
-                    isPlaying={activePanel === index && isVideoPlaying} 
-                    videoSrc={isAuthor && index > 0 && index <= 4 ? `/videos/author_${index}.mp4` : undefined}
+                  <VideoBackground
+                    isPlaying={activePanel === index && isVideoPlaying}
+                    videoSrc={
+                      isAuthor && index > -1 && index <= 4
+                        ? authorVids[index]
+                        : undefined
+                    }
                     posterImage={panel.image?.src}
                     opacity={activePanel === index ? 1 : 0}
                   />
                 )}
-                
+
                 {/* Content container with poster image (visible only before video starts) */}
                 <div className="absolute inset-0 overflow-hidden rounded-xl">
                   {panel.image && (
@@ -785,21 +800,26 @@ const LandingPage = () => {
                       src={panel.image.src}
                       alt={panel.image.alt}
                       className="w-full h-full object-cover transition-opacity duration-500"
-                      style={{ opacity: isVideoPlaying && activePanel === index ? 0 : 1 }}
+                      style={{
+                        opacity:
+                          isVideoPlaying && activePanel === index ? 0 : 1,
+                      }}
                     />
                   )}
                 </div>
-                
+
                 {/* Text content with enhanced gradient overlay */}
-                <div 
+                <div
                   className="absolute inset-x-0 bottom-0 p-8 z-10 gradient-overlay"
                   style={{
-                    height: '70%'
+                    height: "70%",
                   }}
                 >
                   <div className="absolute inset-0 flex flex-col justify-end p-8">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white">{panel.title}</h2>
+                      <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white">
+                        {panel.title}
+                      </h2>
                       {panel.hasExploreMore && (
                         <button
                           onClick={() => handleSidebarOpen(panel.title)}
@@ -832,8 +852,9 @@ const LandingPage = () => {
           isOpen={!!selectedPanel}
           onClose={() => setSelectedPanel(null)}
           title={selectedPanel}
-          content={panels.find((p) => p.title === selectedPanel)
-            ?.exploreContent}
+          content={
+            panels.find((p) => p.title === selectedPanel)?.exploreContent
+          }
         />
       )}
     </div>
