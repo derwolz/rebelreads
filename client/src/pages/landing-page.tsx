@@ -644,8 +644,7 @@ const LandingPage = () => {
   // Reset video playback state when active panel changes
   useEffect(() => {
     // When the active panel changes
-    if (activePanel > 0) {
-      // Only play on content sections, not intro
+    if (activePanel >= 0) {
       // After a short delay for the card to expand, start the video
       const startTimer = setTimeout(() => {
         setIsVideoPlaying(true);
