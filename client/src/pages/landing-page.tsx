@@ -110,11 +110,13 @@ const HexagonShape = ({ className }: { className?: string }) => (
 const VideoBackground = ({ 
   isPlaying, 
   posterImage,
-  videoSrc
+  videoSrc,
+  opacity = 1
 }: { 
   isPlaying: boolean; 
   posterImage?: string;
   videoSrc?: string;
+  opacity?: number;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -124,11 +126,16 @@ const VideoBackground = ({
     // Control video playback
     if (videoRef.current) {
       if (isPlaying) {
-        videoRef.current.play().catch(err => {
-          console.error("Error playing video:", err);
-        });
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.error("Error playing video:", err);
+          });
+        }
       } else {
-        videoRef.current.pause();
+        if (videoRef.current.readyState > 2) { // Only pause if video is actually loaded
+          videoRef.current.pause();
+        }
       }
     }
     
@@ -146,15 +153,12 @@ const VideoBackground = ({
   return (
     <div 
       className={`absolute inset-0 w-full h-full z-0 overflow-hidden transition-all duration-1000 ease-in-out
-        ${isPlaying ? 'opacity-100' : 'opacity-0'}
         ${fadeIn ? 'scale-100' : 'scale-110'}`}
+      style={{ opacity: isPlaying ? opacity : 0 }}
     >
       {!videoSrc && (
         // Fallback gradient background when no video is available
-        <div 
-          className={`absolute inset-0 transition-opacity duration-1000 
-            ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-        >
+        <div className="absolute inset-0 transition-opacity duration-1000">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black/80 animate-pulse"></div>
           
           {/* Create a simulated video animation effect */}
@@ -177,6 +181,7 @@ const VideoBackground = ({
           muted
           loop
           playsInline
+          preload="auto"
           poster={posterImage}
           onLoadedData={() => setIsVideoLoaded(true)}
         >
@@ -203,6 +208,7 @@ const ExpandingCard = ({
   const [expanded, setExpanded] = useState(false);
   const [visible, setVisible] = useState(false);
   const [slidePosition, setSlidePosition] = useState<'right' | 'center' | 'left'>('right');
+  const [darkenAmount, setDarkenAmount] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -217,12 +223,16 @@ const ExpandingCard = ({
       // 2. Slide to center
       const slideInTimer = setTimeout(() => {
         setSlidePosition('center');
+        // Start darkening the background
+        setDarkenAmount(0.2);
       }, 100);
       timers.push(slideInTimer);
       
       // 3. After slide completes, expand the card
       const expandTimer = setTimeout(() => {
         setExpanded(true);
+        // Increase darkening for full screen mode
+        setDarkenAmount(0.7);
       }, 800);
       timers.push(expandTimer);
       
@@ -235,12 +245,14 @@ const ExpandingCard = ({
     
     if (!isActive && visible) {
       // Animation sequence for leaving:
-      // 1. First shrink back to card size
+      // 1. First shrink back to card size and start undarken
       setExpanded(false);
+      setDarkenAmount(0.2);
       
-      // 2. Then slide to the left (off screen)
+      // 2. Then slide to the left (off screen) and continue undarkening
       const slideLeftTimer = setTimeout(() => {
         setSlidePosition('left');
+        setDarkenAmount(0);
       }, 300);
       timers.push(slideLeftTimer);
       
@@ -275,24 +287,39 @@ const ExpandingCard = ({
   };
 
   return (
-    <div 
-      ref={cardRef}
-      className={`
-        relative overflow-hidden
-        transition-all duration-700 ease-out
-        ${visible ? 'opacity-100' : 'opacity-0'}
-      `}
-      style={{
-        width: expanded ? '100%' : '85%',
-        height: expanded ? '100%' : '85%',
-        borderRadius: expanded ? '0' : '0.75rem',
-        boxShadow: expanded ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        transform: getTransform(),
-        transition: 'transform 800ms cubic-bezier(0.17, 0.67, 0.3, 0.96), width 700ms ease-out, height 700ms ease-out, border-radius 700ms ease-out, box-shadow 700ms ease-out, opacity 500ms ease-out',
-      }}
-    >
-      {children}
-    </div>
+    <>
+      {/* Background darkening overlay */}
+      <div 
+        className="fixed inset-0 bg-black pointer-events-none transition-opacity duration-1000"
+        style={{ 
+          opacity: darkenAmount,
+          zIndex: visible ? 5 : -1
+        }}
+      />
+      
+      {/* The card itself */}
+      <div 
+        ref={cardRef}
+        className={`
+          relative overflow-hidden z-10
+          transition-all duration-700 ease-out
+          ${visible ? 'opacity-100' : 'opacity-0'}
+        `}
+        style={{
+          width: expanded ? '100vw' : '85%',  // Use 100vw to match viewport width
+          height: expanded ? '100vh' : '85%', // Use 100vh to match viewport height
+          borderRadius: expanded ? '0' : '0.75rem',
+          boxShadow: expanded ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          transform: getTransform(),
+          transition: 'transform 800ms cubic-bezier(0.17, 0.67, 0.3, 0.96), width 700ms ease-out, height 700ms ease-out, border-radius 700ms ease-out, box-shadow 700ms ease-out, opacity 500ms ease-out',
+          position: expanded ? 'fixed' : 'relative',
+          left: expanded ? '0' : 'auto',
+          top: expanded ? '0' : 'auto',
+        }}
+      >
+        {children}
+      </div>
+    </>
   );
 };
 
@@ -306,6 +333,8 @@ const LandingPage = () => {
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  
+  // This hook was merged with the more detailed one below
 
   useEffect(() => {
     fetch("/api/landing/session", {
@@ -732,28 +761,31 @@ const LandingPage = () => {
               height: "100vh",
             }}
           >
-            {/* Video background that starts playing when expanded */}
-            {activePanel === index && (
-              <VideoBackground 
-                isPlaying={isVideoPlaying} 
-                videoSrc={isAuthor && index > 0 && index <= 4 ? `/videos/author_${index}.mp4` : undefined}
-                posterImage={panel.image?.src}
-              />
-            )}
-            
             <ExpandingCard 
               isActive={activePanel === index}
-              onExpand={() => setIsVideoPlaying(true)}
+              onExpand={() => {
+                /* Video will be triggered to play by the useEffect */
+              }}
             >
               <div className="w-full h-full relative overflow-hidden">
-                {/* Content container with poster image */}
+                {/* Video background inside the card */}
+                {activePanel === index && (
+                  <VideoBackground 
+                    isPlaying={activePanel === index && isVideoPlaying} 
+                    videoSrc={isAuthor && index > 0 && index <= 4 ? `/videos/author_${index}.mp4` : undefined}
+                    posterImage={panel.image?.src}
+                    opacity={activePanel === index ? 1 : 0}
+                  />
+                )}
+                
+                {/* Content container with poster image (visible only before video starts) */}
                 <div className="absolute inset-0 overflow-hidden rounded-xl">
-                  {panel.image && !isVideoPlaying && (
+                  {panel.image && (
                     <img
                       src={panel.image.src}
                       alt={panel.image.alt}
                       className="w-full h-full object-cover transition-opacity duration-500"
-                      style={{ opacity: isVideoPlaying ? 0 : 1 }}
+                      style={{ opacity: isVideoPlaying && activePanel === index ? 0 : 1 }}
                     />
                   )}
                 </div>
