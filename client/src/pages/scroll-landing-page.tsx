@@ -166,7 +166,7 @@ const ScrollLandingPage = (): React.JSX.Element => {
             {index <= 2 && activeSection === index && (
               <div className="container mx-auto px-4 text-center z-10">
                 <motion.h1 
-                  className="text-4xl md:text-6xl font-bold mb-6 text-primary"
+                  className="text-4xl md:text-6xl font-bold mb-6 text-primary animate-slide-bottom"
                   initial={{ opacity: 0, y: 50 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.7 }}
@@ -174,7 +174,7 @@ const ScrollLandingPage = (): React.JSX.Element => {
                   {section.heading}
                 </motion.h1>
                 <motion.p 
-                  className="text-xl md:text-2xl max-w-3xl mx-auto text-foreground/80"
+                  className="text-xl md:text-2xl max-w-3xl mx-auto text-foreground/80 animate-fade-scale"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.7, delay: 0.3 }}
@@ -189,7 +189,7 @@ const ScrollLandingPage = (): React.JSX.Element => {
               <>
                 {/* Image at top */}
                 <motion.div 
-                  className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-1/2 max-w-xl"
+                  className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-1/2 max-w-xl animate-fade-scale"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.7 }}
@@ -203,7 +203,7 @@ const ScrollLandingPage = (): React.JSX.Element => {
                 
                 {/* Heading at bottom left */}
                 <motion.div 
-                  className="absolute bottom-24 left-10 md:left-20 max-w-md z-10"
+                  className="absolute bottom-24 left-10 md:left-20 max-w-md z-10 animate-slide-left"
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.7 }}
@@ -215,7 +215,7 @@ const ScrollLandingPage = (): React.JSX.Element => {
                 
                 {/* Subtext at bottom right */}
                 <motion.div 
-                  className="absolute bottom-24 right-10 md:right-20 max-w-md text-right z-10"
+                  className="absolute bottom-24 right-10 md:right-20 max-w-md text-right z-10 animate-slide-right"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.7, delay: 0.2 }}
@@ -236,7 +236,7 @@ const ScrollLandingPage = (): React.JSX.Element => {
               sections.slice(0, activeSection).map((section, index) => (
                 <motion.div
                   key={section.id}
-                  className="mb-4 opacity-60 hover:opacity-80 transition-opacity"
+                  className="mb-4 opacity-60 hover:opacity-80 transition-opacity animate-push-up"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 0.6, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
