@@ -261,11 +261,11 @@ export function ScrollLandingPage(): React.JSX.Element {
       {/* User type toggle button - only show in first section or when scrolling to it */}
       {currentSectionIndex === 0 && (
         <div 
-          className="fixed top-24 right-8 z-50 transition-opacity duration-500"
+          className="fixed top-32 left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-500"
           style={{ opacity: 1 - (progressInSection * 2) }} // Fade out as user scrolls
         >
           <button 
-            className="mode-toggle-button flex items-center gap-2"
+            className="mode-toggle-button flex items-center justify-center gap-2.5"
             onClick={toggleUserType}
             aria-label={`Switch to ${userType === "author" ? "reader" : "author"} mode`}
           >
