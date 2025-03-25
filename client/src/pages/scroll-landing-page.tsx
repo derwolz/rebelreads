@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { motion } from "framer-motion";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
 import { useTheme } from "@/hooks/use-theme";
@@ -25,14 +24,14 @@ export function ScrollLandingPage(): React.JSX.Element {
     {
       id: "section-1",
       heading: "Welcome to a New Reading Experience",
-      subtext: "Discover a platform where stories come to life",
+      subtext: "", // No subtext for first section
       imageSrc: "/images/book-stack.svg",
       backgroundColor: "bg-primary/5"
     },
     {
       id: "section-2",
       heading: "Connect with Your Favorite Authors",
-      subtext: "Follow and engage with creators who inspire you",
+      subtext: "", // No subtext for second section
       imageSrc: "/images/author-writing.svg",
       backgroundColor: "bg-primary/10"
     },
@@ -71,15 +70,6 @@ export function ScrollLandingPage(): React.JSX.Element {
     // Handle scroll events to update scrollY state
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      
-      // Track section view in analytics if needed
-      const windowHeight = window.innerHeight;
-      const currentSectionIndex = Math.min(
-        Math.floor(window.scrollY / windowHeight),
-        sections.length - 1
-      );
-      
-      // You could add section tracking logic here if needed
     };
     
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -128,15 +118,7 @@ export function ScrollLandingPage(): React.JSX.Element {
   // Calculate progress within the current section (0 to 1)
   const progressInSection = 
     (scrollY - (currentSectionIndex * windowHeight)) / windowHeight;
-  
-  // Determine which headings should be visible in the stack
-  const visibleHeadings = currentSectionIndex >= 3 
-    ? sections.slice(0, currentSectionIndex)
-    : [];
-  
-  // Calculate the transition progress
-  const transitionToBottomLeft = currentSectionIndex >= 2 ? Math.min(progressInSection, 1) : 0;
-  
+
   // Track section view in analytics
   const trackEvent = async (type: string, data = {}) => {
     try {
@@ -179,102 +161,119 @@ export function ScrollLandingPage(): React.JSX.Element {
             </div>
           )}
           
-          {/* Center heading - initial state (sections 0-2) */}
-          {currentSectionIndex <= 2 && (
-            <div 
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-10 w-full px-6"
-              style={{
-                opacity: currentSectionIndex === 2 ? 1 - transitionToBottomLeft : 1,
-                transform: currentSectionIndex === 2 
-                  ? `translate(-50%, calc(-50% + ${transitionToBottomLeft * 35}vh))`
-                  : 'translate(-50%, -50%)'
-              }}
+          {/* Main Heading Container - Position depends on section */}
+          <div 
+            className={`absolute z-10 w-full px-6 transition-all duration-500 ${
+              currentSectionIndex < 3 
+                ? "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center" 
+                : "bottom-32 left-20 text-left max-w-md"
+            }`}
+            style={{
+              transform: currentSectionIndex === 2 
+                ? `translate(calc(-50% + ${progressInSection * 35}%), calc(-50% + ${progressInSection * 40}%))`
+                : currentSectionIndex < 2 
+                  ? "translate(-50%, -50%)" 
+                  : "none"
+            }}
+          >
+            {/* Current section's heading */}
+            <h1 
+              className={`font-bold transition-all ${
+                currentSectionIndex < 3 
+                  ? "text-4xl md:text-6xl mb-8" 
+                  : "text-3xl md:text-4xl mb-4"
+              } text-primary`}
             >
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
-                {sections[currentSectionIndex]?.heading}
-              </h1>
-              <p className="text-xl md:text-2xl max-w-3xl mx-auto text-foreground/80">
+              {sections[currentSectionIndex]?.heading}
+            </h1>
+            
+            {/* Show subtext for sections that have it (after heading 2) */}
+            {currentSectionIndex >= 2 && sections[currentSectionIndex]?.subtext && (
+              <p 
+                className={`transition-all ${
+                  currentSectionIndex < 3 
+                    ? "text-xl md:text-2xl max-w-3xl mx-auto" 
+                    : "text-lg md:text-xl"
+                } text-foreground/80`}
+                style={{ 
+                  opacity: progressInSection < 0.5 ? progressInSection * 2 : 1 
+                }}
+              >
                 {sections[currentSectionIndex]?.subtext}
               </p>
-            </div>
-          )}
+            )}
+          </div>
           
-          {/* Layout for section 3+ with heading at bottom left and subtext at bottom right */}
-          {currentSectionIndex >= 2 && (
-            <>
-              {/* Image at top */}
-              <div 
-                className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-1/2 max-w-xl"
-                style={{ 
-                  opacity: currentSectionIndex === 2 ? transitionToBottomLeft : 1,
-                  transform: `translate(-50%, 0) scale(${
-                    currentSectionIndex === 2 
-                      ? 0.8 + (transitionToBottomLeft * 0.2) 
-                      : 1
-                  })` 
-                }}
-              >
-                <img 
-                  src={sections[currentSectionIndex]?.imageSrc} 
-                  alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
-                  className="w-full h-auto"
-                />
-              </div>
-              
-              {/* Heading at bottom left */}
-              <div 
-                className="absolute bottom-24 left-10 md:left-20 max-w-md z-10"
-                style={{ 
-                  opacity: currentSectionIndex === 2 ? transitionToBottomLeft : 1,
-                  transform: currentSectionIndex === 2
-                    ? `translateX(${-50 + (transitionToBottomLeft * 50)}px)`
-                    : 'translateX(0)'
-                }}
-              >
-                <h2 className="text-3xl md:text-4xl font-bold text-primary">
-                  {sections[currentSectionIndex]?.heading}
-                </h2>
-              </div>
-              
-              {/* Subtext at bottom right */}
-              <div 
-                className="absolute bottom-24 right-10 md:right-20 max-w-md text-right z-10"
-                style={{ 
-                  opacity: currentSectionIndex === 2 ? transitionToBottomLeft : 1,
-                  transform: currentSectionIndex === 2
-                    ? `translateX(${50 - (transitionToBottomLeft * 50)}px)`
-                    : 'translateX(0)'
-                }}
-              >
-                <p className="text-lg md:text-xl text-foreground/80">
-                  {sections[currentSectionIndex]?.subtext}
-                </p>
-              </div>
-            </>
-          )}
-          
-          {/* Fixed heading stack for sections 3+ */}
-          <div className="fixed left-10 top-32 z-20 max-w-md pointer-events-none">
-            {currentSectionIndex >= 3 && visibleHeadings.map((section, index) => {
-              // Calculate vertical position based on index and scroll progress
-              const topOffset = index * 2.5;
+          {/* Stack of Previous Headings */}
+          <div 
+            className={`absolute z-20 transition-all duration-500 ${
+              currentSectionIndex >= 3 
+                ? "bottom-80 left-20 text-left" 
+                : "left-1/2 transform -translate-x-1/2 text-center"
+            }`}
+            style={{
+              // For index 0-1, headings are stacked in center
+              // For index 2, they transition to bottom left
+              // For index 3+, they stay at bottom left
+              bottom: currentSectionIndex < 2 
+                ? "45%" 
+                : currentSectionIndex === 2 
+                  ? `calc(45% - ${progressInSection * 35}%)` 
+                  : "80px",
+              left: currentSectionIndex < 2
+                ? "50%" 
+                : currentSectionIndex === 2
+                  ? `calc(50% - ${progressInSection * 30}%)` 
+                  : "20px",
+              transform: currentSectionIndex < 3 
+                ? "translateX(-50%)" 
+                : "none"
+            }}
+          >
+            {currentSectionIndex >= 1 && sections.slice(0, currentSectionIndex).map((section, index) => {
+              // Calculate vertical position for stacking effect
+              // More recent headings (higher index) are stacked on top
+              const stackPosition = index * 40;
+              const opacity = 0.8 - (index * 0.15); // Gradually decrease opacity for older headings
               
               return (
                 <div
                   key={section.id}
-                  className="mb-4 opacity-60 hover:opacity-80 transition-opacity"
+                  className="mb-3 transition-all duration-300"
                   style={{ 
-                    transform: `translateY(${topOffset - (progressInSection * 2)}rem)`,
-                    opacity: 0.6 - (index * 0.1)
+                    transform: `translateY(-${stackPosition}px)`,
+                    opacity: opacity,
+                    // Animate the most recent previous heading based on scroll progress
+                    ...(index === currentSectionIndex - 1 && {
+                      transform: `translateY(-${stackPosition + (progressInSection * 20)}px)`,
+                      opacity: opacity - (progressInSection * 0.1)
+                    })
                   }}
                 >
-                  <h3 className="text-lg md:text-xl font-medium text-primary/80">
+                  <h3 className="text-2xl md:text-3xl font-medium text-primary">
                     {section.heading}
                   </h3>
                 </div>
               );
             })}
           </div>
+          
+          {/* Image for current section - only show after section 1 */}
+          {currentSectionIndex >= 2 && (
+            <div 
+              className="absolute top-1/4 right-20 transform -translate-y-1/2 w-1/3 max-w-md"
+              style={{ 
+                opacity: progressInSection < 0.3 ? progressInSection * 3 : 1,
+                transform: `translateY(-50%) scale(${0.9 + (progressInSection * 0.1)})` 
+              }}
+            >
+              <img 
+                src={sections[currentSectionIndex]?.imageSrc} 
+                alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
+                className="w-full h-auto"
+              />
+            </div>
+          )}
         </div>
       </div>
       
