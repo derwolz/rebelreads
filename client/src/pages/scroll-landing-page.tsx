@@ -231,14 +231,19 @@ export function ScrollLandingPage(): React.JSX.Element {
                 // Opacity calculation with emphasis on the newest one
                 const opacity = 0.3 + ((reverseIndex + 1) * 0.15); // More opacity for newer ones
                 
+                // Determine the text alignment and position for proper centering
+                const textAlignClass = currentSectionIndex === 1 && index === 0 
+                  ? "text-center w-full left-0" 
+                  : "";
+                
                 return (
                   <div
                     key={section.id}
-                    className="absolute transition-all duration-300"
+                    className={`absolute transition-all duration-300 ${textAlignClass}`}
                     style={{ 
                       bottom: `${stackPosition}px`,
                       opacity: opacity,
-                      left: currentSectionIndex === 1 && index === 0 ? `-${progressInSection * 5}px` : "0"
+                      width: currentSectionIndex === 1 && index === 0 ? "100%" : "auto"
                     }}
                   >
                     <h3 className="text-2xl md:text-3xl font-medium text-primary">
