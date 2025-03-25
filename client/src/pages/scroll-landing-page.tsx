@@ -166,23 +166,20 @@ export function ScrollLandingPage(): React.JSX.Element {
             className={`absolute z-10 w-full px-6 transition-all duration-500 ${
               currentSectionIndex < 3 
                 ? "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center" 
-                : "bottom-32 left-20 text-left max-w-md"
+                : "bottom-1/4 left-20 text-left max-w-md"
             }`}
             style={{
               transform: currentSectionIndex === 2 
                 ? `translate(calc(-50% + ${progressInSection * 35}%), calc(-50% + ${progressInSection * 40}%))`
                 : currentSectionIndex < 2 
                   ? "translate(-50%, -50%)" 
-                  : "none"
+                  : "none",
+              opacity: 1 // Main heading always has full opacity
             }}
           >
             {/* Current section's heading */}
             <h1 
-              className={`font-bold transition-all ${
-                currentSectionIndex < 3 
-                  ? "text-4xl md:text-6xl mb-8" 
-                  : "text-3xl md:text-4xl mb-4"
-              } text-primary`}
+              className="text-2xl md:text-3xl font-bold text-primary transition-all"
             >
               {sections[currentSectionIndex]?.heading}
             </h1>
@@ -190,11 +187,7 @@ export function ScrollLandingPage(): React.JSX.Element {
             {/* Show subtext for sections that have it (after heading 2) */}
             {currentSectionIndex >= 2 && sections[currentSectionIndex]?.subtext && (
               <p 
-                className={`transition-all ${
-                  currentSectionIndex < 3 
-                    ? "text-xl md:text-2xl max-w-3xl mx-auto" 
-                    : "text-lg md:text-xl"
-                } text-foreground/80`}
+                className="text-lg md:text-xl text-foreground/80 transition-all mt-4"
                 style={{ 
                   opacity: progressInSection < 0.5 ? progressInSection * 2 : 1 
                 }}
@@ -208,18 +201,18 @@ export function ScrollLandingPage(): React.JSX.Element {
           <div 
             className={`absolute z-20 transition-all duration-500 ${
               currentSectionIndex >= 3 
-                ? "bottom-80 left-20 text-left" 
+                ? "left-20 text-left" 
                 : "left-1/2 transform -translate-x-1/2 text-center"
             }`}
             style={{
               // For index 0-1, headings are stacked in center
               // For index 2, they transition to bottom left
               // For index 3+, they stay at bottom left
-              bottom: currentSectionIndex < 2 
-                ? "45%" 
+              top: currentSectionIndex < 2 
+                ? "30%" 
                 : currentSectionIndex === 2 
-                  ? `calc(45% - ${progressInSection * 35}%)` 
-                  : "80px",
+                  ? `calc(30% + ${progressInSection * 20}%)` 
+                  : "50%",
               left: currentSectionIndex < 2
                 ? "50%" 
                 : currentSectionIndex === 2
@@ -230,22 +223,22 @@ export function ScrollLandingPage(): React.JSX.Element {
                 : "none"
             }}
           >
-            {currentSectionIndex >= 1 && sections.slice(0, currentSectionIndex).map((section, index) => {
-              // Calculate vertical position for stacking effect
-              // More recent headings (higher index) are stacked on top
-              const stackPosition = index * 40;
+            {currentSectionIndex >= 1 && sections.slice(0, currentSectionIndex).reverse().map((section, index) => {
+              // Reverse the array so older sections are at the top
+              // Each heading is stacked below the previous one with proper spacing
+              const stackPosition = index * 70; // Increased spacing between headings
               const opacity = 0.8 - (index * 0.15); // Gradually decrease opacity for older headings
               
               return (
                 <div
                   key={section.id}
-                  className="mb-3 transition-all duration-300"
+                  className="mb-10 transition-all duration-300" // Increased margin
                   style={{ 
-                    transform: `translateY(-${stackPosition}px)`,
+                    transform: `translateY(${stackPosition}px)`, // Positive value to stack downwards
                     opacity: opacity,
                     // Animate the most recent previous heading based on scroll progress
-                    ...(index === currentSectionIndex - 1 && {
-                      transform: `translateY(-${stackPosition + (progressInSection * 20)}px)`,
+                    ...(index === 0 && {
+                      transform: `translateY(${stackPosition + (progressInSection * 20)}px)`,
                       opacity: opacity - (progressInSection * 0.1)
                     })
                   }}
