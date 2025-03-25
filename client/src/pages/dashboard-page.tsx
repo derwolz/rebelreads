@@ -35,7 +35,7 @@ interface DashboardData {
   recommendations: any[];
 }
 
-export default function DashboardPage() {
+export default function DashboardPage(): React.JSX.Element {
   const { user } = useAuth();
   const [selectedGenre, setSelectedGenre] = useState<string>("all");
 
@@ -70,7 +70,23 @@ export default function DashboardPage() {
     );
   }
 
-  if (!dashboardData) return null;
+  if (!dashboardData) {
+    // Return a loading placeholder instead of null
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Could not load dashboard data. Please try again later.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    );
+  }
 
   const { readingStats, averageRatings, recentReviews, recommendations } = dashboardData;
 
