@@ -259,6 +259,9 @@ export function ScrollLandingPage(): React.JSX.Element {
     <div className="bg-background overflow-hidden" ref={containerRef}>
       <BrandedNav />
       
+      {/* Add the frosted glass background with moving shapes */}
+      <FrostedGlassBackground />
+      
       {/* User type toggle button - only show in first section or when scrolling to it */}
       {currentSectionIndex === 0 && (
         <div 

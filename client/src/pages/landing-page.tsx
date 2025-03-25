@@ -9,6 +9,7 @@ import { ChevronDown } from "lucide-react";
 import { useLocation } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
 import { HowItWorksSidebar } from "@/components/how-it-works-sidebar";
+import { FrostedGlassBackground } from "@/components/frosted-glass-background";
 import { ChevronRight } from "lucide-react";
 import author_1 from "@/public/videos/author_1.mp4";
 import author_2 from "@/public/videos/author_2.mp4";
@@ -26,86 +27,7 @@ interface PanelData {
   exploreContent?: string;
 }
 
-const FloatingShape = ({ className }: { className?: string }) => (
-  <div
-    style={{ transition: "all 0.1s ease-in-out" }}
-    className={`absolute  animate-float ${className}`}
-  >
-    <svg
-      width="380"
-      height="380"
-      viewBox="0 0 120 120"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M60 10L110 95H10L60 10Z" />
-    </svg>
-  </div>
-);
-
-const CircleShape = ({ className }: { className?: string }) => (
-  <div
-    className={`absolute transition-all duration-800 ease-in-out animate-float-delayed ${className}`}
-  >
-    <svg
-      width="560"
-      height="560"
-      viewBox="0 0 100 100"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle cx="50" cy="50" r="40" />
-    </svg>
-  </div>
-);
-
-const SquareShape = ({ className }: { className?: string }) => (
-  <div
-    className={`absolute transition-all duration-1350 ease-in-out animate-float-reverse ${className}`}
-  >
-    <svg
-      width="540"
-      height="540"
-      viewBox="0 0 80 80"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect x="10" y="10" width="80" height="80" transform="rotate(45 40 40)" />
-    </svg>
-  </div>
-);
-
-const StarShape = ({ className }: { className?: string }) => (
-  <div
-    className={`absolute transition-all duration-1400 ease-in-out animate-float ${className}`}
-  >
-    <svg
-      width="520"
-      height="520"
-      viewBox="0 0 100 100"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M50 5L61 39H97L68 61L79 95L50 73L21 95L32 61L3 39H39L50 5Z" />
-    </svg>
-  </div>
-);
-
-const HexagonShape = ({ className }: { className?: string }) => (
-  <div
-    className={`absolute transition-all duration-1550 ease-in-out animate-float-delayed ${className}`}
-  >
-    <svg
-      width="570"
-      height="570"
-      viewBox="0 0 100 100"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M50 5L90 27.5V72.5L50 95L10 72.5V27.5L50 5Z" />
-    </svg>
-  </div>
-);
+// Shape components have been moved to frosted-glass-background.tsx
 
 // Video background component
 const VideoBackground = ({
@@ -699,18 +621,9 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <BrandedNav />
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <FloatingShape className="text-primary/30 top-1/3 left-[35%]" />
-        <CircleShape className="text-[#40E0D0]/30 top-1/4 right-[40%]" />
-        <SquareShape className="text-primary/35 bottom-[45%] left-[45%]" />
-        <FloatingShape className="text-[#40E0D0]/20 bottom-[40%] right-[35%] rotate-180" />
-        <CircleShape className="text-primary/20 top-[05%] left-[20%]" />
-        <SquareShape className="text-primary/15 top-[35%] right-[45%] rotate-45" />
-        <StarShape className="text-[#40E0D0]/20 bottom-[35%] right-[30%]" />
-        <HexagonShape className="text-[#40E0D0]/20 top-[40%] left-[40%]" />
-      </div>
-
-      <div className="fixed inset-0 backdrop-blur-[45px] pointer-events-none" />
+      
+      {/* Use the new FrostedGlassBackground component */}
+      <FrostedGlassBackground blurIntensity="45px" />
 
       <div className="scroll-container h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory scroll-snap-align:center">
         <section className="snap-section min-h-screen flex items-center justify-center relative snap-start ">
