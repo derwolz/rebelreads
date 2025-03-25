@@ -136,23 +136,27 @@ export function ScrollLandingPage(): React.JSX.Element {
     }
   };
 
-  // Calculate positions based on section index
+  // Determine visibility of the heading stack based on section transitions
+  const isHeadingStackVisible = currentSectionIndex < 2 || 
+    (currentSectionIndex === 2 && progressInSection > 0.3);
+  
+  // Determine opacity for the transition effect when fading back in
+  const transitionOpacity = currentSectionIndex === 2 && progressInSection > 0.3 
+    ? (progressInSection - 0.3) * (1 / 0.7) // Scale from 0 to 1 in the remaining 70% of section 2
+    : 1;
+
+  // Calculate positions based on section index with snap animation
   const headingStackPosition = {
     bottom: currentSectionIndex < 2 
       ? "50%" 
-      : currentSectionIndex === 2 
-        ? `calc(50% - ${progressInSection * 20}vh)` 
-        : "32px",
+      : "32px", // Snap to final position
     left: currentSectionIndex < 2 
       ? "50%" 
-      : currentSectionIndex === 2 
-        ? `calc(50% - ${progressInSection * 30}%)` 
-        : "20px",
+      : "20px", // Snap to final position
     transform: currentSectionIndex < 2 
       ? "translate(-50%, 50%)" 
-      : currentSectionIndex === 2
-        ? `translate(calc(-50% + ${progressInSection * 50}%), 50%)`
-        : "none"
+      : "none",
+    opacity: isHeadingStackVisible ? transitionOpacity : 0
   };
   
   // Style properties with proper casting for TypeScript
@@ -189,7 +193,7 @@ export function ScrollLandingPage(): React.JSX.Element {
           
           {/* Heading stack container */}
           <div 
-            className="absolute z-20 transition-all duration-500"
+            className={`absolute z-20 transition-all duration-500 ${!isHeadingStackVisible ? 'pointer-events-none' : ''}`}
             style={{ 
               ...headingStackPosition,
               ...containerStyle
@@ -235,10 +239,10 @@ export function ScrollLandingPage(): React.JSX.Element {
               className="absolute bottom-32 right-20 max-w-md text-right z-10 transition-all duration-500"
               style={{ 
                 opacity: currentSectionIndex === 2 
-                  ? progressInSection 
+                  ? (progressInSection > 0.3 ? (progressInSection - 0.3) * (1 / 0.7) : 0)
                   : 1,
                 transform: currentSectionIndex === 2
-                  ? `translateX(${50 - (progressInSection * 50)}px)` 
+                  ? `translateX(${(progressInSection > 0.3 ? 50 - ((progressInSection - 0.3) * (1 / 0.7) * 50) : 50)}px)` 
                   : "none"
               }}
             >
@@ -248,12 +252,14 @@ export function ScrollLandingPage(): React.JSX.Element {
             </div>
           )}
           
-          {/* Image for current section - only show after section 1 */}
+          {/* Image for current section - only show after section 2 */}
           {currentSectionIndex >= 2 && (
             <div 
               className="absolute top-1/4 right-20 transform -translate-y-1/2 w-1/3 max-w-md z-5"
               style={{ 
-                opacity: progressInSection < 0.3 ? progressInSection * 3 : 1,
+                opacity: currentSectionIndex === 2 && progressInSection > 0.3 
+                  ? (progressInSection - 0.3) * (1 / 0.7)
+                  : (currentSectionIndex > 2 ? 1 : 0),
                 transform: `translateY(-50%) scale(${0.9 + (progressInSection * 0.1)})` 
               }}
             >
