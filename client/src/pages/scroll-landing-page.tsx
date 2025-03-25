@@ -19,7 +19,7 @@ export function ScrollLandingPage(): React.JSX.Element {
   const { setTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   
   // User type state (Author or Reader)
   const [userType, setUserType] = useState<"author" | "reader">("author");
@@ -106,6 +106,23 @@ export function ScrollLandingPage(): React.JSX.Element {
     }
   };
   
+  // Track events for analytics
+  const trackEvent = async (type: string, data = {}) => {
+    try {
+      await fetch("/api/landing/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          type,
+          data,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to track event:", error);
+    }
+  };
+  
   // Toggle between Author and Reader modes
   const toggleUserType = useCallback(() => {
     const newUserType = userType === "author" ? "reader" : "author";
@@ -119,7 +136,7 @@ export function ScrollLandingPage(): React.JSX.Element {
     
     // Track the mode change
     trackEvent("mode_change", { mode: newUserType });
-  }, [userType, setTheme]);
+  }, [userType, setTheme, sessionId]);
   
   // Check URL hash on component mount to determine initial mode
   useEffect(() => {
@@ -193,23 +210,6 @@ export function ScrollLandingPage(): React.JSX.Element {
   // Calculate progress within the current section (0 to 1)
   const progressInSection = 
     (scrollY - (currentSectionIndex * windowHeight)) / windowHeight;
-
-  // Track section view in analytics
-  const trackEvent = async (type: string, data = {}) => {
-    try {
-      await fetch("/api/landing/event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          type,
-          data,
-        }),
-      });
-    } catch (error) {
-      console.error("Failed to track event:", error);
-    }
-  };
 
   // Determine visibility and opacity of heading stack based on section transitions
   const shouldShowHeadstack = !(currentSectionIndex === 1 && progressInSection >= 0.8) && 
