@@ -136,6 +136,32 @@ export function ScrollLandingPage(): React.JSX.Element {
     }
   };
 
+  // Calculate positions based on section index
+  const headingStackPosition = {
+    bottom: currentSectionIndex < 2 
+      ? "50%" 
+      : currentSectionIndex === 2 
+        ? `calc(50% - ${progressInSection * 20}vh)` 
+        : "32px",
+    left: currentSectionIndex < 2 
+      ? "50%" 
+      : currentSectionIndex === 2 
+        ? `calc(50% - ${progressInSection * 30}%)` 
+        : "20px",
+    transform: currentSectionIndex < 2 
+      ? "translate(-50%, 50%)" 
+      : currentSectionIndex === 2
+        ? `translate(calc(-50% + ${progressInSection * 50}%), 50%)`
+        : "none"
+  };
+  
+  // Style properties with proper casting for TypeScript
+  const containerStyle = {
+    textAlign: (currentSectionIndex < 2 ? "center" : "left") as "center" | "left",
+    width: currentSectionIndex < 2 ? "100%" : "auto",
+    maxWidth: currentSectionIndex < 2 ? "none" : "500px" 
+  };
+
   return (
     <div className="bg-background overflow-hidden" ref={containerRef}>
       <BrandedNav />
@@ -161,102 +187,83 @@ export function ScrollLandingPage(): React.JSX.Element {
             </div>
           )}
           
-          {/* Heading Stack Container */}
-          <div className="absolute w-full h-full">
-            {/* For Sections 0-1: Centered heading only */}
-            {currentSectionIndex < 2 && (
-              <div 
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center w-full px-6 z-10 transition-all duration-500"
-              >
-                <h1 className="text-2xl md:text-3xl font-bold text-primary">
-                  {sections[currentSectionIndex]?.heading}
-                </h1>
-              </div>
-            )}
-            
-            {/* For Section 2+: Bottom left heading stack */}
-            {currentSectionIndex >= 2 && (
-              <div 
-                className="absolute bottom-32 left-20 text-left max-w-md z-20 transition-all duration-500"
-                style={{ 
-                  opacity: 1,
-                  transform: currentSectionIndex === 2 
-                    ? `translateX(${-30 + (progressInSection * 30)}%)` 
-                    : "none" 
-                }}
-              >
-                {/* Stack all headings with current one at the bottom */}
-                <div className="relative">
-                  {/* Previous headings - in ascending order from bottom to top */}
-                  {[...sections.slice(0, currentSectionIndex)].map((section, index) => {
-                    // Calculate vertical position with older ones (lower index) higher up
-                    // First section is at the top, then second, etc.
-                    const reverseIndex = currentSectionIndex - index - 1; // Reverse the index
-                    const stackPosition = (reverseIndex + 1) * 60; // Increased spacing between headings
-                    const opacity = 0.3 + ((reverseIndex + 1) * 0.15); // More opacity for newer ones
-                    
-                    return (
-                      <div
-                        key={section.id}
-                        className="absolute transition-all duration-300"
-                        style={{ 
-                          bottom: `${stackPosition}px`,
-                          opacity: opacity,
-                        }}
-                      >
-                        <h3 className="text-2xl md:text-3xl font-medium text-primary">
-                          {section.heading}
-                        </h3>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Current section heading - at the bottom */}
-                  <div className="relative transition-all duration-300">
-                    <h2 className="text-2xl md:text-3xl font-bold text-primary">
-                      {sections[currentSectionIndex]?.heading}
-                    </h2>
+          {/* Heading stack container */}
+          <div 
+            className="absolute z-20 transition-all duration-500"
+            style={{ 
+              ...headingStackPosition,
+              ...containerStyle
+            }}
+          >
+            {/* Stack all headings with current one at the bottom */}
+            <div className="relative">
+              {/* Previous headings - in ascending order from bottom to top */}
+              {currentSectionIndex > 0 && sections.slice(0, currentSectionIndex).map((section, index) => {
+                // Calculate vertical position with older ones (lower index) higher up
+                const reverseIndex = currentSectionIndex - index - 1; // Reverse the index
+                const stackPosition = (reverseIndex + 1) * 60; // Spacing between headings
+                const opacity = 0.3 + ((reverseIndex + 1) * 0.15); // More opacity for newer ones
+                
+                return (
+                  <div
+                    key={section.id}
+                    className="absolute transition-all duration-300"
+                    style={{ 
+                      bottom: `${stackPosition}px`,
+                      opacity: opacity,
+                    }}
+                  >
+                    <h3 className="text-2xl md:text-3xl font-medium text-primary">
+                      {section.heading}
+                    </h3>
                   </div>
-                </div>
+                );
+              })}
+              
+              {/* Current section heading - at the bottom */}
+              <div className="relative transition-all duration-300">
+                <h2 className="text-2xl md:text-3xl font-bold text-primary">
+                  {sections[currentSectionIndex]?.heading}
+                </h2>
               </div>
-            )}
-            
-            {/* Descriptive text in bottom right - appear for section 2+ */}
-            {currentSectionIndex >= 2 && (
-              <div 
-                className="absolute bottom-32 right-20 max-w-md text-right z-10 transition-all duration-500"
-                style={{ 
-                  opacity: currentSectionIndex === 2 
-                    ? progressInSection 
-                    : 1,
-                  transform: currentSectionIndex === 2
-                    ? `translateX(${50 - (progressInSection * 50)}px)` 
-                    : "none"
-                }}
-              >
-                <p className="text-lg md:text-xl text-foreground/80">
-                  {sections[currentSectionIndex]?.subtext}
-                </p>
-              </div>
-            )}
-            
-            {/* Image for current section - only show after section 1 */}
-            {currentSectionIndex >= 2 && (
-              <div 
-                className="absolute top-1/4 right-20 transform -translate-y-1/2 w-1/3 max-w-md z-5"
-                style={{ 
-                  opacity: progressInSection < 0.3 ? progressInSection * 3 : 1,
-                  transform: `translateY(-50%) scale(${0.9 + (progressInSection * 0.1)})` 
-                }}
-              >
-                <img 
-                  src={sections[currentSectionIndex]?.imageSrc} 
-                  alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
-                  className="w-full h-auto"
-                />
-              </div>
-            )}
+            </div>
           </div>
+          
+          {/* Descriptive text in bottom right - appear for section 2+ */}
+          {currentSectionIndex >= 2 && (
+            <div 
+              className="absolute bottom-32 right-20 max-w-md text-right z-10 transition-all duration-500"
+              style={{ 
+                opacity: currentSectionIndex === 2 
+                  ? progressInSection 
+                  : 1,
+                transform: currentSectionIndex === 2
+                  ? `translateX(${50 - (progressInSection * 50)}px)` 
+                  : "none"
+              }}
+            >
+              <p className="text-lg md:text-xl text-foreground/80">
+                {sections[currentSectionIndex]?.subtext}
+              </p>
+            </div>
+          )}
+          
+          {/* Image for current section - only show after section 1 */}
+          {currentSectionIndex >= 2 && (
+            <div 
+              className="absolute top-1/4 right-20 transform -translate-y-1/2 w-1/3 max-w-md z-5"
+              style={{ 
+                opacity: progressInSection < 0.3 ? progressInSection * 3 : 1,
+                transform: `translateY(-50%) scale(${0.9 + (progressInSection * 0.1)})` 
+              }}
+            >
+              <img 
+                src={sections[currentSectionIndex]?.imageSrc} 
+                alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
+                className="w-full h-auto"
+              />
+            </div>
+          )}
         </div>
       </div>
       
