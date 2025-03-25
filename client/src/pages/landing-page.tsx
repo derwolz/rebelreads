@@ -769,8 +769,6 @@ const LandingPage = () => {
               height: "100vh",
             }}
           >
-            {authorVids[index]}
-            {activePanel}
             <ExpandingCard
               isActive={activePanel === index}
               onExpand={() => {
