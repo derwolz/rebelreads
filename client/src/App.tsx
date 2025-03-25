@@ -48,7 +48,7 @@ function Router() {
       <Switch>
         {/* Public routes */}
         <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
-        <Route path="/landing" component={LandingPage} />
+        <Route path="/landing" component={ScrollLandingPage} />
         <Route path="/scroll-landing" component={ScrollLandingPage} />
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/partner" component={PartnerWithUs} />

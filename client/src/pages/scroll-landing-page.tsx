@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { useTheme } from "@/hooks/use-theme";
-import { useLocation } from "wouter";
+import { ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 
 interface ScrollSection {
   id: string;
@@ -14,13 +13,12 @@ interface ScrollSection {
   backgroundColor: string;
 }
 
-const ScrollLandingPage = (): React.JSX.Element => {
-  const [activeSection, setActiveSection] = useState(0);
-  const [previousSection, setPreviousSection] = useState<number | null>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+export function ScrollLandingPage(): React.JSX.Element {
+  const [scrollY, setScrollY] = useState(0);
   const [sessionId] = useState(() => crypto.randomUUID());
   const { setTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   
   // Define our content sections
   const sections: ScrollSection[] = [
@@ -61,34 +59,30 @@ const ScrollLandingPage = (): React.JSX.Element => {
     }
   ];
 
+  // Total scroll height of the page
+  const totalHeight = sections.length * 100; // 100vh per section
+
   useEffect(() => {
-    // Handle scroll events to update active section
+    // Create a scroll container with the calculated height
+    if (scrollRef.current) {
+      scrollRef.current.style.height = `${totalHeight}vh`;
+    }
+
+    // Handle scroll events to update scrollY state
     const handleScroll = () => {
-      if (!containerRef.current) return;
+      setScrollY(window.scrollY);
       
-      const scrollTop = window.scrollY;
+      // Track section view in analytics if needed
       const windowHeight = window.innerHeight;
-      const docHeight = document.documentElement.scrollHeight;
+      const currentSectionIndex = Math.min(
+        Math.floor(window.scrollY / windowHeight),
+        sections.length - 1
+      );
       
-      // Calculate overall scroll progress (0 to 1)
-      const scrollPercent = scrollTop / (docHeight - windowHeight);
-      setScrollProgress(scrollPercent);
-      
-      // Determine active section based on scroll position
-      const sectionHeight = windowHeight;
-      const rawSectionIndex = Math.floor(scrollTop / sectionHeight);
-      const adjustedSectionIndex = Math.min(rawSectionIndex, sections.length - 1);
-      
-      if (adjustedSectionIndex !== activeSection) {
-        setPreviousSection(activeSection);
-        setActiveSection(adjustedSectionIndex);
-        
-        // Track section view in analytics
-        trackEvent("section_view", { sectionIndex: adjustedSectionIndex });
-      }
+      // You could add section tracking logic here if needed
     };
     
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     
     // Initialize session tracking
     fetch("/api/landing/session", {
@@ -122,8 +116,28 @@ const ScrollLandingPage = (): React.JSX.Element => {
       window.removeEventListener("beforeunload", trackEndSession);
       trackEndSession();
     };
-  }, [activeSection, sessionId, sections.length]);
+  }, [sessionId, totalHeight, sections.length]);
   
+  // Calculate which section is currently active based on scroll position
+  const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+  const currentSectionIndex = Math.min(
+    Math.floor(scrollY / windowHeight),
+    sections.length - 1
+  );
+  
+  // Calculate progress within the current section (0 to 1)
+  const progressInSection = 
+    (scrollY - (currentSectionIndex * windowHeight)) / windowHeight;
+  
+  // Determine which headings should be visible in the stack
+  const visibleHeadings = currentSectionIndex >= 3 
+    ? sections.slice(0, currentSectionIndex)
+    : [];
+  
+  // Calculate the transition progress
+  const transitionToBottomLeft = currentSectionIndex >= 2 ? Math.min(progressInSection, 1) : 0;
+  
+  // Track section view in analytics
   const trackEvent = async (type: string, data = {}) => {
     try {
       await fetch("/api/landing/event", {
@@ -141,120 +155,132 @@ const ScrollLandingPage = (): React.JSX.Element => {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-background overflow-hidden"
-      ref={containerRef}
-    >
+    <div className="bg-background overflow-hidden" ref={containerRef}>
       <BrandedNav />
       
-      {/* Full-height container for the scrollable content */}
-      <div className="relative">
-        {/* Sections container */}
-        {sections.map((section, index) => (
+      {/* Create a container with the full scroll height */}
+      <div className="relative" ref={scrollRef}>
+        {/* Fixed viewport container that shows content based on scroll */}
+        <div className="fixed top-0 left-0 w-full h-screen overflow-hidden">
+          {/* Background color transitions with scroll */}
           <div 
-            key={section.id}
-            className={`h-screen w-full flex flex-col items-center justify-center relative ${section.backgroundColor} transition-colors duration-700`}
-            id={section.id}
-          >
-            {index === 0 && (
-              <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
-                <ChevronDown className="w-8 h-8 text-primary" />
+            className={`absolute inset-0 transition-colors duration-300 ${
+              sections[currentSectionIndex]?.backgroundColor || 'bg-primary/5'
+            }`}
+          />
+          
+          {/* Scroll indicator for first section */}
+          {currentSectionIndex === 0 && progressInSection < 0.5 && (
+            <div 
+              className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce z-10"
+              style={{ opacity: 1 - progressInSection * 2 }}
+            >
+              <ChevronDown className="w-8 h-8 text-primary" />
+            </div>
+          )}
+          
+          {/* Center heading - initial state (sections 0-2) */}
+          {currentSectionIndex <= 2 && (
+            <div 
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-10 w-full px-6"
+              style={{
+                opacity: currentSectionIndex === 2 ? 1 - transitionToBottomLeft : 1,
+                transform: currentSectionIndex === 2 
+                  ? `translate(-50%, calc(-50% + ${transitionToBottomLeft * 35}vh))`
+                  : 'translate(-50%, -50%)'
+              }}
+            >
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 text-primary">
+                {sections[currentSectionIndex]?.heading}
+              </h1>
+              <p className="text-xl md:text-2xl max-w-3xl mx-auto text-foreground/80">
+                {sections[currentSectionIndex]?.subtext}
+              </p>
+            </div>
+          )}
+          
+          {/* Layout for section 3+ with heading at bottom left and subtext at bottom right */}
+          {currentSectionIndex >= 2 && (
+            <>
+              {/* Image at top */}
+              <div 
+                className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-1/2 max-w-xl"
+                style={{ 
+                  opacity: currentSectionIndex === 2 ? transitionToBottomLeft : 1,
+                  transform: `translate(-50%, 0) scale(${
+                    currentSectionIndex === 2 
+                      ? 0.8 + (transitionToBottomLeft * 0.2) 
+                      : 1
+                  })` 
+                }}
+              >
+                <img 
+                  src={sections[currentSectionIndex]?.imageSrc} 
+                  alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
+                  className="w-full h-auto"
+                />
               </div>
-            )}
-            
-            {/* Central heading for sections 0, 1, 2 */}
-            {index <= 2 && activeSection === index && (
-              <div className="container mx-auto px-4 text-center z-10">
-                <motion.h1 
-                  className="text-4xl md:text-6xl font-bold mb-6 text-primary animate-slide-bottom"
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.7 }}
-                >
-                  {section.heading}
-                </motion.h1>
-                <motion.p 
-                  className="text-xl md:text-2xl max-w-3xl mx-auto text-foreground/80 animate-fade-scale"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.7, delay: 0.3 }}
-                >
-                  {section.subtext}
-                </motion.p>
+              
+              {/* Heading at bottom left */}
+              <div 
+                className="absolute bottom-24 left-10 md:left-20 max-w-md z-10"
+                style={{ 
+                  opacity: currentSectionIndex === 2 ? transitionToBottomLeft : 1,
+                  transform: currentSectionIndex === 2
+                    ? `translateX(${-50 + (transitionToBottomLeft * 50)}px)`
+                    : 'translateX(0)'
+                }}
+              >
+                <h2 className="text-3xl md:text-4xl font-bold text-primary">
+                  {sections[currentSectionIndex]?.heading}
+                </h2>
               </div>
-            )}
-            
-            {/* Section 3+ layout - heading moves to bottom left, subtext to bottom right, image appears */}
-            {index >= 3 && activeSection === index && (
-              <>
-                {/* Image at top */}
-                <motion.div 
-                  className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-1/2 max-w-xl animate-fade-scale"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.7 }}
-                >
-                  <img 
-                    src={section.imageSrc} 
-                    alt={`Illustration for ${section.heading}`}
-                    className="w-full h-auto"
-                  />
-                </motion.div>
-                
-                {/* Heading at bottom left */}
-                <motion.div 
-                  className="absolute bottom-24 left-10 md:left-20 max-w-md z-10 animate-slide-left"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.7 }}
-                >
-                  <h2 className="text-3xl md:text-4xl font-bold text-primary">
-                    {section.heading}
-                  </h2>
-                </motion.div>
-                
-                {/* Subtext at bottom right */}
-                <motion.div 
-                  className="absolute bottom-24 right-10 md:right-20 max-w-md text-right z-10 animate-slide-right"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.7, delay: 0.2 }}
-                >
-                  <p className="text-lg md:text-xl text-foreground/80">
-                    {section.subtext}
-                  </p>
-                </motion.div>
-              </>
-            )}
-          </div>
-        ))}
-        
-        {/* Fixed heading stack for sections 3+ */}
-        <div className="fixed left-10 top-32 z-20 max-w-md pointer-events-none">
-          <AnimatePresence>
-            {activeSection >= 3 && activeSection < sections.length &&
-              sections.slice(0, activeSection).map((section, index) => (
-                <motion.div
+              
+              {/* Subtext at bottom right */}
+              <div 
+                className="absolute bottom-24 right-10 md:right-20 max-w-md text-right z-10"
+                style={{ 
+                  opacity: currentSectionIndex === 2 ? transitionToBottomLeft : 1,
+                  transform: currentSectionIndex === 2
+                    ? `translateX(${50 - (transitionToBottomLeft * 50)}px)`
+                    : 'translateX(0)'
+                }}
+              >
+                <p className="text-lg md:text-xl text-foreground/80">
+                  {sections[currentSectionIndex]?.subtext}
+                </p>
+              </div>
+            </>
+          )}
+          
+          {/* Fixed heading stack for sections 3+ */}
+          <div className="fixed left-10 top-32 z-20 max-w-md pointer-events-none">
+            {currentSectionIndex >= 3 && visibleHeadings.map((section, index) => {
+              // Calculate vertical position based on index and scroll progress
+              const topOffset = index * 2.5;
+              
+              return (
+                <div
                   key={section.id}
-                  className="mb-4 opacity-60 hover:opacity-80 transition-opacity animate-push-up"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 0.6, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.5 }}
+                  className="mb-4 opacity-60 hover:opacity-80 transition-opacity"
+                  style={{ 
+                    transform: `translateY(${topOffset - (progressInSection * 2)}rem)`,
+                    opacity: 0.6 - (index * 0.1)
+                  }}
                 >
                   <h3 className="text-lg md:text-xl font-medium text-primary/80">
                     {section.heading}
                   </h3>
-                </motion.div>
-              ))
-            }
-          </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
       
       <FloatingSignup />
     </div>
   );
-};
+}
 
 export default ScrollLandingPage;
