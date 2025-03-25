@@ -136,14 +136,22 @@ export function ScrollLandingPage(): React.JSX.Element {
     }
   };
 
-  // Determine visibility of the heading stack based on section transitions
-  const isHeadingStackVisible = currentSectionIndex < 2 || 
-    (currentSectionIndex === 2 && progressInSection > 0.3);
+  // Determine visibility and opacity of heading stack based on section transitions
+  const shouldShowHeadstack = !(currentSectionIndex === 1 && progressInSection >= 0.8) && 
+                             !(currentSectionIndex === 2 && progressInSection < 0.2);
   
-  // Determine opacity for the transition effect when fading back in
-  const transitionOpacity = currentSectionIndex === 2 && progressInSection > 0.3 
-    ? (progressInSection - 0.3) * (1 / 0.7) // Scale from 0 to 1 in the remaining 70% of section 2
+  // Calculate the fade-out opacity at the end of section 2
+  const fadeOutOpacity = currentSectionIndex === 1 && progressInSection >= 0.8 
+    ? 1 - ((progressInSection - 0.8) * 5) // Scale from 1 to 0 in last 20% of section 1
     : 1;
+    
+  // Calculate the fade-in opacity at the beginning of section 3
+  const fadeInOpacity = currentSectionIndex === 2 && progressInSection <= 0.2 
+    ? progressInSection * 5 // Scale from 0 to 1 in first 20% of section 2
+    : 1;
+    
+  // Combined opacity effect
+  const transitionOpacity = Math.min(fadeOutOpacity, fadeInOpacity);
 
   // Calculate positions based on section index with snap animation
   const headingStackPosition = {
@@ -156,7 +164,7 @@ export function ScrollLandingPage(): React.JSX.Element {
     transform: currentSectionIndex < 2 
       ? "translate(-50%, 50%)" 
       : "none",
-    opacity: isHeadingStackVisible ? transitionOpacity : 0
+    opacity: shouldShowHeadstack ? transitionOpacity : 0
   };
   
   // Style properties with proper casting for TypeScript
@@ -165,6 +173,11 @@ export function ScrollLandingPage(): React.JSX.Element {
     width: currentSectionIndex < 2 ? "100%" : "auto",
     maxWidth: currentSectionIndex < 2 ? "none" : "500px" 
   };
+
+  // Calculate image and subtext opacity with same timing as headings
+  const elementsOpacity = currentSectionIndex === 2 
+    ? (progressInSection <= 0.2 ? progressInSection * 5 : 1) 
+    : (currentSectionIndex > 2 ? 1 : 0);
 
   return (
     <div className="bg-background overflow-hidden" ref={containerRef}>
@@ -193,7 +206,7 @@ export function ScrollLandingPage(): React.JSX.Element {
           
           {/* Heading stack container */}
           <div 
-            className={`absolute z-20 transition-all duration-500 ${!isHeadingStackVisible ? 'pointer-events-none' : ''}`}
+            className={`absolute z-20 transition-all duration-500 ${!shouldShowHeadstack ? 'pointer-events-none' : ''}`}
             style={{ 
               ...headingStackPosition,
               ...containerStyle
@@ -238,11 +251,9 @@ export function ScrollLandingPage(): React.JSX.Element {
             <div 
               className="absolute bottom-32 right-20 max-w-md text-right z-10 transition-all duration-500"
               style={{ 
-                opacity: currentSectionIndex === 2 
-                  ? (progressInSection > 0.3 ? (progressInSection - 0.3) * (1 / 0.7) : 0)
-                  : 1,
-                transform: currentSectionIndex === 2
-                  ? `translateX(${(progressInSection > 0.3 ? 50 - ((progressInSection - 0.3) * (1 / 0.7) * 50) : 50)}px)` 
+                opacity: elementsOpacity,
+                transform: currentSectionIndex === 2 && progressInSection <= 0.2
+                  ? `translateX(${50 - (progressInSection * 5 * 50)}px)` 
                   : "none"
               }}
             >
@@ -257,9 +268,7 @@ export function ScrollLandingPage(): React.JSX.Element {
             <div 
               className="absolute top-1/4 right-20 transform -translate-y-1/2 w-1/3 max-w-md z-5"
               style={{ 
-                opacity: currentSectionIndex === 2 && progressInSection > 0.3 
-                  ? (progressInSection - 0.3) * (1 / 0.7)
-                  : (currentSectionIndex > 2 ? 1 : 0),
+                opacity: elementsOpacity,
                 transform: `translateY(-50%) scale(${0.9 + (progressInSection * 0.1)})` 
               }}
             >
