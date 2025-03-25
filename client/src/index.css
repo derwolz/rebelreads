@@ -127,6 +127,72 @@
 .card-animate-out {
   animation: cardRotateOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* Scroll landing page animations */
+@keyframes slideInFromBottom {
+  0% {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeScale {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-slide-bottom {
+  animation: slideInFromBottom 0.7s ease forwards;
+}
+
+.animate-slide-left {
+  animation: slideInFromLeft 0.7s ease forwards;
+}
+
+.animate-slide-right {
+  animation: slideInFromRight 0.7s ease forwards;
+}
+
+.animate-fade-scale {
+  animation: fadeScale 0.7s ease forwards;
+}
+
+.scroll-heading-stack {
+  transition: transform 0.5s ease-out;
+}
+
 @tailwind utilities;
 
 @layer base {

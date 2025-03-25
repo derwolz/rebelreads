@@ -11,6 +11,7 @@ import { FloatingSignup } from "@/components/floating-signup";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import LandingPage from "@/pages/landing-page";
+import ScrollLandingPage from "@/pages/scroll-landing-page";
 import BookDetails from "@/pages/book-details";
 import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
@@ -32,7 +33,7 @@ function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
   const [location] = useLocation();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing"];
   const isApiPath = location.startsWith("/api");
   const [path, hash] = location.split("#");
 
@@ -48,6 +49,7 @@ function Router() {
         {/* Public routes */}
         <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
         <Route path="/landing" component={LandingPage} />
+        <Route path="/scroll-landing" component={ScrollLandingPage} />
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/partner" component={PartnerWithUs} />
         <Route path="/books/:id" component={BookDetails} />
