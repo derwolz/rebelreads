@@ -28,35 +28,35 @@ const ScrollLandingPage = () => {
       id: "section-1",
       heading: "Welcome to a New Reading Experience",
       subtext: "Discover a platform where stories come to life",
-      imageSrc: "/images/book-stack.svg", // Replace with actual image path
+      imageSrc: "/src/public/images/book-stack.svg",
       backgroundColor: "bg-primary/5"
     },
     {
       id: "section-2",
       heading: "Connect with Your Favorite Authors",
       subtext: "Follow and engage with creators who inspire you",
-      imageSrc: "/images/author-writing.svg", // Replace with actual image path
+      imageSrc: "/src/public/images/author-writing.svg",
       backgroundColor: "bg-primary/10"
     },
     {
       id: "section-3",
       heading: "Explore New Literary Worlds",
       subtext: "Find your next favorite story in our vast collection",
-      imageSrc: "/images/reading-adventure.svg", // Replace with actual image path
+      imageSrc: "/src/public/images/reading-adventure.svg",
       backgroundColor: "bg-primary/15"
     },
     {
       id: "section-4",
       heading: "Join Our Growing Community",
       subtext: "Be part of a network of passionate readers and writers",
-      imageSrc: "/images/community-readers.svg", // Replace with actual image path
+      imageSrc: "/src/public/images/community-readers.svg",
       backgroundColor: "bg-primary/20"
     },
     {
       id: "section-5",
       heading: "Start Your Journey Today",
       subtext: "Sign up and unlock the full potential of your reading experience",
-      imageSrc: "/images/journey-start.svg", // Replace with actual image path
+      imageSrc: "/src/public/images/journey-start.svg",
       backgroundColor: "bg-primary/25"
     }
   ];
