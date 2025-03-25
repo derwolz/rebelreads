@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
 import { useTheme } from "@/hooks/use-theme";
+import { useLocation } from "wouter";
 
 interface ScrollSection {
   id: string;
@@ -18,45 +19,119 @@ export function ScrollLandingPage(): React.JSX.Element {
   const { setTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [location, setLocation] = useLocation();
   
-  // Define our content sections
-  const sections: ScrollSection[] = [
-    {
-      id: "section-1",
-      heading: "Welcome to a New Reading Experience",
-      subtext: "", // No subtext for first section
-      imageSrc: "/images/book-stack.svg",
-      backgroundColor: "bg-primary/5"
+  // User type state (Author or Reader)
+  const [userType, setUserType] = useState<"author" | "reader">("author");
+  
+  // Author and Reader content variations
+  const contentVariations = {
+    author: {
+      sections: [
+        {
+          id: "section-1",
+          heading: "Welcome to a New Reading Experience",
+          subtext: "", // No subtext for first section
+          imageSrc: "/images/book-stack.svg",
+          backgroundColor: "bg-primary/5"
+        },
+        {
+          id: "section-2",
+          heading: "Connect with Your Favorite Authors",
+          subtext: "", // No subtext for second section
+          imageSrc: "/images/author-writing.svg",
+          backgroundColor: "bg-primary/10"
+        },
+        {
+          id: "section-3",
+          heading: "Explore New Literary Worlds",
+          subtext: "Find your next favorite story in our vast collection",
+          imageSrc: "/images/reading-adventure.svg",
+          backgroundColor: "bg-primary/15"
+        },
+        {
+          id: "section-4",
+          heading: "Join Our Growing Community",
+          subtext: "Be part of a network of passionate readers and writers",
+          imageSrc: "/images/community-readers.svg",
+          backgroundColor: "bg-primary/20"
+        },
+        {
+          id: "section-5",
+          heading: "Start Your Journey Today",
+          subtext: "Sign up and unlock the full potential of your reading experience",
+          imageSrc: "/images/journey-start.svg",
+          backgroundColor: "bg-primary/25"
+        }
+      ]
     },
-    {
-      id: "section-2",
-      heading: "Connect with Your Favorite Authors",
-      subtext: "", // No subtext for second section
-      imageSrc: "/images/author-writing.svg",
-      backgroundColor: "bg-primary/10"
-    },
-    {
-      id: "section-3",
-      heading: "Explore New Literary Worlds",
-      subtext: "Find your next favorite story in our vast collection",
-      imageSrc: "/images/reading-adventure.svg",
-      backgroundColor: "bg-primary/15"
-    },
-    {
-      id: "section-4",
-      heading: "Join Our Growing Community",
-      subtext: "Be part of a network of passionate readers and writers",
-      imageSrc: "/images/community-readers.svg",
-      backgroundColor: "bg-primary/20"
-    },
-    {
-      id: "section-5",
-      heading: "Start Your Journey Today",
-      subtext: "Sign up and unlock the full potential of your reading experience",
-      imageSrc: "/images/journey-start.svg",
-      backgroundColor: "bg-primary/25"
+    reader: {
+      sections: [
+        {
+          id: "section-1",
+          heading: "Discover Your Next Reading Adventure",
+          subtext: "", // No subtext for first section
+          imageSrc: "/images/book-stack.svg",
+          backgroundColor: "bg-primary/5"
+        },
+        {
+          id: "section-2",
+          heading: "Find Books You'll Love",
+          subtext: "", // No subtext for second section
+          imageSrc: "/images/author-writing.svg",
+          backgroundColor: "bg-primary/10"
+        },
+        {
+          id: "section-3",
+          heading: "Track Your Reading Journey",
+          subtext: "Keep a record of books you've read and want to read",
+          imageSrc: "/images/reading-adventure.svg",
+          backgroundColor: "bg-primary/15"
+        },
+        {
+          id: "section-4",
+          heading: "Join Discussions With Other Readers",
+          subtext: "Share your thoughts and see what others are reading",
+          imageSrc: "/images/community-readers.svg",
+          backgroundColor: "bg-primary/20"
+        },
+        {
+          id: "section-5",
+          heading: "Make Reading Social",
+          subtext: "Connect with friends and share recommendations",
+          imageSrc: "/images/journey-start.svg",
+          backgroundColor: "bg-primary/25"
+        }
+      ]
     }
-  ];
+  };
+  
+  // Toggle between Author and Reader modes
+  const toggleUserType = useCallback(() => {
+    const newUserType = userType === "author" ? "reader" : "author";
+    setUserType(newUserType);
+    
+    // Update theme based on user type
+    setTheme(newUserType === "author" ? "dark" : "light");
+    
+    // Update URL hash for direct access
+    window.location.hash = newUserType;
+    
+    // Track the mode change
+    trackEvent("mode_change", { mode: newUserType });
+  }, [userType, setTheme]);
+  
+  // Check URL hash on component mount to determine initial mode
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'reader' || hash === 'author') {
+      setUserType(hash as "author" | "reader");
+      setTheme(hash === "author" ? "dark" : "light");
+    }
+  }, [setTheme]);
+  
+  // Use dynamic content based on selected user type
+  const sections: ScrollSection[] = contentVariations[userType].sections;
 
   // Total scroll height of the page
   const totalHeight = sections.length * 100; // 100vh per section
@@ -182,6 +257,32 @@ export function ScrollLandingPage(): React.JSX.Element {
   return (
     <div className="bg-background overflow-hidden" ref={containerRef}>
       <BrandedNav />
+      
+      {/* User type toggle button - only show in first section or when scrolling to it */}
+      {currentSectionIndex === 0 && (
+        <div 
+          className="fixed top-24 right-8 z-50 transition-opacity duration-500"
+          style={{ opacity: 1 - (progressInSection * 2) }} // Fade out as user scrolls
+        >
+          <button 
+            className="mode-toggle-button flex items-center gap-2"
+            onClick={toggleUserType}
+            aria-label={`Switch to ${userType === "author" ? "reader" : "author"} mode`}
+          >
+            {userType === "author" ? (
+              <>
+                <Book className="w-4 h-4" />
+                <span>Reader Mode</span>
+              </>
+            ) : (
+              <>
+                <User className="w-4 h-4" />
+                <span>Author Mode</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
       
       {/* Create a container with the full scroll height */}
       <div className="relative" ref={scrollRef}>
