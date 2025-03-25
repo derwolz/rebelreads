@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
+import { FrostedGlassBackground } from "@/components/frosted-glass-background";
 import { useTheme } from "@/hooks/use-theme";
 import { useLocation } from "wouter";
 
