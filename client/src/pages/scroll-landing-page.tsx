@@ -218,7 +218,17 @@ export function ScrollLandingPage(): React.JSX.Element {
               {currentSectionIndex > 0 && sections.slice(0, currentSectionIndex).map((section, index) => {
                 // Calculate vertical position with older ones (lower index) higher up
                 const reverseIndex = currentSectionIndex - index - 1; // Reverse the index
-                const stackPosition = (reverseIndex + 1) * 60; // Spacing between headings
+                
+                // Calculate initial vertical position
+                let stackPosition = (reverseIndex + 1) * 60; // Spacing between headings
+                
+                // Add animation effect for the first heading when the second section is active
+                if (currentSectionIndex === 1 && index === 0) {
+                  // Smoothly move heading 1 upward as user scrolls through section 2
+                  stackPosition += progressInSection * 20; // Adjust travel distance (in pixels)
+                }
+                
+                // Opacity calculation with emphasis on the newest one
                 const opacity = 0.3 + ((reverseIndex + 1) * 0.15); // More opacity for newer ones
                 
                 return (
@@ -228,6 +238,7 @@ export function ScrollLandingPage(): React.JSX.Element {
                     style={{ 
                       bottom: `${stackPosition}px`,
                       opacity: opacity,
+                      left: currentSectionIndex === 1 && index === 0 ? `-${progressInSection * 5}px` : "0"
                     }}
                   >
                     <h3 className="text-2xl md:text-3xl font-medium text-primary">
