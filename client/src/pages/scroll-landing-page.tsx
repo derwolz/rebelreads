@@ -375,10 +375,14 @@ export function ScrollLandingPage(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Descriptive text in bottom right - appear for section 2+ */}
+          {/* Descriptive text - appear for section 2+ */}
           {currentSectionIndex >= 2 && (
             <div
-              className="absolute bottom-32 right-20 max-w-md text-right z-10 transition-all duration-500"
+              className={`absolute bottom-32 max-w-md z-10 transition-all duration-500 ${
+                currentSectionIndex >= sections.length - 2
+                  ? "left-1/2 -translate-x-1/2 text-center" // Center text for last two panels
+                  : "right-20 text-right" // Keep right alignment for other panels
+              }`}
               style={{
                 opacity: elementsOpacity,
                 transform:
@@ -396,7 +400,11 @@ export function ScrollLandingPage(): React.JSX.Element {
           {/* Image for current section - only show after section 2 */}
           {currentSectionIndex >= 2 && (
             <div
-              className="absolute top-1/4 right-20 transform -translate-y-1/2 w-1/3 max-w-md z-5"
+              className={`absolute top-1/4 transform -translate-y-1/2 w-1/3 max-w-md z-5 ${
+                currentSectionIndex >= sections.length - 2 
+                  ? "left-1/2 -translate-x-1/2" // Center the image in the last two panels
+                  : "right-20" // Keep right positioning for other panels
+              }`}
               style={{
                 opacity: elementsOpacity,
                 transform: `translateY(-50%) scale(${0.9 + progressInSection * 0.1})`,
