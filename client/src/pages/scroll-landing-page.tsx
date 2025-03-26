@@ -280,13 +280,11 @@ export function ScrollLandingPage(): React.JSX.Element {
           >
             {userType === "author" ? (
               <>
-                <Book className="w-4 h-4" />
-                <span>Reader Mode</span>
+                <span>Author</span>
               </>
             ) : (
               <>
-                <User className="w-4 h-4" />
-                <span>Author Mode</span>
+                <span>Reader</span>
               </>
             )}
           </button>
