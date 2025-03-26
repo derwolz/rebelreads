@@ -361,7 +361,7 @@ export function ScrollLandingPage(): React.JSX.Element {
                             : "auto",
                       }}
                     >
-                      <h3 className="text-2xl md:text-3xl drop-shadow-lg drop-shadow-[16px_4px_8px_rgba(0,0,0,1)] font-medium text-primary">
+                      <h3 className={`text-2xl md:text-3xl font-medium text-primary ${userType === "author" ? "drop-shadow-lg drop-shadow-[16px_4px_8px_rgba(0,0,0,1)]" : ""}`}>
                         {section.heading}
                       </h3>
                     </div>
@@ -370,7 +370,7 @@ export function ScrollLandingPage(): React.JSX.Element {
 
               {/* Current section heading - at the bottom */}
               <div className="relative transition-all duration-300">
-                <h2 className="text-2xl md:text-3xl drop-shadow-[0px_2px_2px_rgba(0,0,0,1)] font-bold text-primary">
+                <h2 className={`text-2xl md:text-3xl font-bold text-primary ${userType === "author" ? "drop-shadow-[0px_2px_2px_rgba(0,0,0,1)]" : ""}`}>
                   {sections[currentSectionIndex]?.heading}
                 </h2>
               </div>
