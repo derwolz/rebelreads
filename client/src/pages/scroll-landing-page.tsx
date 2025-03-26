@@ -274,7 +274,7 @@ export function ScrollLandingPage(): React.JSX.Element {
           style={{ opacity: 1 - progressInSection * 2 }} // Fade out as user scrolls
         >
           <button
-            className="mode-toggle-button flex items-center justify-center gap-2.5 bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors"
+            className="mode-toggle-button flex items-center justify-center gap-2.5 text-primary px-4 py-2 rounded-md  transition-colors"
             onClick={toggleUserType}
             aria-label={`Switch to ${userType === "author" ? "reader" : "author"} mode`}
           >
