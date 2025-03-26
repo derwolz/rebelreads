@@ -3,6 +3,7 @@ import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
 import { FrostedGlassBackground } from "@/components/frosted-glass-background";
+import { BookMetricsDashboard } from "@/components/book-metrics-dashboard";
 import { useTheme } from "@/hooks/use-theme";
 import { useLocation } from "wouter";
 
@@ -52,9 +53,9 @@ export function ScrollLandingPage(): React.JSX.Element {
         },
         {
           id: "section-4",
-          heading: "Join Our Growing Community",
-          subtext: "Be part of a network of passionate readers and writers",
-          imageSrc: "/images/community-readers.svg",
+          heading: "Track Your Book Performance",
+          subtext: "Analyze impressions, referrals, and wishlists with powerful analytics",
+          imageSrc: "/images/community-readers.svg", // This won't be used but kept for fallback
           backgroundColor: "bg-primary/20",
         },
         {
@@ -92,8 +93,8 @@ export function ScrollLandingPage(): React.JSX.Element {
         },
         {
           id: "section-4",
-          heading: "Join Discussions With Other Readers",
-          subtext: "Share your thoughts and see what others are reading",
+          heading: "Track Reading Insights",
+          subtext: "Get personalized recommendations and analyze your reading habits",
           imageSrc: "/images/community-readers.svg",
           backgroundColor: "bg-primary/20",
         },
@@ -397,25 +398,41 @@ export function ScrollLandingPage(): React.JSX.Element {
             </div>
           )}
 
-          {/* Image for current section - only show after section 2 */}
+          {/* Content for sections - conditional rendering based on section index */}
           {currentSectionIndex >= 2 && (
-            <div
-              className={`absolute top-1/4 transform -translate-y-1/2 w-1/3 max-w-md z-5 ${
-                currentSectionIndex >= sections.length - 2 
-                  ? "left-1/2 -translate-x-1/2" // Center the image in the last two panels
-                  : "right-20" // Keep right positioning for other panels
-              }`}
-              style={{
-                opacity: elementsOpacity,
-                transform: `translateY(-50%) scale(${0.9 + progressInSection * 0.1})`,
-              }}
-            >
-              <img
-                src={sections[currentSectionIndex]?.imageSrc}
-                alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
-                className="w-full h-auto"
-              />
-            </div>
+            <>
+              {/* Show dashboard for section 4 */}
+              {currentSectionIndex === 3 ? (
+                <div
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-4xl z-5"
+                  style={{
+                    opacity: elementsOpacity,
+                    transform: `translate(-50%, -50%) scale(${0.9 + progressInSection * 0.1})`,
+                  }}
+                >
+                  <BookMetricsDashboard />
+                </div>
+              ) : (
+                /* Show regular image for other sections */
+                <div
+                  className={`absolute top-1/4 transform -translate-y-1/2 w-1/3 max-w-md z-5 ${
+                    currentSectionIndex >= sections.length - 2 
+                      ? "left-1/2 -translate-x-1/2" // Center the image in the last two panels
+                      : "right-20" // Keep right positioning for other panels
+                  }`}
+                  style={{
+                    opacity: elementsOpacity,
+                    transform: `translateY(-50%) scale(${0.9 + progressInSection * 0.1})`,
+                  }}
+                >
+                  <img
+                    src={sections[currentSectionIndex]?.imageSrc}
+                    alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
+                    className="w-full h-auto"
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
