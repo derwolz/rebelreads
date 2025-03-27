@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 interface WaveBackgroundProps {
@@ -12,15 +12,22 @@ interface WaveBackgroundProps {
    * Default is true
    */
   fixed?: boolean;
+  
+  /**
+   * Enable scroll-based camera movement
+   * Default is false
+   */
+  scrollEnabled?: boolean;
 }
 
 /**
  * WaveBackground component creates an animated ocean wave effect using Three.js
- * with the camera positioned at the water's surface, sky above, and blue water below
+ * with the camera position adjustable via scrolling
  */
 export function WaveBackground({
   className = "",
   fixed = true,
+  scrollEnabled = false,
 }: WaveBackgroundProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -28,7 +35,9 @@ export function WaveBackground({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const waterMeshRef = useRef<THREE.Mesh | null>(null);
   const underwaterMeshRef = useRef<THREE.Mesh | null>(null);
+  const seabedMeshRef = useRef<THREE.Mesh | null>(null);
   const positionClass = fixed ? "fixed" : "absolute";
+  const [initialCameraY] = useState(8); // Start above water
   
   useEffect(() => {
     if (!containerRef.current) return;
@@ -39,16 +48,16 @@ export function WaveBackground({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     
-    // Create camera - position at water level
+    // Create camera - position initially above water level
     const camera = new THREE.PerspectiveCamera(
       70, 
       window.innerWidth / window.innerHeight, 
       0.1, 
       1000
     );
-    // Position camera at water level with a slight upward angle
-    camera.position.set(0, 0, 5);
-    camera.lookAt(0, 2, 0);
+    // Start with camera above water looking down at an angle
+    camera.position.set(0, initialCameraY, 12);
+    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
     
     // Create renderer
@@ -62,7 +71,7 @@ export function WaveBackground({
     rendererRef.current = renderer;
     
     // Create the water surface geometry
-    const waterGeometry = new THREE.PlaneGeometry(100, 100, 128, 128);
+    const waterGeometry = new THREE.PlaneGeometry(200, 200, 128, 128);
     
     // Create water surface shader material
     const waterMaterial = new THREE.ShaderMaterial({
@@ -198,12 +207,12 @@ export function WaveBackground({
     // Create the water surface mesh
     const waterMesh = new THREE.Mesh(waterGeometry, waterMaterial);
     waterMesh.rotation.x = -Math.PI / 2; // Make the plane horizontal
-    waterMesh.position.y = 0; // At camera level
+    waterMesh.position.y = 0; // At water level
     scene.add(waterMesh);
     waterMeshRef.current = waterMesh;
     
     // Create underwater volume with deep blue color
-    const underwaterGeometry = new THREE.BoxGeometry(100, 20, 100);
+    const underwaterGeometry = new THREE.BoxGeometry(200, 40, 200);
     const underwaterMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -234,14 +243,14 @@ export function WaveBackground({
         
         void main() {
           // Calculate depth gradient (deeper = darker)
-          float depthFactor = smoothstep(-20.0, 0.0, vDepth);
+          float depthFactor = smoothstep(-40.0, 0.0, vDepth);
           vec3 color = mix(uDepthColor, uSurfaceColor, depthFactor);
           
           // Add some caustics near the surface
-          if (vDepth > -5.0) {
+          if (vDepth > -8.0) {
             float causticIntensity = random(vUv + uTime * 0.05) * 0.1;
             float causticPattern = sin(vUv.x * 20.0 + uTime) * sin(vUv.y * 20.0 + uTime * 1.3) * 0.5 + 0.5;
-            causticPattern *= smoothstep(-5.0, -1.0, vDepth); // Stronger near surface
+            causticPattern *= smoothstep(-8.0, -1.0, vDepth); // Stronger near surface
             color += vec3(0.2, 0.3, 0.4) * causticPattern * causticIntensity;
           }
           
@@ -256,12 +265,107 @@ export function WaveBackground({
     });
     
     const underwaterMesh = new THREE.Mesh(underwaterGeometry, underwaterMaterial);
-    underwaterMesh.position.y = -10; // Position below the water surface
+    underwaterMesh.position.y = -20; // Position below the water surface
     scene.add(underwaterMesh);
     underwaterMeshRef.current = underwaterMesh;
     
+    // Create seabed at the bottom
+    const seabedGeometry = new THREE.PlaneGeometry(200, 200, 64, 64);
+    const seabedMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uSandColor: { value: new THREE.Color(0x1a3040) }, // Dark sand color
+        uRockColor: { value: new THREE.Color(0x121e28) }, // Darker rock color
+      },
+      vertexShader: `
+        uniform float uTime;
+        
+        varying vec2 vUv;
+        varying float vElevation;
+        
+        // Simplex 3D noise function (simplified version)
+        float random(vec2 st) {
+          return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
+        
+        // Simple noise function for seabed terrain
+        float noise(vec2 st) {
+          vec2 i = floor(st);
+          vec2 f = fract(st);
+          
+          float a = random(i);
+          float b = random(i + vec2(1.0, 0.0));
+          float c = random(i + vec2(0.0, 1.0));
+          float d = random(i + vec2(1.0, 1.0));
+          
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+        
+        void main() {
+          vUv = uv;
+          
+          // Create seabed terrain with multiple noise layers
+          float n1 = noise(vec2(position.x * 0.05, position.y * 0.05)) * 0.8;
+          float n2 = noise(vec2(position.x * 0.15, position.y * 0.15)) * 0.2;
+          float n3 = noise(vec2(position.x * 0.4, position.y * 0.4)) * 0.1;
+          
+          // Combine for varied terrain
+          vElevation = n1 + n2 + n3;
+          
+          // Set the vertex position with the terrain height
+          vec3 newPosition = position;
+          newPosition.z = vElevation * 3.0; // Scale height for more pronounced effect
+          
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform vec3 uSandColor;
+        uniform vec3 uRockColor;
+        
+        varying vec2 vUv;
+        varying float vElevation;
+        
+        float random(vec2 st) {
+          return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
+        
+        void main() {
+          // Mix sand and rock based on elevation
+          float rockFactor = smoothstep(0.2, 0.7, vElevation);
+          vec3 baseColor = mix(uSandColor, uRockColor, rockFactor);
+          
+          // Add some variation with noise
+          float noiseValue = random(vUv * 50.0) * 0.1;
+          vec3 color = baseColor + vec3(noiseValue);
+          
+          // Add small particles to simulate seabed detritus
+          float detritusAmount = step(0.991, random(vUv * 500.0 + uTime * 0.01));
+          color += vec3(0.15, 0.15, 0.12) * detritusAmount;
+          
+          // Add some marine algae/plant-like highlights
+          float plantHighlight = step(0.97, random(vUv * 20.0));
+          if (plantHighlight > 0.5 && vElevation < 0.4) {
+            vec3 plantColor = vec3(0.1, 0.25, 0.1);
+            color = mix(color, plantColor, 0.3);
+          }
+          
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `,
+      side: THREE.DoubleSide
+    });
+    
+    const seabedMesh = new THREE.Mesh(seabedGeometry, seabedMaterial);
+    seabedMesh.rotation.x = -Math.PI / 2; // Make it horizontal
+    seabedMesh.position.y = -40; // Position at the bottom
+    scene.add(seabedMesh);
+    seabedMeshRef.current = seabedMesh;
+    
     // Add sky - simple gradient background
-    const skyGeometry = new THREE.SphereGeometry(60, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
+    const skyGeometry = new THREE.SphereGeometry(90, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
     const skyMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -328,12 +432,41 @@ export function WaveBackground({
     });
     
     const sky = new THREE.Mesh(skyGeometry, skyMaterial);
-    sky.position.y = 0; // Center at same height as camera
+    sky.position.y = 0; // Center at same height as water surface
     scene.add(sky);
     
     // Create lightning effect
     let lightningTimer = 0;
     let lightningActive = false;
+    
+    // Handle scrolling to move camera up/down
+    const handleScroll = () => {
+      if (!scrollEnabled || !cameraRef.current) return;
+      
+      // Get scroll position
+      const scrollY = window.scrollY;
+      const totalHeight = document.body.scrollHeight - window.innerHeight;
+      const scrollProgress = Math.min(1, scrollY / totalHeight);
+      
+      // Calculate camera position based on scroll
+      // Start above water (initialCameraY), end at bottom of ocean (-38)
+      const targetY = initialCameraY - (scrollProgress * (initialCameraY + 38));
+      
+      // Smoothly update camera position
+      cameraRef.current.position.y = targetY;
+      
+      // Adjust camera angle based on depth
+      if (targetY > 0) {
+        // Above water, look down at water
+        cameraRef.current.lookAt(0, -5, 0);
+      } else if (targetY > -35) {
+        // In water, look slightly downward
+        cameraRef.current.lookAt(0, targetY - 10, 0);
+      } else {
+        // Near bottom, look at seabed
+        cameraRef.current.lookAt(0, -40, 0);
+      }
+    };
     
     // Window resize handler
     const handleResize = () => {
@@ -345,6 +478,11 @@ export function WaveBackground({
     };
     
     window.addEventListener('resize', handleResize);
+    if (scrollEnabled) {
+      window.addEventListener('scroll', handleScroll);
+      // Initial camera position based on scroll
+      handleScroll();
+    }
     
     // Animation loop
     let timeElapsed = 0;
@@ -352,17 +490,21 @@ export function WaveBackground({
       const animationId = requestAnimationFrame(animate);
       
       if (!rendererRef.current || !sceneRef.current || !cameraRef.current || 
-          !waterMeshRef.current || !underwaterMeshRef.current) {
+          !waterMeshRef.current || !underwaterMeshRef.current || !seabedMeshRef.current) {
         return;
       }
       
       timeElapsed += 0.01;
       
       // Small bobbing motion for the camera to simulate floating on water
-      cameraRef.current.position.y = Math.sin(timeElapsed * 0.5) * 0.05;
-      
-      // Gently rock the camera for more realism
-      cameraRef.current.rotation.z = Math.sin(timeElapsed * 0.3) * 0.02;
+      // Only apply this when camera is near the surface
+      if (cameraRef.current.position.y > -2 && cameraRef.current.position.y < 2) {
+        cameraRef.current.position.y += Math.sin(timeElapsed * 0.5) * 0.01;
+        // Gently rock the camera for more realism
+        cameraRef.current.rotation.z = Math.sin(timeElapsed * 0.3) * 0.01;
+      } else {
+        cameraRef.current.rotation.z = 0;
+      }
       
       // Update time uniform for water animation
       const waterMaterial = waterMeshRef.current.material as THREE.ShaderMaterial;
@@ -371,6 +513,10 @@ export function WaveBackground({
       // Update underwater material
       const underwaterMaterial = underwaterMeshRef.current.material as THREE.ShaderMaterial;
       underwaterMaterial.uniforms.uTime.value = timeElapsed;
+      
+      // Update seabed material
+      const seabedMaterial = seabedMeshRef.current.material as THREE.ShaderMaterial;
+      seabedMaterial.uniforms.uTime.value = timeElapsed;
       
       // Handle lightning effect
       lightningTimer -= 0.02;
@@ -401,10 +547,6 @@ export function WaveBackground({
       
       // Render scene
       rendererRef.current.render(sceneRef.current, cameraRef.current);
-      
-      return () => {
-        cancelAnimationFrame(animationId);
-      };
     };
     
     animate();
@@ -412,6 +554,10 @@ export function WaveBackground({
     // Cleanup on unmount
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (scrollEnabled) {
+        window.removeEventListener('scroll', handleScroll);
+      }
+      
       if (rendererRef.current && rendererRef.current.domElement && container.contains(rendererRef.current.domElement)) {
         container.removeChild(rendererRef.current.domElement);
       }
@@ -425,8 +571,12 @@ export function WaveBackground({
         underwaterMeshRef.current.geometry.dispose();
         (underwaterMeshRef.current.material as THREE.Material).dispose();
       }
+      if (seabedMeshRef.current) {
+        seabedMeshRef.current.geometry.dispose();
+        (seabedMeshRef.current.material as THREE.Material).dispose();
+      }
     };
-  }, []);
+  }, [initialCameraY, scrollEnabled]);
   
   return (
     <div 
