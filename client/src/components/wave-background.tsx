@@ -36,6 +36,9 @@ export function WaveBackground({
   const waterMeshRef = useRef<THREE.Mesh | null>(null);
   const underwaterMeshRef = useRef<THREE.Mesh | null>(null);
   const seabedMeshRef = useRef<THREE.Mesh | null>(null);
+  const texturesLoadedRef = useRef<boolean>(false);
+  const moonTextureRef = useRef<THREE.Texture | null>(null);
+  const bumpMapTextureRef = useRef<THREE.Texture | null>(null);
   const positionClass = fixed ? "fixed" : "absolute";
   const [initialCameraY] = useState(8); // Start above water
   
@@ -74,6 +77,24 @@ export function WaveBackground({
     // Use higher subdivision for smoother waves
     const waterGeometry = new THREE.PlaneGeometry(125,200, 512, 512);
     
+    // Create default textures (1x1 pixels) that will be replaced when real textures load
+    const createDefaultTexture = (color = '#ffffff') => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 1, 1);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      return texture;
+    };
+    
+    // Create default bump map (flat) and moon texture (white)
+    const defaultBumpMap = createDefaultTexture('#7f7f7f'); // Mid-gray for no displacement
+    const defaultMoonTexture = createDefaultTexture('#ffffff'); // White for reflection
+    
     // Create water surface shader material
     const waterMaterial = new THREE.ShaderMaterial({
       uniforms: {
@@ -81,14 +102,22 @@ export function WaveBackground({
         uColor1: { value: new THREE.Color(0x0a1a2a) }, // Dark stormy blue (surface)
         uColor2: { value: new THREE.Color(0x0066aa) }, // Medium blue (wave troughs)
         uStorminess: { value: 0.7 },
-        uLightning: { value: 0.0 }
+        uLightning: { value: 0.0 },
+        uBumpMap: { value: defaultBumpMap }, // Use default until real texture loads
+        uMoonTexture: { value: defaultMoonTexture }, // Use default until real texture loads
+        uBumpStrength: { value: 0.15 }, // Bump mapping strength
+        uReflectionStrength: { value: 0.2 } // Reflection strength
       },
       vertexShader: `
         uniform float uTime;
         uniform float uStorminess;
+        uniform sampler2D uBumpMap;
+        uniform float uBumpStrength;
         
         varying vec2 vUv;
         varying float vElevation;
+        varying vec3 vWorldPosition;
+        varying vec3 vNormal;
         
         // Simplex 3D noise function
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -165,11 +194,45 @@ export function WaveBackground({
           float wave3 = snoise(vec3(position.x * 0.6, position.y * 0.6, uTime * 0.1)) * 0.125;
           
           // Combine waves and adjust height based on storminess
-          vElevation = (wave1 + wave2 + wave3) * uStorminess;
+          float baseElevation = (wave1 + wave2 + wave3) * uStorminess;
+          
+          // Add bump mapping detail from the texture
+          // The bump map is black and white, and each component (r,g,b) contains the same value
+          vec2 bumpUv = vUv * 4.0; // Scale UVs to match the texture repeat
+          bumpUv.x += uTime * 0.05; // Slowly move the bump map for additional wave motion
+          bumpUv.y += uTime * 0.03;
+          
+          // Apply bump mapping
+          float bumpFactor = texture2D(uBumpMap, bumpUv).r * uBumpStrength;
+          
+          // Combine base waves with bump mapping
+          vElevation = baseElevation + bumpFactor;
           
           // Set the vertex position with the wave height
           vec3 newPosition = position;
           newPosition.z = vElevation;
+          
+          // Calculate normal for reflection calculations
+          vec3 pos_dx = newPosition + vec3(0.01, 0.0, 0.0);
+          vec3 pos_dy = newPosition + vec3(0.0, 0.01, 0.0);
+          
+          // Calculate elevation at neighboring points
+          float elevation_dx = baseElevation + texture2D(uBumpMap, bumpUv + vec2(0.01, 0.0)).r * uBumpStrength;
+          float elevation_dy = baseElevation + texture2D(uBumpMap, bumpUv + vec2(0.0, 0.01)).r * uBumpStrength;
+          
+          // Set elevation for neighboring points
+          pos_dx.z = elevation_dx;
+          pos_dy.z = elevation_dy;
+          
+          // Calculate tangent vectors
+          vec3 tangentX = pos_dx - newPosition;
+          vec3 tangentY = pos_dy - newPosition;
+          
+          // Calculate normal from tangent vectors
+          vNormal = normalize(cross(tangentX, tangentY));
+          
+          // Pass world position for reflections
+          vWorldPosition = (modelMatrix * vec4(newPosition, 1.0)).xyz;
           
           gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
         }
@@ -178,9 +241,13 @@ export function WaveBackground({
         uniform vec3 uColor1;  // Dark stormy blue
         uniform vec3 uColor2;  // Medium blue
         uniform float uLightning;
+        uniform sampler2D uMoonTexture;  // Moon texture for reflection
+        uniform float uReflectionStrength;
         
         varying vec2 vUv;
         varying float vElevation;
+        varying vec3 vWorldPosition;
+        varying vec3 vNormal;
         
         void main() {
           // Add lightning effect as occasional bright flashes
@@ -188,7 +255,41 @@ export function WaveBackground({
           
           // Create a gradient based on elevation (waves higher = more stormy/dark)
           float mixFactor = smoothstep(-0.5, 0.5, vElevation);
-          vec3 color = mix(uColor2, uColor1, mixFactor);
+          vec3 baseColor = mix(uColor2, uColor1, mixFactor);
+          
+          // Calculate reflection
+          // Reflection is stronger when looking at waves from a low angle
+          vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+          float reflectionFactor = 0.0;
+          vec3 reflectionColor = vec3(0.0);
+          
+          // Calculate reflection vector
+          vec3 reflectionVector = reflect(-viewDirection, vNormal);
+          
+          // The reflection is stronger at glancing angles (Fresnel effect)
+          float fresnel = pow(1.0 - max(dot(viewDirection, vNormal), 0.0), 3.0);
+          
+          // Map reflection vector to texture coordinates for moon reflection
+          // We're creating a simplified environment map just using the moon texture
+          // The moon appears to reflect based on viewing angle
+          vec2 reflectionUv = vec2(
+            0.5 + 0.5 * reflectionVector.x, 
+            0.5 + 0.5 * reflectionVector.y
+          );
+          
+          // Sample reflection texture
+          reflectionColor = texture2D(uMoonTexture, reflectionUv).rgb;
+          
+          // Apply Fresnel and wave height factors to strengthen reflection near peaks
+          reflectionFactor = fresnel * uReflectionStrength;
+          
+          // Waves at higher elevations get stronger reflections
+          if (vElevation > 0.1) {
+            reflectionFactor *= smoothstep(0.1, 0.3, vElevation) * 2.0;
+          }
+          
+          // Mix base color with reflection
+          vec3 color = mix(baseColor, reflectionColor, reflectionFactor);
           
           // Mix in the lightning effect
           color = mix(color, lightning, uLightning * 0.7);
@@ -196,8 +297,11 @@ export function WaveBackground({
           // Add some foam to wave peaks
           if (vElevation > 0.25) {
             float foamFactor = smoothstep(0.25, 0.4, vElevation);
-            color = mix(color, vec3(0.9, 0.95, 1.0), foamFactor * 0.2);
+            color = mix(color, vec3(0.9, 0.95, 1.0), foamFactor * 0.3);
           }
+          
+          // Add subtle variation for more realism
+          color += vec3(vElevation * 0.03);
           
           gl_FragColor = vec4(color, 1.0);
         }
@@ -440,6 +544,36 @@ export function WaveBackground({
     starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
     const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
+    
+    // Load textures for water surface
+    const textureLoader = new THREE.TextureLoader();
+    
+    // Load moon texture for reflection
+    textureLoader.load('/images/textures/FullMoon.webp', (texture) => {
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      moonTextureRef.current = texture;
+      
+      // Load water bump map texture
+      textureLoader.load('/images/textures/waterbumpmap.webp', (bumpTexture) => {
+        bumpTexture.wrapS = THREE.RepeatWrapping;
+        bumpTexture.wrapT = THREE.RepeatWrapping;
+        // Set to higher repeat values for more detailed waves
+        bumpTexture.repeat.set(4, 4);
+        bumpMapTextureRef.current = bumpTexture;
+        
+        // Mark textures as loaded
+        texturesLoadedRef.current = true;
+        
+        // Update water material with the loaded textures
+        if (waterMeshRef.current) {
+          const waterMaterial = waterMeshRef.current.material as THREE.ShaderMaterial;
+          waterMaterial.uniforms.uBumpMap = { value: bumpTexture };
+          waterMaterial.uniforms.uMoonTexture = { value: texture };
+          waterMaterial.needsUpdate = true;
+        }
+      });
+    });
     
     // Lightning flash effect
     const lightningSphere = new THREE.Mesh(
