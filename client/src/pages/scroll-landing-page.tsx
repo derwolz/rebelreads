@@ -262,7 +262,7 @@ export function ScrollLandingPage(): React.JSX.Element {
         : 0;
 
   return (
-    <div className="bg-background overflow-hidden" ref={containerRef}>
+    <div className="overflow-hidden" ref={containerRef}>
       <BrandedNav />
 
       {/* Add the wave background with water surface and ocean effect */}
@@ -275,7 +275,7 @@ export function ScrollLandingPage(): React.JSX.Element {
           style={{ opacity: 1 - progressInSection * 2 }} // Fade out as user scrolls
         >
           <button
-            className="mode-toggle-button flex items-center justify-center gap-2.5 text-primary px-4 py-2 rounded-md  transition-colors"
+            className="mode-toggle-button flex items-center justify-center gap-2.5 text-white px-4 py-2 rounded-md bg-black/30 backdrop-blur-sm  transition-colors"
             onClick={toggleUserType}
             aria-label={`Switch to ${userType === "author" ? "reader" : "author"} mode`}
           >
@@ -304,7 +304,7 @@ export function ScrollLandingPage(): React.JSX.Element {
               className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce z-10"
               style={{ opacity: 1 - progressInSection * 2 }}
             >
-              <ChevronDown className="w-8 h-8 text-primary" />
+              <ChevronDown className="w-8 h-8 text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]" />
             </div>
           )}
 
