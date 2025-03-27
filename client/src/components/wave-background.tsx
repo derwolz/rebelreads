@@ -274,8 +274,8 @@ export function WaveBackground({
     const seabedMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uSandColor: { value: new THREE.Color(0x1a3040) }, // Dark sand color
-        uRockColor: { value: new THREE.Color(0x121e28) }, // Darker rock color
+        uSandColor: { value: new THREE.Color(0xe6a75f) }, // Sandy orange color
+        uRockColor: { value: new THREE.Color(0xc6824a) }, // Darker orange-brown rock
       },
       vertexShader: `
         uniform float uTime;
@@ -342,13 +342,13 @@ export function WaveBackground({
           vec3 color = baseColor + vec3(noiseValue);
           
           // Add small particles to simulate seabed detritus
-          float detritusAmount = step(0.991, random(vUv * 500.0 + uTime * 0.01));
-          color += vec3(0.15, 0.15, 0.12) * detritusAmount;
+          float detritusAmount = step(0.993, random(vUv * 500.0 + uTime * 0.01));
+          color += vec3(0.3, 0.25, 0.15) * detritusAmount;
           
           // Add some marine algae/plant-like highlights
           float plantHighlight = step(0.97, random(vUv * 20.0));
           if (plantHighlight > 0.5 && vElevation < 0.4) {
-            vec3 plantColor = vec3(0.1, 0.25, 0.1);
+            vec3 plantColor = vec3(0.1, 0.4, 0.1); // Brighter green algae
             color = mix(color, plantColor, 0.3);
           }
           
@@ -364,76 +364,92 @@ export function WaveBackground({
     scene.add(seabedMesh);
     seabedMeshRef.current = seabedMesh;
     
-    // Add sky - simple gradient background
-    const skyGeometry = new THREE.SphereGeometry(90, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    const skyMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uLightning: { value: 0.0 }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        varying vec3 vPosition;
-        
-        void main() {
-          vUv = uv;
-          vPosition = position;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float uTime;
-        uniform float uLightning;
-        
-        varying vec2 vUv;
-        varying vec3 vPosition;
-        
-        // Simple random function
-        float random(vec2 st) {
-          return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-        }
-        
-        void main() {
-          // Sky colors
-          vec3 skyColor1 = vec3(0.05, 0.05, 0.1);  // Almost black at horizon
-          vec3 skyColor2 = vec3(0.1, 0.1, 0.2);    // Very dark blue at zenith
-          vec3 cloudColor = vec3(0.2, 0.2, 0.25);  // Dark grey clouds
-          
-          // Calculate position in sky (0 = horizon, 1 = zenith)
-          float skyGradient = normalize(vPosition).y; // Range from 0 at horizon to 1 at zenith
-          
-          // Base sky gradient
-          vec3 color = mix(skyColor1, skyColor2, skyGradient);
-          
-          // Add some cloud-like noise that moves slowly
-          float noiseScale = 10.0;
-          vec2 cloudUv = vec2(vUv.x + uTime * 0.01, vUv.y);
-          float noise1 = random(cloudUv * noiseScale) * 0.5 + 0.5;
-          float noise2 = random((cloudUv + 0.5) * noiseScale * 2.0) * 0.3 + 0.7;
-          float cloudNoise = noise1 * noise2;
-          
-          // Create moving cloud formations
-          float cloudMask = smoothstep(0.6, 0.8, cloudNoise);
-          cloudMask *= (1.0 - skyGradient); // More clouds near horizon
-          color = mix(color, cloudColor, cloudMask * 0.5);
-          
-          // Add occasional random lightning flashes
-          float lightningBrightness = uLightning;
-          color = mix(color, vec3(0.9, 0.9, 1.0), lightningBrightness);
-          
-          // Add a few subtle stars in the sky
-          float starField = step(0.998, random(vUv * 1000.0));
-          color += vec3(0.8, 0.8, 0.9) * starField * skyGradient; // Only in upper part of sky
-          
-          gl_FragColor = vec4(color, 1.0);
-        }
-      `,
-      side: THREE.BackSide
+    // Create a skybox using cube textures
+    // Use gradient colors instead of images for a clean look
+    const createGradientTexture = (color1: string, color2: string, size = 512) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d')!;
+      
+      // Create gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, size);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      
+      // Fill with gradient
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      return new THREE.CanvasTexture(canvas);
+    };
+    
+    // Create textures for each side of the skybox
+    // Top: dark blue
+    const topTexture = createGradientTexture('#0a0e1a', '#131b36');
+    
+    // Bottom: not visible (underwater)
+    const bottomTexture = createGradientTexture('#050a14', '#050a14');
+    
+    // Sides: gradient from horizon to higher
+    const sideTexture = createGradientTexture('#050a14', '#131b36');
+    
+    // Create materials for each face
+    const skyboxMaterials = [
+      new THREE.MeshBasicMaterial({ map: sideTexture, side: THREE.BackSide }), // right
+      new THREE.MeshBasicMaterial({ map: sideTexture, side: THREE.BackSide }), // left
+      new THREE.MeshBasicMaterial({ map: topTexture, side: THREE.BackSide }),  // top
+      new THREE.MeshBasicMaterial({ map: bottomTexture, side: THREE.BackSide }), // bottom
+      new THREE.MeshBasicMaterial({ map: sideTexture, side: THREE.BackSide }), // front
+      new THREE.MeshBasicMaterial({ map: sideTexture, side: THREE.BackSide })  // back
+    ];
+    
+    // Create a skybox
+    const skyboxGeometry = new THREE.BoxGeometry(500, 500, 500);
+    const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
+    scene.add(skybox);
+    
+    // Stars in the sky
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 1,
+      transparent: true,
+      opacity: 0.8,
+      sizeAttenuation: false
     });
     
-    const sky = new THREE.Mesh(skyGeometry, skyMaterial);
-    sky.position.y = 0; // Center at same height as water surface
-    scene.add(sky);
+    // Create random stars
+    const starsVertices = [];
+    for (let i = 0; i < 1000; i++) {
+      // Place stars only in the upper hemisphere
+      const theta = Math.random() * Math.PI; // 0 to PI (only upper hemisphere)
+      const phi = Math.random() * 2 * Math.PI; // 0 to 2PI
+      
+      // Convert to Cartesian coordinates (radius 245 - just inside the skybox)
+      const radius = 245;
+      const x = radius * Math.sin(theta) * Math.cos(phi);
+      const y = Math.abs(radius * Math.cos(theta)); // Make y positive (upper hemisphere)
+      const z = radius * Math.sin(theta) * Math.sin(phi);
+      
+      starsVertices.push(x, y, z);
+    }
+    
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
+    
+    // Lightning flash effect
+    const lightningSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(240, 32, 32),
+      new THREE.MeshBasicMaterial({ 
+        color: 0xffffff, 
+        transparent: true, 
+        opacity: 0,
+        side: THREE.BackSide 
+      })
+    );
+    scene.add(lightningSphere);
     
     // Create lightning effect
     let lightningTimer = 0;
@@ -531,19 +547,16 @@ export function WaveBackground({
         const intensity = Math.max(0, Math.sin(timeElapsed * 30) * 0.5 + 0.5) * 0.8;
         waterMaterial.uniforms.uLightning.value = intensity;
         
-        // Also update sky lightning
-        (sky.material as THREE.ShaderMaterial).uniforms.uLightning.value = intensity;
+        // Update lightning sphere for the skybox
+        (lightningSphere.material as THREE.MeshBasicMaterial).opacity = intensity * 0.3;
         
         if (lightningTimer <= 0) {
           lightningActive = false;
           lightningTimer = Math.random() * 5 + 2; // Time until next lightning
           waterMaterial.uniforms.uLightning.value = 0;
-          (sky.material as THREE.ShaderMaterial).uniforms.uLightning.value = 0;
+          (lightningSphere.material as THREE.MeshBasicMaterial).opacity = 0;
         }
       }
-      
-      // Update sky time uniform
-      (sky.material as THREE.ShaderMaterial).uniforms.uTime.value = timeElapsed;
       
       // Render scene
       rendererRef.current.render(sceneRef.current, cameraRef.current);
