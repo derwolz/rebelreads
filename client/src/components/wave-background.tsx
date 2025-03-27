@@ -47,7 +47,7 @@ export function WaveBackground({
       1000
     );
     // Position camera at water level with a slight upward angle
-    camera.position.set(0, 0, 100);
+    camera.position.set(0, 0, 5);
     camera.lookAt(0, 2, 0);
     cameraRef.current = camera;
     
@@ -256,7 +256,7 @@ export function WaveBackground({
     });
     
     const underwaterMesh = new THREE.Mesh(underwaterGeometry, underwaterMaterial);
-    underwaterMesh.position.y = -6; // Position below the water surface
+    underwaterMesh.position.y = -10; // Position below the water surface
     scene.add(underwaterMesh);
     underwaterMeshRef.current = underwaterMesh;
     
