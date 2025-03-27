@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
-import { FrostedGlassBackground } from "@/components/frosted-glass-background";
+import { WaveBackground } from "@/components/wave-background";
 import { BookMetricsDashboard } from "@/components/book-metrics-dashboard";
 import { useTheme } from "@/hooks/use-theme";
 import { useLocation } from "wouter";
@@ -265,8 +265,8 @@ export function ScrollLandingPage(): React.JSX.Element {
     <div className="bg-background overflow-hidden" ref={containerRef}>
       <BrandedNav />
 
-      {/* Add the frosted glass background with moving shapes */}
-      <FrostedGlassBackground />
+      {/* Add the wave background with water surface and ocean effect */}
+      <WaveBackground scrollEnabled={true} />
 
       {/* User type toggle button - only show in first section or when scrolling to it */}
       {currentSectionIndex === 0 && (
@@ -296,12 +296,7 @@ export function ScrollLandingPage(): React.JSX.Element {
       <div className="relative" ref={scrollRef}>
         {/* Fixed viewport container that shows content based on scroll */}
         <div className="fixed top-0 left-0 w-full h-screen overflow-hidden">
-          {/* Background color transitions with scroll */}
-          <div
-            className={`absolute inset-0 transition-colors duration-300 ${
-              sections[currentSectionIndex]?.backgroundColor || "bg-primary/5"
-            }`}
-          />
+          {/* Remove background color since we're using wave background */}
 
           {/* Scroll indicator for first section */}
           {currentSectionIndex === 0 && progressInSection < 0.5 && (
@@ -360,7 +355,7 @@ export function ScrollLandingPage(): React.JSX.Element {
                             : "auto",
                       }}
                     >
-                      <h3 className={`text-2xl md:text-3xl font-medium text-primary ${userType === "author" ? "drop-shadow-lg drop-shadow-[16px_4px_8px_rgba(0,0,0,1)]" : ""}`}>
+                      <h3 className="text-2xl md:text-3xl font-medium text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] shadow-black">
                         {section.heading}
                       </h3>
                     </div>
@@ -369,7 +364,7 @@ export function ScrollLandingPage(): React.JSX.Element {
 
               {/* Current section heading - at the bottom */}
               <div className="relative transition-all duration-300">
-                <h2 className={`text-2xl md:text-3xl font-bold text-primary ${userType === "author" ? "drop-shadow-[0px_2px_2px_rgba(0,0,0,1)]" : ""}`}>
+                <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]">
                   {sections[currentSectionIndex]?.heading}
                 </h2>
               </div>
@@ -392,7 +387,7 @@ export function ScrollLandingPage(): React.JSX.Element {
                     : "none",
               }}
             >
-              <p className="text-lg md:text-xl text-foreground/80">
+              <p className="text-lg md:text-xl text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] bg-black/20 backdrop-blur-sm p-4 rounded-lg">
                 {sections[currentSectionIndex]?.subtext}
               </p>
             </div>
