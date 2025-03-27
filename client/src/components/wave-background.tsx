@@ -72,7 +72,7 @@ export function WaveBackground({
     
     // Create the water surface geometry
     // Use higher subdivision for smoother waves
-    const waterGeometry = new THREE.PlaneGeometry(200, 200, 256, 256);
+    const waterGeometry = new THREE.PlaneGeometry(125,200, 512, 512);
     
     // Create water surface shader material
     const waterMaterial = new THREE.ShaderMaterial({
@@ -196,7 +196,7 @@ export function WaveBackground({
           // Add some foam to wave peaks
           if (vElevation > 0.25) {
             float foamFactor = smoothstep(0.25, 0.4, vElevation);
-            color = mix(color, vec3(0.9, 0.95, 1.0), foamFactor * 0.7);
+            color = mix(color, vec3(0.9, 0.95, 1.0), foamFactor * 0.2);
           }
           
           gl_FragColor = vec4(color, 1.0);
