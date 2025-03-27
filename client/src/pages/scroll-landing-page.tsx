@@ -32,37 +32,37 @@ export function ScrollLandingPage(): React.JSX.Element {
       sections: [
         {
           id: "section-1",
-          heading: "Welcome to a New Reading Experience",
-          subtext: "", // No subtext for first section
+          heading: "You are the Protagonist",
+          subtext: "Every great author starts with a spark — yours ignites here", // No subtext for first section
           imageSrc: "/images/book-stack.svg",
           backgroundColor: "bg-primary/5",
         },
         {
           id: "section-2",
-          heading: "Connect with Your Favorite Authors",
-          subtext: "", // No subtext for second section
+          heading: "Every hero finds troubled waters.",
+          subtext: "Industry giants drown your writing in fees, but a new future crests the horizon", // No subtext for second section
           imageSrc: "/images/author-writing.svg",
           backgroundColor: "bg-primary/10",
         },
         {
           id: "section-3",
-          heading: "Explore New Literary Worlds",
-          subtext: "Find your next favorite story in our vast collection",
+          heading: "A song pierces the chaos",
+          subtext: "Sirened calls you to a fair market. No hidden fees, no paid rankings, just readers waiting for your book.",
           imageSrc: "/images/reading-adventure.svg",
           backgroundColor: "bg-primary/15",
         },
         {
           id: "section-4",
-          heading: "Track Your Book Performance",
-          subtext: "Analyze impressions, referrals, and wishlists with powerful analytics",
+          heading: "Step into the town square.",
+          subtext: "You wrote your book, now let us help you find readers. At our fair marketplace, you control your sales and keep 100% of your profits.",
           imageSrc: "/images/community-readers.svg", // This won't be used but kept for fallback
           backgroundColor: "bg-primary/20",
         },
         {
           id: "section-5",
-          heading: "Start Your Journey Today",
+          heading: "Reclaim your literary future.",
           subtext:
-            "Sign up and unlock the full potential of your reading experience",
+            "Sign up today. With access to our qualified readership, advanced analytics, and a fair search engine, You'll have every tool to make your stories a success.",
           imageSrc: "/images/journey-start.svg",
           backgroundColor: "bg-primary/25",
         },
@@ -72,36 +72,36 @@ export function ScrollLandingPage(): React.JSX.Element {
       sections: [
         {
           id: "section-1",
-          heading: "Discover Your Next Reading Adventure",
-          subtext: "", // No subtext for first section
+          heading: "You are the Hero",
+          subtext: "Crawling through labyrinthian suggestions, you seek a perfect story around every bend.", // No subtext for first section
           imageSrc: "/images/book-stack.svg",
           backgroundColor: "bg-primary/5",
         },
         {
           id: "section-2",
-          heading: "Find Books You'll Love",
-          subtext: "", // No subtext for second section
+          heading: "Spellbound by a False Tune",
+          subtext: "You crave adventure and the industry giants only offer the bargain bin. Storytellers reach for your ears, but fail to pass their gates.", // No subtext for second section
           imageSrc: "/images/author-writing.svg",
           backgroundColor: "bg-primary/10",
         },
         {
           id: "section-3",
-          heading: "Track Your Reading Journey",
-          subtext: "Keep a record of books you've read and want to read",
+          heading: "A Song breaks the Charm",
+          subtext: "Discover a realm where storytellers thrive. A place where quality trumps quantity.",
           imageSrc: "/images/reading-adventure.svg",
           backgroundColor: "bg-primary/15",
         },
         {
           id: "section-4",
-          heading: "Track Reading Insights",
-          subtext: "Get personalized recommendations and analyze your reading habits",
+          heading: "Step into the town square",
+          subtext: "Enter Sirened's marketplace. Where your reviews affect your suggestions. Ensuring the themes you care about make it to your hands.",
           imageSrc: "/images/community-readers.svg",
           backgroundColor: "bg-primary/20",
         },
         {
           id: "section-5",
-          heading: "Make Reading Social",
-          subtext: "Connect with friends and share recommendations",
+          heading: "Support your Storytellers",
+          subtext: "Join Sirened's elite readership — back your favorite authors directly, not the giants that leave them in obscurity.",
           imageSrc: "/images/journey-start.svg",
           backgroundColor: "bg-primary/25",
         },
