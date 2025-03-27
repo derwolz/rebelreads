@@ -71,7 +71,8 @@ export function WaveBackground({
     rendererRef.current = renderer;
     
     // Create the water surface geometry
-    const waterGeometry = new THREE.PlaneGeometry(200, 200, 128, 128);
+    // Use higher subdivision for smoother waves
+    const waterGeometry = new THREE.PlaneGeometry(200, 200, 256, 256);
     
     // Create water surface shader material
     const waterMaterial = new THREE.ShaderMaterial({
@@ -270,7 +271,8 @@ export function WaveBackground({
     underwaterMeshRef.current = underwaterMesh;
     
     // Create seabed at the bottom
-    const seabedGeometry = new THREE.PlaneGeometry(200, 200, 64, 64);
+    // Use higher subdivision for smoother seabed terrain
+    const seabedGeometry = new THREE.PlaneGeometry(200, 200, 128, 128);
     const seabedMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
