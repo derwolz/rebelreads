@@ -16,7 +16,7 @@ interface WaveBackgroundProps {
 
 /**
  * WaveBackground component creates an animated ocean wave effect using Three.js
- * with a dark stormy night sky above the waves and blue ocean below
+ * with the camera positioned at the water's surface, sky above, and blue water below
  */
 export function WaveBackground({
   className = "",
@@ -26,7 +26,8 @@ export function WaveBackground({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const meshRef = useRef<THREE.Mesh | null>(null);
+  const waterMeshRef = useRef<THREE.Mesh | null>(null);
+  const underwaterMeshRef = useRef<THREE.Mesh | null>(null);
   const positionClass = fixed ? "fixed" : "absolute";
   
   useEffect(() => {
@@ -38,15 +39,16 @@ export function WaveBackground({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     
-    // Create camera
+    // Create camera - position at water level
     const camera = new THREE.PerspectiveCamera(
-      75, 
+      70, 
       window.innerWidth / window.innerHeight, 
       0.1, 
       1000
     );
-    camera.position.set(0, 5, 10);
-    camera.lookAt(0, 0, 0);
+    // Position camera at water level with a slight upward angle
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 2, 0);
     cameraRef.current = camera;
     
     // Create renderer
@@ -59,16 +61,16 @@ export function WaveBackground({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
-    // Create the wave geometry
-    const geometry = new THREE.PlaneGeometry(30, 30, 100, 100);
+    // Create the water surface geometry
+    const waterGeometry = new THREE.PlaneGeometry(100, 100, 128, 128);
     
-    // Create wave shader material
-    const material = new THREE.ShaderMaterial({
+    // Create water surface shader material
+    const waterMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uColor1: { value: new THREE.Color(0x0a1a2a) }, // Dark stormy blue
-        uColor2: { value: new THREE.Color(0x0077be) }, // Deep blue ocean
-        uStorminess: { value: 0.8 },
+        uColor1: { value: new THREE.Color(0x0a1a2a) }, // Dark stormy blue (surface)
+        uColor2: { value: new THREE.Color(0x0066aa) }, // Medium blue (wave troughs)
+        uStorminess: { value: 0.7 },
         uLightning: { value: 0.0 }
       },
       vertexShader: `
@@ -148,23 +150,23 @@ export function WaveBackground({
           vUv = uv;
           
           // Create wave patterns using multiple noise frequencies
-          float wave1 = snoise(vec3(position.x * 0.2, position.y * 0.2, uTime * 0.5)) * 0.5;
-          float wave2 = snoise(vec3(position.x * 0.4, position.y * 0.4, uTime * 0.3)) * 0.25;
-          float wave3 = snoise(vec3(position.x * 0.8, position.y * 0.8, uTime * 0.2)) * 0.125;
+          float wave1 = snoise(vec3(position.x * 0.1, position.y * 0.1, uTime * 0.3)) * 0.5;
+          float wave2 = snoise(vec3(position.x * 0.3, position.y * 0.3, uTime * 0.2)) * 0.25;
+          float wave3 = snoise(vec3(position.x * 0.6, position.y * 0.6, uTime * 0.1)) * 0.125;
           
           // Combine waves and adjust height based on storminess
           vElevation = (wave1 + wave2 + wave3) * uStorminess;
           
           // Set the vertex position with the wave height
           vec3 newPosition = position;
-          newPosition.z += vElevation;
+          newPosition.z = vElevation;
           
           gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
         }
       `,
       fragmentShader: `
         uniform vec3 uColor1;  // Dark stormy blue
-        uniform vec3 uColor2;  // Deep ocean blue
+        uniform vec3 uColor2;  // Medium blue
         uniform float uLightning;
         
         varying vec2 vUv;
@@ -182,9 +184,9 @@ export function WaveBackground({
           color = mix(color, lightning, uLightning * 0.7);
           
           // Add some foam to wave peaks
-          if (vElevation > 0.3) {
-            float foamFactor = smoothstep(0.3, 0.5, vElevation);
-            color = mix(color, vec3(0.9, 0.95, 1.0), foamFactor * 0.6);
+          if (vElevation > 0.25) {
+            float foamFactor = smoothstep(0.25, 0.4, vElevation);
+            color = mix(color, vec3(0.9, 0.95, 1.0), foamFactor * 0.7);
           }
           
           gl_FragColor = vec4(color, 1.0);
@@ -193,15 +195,73 @@ export function WaveBackground({
       side: THREE.DoubleSide
     });
     
-    // Create the wave mesh
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = -Math.PI / 2.5; // Angle the surface slightly
-    mesh.position.y = -2;
-    scene.add(mesh);
-    meshRef.current = mesh;
+    // Create the water surface mesh
+    const waterMesh = new THREE.Mesh(waterGeometry, waterMaterial);
+    waterMesh.rotation.x = -Math.PI / 2; // Make the plane horizontal
+    waterMesh.position.y = 0; // At camera level
+    scene.add(waterMesh);
+    waterMeshRef.current = waterMesh;
     
-    // Add dark stormy sky - simple gradient background
-    const skyGeometry = new THREE.PlaneGeometry(50, 30);
+    // Create underwater volume with deep blue color
+    const underwaterGeometry = new THREE.BoxGeometry(100, 20, 100);
+    const underwaterMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uDepthColor: { value: new THREE.Color(0x0033aa) }, // Deep blue
+        uSurfaceColor: { value: new THREE.Color(0x0066aa) }, // Medium blue near surface
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying float vDepth;
+        
+        void main() {
+          vUv = uv;
+          vDepth = position.y; // Pass y position for depth calculation
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform vec3 uDepthColor;
+        uniform vec3 uSurfaceColor;
+        
+        varying vec2 vUv;
+        varying float vDepth;
+        
+        float random(vec2 st) {
+          return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
+        
+        void main() {
+          // Calculate depth gradient (deeper = darker)
+          float depthFactor = smoothstep(-20.0, 0.0, vDepth);
+          vec3 color = mix(uDepthColor, uSurfaceColor, depthFactor);
+          
+          // Add some caustics near the surface
+          if (vDepth > -5.0) {
+            float causticIntensity = random(vUv + uTime * 0.05) * 0.1;
+            float causticPattern = sin(vUv.x * 20.0 + uTime) * sin(vUv.y * 20.0 + uTime * 1.3) * 0.5 + 0.5;
+            causticPattern *= smoothstep(-5.0, -1.0, vDepth); // Stronger near surface
+            color += vec3(0.2, 0.3, 0.4) * causticPattern * causticIntensity;
+          }
+          
+          // Add dusty particles in the water
+          float dustSpeck = step(0.997, random(vUv * 100.0 + uTime * 0.01));
+          color += vec3(0.4, 0.5, 0.6) * dustSpeck * 0.1;
+          
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `,
+      side: THREE.BackSide
+    });
+    
+    const underwaterMesh = new THREE.Mesh(underwaterGeometry, underwaterMaterial);
+    underwaterMesh.position.y = -10; // Position below the water surface
+    scene.add(underwaterMesh);
+    underwaterMeshRef.current = underwaterMesh;
+    
+    // Add sky - simple gradient background
+    const skyGeometry = new THREE.SphereGeometry(60, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
     const skyMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -209,9 +269,11 @@ export function WaveBackground({
       },
       vertexShader: `
         varying vec2 vUv;
+        varying vec3 vPosition;
         
         void main() {
           vUv = uv;
+          vPosition = position;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
@@ -220,6 +282,7 @@ export function WaveBackground({
         uniform float uLightning;
         
         varying vec2 vUv;
+        varying vec3 vPosition;
         
         // Simple random function
         float random(vec2 st) {
@@ -227,22 +290,36 @@ export function WaveBackground({
         }
         
         void main() {
-          // Dark stormy sky gradient
-          vec3 skyColor1 = vec3(0.05, 0.05, 0.1);  // Almost black
-          vec3 skyColor2 = vec3(0.1, 0.1, 0.2);    // Very dark blue
-          vec3 cloudColor = vec3(0.2, 0.2, 0.25);  // Dark grey
+          // Sky colors
+          vec3 skyColor1 = vec3(0.05, 0.05, 0.1);  // Almost black at horizon
+          vec3 skyColor2 = vec3(0.1, 0.1, 0.2);    // Very dark blue at zenith
+          vec3 cloudColor = vec3(0.2, 0.2, 0.25);  // Dark grey clouds
+          
+          // Calculate position in sky (0 = horizon, 1 = zenith)
+          float skyGradient = normalize(vPosition).y; // Range from 0 at horizon to 1 at zenith
           
           // Base sky gradient
-          vec3 color = mix(skyColor1, skyColor2, vUv.y);
+          vec3 color = mix(skyColor1, skyColor2, skyGradient);
           
-          // Add some cloud-like noise
-          float noiseValue = random(vUv + uTime * 0.05);
-          float cloudMask = smoothstep(0.5, 0.8, noiseValue);
-          color = mix(color, cloudColor, cloudMask * 0.4);
+          // Add some cloud-like noise that moves slowly
+          float noiseScale = 10.0;
+          vec2 cloudUv = vec2(vUv.x + uTime * 0.01, vUv.y);
+          float noise1 = random(cloudUv * noiseScale) * 0.5 + 0.5;
+          float noise2 = random((cloudUv + 0.5) * noiseScale * 2.0) * 0.3 + 0.7;
+          float cloudNoise = noise1 * noise2;
+          
+          // Create moving cloud formations
+          float cloudMask = smoothstep(0.6, 0.8, cloudNoise);
+          cloudMask *= (1.0 - skyGradient); // More clouds near horizon
+          color = mix(color, cloudColor, cloudMask * 0.5);
           
           // Add occasional random lightning flashes
           float lightningBrightness = uLightning;
           color = mix(color, vec3(0.9, 0.9, 1.0), lightningBrightness);
+          
+          // Add a few subtle stars in the sky
+          float starField = step(0.998, random(vUv * 1000.0));
+          color += vec3(0.8, 0.8, 0.9) * starField * skyGradient; // Only in upper part of sky
           
           gl_FragColor = vec4(color, 1.0);
         }
@@ -251,8 +328,7 @@ export function WaveBackground({
     });
     
     const sky = new THREE.Mesh(skyGeometry, skyMaterial);
-    sky.position.z = -15;
-    sky.position.y = 5;
+    sky.position.y = 0; // Center at same height as camera
     scene.add(sky);
     
     // Create lightning effect
@@ -275,20 +351,31 @@ export function WaveBackground({
     const animate = () => {
       const animationId = requestAnimationFrame(animate);
       
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !meshRef.current) {
+      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || 
+          !waterMeshRef.current || !underwaterMeshRef.current) {
         return;
       }
       
       timeElapsed += 0.01;
       
-      // Update time uniform for wave animation
-      const waveMaterial = meshRef.current.material as THREE.ShaderMaterial;
-      waveMaterial.uniforms.uTime.value = timeElapsed;
+      // Small bobbing motion for the camera to simulate floating on water
+      cameraRef.current.position.y = Math.sin(timeElapsed * 0.5) * 0.05;
+      
+      // Gently rock the camera for more realism
+      cameraRef.current.rotation.z = Math.sin(timeElapsed * 0.3) * 0.02;
+      
+      // Update time uniform for water animation
+      const waterMaterial = waterMeshRef.current.material as THREE.ShaderMaterial;
+      waterMaterial.uniforms.uTime.value = timeElapsed;
+      
+      // Update underwater material
+      const underwaterMaterial = underwaterMeshRef.current.material as THREE.ShaderMaterial;
+      underwaterMaterial.uniforms.uTime.value = timeElapsed;
       
       // Handle lightning effect
       lightningTimer -= 0.02;
       
-      if (!lightningActive && Math.random() < 0.005) {
+      if (!lightningActive && Math.random() < 0.003) {
         lightningActive = true;
         lightningTimer = Math.random() * 0.2 + 0.1; // Lightning duration
       }
@@ -296,7 +383,7 @@ export function WaveBackground({
       if (lightningActive) {
         // Flicker the lightning intensity
         const intensity = Math.max(0, Math.sin(timeElapsed * 30) * 0.5 + 0.5) * 0.8;
-        waveMaterial.uniforms.uLightning.value = intensity;
+        waterMaterial.uniforms.uLightning.value = intensity;
         
         // Also update sky lightning
         (sky.material as THREE.ShaderMaterial).uniforms.uLightning.value = intensity;
@@ -304,7 +391,7 @@ export function WaveBackground({
         if (lightningTimer <= 0) {
           lightningActive = false;
           lightningTimer = Math.random() * 5 + 2; // Time until next lightning
-          waveMaterial.uniforms.uLightning.value = 0;
+          waterMaterial.uniforms.uLightning.value = 0;
           (sky.material as THREE.ShaderMaterial).uniforms.uLightning.value = 0;
         }
       }
@@ -330,9 +417,13 @@ export function WaveBackground({
       }
       
       // Dispose of Three.js resources
-      if (meshRef.current) {
-        meshRef.current.geometry.dispose();
-        (meshRef.current.material as THREE.Material).dispose();
+      if (waterMeshRef.current) {
+        waterMeshRef.current.geometry.dispose();
+        (waterMeshRef.current.material as THREE.Material).dispose();
+      }
+      if (underwaterMeshRef.current) {
+        underwaterMeshRef.current.geometry.dispose();
+        (underwaterMeshRef.current.material as THREE.Material).dispose();
       }
     };
   }, []);

@@ -14,6 +14,7 @@ export default function WaveDemoPage() {
         <BrandedNav />
         
         <div className="container mx-auto px-4 pt-20 pb-32">
+          {/* Top section - visible in the sky portion */}
           <div className="max-w-2xl mx-auto text-center mb-12">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white drop-shadow-lg">
               Riding the Wave of Innovation
@@ -31,18 +32,42 @@ export default function WaveDemoPage() {
             </div>
           </div>
           
-          <div className="mt-32 max-w-3xl mx-auto backdrop-blur-md bg-black/30 rounded-xl p-8 text-white shadow-xl">
-            <h2 className="text-2xl font-bold mb-4">Navigate Through the Storm</h2>
-            <p className="mb-6">
-              Our platform provides the stability and clarity you need to navigate the turbulent waters of digital advertising. 
-              With advanced analytics and intelligent bidding tools, we help you chart a course to success.
-            </p>
-            <div className="text-center mt-8">
-              <Link href="/">
-                <Button variant="link" className="text-white hover:text-primary">
-                  Back to Home Page
-                </Button>
-              </Link>
+          {/* Bottom section - position in the water portion with underwater effect */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-900/90 to-blue-900/0 py-24">
+            <div className="max-w-3xl mx-auto backdrop-blur-sm bg-blue-900/30 rounded-xl p-8 text-white shadow-xl m-4">
+              <h2 className="text-2xl font-bold mb-4">Dive Deeper Into Success</h2>
+              <p className="mb-6">
+                Immerse yourself in a world of data-driven advertising insights. Our platform provides the stability 
+                and clarity you need to navigate the turbulent waters of digital marketing.
+              </p>
+              <p className="mb-6">
+                With advanced analytics and intelligent bidding tools, we help you discover hidden 
+                opportunities beneath the surface.
+              </p>
+              <div className="text-center mt-8">
+                <Link href="/">
+                  <Button variant="link" className="text-blue-100 hover:text-blue-200">
+                    Back to Home Page
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Underwater bubbles effect */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 overflow-hidden opacity-30">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div 
+                  key={i}
+                  className="absolute bottom-0 rounded-full bg-blue-100 animate-bubble"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    width: `${Math.random() * 12 + 4}px`,
+                    height: `${Math.random() * 12 + 4}px`,
+                    animationDuration: `${Math.random() * 4 + 3}s`,
+                    animationDelay: `${Math.random() * 5}s`,
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
