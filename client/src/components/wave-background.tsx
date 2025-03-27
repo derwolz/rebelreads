@@ -36,6 +36,7 @@ export function WaveBackground({
   const waterMeshRef = useRef<THREE.Mesh | null>(null);
   const underwaterMeshRef = useRef<THREE.Mesh | null>(null);
   const seabedMeshRef = useRef<THREE.Mesh | null>(null);
+  const fogRef = useRef<THREE.FogExp2 | null>(null);
   const texturesLoadedRef = useRef<boolean>(false);
   const moonTextureRef = useRef<THREE.Texture | null>(null);
   const bumpMapTextureRef = useRef<THREE.Texture | null>(null);
@@ -50,6 +51,11 @@ export function WaveBackground({
     // Initialize Three.js scene
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    
+    // Create fog for underwater effect (but don't enable it yet)
+    // We'll dynamically enable this when camera goes underwater
+    const underwaterFog = new THREE.FogExp2(0x0055aa, 0.045);
+    fogRef.current = underwaterFog;
     
     // Create camera - position initially above water level
     const camera = new THREE.PerspectiveCamera(
@@ -642,7 +648,8 @@ export function WaveBackground({
       const animationId = requestAnimationFrame(animate);
       
       if (!rendererRef.current || !sceneRef.current || !cameraRef.current || 
-          !waterMeshRef.current || !underwaterMeshRef.current || !seabedMeshRef.current) {
+          !waterMeshRef.current || !underwaterMeshRef.current || !seabedMeshRef.current || 
+          !fogRef.current) {
         return;
       }
       
@@ -656,6 +663,29 @@ export function WaveBackground({
         cameraRef.current.rotation.z = Math.sin(timeElapsed * 0.3) * 0.01;
       } else {
         cameraRef.current.rotation.z = 0;
+      }
+      
+      // Underwater fog effect - enable fog when camera is below water surface
+      if (cameraRef.current.position.y < 0) {
+        // Camera is underwater - enable fog
+        // Adjust fog density based on depth (deeper = denser fog)
+        const depthFactor = Math.min(1.0, Math.abs(cameraRef.current.position.y) / 30);
+        const baseFogDensity = 0.045;
+        const maxAdditionalFogDensity = 0.06;
+        
+        // Darker and denser fog the deeper we go
+        fogRef.current.density = baseFogDensity + (depthFactor * maxAdditionalFogDensity);
+        
+        // Tint fog more blue-green as we go deeper
+        const deepColor = new THREE.Color(0x004488); // Deep underwater color
+        const shallowColor = new THREE.Color(0x0077aa); // Shallow underwater color
+        fogRef.current.color.copy(shallowColor).lerp(deepColor, depthFactor);
+        
+        // Apply fog to scene
+        sceneRef.current.fog = fogRef.current;
+      } else {
+        // Camera is above water - disable fog
+        sceneRef.current.fog = null;
       }
       
       // Update time uniform for water animation
