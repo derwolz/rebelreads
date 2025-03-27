@@ -27,13 +27,14 @@ import AdminPanel from "@/pages/admin-panel";
 import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
+import WaveDemoPage from "@/pages/wave-demo-page";
 import { Redirect, useLocation } from "wouter";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
   const [location] = useLocation();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo"];
   const isApiPath = location.startsWith("/api");
   const [path, hash] = location.split("#");
 
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/" component={showLandingPage ? LandingPage : HomePage} />
         <Route path="/landing" component={ScrollLandingPage} />
         <Route path="/scroll-landing" component={ScrollLandingPage} />
+        <Route path="/wave-demo" component={WaveDemoPage} />
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/partner" component={PartnerWithUs} />
         <Route path="/books/:id" component={BookDetails} />
