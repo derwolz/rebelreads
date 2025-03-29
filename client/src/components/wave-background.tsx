@@ -54,7 +54,8 @@ export function WaveBackground({
     
     // Create fog for underwater effect (but don't enable it yet)
     // We'll dynamically enable this when camera goes underwater
-    const underwaterFog = new THREE.FogExp2(0x0055aa, 0.045);
+    // Use a higher default density for more pronounced effect
+    const underwaterFog = new THREE.FogExp2(0x0055aa, 0.12);
     fogRef.current = underwaterFog;
     
     // Create camera - position initially above water level
@@ -62,7 +63,7 @@ export function WaveBackground({
       70, 
       window.innerWidth / window.innerHeight, 
       0.1, 
-      1000
+      1000  // Initial far clipping plane - will be dynamically adjusted when underwater
     );
     // Start with camera above water looking down at an angle
     camera.position.set(0, initialCameraY, 12);
@@ -669,23 +670,34 @@ export function WaveBackground({
       if (cameraRef.current.position.y < 0) {
         // Camera is underwater - enable fog
         // Adjust fog density based on depth (deeper = denser fog)
-        const depthFactor = Math.min(1.0, Math.abs(cameraRef.current.position.y) / 30);
-        const baseFogDensity = 0.045;
-        const maxAdditionalFogDensity = 0.06;
+        const depthFactor = Math.min(1.0, Math.abs(cameraRef.current.position.y) / 20);
+        const baseFogDensity = 0.12;
+        const maxAdditionalFogDensity = 0.18;
         
         // Darker and denser fog the deeper we go
         fogRef.current.density = baseFogDensity + (depthFactor * maxAdditionalFogDensity);
         
         // Tint fog more blue-green as we go deeper
-        const deepColor = new THREE.Color(0x004488); // Deep underwater color
-        const shallowColor = new THREE.Color(0x0077aa); // Shallow underwater color
+        const deepColor = new THREE.Color(0x003366); // Deep underwater color (darker)
+        const shallowColor = new THREE.Color(0x0066aa); // Shallow underwater color
         fogRef.current.color.copy(shallowColor).lerp(deepColor, depthFactor);
         
         // Apply fog to scene
         sceneRef.current.fog = fogRef.current;
+        
+        // Also update the far clipping plane to enhance the fog effect
+        // When underwater, we reduce the far clipping plane to create a stronger fog effect
+        cameraRef.current.far = 100 - (depthFactor * 70); // Reduce far plane from 100 to 30 at max depth
+        cameraRef.current.updateProjectionMatrix();
       } else {
         // Camera is above water - disable fog
         sceneRef.current.fog = null;
+        
+        // Reset the far clipping plane when above water
+        if (cameraRef.current.far !== 1000) {
+          cameraRef.current.far = 1000;
+          cameraRef.current.updateProjectionMatrix();
+        }
       }
       
       // Update time uniform for water animation
