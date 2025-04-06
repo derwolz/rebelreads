@@ -55,7 +55,7 @@ export function WaveBackground({
     // Create fog for underwater effect (but don't enable it yet)
     // We'll dynamically enable this when camera goes underwater
     // Use a higher default density for more pronounced effect
-    const underwaterFog = new THREE.FogExp2(0x0055aa, 0.12);
+    const underwaterFog = new THREE.FogExp2(0x0055aa, 0.92);
     fogRef.current = underwaterFog;
     
     // Create camera - position initially above water level
@@ -670,9 +670,9 @@ export function WaveBackground({
       if (cameraRef.current.position.y < 0) {
         // Camera is underwater - enable fog
         // Adjust fog density based on depth (deeper = denser fog)
-        const depthFactor = Math.min(1.0, Math.abs(cameraRef.current.position.y) / 20);
-        const baseFogDensity = 0.12;
-        const maxAdditionalFogDensity = 0.18;
+        const depthFactor = Math.min(1.0, Math.abs(cameraRef.current.position.y) / 10);
+        const baseFogDensity = 0.02;
+        const maxAdditionalFogDensity = 0.08;
         
         // Darker and denser fog the deeper we go
         fogRef.current.density = baseFogDensity + (depthFactor * maxAdditionalFogDensity);
@@ -687,7 +687,10 @@ export function WaveBackground({
         
         // Also update the far clipping plane to enhance the fog effect
         // When underwater, we reduce the far clipping plane to create a stronger fog effect
-        cameraRef.current.far = 100 - (depthFactor * 70); // Reduce far plane from 100 to 30 at max depth
+        cameraRef.current.far = 100 - (depthFactor * 70); 
+
+        cameraRef.current.near = 1;
+        // Reduce far plane from 100 to 30 at max depth
         cameraRef.current.updateProjectionMatrix();
       } else {
         // Camera is above water - disable fog
