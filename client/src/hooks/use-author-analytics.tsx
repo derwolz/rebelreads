@@ -140,42 +140,56 @@ export function useAuthorAnalytics() {
 
   // Track page view with automatic exit tracking
   const trackPageView = useCallback((pageUrl: string, referrer?: string) => {
-    // Get or create a session ID for consistent tracking
-    const sessionId = localStorage.getItem("authorSessionId") || 
-      Math.random().toString(36).substring(2, 15);
-    
-    // Store the session ID
-    localStorage.setItem("authorSessionId", sessionId);
+    try {
+      // Get or create a session ID for consistent tracking
+      const sessionId = localStorage.getItem("authorSessionId") || 
+        Math.random().toString(36).substring(2, 15);
+      
+      // Store the session ID
+      localStorage.setItem("authorSessionId", sessionId);
 
-    // Record the page view
-    recordPageView.mutateAsync({
-      pageUrl,
-      referrer,
-      sessionId,
-      deviceInfo: {
-        userAgent: navigator.userAgent,
-        screenSize: `${window.innerWidth}x${window.innerHeight}`,
-      },
-    }).then((response) => {
-      if (response && response.id) {
-        const pageViewId = response.id;
-        
-        // Create a function to handle when user leaves the page
-        const handlePageExit = () => {
-          updatePageViewExit.mutate(pageViewId);
-        };
-        
-        // Add event listeners for page exit
-        window.addEventListener("beforeunload", handlePageExit);
-        
-        // Return a cleanup function to remove the event listener
-        return () => {
-          window.removeEventListener("beforeunload", handlePageExit);
-          // Call the exit handler when the component is unmounted
-          handlePageExit();
-        };
-      }
-    });
+      // Prepare payload according to schema (authorId will be added by the server)
+      const payload = {
+        pageUrl,
+        sessionId,
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        },
+        referrer: referrer || undefined
+      };
+      
+      console.log("Page view payload:", payload);
+
+      // Record the page view
+      recordPageView.mutateAsync(payload)
+        .then((response) => {
+          console.log("Page view recorded successfully:", response);
+          if (response && response.id) {
+            const pageViewId = response.id;
+            
+            // Create a function to handle when user leaves the page
+            const handlePageExit = () => {
+              updatePageViewExit.mutate(pageViewId);
+            };
+            
+            // Add event listeners for page exit
+            window.addEventListener("beforeunload", handlePageExit);
+            
+            // Return a cleanup function to remove the event listener
+            return () => {
+              window.removeEventListener("beforeunload", handlePageExit);
+              // Call the exit handler when the component is unmounted
+              handlePageExit();
+            };
+          }
+        })
+        .catch((error) => {
+          console.error("Error recording page view:", error);
+        });
+    } catch (error) {
+      console.error("Exception in trackPageView:", error);
+    }
   }, [recordPageView, updatePageViewExit]);
 
   return {

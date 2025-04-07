@@ -82,15 +82,23 @@ router.get("/actions", requireAuthor, async (req: Request, res: Response) => {
 router.post("/page-view", requireAuthor, async (req: Request, res: Response) => {
   try {
     const authorId = req.user!.id;
+    console.log("Recording page view for author:", authorId);
+    console.log("Request body:", req.body);
+    
     const validatedData = insertAuthorPageViewSchema.parse({
       ...req.body,
       authorId
     });
+    console.log("Validated data:", validatedData);
     
     const pageView = await dbStorage.recordPageView(validatedData);
+    console.log("Page view recorded:", pageView);
     res.status(201).json(pageView);
   } catch (error) {
     console.error("Error recording page view:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+    }
     res.status(400).json({ error: "Invalid page view data" });
   }
 });

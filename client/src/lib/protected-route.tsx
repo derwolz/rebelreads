@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 import { AuthorAnalyticsProvider } from "@/components/author-analytics-provider";
+import { useToast } from "@/hooks/use-toast";
 
 export function ProtectedRoute({
   path,
@@ -11,13 +12,29 @@ export function ProtectedRoute({
   component: () => React.JSX.Element;
 }) {
   const { user, isLoading } = useAuth();
+  const { toast } = useToast();
   
   // Check if this is a Pro route that needs analytics tracking
   const isProRoute = path.startsWith("/pro");
+  
+  // Check if user is an author for Pro routes
+  const isAuthorRequired = isProRoute;
+  const hasPermission = !isAuthorRequired || (user && user.isAuthor);
 
   const renderComponent = () => {
-    // For Pro routes, wrap with AuthorAnalyticsProvider
-    if (isProRoute) {
+    // Show toast if trying to access Pro route without author permissions
+    if (isProRoute && user && !user.isAuthor) {
+      toast({
+        title: "Author access required",
+        description: "You need author privileges to access this area.",
+        variant: "destructive",
+      });
+      return <Redirect to="/" />;
+    }
+    
+    // For Pro routes with proper author permissions, wrap with AuthorAnalyticsProvider
+    if (isProRoute && user && user.isAuthor) {
+      console.log("Rendering Pro route with analytics tracking");
       return (
         <AuthorAnalyticsProvider>
           <Component />
@@ -37,6 +54,8 @@ export function ProtectedRoute({
         </div>
       ) : !user ? (
         <Redirect to="/auth" />
+      ) : !hasPermission ? (
+        <Redirect to="/" />
       ) : (
         renderComponent()
       )}

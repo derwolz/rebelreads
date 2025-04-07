@@ -21,6 +21,14 @@ export function AuthorAnalyticsProvider({ children }: AuthorAnalyticsProviderPro
     // Only track for authors
     if (user?.isAuthor) {
       const referrer = document.referrer || "";
+      
+      // Log for debugging
+      console.log("Tracking page view:", {
+        pageUrl: location,
+        referrer,
+        authorId: user.id
+      });
+      
       trackPageView(location, referrer);
     }
   }, [location, trackPageView, user]);
