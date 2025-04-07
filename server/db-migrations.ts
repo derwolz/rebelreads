@@ -103,11 +103,12 @@ async function createAuthorAnalyticsTables() {
           id SERIAL PRIMARY KEY,
           author_id INTEGER NOT NULL,
           action_type TEXT NOT NULL,
-          object_id TEXT,
-          object_type TEXT,
-          details JSONB,
-          device_info JSONB,
-          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          action_data JSONB DEFAULT '{}',
+          page_url TEXT,
+          referrer_url TEXT,
+          timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+          session_id TEXT,
+          device_info JSONB DEFAULT '{}'
         )
       `);
       console.log("Table 'author_analytics' created successfully");

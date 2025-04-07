@@ -29,9 +29,16 @@ export function AuthorAnalyticsProvider({ children }: AuthorAnalyticsProviderPro
         authorId: user.id
       });
       
-      trackPageView(location, referrer);
+      // We use a ref to track if this is the first render to avoid duplicate calls
+      const trackingTimeout = setTimeout(() => {
+        trackPageView(location, referrer);
+      }, 100);
+      
+      return () => {
+        clearTimeout(trackingTimeout);
+      };
     }
-  }, [location, trackPageView, user]);
+  }, [location, user]);  // Remove trackPageView from deps to prevent multiple calls
 
   return <>{children}</>;
 }

@@ -138,7 +138,7 @@ export function useAuthorAnalytics() {
     });
   }, [updateFormStatus]);
 
-  // Track page view with automatic exit tracking
+  // Track page view with automatic exit tracking - limited to once per minute per URL
   const trackPageView = useCallback((pageUrl: string, referrer?: string) => {
     try {
       // Get or create a session ID for consistent tracking
@@ -147,46 +147,58 @@ export function useAuthorAnalytics() {
       
       // Store the session ID
       localStorage.setItem("authorSessionId", sessionId);
-
-      // Prepare payload according to schema (authorId will be added by the server)
-      const payload = {
-        pageUrl,
-        sessionId,
-        deviceInfo: {
-          userAgent: navigator.userAgent,
-          screenSize: `${window.innerWidth}x${window.innerHeight}`,
-        },
-        referrer: referrer || undefined
-      };
       
-      console.log("Page view payload:", payload);
+      // Check if we've tracked this page recently (in last minute)
+      const lastTrackedKey = `lastTracked_${pageUrl}`;
+      const lastTrackedTime = localStorage.getItem(lastTrackedKey);
+      const currentTime = Date.now();
+      
+      // Only track if we haven't tracked this page in the last minute
+      if (!lastTrackedTime || (currentTime - parseInt(lastTrackedTime)) > 60000) {
+        // Update tracking timestamp
+        localStorage.setItem(lastTrackedKey, currentTime.toString());
+        
+        // Prepare payload according to schema (authorId will be added by the server)
+        const payload = {
+          pageUrl,
+          sessionId,
+          deviceInfo: {
+            userAgent: navigator.userAgent,
+            screenSize: `${window.innerWidth}x${window.innerHeight}`,
+          },
+          referrer: referrer || undefined
+        };
+        
+        console.log("Tracking page view:", { pageUrl });
 
-      // Record the page view
-      recordPageView.mutateAsync(payload)
-        .then((response) => {
-          console.log("Page view recorded successfully:", response);
-          if (response && response.id) {
-            const pageViewId = response.id;
-            
-            // Create a function to handle when user leaves the page
-            const handlePageExit = () => {
-              updatePageViewExit.mutate(pageViewId);
-            };
-            
-            // Add event listeners for page exit
-            window.addEventListener("beforeunload", handlePageExit);
-            
-            // Return a cleanup function to remove the event listener
-            return () => {
-              window.removeEventListener("beforeunload", handlePageExit);
-              // Call the exit handler when the component is unmounted
-              handlePageExit();
-            };
-          }
-        })
-        .catch((error) => {
-          console.error("Error recording page view:", error);
-        });
+        // Record the page view
+        recordPageView.mutateAsync(payload)
+          .then((response) => {
+            if (response && response.id) {
+              const pageViewId = response.id;
+              
+              // Create a function to handle when user leaves the page
+              const handlePageExit = () => {
+                updatePageViewExit.mutate(pageViewId);
+              };
+              
+              // Add event listeners for page exit
+              window.addEventListener("beforeunload", handlePageExit);
+              
+              // Return a cleanup function to remove the event listener
+              return () => {
+                window.removeEventListener("beforeunload", handlePageExit);
+                // Call the exit handler when the component is unmounted
+                handlePageExit();
+              };
+            }
+          })
+          .catch((error) => {
+            console.error("Error recording page view:", error);
+          });
+      } else {
+        console.log("Skipping page view tracking (already tracked within last minute):", { pageUrl });
+      }
     } catch (error) {
       console.error("Exception in trackPageView:", error);
     }

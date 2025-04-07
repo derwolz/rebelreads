@@ -2,9 +2,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, BarChart2, BookCopy, UsersRound, Settings } from "lucide-react";
 import { Redirect } from "wouter";
 import { AdminBookCsvUploadWizard } from "@/components/admin-book-csv-upload-wizard";
+import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -39,28 +40,48 @@ export default function AdminPanel() {
           <CardDescription>Manage your website settings and content</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="books">
-            <TabsList>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="books">Books</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+          <Tabs defaultValue="analytics">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart2 className="h-4 w-4" />
+                <span>Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <UsersRound className="h-4 w-4" />
+                <span>Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="books" className="flex items-center gap-2">
+                <BookCopy className="h-4 w-4" />
+                <span>Books</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="users">
-              <h3 className="text-lg font-semibold mb-4">User Management</h3>
-              {/* User management content will go here */}
+            
+            <TabsContent value="analytics" className="py-4">
+              <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
+              <AdminAnalyticsDashboard />
             </TabsContent>
-            <TabsContent value="books">
+            
+            <TabsContent value="users" className="py-4">
+              <h3 className="text-lg font-semibold mb-4">User Management</h3>
+              <div className="text-center text-muted-foreground py-10">
+                User management functionality coming soon.
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="books" className="py-4">
               <h3 className="text-lg font-semibold mb-4">Book Management</h3>
               <AdminBookCsvUploadWizard />
             </TabsContent>
-            <TabsContent value="reports">
-              <h3 className="text-lg font-semibold mb-4">Report Management</h3>
-              {/* Report management content will go here */}
-            </TabsContent>
-            <TabsContent value="settings">
+            
+            <TabsContent value="settings" className="py-4">
               <h3 className="text-lg font-semibold mb-4">Site Settings</h3>
-              {/* Settings content will go here */}
+              <div className="text-center text-muted-foreground py-10">
+                Site settings functionality coming soon.
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
