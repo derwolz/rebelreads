@@ -567,3 +567,75 @@ export const insertReviewPurchaseSchema = createInsertSchema(reviewPurchases).om
 // Add the type
 export type ReviewPurchase = typeof reviewPurchases.$inferSelect;
 export type InsertReviewPurchase = typeof reviewPurchases.$inferInsert;
+
+// Author analytics tables
+export const AUTHOR_ACTION_TYPES = [
+  "pro_page_view",
+  "form_submission",
+  "form_started", 
+  "link_click",
+  "wizard_step",
+  "wizard_exit",
+  "template_download",
+  "navigation"
+] as const;
+
+export const authorAnalytics = pgTable("author_analytics", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull(),
+  actionType: text("action_type").notNull(),
+  actionData: jsonb("action_data").default({}),
+  pageUrl: text("page_url"),
+  referrerUrl: text("referrer_url"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  sessionId: text("session_id"),
+  deviceInfo: jsonb("device_info").default({}),
+});
+
+export const authorPageViews = pgTable("author_page_views", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull(),
+  pageUrl: text("page_url").notNull(),
+  enteredAt: timestamp("entered_at").notNull().defaultNow(),
+  exitedAt: timestamp("exited_at"),
+  duration: integer("duration"),
+  sessionId: text("session_id"),
+});
+
+export const authorFormAnalytics = pgTable("author_form_analytics", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull(), 
+  formId: text("form_id").notNull(), // e.g., "book_creation", "ad_campaign"
+  status: text("status").notNull(), // "started", "completed", "abandoned"
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+  duration: integer("duration"),
+  formData: jsonb("form_data").default({}),
+  stepData: jsonb("step_data").default({}), // track which steps were completed
+  abandonedStep: text("abandoned_step"),
+  sessionId: text("session_id"),
+});
+
+export const insertAuthorAnalyticsSchema = createInsertSchema(authorAnalytics).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertAuthorPageViewSchema = createInsertSchema(authorPageViews).omit({
+  id: true,
+  enteredAt: true,
+  duration: true,
+});
+
+export const insertAuthorFormAnalyticsSchema = createInsertSchema(authorFormAnalytics).omit({
+  id: true,
+  startedAt: true,
+  duration: true,
+});
+
+export type AuthorAnalytics = typeof authorAnalytics.$inferSelect;
+export type InsertAuthorAnalytics = typeof authorAnalytics.$inferInsert;
+export type AuthorPageView = typeof authorPageViews.$inferSelect;
+export type InsertAuthorPageView = typeof authorPageViews.$inferInsert;
+export type AuthorFormAnalytics = typeof authorFormAnalytics.$inferSelect;
+export type InsertAuthorFormAnalytics = typeof authorFormAnalytics.$inferInsert;

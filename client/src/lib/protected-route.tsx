@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { AuthorAnalyticsProvider } from "@/components/author-analytics-provider";
 
 export function ProtectedRoute({
   path,
@@ -10,6 +11,23 @@ export function ProtectedRoute({
   component: () => React.JSX.Element;
 }) {
   const { user, isLoading } = useAuth();
+  
+  // Check if this is a Pro route that needs analytics tracking
+  const isProRoute = path.startsWith("/pro");
+
+  const renderComponent = () => {
+    // For Pro routes, wrap with AuthorAnalyticsProvider
+    if (isProRoute) {
+      return (
+        <AuthorAnalyticsProvider>
+          <Component />
+        </AuthorAnalyticsProvider>
+      );
+    }
+    
+    // For other routes, render component directly
+    return <Component />;
+  };
 
   return (
     <Route path={path}>
@@ -20,7 +38,7 @@ export function ProtectedRoute({
       ) : !user ? (
         <Redirect to="/auth" />
       ) : (
-        <Component />
+        renderComponent()
       )}
     </Route>
   );

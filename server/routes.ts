@@ -11,6 +11,7 @@ import proRoutes from "./routes/pro-routes";
 import homeRoutes from "./routes/home-routes";
 import searchRoutes from "./routes/search-routes";
 import adsRoutes from "./routes/ads-routes";
+import authorAnalyticsRoutes from "./routes/author-analytics-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -26,6 +27,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", homeRoutes);
   app.use("/api/search", searchRoutes);
   app.use("/api/ads", adsRoutes);
+  app.use("/api/author-analytics", authorAnalyticsRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -4,6 +4,7 @@ import { AnalyticsStorage } from "./storage/analytics";
 import { LandingPageStorage } from "./storage/landing-page";
 import { CampaignStorage } from "./storage/campaigns";
 import { PublisherStorage } from "./storage/publisher";
+import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -12,6 +13,7 @@ const analyticsStorage = new AnalyticsStorage();
 const landingPageStorage = new LandingPageStorage();
 const campaignStorage = new CampaignStorage();
 const publisherStorage = new PublisherStorage();
+const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -36,6 +38,17 @@ export const dbStorage = {
   getFollowerCount: accountStorage.getFollowerCount.bind(accountStorage),
   getFollowingCount: accountStorage.getFollowingCount.bind(accountStorage),
   getFollowerMetrics: accountStorage.getFollowerMetrics.bind(accountStorage),
+  
+  // Author analytics
+  recordAuthorAction: authorAnalyticsStorage.recordAuthorAction.bind(authorAnalyticsStorage),
+  getAuthorActions: authorAnalyticsStorage.getAuthorActions.bind(authorAnalyticsStorage),
+  recordPageView: authorAnalyticsStorage.recordPageView.bind(authorAnalyticsStorage),
+  updatePageViewExit: authorAnalyticsStorage.updatePageViewExit.bind(authorAnalyticsStorage),
+  getAuthorPageViews: authorAnalyticsStorage.getAuthorPageViews.bind(authorAnalyticsStorage),
+  recordFormAnalytics: authorAnalyticsStorage.recordFormAnalytics.bind(authorAnalyticsStorage),
+  updateFormStatus: authorAnalyticsStorage.updateFormStatus.bind(authorAnalyticsStorage),
+  getAuthorFormAnalytics: authorAnalyticsStorage.getAuthorFormAnalytics.bind(authorAnalyticsStorage),
+  getAuthorActivitySummary: authorAnalyticsStorage.getAuthorActivitySummary.bind(authorAnalyticsStorage),
 
   // Book management
   getBooks: bookStorage.getBooks.bind(bookStorage),
@@ -126,6 +139,7 @@ export type { IAnalyticsStorage } from "./storage/analytics";
 export type { ILandingPageStorage } from "./storage/landing-page";
 export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
+export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 
 // Re-export storage classes
 export {
@@ -135,4 +149,5 @@ export {
   LandingPageStorage,
   CampaignStorage,
   PublisherStorage,
+  AuthorAnalyticsStorage,
 };
