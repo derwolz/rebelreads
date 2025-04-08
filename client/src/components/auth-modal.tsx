@@ -155,22 +155,24 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={loginForm.control}
-                  name="betaKey"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Beta Key</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your beta key if needed" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Required during beta testing phase
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {useBeta().isBetaActive && (
+                  <FormField
+                    control={loginForm.control}
+                    name="betaKey"
+                    render={({ field }) => (
+                      <FormItem className="mt-4">
+                        <FormLabel>Beta Key</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your beta key" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Required during beta testing phase
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <Button className="w-full mt-6" type="submit">
                   Login
                 </Button>
@@ -282,22 +284,24 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={registerForm.control}
-                  name="betaKey"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Beta Key</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your beta key if needed" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Required during beta testing phase
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {useBeta().isBetaActive && (
+                  <FormField
+                    control={registerForm.control}
+                    name="betaKey"
+                    render={({ field }) => (
+                      <FormItem className="mt-4">
+                        <FormLabel>Beta Key</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your beta key" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Required during beta testing phase
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <Button className="w-full mt-6" type="submit">
                   Register
                 </Button>
