@@ -5,10 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { BetaProvider } from "@/hooks/use-beta";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { OnboardingProvider } from "@/hooks/use-onboarding";
 import { MainNav } from "@/components/main-nav";
 import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
 import { FloatingSignup } from "@/components/floating-signup";
+import OnboardingWizard from "@/components/onboarding/onboarding-wizard";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import LandingPage from "@/pages/landing-page";
@@ -121,10 +123,13 @@ function App() {
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <BetaProvider>
           <AuthProvider>
-            <Router />
-            <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
-            <ReviewInviteDialog />
-            <Toaster />
+            <OnboardingProvider>
+              <Router />
+              <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
+              <ReviewInviteDialog />
+              <OnboardingWizard />
+              <Toaster />
+            </OnboardingProvider>
           </AuthProvider>
         </BetaProvider>
       </ThemeProvider>

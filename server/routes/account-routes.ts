@@ -150,4 +150,47 @@ router.post(
   },
 );
 
+// Rating preferences and onboarding routes
+router.get("/user/rating-preferences", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+
+  try {
+    const preferences = await dbStorage.getUserRatingPreferences(req.user!.id);
+    res.json(preferences || { criteriaOrder: ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'] });
+  } catch (error) {
+    console.error("Error fetching rating preferences:", error);
+    res.status(500).json({ message: "Failed to fetch rating preferences" });
+  }
+});
+
+router.post("/user/rating-preferences", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const { criteriaOrder } = req.body;
+    
+    if (!Array.isArray(criteriaOrder) || criteriaOrder.length !== 5) {
+      return res.status(400).json({ message: "Invalid criteria order provided" });
+    }
+    
+    const preferences = await dbStorage.saveUserRatingPreferences(req.user!.id, criteriaOrder);
+    res.json(preferences);
+  } catch (error) {
+    console.error("Error saving rating preferences:", error);
+    res.status(500).json({ message: "Failed to save rating preferences" });
+  }
+});
+
+router.post("/user/complete-onboarding", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  try {
+    const updatedUser = await dbStorage.markOnboardingCompleted(req.user!.id);
+    res.json(updatedUser);
+  } catch (error) {
+    console.error("Error marking onboarding as completed:", error);
+    res.status(500).json({ message: "Failed to complete onboarding" });
+  }
+});
+
 export default router;
