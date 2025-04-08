@@ -2,10 +2,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, BarChart2, BookCopy, UsersRound, Settings } from "lucide-react";
+import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key } from "lucide-react";
 import { Redirect } from "wouter";
 import { AdminBookCsvUploadWizard } from "@/components/admin-book-csv-upload-wizard";
 import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
+import { AdminBetaKeysManager } from "@/components/admin-beta-keys-manager";
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export default function AdminPanel() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="analytics">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
@@ -53,6 +54,10 @@ export default function AdminPanel() {
               <TabsTrigger value="books" className="flex items-center gap-2">
                 <BookCopy className="h-4 w-4" />
                 <span>Books</span>
+              </TabsTrigger>
+              <TabsTrigger value="beta" className="flex items-center gap-2">
+                <Key className="h-4 w-4" />
+                <span>Beta Keys</span>
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
@@ -75,6 +80,10 @@ export default function AdminPanel() {
             <TabsContent value="books" className="py-4">
               <h3 className="text-lg font-semibold mb-4">Book Management</h3>
               <AdminBookCsvUploadWizard />
+            </TabsContent>
+            
+            <TabsContent value="beta" className="py-4">
+              <AdminBetaKeysManager />
             </TabsContent>
             
             <TabsContent value="settings" className="py-4">
