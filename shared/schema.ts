@@ -77,7 +77,6 @@ export const users = pgTable("users", {
   displayName: text("display_name"), // Added display name field
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
   credits: decimal("credits").notNull().default("0"), // Add credits field
-  hasCompletedOnboarding: boolean("has_completed_onboarding").default(false), // Track if user has completed the onboarding wizard
 });
 
 export const followers = pgTable("followers", {
@@ -421,16 +420,6 @@ export type InsertKeywordBid = typeof keywordBids.$inferInsert;
 export type GiftedBook = typeof giftedBooks.$inferSelect;
 export type InsertGiftedBook = typeof giftedBooks.$inferInsert;
 
-// User rating preferences table
-export const ratingPreferences = pgTable("rating_preferences", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),
-  // Order matters - the order in this array determines the weight
-  criteriaOrder: text("criteria_order").array().notNull().default(['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding']),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
 // Ad Tracking Table
 export const adImpressions = pgTable("ad_impressions", {
   id: serial("id").primaryKey(),
@@ -453,51 +442,14 @@ export const insertAdImpressionSchema = createInsertSchema(adImpressions).omit({
 export type AdImpression = typeof adImpressions.$inferSelect;
 export type InsertAdImpression = typeof adImpressions.$inferInsert;
 
-// Define the rating criteria and weights for reference
-export const RATING_CRITERIA = [
-  'enjoyment',
-  'writing',
-  'themes',
-  'characters',
-  'worldbuilding'
-] as const;
-
-export type RatingCriteria = typeof RATING_CRITERIA[number];
-
-// Default weights for each position
-export const DEFAULT_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
-
-export function getWeightForCriteria(criteria: RatingCriteria, criteriaOrder: RatingCriteria[]): number {
-  // Find the position of this criteria in the user's order
-  const position = criteriaOrder.indexOf(criteria);
-  if (position === -1) {
-    // If not found in order (shouldn't happen), use lowest weight
-    return DEFAULT_WEIGHTS[DEFAULT_WEIGHTS.length - 1];
-  }
-  return DEFAULT_WEIGHTS[position];
-}
-
-export function calculateWeightedRating(rating: Rating, userPreferences?: RatingPreference): number {
-  if (userPreferences) {
-    // Use user's custom ordering
-    const criteriaOrder = userPreferences.criteriaOrder as RatingCriteria[];
-    return (
-      rating.enjoyment * getWeightForCriteria('enjoyment', criteriaOrder) +
-      rating.writing * getWeightForCriteria('writing', criteriaOrder) +
-      rating.themes * getWeightForCriteria('themes', criteriaOrder) +
-      rating.characters * getWeightForCriteria('characters', criteriaOrder) +
-      rating.worldbuilding * getWeightForCriteria('worldbuilding', criteriaOrder)
-    );
-  } else {
-    // Use default weights (default ordering is: enjoyment, writing, themes, characters, worldbuilding)
-    return (
-      rating.enjoyment * 0.35 +     // 35% weight for 1st position (enjoyment)
-      rating.writing * 0.25 +       // 25% weight for 2nd position (writing)
-      rating.themes * 0.20 +        // 20% weight for 3rd position (themes)
-      rating.characters * 0.12 +    // 12% weight for 4th position (characters)
-      rating.worldbuilding * 0.08   // 8% weight for 5th position (worldbuilding)
-    );
-  }
+export function calculateWeightedRating(rating: Rating): number {
+  return (
+    rating.enjoyment * 0.3 +     // 30% weight for enjoyment
+    rating.writing * 0.2 +       // 20% weight for writing
+    rating.themes * 0.2 +        // 20% weight for themes
+    rating.characters * 0.1 +    // 10% weight for characters
+    rating.worldbuilding * 0.1   // 10% weight for worldbuilding
+  );
 }
 
 export const landing_sessions = pgTable("landing_sessions", {
@@ -719,14 +671,3 @@ export const insertBetaKeySchema = createInsertSchema(betaKeys).omit({
 export type BetaKey = typeof betaKeys.$inferSelect;
 export type InsertBetaKey = typeof betaKeys.$inferInsert;
 export type BetaKeyUsage = typeof betaKeyUsage.$inferSelect;
-
-// Rating preferences schema and types
-export const insertRatingPreferencesSchema = createInsertSchema(ratingPreferences).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type RatingPreference = typeof ratingPreferences.$inferSelect;
-export type InsertRatingPreference = typeof ratingPreferences.$inferInsert;
-

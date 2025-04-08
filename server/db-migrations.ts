@@ -235,54 +235,6 @@ async function createBetaKeysTables() {
   }
 }
 
-async function addRatingPreferencesTable() {
-  try {
-    // Check if users table has has_completed_onboarding column
-    const checkUserColumnResult = await db.execute(sql`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'users' AND column_name = 'has_completed_onboarding'
-    `);
-    
-    if (checkUserColumnResult.rows.length === 0) {
-      console.log("Adding 'has_completed_onboarding' column to users table...");
-      await db.execute(sql`
-        ALTER TABLE users 
-        ADD COLUMN has_completed_onboarding boolean DEFAULT false
-      `);
-      console.log("Column 'has_completed_onboarding' added successfully");
-    } else {
-      console.log("Column 'has_completed_onboarding' already exists");
-    }
-
-    // Check if rating_preferences table exists
-    const checkTableResult = await db.execute(sql`
-      SELECT table_name
-      FROM information_schema.tables 
-      WHERE table_name = 'rating_preferences'
-    `);
-    
-    if (checkTableResult.rows.length === 0) {
-      console.log("Creating 'rating_preferences' table...");
-      await db.execute(sql`
-        CREATE TABLE rating_preferences (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL UNIQUE,
-          criteria_order TEXT[] NOT NULL DEFAULT ARRAY['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'],
-          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-        )
-      `);
-      console.log("Table 'rating_preferences' created successfully");
-    } else {
-      console.log("Table 'rating_preferences' already exists");
-    }
-  } catch (error) {
-    console.error("Error setting up rating preferences:", error);
-    throw error;
-  }
-}
-
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -290,6 +242,5 @@ export async function runMigrations() {
   await createAdImpressionsTable();
   await createAuthorAnalyticsTables();
   await createBetaKeysTables();
-  await addRatingPreferencesTable();
   console.log("Migrations completed");
 }

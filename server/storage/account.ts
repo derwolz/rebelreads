@@ -11,9 +11,6 @@ import {
   Follower,
   books,
   Book,
-  ratingPreferences,
-  RatingPreference,
-  RatingCriteria,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
@@ -59,11 +56,6 @@ export interface IAccountStorage {
     follows: Array<{ date: string; count: number }>;
     unfollows: Array<{ date: string; count: number }>;
   }>;
-  
-  // User onboarding and preferences
-  getUserRatingPreferences(userId: number): Promise<RatingPreference | undefined>;
-  saveUserRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreference>;
-  markOnboardingCompleted(userId: number): Promise<User>;
 }
 
 export class AccountStorage implements IAccountStorage {
@@ -368,54 +360,5 @@ export class AccountStorage implements IAccountStorage {
         and(eq(followers.followerId, userId), isNull(followers.deletedAt)),
       );
     return result?.count || 0;
-  }
-
-  async getUserRatingPreferences(userId: number): Promise<RatingPreference | undefined> {
-    const [result] = await db
-      .select()
-      .from(ratingPreferences)
-      .where(eq(ratingPreferences.userId, userId));
-    
-    return result;
-  }
-
-  async saveUserRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreference> {
-    // Check if user already has preferences
-    const existing = await this.getUserRatingPreferences(userId);
-    
-    if (existing) {
-      // Update existing preferences
-      const [updated] = await db
-        .update(ratingPreferences)
-        .set({ 
-          criteriaOrder, 
-          updatedAt: new Date() 
-        })
-        .where(eq(ratingPreferences.userId, userId))
-        .returning();
-      
-      return updated;
-    } else {
-      // Create new preferences
-      const [newPreferences] = await db
-        .insert(ratingPreferences)
-        .values({
-          userId,
-          criteriaOrder,
-        })
-        .returning();
-      
-      return newPreferences;
-    }
-  }
-
-  async markOnboardingCompleted(userId: number): Promise<User> {
-    const [updated] = await db
-      .update(users)
-      .set({ hasCompletedOnboarding: true })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return updated;
   }
 }
