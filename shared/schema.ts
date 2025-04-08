@@ -56,6 +56,30 @@ export const AVAILABLE_GENRES = [
   "Crime"
 ] as const;
 
+export const RATING_CRITERIA = [
+  "enjoyment",
+  "writing",
+  "themes",
+  "characters",
+  "worldbuilding"
+] as const;
+
+export const RATING_CRITERIA_DESCRIPTIONS = {
+  enjoyment: "A measurement of how engaging the novel is. Fun, memorable, entertaining.",
+  writing: "A measurement of wordchoice, plot, style, overall skill in presenting the book.",
+  characters: "A measurement of how well characters are portrayed. The characters are interesting, engaging, real.",
+  themes: "A measurement of the ideas. Are they well explored, or interesting.",
+  worldbuilding: "A measurement of the world. Magic systems true to mechanics, physics, general believability of elements."
+} as const;
+
+export const DEFAULT_RATING_WEIGHTS = {
+  enjoyment: 0.35,
+  writing: 0.25,
+  themes: 0.2,
+  characters: 0.12,
+  worldbuilding: 0.08
+} as const;
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -77,6 +101,7 @@ export const users = pgTable("users", {
   displayName: text("display_name"), // Added display name field
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
   credits: decimal("credits").notNull().default("0"), // Add credits field
+  hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
 });
 
 export const followers = pgTable("followers", {
@@ -169,6 +194,14 @@ export const reading_status = pgTable("reading_status", {
   isWishlisted: boolean("is_wishlisted").notNull().default(false),
   isCompleted: boolean("is_completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
+});
+
+export const rating_preferences = pgTable("rating_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  criteriaOrder: jsonb("criteria_order").$type<string[]>().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const bookImpressions = pgTable("book_impressions", {
@@ -356,6 +389,11 @@ export const insertReadingStatusSchema = createInsertSchema(reading_status);
 export const insertFollowerSchema = createInsertSchema(followers);
 export const insertImpressionSchema = createInsertSchema(bookImpressions);
 export const insertClickThroughSchema = createInsertSchema(bookClickThroughs);
+export const insertRatingPreferencesSchema = createInsertSchema(rating_preferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export const loginSchema = z.object({
   email: z.string().min(1, "Email or username is required"),
@@ -392,6 +430,8 @@ export type InsertPublisher = z.infer<typeof insertPublisherSchema>;
 export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
+export type RatingPreferences = typeof rating_preferences.$inferSelect;
+export type InsertRatingPreferences = z.infer<typeof insertRatingPreferencesSchema>;
 
 export const giftedBooks = pgTable("gifted_books", {
   id: serial("id").primaryKey(),
@@ -442,13 +482,48 @@ export const insertAdImpressionSchema = createInsertSchema(adImpressions).omit({
 export type AdImpression = typeof adImpressions.$inferSelect;
 export type InsertAdImpression = typeof adImpressions.$inferInsert;
 
-export function calculateWeightedRating(rating: Rating): number {
+export function calculateWeightedRating(
+  rating: Rating, 
+  customWeights?: Record<string, number>,
+  userCriteriaOrder?: string[]
+): number {
+  // If custom weights are directly provided, use them
+  if (customWeights) {
+    return (
+      rating.enjoyment * customWeights.enjoyment +
+      rating.writing * customWeights.writing +
+      rating.themes * customWeights.themes + 
+      rating.characters * customWeights.characters +
+      rating.worldbuilding * customWeights.worldbuilding
+    );
+  }
+  
+  // If user criteria order is provided, derive weights based on position
+  if (userCriteriaOrder && userCriteriaOrder.length === 5) {
+    const positionWeights = [0.35, 0.25, 0.20, 0.12, 0.08]; // Weights by position
+    const derivedWeights: Record<string, number> = {};
+    
+    // Assign weights based on position in the user's criteria order
+    userCriteriaOrder.forEach((criterion, index) => {
+      derivedWeights[criterion] = positionWeights[index];
+    });
+    
+    return (
+      rating.enjoyment * (derivedWeights.enjoyment || DEFAULT_RATING_WEIGHTS.enjoyment) +
+      rating.writing * (derivedWeights.writing || DEFAULT_RATING_WEIGHTS.writing) +
+      rating.themes * (derivedWeights.themes || DEFAULT_RATING_WEIGHTS.themes) + 
+      rating.characters * (derivedWeights.characters || DEFAULT_RATING_WEIGHTS.characters) +
+      rating.worldbuilding * (derivedWeights.worldbuilding || DEFAULT_RATING_WEIGHTS.worldbuilding)
+    );
+  }
+  
+  // Default fallback using system default weights
   return (
-    rating.enjoyment * 0.3 +     // 30% weight for enjoyment
-    rating.writing * 0.2 +       // 20% weight for writing
-    rating.themes * 0.2 +        // 20% weight for themes
-    rating.characters * 0.1 +    // 10% weight for characters
-    rating.worldbuilding * 0.1   // 10% weight for worldbuilding
+    rating.enjoyment * DEFAULT_RATING_WEIGHTS.enjoyment +
+    rating.writing * DEFAULT_RATING_WEIGHTS.writing +
+    rating.themes * DEFAULT_RATING_WEIGHTS.themes + 
+    rating.characters * DEFAULT_RATING_WEIGHTS.characters +
+    rating.worldbuilding * DEFAULT_RATING_WEIGHTS.worldbuilding
   );
 }
 

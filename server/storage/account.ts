@@ -11,6 +11,8 @@ import {
   Follower,
   books,
   Book,
+  rating_preferences,
+  RatingPreferences,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
@@ -49,6 +51,9 @@ export interface IAccountStorage {
   getFollowerCount(authorId: number): Promise<number>;
   getFollowingCount(userId: number): Promise<number>;
 
+  getRatingPreferences(userId: number): Promise<RatingPreferences | undefined>;
+  saveRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreferences>;
+  
   getFollowerMetrics(
     authorId: number,
     days: number,
@@ -360,5 +365,59 @@ export class AccountStorage implements IAccountStorage {
         and(eq(followers.followerId, userId), isNull(followers.deletedAt)),
       );
     return result?.count || 0;
+  }
+
+  async getRatingPreferences(userId: number): Promise<RatingPreferences | undefined> {
+    const preferences = await db
+      .select()
+      .from(rating_preferences)
+      .where(eq(rating_preferences.userId, userId));
+    
+    return preferences[0];
+  }
+
+  async saveRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreferences> {
+    // Check if preferences already exist
+    const existing = await this.getRatingPreferences(userId);
+    
+    if (existing) {
+      // Update existing
+      const [updated] = await db
+        .update(rating_preferences)
+        .set({ 
+          criteriaOrder,
+          updatedAt: new Date()
+        })
+        .where(eq(rating_preferences.userId, userId))
+        .returning();
+      
+      // Mark onboarding as complete if not already
+      const user = await this.getUser(userId);
+      if (user && !user.hasCompletedOnboarding) {
+        await db
+          .update(users)
+          .set({ hasCompletedOnboarding: true })
+          .where(eq(users.id, userId));
+      }
+      
+      return updated;
+    } else {
+      // Create new
+      const [created] = await db
+        .insert(rating_preferences)
+        .values({
+          userId,
+          criteriaOrder
+        })
+        .returning();
+      
+      // Mark onboarding as complete
+      await db
+        .update(users)
+        .set({ hasCompletedOnboarding: true })
+        .where(eq(users.id, userId));
+      
+      return created;
+    }
   }
 }

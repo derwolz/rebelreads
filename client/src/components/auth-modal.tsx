@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
+import { useBeta } from "@/hooks/use-beta";
 import { insertUserSchema, loginSchema, LoginData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
