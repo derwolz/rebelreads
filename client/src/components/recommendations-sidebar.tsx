@@ -43,19 +43,19 @@ export function RecommendationsSidebar() {
           <>
             {recommendedBooks?.slice(0, 3).map((book) => (
               <div key={book.id} className="flex items-start gap-3 pb-3 last:pb-0 border-b last:border-0">
-                <Link href={`/books/${book.id}`}>
-                  <a className="block w-10 h-14 shrink-0">
+                <div className="block w-10 h-14 shrink-0">
+                  <Link href={`/books/${book.id}`}>
                     <img
                       src={book.coverUrl}
                       alt={book.title}
-                      className="w-full h-full object-cover rounded"
+                      className="w-full h-full object-cover rounded cursor-pointer"
                     />
-                  </a>
-                </Link>
+                  </Link>
+                </div>
                 <div className="space-y-1 flex-1 min-w-0">
                   <h4 className="font-medium text-sm truncate">
                     <Link href={`/books/${book.id}`}>
-                      <a className="hover:text-primary">{book.title}</a>
+                      <span className="hover:text-primary cursor-pointer">{book.title}</span>
                     </Link>
                   </h4>
                   <div className="flex items-center text-xs text-muted-foreground">

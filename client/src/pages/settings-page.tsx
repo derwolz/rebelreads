@@ -489,7 +489,7 @@ export default function SettingsPage() {
                           <Select
                             onValueChange={(value) => {
                               const newLink: ReferralLink = {
-                                retailer: value,
+                                retailer: value as (typeof RETAILER_OPTIONS)[number],
                                 url: "",
                                 customName: value === "Custom" ? "" : undefined,
                               };
