@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Monitor } from "lucide-react";
+import { User, Settings, Monitor, Star } from "lucide-react";
 
 interface NavItemProps {
   href: string;
@@ -51,6 +51,13 @@ export function SettingsSidebar() {
         icon={<Monitor className="h-4 w-4" />}
       >
         Appearance
+      </NavItem>
+      <NavItem
+        href="/settings/rating-preferences"
+        active={location === "/settings/rating-preferences"}
+        icon={<Star className="h-4 w-4" />}
+      >
+        Rating Preferences
       </NavItem>
     </nav>
   );

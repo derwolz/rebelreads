@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Book, UpdateProfile, ReferralLink, updateProfileSchema } from "@shared/schema";
+import { Book, UpdateProfile, ReferralLink, updateProfileSchema, RETAILER_OPTIONS } from "@shared/schema";
 import { SettingsSidebar } from "@/components/settings-sidebar";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { ReaderSettings } from "@/components/reader-settings";
 import { BookUploadDialog } from "@/components/book-upload-wizard";
+import { RatingPreferencesSettings } from "@/components/rating-preferences-settings";
+import { RecommendationsSidebar } from "@/components/recommendations-sidebar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -411,6 +413,8 @@ export default function SettingsPage() {
     );
   } else if (location === "/settings/appearance") {
     content = <AppearanceSettings />;
+  } else if (location === "/settings/rating-preferences") {
+    content = <RatingPreferencesSettings />;
   } else if (location === "/settings/author" && user?.isAuthor) {
     content = (
       <Card>
@@ -602,6 +606,13 @@ export default function SettingsPage() {
           {content}
         </div>
 
+        {/* Recommendations Sidebar - Only visible on desktop and only for reader settings and rating preferences */}
+        {(location === "/settings" || location === "/settings/rating-preferences") && (
+          <div className="hidden lg:block w-72 shrink-0">
+            <RecommendationsSidebar />
+          </div>
+        )}
+
         {/* Overlay */}
         {isSidebarOpen && (
           <div
@@ -626,4 +637,4 @@ async function apiRequest(method: string, url: string, data?: any) {
   return res;
 }
 
-const RETAILER_OPTIONS = ["Amazon", "Barnes & Noble", "IndieBound", "Custom"] as const;
+// RETAILER_OPTIONS is already imported at the top of the file
