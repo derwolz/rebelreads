@@ -179,11 +179,68 @@ async function createAuthorAnalyticsTables() {
   }
 }
 
+async function createBetaKeysTables() {
+  try {
+    // Check if beta_keys table exists
+    const checkBetaKeysResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'beta_keys'
+    `);
+    
+    if (checkBetaKeysResult.rows.length === 0) {
+      console.log("Creating 'beta_keys' table...");
+      await db.execute(sql`
+        CREATE TABLE beta_keys (
+          id SERIAL PRIMARY KEY,
+          key TEXT NOT NULL UNIQUE,
+          description TEXT,
+          is_active BOOLEAN NOT NULL DEFAULT TRUE,
+          usage_limit INTEGER,
+          usage_count INTEGER NOT NULL DEFAULT 0,
+          created_by INTEGER,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          expires_at TIMESTAMP
+        )
+      `);
+      console.log("Table 'beta_keys' created successfully");
+    } else {
+      console.log("Table 'beta_keys' already exists");
+    }
+
+    // Check if beta_key_usage table exists
+    const checkBetaKeyUsageResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'beta_key_usage'
+    `);
+    
+    if (checkBetaKeyUsageResult.rows.length === 0) {
+      console.log("Creating 'beta_key_usage' table...");
+      await db.execute(sql`
+        CREATE TABLE beta_key_usage (
+          id SERIAL PRIMARY KEY,
+          beta_key_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          used_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'beta_key_usage' created successfully");
+    } else {
+      console.log("Table 'beta_key_usage' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating beta keys tables:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
   await addReportStatusColumnToRatings();
   await createAdImpressionsTable();
   await createAuthorAnalyticsTables();
+  await createBetaKeysTables();
   console.log("Migrations completed");
 }
