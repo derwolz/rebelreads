@@ -68,31 +68,110 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/register", async (req, res, next) => {
-    // Check for existing email
-    const existingEmail = await dbStorage.getUserByEmail(req.body.email);
-    if (existingEmail) {
-      return res.status(400).send("Email already exists");
+    try {
+      // Check if beta is active
+      const isBetaActive = await dbStorage.isBetaActive();
+      
+      // If beta is active, validate the beta key
+      if (isBetaActive) {
+        const { betaKey } = req.body;
+        
+        if (!betaKey) {
+          return res.status(400).json({ error: "Beta key is required during beta testing phase" });
+        }
+        
+        const isValidKey = await dbStorage.validateBetaKey(betaKey);
+        
+        if (!isValidKey) {
+          return res.status(400).json({ error: "Invalid beta key" });
+        }
+      }
+      
+      // Check for existing email
+      const existingEmail = await dbStorage.getUserByEmail(req.body.email);
+      if (existingEmail) {
+        return res.status(400).send("Email already exists");
+      }
+
+      // Check for existing username
+      const existingUsername = await dbStorage.getUserByUsername(req.body.username);
+      if (existingUsername) {
+        return res.status(400).send("Username already exists");
+      }
+
+      const user = await dbStorage.createUser({
+        ...req.body,
+        password: await hashPassword(req.body.password),
+      });
+      
+      // If beta is active and registration was successful, record the beta key usage
+      if (isBetaActive && req.body.betaKey) {
+        const betaKeyObj = await dbStorage.getBetaKeyByKey(req.body.betaKey);
+        if (betaKeyObj) {
+          await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
+        }
+      }
+
+      req.login(user, (err) => {
+        if (err) return next(err);
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Registration failed" });
     }
-
-    // Check for existing username
-    const existingUsername = await dbStorage.getUserByUsername(req.body.username);
-    if (existingUsername) {
-      return res.status(400).send("Username already exists");
-    }
-
-    const user = await dbStorage.createUser({
-      ...req.body,
-      password: await hashPassword(req.body.password),
-    });
-
-    req.login(user, (err) => {
-      if (err) return next(err);
-      res.status(201).json(user);
-    });
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", async (req, res, next) => {
+    try {
+      // Check if beta is active
+      const isBetaActive = await dbStorage.isBetaActive();
+      
+      // If beta is active, validate the beta key
+      if (isBetaActive && !req.isAuthenticated()) {
+        const { betaKey } = req.body;
+        
+        if (!betaKey) {
+          return res.status(400).json({ error: "Beta key is required during beta testing phase" });
+        }
+        
+        const isValidKey = await dbStorage.validateBetaKey(betaKey);
+        
+        if (!isValidKey) {
+          return res.status(400).json({ error: "Invalid beta key" });
+        }
+      }
+      
+      // Proceed with passport authentication
+      passport.authenticate("local", async (err: any, user: SelectUser | false, info: any) => {
+        if (err) {
+          return next(err);
+        }
+        
+        if (!user) {
+          return res.status(401).json({ error: "Invalid email/username or password" });
+        }
+        
+        // If beta is active, record the beta key usage
+        if (isBetaActive && req.body.betaKey) {
+          const betaKeyObj = await dbStorage.getBetaKeyByKey(req.body.betaKey);
+          if (betaKeyObj) {
+            await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
+          }
+        }
+        
+        // Login the user
+        req.login(user, (err) => {
+          if (err) {
+            return next(err);
+          }
+          return res.status(200).json(user);
+        });
+      })(req, res, next);
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {

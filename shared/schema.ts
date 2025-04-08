@@ -296,6 +296,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: z.string().email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   isAuthor: z.boolean().default(false),
+  betaKey: z.string().optional(),
 });
 
 export const updateProfileSchema = createInsertSchema(users).pick({
@@ -359,6 +360,7 @@ export const insertClickThroughSchema = createInsertSchema(bookClickThroughs);
 export const loginSchema = z.object({
   email: z.string().min(1, "Email or username is required"),
   password: z.string().min(1, "Password is required"),
+  betaKey: z.string().optional(),
 });
 
 export type LoginData = z.infer<typeof loginSchema>;
@@ -639,3 +641,33 @@ export type AuthorPageView = typeof authorPageViews.$inferSelect;
 export type InsertAuthorPageView = typeof authorPageViews.$inferInsert;
 export type AuthorFormAnalytics = typeof authorFormAnalytics.$inferSelect;
 export type InsertAuthorFormAnalytics = typeof authorFormAnalytics.$inferInsert;
+
+// Beta key system
+export const betaKeys = pgTable("beta_keys", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  usageLimit: integer("usage_limit"),
+  usageCount: integer("usage_count").notNull().default(0),
+  createdBy: integer("created_by"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const betaKeyUsage = pgTable("beta_key_usage", {
+  id: serial("id").primaryKey(),
+  betaKeyId: integer("beta_key_id").notNull(),
+  userId: integer("user_id").notNull(),
+  usedAt: timestamp("used_at").notNull().defaultNow(),
+});
+
+export const insertBetaKeySchema = createInsertSchema(betaKeys).omit({
+  id: true,
+  createdAt: true,
+  usageCount: true,
+});
+
+export type BetaKey = typeof betaKeys.$inferSelect;
+export type InsertBetaKey = typeof betaKeys.$inferInsert;
+export type BetaKeyUsage = typeof betaKeyUsage.$inferSelect;

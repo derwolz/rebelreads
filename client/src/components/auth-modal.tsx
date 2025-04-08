@@ -38,7 +38,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", betaKey: "" },
   });
 
   const registerForm = useForm({
@@ -49,6 +49,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
       password: "",
       newsletterOptIn: false,
       isAuthor: false,
+      betaKey: "",
     },
   });
 
@@ -150,6 +151,22 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={loginForm.control}
+                  name="betaKey"
+                  render={({ field }) => (
+                    <FormItem className="mt-4">
+                      <FormLabel>Beta Key</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your beta key if needed" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Required during beta testing phase
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -262,6 +279,22 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                           Subscribe to newsletter
                         </FormLabel>
                       </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="betaKey"
+                  render={({ field }) => (
+                    <FormItem className="mt-4">
+                      <FormLabel>Beta Key</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your beta key if needed" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Required during beta testing phase
+                      </FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
