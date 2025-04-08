@@ -21,7 +21,6 @@ import ProDashboard from "@/pages/pro-dashboard";
 import { SearchBooksPage } from "@/pages/search-books-page";
 import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
-import { BetaProtectedRoute } from "./lib/beta-protected-route";
 import ProActionPage from "@/pages/pro-action-page";
 import PublisherPage from "@/pages/publisher-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -30,6 +29,7 @@ import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
 import WaveDemoPage from "@/pages/wave-demo-page";
+import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
 import { useBeta } from "@/hooks/use-beta";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,20 +37,28 @@ import { useAuth } from "@/hooks/use-auth";
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
   const [location] = useLocation();
-  const { isBetaActive } = useBeta();
-  const { user } = useAuth();
+  const { isBetaActive, isLoading: isBetaLoading } = useBeta();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo"];
   const isApiPath = location.startsWith("/api");
+  const isAuthWallPath = location === "/auth";
   const [path, hash] = location.split("#");
 
-  // If beta mode is active and user is not logged in, redirect to landing unless it's an allowed path
-  if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath) {
-    return <Redirect to={`/landing${hash ? '#' + hash : ''}`} />;
+  // Show loading state while checking auth and beta status
+  if (isBetaLoading || isAuthLoading) {
+    return null;
+  }
+
+  // If beta mode is active and user is not logged in, redirect to auth wall
+  // unless it's an allowed path or already on the auth wall
+  if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath && !isAuthWallPath) {
+    return <Redirect to="/auth" />;
   }
   
   // If landing page is configured to show, honor that setting
-  if (showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
+  // but only if not in beta mode (beta mode takes precedence)
+  if (!isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
     return <Redirect to={`/landing${hash ? '#' + hash : ''}`} />;
   }
 
@@ -59,7 +67,7 @@ function Router() {
 
   return (
     <>
-      {!allowedPaths.includes(path) && <MainNav />}
+      {!allowedPaths.includes(path) && path !== "/auth" && <MainNav />}
 
       <Switch>
         {/* Always accessible routes */}
@@ -68,17 +76,20 @@ function Router() {
         <Route path="/wave-demo" component={WaveDemoPage} />
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/partner" component={PartnerWithUs} />
+        
+        {/* Auth wall */}
+        <Route path="/auth" component={AuthWallPage} />
 
-        {/* Beta-protected public routes */}
-        <BetaProtectedRoute path="/" component={HomeComponent} />
-        <BetaProtectedRoute path="/books/:id" component={BookDetails} />
-        <BetaProtectedRoute path="/search/books" component={SearchBooksPage} />
-        <BetaProtectedRoute path="/search/authors" component={SearchAuthorsPage} />
-        <BetaProtectedRoute path="/authors/:id" component={AuthorPage} />
-        <BetaProtectedRoute path="/publishers/:id" component={PublisherPage} />
-        <BetaProtectedRoute path="/ad-showcase" component={AdShowcasePage} />
+        {/* Public routes that require authentication in beta mode */}
+        <Route path="/" component={HomeComponent} />
+        <Route path="/books/:id" component={BookDetails} />
+        <Route path="/search/books" component={SearchBooksPage} />
+        <Route path="/search/authors" component={SearchAuthorsPage} />
+        <Route path="/authors/:id" component={AuthorPage} />
+        <Route path="/publishers/:id" component={PublisherPage} />
+        <Route path="/ad-showcase" component={AdShowcasePage} />
 
-        {/* Protected routes (require login) */}
+        {/* Protected routes (always require login) */}
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/settings/account" component={SettingsPage} />
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
