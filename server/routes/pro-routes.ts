@@ -165,4 +165,183 @@ router.get("/dashboard", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to get reviews for books by the author
+router.get("/reviews", async (req: Request, res: Response) => {
+  if (!req.user || !req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    // In a real app, we would join tables and get reviews for books by this author
+    // For now, return example data
+    return res.json({
+      reviews: [
+        {
+          id: 1,
+          userId: 123,
+          bookId: 1,
+          enjoyment: 4,
+          writing: 5,
+          themes: 3,
+          characters: 4,
+          worldbuilding: 3,
+          review: "This was a fantastic read! I loved the main character's development throughout the story.",
+          createdAt: new Date().toISOString(),
+          featured: false,
+          user: {
+            username: "bookfan123",
+            displayName: "Book Fan",
+            profileImageUrl: null
+          },
+          book: {
+            title: "Adventure of Lifetime",
+            author: req.user.username
+          },
+          replies: []
+        },
+        {
+          id: 2,
+          userId: 456,
+          bookId: 2,
+          enjoyment: 5,
+          writing: 4,
+          themes: 5,
+          characters: 5,
+          worldbuilding: 4,
+          review: "This book was a wonderful journey. The plot twists kept me engaged throughout!",
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+          featured: true,
+          user: {
+            username: "readerlover",
+            displayName: "Avid Reader",
+            profileImageUrl: null
+          },
+          book: {
+            title: "Mystery of the Lost Key",
+            author: req.user.username
+          },
+          replies: [
+            {
+              id: 1,
+              authorId: req.user.id,
+              reviewId: 2,
+              content: "Thank you for the wonderful review! I'm glad you enjoyed the plot twists!",
+              createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+              author: {
+                username: req.user.username,
+                profileImageUrl: null
+              }
+            }
+          ]
+        }
+      ],
+      hasMore: false,
+      totalPages: 1
+    });
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to feature/unfeature a review (Pro only)
+router.post("/reviews/:reviewId/feature", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  // Check if user is a Pro member
+  if (!req.user.isPro) {
+    return res.status(403).json({ error: "Pro membership required to feature reviews" });
+  }
+
+  try {
+    const reviewId = parseInt(req.params.reviewId);
+    const { featured } = req.body;
+
+    // In a real app, update the featured status in the database
+    return res.json({
+      success: true,
+      featured: featured,
+      reviewId: reviewId
+    });
+  } catch (error) {
+    console.error("Error featuring review:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to reply to a review (available to all authors)
+router.post("/reviews/:reviewId/reply", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  try {
+    const reviewId = parseInt(req.params.reviewId);
+    const { content } = req.body;
+
+    if (!content || content.trim() === "") {
+      return res.status(400).json({ error: "Reply content cannot be empty" });
+    }
+
+    // In a real app, save the reply to the database
+    return res.json({
+      id: Date.now(),
+      authorId: req.user.id,
+      reviewId: reviewId,
+      content: content,
+      createdAt: new Date().toISOString(),
+      author: {
+        username: req.user.username,
+        profileImageUrl: null
+      }
+    });
+  } catch (error) {
+    console.error("Error replying to review:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to report a review (available to all authors)
+router.post("/reviews/:reviewId/report", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  try {
+    const reviewId = parseInt(req.params.reviewId);
+    const { reason } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ error: "Report reason is required" });
+    }
+
+    // In a real app, save the report to the database
+    return res.json({
+      success: true,
+      message: "Review reported successfully"
+    });
+  } catch (error) {
+    console.error("Error reporting review:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

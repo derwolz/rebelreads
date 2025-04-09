@@ -103,7 +103,7 @@ export default function ProDashboard() {
     queryFn: () => fetch("/api/pro/follower-metrics").then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
-  
+
   const handleBookSelect = (bookId: number) => {
     if (selectedBookIds.includes(bookId)) {
       setSelectedBookIds(selectedBookIds.filter((id) => id !== bookId));
@@ -176,44 +176,8 @@ export default function ProDashboard() {
     // Analytics dashboard with Pro check
     const analyticsContent = (
       <div className="flex-1 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Author Analytics</h1>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Reviews</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">
-                {dashboardData?.totalReviews}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Average Rating</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">
-                {dashboardData?.averageRating?.toFixed(1) || "0.0"}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">
-                {dashboardData?.recentReports}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card>
+       
+       <Card>
           <CardHeader className="space-y-4">
             <CardTitle>Book Performance Analytics</CardTitle>
             <div className="space-y-4">
@@ -331,11 +295,7 @@ export default function ProDashboard() {
       </div>
     );
 
-    return (
-      <ProAnalyticsWrapper>
-        {analyticsContent}
-      </ProAnalyticsWrapper>
-    );
+    return <ProAnalyticsWrapper>{analyticsContent}</ProAnalyticsWrapper>;
   };
 
   return (

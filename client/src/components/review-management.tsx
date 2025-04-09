@@ -6,11 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { StarIcon, Flag, MessageSquare } from "lucide-react";
+import { StarIcon, Flag, MessageSquare, LockIcon } from "lucide-react";
 import { StarRating } from "@/components/star-rating";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { Rating, calculateWeightedRating } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReportDialogProps {
   reviewId: number;
@@ -110,6 +112,11 @@ function ReplyForm({ reviewId, onReply }: ReplyFormProps) {
 export function ReviewManagement() {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Check if user is Pro
+  const isPro = user?.isPro;
 
   const { data, isLoading } = useQuery({
     queryKey: ["/api/pro/reviews", page],
@@ -127,12 +134,24 @@ export function ReviewManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featured }),
       });
+      
+      if (res.status === 403) {
+        throw new Error("Pro subscription required to feature reviews");
+      }
+      
       if (!res.ok) throw new Error("Failed to feature review");
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pro/reviews"] });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   });
 
   const replyMutation = useMutation({
@@ -175,6 +194,23 @@ export function ReviewManagement() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-2xl md:text-3xl font-bold">Review Management</h1>
       </div>
+      
+      {!isPro && (
+        <div className="bg-muted/40 border border-primary/20 rounded-lg p-4 flex justify-between items-center">
+          <div>
+            <h3 className="font-semibold text-lg">Unlock Pro Features</h3>
+            <p className="text-sm text-muted-foreground">Upgrade to Pro to feature important reviews and unlock advanced analytics</p>
+          </div>
+          <Button 
+            variant="default" 
+            onClick={() => {
+              window.location.href = "/pro";
+            }}
+          >
+            Upgrade to Pro
+          </Button>
+        </div>
+      )}
 
       <div className="space-y-4">
         {data?.reviews.map((review: Rating & { user: any; book: any; featured?: boolean; replies?: any[] }) => (
@@ -196,13 +232,34 @@ export function ReviewManagement() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={review.featured ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => featureMutation.mutate({ reviewId: review.id, featured: !review.featured })}
-                  >
-                    <StarIcon className="h-4 w-4" />
-                  </Button>
+                  {isPro ? (
+                    <Button
+                      variant={review.featured ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => featureMutation.mutate({ reviewId: review.id, featured: !review.featured })}
+                      title="Feature this review"
+                    >
+                      <StarIcon className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-50 cursor-not-allowed"
+                      disabled
+                      title="Pro feature - Upgrade to feature reviews"
+                      onClick={() => {
+                        toast({
+                          title: "Pro Feature",
+                          description: "Upgrade to Pro to feature reviews",
+                          variant: "default"
+                        });
+                      }}
+                    >
+                      <LockIcon className="h-3 w-3 mr-1" />
+                      <StarIcon className="h-4 w-4" />
+                    </Button>
+                  )}
                   <ReplyForm
                     reviewId={review.id}
                     onReply={(content) => replyMutation.mutate({ reviewId: review.id, content })}

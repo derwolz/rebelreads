@@ -70,46 +70,41 @@ export function ProAnalyticsWrapper({ children }: ProAnalyticsWrapperProps) {
       {/* Show real data stats at top */}
       <div className="space-y-6">
         {/* Either use extracted stats from children, or fallback to basic stats */}
-        {statsContent || (
-          <>
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold">Author Analytics</h1>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Total Reviews</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">
-                    {dashboardData?.totalReviews || 0}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Average Rating</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">
-                    {dashboardData?.averageRating?.toFixed(1) || "0.0"}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Reports</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">
-                    {dashboardData?.recentReports || 0}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </>
-        )}
-        
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Author Analytics</h1>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Total Reviews</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                {dashboardData?.totalReviews || 0}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Average Rating</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                {dashboardData?.averageRating?.toFixed(1) || "0.0"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                {dashboardData?.recentReports || 0}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
         {/* Blurred charts with paywall overlay */}
         <div className="relative mt-8">
           <div className="pointer-events-none filter blur-[2px] opacity-40">
