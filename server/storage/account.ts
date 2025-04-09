@@ -13,6 +13,7 @@ import {
   Book,
   rating_preferences,
   RatingPreferences,
+  replies,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
@@ -35,6 +36,9 @@ export interface IAccountStorage {
   getRatings(bookId: number): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
   getUserRatings(userId: number): Promise<Rating[]>;
+  
+  getReplies(reviewId: number): Promise<any[]>;
+  createReply(reviewId: number, authorId: number, content: string): Promise<any>;
 
   getReadingStatus(
     userId: number,
@@ -419,5 +423,25 @@ export class AccountStorage implements IAccountStorage {
       
       return created;
     }
+  }
+  
+  async getReplies(reviewId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(replies)
+      .where(eq(replies.reviewId, reviewId))
+      .orderBy(desc(replies.createdAt));
+  }
+  
+  async createReply(reviewId: number, authorId: number, content: string): Promise<any> {
+    const [reply] = await db
+      .insert(replies)
+      .values({
+        reviewId,
+        authorId,
+        content
+      })
+      .returning();
+    return reply;
   }
 }

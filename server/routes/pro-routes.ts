@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
-import { users } from "@shared/schema";
+import { users, ratings, replies, reports } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { dbStorage } from "../storage";
 
 const router = Router();
 
@@ -152,12 +153,69 @@ router.get("/dashboard", async (req: Request, res: Response) => {
   }
 
   try {
-    // In a real app, these would pull from actual data sources
-    // For now, return some example data
+    // Get all books by this author
+    const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
+    
+    if (!authorBooks || authorBooks.length === 0) {
+      return res.json({
+        totalReviews: 0,
+        averageRating: 0,
+        recentReports: 0,
+      });
+    }
+    
+    // Get book IDs
+    const bookIds = authorBooks.map((book: { id: number }) => book.id);
+    
+    // Collect all ratings for these books
+    let allRatings: any[] = [];
+    for (const bookId of bookIds) {
+      const bookRatings = await dbStorage.getRatings(bookId);
+      allRatings = [...allRatings, ...bookRatings];
+    }
+    
+    // Calculate total reviews
+    const totalReviews = allRatings.length;
+    
+    // Calculate average rating (across all criteria)
+    let sumRatings = 0;
+    let countRatings = 0;
+    
+    allRatings.forEach(rating => {
+      // Sum up all numerical rating criteria
+      const criteriaSum = 
+        (rating.enjoyment || 0) + 
+        (rating.writing || 0) + 
+        (rating.themes || 0) + 
+        (rating.characters || 0) + 
+        (rating.worldbuilding || 0);
+      
+      // Count the number of criteria that had values
+      const criteriaCount = [
+        rating.enjoyment, 
+        rating.writing, 
+        rating.themes, 
+        rating.characters, 
+        rating.worldbuilding
+      ].filter(Boolean).length;
+      
+      if (criteriaCount > 0) {
+        sumRatings += (criteriaSum / criteriaCount);
+        countRatings++;
+      }
+    });
+    
+    const averageRating = countRatings > 0 ? (sumRatings / countRatings) : 0;
+    
+    // Count number of reports
+    const recentReports = allRatings.filter(
+      rating => rating.report_status && rating.report_status !== 'none'
+    ).length;
+    
     return res.json({
-      totalReviews: 42,
-      averageRating: 4.5,
-      recentReports: 3,
+      totalReviews,
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      recentReports,
     });
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
@@ -176,71 +234,76 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    // In a real app, we would join tables and get reviews for books by this author
-    // For now, return example data
-    return res.json({
-      reviews: [
-        {
-          id: 1,
-          userId: 123,
-          bookId: 1,
-          enjoyment: 4,
-          writing: 5,
-          themes: 3,
-          characters: 4,
-          worldbuilding: 3,
-          review: "This was a fantastic read! I loved the main character's development throughout the story.",
-          createdAt: new Date().toISOString(),
-          featured: false,
-          user: {
-            username: "bookfan123",
-            displayName: "Book Fan",
-            profileImageUrl: null
-          },
-          book: {
-            title: "Adventure of Lifetime",
-            author: req.user.username
-          },
-          replies: []
+    // Get all books by this author
+    const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
+    
+    if (!authorBooks || authorBooks.length === 0) {
+      return res.json({
+        reviews: [],
+        hasMore: false,
+        totalPages: 0
+      });
+    }
+
+    // Get book IDs
+    const bookIds = authorBooks.map((book: { id: number }) => book.id);
+    
+    // Collect all ratings for these books
+    let allRatings: any[] = [];
+    for (const bookId of bookIds) {
+      const bookRatings = await dbStorage.getRatings(bookId);
+      allRatings = [...allRatings, ...bookRatings];
+    }
+    
+    // Sort reviews by creation date (most recent first)
+    allRatings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    // Paginate the results
+    const paginatedRatings = allRatings.slice(offset, offset + limit);
+    
+    // Get user information for each review
+    const reviewsWithDetails = await Promise.all(paginatedRatings.map(async (rating) => {
+      // Get user information
+      const user = await dbStorage.getUser(rating.userId);
+      
+      // Get book information
+      const book = await dbStorage.getBook(rating.bookId);
+      
+      // Get replies to this review
+      const replies = await dbStorage.getReplies(rating.id);
+      
+      const repliesWithAuthor = await Promise.all(replies.map(async (reply: any) => {
+        const author = await dbStorage.getUser(reply.authorId);
+        return {
+          ...reply,
+          author: {
+            username: author?.username || 'Unknown',
+            profileImageUrl: author?.profileImageUrl
+          }
+        };
+      }));
+      
+      return {
+        ...rating,
+        user: {
+          username: user?.username || 'Anonymous',
+          displayName: user?.displayName || user?.username || 'Anonymous',
+          profileImageUrl: user?.profileImageUrl
         },
-        {
-          id: 2,
-          userId: 456,
-          bookId: 2,
-          enjoyment: 5,
-          writing: 4,
-          themes: 5,
-          characters: 5,
-          worldbuilding: 4,
-          review: "This book was a wonderful journey. The plot twists kept me engaged throughout!",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-          featured: true,
-          user: {
-            username: "readerlover",
-            displayName: "Avid Reader",
-            profileImageUrl: null
-          },
-          book: {
-            title: "Mystery of the Lost Key",
-            author: req.user.username
-          },
-          replies: [
-            {
-              id: 1,
-              authorId: req.user.id,
-              reviewId: 2,
-              content: "Thank you for the wonderful review! I'm glad you enjoyed the plot twists!",
-              createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-              author: {
-                username: req.user.username,
-                profileImageUrl: null
-              }
-            }
-          ]
-        }
-      ],
-      hasMore: false,
-      totalPages: 1
+        book: {
+          title: book?.title || 'Unknown Book',
+          author: book?.author || 'Unknown Author'
+        },
+        replies: repliesWithAuthor
+      };
+    }));
+    
+    const totalPages = Math.ceil(allRatings.length / limit);
+    
+    return res.json({
+      reviews: reviewsWithDetails,
+      hasMore: page < totalPages,
+      totalPages
     });
   } catch (error) {
     console.error("Error fetching reviews:", error);
@@ -267,11 +330,21 @@ router.post("/reviews/:reviewId/feature", async (req: Request, res: Response) =>
     const reviewId = parseInt(req.params.reviewId);
     const { featured } = req.body;
 
-    // In a real app, update the featured status in the database
+    // Get the rating first to verify it exists
+    const [rating] = await db
+      .update(ratings)
+      .set({ featured })
+      .where(eq(ratings.id, reviewId))
+      .returning();
+
+    if (!rating) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
     return res.json({
       success: true,
-      featured: featured,
-      reviewId: reviewId
+      featured: rating.featured,
+      reviewId: rating.id
     });
   } catch (error) {
     console.error("Error featuring review:", error);
@@ -297,18 +370,30 @@ router.post("/reviews/:reviewId/reply", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Reply content cannot be empty" });
     }
 
-    // In a real app, save the reply to the database
-    return res.json({
-      id: Date.now(),
-      authorId: req.user.id,
-      reviewId: reviewId,
-      content: content,
-      createdAt: new Date().toISOString(),
+    // First check if the review exists
+    const rating = await db
+      .select()
+      .from(ratings)
+      .where(eq(ratings.id, reviewId))
+      .limit(1);
+
+    if (!rating || rating.length === 0) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    // Create the reply in the database
+    const reply = await dbStorage.createReply(reviewId, req.user.id, content);
+    
+    // Add author info to the response
+    const replyWithAuthor = {
+      ...reply,
       author: {
         username: req.user.username,
-        profileImageUrl: null
+        profileImageUrl: req.user.profileImageUrl || null
       }
-    });
+    };
+
+    return res.json(replyWithAuthor);
   } catch (error) {
     console.error("Error replying to review:", error);
     return res.status(500).json({ error: "Internal server error" });
@@ -332,11 +417,40 @@ router.post("/reviews/:reviewId/report", async (req: Request, res: Response) => 
     if (!reason) {
       return res.status(400).json({ error: "Report reason is required" });
     }
+    
+    // First check if the review exists
+    const rating = await db
+      .select()
+      .from(ratings)
+      .where(eq(ratings.id, reviewId))
+      .limit(1);
 
-    // In a real app, save the report to the database
+    if (!rating || rating.length === 0) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+    
+    // Update the review with the report status and reason
+    const [updatedRating] = await db
+      .update(ratings)
+      .set({ 
+        report_status: "pending",
+        report_reason: reason
+      })
+      .where(eq(ratings.id, reviewId))
+      .returning();
+      
+    // Insert an entry into the reports table
+    await db.insert(reports).values({
+      reviewId: reviewId,
+      authorId: req.user.id,
+      reason: reason,
+      status: "pending"
+    });
+
     return res.json({
       success: true,
-      message: "Review reported successfully"
+      message: "Review reported successfully",
+      report_status: updatedRating.report_status
     });
   } catch (error) {
     console.error("Error reporting review:", error);

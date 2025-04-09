@@ -29,6 +29,8 @@ export const dbStorage = {
   getRatings: accountStorage.getRatings.bind(accountStorage),
   createRating: accountStorage.createRating.bind(accountStorage),
   getUserRatings: accountStorage.getUserRatings.bind(accountStorage),
+  getReplies: accountStorage.getReplies.bind(accountStorage),
+  createReply: accountStorage.createReply.bind(accountStorage),
   getReadingStatus: accountStorage.getReadingStatus.bind(accountStorage),
   toggleWishlist: accountStorage.toggleWishlist.bind(accountStorage),
   markAsCompleted: accountStorage.markAsCompleted.bind(accountStorage),
