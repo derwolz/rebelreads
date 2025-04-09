@@ -57,13 +57,16 @@ router.post("/upgrade", async (req: Request, res: Response) => {
       proExpiresAt.setFullYear(proExpiresAt.getFullYear() + 1);
       
       // Add 200 credits for yearly plan
+      // First get current credit amount
+      const userInfo = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+        columns: { credits: true },
+      });
+      
+      // Then update with new amount
+      const newCredits = userInfo ? Number(userInfo.credits) + 200 : 200;
       await db.update(users)
-        .set({
-          credits: db.select({ value: users.credits })
-            .where(eq(users.id, req.user.id))
-            .limit(1)
-            .then(rows => Number(rows[0].value) + 200),
-        })
+        .set({ credits: newCredits.toString() })
         .where(eq(users.id, req.user.id));
     } else {
       return res.status(400).json({ error: "Invalid plan ID" });
@@ -109,13 +112,16 @@ router.post("/test-upgrade", async (req: Request, res: Response) => {
       proExpiresAt.setFullYear(proExpiresAt.getFullYear() + 1);
       
       // Add 200 credits for yearly plan
+      // First get current credit amount
+      const userInfo = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+        columns: { credits: true },
+      });
+      
+      // Then update with new amount
+      const newCredits = userInfo ? Number(userInfo.credits) + 200 : 200;
       await db.update(users)
-        .set({
-          credits: db.select({ value: users.credits })
-            .where(eq(users.id, req.user.id))
-            .limit(1)
-            .then(rows => Number(rows[0].value) + 200),
-        })
+        .set({ credits: newCredits.toString() })
         .where(eq(users.id, req.user.id));
     }
 

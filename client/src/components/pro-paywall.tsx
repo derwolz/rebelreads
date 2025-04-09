@@ -177,18 +177,7 @@ export function ProPaywall({ onClose, showPartialData, children }: ProPaywallPro
 
   return (
     <div className="relative">
-      {/* Show the blurred partial content if requested */}
-      {showPartialData && children && (
-        <div className="relative">
-          <div className="pointer-events-none">
-            {children}
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background flex flex-col items-center justify-center backdrop-blur-[2px]">
-            {/* The paywall content will show on top of the blurred content */}
-          </div>
-        </div>
-      )}
-
+      {/* The full paywall content is only shown in the dialog */}
       <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-2">Unlock Your Author Potential</h2>
