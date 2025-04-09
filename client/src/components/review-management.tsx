@@ -119,9 +119,10 @@ export function ReviewManagement() {
   const isPro = user?.isPro;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["/api/pro/reviews", page],
+    queryKey: ["/api/pro/demo-reviews", page],
     queryFn: async () => {
-      const res = await fetch(`/api/pro/reviews?page=${page}`);
+      // Use the demo endpoint for testing purposes
+      const res = await fetch(`/api/pro/demo-reviews?page=${page}`);
       if (!res.ok) throw new Error("Failed to fetch reviews");
       return res.json();
     }
@@ -143,7 +144,7 @@ export function ReviewManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pro/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pro/demo-reviews"] });
     },
     onError: (error: Error) => {
       toast({
@@ -165,7 +166,7 @@ export function ReviewManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pro/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pro/demo-reviews"] });
     },
   });
 
@@ -178,6 +179,9 @@ export function ReviewManagement() {
       });
       if (!res.ok) throw new Error("Failed to report review");
       return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pro/demo-reviews"] });
     },
   });
 
@@ -242,23 +246,30 @@ export function ReviewManagement() {
                       <StarIcon className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-50 cursor-not-allowed"
-                      disabled
-                      title="Pro feature - Upgrade to feature reviews"
-                      onClick={() => {
-                        toast({
-                          title: "Pro Feature",
-                          description: "Upgrade to Pro to feature reviews",
-                          variant: "default"
-                        });
-                      }}
-                    >
-                      <LockIcon className="h-3 w-3 mr-1" />
-                      <StarIcon className="h-4 w-4" />
-                    </Button>
+                    <div className="relative group">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-50 cursor-not-allowed"
+                        disabled
+                        onClick={() => {
+                          toast({
+                            title: "Pro Feature",
+                            description: "Upgrade to Pro to feature reviews",
+                            variant: "default"
+                          });
+                        }}
+                      >
+                        <LockIcon className="h-3 w-3 mr-1" />
+                        <StarIcon className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                        <div className="bg-primary text-primary-foreground text-xs rounded px-2 py-1 whitespace-nowrap">
+                          Upgrade to pin reviews
+                        </div>
+                        <div className="w-2 h-2 bg-primary transform rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1"></div>
+                      </div>
+                    </div>
                   )}
                   <ReplyForm
                     reviewId={review.id}

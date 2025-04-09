@@ -224,6 +224,7 @@ router.get("/dashboard", async (req: Request, res: Response) => {
 });
 
 // Endpoint to get reviews for books by the author
+// Main review endpoint for authors
 router.get("/reviews", async (req: Request, res: Response) => {
   if (!req.user || !req.user.isAuthor) {
     return res.status(403).json({ error: "Author access required" });
@@ -234,10 +235,14 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
+    console.log("Fetching real reviews for author:", req.user.id);
+    
     // Get all books by this author
     const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
+    console.log("Author books found:", authorBooks.length, authorBooks.map((b: any) => b.id));
     
     if (!authorBooks || authorBooks.length === 0) {
+      console.log("No author books found, returning empty result");
       return res.json({
         reviews: [],
         hasMore: false,
@@ -247,12 +252,20 @@ router.get("/reviews", async (req: Request, res: Response) => {
 
     // Get book IDs
     const bookIds = authorBooks.map((book: { id: number }) => book.id);
+    console.log("Book IDs to fetch ratings for:", bookIds);
     
     // Collect all ratings for these books
     let allRatings: any[] = [];
     for (const bookId of bookIds) {
+      console.log(`Fetching ratings for book ID ${bookId}`);
       const bookRatings = await dbStorage.getRatings(bookId);
+      console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
       allRatings = [...allRatings, ...bookRatings];
+    }
+    console.log(`Total ratings found: ${allRatings.length}`);
+    
+    if (allRatings.length > 0) {
+      console.log("First rating sample:", allRatings[0]);
     }
     
     // Sort reviews by creation date (most recent first)
@@ -307,6 +320,103 @@ router.get("/reviews", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching reviews:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Test endpoint for demo purposes (no auth required)
+router.get("/demo-reviews", async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    console.log("Fetching demo reviews for testing");
+    
+    // Get some sample books
+    const sampleBooks = await db.query.books.findMany({
+      limit: 5
+    });
+    
+    if (!sampleBooks || sampleBooks.length === 0) {
+      console.log("No sample books found, returning empty result");
+      return res.json({
+        reviews: [],
+        hasMore: false,
+        totalPages: 0
+      });
+    }
+
+    // Get book IDs
+    const bookIds = sampleBooks.map(book => book.id);
+    console.log("Book IDs to fetch ratings for:", bookIds);
+    
+    // Collect all ratings for these books
+    let allRatings: any[] = [];
+    for (const bookId of bookIds) {
+      console.log(`Fetching ratings for book ID ${bookId}`);
+      const bookRatings = await dbStorage.getRatings(bookId);
+      console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
+      allRatings = [...allRatings, ...bookRatings];
+    }
+    console.log(`Total ratings found: ${allRatings.length}`);
+    
+    if (allRatings.length > 0) {
+      console.log("First rating sample:", allRatings[0]);
+    }
+    
+    // Sort reviews by creation date (most recent first)
+    allRatings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    // Paginate the results
+    const paginatedRatings = allRatings.slice(offset, offset + limit);
+    
+    // Get user information for each review
+    const reviewsWithDetails = await Promise.all(paginatedRatings.map(async (rating) => {
+      // Get user information
+      const user = await dbStorage.getUser(rating.userId);
+      
+      // Get book information
+      const book = await dbStorage.getBook(rating.bookId);
+      
+      // Get replies to this review
+      const replies = await dbStorage.getReplies(rating.id);
+      
+      const repliesWithAuthor = await Promise.all(replies.map(async (reply: any) => {
+        const author = await dbStorage.getUser(reply.authorId);
+        return {
+          ...reply,
+          author: {
+            username: author?.username || 'Unknown',
+            profileImageUrl: author?.profileImageUrl
+          }
+        };
+      }));
+      
+      return {
+        ...rating,
+        user: {
+          username: user?.username || 'Anonymous',
+          displayName: user?.displayName || user?.username || 'Anonymous',
+          profileImageUrl: user?.profileImageUrl
+        },
+        book: {
+          title: book?.title || 'Unknown Book',
+          author: book?.author || 'Unknown Author'
+        },
+        replies: repliesWithAuthor
+      };
+    }));
+    
+    const totalPages = Math.ceil(allRatings.length / limit);
+    
+    return res.json({
+      reviews: reviewsWithDetails,
+      hasMore: page < totalPages,
+      totalPages
+    });
+  } catch (error) {
+    console.error("Error fetching demo reviews:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
