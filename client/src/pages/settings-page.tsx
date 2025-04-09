@@ -414,7 +414,7 @@ export default function SettingsPage() {
   } else if (location === "/settings/appearance") {
     content = <AppearanceSettings />;
   } else if (location === "/settings/rating-preferences") {
-    content = <RatingPreferencesSettings />;
+    content = <RatingPreferencesSettings isWizard={false} />;
   } else if (location === "/settings/author" && user?.isAuthor) {
     content = (
       <Card>

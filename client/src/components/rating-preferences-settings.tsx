@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MoveVertical, Info } from "lucide-react";
+import { MoveVertical, Info, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RATING_CRITERIA, RATING_CRITERIA_DESCRIPTIONS } from "@shared/schema";
 
@@ -62,7 +62,7 @@ function SortableCriteriaItem({ id, index }: { id: string; index: number }) {
     <div 
       ref={setNodeRef} 
       style={style}
-      className="flex items-center p-3 mb-2 bg-card border rounded-md shadow-sm hover:shadow-md transition-all"
+      className="flex items-center p-3 mb-2 bg-card border rounded-md shadow-sm hover:shadow-md transition-all group"
     >
       <div 
         {...attributes}
@@ -74,7 +74,7 @@ function SortableCriteriaItem({ id, index }: { id: string; index: number }) {
       
       <div className="flex-1">
         <div className="font-medium">{displayName}</div>
-        <div className="text-sm text-muted-foreground truncate">{description}</div>
+        <div className="text-sm text-muted-foreground line-clamp-1 group-hover:line-clamp-none transition-all duration-300">{description}</div>
       </div>
       
       <div className="flex items-center gap-2">
@@ -96,11 +96,25 @@ function SortableCriteriaItem({ id, index }: { id: string; index: number }) {
   );
 }
 
-export function RatingPreferencesSettings() {
-  const [criteriaOrder, setCriteriaOrder] = useState<string[]>([...RATING_CRITERIA]);
+interface RatingPreferencesSettingsProps {
+  isWizard?: boolean;
+  onComplete?: () => void;
+  onSkip?: () => void;
+  initialCriteriaOrder?: string[];
+}
+
+export function RatingPreferencesSettings({
+  isWizard = false,
+  onComplete,
+  onSkip,
+  initialCriteriaOrder,
+}: RatingPreferencesSettingsProps) {
+  const [criteriaOrder, setCriteriaOrder] = useState<string[]>(
+    initialCriteriaOrder || [...RATING_CRITERIA]
+  );
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -125,7 +139,7 @@ export function RatingPreferencesSettings() {
     }
   };
 
-  // Query to get existing preferences (if any)
+  // Query to get existing preferences (if any) - only if initialCriteriaOrder is not provided
   const { isLoading: isLoadingPreferences, data: preferencesData } = useQuery<{
     id: number;
     userId: number;
@@ -134,15 +148,16 @@ export function RatingPreferencesSettings() {
     updatedAt: string;
   }>({
     queryKey: ['/api/account/rating-preferences'],
-    staleTime: 60000
+    staleTime: 60000,
+    enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });
 
   // Update criteria order when data is received
   useEffect(() => {
-    if (preferencesData && preferencesData.criteriaOrder) {
+    if (preferencesData && preferencesData.criteriaOrder && !initialCriteriaOrder) {
       setCriteriaOrder(preferencesData.criteriaOrder);
     }
-  }, [preferencesData]);
+  }, [preferencesData, initialCriteriaOrder]);
   
   // Mutation to save preferences
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
@@ -157,6 +172,11 @@ export function RatingPreferencesSettings() {
         description: "Your rating criteria preferences have been saved successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/account/rating-preferences'] });
+      
+      // Call onComplete callback if provided (for wizard mode)
+      if (onComplete) {
+        onComplete();
+      }
     },
     onError: (error) => {
       toast({
@@ -171,55 +191,97 @@ export function RatingPreferencesSettings() {
   const handleSave = () => {
     savePreferences();
   };
+  
+  const handleSkip = () => {
+    if (onSkip) {
+      onSkip();
+    }
+  };
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Rating Preferences</CardTitle>
-        <CardDescription>
-          Customize how you rate books by prioritizing the criteria that matter most to you.
-          Drag and reorder the criteria below to match your preferences.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 flex items-center">
-          <div className="flex-1">
-            <h3 className="text-sm font-medium">Criteria</h3>
-          </div>
-          <div className="text-sm font-medium">Weight</div>
-          <div className="w-8"></div>
+  // Content is the same for both modes, only the container changes
+  const content = (
+    <>
+      <div className="mb-4 flex items-center">
+        <div className="flex-1">
+          <h3 className="text-sm font-medium">Criteria</h3>
         </div>
-        
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
+        <div className="text-sm font-medium">Weight</div>
+        <div className="w-8"></div>
+      </div>
+      
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={criteriaOrder}
+          strategy={verticalListSortingStrategy}
         >
-          <SortableContext
-            items={criteriaOrder}
-            strategy={verticalListSortingStrategy}
+          {criteriaOrder.map((id, index) => (
+            <SortableCriteriaItem key={id} id={id} index={index} />
+          ))}
+        </SortableContext>
+      </DndContext>
+      
+      <div className="mt-4 text-sm text-muted-foreground">
+        <p className="flex items-center">
+          <Info className="w-4 h-4 mr-2" />
+          Drag to reorder. The higher an item is in the list, the more it affects the overall book rating.
+        </p>
+      </div>
+    </>
+  );
+
+  // For regular settings page view
+  if (!isWizard) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Rating Preferences</CardTitle>
+          <CardDescription>
+            Customize how you rate books by prioritizing the criteria that matter most to you.
+            Drag and reorder the criteria below to match your preferences.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {content}
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button 
+            onClick={handleSave}
+            disabled={isSaving}
           >
-            {criteriaOrder.map((id, index) => (
-              <SortableCriteriaItem key={id} id={id} index={index} />
-            ))}
-          </SortableContext>
-        </DndContext>
-        
-        <div className="mt-4 text-sm text-muted-foreground">
-          <p className="flex items-center">
-            <Info className="w-4 h-4 mr-2" />
-            Drag to reorder. The higher an item is in the list, the more it affects the overall book rating.
-          </p>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-end">
+            {isSaving ? "Saving..." : "Save preferences"}
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+  
+  // For wizard view
+  return (
+    <div className="py-4">
+      {content}
+      <div className="flex justify-between mt-6">
+        {onSkip && (
+          <Button 
+            variant="ghost" 
+            onClick={handleSkip}
+            disabled={isSaving}
+          >
+            Skip for now
+          </Button>
+        )}
         <Button 
           onClick={handleSave}
           disabled={isSaving}
+          className="ml-auto gap-1"
         >
           {isSaving ? "Saving..." : "Save preferences"}
+          {!isSaving && <Check className="h-4 w-4" />}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
