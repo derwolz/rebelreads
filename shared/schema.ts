@@ -89,6 +89,8 @@ export const users = pgTable("users", {
   provider: text("provider"), // google, amazon, x, or null for email/password
   providerId: text("provider_id"), // external provider's user ID
   isAuthor: boolean("is_author").notNull().default(false),
+  isPro: boolean("is_pro").notNull().default(false), // Pro user status
+  proExpiresAt: timestamp("pro_expires_at"), // When pro subscription expires
   authorName: text("author_name"), // Name to display for authored books
   authorBio: text("author_bio"),
   authorImageUrl: text("author_image_url"), // Author profile image

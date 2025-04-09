@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { ReviewManagement } from "@/components/review-management";
 import { ProBookManagement } from "@/components/pro-book-management";
+import { ProAnalyticsWrapper } from "@/components/pro-analytics-wrapper";
 import {
   LineChart,
   Line,
@@ -172,7 +173,8 @@ export default function ProDashboard() {
       return <ProBookManagement />;
     }
 
-    return (
+    // Analytics dashboard with Pro check
+    const analyticsContent = (
       <div className="flex-1 space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Author Analytics</h1>
@@ -195,7 +197,7 @@ export default function ProDashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold">
-                {dashboardData?.averageRating.toFixed(1)}
+                {dashboardData?.averageRating?.toFixed(1) || "0.0"}
               </p>
             </CardContent>
           </Card>
@@ -327,6 +329,12 @@ export default function ProDashboard() {
           </CardContent>
         </Card>
       </div>
+    );
+
+    return (
+      <ProAnalyticsWrapper>
+        {analyticsContent}
+      </ProAnalyticsWrapper>
     );
   };
 
