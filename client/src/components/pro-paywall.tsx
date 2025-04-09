@@ -1,199 +1,237 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Lock, CheckCircle, LucideIcon, LineChart, MessageSquare, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
 
-/**
- * Pro Paywall component that displays an upgrade button over blurred content
- * and renders a checkout dialog when clicked
- */
-export default function ProPaywall() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface PlanOption {
+  id: string;
+  name: string;
+  price: number;
+  priceUnit: string;
+  features: string[];
+  bonusCredits?: number;
+  isPopular?: boolean;
+}
+
+interface ProPaywallProps {
+  onClose?: () => void;
+  showPartialData?: boolean;
+  children?: React.ReactNode;
+}
+
+export function ProPaywall({ onClose, showPartialData, children }: ProPaywallProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedTab, setSelectedTab] = React.useState("monthly");
+  
+  const monthlyPlans: PlanOption[] = [
+    {
+      id: "monthly",
+      name: "Pro Monthly",
+      price: 10,
+      priceUnit: "month",
+      features: [
+        "Full analytics dashboard",
+        "Priority review management",
+        "Advanced book performance metrics",
+        "Audience insights"
+      ]
+    }
+  ];
+  
+  const yearlyPlans: PlanOption[] = [
+    {
+      id: "yearly",
+      name: "Pro Annual",
+      price: 100,
+      priceUnit: "year",
+      features: [
+        "Full analytics dashboard",
+        "Priority review management",
+        "Advanced book performance metrics",
+        "Audience insights"
+      ],
+      bonusCredits: 200,
+      isPopular: true
+    }
+  ];
 
-  const handleUpgrade = (plan: 'monthly' | 'annual') => {
-    setIsSubmitting(true);
-    
-    // Call the API to upgrade
-    fetch('/api/pro/upgrade', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ plan }),
-    })
-      .then(async (response) => {
-        const data = await response.json();
-        if (response.ok) {
-          toast({
-            title: 'Upgrade successful!',
-            description: 'You now have access to Pro features.',
-          });
-          // Close the dialog and reload to refresh user state
-          setIsDialogOpen(false);
-          window.location.reload();
-        } else {
-          throw new Error(data.error || 'Failed to upgrade');
-        }
-      })
-      .catch((error) => {
-        toast({
-          title: 'Upgrade failed',
-          description: error.message || 'An error occurred while upgrading',
-          variant: 'destructive',
-        });
-      })
-      .finally(() => {
-        setIsSubmitting(false);
+  const features = [
+    {
+      icon: LineChart,
+      title: "Comprehensive Analytics",
+      description: "Get detailed insights into your book performance and reader engagement"
+    },
+    {
+      icon: MessageSquare,
+      title: "Better Review Management",
+      description: "Take control of your reviews with advanced management tools"
+    },
+    {
+      icon: TrendingUp,
+      title: "Drive Traffic to Books",
+      description: "Optimize your marketing with data-driven insights"
+    }
+  ];
+
+  // This is a dummy function to update the user's Pro status
+  const upgradeToPro = useMutation({
+    mutationFn: async (planId: string) => {
+      // In a real implementation, this would process payment and then update the pro status
+      return await apiRequest("POST", "/api/pro/upgrade", { planId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Upgrade successful!",
+        description: "You now have access to all Pro features.",
       });
+      if (onClose) onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "Upgrade failed",
+        description: (error as Error).message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Temporary testing function to set user as pro
+  const setUserAsPro = useMutation({
+    mutationFn: async (planId: string) => {
+      return await apiRequest("POST", "/api/pro/test-upgrade", { planId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Pro access granted",
+        description: "This is for testing only - you now have Pro access",
+      });
+      if (onClose) onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to set Pro status",
+        description: (error as Error).message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpgrade = (planId: string) => {
+    // Use test upgrade for now
+    setUserAsPro.mutate(planId);
+    // This would be the actual implementation with payment processing:
+    // upgradeToPro.mutate(planId);
   };
 
-  // For testing purposes, let's add a quick option to set as Pro
-  const handleTestUpgrade = () => {
-    setIsSubmitting(true);
-    
-    fetch('/api/test-auth/set-pro')
-      .then(async (response) => {
-        if (response.ok) {
-          toast({
-            title: 'Test upgrade successful!',
-            description: 'You now have Pro status for testing.',
-          });
-          window.location.reload();
-        } else {
-          throw new Error('Failed to set Pro status');
-        }
-      })
-      .catch(() => {
-        toast({
-          title: 'Test upgrade failed',
-          description: 'Make sure you are logged in first',
-          variant: 'destructive',
-        });
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
-  };
-
-  return (
-    <>
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 z-10">
-        <h3 className="text-xl font-semibold mb-3">Unlock your Author Potential</h3>
-        <Button onClick={() => setIsDialogOpen(true)} size="lg" className="font-semibold">
-          Upgrade to Pro
-        </Button>
-      </div>
-
-      {/* Pro Upgrade Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Upgrade to Pro</DialogTitle>
-            <DialogDescription>
-              Get detailed analytics and insights to boost your book's performance.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {/* Monthly Plan */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly</CardTitle>
-                <CardDescription>Perfect for short-term campaigns</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">$10</div>
-                <div className="text-sm text-muted-foreground">per month</div>
-                <ul className="mt-4 space-y-2 text-sm">
-                  <li>Full analytics dashboard</li>
-                  <li>Performance tracking</li>
-                  <li>Advanced audience insights</li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleUpgrade('monthly')}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Select Plan
-                </Button>
-              </CardFooter>
-            </Card>
-
-            {/* Annual Plan */}
-            <Card className="border-primary">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>Annual</CardTitle>
-                    <CardDescription>Save and get more credits</CardDescription>
-                  </div>
-                  <Badge variant="default" className="px-3 py-1">
-                    Best Value
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">$100</div>
-                <div className="text-sm text-muted-foreground">per year</div>
-                <div className="mt-1 text-sm text-primary font-medium">+ $200 in credits</div>
-                <ul className="mt-4 space-y-2 text-sm">
-                  <li>Everything in monthly</li>
-                  <li>Priority support</li>
-                  <li>$200 in promotional credits</li>
-                  <li>Campaign planning tools</li>
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  variant="default" 
-                  onClick={() => handleUpgrade('annual')}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Select Plan
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-
-          {/* Test button - only in development */}
-          {process.env.NODE_ENV !== 'production' && (
-            <div className="mt-2 flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTestUpgrade}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Set as Pro (Testing Only)
-              </Button>
+  const renderPlanCard = (plan: PlanOption) => (
+    <Card key={plan.id} className={`flex flex-col h-full ${plan.isPopular ? 'border-primary shadow-lg' : ''}`}>
+      <CardHeader className="flex flex-col space-y-1.5">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+          {plan.isPopular && <Badge className="bg-primary hover:bg-primary/90">Best Value</Badge>}
+        </div>
+        <CardDescription>Perfect for authors seeking to grow their readership</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <div className="mb-4">
+          <span className="text-3xl font-bold">${plan.price}</span>
+          <span className="text-muted-foreground">/{plan.priceUnit}</span>
+          {plan.bonusCredits && (
+            <div className="mt-2 text-sm text-primary font-medium">
+              Includes ${plan.bonusCredits} in promotional credits
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+        <ul className="space-y-2 mb-6">
+          {plan.features.map((feature, i) => (
+            <li key={i} className="flex items-start">
+              <CheckCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+      <CardFooter className="mt-auto">
+        <Button 
+          className="w-full" 
+          onClick={() => handleUpgrade(plan.id)}
+          disabled={upgradeToPro.isPending || setUserAsPro.isPending}
+        >
+          {upgradeToPro.isPending || setUserAsPro.isPending 
+            ? "Processing..." 
+            : `Get Started`}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+
+  return (
+    <div className="relative">
+      {/* Show the blurred partial content if requested */}
+      {showPartialData && children && (
+        <div className="relative">
+          <div className="pointer-events-none">
+            {children}
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/60 to-background flex flex-col items-center justify-center backdrop-blur-[2px]">
+            {/* The paywall content will show on top of the blurred content */}
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-2">Unlock Your Author Potential</h2>
+          <p className="text-xl text-muted-foreground">
+            Take your writing career to the next level with powerful analytics and tools
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {features.map((feature, index) => (
+            <Card key={index} className="bg-muted/30">
+              <CardHeader>
+                <feature.icon className="h-10 w-10 text-primary mb-2" />
+                <CardTitle>{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mb-8">
+          <Tabs defaultValue="monthly" value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList className="grid w-64 grid-cols-2 mx-auto mb-8">
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="yearly">Annual</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="monthly" className="mt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-1 gap-8">
+                {monthlyPlans.map(renderPlanCard)}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="yearly" className="mt-0">
+              <div className="grid grid-cols-1 sm:grid-cols-1 gap-8">
+                {yearlyPlans.map(renderPlanCard)}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
   );
 }

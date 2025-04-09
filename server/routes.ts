@@ -14,7 +14,6 @@ import adsRoutes from "./routes/ads-routes";
 import authorAnalyticsRoutes from "./routes/author-analytics-routes";
 import adminRoutes from "./routes/admin-routes";
 import betaRoutes from "./routes/beta-routes";
-import testAuthRoutes from "./routes/test-auth-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -33,7 +32,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/author-analytics", authorAnalyticsRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/beta", betaRoutes);
-  app.use("/api/test-auth", testAuthRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { ReviewManagement } from "@/components/review-management";
 import { ProBookManagement } from "@/components/pro-book-management";
-import ProAnalyticsWrapper from "@/components/pro-analytics-wrapper";
+import { ProAnalyticsWrapper } from "@/components/pro-analytics-wrapper";
 import {
   LineChart,
   Line,
@@ -175,91 +175,99 @@ export default function ProDashboard() {
 
     // Analytics dashboard with Pro check
     const analyticsContent = (
-      <>
-        {/* Title - this will be shown above the stats in both pro and non-pro view */}
-        <div className="flex items-center justify-between mb-6">
+      <div className="flex-1 space-y-8">
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Author Analytics</h1>
         </div>
-        
-        {/* Basic stats remain visible to all users */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
+            <CardHeader>
+              <CardTitle>Total Reviews</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData?.totalReviews || 0}</div>
+              <p className="text-3xl font-bold">
+                {dashboardData?.totalReviews}
+              </p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <CardHeader>
+              <CardTitle>Average Rating</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData?.averageRating?.toFixed(1) || "0.0"}</div>
+              <p className="text-3xl font-bold">
+                {dashboardData?.averageRating?.toFixed(1) || "0.0"}
+              </p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Recent Reports</CardTitle>
+            <CardHeader>
+              <CardTitle>Recent Reports</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardData?.recentReports || 0}</div>
+              <p className="text-3xl font-bold">
+                {dashboardData?.recentReports}
+              </p>
             </CardContent>
           </Card>
         </div>
-        
-        {/* Book Performance Analytics - Pro feature */}
-        <ProAnalyticsWrapper title="Book Performance Analytics">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <Select
-                value={timeRange}
-                onValueChange={(value) => setTimeRange(value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_RANGES.map((range) => (
-                    <SelectItem key={range.value} value={range.value}>
-                      {range.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {books?.map((book) => (
-                <Button
-                  key={book.id}
-                  variant={
-                    selectedBookIds.includes(book.id) ? "default" : "outline"
-                  }
-                  onClick={() => handleBookSelect(book.id)}
-                  className="text-sm"
+
+        <Card>
+          <CardHeader className="space-y-4">
+            <CardTitle>Book Performance Analytics</CardTitle>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-4">
+                <Select
+                  value={timeRange}
+                  onValueChange={(value) => setTimeRange(value)}
                 >
-                  {book.title}
-                </Button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-4">
-              {METRICS.map((metric) => (
-                <div key={metric.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={metric.id}
-                    checked={selectedMetrics.includes(metric.id)}
-                    onCheckedChange={() => handleMetricToggle(metric.id)}
-                  />
-                  <label
-                    htmlFor={metric.id}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select time range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_RANGES.map((range) => (
+                      <SelectItem key={range.value} value={range.value}>
+                        {range.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {books?.map((book) => (
+                  <Button
+                    key={book.id}
+                    variant={
+                      selectedBookIds.includes(book.id) ? "default" : "outline"
+                    }
+                    onClick={() => handleBookSelect(book.id)}
+                    className="text-sm"
                   >
-                    {metric.label}
-                  </label>
-                </div>
-              ))}
+                    {book.title}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-4">
+                {METRICS.map((metric) => (
+                  <div key={metric.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={metric.id}
+                      checked={selectedMetrics.includes(metric.id)}
+                      onCheckedChange={() => handleMetricToggle(metric.id)}
+                    />
+                    <label
+                      htmlFor={metric.id}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {metric.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
+          </CardHeader>
+          <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
@@ -282,12 +290,14 @@ export default function ProDashboard() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        </ProAnalyticsWrapper>
+          </CardContent>
+        </Card>
 
-        {/* Follower Growth Analytics - Pro feature */}
-        <div className="mt-6">
-          <ProAnalyticsWrapper title="Follower Growth Analytics">
+        <Card>
+          <CardHeader>
+            <CardTitle>Follower Growth Analytics</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={followerChartData}>
@@ -316,12 +326,16 @@ export default function ProDashboard() {
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-          </ProAnalyticsWrapper>
-        </div>
-      </>
+          </CardContent>
+        </Card>
+      </div>
     );
 
-    return analyticsContent;
+    return (
+      <ProAnalyticsWrapper>
+        {analyticsContent}
+      </ProAnalyticsWrapper>
+    );
   };
 
   return (
