@@ -44,29 +44,36 @@ router.post("/upgrade", async (req: Request, res: Response) => {
   }
 
   try {
-    const { planId } = req.body;
+    const { plan } = req.body;
     
     // Calculate expiration date based on plan
     let proExpiresAt = new Date();
     
-    if (planId === "monthly") {
+    if (plan === "monthly") {
       // Add 1 month
       proExpiresAt.setMonth(proExpiresAt.getMonth() + 1);
-    } else if (planId === "yearly") {
+    } else if (plan === "annual") {
       // Add 1 year
       proExpiresAt.setFullYear(proExpiresAt.getFullYear() + 1);
       
       // Add 200 credits for yearly plan
-      await db.update(users)
-        .set({
-          credits: db.select({ value: users.credits })
-            .where(eq(users.id, req.user.id))
-            .limit(1)
-            .then(rows => Number(rows[0].value) + 200),
-        })
-        .where(eq(users.id, req.user.id));
+      const userData = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+        columns: {
+          credits: true
+        }
+      });
+      
+      if (userData) {
+        const newCredits = Number(userData.credits) + 200;
+        await db.update(users)
+          .set({
+            credits: newCredits.toString(),
+          })
+          .where(eq(users.id, req.user.id));
+      }
     } else {
-      return res.status(400).json({ error: "Invalid plan ID" });
+      return res.status(400).json({ error: "Invalid plan type" });
     }
 
     // Update user as Pro
@@ -96,27 +103,34 @@ router.post("/test-upgrade", async (req: Request, res: Response) => {
   }
 
   try {
-    const { planId } = req.body;
+    const { plan } = req.body;
     
     // Calculate expiration date based on plan
     let proExpiresAt = new Date();
     
-    if (planId === "monthly") {
+    if (plan === "monthly") {
       // Add 1 month
       proExpiresAt.setMonth(proExpiresAt.getMonth() + 1);
-    } else if (planId === "yearly") {
+    } else if (plan === "annual") {
       // Add 1 year
       proExpiresAt.setFullYear(proExpiresAt.getFullYear() + 1);
       
       // Add 200 credits for yearly plan
-      await db.update(users)
-        .set({
-          credits: db.select({ value: users.credits })
-            .where(eq(users.id, req.user.id))
-            .limit(1)
-            .then(rows => Number(rows[0].value) + 200),
-        })
-        .where(eq(users.id, req.user.id));
+      const userData = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+        columns: {
+          credits: true
+        }
+      });
+      
+      if (userData) {
+        const newCredits = Number(userData.credits) + 200;
+        await db.update(users)
+          .set({
+            credits: newCredits.toString(),
+          })
+          .where(eq(users.id, req.user.id));
+      }
     }
 
     // Update user as Pro
