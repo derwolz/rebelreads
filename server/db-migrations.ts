@@ -304,6 +304,35 @@ async function addRatingMetricsColumnsToRatingPreferences() {
   }
 }
 
+async function removeOldRatingPreferencesColumns() {
+  try {
+    // Check if columns exist first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'rating_preferences' AND column_name = 'criteria_order'
+    `);
+    
+    if (checkResult.rows.length > 0) {
+      console.log("Removing old criteria_order and criteria_weights columns...");
+      
+      // Drop the old columns
+      await db.execute(sql`
+        ALTER TABLE rating_preferences 
+        DROP COLUMN criteria_order,
+        DROP COLUMN criteria_weights
+      `);
+      
+      console.log("Old rating preferences columns removed successfully");
+    } else {
+      console.log("Old rating preferences columns have already been removed");
+    }
+  } catch (error) {
+    console.error("Error removing old rating preferences columns:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -313,5 +342,6 @@ export async function runMigrations() {
   await createBetaKeysTables();
   await addCriteriaWeightsColumnToRatingPreferences();
   await addRatingMetricsColumnsToRatingPreferences();
+  await removeOldRatingPreferencesColumns();
   console.log("Migrations completed");
 }

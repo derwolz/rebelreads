@@ -56,7 +56,7 @@ export interface IAccountStorage {
   getFollowingCount(userId: number): Promise<number>;
 
   getRatingPreferences(userId: number): Promise<RatingPreferences | undefined>;
-  saveRatingPreferences(userId: number, criteriaOrder: string[], criteriaWeights?: Record<string, number>): Promise<RatingPreferences>;
+  saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences>;
   
   getFollowerMetrics(
     authorId: number,
@@ -380,22 +380,19 @@ export class AccountStorage implements IAccountStorage {
     return preferences[0];
   }
 
-  async saveRatingPreferences(userId: number, criteriaOrder: string[], criteriaWeights?: Record<string, number>): Promise<RatingPreferences> {
-    console.log(`Storage: saveRatingPreferences called for user ${userId} with order:`, criteriaOrder);
+  async saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences> {
+    console.log(`Storage: saveRatingPreferences called for user ${userId} with weights:`, weights);
     
-    // Generate weights if not provided
-    if (!criteriaWeights) {
-      const positionWeights = [0.35, 0.25, 0.20, 0.12, 0.08]; // Weights by position
-      criteriaWeights = {};
-      
-      // Assign weights based on position in the criteria order
-      criteriaOrder.forEach((criterion, index) => {
-        criteriaWeights![criterion] = positionWeights[index];
-      });
-    }
+    // Ensure all weights are provided or use defaults
+    const criteriaWeights = {
+      enjoyment: weights.enjoyment ?? 0.35,
+      writing: weights.writing ?? 0.25,
+      themes: weights.themes ?? 0.2,
+      characters: weights.characters ?? 0.12,
+      worldbuilding: weights.worldbuilding ?? 0.08
+    };
     
     console.log(`Storage: Using criteria weights:`, criteriaWeights);
-    console.log(`Storage: JSON stringified weights:`, JSON.stringify(criteriaWeights));
     
     // Check if preferences already exist
     const existing = await this.getRatingPreferences(userId);
@@ -406,16 +403,14 @@ export class AccountStorage implements IAccountStorage {
         console.log("Storage: updating existing preferences");
         // Update existing
         
-        // Explicitly create the data object to update with both JSON and individual columns
+        // Explicitly create the data object to update with individual columns
         const dataToUpdate = { 
-          criteriaOrder,
-          criteriaWeights,
           // Add individual columns for each criteria - convert numbers to strings for decimal columns
-          themes: String(criteriaWeights.themes || 0.2),
-          worldbuilding: String(criteriaWeights.worldbuilding || 0.08),
-          writing: String(criteriaWeights.writing || 0.25),
-          enjoyment: String(criteriaWeights.enjoyment || 0.35),
-          characters: String(criteriaWeights.characters || 0.12),
+          themes: String(criteriaWeights.themes),
+          worldbuilding: String(criteriaWeights.worldbuilding),
+          writing: String(criteriaWeights.writing),
+          enjoyment: String(criteriaWeights.enjoyment),
+          characters: String(criteriaWeights.characters),
           updatedAt: new Date()
         };
         console.log("Storage: data to update:", JSON.stringify(dataToUpdate));
@@ -459,17 +454,15 @@ export class AccountStorage implements IAccountStorage {
         console.log("Storage: creating new preferences");
         // Create new
         
-        // Explicitly create the data object to insert with both JSON and individual columns
+        // Explicitly create the data object to insert with individual columns
         const dataToInsert = {
           userId,
-          criteriaOrder,
-          criteriaWeights,
           // Add individual columns for each criteria - convert numbers to strings for decimal columns
-          themes: String(criteriaWeights.themes || 0.2),
-          worldbuilding: String(criteriaWeights.worldbuilding || 0.08),
-          writing: String(criteriaWeights.writing || 0.25),
-          enjoyment: String(criteriaWeights.enjoyment || 0.35),
-          characters: String(criteriaWeights.characters || 0.12)
+          themes: String(criteriaWeights.themes),
+          worldbuilding: String(criteriaWeights.worldbuilding),
+          writing: String(criteriaWeights.writing),
+          enjoyment: String(criteriaWeights.enjoyment),
+          characters: String(criteriaWeights.characters)
         };
         console.log("Storage: data to insert:", JSON.stringify(dataToInsert));
         
@@ -514,22 +507,16 @@ export class AccountStorage implements IAccountStorage {
       try {
         console.log("Storage: trying fallback direct SQL query");
         
-        // Convert criteriaOrder and criteriaWeights to JSON
-        const criteriaOrderJson = JSON.stringify(criteriaOrder);
-        const criteriaWeightsJson = JSON.stringify(criteriaWeights || {});
-        
         if (existing) {
           // Update using SQL with individual columns
           const result = await db.execute(sql`
             UPDATE rating_preferences 
             SET 
-              criteria_order = ${criteriaOrderJson}::jsonb,
-              criteria_weights = ${criteriaWeightsJson}::jsonb,
-              themes = ${String(criteriaWeights.themes || 0.2)},
-              worldbuilding = ${String(criteriaWeights.worldbuilding || 0.08)},
-              writing = ${String(criteriaWeights.writing || 0.25)},
-              enjoyment = ${String(criteriaWeights.enjoyment || 0.35)},
-              characters = ${String(criteriaWeights.characters || 0.12)},
+              themes = ${String(criteriaWeights.themes)},
+              worldbuilding = ${String(criteriaWeights.worldbuilding)},
+              writing = ${String(criteriaWeights.writing)},
+              enjoyment = ${String(criteriaWeights.enjoyment)},
+              characters = ${String(criteriaWeights.characters)},
               updated_at = NOW()
             WHERE user_id = ${userId}
             RETURNING *
@@ -545,8 +532,6 @@ export class AccountStorage implements IAccountStorage {
           const result = await db.execute(sql`
             INSERT INTO rating_preferences (
               user_id, 
-              criteria_order, 
-              criteria_weights, 
               themes,
               worldbuilding,
               writing,
@@ -557,13 +542,11 @@ export class AccountStorage implements IAccountStorage {
             )
             VALUES (
               ${userId}, 
-              ${criteriaOrderJson}::jsonb, 
-              ${criteriaWeightsJson}::jsonb, 
-              ${String(criteriaWeights.themes || 0.2)},
-              ${String(criteriaWeights.worldbuilding || 0.08)},
-              ${String(criteriaWeights.writing || 0.25)},
-              ${String(criteriaWeights.enjoyment || 0.35)},
-              ${String(criteriaWeights.characters || 0.12)},
+              ${String(criteriaWeights.themes)},
+              ${String(criteriaWeights.worldbuilding)},
+              ${String(criteriaWeights.writing)},
+              ${String(criteriaWeights.enjoyment)},
+              ${String(criteriaWeights.characters)},
               NOW(), 
               NOW()
             )

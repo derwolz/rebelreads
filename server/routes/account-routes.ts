@@ -44,14 +44,11 @@ router.get("/rating-preferences", async (req: Request, res: Response) => {
     if (!preferences) {
       // Return default preferences if none exist yet
       return res.json({ 
-        criteriaOrder: ["enjoyment", "writing", "themes", "characters", "worldbuilding"],
-        criteriaWeights: {
-          enjoyment: 0.35,
-          writing: 0.25,
-          themes: 0.20,
-          characters: 0.12,
-          worldbuilding: 0.08
-        }
+        enjoyment: 0.35,
+        writing: 0.25,
+        themes: 0.20,
+        characters: 0.12,
+        worldbuilding: 0.08
       });
     }
     
@@ -77,17 +74,20 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
   
   // Validate the request body
   const schema = z.object({
-    criteriaOrder: z.array(z.string()).length(5),
-    criteriaWeights: z.record(z.string(), z.number()).optional()
+    enjoyment: z.number(),
+    writing: z.number(),
+    themes: z.number(),
+    characters: z.number(),
+    worldbuilding: z.number()
   });
   
   try {
     console.log("Rating preferences POST - Request body:", req.body);
     console.log("Rating preferences POST - User ID:", req.user.id);
     
-    const { criteriaOrder, criteriaWeights } = schema.parse(req.body);
+    const weights = schema.parse(req.body);
     
-    const preferences = await dbStorage.saveRatingPreferences(req.user.id, criteriaOrder, criteriaWeights);
+    const preferences = await dbStorage.saveRatingPreferences(req.user.id, weights);
     
     console.log("Rating preferences POST - Successfully saved:", JSON.stringify(preferences));
     res.json(preferences);

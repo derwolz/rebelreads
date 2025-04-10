@@ -48,7 +48,7 @@ function SortableCriteriaItem({
 }: { 
   id: string; 
   index: number; 
-  savedWeights?: Record<string, number>
+  savedWeights?: any
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
   
@@ -64,7 +64,7 @@ function SortableCriteriaItem({
   const description = RATING_CRITERIA_DESCRIPTIONS[id as keyof typeof RATING_CRITERIA_DESCRIPTIONS];
   
   // Weight percentage - use saved weight if available, otherwise calculate from position
-  const weight = savedWeights && savedWeights[id]
+  const weight = savedWeights && savedWeights[id] !== undefined
     ? savedWeights[id] * 100
     : POSITION_WEIGHTS[index] * 100;
   
@@ -147,11 +147,8 @@ export function RatingPreferencesSettings({
       
       console.log("Criteria reordered:", newOrder);
       
-      // Calculate new weights based on the new order
-      const newWeights = preferencesData?.criteriaWeights 
-        ? updateWeightsForNewOrder(newOrder, preferencesData.criteriaWeights)
-        : generateCriteriaWeights(newOrder);
-      
+      // Generate new weights based on position
+      const newWeights = generateCriteriaWeights(newOrder);
       console.log("New weights after reordering:", newWeights);
       
       setCriteriaOrder(newOrder);
@@ -162,8 +159,11 @@ export function RatingPreferencesSettings({
   const { isLoading: isLoadingPreferences, data: preferencesData } = useQuery<{
     id: number;
     userId: number;
-    criteriaOrder: string[];
-    criteriaWeights: Record<string, number>;
+    enjoyment: number;
+    writing: number;
+    themes: number;
+    characters: number;
+    worldbuilding: number;
     createdAt: string;
     updatedAt: string;
   }>({
@@ -172,13 +172,26 @@ export function RatingPreferencesSettings({
     enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });
 
-  // Update criteria order when data is received
+  // Calculate criteria order from weights when data is received
   useEffect(() => {
-    if (preferencesData && preferencesData.criteriaOrder && !initialCriteriaOrder) {
-      // Ensure we're using the order from the database
-      setCriteriaOrder(preferencesData.criteriaOrder);
-      console.log("Loaded criteria order from DB:", preferencesData.criteriaOrder);
-      console.log("Loaded criteria weights from DB:", preferencesData.criteriaWeights);
+    if (preferencesData && !initialCriteriaOrder) {
+      // Derive criteria order from the weights
+      const weights = {
+        enjoyment: preferencesData.enjoyment,
+        writing: preferencesData.writing,
+        themes: preferencesData.themes,
+        characters: preferencesData.characters,
+        worldbuilding: preferencesData.worldbuilding
+      };
+      
+      // Sort criteria by weight in descending order
+      const derivedOrder = Object.entries(weights)
+        .sort((a, b) => b[1] - a[1])
+        .map(([criterion]) => criterion);
+        
+      setCriteriaOrder(derivedOrder);
+      console.log("Derived criteria order from weights:", derivedOrder);
+      console.log("Loaded weights from DB:", weights);
     }
   }, [preferencesData, initialCriteriaOrder]);
   
@@ -216,18 +229,13 @@ export function RatingPreferencesSettings({
   // Mutation to save preferences
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
-      // If we have preferencesData, use the saved weights, otherwise generate new ones
-      const criteriaWeights = preferencesData?.criteriaWeights 
-        ? updateWeightsForNewOrder(criteriaOrder, preferencesData.criteriaWeights)
-        : generateCriteriaWeights(criteriaOrder);
+      // Generate weights based on the current criteria order
+      const weights = generateCriteriaWeights(criteriaOrder);
       
-      console.log("Saving preferences with criteriaOrder:", criteriaOrder);
-      console.log("Saving preferences with criteriaWeights:", criteriaWeights);
+      console.log("Saving preferences with weights:", weights);
       
-      return apiRequest('POST', '/api/account/rating-preferences', {
-        criteriaOrder,
-        criteriaWeights
-      });
+      // Send just the weights (individual columns, not nested objects)
+      return apiRequest('POST', '/api/account/rating-preferences', weights);
     },
     onSuccess: () => {
       toast({
@@ -286,7 +294,7 @@ export function RatingPreferencesSettings({
               key={id} 
               id={id} 
               index={index} 
-              savedWeights={preferencesData?.criteriaWeights}
+              savedWeights={preferencesData ? preferencesData : undefined}
             />
           ))}
         </SortableContext>
