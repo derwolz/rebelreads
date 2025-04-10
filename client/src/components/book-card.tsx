@@ -30,6 +30,11 @@ export function BookCard({ book }: { book: Book }) {
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
   });
+  
+  // Fetch user's rating preferences
+  const { data: ratingPreferences } = useQuery<{ criteriaOrder: string[] }>({
+    queryKey: ['/api/account/rating-preferences'],
+  });
 
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
@@ -62,10 +67,14 @@ export function BookCard({ book }: { book: Book }) {
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
+  // Get user's criteria order if available
+  const userCriteriaOrder = ratingPreferences?.criteriaOrder;
+  
   const averageRatings = ratings?.length
     ? {
+        // Use user preferences for weighted rating
         overall:
-          ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) /
+          ratings.reduce((acc, r) => acc + calculateWeightedRating(r, undefined, userCriteriaOrder), 0) /
           ratings.length,
         enjoyment:
           ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
@@ -176,11 +185,11 @@ export function BookCard({ book }: { book: Book }) {
                 <div className="mt-2">
                   <div className="flex items-center gap-2">
                     <StarRating
-                      rating={Math.round(averageRatings?.overall || 0)}
+                      rating={averageRatings?.overall || 0}
                       readOnly
                     />
                     <span className="text-sm text-muted-foreground">
-                      ({ratings?.length || 0})
+                      ({averageRatings?.overall.toFixed(2) || "0.00"})
                     </span>
                   </div>
                 </div>
@@ -202,43 +211,68 @@ export function BookCard({ book }: { book: Book }) {
                   <div className="p-4 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Enjoyment (30%)</span>
-                      <StarRating
-                        rating={Math.round(averageRatings?.enjoyment || 0)}
-                        readOnly
-                        size="sm"
-                      />
+                      <div className="flex items-center gap-2">
+                        <StarRating
+                          rating={averageRatings?.enjoyment || 0}
+                          readOnly
+                          size="sm"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ({averageRatings?.enjoyment.toFixed(1) || "0.0"})
+                        </span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Writing (30%)</span>
-                      <StarRating
-                        rating={Math.round(averageRatings?.writing || 0)}
-                        readOnly
-                        size="sm"
-                      />
+                      <div className="flex items-center gap-2">
+                        <StarRating
+                          rating={averageRatings?.writing || 0}
+                          readOnly
+                          size="sm"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ({averageRatings?.writing.toFixed(1) || "0.0"})
+                        </span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Themes (20%)</span>
-                      <StarRating
-                        rating={Math.round(averageRatings?.themes || 0)}
-                        readOnly
-                        size="sm"
-                      />
+                      <div className="flex items-center gap-2">
+                        <StarRating
+                          rating={averageRatings?.themes || 0}
+                          readOnly
+                          size="sm"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ({averageRatings?.themes.toFixed(1) || "0.0"})
+                        </span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Characters (10%)</span>
-                      <StarRating
-                        rating={Math.round(averageRatings?.characters || 0)}
-                        readOnly
-                        size="sm"
-                      />
+                      <div className="flex items-center gap-2">
+                        <StarRating
+                          rating={averageRatings?.characters || 0}
+                          readOnly
+                          size="sm"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ({averageRatings?.characters.toFixed(1) || "0.0"})
+                        </span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">World Building (10%)</span>
-                      <StarRating
-                        rating={Math.round(averageRatings?.worldbuilding || 0)}
-                        readOnly
-                        size="sm"
-                      />
+                      <div className="flex items-center gap-2">
+                        <StarRating
+                          rating={averageRatings?.worldbuilding || 0}
+                          readOnly
+                          size="sm"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ({averageRatings?.worldbuilding.toFixed(1) || "0.0"})
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

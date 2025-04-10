@@ -30,6 +30,11 @@ export function BookGridCard({ book }: { book: Book }) {
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
   });
+  
+  // Fetch user's rating preferences
+  const { data: ratingPreferences } = useQuery<{ criteriaOrder: string[] }>({
+    queryKey: ['/api/account/rating-preferences'],
+  });
 
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
@@ -66,8 +71,12 @@ export function BookGridCard({ book }: { book: Book }) {
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
+  // Get user's criteria order if available
+  const userCriteriaOrder = ratingPreferences?.criteriaOrder;
+  
   const averageRatings = ratings?.length ? {
-    overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
+    // Use user preferences for weighted rating
+    overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r, undefined, userCriteriaOrder), 0) / ratings.length,
     enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
     writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
     themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
@@ -147,9 +156,9 @@ export function BookGridCard({ book }: { book: Book }) {
 
                   <div className="mt-2">
                     <div className="flex items-center gap-1">
-                      <StarRating rating={Math.round(averageRatings?.overall || 0)} readOnly size="sm" />
+                      <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
                       <span className="text-xs text-muted-foreground">
-                        ({ratings?.length || 0})
+                        ({averageRatings?.overall.toFixed(2) || "0.00"})
                       </span>
                     </div>
                   </div>
