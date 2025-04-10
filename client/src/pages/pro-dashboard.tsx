@@ -141,27 +141,27 @@ export default function ProDashboard() {
   });
 
   const followerChartData = (() => {
-    if (!followerData) return [];
+    if (!followerData || !followerData.trending) return [];
 
-    const dates = new Set([
-      ...followerData.follows.map((f) => f.date),
-      ...followerData.unfollows.map((u) => u.date),
-    ]);
-
-    return Array.from(dates)
-      .map((date) => {
-        const follows =
-          followerData.follows.find((f) => f.date === date)?.count || 0;
-        const unfollows =
-          followerData.unfollows.find((u) => u.date === date)?.count || 0;
-        return {
-          date,
-          "New Followers": follows,
-          "Lost Followers": unfollows,
-          "Net Change": follows - unfollows,
-        };
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // The backend now provides a 'trending' array with { date, count } for each day
+    // where count is the cumulative follower count for that day
+    return followerData.trending.map((dayData: { date: string; count: number }, index: number, arr: Array<{ date: string; count: number }>) => {
+      // Calculate daily change by comparing with previous day
+      const prevCount = index > 0 ? arr[index - 1].count : 0;
+      const netChange = dayData.count - prevCount;
+      
+      // For visualization, separate positive and negative changes
+      const newFollowers = netChange > 0 ? netChange : 0;
+      const lostFollowers = netChange < 0 ? Math.abs(netChange) : 0;
+      
+      return {
+        date: dayData.date,
+        "New Followers": newFollowers,
+        "Lost Followers": lostFollowers,
+        "Net Change": netChange,
+        "Total Followers": dayData.count,
+      };
+    });
   })();
 
   const renderContent = () => {
@@ -332,8 +332,8 @@ interface BookPerformance {
 }
 
 interface FollowerAnalytics {
-  follows: Array<{ date: string; count: number }>;
-  unfollows: Array<{ date: string; count: number }>;
+  total: number;
+  trending: Array<{ date: string; count: number }>;
 }
 
 interface ProDashboardData {

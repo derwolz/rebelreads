@@ -1,0 +1,26 @@
+Uncaught TypeError: followerData.follows is undefined
+    followerChartData pro-dashboard.tsx:147
+    ProDashboard pro-dashboard.tsx:165
+    React 4
+pro-dashboard.tsx:147:6
+The above error occurred in the <ProDashboard> component:
+
+ProDashboard@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/pages/pro-dashboard.tsx:62:20
+AuthorAnalyticsProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/author-analytics-provider.tsx:22:40
+Route@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=82dbefcf:191:13
+ProtectedRoute@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/lib/protected-route.tsx:23:31
+Switch@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=82dbefcf:247:14
+Router@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/App.tsx?v=kPdYfCWLcZHr6YmzyKm8V:58:22
+OnboardingProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-onboarding.tsx:22:35
+AuthProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-auth.tsx:26:29
+BetaProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-beta.tsx:23:29
+ThemeProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-theme.tsx:24:30
+QueryClientProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=82dbefcf:2804:27
+App@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/App.tsx?v=kPdYfCWLcZHr6YmzyKm8V:252:33
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. react-dom.development.js:18704:14
+Uncaught TypeError: followerData.follows is undefined
+    followerChartData pro-dashboard.tsx:147
+    ProDashboard pro-dashboard.tsx:165
+    React 4
