@@ -7,12 +7,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Megaphone, Star, LineChart, Wallet, Plus } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Megaphone, Star, LineChart, Wallet, Plus, LockIcon } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
 import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
 import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
 import { PurchaseCreditsModal } from "@/components/purchase-credits-modal";
 import { ProActionWrapper } from "@/components/pro-action-wrapper";
+import { ProPaywall } from "@/components/pro-paywall";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
@@ -20,7 +23,11 @@ export default function ProActionPage() {
   const [isSurveyBuilderOpen, setIsSurveyBuilderOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [showProPaywall, setShowProPaywall] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  const isPro = user?.isPro;
 
   const { data: books } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
@@ -51,9 +58,21 @@ export default function ProActionPage() {
               <li>• Track campaign performance</li>
               <li>• Optimize your reach</li>
             </ul>
-            <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full">
-              Manage Ads
-            </Button>
+            {isPro ? (
+              <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full">
+                Manage Ads
+              </Button>
+            ) : (
+              <Button 
+                className="w-full opacity-70 cursor-not-allowed" 
+                variant="outline"
+                disabled
+                onClick={() => setShowProPaywall(true)}
+              >
+                <LockIcon className="h-3 w-3 mr-1" />
+                Upgrade to Access
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -73,9 +92,21 @@ export default function ProActionPage() {
               <li>• Improve book visibility</li>
               <li>• Build social proof</li>
             </ul>
-            <Button onClick={() => setIsReviewBoostOpen(true)} className="w-full">
-              Start Boost
-            </Button>
+            {isPro ? (
+              <Button onClick={() => setIsReviewBoostOpen(true)} className="w-full">
+                Start Boost
+              </Button>
+            ) : (
+              <Button 
+                className="w-full opacity-70 cursor-not-allowed" 
+                variant="outline"
+                disabled
+                onClick={() => setShowProPaywall(true)}
+              >
+                <LockIcon className="h-3 w-3 mr-1" />
+                Upgrade to Access
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -95,23 +126,57 @@ export default function ProActionPage() {
               <li>• Analyze responses</li>
               <li>• Make data-driven decisions</li>
             </ul>
-            <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full">
-              Create Survey
-            </Button>
+            {isPro ? (
+              <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full">
+                Create Survey
+              </Button>
+            ) : (
+              <Button 
+                className="w-full opacity-70 cursor-not-allowed" 
+                variant="outline"
+                disabled
+                onClick={() => setShowProPaywall(true)}
+              >
+                <LockIcon className="h-3 w-3 mr-1" />
+                Upgrade to Access
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Active Campaigns Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Active Campaigns</CardTitle>
-          <CardDescription>
-            Monitor and manage your ongoing promotional campaigns
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Active Campaigns</CardTitle>
+            <CardDescription>
+              Monitor and manage your ongoing promotional campaigns
+            </CardDescription>
+          </div>
+          {!isPro && (
+            <div className="bg-primary/10 text-primary rounded-md py-1 px-2 text-xs font-medium flex items-center">
+              <LockIcon className="h-3 w-3 mr-1" />
+              Pro Feature
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          <CampaignTable />
+          {isPro ? (
+            <CampaignTable />
+          ) : (
+            <div className="text-center py-8 border border-dashed rounded-md border-muted-foreground/30">
+              <LockIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground mb-4">Upgrade to Pro to view your campaigns</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowProPaywall(true)}
+              >
+                Upgrade to Pro
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -161,6 +226,12 @@ export default function ProActionPage() {
             open={isPurchaseModalOpen}
             onClose={() => setIsPurchaseModalOpen(false)}
           />
+          
+          <Dialog open={showProPaywall} onOpenChange={setShowProPaywall}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <ProPaywall onClose={() => setShowProPaywall(false)} />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </main>

@@ -28,16 +28,8 @@ export function ProActionWrapper({ children }: ProActionWrapperProps) {
     return <>{children}</>;
   }
 
-  // Special handling for non-Pro users
-  // Extract the action cards section and campaign table section from children
-  const childrenArray = React.Children.toArray(children);
-  let childContent = null;
-  
-  if (childrenArray.length > 0 && React.isValidElement(childrenArray[0])) {
-    // Clone the child element to modify it
-    childContent = React.cloneElement(childrenArray[0] as React.ReactElement);
-  }
-
+  // Simple wrapper for non-Pro users
+  // Just add an upgrade banner at the top
   const upgradeOverlay = (
     <div className="mt-8 mb-12 bg-primary/5 border border-primary/20 rounded-lg p-6 text-center">
       <h2 className="text-2xl font-bold mb-2">Unlock Your Author Potential</h2>
@@ -61,45 +53,8 @@ export function ProActionWrapper({ children }: ProActionWrapperProps) {
         {/* Upgrade banner */}
         {upgradeOverlay}
         
-        {/* Action cards with Pro indicator */}
-        <div className="relative">
-          {childContent}
-          
-          {/* Overlay divs with "Pro Feature" on each card button */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 h-full">
-              {Array(3).fill(null).map((_, i) => (
-                <div key={i} className="flex flex-col justify-between">
-                  <div></div>
-                  <div className="px-6 pb-6">
-                    <div className="bg-primary/10 text-primary rounded-md py-1 px-2 text-xs font-medium flex items-center justify-center mb-2">
-                      <LockIcon className="h-3 w-3 mr-1" />
-                      Pro Feature
-                    </div>
-                    <Button disabled className="w-full opacity-70 cursor-not-allowed">
-                      <LockIcon className="h-3 w-3 mr-1" />
-                      Upgrade to Access
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Campaign table overlay */}
-            <div className="absolute top-[calc(100%-160px)] left-0 right-0 h-40 bg-gradient-to-t from-background via-background/80 to-transparent flex flex-col items-center justify-end pb-8">
-              <p className="text-muted-foreground mb-2">Upgrade to Pro to view and manage your campaigns</p>
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="pointer-events-auto"
-                onClick={() => setShowFullPaywall(true)}
-              >
-                <LockIcon className="h-3 w-3 mr-1" />
-                Upgrade to Pro
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* The page already has the proper Pro/non-Pro handling for buttons */}
+        {children}
       </div>
       
       {/* Full paywall dialog */}
