@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { dbStorage } from "../storage";
 import multer from "multer";
 import path from "path";
@@ -6,7 +6,7 @@ import fs from "fs";
 import express from "express";
 import { db } from "../db";
 import { ratings, books, followers } from "@shared/schema";
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray, desc, avg, count, sql } from "drizzle-orm";
 
 // Configure multer for file uploads
 const uploadsDir = "./uploads";
@@ -221,8 +221,26 @@ router.get("/books/followed-authors", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
   try {
-    const books = await dbStorage.getFollowedAuthorsBooks(req.user!.id);
-    res.json(books);
+    // Get authors that the user follows
+    const followedAuthors = await db
+      .select({
+        authorId: followers.followingId
+      })
+      .from(followers)
+      .where(eq(followers.userId, req.user!.id));
+    
+    if (followedAuthors.length === 0) {
+      return res.json([]);
+    }
+    
+    // Get books by those authors
+    const authorIds = followedAuthors.map(f => f.authorId);
+    const authorBooks = await db
+      .select()
+      .from(books)
+      .where(inArray(books.authorId, authorIds));
+    
+    res.json(authorBooks);
   } catch (error) {
     console.error("Error fetching followed authors books:", error);
     res
@@ -251,6 +269,166 @@ router.post("/authors/:id/unfollow", async (req, res) => {
 
   await dbStorage.unfollowAuthor(req.user!.id, authorId);
   res.sendStatus(200);
+});
+
+// User dashboard endpoint
+router.get("/dashboard", async (req: Request, res: Response) => {
+  // Check if user is authenticated, return empty structure if not
+  if (!req.isAuthenticated()) {
+    console.log("Dashboard accessed without authentication");
+    return res.json({
+      user: {
+        username: "Guest",
+        bio: null,
+        profileImageUrl: null,
+        followingCount: 0,
+        followerCount: 0,
+        socialMediaLinks: []
+      },
+      readingStats: {
+        wishlisted: 0,
+        completed: 0
+      },
+      averageRatings: null,
+      recentReviews: [],
+      recommendations: []
+    });
+  }
+
+  try {
+    const userId = req.user!.id;
+    
+    // Get user data
+    const user = await dbStorage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Get user reading statistics
+    const wishlistedBooks = await dbStorage.getWishlistedBooks(userId);
+    const wishlisted = wishlistedBooks.length;
+    
+    const completedBooks = await dbStorage.getCompletedBooks(userId);
+    const completed = completedBooks.length;
+    
+    // Get user's ratings for averages
+    const userRatings = await dbStorage.getUserRatings(userId);
+    
+    let averageRatings = null;
+    if (userRatings.length > 0) {
+      const enjoymentSum = userRatings.reduce((sum, r) => sum + r.enjoyment, 0);
+      const writingSum = userRatings.reduce((sum, r) => sum + r.writing, 0);
+      const themesSum = userRatings.reduce((sum, r) => sum + r.themes, 0);
+      const charactersSum = userRatings.reduce((sum, r) => sum + r.characters, 0);
+      const worldbuildingSum = userRatings.reduce((sum, r) => sum + r.worldbuilding, 0);
+      
+      const count = userRatings.length;
+      
+      // Calculate weighted overall rating based on default weights
+      const overallSum = userRatings.reduce((sum, r) => {
+        const weightedRating = 
+          (r.enjoyment * 0.3) + 
+          (r.writing * 0.3) + 
+          (r.themes * 0.2) + 
+          (r.characters * 0.1) + 
+          (r.worldbuilding * 0.1);
+        return sum + weightedRating;
+      }, 0);
+      
+      averageRatings = {
+        overall: overallSum / count,
+        enjoyment: enjoymentSum / count,
+        writing: writingSum / count,
+        themes: themesSum / count,
+        characters: charactersSum / count,
+        worldbuilding: worldbuildingSum / count
+      };
+    }
+    
+    // Get recent reviews with book information
+    const recentReviews = await db
+      .select({
+        id: ratings.id,
+        review: ratings.review,
+        enjoyment: ratings.enjoyment,
+        writing: ratings.writing,
+        themes: ratings.themes,
+        characters: ratings.characters,
+        worldbuilding: ratings.worldbuilding,
+        createdAt: ratings.createdAt,
+        bookId: books.id,
+        bookTitle: books.title,
+        bookCoverUrl: books.coverUrl,
+        bookAuthor: books.author
+      })
+      .from(ratings)
+      .innerJoin(books, eq(ratings.bookId, books.id))
+      .where(eq(ratings.userId, userId))
+      .orderBy(desc(ratings.createdAt))
+      .limit(5);
+    
+    // Get recommendations - for now simple recommendations based on user's most read genres
+    const userGenres = new Set<string>();
+    [...wishlistedBooks, ...completedBooks].forEach(book => {
+      book.genres.forEach(genre => userGenres.add(genre));
+    });
+    
+    // Get books in user's preferred genres that they haven't rated yet
+    let recommendations = [];
+    
+    if (userGenres.size > 0) {
+      // Using a simpler approach to avoid SQL array operators
+      try {
+        // Get all books
+        const allBooks = await db.select().from(books).limit(50);
+        
+        // Get user's rated books
+        const userRatedBookIds = userRatings.map(rating => rating.bookId);
+        
+        // Filter recommendations client-side
+        recommendations = allBooks.filter(book => {
+          // Don't recommend books the user has already rated
+          if (userRatedBookIds.includes(book.id)) {
+            return false;
+          }
+          
+          // Check if the book has any genres that match user interests
+          return book.genres.some(genre => userGenres.has(genre));
+        }).slice(0, 6);
+      } catch (error) {
+        console.error("Error getting recommendations:", error);
+        recommendations = [];
+      }
+    }
+    
+    // Get user's following/follower counts
+    const followingCount = await dbStorage.getFollowingCount(userId);
+    const followerCount = await dbStorage.getFollowerCount(userId);
+    
+    // Format the response
+    const dashboard = {
+      user: {
+        username: user.username,
+        bio: user.bio,
+        profileImageUrl: user.profileImageUrl,
+        followingCount,
+        followerCount,
+        socialMediaLinks: user.socialMediaLinks || []
+      },
+      readingStats: {
+        wishlisted,
+        completed
+      },
+      averageRatings,
+      recentReviews,
+      recommendations
+    };
+    
+    res.json(dashboard);
+  } catch (error) {
+    console.error("Error getting dashboard data:", error);
+    res.status(500).json({ error: "Failed to retrieve dashboard data", details: error });
+  }
 });
 
 export default router;
