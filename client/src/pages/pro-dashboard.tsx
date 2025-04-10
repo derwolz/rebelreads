@@ -14,7 +14,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ComposedChart,
+  BarChart,
   Bar,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -251,30 +251,18 @@ export default function ProDashboard() {
           <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={followerChartData}>
+                <BarChart data={followerChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
                   <Legend />
                   <Bar
-                    dataKey="New Followers"
-                    fill="hsl(145, 70%, 50%)"
-                    stackId="stack"
+                    dataKey="Total Followers"
+                    fill="hsl(200, 70%, 50%)"
+                    name="Total Followers"
                   />
-                  <Bar
-                    dataKey="Lost Followers"
-                    fill="hsl(0, 70%, 50%)"
-                    stackId="stack"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Net Change"
-                    stroke="hsl(200, 70%, 50%)"
-                    strokeWidth={2}
-                    dot={{ fill: "hsl(200, 70%, 50%)" }}
-                  />
-                </ComposedChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
