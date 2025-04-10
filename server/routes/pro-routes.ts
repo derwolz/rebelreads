@@ -639,6 +639,8 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     // Get follower metrics for this author based on the requested time range
     const followerMetrics = await dbStorage.getFollowerMetrics(req.user.id, timeRange);
     
+    console.log("Raw follower metrics:", JSON.stringify(followerMetrics));
+    
     // Create a map to store daily counts
     const dateMap = new Map<string, number>();
     const today = new Date();
@@ -651,16 +653,28 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
       dateMap.set(dateStr, 0);
     }
     
-    // Apply follow counts to the date map
+    // Debug the ranges of counts
+    const followCounts = followerMetrics.follows.map(f => f.count);
+    const unfollowCounts = followerMetrics.unfollows.map(u => u.count);
+    console.log("Follow counts range:", Math.min(...(followCounts.length ? followCounts : [0])), 
+                "to", Math.max(...(followCounts.length ? followCounts : [0])));
+    console.log("Unfollow counts range:", Math.min(...(unfollowCounts.length ? unfollowCounts : [0])), 
+                "to", Math.max(...(unfollowCounts.length ? unfollowCounts : [0])));
+                
+    // Apply follow counts to the date map - ensure we're working with real numbers
     let runningTotal = 0;
     followerMetrics.follows.forEach(follow => {
-      runningTotal += follow.count;
+      // Ensure count is a valid number
+      const count = typeof follow.count === 'number' && isFinite(follow.count) ? follow.count : 0;
+      runningTotal += count;
       dateMap.set(follow.date, runningTotal);
     });
     
-    // Apply unfollow counts to the date map
+    // Apply unfollow counts to the date map - ensure we're working with real numbers
     followerMetrics.unfollows.forEach(unfollow => {
-      runningTotal -= unfollow.count;
+      // Ensure count is a valid number
+      const count = typeof unfollow.count === 'number' && isFinite(unfollow.count) ? unfollow.count : 0;
+      runningTotal -= count;
       dateMap.set(unfollow.date, runningTotal);
     });
     
@@ -672,8 +686,17 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
         followers: count  // Use property name that matches what the chart component expects
       }));
     
+    // Make sure total is a valid number
+    const total = trending[trending.length - 1]?.followers || 0;
+    const safeTotal = isFinite(total) ? total : 0;
+    
+    console.log("Final follower metrics response:", {
+      total: safeTotal,
+      trending: trending.slice(0, 3) // Log just the first few entries to keep logs clean
+    });
+    
     return res.json({
-      total: trending[trending.length - 1]?.followers || 0,
+      total: safeTotal,
       trending
     });
   } catch (error) {
