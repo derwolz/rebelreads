@@ -235,6 +235,31 @@ async function createBetaKeysTables() {
   }
 }
 
+async function addCriteriaWeightsColumnToRatingPreferences() {
+  try {
+    // Check if column exists first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'rating_preferences' AND column_name = 'criteria_weights'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Adding 'criteria_weights' column to rating_preferences table...");
+      await db.execute(sql`
+        ALTER TABLE rating_preferences 
+        ADD COLUMN criteria_weights jsonb DEFAULT '{}'::jsonb NOT NULL
+      `);
+      console.log("Column 'criteria_weights' added successfully");
+    } else {
+      console.log("Column 'criteria_weights' already exists");
+    }
+  } catch (error) {
+    console.error("Error adding 'criteria_weights' column:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -242,5 +267,6 @@ export async function runMigrations() {
   await createAdImpressionsTable();
   await createAuthorAnalyticsTables();
   await createBetaKeysTables();
+  await addCriteriaWeightsColumnToRatingPreferences();
   console.log("Migrations completed");
 }

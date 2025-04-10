@@ -159,7 +159,7 @@ export function RatingPreferencesSettings({
   };
 
   // Query to get existing preferences (if any) - only if initialCriteriaOrder is not provided
-  const { isLoading: isLoadingPreferences, data: preferencesData, error: preferencesError } = useQuery<{
+  const { isLoading: isLoadingPreferences, data: preferencesData } = useQuery<{
     id: number;
     userId: number;
     criteriaOrder: string[];
@@ -170,35 +170,6 @@ export function RatingPreferencesSettings({
     queryKey: ['/api/account/rating-preferences'],
     staleTime: 60000,
     enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
-    queryFn: async ({ queryKey }) => {
-      try {
-        const response = await fetch(queryKey[0] as string, {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-          }
-        });
-        
-        if (!response.ok) {
-          // Try to get the response content to diagnose the issue
-          const responseText = await response.text();
-          console.error('Rating preferences API error response:', responseText.substring(0, 100) + '...');
-          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        console.log('Rating preferences API response content type:', contentType);
-        
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error(`Expected application/json but got ${contentType}`);
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching rating preferences:', error);
-        throw error;
-      }
-    }
   });
 
   // Update criteria order when data is received
@@ -253,34 +224,10 @@ export function RatingPreferencesSettings({
       console.log("Saving preferences with criteriaOrder:", criteriaOrder);
       console.log("Saving preferences with criteriaWeights:", criteriaWeights);
       
-      try {
-        const response = await fetch('/api/account/rating-preferences', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            criteriaOrder,
-            criteriaWeights
-          })
-        });
-        
-        if (!response.ok) {
-          const responseText = await response.text();
-          console.error('Error saving preferences response:', responseText.substring(0, 100) + '...');
-          throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
-        
-        const contentType = response.headers.get('content-type');
-        console.log('Save preferences API response content type:', contentType);
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Error in save preferences mutation:', error);
-        throw error;
-      }
+      return apiRequest('POST', '/api/account/rating-preferences', {
+        criteriaOrder,
+        criteriaWeights
+      });
     },
     onSuccess: () => {
       toast({
