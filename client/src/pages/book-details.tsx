@@ -389,7 +389,9 @@ export default function BookDetails() {
                           </p>
                         ) : null}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Enjoyment</span>
+                          <span className="text-sm">
+                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences?.criteriaOrder)})
+                          </span>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={averageRatings.enjoyment}
@@ -397,12 +399,14 @@ export default function BookDetails() {
                               size="sm"
                             />
                             <span className="text-xs text-muted-foreground">
-                              ({averageRatings.enjoyment.toFixed(1)})
+                              ({averageRatings.enjoyment.toFixed(2)})
                             </span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Writing Style</span>
+                          <span className="text-sm">
+                            Writing ({getWeightPercentage("writing", ratingPreferences?.criteriaOrder)})
+                          </span>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={averageRatings.writing}
@@ -410,12 +414,14 @@ export default function BookDetails() {
                               size="sm"
                             />
                             <span className="text-xs text-muted-foreground">
-                              ({averageRatings.writing.toFixed(1)})
+                              ({averageRatings.writing.toFixed(2)})
                             </span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Themes</span>
+                          <span className="text-sm">
+                            Themes ({getWeightPercentage("themes", ratingPreferences?.criteriaOrder)})
+                          </span>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={averageRatings.themes}
@@ -423,12 +429,14 @@ export default function BookDetails() {
                               size="sm"
                             />
                             <span className="text-xs text-muted-foreground">
-                              ({averageRatings.themes.toFixed(1)})
+                              ({averageRatings.themes.toFixed(2)})
                             </span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Characters</span>
+                          <span className="text-sm">
+                            Characters ({getWeightPercentage("characters", ratingPreferences?.criteriaOrder)})
+                          </span>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={averageRatings.characters}
@@ -436,12 +444,14 @@ export default function BookDetails() {
                               size="sm"
                             />
                             <span className="text-xs text-muted-foreground">
-                              ({averageRatings.characters.toFixed(1)})
+                              ({averageRatings.characters.toFixed(2)})
                             </span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">World Building</span>
+                          <span className="text-sm">
+                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences?.criteriaOrder)})
+                          </span>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={averageRatings.worldbuilding}
@@ -449,7 +459,7 @@ export default function BookDetails() {
                               size="sm"
                             />
                             <span className="text-xs text-muted-foreground">
-                              ({averageRatings.worldbuilding.toFixed(1)})
+                              ({averageRatings.worldbuilding.toFixed(2)})
                             </span>
                           </div>
                         </div>

@@ -205,7 +205,7 @@ export function BookGridCard({ book }: { book: Book }) {
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="sm" />
                       <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.enjoyment.toFixed(1) || "0.0"})
+                        ({averageRatings?.enjoyment.toFixed(2) || "0.00"})
                       </span>
                     </div>
                   </div>
@@ -216,7 +216,7 @@ export function BookGridCard({ book }: { book: Book }) {
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.writing || 0} readOnly size="sm" />
                       <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.writing.toFixed(1) || "0.0"})
+                        ({averageRatings?.writing.toFixed(2) || "0.00"})
                       </span>
                     </div>
                   </div>
@@ -227,7 +227,7 @@ export function BookGridCard({ book }: { book: Book }) {
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.themes || 0} readOnly size="sm" />
                       <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.themes.toFixed(1) || "0.0"})
+                        ({averageRatings?.themes.toFixed(2) || "0.00"})
                       </span>
                     </div>
                   </div>
@@ -238,7 +238,7 @@ export function BookGridCard({ book }: { book: Book }) {
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.characters || 0} readOnly size="sm" />
                       <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.characters.toFixed(1) || "0.0"})
+                        ({averageRatings?.characters.toFixed(2) || "0.00"})
                       </span>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export function BookGridCard({ book }: { book: Book }) {
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="sm" />
                       <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.worldbuilding.toFixed(1) || "0.0"})
+                        ({averageRatings?.worldbuilding.toFixed(2) || "0.00"})
                       </span>
                     </div>
                   </div>

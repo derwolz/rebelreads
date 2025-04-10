@@ -150,7 +150,7 @@ export function ProBookManagement() {
                                   <div className="flex items-center gap-2">
                                     <StarRating rating={averageRatings.enjoyment} readOnly size="sm" />
                                     <span className="text-xs text-muted-foreground">
-                                      ({averageRatings.enjoyment.toFixed(1)})
+                                      ({averageRatings.enjoyment.toFixed(2)})
                                     </span>
                                   </div>
                                 </div>
@@ -159,7 +159,7 @@ export function ProBookManagement() {
                                   <div className="flex items-center gap-2">
                                     <StarRating rating={averageRatings.writing} readOnly size="sm" />
                                     <span className="text-xs text-muted-foreground">
-                                      ({averageRatings.writing.toFixed(1)})
+                                      ({averageRatings.writing.toFixed(2)})
                                     </span>
                                   </div>
                                 </div>
@@ -168,7 +168,7 @@ export function ProBookManagement() {
                                   <div className="flex items-center gap-2">
                                     <StarRating rating={averageRatings.themes} readOnly size="sm" />
                                     <span className="text-xs text-muted-foreground">
-                                      ({averageRatings.themes.toFixed(1)})
+                                      ({averageRatings.themes.toFixed(2)})
                                     </span>
                                   </div>
                                 </div>
@@ -177,7 +177,7 @@ export function ProBookManagement() {
                                   <div className="flex items-center gap-2">
                                     <StarRating rating={averageRatings.characters} readOnly size="sm" />
                                     <span className="text-xs text-muted-foreground">
-                                      ({averageRatings.characters.toFixed(1)})
+                                      ({averageRatings.characters.toFixed(2)})
                                     </span>
                                   </div>
                                 </div>
@@ -186,7 +186,7 @@ export function ProBookManagement() {
                                   <div className="flex items-center gap-2">
                                     <StarRating rating={averageRatings.worldbuilding} readOnly size="sm" />
                                     <span className="text-xs text-muted-foreground">
-                                      ({averageRatings.worldbuilding.toFixed(1)})
+                                      ({averageRatings.worldbuilding.toFixed(2)})
                                     </span>
                                   </div>
                                 </div>
