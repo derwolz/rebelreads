@@ -19,16 +19,19 @@ export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputP
 
   // Load existing genres from the server using React Query
   const { data: customGenres = [] } = useQuery({
-    queryKey: ["/api/genres"],
+    queryKey: ["/api/genres", { type: "genre" }],
     queryFn: async () => {
-      const res = await fetch("/api/genres");
+      const res = await fetch("/api/genres?type=genre");
       if (!res.ok) throw new Error("Failed to fetch genres");
       return res.json();
     }
   });
 
+  // Create a list of genre names from the genre taxonomy objects
+  const genreNames = (customGenres || []).map(g => g.name || "").filter(Boolean);
+  
   // Combine built-in and custom genres
-  const availableGenres = Array.from(new Set([...AVAILABLE_GENRES, ...customGenres]));
+  const availableGenres = Array.from(new Set([...AVAILABLE_GENRES, ...genreNames]));
 
   const addGenre = (genre: string) => {
     if (!selectedGenres.includes(genre)) {

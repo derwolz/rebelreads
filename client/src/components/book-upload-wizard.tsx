@@ -74,7 +74,7 @@ interface FormData {
   originalTitle: string;
   referralLinks: ReferralLink[];
   internal_details: string; // Added new field
-  genreTaxonomies?: { // New taxonomy field
+  genreTaxonomies: { // New taxonomy field
     id?: number;
     taxonomyId: number;
     rank: number;

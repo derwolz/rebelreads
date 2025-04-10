@@ -17,7 +17,7 @@ import { GenreTaxonomy } from "@shared/schema";
 
 interface TaxonomySelectorProps {
   selectedTaxonomies: {
-    id: number;
+    id?: number;
     taxonomyId: number;
     rank: number;
     type: "genre" | "subgenre" | "theme" | "trope";
