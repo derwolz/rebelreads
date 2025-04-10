@@ -573,14 +573,11 @@ router.post("/metrics", async (req: Request, res: Response) => {
     
     // Process data by date
     const result = dateRange.map(date => {
+      // Start with date in the format Recharts expects
       const dayData: Record<string, string | number> = { date };
       
-      // Initialize with zero counts for each book and metric
-      bookIds.forEach(bookId => {
-        (metrics as string[]).forEach((metric: string) => {
-          dayData[`${bookId}_${metric}`] = 0;
-        });
-      });
+      // Initialize metrics counters for this day
+      const dailyMetrics: Record<string, number> = {};
       
       // Calculate metrics for each book on this date
       metricsData.forEach(({ bookId, impressions, clickThroughs }) => {
@@ -594,17 +591,20 @@ router.post("/metrics", async (req: Request, res: Response) => {
           new Date(click.timestamp).toISOString().split('T')[0] === date
         ).length;
         
-        // Set metric values
+        // Use book title or a readable name instead of just ID for better chart labels
+        const bookLabel = `Book ${bookId}`;
+        
+        // Set metric values in the format Recharts expects
         if (metrics.includes("impressions")) {
-          dayData[`${bookId}_impressions`] = dateImpressions;
+          dayData[`${bookLabel} (impressions)`] = dateImpressions;
         }
         
         if (metrics.includes("clicks")) {
-          dayData[`${bookId}_clicks`] = dateClicks;
+          dayData[`${bookLabel} (clicks)`] = dateClicks;
         }
         
         if (metrics.includes("ctr")) {
-          dayData[`${bookId}_ctr`] = dateImpressions > 0 
+          dayData[`${bookLabel} (ctr)`] = dateImpressions > 0 
             ? Math.round((dateClicks / dateImpressions) * 100) 
             : 0;
         }
@@ -659,13 +659,16 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
       dateMap.set(unfollow.date, runningTotal);
     });
     
-    // Convert to the trending format expected by the frontend
+    // Convert to the format expected by Recharts
     const trending = Array.from(dateMap.entries())
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-      .map(([date, count]) => ({ date, count }));
+      .map(([date, count]) => ({ 
+        date,
+        followers: count  // Use property name that matches what the chart component expects
+      }));
     
     return res.json({
-      total: trending[trending.length - 1]?.count || 0,
+      total: trending[trending.length - 1]?.followers || 0,
       trending
     });
   } catch (error) {

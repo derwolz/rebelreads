@@ -120,25 +120,8 @@ export default function ProDashboard() {
     }
   };
 
-  const chartData = performanceData?.map((item) => {
-    // Start with the date
-    const processedData: { [key: string]: string | number } = {
-      date: item.date,
-    };
-
-    // For each selected book and metric combination
-    selectedBookIds.forEach((bookId) => {
-      selectedMetrics.forEach((metric) => {
-        const key = `Book ${bookId}_${metric}`;
-        // Convert string values to numbers and default to 0 if missing
-        processedData[key] = item[key]
-          ? parseFloat(item[key] as string) || 0
-          : 0;
-      });
-    });
-
-    return processedData;
-  });
+  // The API now returns data already in the format Recharts needs
+  const chartData = performanceData;
 
   const followerChartData = (() => {
     if (!followerData || !followerData.trending) return [];
