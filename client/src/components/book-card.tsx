@@ -209,7 +209,8 @@ export function BookCard({ book }: { book: Book }) {
                 </Link>
 
                 <div className="flex flex-wrap gap-1 mt-2 mb-2">
-                  {book.genres.slice(0, 3).map((genre) => (
+                  {/* Temporarily handling missing genres field during migration to taxonomy system */}
+                  {((book as any).genres || []).slice(0, 3).map((genre: string) => (
                     <Badge key={genre} variant="secondary" className="text-xs">
                       {genre}
                     </Badge>

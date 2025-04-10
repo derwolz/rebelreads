@@ -13,6 +13,7 @@ import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
 import { DragDropCover } from "@/components/drag-drop-cover";
 import { GenreTagInput } from "@/components/genre-tag-input";
+import { TaxonomySelector } from "@/components/taxonomy-selector";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,13 @@ interface FormData {
   originalTitle: string;
   referralLinks: ReferralLink[];
   internal_details: string; // Added new field
+  genreTaxonomies?: { // New taxonomy field
+    id?: number;
+    taxonomyId: number;
+    rank: number;
+    type: "genre" | "subgenre" | "theme" | "trope";
+    name: string;
+  }[];
 }
 
 const STEPS = [
@@ -714,17 +722,29 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 5:
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Genres</h2>
+            <h2 className="text-lg font-semibold">Genres, Themes & Tropes</h2>
             <p className="text-sm text-muted-foreground">
-              Select existing genres or create new ones to accurately categorize
-              your book.
+              Select and prioritize taxonomies to accurately categorize your book.
             </p>
-            <GenreTagInput
-              selectedGenres={formData.genres}
-              onGenresChange={(genres) =>
-                setFormData((prev) => ({ ...prev, genres }))
+            {/* New Taxonomy Selector */}
+            <TaxonomySelector
+              selectedTaxonomies={formData.genreTaxonomies || []}
+              onTaxonomiesChange={(taxonomies) => 
+                setFormData((prev) => ({ ...prev, genreTaxonomies: taxonomies }))
               }
             />
+            {/* Legacy Genre Selector - to be removed after migration */}
+            {!formData.genreTaxonomies?.length && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Legacy Genre Selection</h3>
+                <GenreTagInput
+                  selectedGenres={formData.genres || []}
+                  onGenresChange={(genres) =>
+                    setFormData((prev) => ({ ...prev, genres }))
+                  }
+                />
+              </div>
+            )}
           </div>
         );
 

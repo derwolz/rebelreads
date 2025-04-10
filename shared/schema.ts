@@ -123,7 +123,7 @@ export const books = pgTable("books", {
   coverUrl: text("cover_url").notNull(),
   authorImageUrl: text("author_image_url"),
   promoted: boolean("promoted").default(false),
-  genres: text("genres").array().notNull(), // Array of genre strings
+  // genres column removed - using book_genre_taxonomies relationship table instead
   pageCount: integer("page_count"),
   formats: text("formats").array().notNull(), // Array of formats (softback, hardback, etc)
   publishedDate: date("published_date"),
@@ -378,7 +378,6 @@ export const updateProfileSchema = createInsertSchema(users).pick({
 });
 
 export const insertBookSchema = createInsertSchema(books).extend({
-  genres: z.array(z.string()).min(1, "At least one genre is required"),
   formats: z.array(z.enum(FORMAT_OPTIONS)).min(1, "At least one format is required"),
   publishedDate: z.date().optional(),
   pageCount: z.number().min(1, "Page count must be at least 1").optional(),
@@ -389,6 +388,97 @@ export const insertBookSchema = createInsertSchema(books).extend({
   impressionCount: z.number().int().min(0).default(0),
   clickThroughCount: z.number().int().min(0).default(0),
   internal_details: z.string().optional(),
+  // New taxonomy fields
+  genreTaxonomies: z.array(z.object({
+    id: z.number().optional(),
+    taxonomyId: z.number(),
+    rank: z.number(),
+    type: z.enum(["genre", "subgenre", "theme", "trope"]),
+    name: z.string() // For display purposes
+  })).superRefine((val, ctx) => {
+    // Check the constraints for each taxonomy type
+    const genres = val.filter(item => item.type === "genre");
+    const subgenres = val.filter(item => item.type === "subgenre");
+    const themes = val.filter(item => item.type === "theme");
+    const tropes = val.filter(item => item.type === "trope");
+    
+    if (genres.length < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_small,
+        minimum: 1,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "genre"],
+        message: "At least 1 genre is required",
+      });
+    }
+    
+    if (genres.length > 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: 2,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "genre"],
+        message: "Maximum 2 genres allowed",
+      });
+    }
+    
+    if (subgenres.length > 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: 5,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "subgenre"],
+        message: "Maximum 5 subgenres allowed",
+      });
+    }
+    
+    if (themes.length < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_small,
+        minimum: 1,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "theme"],
+        message: "At least 1 theme is required",
+      });
+    }
+    
+    if (themes.length > 6) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: 6,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "theme"],
+        message: "Maximum 6 themes allowed",
+      });
+    }
+    
+    if (tropes.length < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_small,
+        minimum: 1,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "trope"],
+        message: "At least 1 trope is required",
+      });
+    }
+    
+    if (tropes.length > 7) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: 7,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies", "trope"],
+        message: "Maximum 7 tropes allowed",
+      });
+    }
+  }),
 });
 
 export const insertRatingSchema = createInsertSchema(ratings);
@@ -800,6 +890,16 @@ export const genreTaxonomies = pgTable("genre_taxonomies", {
   deletedAt: timestamp("deleted_at"),
 });
 
+// Book - Genre Taxonomy relationship table
+export const bookGenreTaxonomies = pgTable("book_genre_taxonomies", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull(),
+  taxonomyId: integer("taxonomy_id").notNull(),
+  rank: integer("rank").notNull(), // Position for ordering importance
+  importance: decimal("importance").notNull(), // Calculated value using 1 / (1 + ln(rank))
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Create insert schemas
 export const insertGenreTaxonomySchema = createInsertSchema(genreTaxonomies).omit({
   id: true,
@@ -808,6 +908,14 @@ export const insertGenreTaxonomySchema = createInsertSchema(genreTaxonomies).omi
   deletedAt: true,
 });
 
+export const insertBookGenreTaxonomySchema = createInsertSchema(bookGenreTaxonomies).omit({
+  id: true,
+  createdAt: true,
+  importance: true,
+});
+
 // Define types
 export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
 export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
+export type BookGenreTaxonomy = typeof bookGenreTaxonomies.$inferSelect;
+export type InsertBookGenreTaxonomy = typeof bookGenreTaxonomies.$inferInsert;
