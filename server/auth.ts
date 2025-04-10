@@ -182,7 +182,27 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(401).json({ error: "Not authenticated" });
+    }
     res.json(req.user);
+  });
+  
+  // Add middleware to ensure API routes always return JSON for unauthenticated requests
+  app.use((req, res, next) => {
+    // For API routes, ensure proper error response for unauthenticated requests
+    if (req.path.startsWith('/api/') && 
+        !req.isAuthenticated() && 
+        !req.path.startsWith('/api/auth/') && 
+        !req.path.startsWith('/api/beta/') &&
+        !req.path.match(/^\/api\/books(\/\d+)?(\/ratings|\/reading-status)?$/) && 
+        req.method !== 'OPTIONS') {
+      // Set content type explicitly to prevent HTML responses
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    next();
   });
 }

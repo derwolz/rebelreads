@@ -22,9 +22,16 @@ app.use((req, res, next) => {
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
+  // Set default content type header for API routes
+  if (path.startsWith('/api/')) {
+    res.setHeader('Content-Type', 'application/json');
+  }
+
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
+    // Ensure content type is set to application/json for all json responses
+    this.setHeader('Content-Type', 'application/json');
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 

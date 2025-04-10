@@ -38,12 +38,25 @@ router.get("/rating-preferences", async (req: Request, res: Response) => {
   try {
     const preferences = await dbStorage.getRatingPreferences(req.user.id);
     
+    // Set content type header explicitly
+    res.setHeader('Content-Type', 'application/json');
+    
     if (!preferences) {
       // Return default preferences if none exist yet
       return res.json({ 
-        criteriaOrder: ["enjoyment", "writing", "themes", "characters", "worldbuilding"] 
+        criteriaOrder: ["enjoyment", "writing", "themes", "characters", "worldbuilding"],
+        criteriaWeights: {
+          enjoyment: 0.35,
+          writing: 0.25,
+          themes: 0.20,
+          characters: 0.12,
+          worldbuilding: 0.08
+        }
       });
     }
+    
+    // Log what we're sending back
+    console.log("Returning preferences:", JSON.stringify(preferences));
     
     res.json(preferences);
   } catch (error) {
@@ -59,6 +72,9 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
     return res.status(401).json({ error: "Not authenticated" });
   }
   
+  // Set content type header explicitly
+  res.setHeader('Content-Type', 'application/json');
+  
   // Validate the request body
   const schema = z.object({
     criteriaOrder: z.array(z.string()).length(5),
@@ -73,7 +89,7 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
     
     const preferences = await dbStorage.saveRatingPreferences(req.user.id, criteriaOrder, criteriaWeights);
     
-    console.log("Rating preferences POST - Successfully saved:", preferences);
+    console.log("Rating preferences POST - Successfully saved:", JSON.stringify(preferences));
     res.json(preferences);
   } catch (error) {
     console.error("Error saving rating preferences:", error);
