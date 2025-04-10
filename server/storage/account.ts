@@ -395,6 +395,7 @@ export class AccountStorage implements IAccountStorage {
     }
     
     console.log(`Storage: Using criteria weights:`, criteriaWeights);
+    console.log(`Storage: JSON stringified weights:`, JSON.stringify(criteriaWeights));
     
     // Check if preferences already exist
     const existing = await this.getRatingPreferences(userId);
@@ -404,17 +405,39 @@ export class AccountStorage implements IAccountStorage {
       if (existing) {
         console.log("Storage: updating existing preferences");
         // Update existing
+        
+        // Explicitly create the data object to update
+        const dataToUpdate = { 
+          criteriaOrder,
+          criteriaWeights,
+          updatedAt: new Date()
+        };
+        console.log("Storage: data to update:", JSON.stringify(dataToUpdate));
+        
         const [updated] = await db
           .update(rating_preferences)
-          .set({ 
-            criteriaOrder,
-            criteriaWeights,
-            updatedAt: new Date()
-          })
+          .set(dataToUpdate)
           .where(eq(rating_preferences.userId, userId))
           .returning();
         
-        console.log("Storage: updated preferences:", updated);
+        console.log("Storage: updated preferences returned from DB:", updated ? JSON.stringify(updated) : "null");
+        
+        if (!updated) {
+          console.error("Storage: update didn't return any data");
+          
+          // Let's check if the row still exists
+          const checkResult = await db
+            .select()
+            .from(rating_preferences)
+            .where(eq(rating_preferences.userId, userId));
+          
+          console.log("Storage: check if row exists after update:", checkResult.length > 0 ? "Yes" : "No");
+          
+          if (checkResult.length > 0) {
+            console.log("Storage: row data after update:", JSON.stringify(checkResult[0]));
+            return checkResult[0];
+          }
+        }
         
         // Mark onboarding as complete if not already
         const user = await this.getUser(userId);
@@ -429,16 +452,38 @@ export class AccountStorage implements IAccountStorage {
       } else {
         console.log("Storage: creating new preferences");
         // Create new
+        
+        // Explicitly create the data object to insert
+        const dataToInsert = {
+          userId,
+          criteriaOrder,
+          criteriaWeights
+        };
+        console.log("Storage: data to insert:", JSON.stringify(dataToInsert));
+        
         const [created] = await db
           .insert(rating_preferences)
-          .values({
-            userId,
-            criteriaOrder,
-            criteriaWeights
-          })
+          .values(dataToInsert)
           .returning();
         
-        console.log("Storage: created preferences:", created);
+        console.log("Storage: created preferences returned from DB:", created ? JSON.stringify(created) : "null");
+        
+        if (!created) {
+          console.error("Storage: insert didn't return any data");
+          
+          // Let's check if the row was actually created
+          const checkResult = await db
+            .select()
+            .from(rating_preferences)
+            .where(eq(rating_preferences.userId, userId));
+          
+          console.log("Storage: check if row exists after insert:", checkResult.length > 0 ? "Yes" : "No");
+          
+          if (checkResult.length > 0) {
+            console.log("Storage: row data after insert:", JSON.stringify(checkResult[0]));
+            return checkResult[0];
+          }
+        }
         
         // Mark onboarding as complete
         await db
@@ -450,6 +495,52 @@ export class AccountStorage implements IAccountStorage {
       }
     } catch (error) {
       console.error("Storage: Error saving preferences:", error);
+      console.error("Storage: Error details:", error instanceof Error ? error.message : String(error));
+      console.error("Storage: Error stack:", error instanceof Error ? error.stack : "No stack available");
+      
+      // If there's an error, let's try a direct query as a fallback
+      try {
+        console.log("Storage: trying fallback direct SQL query");
+        
+        // Convert criteriaOrder and criteriaWeights to JSON
+        const criteriaOrderJson = JSON.stringify(criteriaOrder);
+        const criteriaWeightsJson = JSON.stringify(criteriaWeights || {});
+        
+        if (existing) {
+          // Update using SQL
+          const result = await db.execute(sql`
+            UPDATE rating_preferences 
+            SET 
+              criteria_order = ${criteriaOrderJson}::jsonb,
+              criteria_weights = ${criteriaWeightsJson}::jsonb,
+              updated_at = NOW()
+            WHERE user_id = ${userId}
+            RETURNING *
+          `);
+          
+          console.log("Storage: SQL update result:", result.rows.length > 0 ? "Success" : "No rows updated");
+          
+          if (result.rows.length > 0) {
+            return result.rows[0] as RatingPreferences;
+          }
+        } else {
+          // Insert using SQL
+          const result = await db.execute(sql`
+            INSERT INTO rating_preferences (user_id, criteria_order, criteria_weights, created_at, updated_at)
+            VALUES (${userId}, ${criteriaOrderJson}::jsonb, ${criteriaWeightsJson}::jsonb, NOW(), NOW())
+            RETURNING *
+          `);
+          
+          console.log("Storage: SQL insert result:", result.rows.length > 0 ? "Success" : "No rows inserted");
+          
+          if (result.rows.length > 0) {
+            return result.rows[0] as RatingPreferences;
+          }
+        }
+      } catch (sqlError) {
+        console.error("Storage: Fallback SQL query failed:", sqlError);
+      }
+      
       throw error;
     }
   }
