@@ -229,7 +229,7 @@ export default function AuthorPage() {
                 {filteredBooks.map((book) => (
                   <CarouselItem
                     key={book.id}
-                    className="md:basis-1/2 lg:basis-1/3 pb-32"
+                    className="md:basis-1/2 lg:basis-1/3 pl-0 pr-1 pb-40"
                   >
                     <BookCard book={book} />
                   </CarouselItem>

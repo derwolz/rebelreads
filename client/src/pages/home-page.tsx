@@ -142,7 +142,7 @@ export default function HomePage() {
                 : followedAuthorsBooks.slice(0, 10).map((book) => (
                     <CarouselItem
                       key={book.id}
-                      className="md:basis-1/3 lg:basis-1/4 pb-32"
+                      className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
                     >
                       <BookCard book={book} />
                     </CarouselItem>
@@ -174,7 +174,7 @@ export default function HomePage() {
                   : filteredBooks?.map((book) => (
                       <CarouselItem
                         key={book.id}
-                        className="md:basis-1/3 lg:basis-1/4 pb-32"
+                        className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
                       >
                         <BookCard book={book} />
                       </CarouselItem>

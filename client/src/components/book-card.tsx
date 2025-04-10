@@ -147,21 +147,23 @@ export function BookCard({ book }: { book: Book }) {
     }
   }, [book.promoted]);
   return (
-    <div className="relative group" style={{ height: "32rem" }}>
+    <div className="relative group" style={{ height: "32rem", width: "16rem", maxWidth: "100%" }}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Card
               id={`book-card-${book.id}`}
               className={`
-                overflow-visible cursor-pointer
+                overflow-visible cursor-pointer w-full
                 transition-all duration-300 ease-in-out
                 ${showDetailed ? "absolute inset-0 scale-105 shadow-xl z-50" : "relative z-10"}
                 ${book.promoted ? "animate-pulse-shadow border-primary/20" : ""}
               `}
               style={{ 
                 height: showDetailed ? "auto" : "auto",
-                minHeight: "24rem"
+                minHeight: "32rem",
+                aspectRatio: "1/2",
+                width: "100%"
               }}
               onClick={handleCardClick}
               onMouseEnter={() => setShowDetailed(true)}
@@ -183,7 +185,8 @@ export function BookCard({ book }: { book: Book }) {
               <img
                 src={book.coverUrl}
                 alt={book.title}
-                className="w-full h-64 object-cover"
+                className="w-full h-72 object-cover"
+                style={{ aspectRatio: "1/1" }}
               />
               <CardContent className="p-4 relative">
                 <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%] overflow-hidden">

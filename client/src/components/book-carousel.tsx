@@ -39,7 +39,7 @@ export function BookCarousel({ title, books, isLoading }: BookCarouselProps) {
             ))
           ) : (
             books?.slice(0, 10).map((book) => (
-              <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4 pb-24">
+              <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4 pb-1">
                 <BookCard book={book} />
               </CarouselItem>
             ))
