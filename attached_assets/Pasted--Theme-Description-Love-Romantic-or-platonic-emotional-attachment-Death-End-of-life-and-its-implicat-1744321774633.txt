@@ -1,0 +1,102 @@
+
+Theme,Description
+Love,Romantic or platonic emotional attachment
+Death,End of life and its implications
+Redemption,Moral or spiritual recovery from sin or error
+Good vs. Evil,Conflict between moral opposites
+Coming of Age,Transition from youth to adulthood
+Identity,Discovery or search for self
+Alienation,Disconnection from society or others
+Power,Control over others or oneself
+Justice,Fairness and moral rightness
+Revenge,Retaliation for perceived wrongs
+War,Armed conflict and its effects
+Peace,Harmony and absence of conflict
+Freedom,Liberation from constraints
+Oppression,Prolonged cruel or unjust treatment
+Sacrifice,Giving up something valued for something else
+Survival,Struggle to remain alive
+Family,Relationships among relatives
+Friendship,Bond between non-related individuals
+Betrayal,Breach of trust
+Honor,Adherence to moral principles
+Corruption,Moral deterioration
+Ambition,Strong desire for achievement
+Greed,Excessive desire for wealth or power
+Faith,Strong belief without proof
+Doubt,Uncertainty or lack of conviction
+Hope,Expectation and desire for something good
+Despair,Complete loss of hope
+Time,Passage of moments and its effects
+Memory,Recollection of past experiences
+Fate,Predetermined course of events
+Free Will,Ability to make choices independently
+Prejudice,Preconceived opinion not based on reason
+Tolerance,Willingness to accept differences
+Guilt,Feeling of responsibility for wrongdoing
+Forgiveness,Cessation of resentment
+Nature,Natural world and humanity's relationship to it
+Civilization,Organized human society
+Technology,Scientific advances and their impact
+Tradition,Customs passed down through generations
+Change,Transformation or alteration
+Progress,Forward movement or development
+Regression,Return to earlier state
+Knowledge,Information and understanding
+Ignorance,Lack of knowledge or awareness
+Wisdom,Experience-based insight
+Folly,Foolishness or lack of good sense
+Beauty,Pleasing aesthetic qualities
+Ugliness,Displeasing aesthetic qualities
+Truth,Conformity with fact or reality
+Deception,Act of misleading or fraud
+Appearance vs. Reality,Contrast between what seems and what is
+Isolation,State of being alone or separated
+Community,Group sharing common characteristics
+Hubris,Excessive pride leading to downfall
+Mortality,Subject to death
+Immortality,Endless life or lasting fame
+Materialism,Focus on physical possessions
+Spirituality,Concern with soul or spirit
+Life Journey,Progression through existence
+Cyclical Nature of Life,Recurring patterns in existence
+Order vs. Chaos,Organized structure contrasted with disorder
+Duty,Moral obligation
+Responsibility,Being accountable for something
+Loss,Deprivation or bereavement
+Gain,Acquisition or profit
+Loyalty,Faithfulness to commitments or obligations
+Rebellion,Resistance to authority
+Conformity,Compliance with standards or rules
+Individualism,Independence from social norms
+Collectivism,Prioritizing group over individual
+Justice vs. Mercy,Strict enforcement contrasted with compassion
+Growth,Development or increase
+Decline,Deterioration or decrease
+Innocence,Freedom from guilt or sin
+Experience,Practical contact with events
+Wealth,Abundance of valuable possessions
+Poverty,Scarcity of resources
+Class Struggle,Conflict between social classes
+Gender Roles,Societal expectations based on sex
+Cultural Identity,Sense of belonging to a cultural group
+Colonialism,Control by one power over dependent area
+Post-colonialism,After-effects of colonialism
+Racism,Prejudice based on race
+Sexism,Prejudice based on sex
+Environmentalism,Concern for natural environment
+Industrialization,Development of industries
+Urbanization,Process of becoming more urban
+Rural Life,Existence in countryside
+Childhood,Early period of life
+Adulthood,Mature period of life
+Old Age,Later period of life
+Dreams,Aspirations or sleep experiences
+Reality,Actual existence
+Absurdity,Ridiculously unreasonable quality
+Meaning,Significance or importance
+Meaninglessness,Lack of purpose or significance
+Dystopia,Unpleasant imagined society
+Utopia,Idealized perfect society
+Human Condition,Universal aspects of existence
+Existentialism,Emphasis on individual existence
