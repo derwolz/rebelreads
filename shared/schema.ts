@@ -787,3 +787,27 @@ export const insertBetaKeySchema = createInsertSchema(betaKeys).omit({
 export type BetaKey = typeof betaKeys.$inferSelect;
 export type InsertBetaKey = typeof betaKeys.$inferInsert;
 export type BetaKeyUsage = typeof betaKeyUsage.$inferSelect;
+
+// Genre taxonomy tables
+export const genreTaxonomies = pgTable("genre_taxonomies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // Major genre, Subgenre, Trope, or Theme
+  description: text("description"),
+  type: text("type").notNull(), // genre, subgenre, trope, theme
+  parentId: integer("parent_id"), // For subgenres, references a major genre
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  deletedAt: timestamp("deleted_at"),
+});
+
+// Create insert schemas
+export const insertGenreTaxonomySchema = createInsertSchema(genreTaxonomies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+// Define types
+export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
+export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
