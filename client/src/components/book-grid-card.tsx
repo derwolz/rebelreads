@@ -227,6 +227,8 @@ export function BookGridCard({ book }: { book: Book }) {
                   top: "100%",
                   borderTop: "1px solid var(--border)",
                   zIndex: 100,
+                  width: "100%",
+                  maxWidth: "100%"
                 }}
               >
                 <div className="p-3 space-y-1">
