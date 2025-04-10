@@ -182,23 +182,48 @@ export function BookGridCard({ book }: { book: Book }) {
                 <div className="p-3 space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="text-xs">Enjoyment (30%)</span>
-                    <StarRating rating={Math.round(averageRatings?.enjoyment || 0)} readOnly size="sm" />
+                    <div className="flex items-center gap-1">
+                      <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        ({averageRatings?.enjoyment.toFixed(1) || "0.0"})
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">Writing (30%)</span>
-                    <StarRating rating={Math.round(averageRatings?.writing || 0)} readOnly size="sm" />
+                    <div className="flex items-center gap-1">
+                      <StarRating rating={averageRatings?.writing || 0} readOnly size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        ({averageRatings?.writing.toFixed(1) || "0.0"})
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">Themes (20%)</span>
-                    <StarRating rating={Math.round(averageRatings?.themes || 0)} readOnly size="sm" />
+                    <div className="flex items-center gap-1">
+                      <StarRating rating={averageRatings?.themes || 0} readOnly size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        ({averageRatings?.themes.toFixed(1) || "0.0"})
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">Characters (10%)</span>
-                    <StarRating rating={Math.round(averageRatings?.characters || 0)} readOnly size="sm" />
+                    <div className="flex items-center gap-1">
+                      <StarRating rating={averageRatings?.characters || 0} readOnly size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        ({averageRatings?.characters.toFixed(1) || "0.0"})
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">World Building (10%)</span>
-                    <StarRating rating={Math.round(averageRatings?.worldbuilding || 0)} readOnly size="sm" />
+                    <div className="flex items-center gap-1">
+                      <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        ({averageRatings?.worldbuilding.toFixed(1) || "0.0"})
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
