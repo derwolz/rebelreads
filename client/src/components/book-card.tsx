@@ -147,7 +147,7 @@ export function BookCard({ book }: { book: Book }) {
     }
   }, [book.promoted]);
   return (
-    <div className="relative group min-h-256" style={{ marginBottom: "10rem" }}>
+    <div className="relative group" style={{ height: "24rem" }}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -155,10 +155,9 @@ export function BookCard({ book }: { book: Book }) {
               id={`book-card-${book.id}`}
               className={`
                 overflow-visible cursor-pointer
-                group-hover:scale-105 group-hover:shadow-xl
-                ${showDetailed ? "z-50" : "z-10"}
+                transition-all duration-300 ease-in-out
+                ${showDetailed ? "absolute inset-0 scale-105 shadow-xl z-50" : "relative z-10"}
                 ${book.promoted ? "animate-pulse-shadow border-primary/20" : ""}
-                relative
               `}
               onClick={handleCardClick}
               onMouseEnter={() => setShowDetailed(true)}

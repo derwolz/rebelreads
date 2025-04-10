@@ -28,7 +28,9 @@ export function BookGrid({ title, books, isLoading }: BookGridProps) {
               <BookCardSkeleton key={i} />
             ))
           : books?.map((book) => (
-              <BookGridCard key={book.id} book={book} />
+              <div key={book.id} className="min-h-48 pb-20 relative">
+                <BookGridCard book={book} />
+              </div>
             ))}
       </div>
     </section>

@@ -149,7 +149,7 @@ export default function DashboardPage(): React.JSX.Element {
             <div className="relative">
               <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
                 {filteredBooks?.map((book) => (
-                  <div key={book.id} className="flex-none w-[250px] snap-start">
+                  <div key={book.id} className="flex-none w-[250px] snap-start pb-24 relative">
                     <BookCard book={book} />
                   </div>
                 ))}
@@ -263,7 +263,9 @@ export default function DashboardPage(): React.JSX.Element {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recommendations.map((book) => (
-                  <BookCard key={book.id} book={book} />
+                  <div key={book.id} className="relative pb-24">
+                    <BookCard book={book} />
+                  </div>
                 ))}
               </div>
             </CardContent>
