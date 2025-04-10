@@ -651,21 +651,30 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     // Apply daily follow counts from the data
     followerMetrics.follows.forEach(follow => {
       // Ensure count is a valid number
-      const followCount = typeof follow.count === 'number' && isFinite(follow.count) ? follow.count : 0;
-      dateMap.set(follow.date, { 
-        follows: followCount, 
-        unfollows: dateMap.has(follow.date) ? (dateMap.get(follow.date)?.unfollows || 0) : 0
-      });
+      const followCount = typeof follow.count === 'number' && isFinite(follow.count) ? Number(follow.count) : 0;
+      
+      if (dateMap.has(follow.date)) {
+        const existing = dateMap.get(follow.date);
+        if (existing) {
+          existing.follows = followCount;
+        }
+      } else {
+        dateMap.set(follow.date, { 
+          follows: followCount, 
+          unfollows: 0
+        });
+      }
     });
     
     // Apply daily unfollow counts from the data
     followerMetrics.unfollows.forEach(unfollow => {
       // Ensure count is a valid number
-      const unfollowCount = typeof unfollow.count === 'number' && isFinite(unfollow.count) ? unfollow.count : 0;
+      const unfollowCount = typeof unfollow.count === 'number' && isFinite(unfollow.count) ? Number(unfollow.count) : 0;
       if (dateMap.has(unfollow.date)) {
         const existing = dateMap.get(unfollow.date);
         if (existing) {
-          existing.unfollows = unfollowCount;
+          // Add to existing unfollows instead of replacing
+          existing.unfollows += unfollowCount;
         }
       } else {
         dateMap.set(unfollow.date, { follows: 0, unfollows: unfollowCount });
