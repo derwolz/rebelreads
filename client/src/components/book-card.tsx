@@ -55,7 +55,7 @@ export function BookCard({ book }: { book: Book }) {
   
   // Fetch user's rating preferences
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
-    queryKey: ['/api/account/rating-preferences'],
+    queryKey: ['/api/rating-preferences'],
   });
 
   // Set up intersection observer to track when the card becomes visible
@@ -239,7 +239,7 @@ export function BookCard({ book }: { book: Book }) {
                   <div className="p-4 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences)})
+                        Enjoyment 
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating
@@ -247,14 +247,12 @@ export function BookCard({ book }: { book: Book }) {
                           readOnly
                           size="sm"
                         />
-                        <span className="text-xs text-muted-foreground">
-                          ({averageRatings?.enjoyment.toFixed(2) || "0.00"})
-                        </span>
+                  
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        Writing ({getWeightPercentage("writing", ratingPreferences)})
+                        Writing 
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating
@@ -262,14 +260,11 @@ export function BookCard({ book }: { book: Book }) {
                           readOnly
                           size="sm"
                         />
-                        <span className="text-xs text-muted-foreground">
-                          ({averageRatings?.writing.toFixed(2) || "0.00"})
-                        </span>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        Themes ({getWeightPercentage("themes", ratingPreferences)})
+                        Themes 
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating
@@ -277,14 +272,11 @@ export function BookCard({ book }: { book: Book }) {
                           readOnly
                           size="sm"
                         />
-                        <span className="text-xs text-muted-foreground">
-                          ({averageRatings?.themes.toFixed(2) || "0.00"})
-                        </span>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        Characters ({getWeightPercentage("characters", ratingPreferences)})
+                        Characters 
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating
@@ -292,14 +284,11 @@ export function BookCard({ book }: { book: Book }) {
                           readOnly
                           size="sm"
                         />
-                        <span className="text-xs text-muted-foreground">
-                          ({averageRatings?.characters.toFixed(2) || "0.00"})
-                        </span>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
+                        World Building 
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating
@@ -307,9 +296,6 @@ export function BookCard({ book }: { book: Book }) {
                           readOnly
                           size="sm"
                         />
-                        <span className="text-xs text-muted-foreground">
-                          ({averageRatings?.worldbuilding.toFixed(2) || "0.00"})
-                        </span>
                       </div>
                     </div>
                   </div>

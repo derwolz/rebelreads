@@ -50,7 +50,7 @@ function getWeightPercentage(criteriaName: string, prefs?: RatingPreferences): s
   }
   
   // Fall back to default weights if preference structure is unknown
-  return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
+  return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}% [[default]] `;
 }
 
 export default function BookDetails() {
@@ -70,7 +70,7 @@ export default function BookDetails() {
   
   // Fetch user's rating preferences if logged in
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
-    queryKey: ['/api/account/rating-preferences'],
+    queryKey: ['/api/rating-preferences'],
     enabled: !!user,
   });
 
