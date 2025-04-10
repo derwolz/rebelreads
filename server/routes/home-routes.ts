@@ -129,44 +129,57 @@ router.post("/books", upload.single("cover"), async (req, res) => {
     return res.sendStatus(401);
   }
 
-  if (!req.file) {
-    return res.status(400).json({ message: "Cover image is required" });
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Cover image is required" });
+    }
+
+    // Log the request body for debugging
+    console.log("Book creation request:", req.body);
+
+    // Parse form data fields
+    const coverUrl = `/uploads/covers/${req.file.filename}`;
+    const formats = req.body.formats ? JSON.parse(req.body.formats) : [];
+    const characters = req.body.characters ? JSON.parse(req.body.characters) : [];
+    const awards = req.body.awards ? JSON.parse(req.body.awards) : [];
+    const publishedDate = req.body.publishedDate ? new Date(req.body.publishedDate) : null;
+    
+    // Extract and handle taxonomy data separately
+    const genreTaxonomies = req.body.genreTaxonomies ? JSON.parse(req.body.genreTaxonomies) : [];
+
+    // Create the book first (without taxonomies)
+    const book = await dbStorage.createBook({
+      title: req.body.title,
+      description: req.body.description,
+      authorId: req.user!.id,
+      coverUrl,
+      author: req.user!.authorName || req.user!.username,
+      formats: formats,
+      promoted: false,
+      authorImageUrl: null,
+      pageCount: req.body.pageCount ? parseInt(req.body.pageCount) : null,
+      publishedDate,
+      awards,
+      originalTitle: req.body.originalTitle || null,
+      series: req.body.series || null,
+      setting: req.body.setting || null,
+      characters,
+      isbn: req.body.isbn || null,
+      asin: req.body.asin || null,
+      language: req.body.language || "English",
+    });
+
+    // Now handle the taxonomies separately if present
+    if (genreTaxonomies && genreTaxonomies.length > 0) {
+      console.log("Adding taxonomies for new book:", genreTaxonomies);
+      await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
+    }
+
+    res.json(book);
+  } catch (error) {
+    console.error("Error creating book:", error);
+    res.status(500).json({ error: "Failed to create book" });
   }
-
-  const coverUrl = `/uploads/covers/${req.file.filename}`;
-  const genres = JSON.parse(req.body.genres);
-  const formats = JSON.parse(req.body.formats);
-  const characters = req.body.characters
-    ? JSON.parse(req.body.characters)
-    : [];
-  const awards = req.body.awards ? JSON.parse(req.body.awards) : [];
-  const publishedDate = req.body.publishedDate
-    ? new Date(req.body.publishedDate)
-    : null;
-
-  const book = await dbStorage.createBook({
-    title: req.body.title,
-    description: req.body.description,
-    authorId: req.user!.id,
-    coverUrl,
-    author: req.user!.authorName || req.user!.username,
-    genres: genres,
-    formats: formats,
-    promoted: false,
-    authorImageUrl: null,
-    pageCount: req.body.pageCount ? parseInt(req.body.pageCount) : null,
-    publishedDate,
-    awards,
-    originalTitle: req.body.originalTitle || null,
-    series: req.body.series || null,
-    setting: req.body.setting || null,
-    characters,
-    isbn: req.body.isbn || null,
-    asin: req.body.asin || null,
-    language: req.body.language || "English",
-  });
-
-  res.json(book);
 });
 
 router.patch("/books/:id", async (req, res) => {
