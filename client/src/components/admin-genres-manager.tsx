@@ -420,21 +420,43 @@ export const AdminGenresManager: React.FC = () => {
       if (activeTab === "subgenres" && genres) {
         const genreMap = new Map(genres.map(g => [g.name.toLowerCase(), g.id]));
         
-        for (const item of items as any[]) {
-          if (item.parentGenreName) {
-            const parentId = genreMap.get(item.parentGenreName.toLowerCase());
-            if (parentId) {
-              item.parentId = parentId;
-            } else {
-              // Create a new parent genre if it doesn't exist
-              toast({
-                title: "Warning",
-                description: `Parent genre '${item.parentGenreName}' not found. Subgenre will be created without a parent.`,
-              });
-            }
-            // Safe to use any as we're dealing with dynamic data
+        // If a parent genre is selected in the dropdown, use it for all subgenres
+        if (selectedParentGenreId) {
+          const selectedParentId = parseInt(selectedParentGenreId);
+          const selectedParentGenre = genres.find(g => g.id === selectedParentId);
+          
+          // Set the same parent genre for all subgenres
+          for (const item of items as any[]) {
+            item.parentId = selectedParentId;
+            
+            // Remove any parent genre name if it exists (from CSV data)
             if ('parentGenreName' in item) {
               delete (item as any).parentGenreName;
+            }
+          }
+          
+          toast({
+            title: "Parent Genre Set",
+            description: `All imported subgenres will use '${selectedParentGenre?.name}' as their parent genre.`,
+          });
+        } else {
+          // No parent genre is selected, use the ones from CSV
+          for (const item of items as any[]) {
+            if (item.parentGenreName) {
+              const parentId = genreMap.get(item.parentGenreName.toLowerCase());
+              if (parentId) {
+                item.parentId = parentId;
+              } else {
+                // Create a new parent genre if it doesn't exist
+                toast({
+                  title: "Warning",
+                  description: `Parent genre '${item.parentGenreName}' not found. Subgenre will be created without a parent.`,
+                });
+              }
+              // Safe to use any as we're dealing with dynamic data
+              if ('parentGenreName' in item) {
+                delete (item as any).parentGenreName;
+              }
             }
           }
         }
@@ -487,7 +509,16 @@ export const AdminGenresManager: React.FC = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Genre Taxonomy Management</h2>
         <div className="space-x-2">
-          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+          <Dialog 
+            open={isImportDialogOpen} 
+            onOpenChange={(open) => {
+              setIsImportDialogOpen(open);
+              if (!open) {
+                // Reset form state when dialog closes
+                setSelectedParentGenreId("");
+                setBulkImportText("");
+              }
+            }}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
