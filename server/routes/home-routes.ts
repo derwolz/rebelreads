@@ -177,8 +177,23 @@ router.patch("/books/:id", async (req, res) => {
     return res.sendStatus(403);
   }
 
-  const updatedBook = await dbStorage.updateBook(book.id, req.body);
-  res.json(updatedBook);
+  try {
+    // Extract genreTaxonomies from request body to handle separately
+    const { genreTaxonomies, ...bookData } = req.body;
+    
+    // Update main book data first
+    const updatedBook = await dbStorage.updateBook(book.id, bookData);
+    
+    // Then handle taxonomies if present
+    if (genreTaxonomies) {
+      await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
+    }
+    
+    res.json(updatedBook);
+  } catch (error) {
+    console.error("Error updating book:", error);
+    res.status(500).json({ error: "Failed to update book" });
+  }
 });
 
 router.get("/books/:id/reading-status", async (req, res) => {

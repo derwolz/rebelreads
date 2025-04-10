@@ -2,7 +2,8 @@ import {
   Book,
   books,
   bookGenreTaxonomies,
-  genreTaxonomies
+  genreTaxonomies,
+  InsertBookGenreTaxonomy
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike, sql } from "drizzle-orm";
@@ -14,6 +15,7 @@ export interface IBookStorage {
   createBook(book: Omit<Book, "id">): Promise<Book>;
   promoteBook(id: number): Promise<Book>;
   updateBook(id: number, data: Partial<Book>): Promise<Book>;
+  updateBookTaxonomies(bookId: number, taxonomyData: any[]): Promise<void>;
   deleteBook(id: number, authorId: number): Promise<void>;
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   selectBooks(query: string): Promise<Book[]>;
@@ -90,12 +92,41 @@ export class BookStorage implements IBookStorage {
   }
 
   async updateBook(id: number, data: Partial<Book>): Promise<Book> {
+    // Extract genreTaxonomies from data if present, as we'll handle them separately
+    const { genreTaxonomies, ...bookData } = data as any;
+    
     const [book] = await db
       .update(books)
-      .set(data)
+      .set(bookData)
       .where(eq(books.id, id))
       .returning();
+    
     return book;
+  }
+  
+  async updateBookTaxonomies(bookId: number, taxonomyData: any[]): Promise<void> {
+    // First, delete any existing taxonomies for this book
+    await db.delete(bookGenreTaxonomies)
+      .where(eq(bookGenreTaxonomies.bookId, bookId));
+    
+    if (taxonomyData && taxonomyData.length > 0) {
+      // Then insert the new ones with their importance calculated
+      const newTaxonomies = taxonomyData.map((item, index) => {
+        // Calculate importance value using 1 / (1 + ln(rank))
+        const rank = item.rank || index + 1;
+        const importance = 1 / (1 + Math.log(rank));
+        
+        return {
+          bookId: bookId,
+          taxonomyId: item.taxonomyId,
+          rank: rank,
+          importance: importance.toString() // Convert to string for decimal field
+        } as InsertBookGenreTaxonomy;
+      });
+      
+      await db.insert(bookGenreTaxonomies)
+        .values(newTaxonomies);
+    }
   }
 
   async deleteBook(id: number, authorId: number): Promise<void> {
