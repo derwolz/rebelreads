@@ -356,12 +356,11 @@ export default function BookDetails() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
                         <StarRating
-                          rating={Math.round(averageRatings.overall)}
+                          rating={averageRatings.overall}
                           readOnly
                         />
                         <span className="text-sm text-muted-foreground">
-                          ({ratings?.length}{" "}
-                          {ratings?.length === 1 ? "review" : "reviews"})
+                          ({averageRatings.overall.toFixed(2)})
                         </span>
                       </div>
                       <div className="grid gap-2">
@@ -373,43 +372,68 @@ export default function BookDetails() {
                         ) : null}
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Enjoyment</span>
-                          <StarRating
-                            rating={Math.round(averageRatings.enjoyment)}
-                            readOnly
-                            size="sm"
-                          />
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={averageRatings.enjoyment}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              ({averageRatings.enjoyment.toFixed(1)})
+                            </span>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Writing Style</span>
-                          <StarRating
-                            rating={Math.round(averageRatings.writing)}
-                            readOnly
-                            size="sm"
-                          />
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={averageRatings.writing}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              ({averageRatings.writing.toFixed(1)})
+                            </span>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Themes</span>
-                          <StarRating
-                            rating={Math.round(averageRatings.themes)}
-                            readOnly
-                            size="sm"
-                          />
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={averageRatings.themes}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              ({averageRatings.themes.toFixed(1)})
+                            </span>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">Characters</span>
-                          <StarRating
-                            rating={Math.round(averageRatings.characters)}
-                            readOnly
-                            size="sm"
-                          />
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={averageRatings.characters}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              ({averageRatings.characters.toFixed(1)})
+                            </span>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">World Building</span>
-                          <StarRating
-                            rating={Math.round(averageRatings.worldbuilding)}
-                            readOnly
-                            size="sm"
-                          />
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={averageRatings.worldbuilding}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              ({averageRatings.worldbuilding.toFixed(1)})
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>

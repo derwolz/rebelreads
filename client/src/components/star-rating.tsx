@@ -1,5 +1,6 @@
-import { Star } from "lucide-react";
+import { Star, StarHalf } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface StarRatingProps {
   rating?: number;
@@ -23,20 +24,82 @@ export function StarRating({
     lg: "w-6 h-6",
   }[size];
 
-  return (
-    <div className={cn("flex gap-1")}>
-      {[...Array(maxRating)].map((_, star) => (
+  // Create an array to hold the stars we need to render
+  const stars = [];
+  
+  // Calculate whole and fractional parts
+  const fullStars = Math.floor(rating);
+  const fractionalPart = rating - fullStars;
+  
+  // Render full, half, and empty stars
+  for (let i = 0; i < maxRating; i++) {
+    if (i < fullStars) {
+      // Full star
+      stars.push(
         <Star
-          key={star}
+          key={i}
           className={cn(
             sizeClasses,
-            "cursor-pointer transition-colors",
-            star < rating ? "fill-primary text-primary" : "text-muted",
+            "cursor-pointer transition-colors fill-primary text-primary",
             readOnly && "cursor-default"
           )}
-          onClick={() => !readOnly && onChange?.(star + 1)}
+          onClick={() => !readOnly && onChange?.(i + 1)}
         />
-      ))}
+      );
+    } else if (i === fullStars && fractionalPart >= 0.25 && fractionalPart < 0.75) {
+      // Half star
+      stars.push(
+        <div key={i} className="relative">
+          <Star
+            className={cn(
+              sizeClasses,
+              "cursor-pointer transition-colors text-muted",
+              readOnly && "cursor-default"
+            )}
+          />
+          <div className="absolute top-0 left-0 overflow-hidden" style={{ width: '50%' }}>
+            <Star
+              className={cn(
+                sizeClasses,
+                "cursor-pointer transition-colors fill-primary text-primary",
+                readOnly && "cursor-default"
+              )}
+            />
+          </div>
+        </div>
+      );
+    } else if (i === fullStars && fractionalPart >= 0.75) {
+      // Almost full star but not quite
+      stars.push(
+        <Star
+          key={i}
+          className={cn(
+            sizeClasses,
+            "cursor-pointer transition-colors fill-primary text-primary",
+            readOnly && "cursor-default"
+          )}
+          onClick={() => !readOnly && onChange?.(i + 1)}
+        />
+      );
+    } else {
+      // Empty star
+      stars.push(
+        <Star
+          key={i}
+          className={cn(
+            sizeClasses,
+            "cursor-pointer transition-colors text-muted",
+            readOnly && "cursor-default"
+          )}
+          onClick={() => !readOnly && onChange?.(i + 1)}
+        />
+      );
+    }
+  }
+
+  return (
+    <div className={cn("flex gap-1")}>
+      {stars}
     </div>
   );
 }
