@@ -3,6 +3,13 @@ import { db } from "../db";
 import { eq } from "drizzle-orm";
 import { storyPreferences, genreTaxonomies } from "@shared/schema";
 
+// Extend session types
+declare module "express-session" {
+  interface SessionData {
+    userId?: number;
+  }
+}
+
 const router = Router();
 
 // Get story preferences for the current user
@@ -137,7 +144,7 @@ router.get("/genres/:id", async (req: Request, res: Response) => {
     
     // Query the database for the specific genre
     const genre = await db.query.genreTaxonomies.findFirst({
-      where: eq(storyPreferences.id, genreId)
+      where: eq(genreTaxonomies.id, genreId)
     });
     
     if (!genre) {
