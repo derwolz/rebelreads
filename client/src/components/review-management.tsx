@@ -221,17 +221,39 @@ export function ReviewManagement() {
           <Card key={review.id} className={review.featured ? "border-primary" : undefined}>
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={review.user?.profileImageUrl} alt={review.user?.username} />
-                    <AvatarFallback>{review.user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
-                      <span>•</span>
-                      <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
+                <div className="flex items-start gap-3">
+                  {review.book && (
+                    <div className="flex-shrink-0 mr-1">
+                      <div className="w-12 h-16 rounded overflow-hidden shadow-sm">
+                        {review.book.coverImageUrl ? (
+                          <img
+                            src={review.book.coverImageUrl}
+                            alt={`Cover of ${review.book.title}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted-foreground/10 flex items-center justify-center">
+                            <span className="text-xs text-muted-foreground">No cover</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs mt-1 w-12 truncate" title={review.book.title}>
+                        {review.book.title}
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={review.user?.profileImageUrl} alt={review.user?.username} />
+                      <AvatarFallback>{review.user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
+                        <span>•</span>
+                        <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

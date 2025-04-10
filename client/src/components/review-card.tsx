@@ -13,6 +13,11 @@ interface ReviewCardProps {
       displayName?: string;
       profileImageUrl?: string;
     };
+    book?: {
+      id: number;
+      title: string;
+      coverImageUrl?: string;
+    };
   };
 }
 
@@ -28,6 +33,26 @@ export function ReviewCard({ review }: ReviewCardProps) {
   return (
     <div className="p-4 bg-muted rounded-lg space-y-2 cursor-pointer w-full" onClick={() => setIsOpen(!isOpen)}>
       <div className="flex items-start justify-between">
+        {review.book && (
+          <div className="flex-shrink-0 mr-3">
+            <div className="w-12 h-16 rounded overflow-hidden shadow-sm">
+              {review.book.coverImageUrl ? (
+                <img
+                  src={review.book.coverImageUrl}
+                  alt={`Cover of ${review.book.title}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-muted-foreground/10 flex items-center justify-center">
+                  <span className="text-xs text-muted-foreground">No cover</span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs mt-1 w-12 truncate" title={review.book.title}>
+              {review.book.title}
+            </p>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={review.user?.profileImageUrl} alt={userDisplayName} />
