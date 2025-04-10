@@ -155,8 +155,21 @@ export function StoryPreferencesSettings({
     })
   );
   
+  // Define type for the response from the API
+  interface StoryPreferencesResponse {
+    id?: number;
+    userId?: number;
+    genres?: Array<{id: number, rank: number}>;
+    subgenres?: Array<{id: number, rank: number}>;
+    themes?: Array<{id: number, rank: number}>;
+    tropes?: Array<{id: number, rank: number}>;
+    combinedRanking?: Array<{id: number, type: string, rank: number, weight: number}>;
+    createdAt?: string;
+    updatedAt?: string;
+  }
+
   // Query for existing preferences
-  const { data: preferencesData, isLoading: isLoadingPreferences } = useQuery({
+  const { data: preferencesData, isLoading: isLoadingPreferences } = useQuery<StoryPreferencesResponse>({
     queryKey: ['/api/story-preferences'],
     staleTime: 60000,
   });
