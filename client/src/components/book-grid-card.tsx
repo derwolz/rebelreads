@@ -1,4 +1,4 @@
-import { Book, Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
+import { Book, Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
@@ -17,23 +17,29 @@ import {
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 
-// Helper function to get weight percentage for a criteria based on position
-function getWeightPercentage(criteriaName: string, criteriaOrder?: string[]): string {
-  if (!criteriaOrder) {
+// Helper function to get weight percentage for a criteria based on stored weights
+function getWeightPercentage(criteriaName: string, prefs?: RatingPreferences): string {
+  if (!prefs) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
   
-  // Find the position of the criteria in the user's order
-  const position = criteriaOrder.indexOf(criteriaName);
-  if (position === -1) return "0%"; // Not found
+  // If we have individual weights columns, use those directly
+  if (prefs[criteriaName as keyof RatingPreferences] !== undefined) {
+    // Convert any string values to numbers for percentage calculation
+    const value = prefs[criteriaName as keyof RatingPreferences];
+    const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${(Number(numericValue) * 100).toFixed(0)}%`;
+  }
   
-  // Use the weight based on position
-  return `${(POSITION_WEIGHTS[position] * 100).toFixed(0)}%`;
+  // Fall back to default weights if we don't have the specific property
+  return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
 }
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
+  if (!book.publishedDate) return false;
+  
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   return new Date(book.publishedDate) > oneWeekAgo;
@@ -50,10 +56,7 @@ export function BookGridCard({ book }: { book: Book }) {
   });
   
   // Fetch user's rating preferences
-  const { data: ratingPreferences } = useQuery<{ 
-    criteriaOrder: string[];
-    criteriaWeights: Record<string, number>;
-  }>({
+  const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ['/api/account/rating-preferences'],
   });
 
@@ -92,12 +95,11 @@ export function BookGridCard({ book }: { book: Book }) {
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
-  // Get user's criteria order if available
-  const userCriteriaOrder = ratingPreferences?.criteriaOrder;
+  // We're now using individual weight columns directly
   
   const averageRatings = ratings?.length ? {
     // Use user preferences for weighted rating
-    overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r, undefined, userCriteriaOrder), 0) / ratings.length,
+    overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r, ratingPreferences), 0) / ratings.length,
     enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
     writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
     themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
@@ -203,7 +205,7 @@ export function BookGridCard({ book }: { book: Book }) {
                 <div className="p-3 space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="text-xs">
-                      Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences?.criteriaOrder)})
+                      Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences)})
                     </span>
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="sm" />
@@ -214,7 +216,7 @@ export function BookGridCard({ book }: { book: Book }) {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">
-                      Writing ({getWeightPercentage("writing", ratingPreferences?.criteriaOrder)})
+                      Writing ({getWeightPercentage("writing", ratingPreferences)})
                     </span>
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.writing || 0} readOnly size="sm" />
@@ -225,7 +227,7 @@ export function BookGridCard({ book }: { book: Book }) {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">
-                      Themes ({getWeightPercentage("themes", ratingPreferences?.criteriaOrder)})
+                      Themes ({getWeightPercentage("themes", ratingPreferences)})
                     </span>
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.themes || 0} readOnly size="sm" />
@@ -236,7 +238,7 @@ export function BookGridCard({ book }: { book: Book }) {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">
-                      Characters ({getWeightPercentage("characters", ratingPreferences?.criteriaOrder)})
+                      Characters ({getWeightPercentage("characters", ratingPreferences)})
                     </span>
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.characters || 0} readOnly size="sm" />
@@ -247,7 +249,7 @@ export function BookGridCard({ book }: { book: Book }) {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs">
-                      World Building ({getWeightPercentage("worldbuilding", ratingPreferences?.criteriaOrder)})
+                      World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
                     </span>
                     <div className="flex items-center gap-1">
                       <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="sm" />

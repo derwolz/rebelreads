@@ -1,4 +1,4 @@
-import { Book, Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
+import { Book, Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
@@ -18,15 +18,18 @@ import {
 const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 
 // Helper function to get weight percentage for a criteria based on stored weights or position
-function getWeightPercentage(criteriaName: string, prefs?: any): string {
+function getWeightPercentage(criteriaName: string, prefs?: RatingPreferences): string {
   if (!prefs) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
   
   // If we have individual weights columns, use those directly
-  if (prefs[criteriaName] !== undefined) {
-    return `${(prefs[criteriaName] * 100).toFixed(0)}%`;
+  if (prefs[criteriaName as keyof RatingPreferences] !== undefined) {
+    // Convert any string values to numbers for percentage calculation
+    const value = prefs[criteriaName as keyof RatingPreferences];
+    const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${(Number(numericValue) * 100).toFixed(0)}%`;
   }
   
   // Fall back to default weights if we don't have the specific property
@@ -37,7 +40,7 @@ function getWeightPercentage(criteriaName: string, prefs?: any): string {
 function isNewBook(book: Book) {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  return new Date(book.publishedDate) > oneWeekAgo;
+  return book.publishedDate ? new Date(book.publishedDate) > oneWeekAgo : false;
 }
 
 export function BookCard({ book }: { book: Book }) {
@@ -51,17 +54,7 @@ export function BookCard({ book }: { book: Book }) {
   });
   
   // Fetch user's rating preferences
-  const { data: ratingPreferences } = useQuery<{ 
-    id: number;
-    userId: number;
-    enjoyment: number;
-    writing: number;
-    themes: number;
-    characters: number;
-    worldbuilding: number;
-    createdAt: string;
-    updatedAt: string;
-  }>({
+  const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ['/api/account/rating-preferences'],
   });
 
@@ -96,24 +89,13 @@ export function BookCard({ book }: { book: Book }) {
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
-  // Derive user's criteria order from weights if available
-  const userCriteriaOrder = ratingPreferences ? 
-    Object.entries({
-      enjoyment: ratingPreferences.enjoyment,
-      writing: ratingPreferences.writing,
-      themes: ratingPreferences.themes,
-      characters: ratingPreferences.characters,
-      worldbuilding: ratingPreferences.worldbuilding
-    })
-    .sort((a, b) => b[1] - a[1])
-    .map(([criterion]) => criterion) 
-    : undefined;
+  // We no longer need to derive criteria order as we're using the weight columns directly
   
   const averageRatings = ratings?.length
     ? {
         // Use user preferences for weighted rating
         overall:
-          ratings.reduce((acc, r) => acc + calculateWeightedRating(r, undefined, userCriteriaOrder), 0) /
+          ratings.reduce((acc, r) => acc + calculateWeightedRating(r, ratingPreferences), 0) /
           ratings.length,
         enjoyment:
           ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
@@ -295,7 +277,7 @@ export function BookCard({ book }: { book: Book }) {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        Characters ({getWeightPercentage("characters", ratingPreferences?.criteriaOrder)})
+                        Characters ({getWeightPercentage("characters", ratingPreferences)})
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating
@@ -310,7 +292,7 @@ export function BookCard({ book }: { book: Book }) {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">
-                        World Building ({getWeightPercentage("worldbuilding", ratingPreferences?.criteriaOrder)})
+                        World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
                       </span>
                       <div className="flex items-center gap-2">
                         <StarRating

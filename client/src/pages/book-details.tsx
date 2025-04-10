@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Book, Rating, calculateWeightedRating, RATING_CRITERIA, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
+import { Book, Rating, calculateWeightedRating, RATING_CRITERIA, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
 import { Heart } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
@@ -34,24 +34,23 @@ import { HorizontalBannerAd } from "@/components/banner-ads";
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 
-// Helper function to get weight percentage for a criteria based on position
-function getWeightPercentage(criteriaName: string, criteriaOrder?: string[], criteriaWeights?: Record<string, number>): string {
-  if (!criteriaOrder) {
+// Helper function to get weight percentage for a criteria based on preferences
+function getWeightPercentage(criteriaName: string, prefs?: RatingPreferences): string {
+  if (!prefs) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
   
-  // If we have criteriaWeights, use those directly
-  if (criteriaWeights && criteriaWeights[criteriaName]) {
-    return `${(criteriaWeights[criteriaName] * 100).toFixed(0)}%`;
+  // If we have individual weight columns, use those directly
+  if (prefs[criteriaName as keyof RatingPreferences] !== undefined) {
+    // Convert any string values to numbers for percentage calculation
+    const value = prefs[criteriaName as keyof RatingPreferences];
+    const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+    return `${(Number(numericValue) * 100).toFixed(0)}%`;
   }
   
-  // Otherwise, fall back to position-based calculations
-  const position = criteriaOrder.indexOf(criteriaName);
-  if (position === -1) return "0%"; // Not found
-  
-  // Use the weight based on position
-  return `${(POSITION_WEIGHTS[position] * 100).toFixed(0)}%`;
+  // Fall back to default weights if preference structure is unknown
+  return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
 }
 
 export default function BookDetails() {
@@ -70,10 +69,7 @@ export default function BookDetails() {
   });
   
   // Fetch user's rating preferences if logged in
-  const { data: ratingPreferences } = useQuery<{ 
-    criteriaOrder: string[];
-    criteriaWeights: Record<string, number>;
-  }>({
+  const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ['/api/account/rating-preferences'],
     enabled: !!user,
   });
@@ -93,15 +89,12 @@ export default function BookDetails() {
   }, [book?.id]);
 
   if (!book) return null;
-
-  // Get user's rating preferences if available
-  const userCriteriaOrder = ratingPreferences?.criteriaOrder;
   
   const averageRatings = ratings?.length
     ? {
         // Use user's preferences for the overall rating if available
         overall:
-          ratings.reduce((acc, r) => acc + calculateWeightedRating(r, undefined, userCriteriaOrder), 0) /
+          ratings.reduce((acc, r) => acc + calculateWeightedRating(r, ratingPreferences), 0) /
           ratings.length,
         enjoyment:
           ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
@@ -125,7 +118,7 @@ export default function BookDetails() {
   const filteredRatings = ratings
     ?.filter((rating) => {
       // Apply user preferences to rating calculation for filtering
-      const overallRating = calculateWeightedRating(rating, undefined, userCriteriaOrder);
+      const overallRating = calculateWeightedRating(rating, ratingPreferences);
       switch (ratingFilter) {
         case "5":
           return overallRating >= 4.5;
@@ -146,8 +139,8 @@ export default function BookDetails() {
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
       // Then by rating - using user preferences
-      return calculateWeightedRating(b, undefined, userCriteriaOrder) - 
-             calculateWeightedRating(a, undefined, userCriteriaOrder);
+      return calculateWeightedRating(b, ratingPreferences) - 
+             calculateWeightedRating(a, ratingPreferences);
     });
 
   return (
@@ -390,7 +383,7 @@ export default function BookDetails() {
                         </span>
                       </div>
                       <div className="grid gap-2">
-                        {userCriteriaOrder ? (
+                        {ratingPreferences ? (
                           // If user has preferences, show a message
                           <p className="text-xs text-muted-foreground mb-2">
                             Showing ratings weighted to your preferences
@@ -398,7 +391,7 @@ export default function BookDetails() {
                         ) : null}
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
+                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -413,7 +406,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Writing ({getWeightPercentage("writing", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
+                            Writing ({getWeightPercentage("writing", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -428,7 +421,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Themes ({getWeightPercentage("themes", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
+                            Themes ({getWeightPercentage("themes", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -443,7 +436,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Characters ({getWeightPercentage("characters", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
+                            Characters ({getWeightPercentage("characters", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -458,7 +451,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
+                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
