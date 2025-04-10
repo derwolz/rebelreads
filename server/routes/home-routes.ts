@@ -217,6 +217,18 @@ router.delete("/books/:id/wishlist", async (req, res) => {
   res.json(status);
 });
 
+router.get("/wishlist/books", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+
+  try {
+    const wishlistedBooks = await dbStorage.getWishlistedBooks(req.user!.id);
+    res.json(wishlistedBooks);
+  } catch (error) {
+    console.error("Error fetching wishlisted books:", error);
+    res.status(500).json({ error: "Failed to fetch wishlisted books" });
+  }
+});
+
 router.get("/books/followed-authors", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
