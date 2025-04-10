@@ -202,6 +202,7 @@ export const rating_preferences = pgTable("rating_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
   criteriaOrder: jsonb("criteria_order").$type<string[]>().notNull(),
+  criteriaWeights: jsonb("criteria_weights").$type<Record<string, number>>().notNull().default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -395,6 +396,8 @@ export const insertRatingPreferencesSchema = createInsertSchema(rating_preferenc
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  criteriaWeights: z.record(z.string(), z.number()).optional(),
 });
 
 export const loginSchema = z.object({

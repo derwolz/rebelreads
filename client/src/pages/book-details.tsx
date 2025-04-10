@@ -35,13 +35,18 @@ import { HorizontalBannerAd } from "@/components/banner-ads";
 const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 
 // Helper function to get weight percentage for a criteria based on position
-function getWeightPercentage(criteriaName: string, criteriaOrder?: string[]): string {
+function getWeightPercentage(criteriaName: string, criteriaOrder?: string[], criteriaWeights?: Record<string, number>): string {
   if (!criteriaOrder) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
   
-  // Find the position of the criteria in the user's order
+  // If we have criteriaWeights, use those directly
+  if (criteriaWeights && criteriaWeights[criteriaName]) {
+    return `${(criteriaWeights[criteriaName] * 100).toFixed(0)}%`;
+  }
+  
+  // Otherwise, fall back to position-based calculations
   const position = criteriaOrder.indexOf(criteriaName);
   if (position === -1) return "0%"; // Not found
   
@@ -65,7 +70,10 @@ export default function BookDetails() {
   });
   
   // Fetch user's rating preferences if logged in
-  const { data: ratingPreferences } = useQuery<{ criteriaOrder: string[] }>({
+  const { data: ratingPreferences } = useQuery<{ 
+    criteriaOrder: string[];
+    criteriaWeights: Record<string, number>;
+  }>({
     queryKey: ['/api/account/rating-preferences'],
     enabled: !!user,
   });
@@ -390,7 +398,7 @@ export default function BookDetails() {
                         ) : null}
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences?.criteriaOrder)})
+                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -405,7 +413,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Writing ({getWeightPercentage("writing", ratingPreferences?.criteriaOrder)})
+                            Writing ({getWeightPercentage("writing", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -420,7 +428,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Themes ({getWeightPercentage("themes", ratingPreferences?.criteriaOrder)})
+                            Themes ({getWeightPercentage("themes", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -435,7 +443,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Characters ({getWeightPercentage("characters", ratingPreferences?.criteriaOrder)})
+                            Characters ({getWeightPercentage("characters", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -450,7 +458,7 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences?.criteriaOrder)})
+                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences?.criteriaOrder, ratingPreferences?.criteriaWeights)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating

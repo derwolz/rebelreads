@@ -41,7 +41,15 @@ import { CSS } from "@dnd-kit/utilities";
 const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 
 // Helper component for each sortable criteria item
-function SortableCriteriaItem({ id, index }: { id: string; index: number }) {
+function SortableCriteriaItem({ 
+  id, 
+  index, 
+  savedWeights 
+}: { 
+  id: string; 
+  index: number; 
+  savedWeights?: Record<string, number>
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
   
   const style = {
@@ -55,8 +63,10 @@ function SortableCriteriaItem({ id, index }: { id: string; index: number }) {
   // Description from the schema
   const description = RATING_CRITERIA_DESCRIPTIONS[id as keyof typeof RATING_CRITERIA_DESCRIPTIONS];
   
-  // Weight percentage for current position
-  const weight = POSITION_WEIGHTS[index] * 100;
+  // Weight percentage - use saved weight if available, otherwise calculate from position
+  const weight = savedWeights && savedWeights[id]
+    ? savedWeights[id] * 100
+    : POSITION_WEIGHTS[index] * 100;
   
   return (
     <div 
@@ -144,6 +154,7 @@ export function RatingPreferencesSettings({
     id: number;
     userId: number;
     criteriaOrder: string[];
+    criteriaWeights: Record<string, number>;
     createdAt: string;
     updatedAt: string;
   }>({
@@ -155,15 +166,35 @@ export function RatingPreferencesSettings({
   // Update criteria order when data is received
   useEffect(() => {
     if (preferencesData && preferencesData.criteriaOrder && !initialCriteriaOrder) {
+      // Ensure we're using the order from the database
       setCriteriaOrder(preferencesData.criteriaOrder);
+      console.log("Loaded criteria order from DB:", preferencesData.criteriaOrder);
+      console.log("Loaded criteria weights from DB:", preferencesData.criteriaWeights);
     }
   }, [preferencesData, initialCriteriaOrder]);
+  
+  // Helper function to generate criteria weights from order
+  const generateCriteriaWeights = (order: string[]): Record<string, number> => {
+    const weights: Record<string, number> = {};
+    
+    // Assign weights based on position in the user's criteria order
+    order.forEach((criterion, index) => {
+      weights[criterion] = POSITION_WEIGHTS[index];
+    });
+    
+    console.log("Generated criteria weights:", weights);
+    return weights;
+  };
   
   // Mutation to save preferences
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
+      // Generate weights from the current criteria order
+      const criteriaWeights = generateCriteriaWeights(criteriaOrder);
+      
       return apiRequest('POST', '/api/account/rating-preferences', {
-        criteriaOrder
+        criteriaOrder,
+        criteriaWeights
       });
     },
     onSuccess: () => {
@@ -219,7 +250,12 @@ export function RatingPreferencesSettings({
           strategy={verticalListSortingStrategy}
         >
           {criteriaOrder.map((id, index) => (
-            <SortableCriteriaItem key={id} id={id} index={index} />
+            <SortableCriteriaItem 
+              key={id} 
+              id={id} 
+              index={index} 
+              savedWeights={preferencesData?.criteriaWeights}
+            />
           ))}
         </SortableContext>
       </DndContext>

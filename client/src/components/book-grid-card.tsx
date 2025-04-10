@@ -50,7 +50,10 @@ export function BookGridCard({ book }: { book: Book }) {
   });
   
   // Fetch user's rating preferences
-  const { data: ratingPreferences } = useQuery<{ criteriaOrder: string[] }>({
+  const { data: ratingPreferences } = useQuery<{ 
+    criteriaOrder: string[];
+    criteriaWeights: Record<string, number>;
+  }>({
     queryKey: ['/api/account/rating-preferences'],
   });
 

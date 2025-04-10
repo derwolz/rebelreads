@@ -56,7 +56,7 @@ export interface IAccountStorage {
   getFollowingCount(userId: number): Promise<number>;
 
   getRatingPreferences(userId: number): Promise<RatingPreferences | undefined>;
-  saveRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreferences>;
+  saveRatingPreferences(userId: number, criteriaOrder: string[], criteriaWeights?: Record<string, number>): Promise<RatingPreferences>;
   
   getFollowerMetrics(
     authorId: number,
@@ -380,8 +380,21 @@ export class AccountStorage implements IAccountStorage {
     return preferences[0];
   }
 
-  async saveRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreferences> {
+  async saveRatingPreferences(userId: number, criteriaOrder: string[], criteriaWeights?: Record<string, number>): Promise<RatingPreferences> {
     console.log(`Storage: saveRatingPreferences called for user ${userId} with order:`, criteriaOrder);
+    
+    // Generate weights if not provided
+    if (!criteriaWeights) {
+      const positionWeights = [0.35, 0.25, 0.20, 0.12, 0.08]; // Weights by position
+      criteriaWeights = {};
+      
+      // Assign weights based on position in the criteria order
+      criteriaOrder.forEach((criterion, index) => {
+        criteriaWeights![criterion] = positionWeights[index];
+      });
+    }
+    
+    console.log(`Storage: Using criteria weights:`, criteriaWeights);
     
     // Check if preferences already exist
     const existing = await this.getRatingPreferences(userId);
@@ -395,6 +408,7 @@ export class AccountStorage implements IAccountStorage {
           .update(rating_preferences)
           .set({ 
             criteriaOrder,
+            criteriaWeights,
             updatedAt: new Date()
           })
           .where(eq(rating_preferences.userId, userId))
@@ -419,7 +433,8 @@ export class AccountStorage implements IAccountStorage {
           .insert(rating_preferences)
           .values({
             userId,
-            criteriaOrder
+            criteriaOrder,
+            criteriaWeights
           })
           .returning();
         

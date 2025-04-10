@@ -61,16 +61,17 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
   
   // Validate the request body
   const schema = z.object({
-    criteriaOrder: z.array(z.string()).length(5)
+    criteriaOrder: z.array(z.string()).length(5),
+    criteriaWeights: z.record(z.string(), z.number()).optional()
   });
   
   try {
     console.log("Rating preferences POST - Request body:", req.body);
     console.log("Rating preferences POST - User ID:", req.user.id);
     
-    const { criteriaOrder } = schema.parse(req.body);
+    const { criteriaOrder, criteriaWeights } = schema.parse(req.body);
     
-    const preferences = await dbStorage.saveRatingPreferences(req.user.id, criteriaOrder);
+    const preferences = await dbStorage.saveRatingPreferences(req.user.id, criteriaOrder, criteriaWeights);
     
     console.log("Rating preferences POST - Successfully saved:", preferences);
     res.json(preferences);

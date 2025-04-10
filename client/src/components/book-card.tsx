@@ -17,14 +17,19 @@ import {
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 
-// Helper function to get weight percentage for a criteria based on position
-function getWeightPercentage(criteriaName: string, criteriaOrder?: string[]): string {
+// Helper function to get weight percentage for a criteria based on stored weights or position
+function getWeightPercentage(criteriaName: string, criteriaOrder?: string[], criteriaWeights?: Record<string, number>): string {
   if (!criteriaOrder) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
   
-  // Find the position of the criteria in the user's order
+  // If we have criteriaWeights, use those directly
+  if (criteriaWeights && criteriaWeights[criteriaName]) {
+    return `${(criteriaWeights[criteriaName] * 100).toFixed(0)}%`;
+  }
+  
+  // Otherwise, fall back to position-based calculations
   const position = criteriaOrder.indexOf(criteriaName);
   if (position === -1) return "0%"; // Not found
   
@@ -50,7 +55,10 @@ export function BookCard({ book }: { book: Book }) {
   });
   
   // Fetch user's rating preferences
-  const { data: ratingPreferences } = useQuery<{ criteriaOrder: string[] }>({
+  const { data: ratingPreferences } = useQuery<{ 
+    criteriaOrder: string[];
+    criteriaWeights: Record<string, number>;
+  }>({
     queryKey: ['/api/account/rating-preferences'],
   });
 
