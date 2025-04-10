@@ -188,7 +188,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         isbn: book.isbn || "",
         asin: book.asin || "",
         language: book.language,
-        genres: book.genres,
+        genres: (book as any).genres || [],
+        genreTaxonomies: (book as any).genreTaxonomies || [],
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "", // Initialize from book data
@@ -213,6 +214,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       originalTitle: "",
       referralLinks: [],
       internal_details: "", // Initialize empty for new books
+      genreTaxonomies: [], // Initialize empty taxonomy array for new books
     };
   });
   const [characterInput, setCharacterInput] = useState("");
@@ -341,6 +343,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         originalTitle: "",
         referralLinks: [],
         internal_details: "",
+        genreTaxonomies: [],
       });
       setCurrentStep(0);
       onSuccess?.();
@@ -408,6 +411,14 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 4:
         return formData.publishedDate !== "";
       case 5:
+        // If using taxonomy system, validate genre requirements
+        if (formData.genreTaxonomies && formData.genreTaxonomies.length > 0) {
+          const hasGenre = formData.genreTaxonomies.some(t => t.type === "genre");
+          const hasTheme = formData.genreTaxonomies.some(t => t.type === "theme");
+          const hasTrope = formData.genreTaxonomies.some(t => t.type === "trope");
+          return hasGenre && hasTheme && hasTrope;
+        }
+        // Legacy validation
         return formData.genres.length > 0;
       case 6:
         return true;
@@ -957,14 +968,45 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 </dl>
               </Card>
               <Card className="p-4">
-                <h3 className="font-medium mb-2">Genres</h3>
-                <div className="flex flex-wrap gap-1">
-                  {formData.genres.map((genre, i) => (
-                    <Badge key={i} variant="secondary">
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
+                <h3 className="font-medium mb-2">Taxonomies</h3>
+                {formData.genreTaxonomies && formData.genreTaxonomies.length > 0 ? (
+                  <div className="space-y-3">
+                    {/* Display taxonomies by type */}
+                    {["genre", "subgenre", "theme", "trope"].map(type => {
+                      const taxonomiesOfType = formData.genreTaxonomies!.filter(t => t.type === type);
+                      if (taxonomiesOfType.length === 0) return null;
+                      
+                      return (
+                        <div key={type}>
+                          <h4 className="text-sm font-medium capitalize mb-1">{type}s</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {taxonomiesOfType.map((tax, i) => (
+                              <Badge 
+                                key={`${tax.type}-${tax.taxonomyId}`} 
+                                variant={
+                                  tax.type === "genre" ? "default" :
+                                  tax.type === "subgenre" ? "secondary" :
+                                  tax.type === "theme" ? "outline" :
+                                  "destructive"
+                                }
+                              >
+                                {tax.name} ({(1 / (1 + Math.log(tax.rank))).toFixed(2)})
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {formData.genres.map((genre, i) => (
+                      <Badge key={i} variant="secondary">
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </Card>
               {formData.referralLinks.length > 0 && (
                 <Card className="p-4">
