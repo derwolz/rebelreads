@@ -1,18 +1,27 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertTriangle, Flag, LockIcon, MessageSquare, Star as StarIcon } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { StarIcon, Flag, MessageSquare, LockIcon } from "lucide-react";
-import { StarRating } from "@/components/star-rating";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Rating, calculateWeightedRating } from "@shared/schema";
-import { useAuth } from "@/hooks/use-auth";
+import { format } from "date-fns";
+import { StarRating } from "./star-rating";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ReportDialogProps {
   reviewId: number;
@@ -20,8 +29,8 @@ interface ReportDialogProps {
 }
 
 function ReportDialog({ reviewId, onReport }: ReportDialogProps) {
-  const [reason, setReason] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
+  const [reason, setReason] = useState("");
 
   const handleReport = () => {
     onReport(reason);
@@ -43,20 +52,20 @@ function ReportDialog({ reviewId, onReport }: ReportDialogProps) {
         <div className="space-y-4">
           <RadioGroup value={reason} onValueChange={setReason}>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="spam" id="spam" />
-              <Label htmlFor="spam">Spam</Label>
-            </div>
-            <div className="flex items-center space-x-2">
               <RadioGroupItem value="inappropriate" id="inappropriate" />
-              <Label htmlFor="inappropriate">Inappropriate Content</Label>
+              <Label htmlFor="inappropriate">Inappropriate content</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="harmful" id="harmful" />
-              <Label htmlFor="harmful">Harmful Content</Label>
+              <RadioGroupItem value="spam" id="spam" />
+              <Label htmlFor="spam">Spam or misleading</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="offensive" id="offensive" />
+              <Label htmlFor="offensive">Offensive language</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="other" id="other" />
-              <Label htmlFor="other">Other</Label>
+              <Label htmlFor="other">Other concern</Label>
             </div>
           </RadioGroup>
           <Button onClick={handleReport} disabled={!reason}>Submit Report</Button>
@@ -117,7 +126,7 @@ export function ReviewManagement() {
   
   // Check if user is Pro
   const isPro = user?.isPro;
-
+  
   const { data, isLoading } = useQuery({
     queryKey: ["/api/pro/demo-reviews", page],
     queryFn: async () => {
@@ -220,108 +229,114 @@ export function ReviewManagement() {
         {data?.reviews.map((review: Rating & { user: any; book: any; featured?: boolean; replies?: any[] }) => (
           <Card key={review.id} className={review.featured ? "border-primary" : undefined}>
             <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  {review.book && (
-                    <div className="flex-shrink-0 mr-1">
-                      <div className="w-12 h-16 rounded overflow-hidden shadow-sm">
-                        {review.book.coverImageUrl ? (
-                          <img
-                            src={review.book.coverImageUrl}
-                            alt={`Cover of ${review.book.title}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-muted-foreground/10 flex items-center justify-center">
-                            <span className="text-xs text-muted-foreground">No cover</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs mt-1 w-12 truncate" title={review.book.title}>
-                        {review.book.title}
-                      </p>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={review.user?.profileImageUrl} alt={review.user?.username} />
-                      <AvatarFallback>{review.user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
-                        <span>•</span>
-                        <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {isPro ? (
-                    <Button
-                      variant={review.featured ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => featureMutation.mutate({ reviewId: review.id, featured: !review.featured })}
-                      title="Feature this review"
-                    >
-                      <StarIcon className="h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <div className="relative group">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-50 cursor-not-allowed"
-                        disabled
-                        onClick={() => {
-                          toast({
-                            title: "Pro Feature",
-                            description: "Upgrade to Pro to feature reviews",
-                            variant: "default"
-                          });
-                        }}
-                      >
-                        <LockIcon className="h-3 w-3 mr-1" />
-                        <StarIcon className="h-4 w-4" />
-                      </Button>
-                      <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
-                        <div className="bg-primary text-primary-foreground text-xs rounded px-2 py-1 whitespace-nowrap">
-                          Upgrade to pin reviews
+              <div className="flex gap-4">
+                {/* Book Cover - Full Height Column */}
+                {review.book && (
+                  <div className="flex-shrink-0 w-16">
+                    <div className="w-16 h-24 rounded overflow-hidden shadow-sm">
+                      {review.book.coverImageUrl ? (
+                        <img
+                          src={review.book.coverImageUrl}
+                          alt={`Cover of ${review.book.title}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-muted-foreground/10 flex items-center justify-center">
+                          <span className="text-xs text-muted-foreground">No cover</span>
                         </div>
-                        <div className="w-2 h-2 bg-primary transform rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1"></div>
+                      )}
+                    </div>
+                    <p className="text-xs mt-1 w-16 truncate text-center" title={review.book.title}>
+                      {review.book.title}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Main Content Column */}
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={review.user?.profileImageUrl} alt={review.user?.username} />
+                        <AvatarFallback>{review.user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{review.user?.displayName || review.user?.username}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                          <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
+                          <span>•</span>
+                          <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
+                        </div>
                       </div>
                     </div>
-                  )}
-                  <ReplyForm
-                    reviewId={review.id}
-                    onReply={(content) => replyMutation.mutate({ reviewId: review.id, content })}
-                  />
-                  <ReportDialog
-                    reviewId={review.id}
-                    onReport={(reason) => reportMutation.mutate({ reviewId: review.id, reason })}
-                  />
-                </div>
-              </div>
-              <div className="mt-4">
-                <p className="text-sm">{review.review}</p>
-              </div>
-              {review.replies?.map((reply) => (
-                <div key={reply.id} className="mt-4 pt-4 border-t border-border">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={reply.author?.profileImageUrl} />
-                      <AvatarFallback>{reply.author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">Author Response</span>
-                    <span className="text-sm text-muted-foreground">•</span>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(reply.createdAt), 'MMM d, yyyy')}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {isPro ? (
+                        <Button
+                          variant={review.featured ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => featureMutation.mutate({ reviewId: review.id, featured: !review.featured })}
+                          title="Feature this review"
+                        >
+                          <StarIcon className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <div className="relative group">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-50 cursor-not-allowed"
+                            disabled
+                            onClick={() => {
+                              toast({
+                                title: "Pro Feature",
+                                description: "Upgrade to Pro to feature reviews",
+                                variant: "default"
+                              });
+                            }}
+                          >
+                            <LockIcon className="h-3 w-3 mr-1" />
+                            <StarIcon className="h-4 w-4" />
+                          </Button>
+                          <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                            <div className="bg-primary text-primary-foreground text-xs rounded px-2 py-1 whitespace-nowrap">
+                              Upgrade to pin reviews
+                            </div>
+                            <div className="w-2 h-2 bg-primary transform rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1"></div>
+                          </div>
+                        </div>
+                      )}
+                      <ReplyForm
+                        reviewId={review.id}
+                        onReply={(content) => replyMutation.mutate({ reviewId: review.id, content })}
+                      />
+                      <ReportDialog
+                        reviewId={review.id}
+                        onReport={(reason) => reportMutation.mutate({ reviewId: review.id, reason })}
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm pl-8">{reply.content}</p>
+                  <div className="mt-4">
+                    <p className="text-sm">{review.review}</p>
+                  </div>
+                  
+                  {review.replies?.map((reply) => (
+                    <div key={reply.id} className="mt-4 pt-4 border-t border-border">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={reply.author?.profileImageUrl} />
+                          <AvatarFallback>{reply.author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">Author Response</span>
+                        <span className="text-sm text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(reply.createdAt), 'MMM d, yyyy')}
+                        </span>
+                      </div>
+                      <p className="text-sm pl-8">{reply.content}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </CardContent>
           </Card>
         ))}
