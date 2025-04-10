@@ -70,11 +70,10 @@ interface FormData {
   isbn: string;
   asin: string;
   language: string;
-  genres: string[];
   originalTitle: string;
   referralLinks: ReferralLink[];
   internal_details: string; // Added new field
-  genreTaxonomies: { // New taxonomy field
+  genreTaxonomies: { // Taxonomy field
     id?: number;
     taxonomyId: number;
     rank: number;
@@ -188,7 +187,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         isbn: book.isbn || "",
         asin: book.asin || "",
         language: book.language,
-        genres: (book as any).genres || [],
         genreTaxonomies: (book as any).genreTaxonomies || [],
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
@@ -210,7 +208,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       isbn: "",
       asin: "",
       language: "English",
-      genres: [],
       originalTitle: "",
       referralLinks: [],
       internal_details: "", // Initialize empty for new books
@@ -339,7 +336,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         isbn: "",
         asin: "",
         language: "English",
-        genres: [],
         originalTitle: "",
         referralLinks: [],
         internal_details: "",
@@ -386,14 +382,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
     }));
   };
 
-  const handleGenreToggle = (genre: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      genres: prev.genres.includes(genre)
-        ? prev.genres.filter((g) => g !== genre)
-        : [...prev.genres, genre],
-    }));
-  };
+  // Legacy genre toggle removed
 
   const canProceed = () => {
     switch (currentStep) {
@@ -411,15 +400,11 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 4:
         return formData.publishedDate !== "";
       case 5:
-        // If using taxonomy system, validate genre requirements
-        if (formData.genreTaxonomies && formData.genreTaxonomies.length > 0) {
-          const hasGenre = formData.genreTaxonomies.some(t => t.type === "genre");
-          const hasTheme = formData.genreTaxonomies.some(t => t.type === "theme");
-          const hasTrope = formData.genreTaxonomies.some(t => t.type === "trope");
-          return hasGenre && hasTheme && hasTrope;
-        }
-        // Legacy validation
-        return formData.genres.length > 0;
+        // Validate taxonomy requirements
+        const hasGenre = formData.genreTaxonomies.some((t: any) => t.type === "genre");
+        const hasTheme = formData.genreTaxonomies.some((t: any) => t.type === "theme");
+        const hasTrope = formData.genreTaxonomies.some((t: any) => t.type === "trope");
+        return hasGenre && hasTheme && hasTrope;
       case 6:
         return true;
       case 7:
@@ -744,18 +729,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 setFormData((prev) => ({ ...prev, genreTaxonomies: taxonomies }))
               }
             />
-            {/* Legacy Genre Selector - to be removed after migration */}
-            {!formData.genreTaxonomies?.length && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Legacy Genre Selection</h3>
-                <GenreTagInput
-                  selectedGenres={formData.genres || []}
-                  onGenresChange={(genres) =>
-                    setFormData((prev) => ({ ...prev, genres }))
-                  }
-                />
-              </div>
-            )}
+          
           </div>
         );
 
