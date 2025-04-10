@@ -221,14 +221,14 @@ export default function ProDashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
                   <Legend />
                   {selectedBookIds.map((bookId) =>
                     selectedMetrics.map((metric) => (
                       <Line
                         key={`${bookId}_${metric}`}
                         type="monotone"
-                        dataKey={`Book ${bookId}_${metric}`}
+                        dataKey={`Book ${bookId} (${metric})`}
                         name={`Book ${bookId} (${metric})`}
                         stroke={`hsl(${bookId * 30}, 70%, 50%)`}
                       />
@@ -251,7 +251,7 @@ export default function ProDashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
                   <Legend />
                   <Bar
                     dataKey="New Followers"

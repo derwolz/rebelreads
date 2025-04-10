@@ -1,0 +1,104 @@
+performanceData 
+Array(30) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+​
+0: Object { date: "2025-03-12", "Book 6 (impressions)": 29 }
+​
+1: Object { date: "2025-03-13", "Book 6 (impressions)": 89 }
+​
+2: Object { date: "2025-03-14", "Book 6 (impressions)": 7 }
+​
+3: Object { date: "2025-03-15", "Book 6 (impressions)": 88 }
+​
+4: Object { date: "2025-03-16", "Book 6 (impressions)": 0 }
+​
+5: Object { date: "2025-03-17", "Book 6 (impressions)": 0 }
+​
+6: Object { date: "2025-03-18", "Book 6 (impressions)": 0 }
+​
+7: Object { date: "2025-03-19", "Book 6 (impressions)": 0 }
+​
+8: Object { date: "2025-03-20", "Book 6 (impressions)": 0 }
+​
+9: Object { date: "2025-03-21", "Book 6 (impressions)": 0 }
+​
+10: Object { date: "2025-03-22", "Book 6 (impressions)": 0 }
+​
+11: Object { date: "2025-03-23", "Book 6 (impressions)": 0 }
+​
+12: Object { date: "2025-03-24", "Book 6 (impressions)": 0 }
+​
+13: Object { date: "2025-03-25", "Book 6 (impressions)": 0 }
+​
+14: Object { date: "2025-03-26", "Book 6 (impressions)": 0 }
+​
+15: Object { date: "2025-03-27", "Book 6 (impressions)": 0 }
+​
+16: Object { date: "2025-03-28", "Book 6 (impressions)": 0 }
+​
+17: Object { date: "2025-03-29", "Book 6 (impressions)": 0 }
+​
+18: Object { date: "2025-03-30", "Book 6 (impressions)": 0 }
+​
+19: Object { date: "2025-03-31", "Book 6 (impressions)": 0 }
+​
+20: Object { date: "2025-04-01", "Book 6 (impressions)": 0 }
+​
+21: Object { date: "2025-04-02", "Book 6 (impressions)": 0 }
+​
+22: Object { date: "2025-04-03", "Book 6 (impressions)": 0 }
+​
+23: Object { date: "2025-04-04", "Book 6 (impressions)": 0 }
+​
+24: Object { date: "2025-04-05", "Book 6 (impressions)": 0 }
+​
+25: Object { date: "2025-04-06", "Book 6 (impressions)": 0 }
+​
+26: Object { date: "2025-04-07", "Book 6 (impressions)": 0 }
+​
+27: Object { date: "2025-04-08", "Book 6 (impressions)": 0 }
+​
+28: Object { date: "2025-04-09", "Book 6 (impressions)": 0 }
+​
+29: Object { date: "2025-04-10", "Book 6 (impressions)": 0 }
+​
+length: 30
+​
+<prototype>: Array []
+pro-dashboard.tsx:95:10
+Warning: Received NaN for the `children` attribute. If this is expected, cast the value to a string.
+span
+li
+ul
+div
+DefaultTooltipContent2@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/recharts.js?v=82dbefcf:8480:26
+div
+TooltipBoundingBox2@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/recharts.js?v=82dbefcf:8808:21
+Tooltip2@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/recharts.js?v=82dbefcf:9084:21
+div
+ChartLayoutContextProvider2@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/recharts.js?v=82dbefcf:25434:22
+CategoricalChartWrapper2@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/recharts.js?v=82dbefcf:30715:24
+CategoricalChart2
+div
+ResponsiveContainer<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/recharts.js?v=82dbefcf:9256:16
+div
+div
+_c9@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/card.tsx:114:9
+div
+_c@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/card.tsx:20:8
+div
+ProAnalyticsWrapper@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/pro-analytics-wrapper.tsx:25:36
+div
+div
+main
+ProDashboard@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/pages/pro-dashboard.tsx:62:20
+AuthorAnalyticsProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/author-analytics-provider.tsx:22:40
+Route@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=82dbefcf:191:13
+ProtectedRoute@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/lib/protected-route.tsx:23:31
+Switch@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=82dbefcf:247:14
+Router@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/App.tsx?v=lgsNOWThwv_gR9q3_RyqI:58:22
+OnboardingProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-onboarding.tsx:22:35
+AuthProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-auth.tsx:26:29
+BetaProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-beta.tsx:23:29
+ThemeProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-theme.tsx:24:30
+QueryClientProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=82dbefcf:2804:27
+App@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/App.tsx?v=lgsNOWThwv_gR9q3_RyqI:252:33 react-dom.development.js:86:29
