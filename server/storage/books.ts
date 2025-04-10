@@ -45,7 +45,7 @@ export class BookStorage implements IBookStorage {
         author: books.author,
         description: books.description,
         internal_details: books.internal_details,
-        genres: books.genres,
+        // genres removed - using relationship table instead
         coverUrl: books.coverUrl,
         publishedDate: books.publishedDate,
         promoted: books.promoted,
