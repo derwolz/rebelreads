@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Book, Rating, calculateWeightedRating } from "@shared/schema";
+import { Book, Rating, calculateWeightedRating, RATING_CRITERIA } from "@shared/schema";
 import { Heart } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
@@ -47,7 +47,7 @@ export default function BookDetails() {
   });
   
   // Fetch user's rating preferences if logged in
-  const { data: ratingPreferences } = useQuery({
+  const { data: ratingPreferences } = useQuery<{ criteriaOrder: string[] }>({
     queryKey: ['/api/account/rating-preferences'],
     enabled: !!user,
   });
@@ -68,10 +68,14 @@ export default function BookDetails() {
 
   if (!book) return null;
 
+  // Get user's rating preferences if available
+  const userCriteriaOrder = ratingPreferences?.criteriaOrder;
+  
   const averageRatings = ratings?.length
     ? {
+        // Use user's preferences for the overall rating if available
         overall:
-          ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) /
+          ratings.reduce((acc, r) => acc + calculateWeightedRating(r, undefined, userCriteriaOrder), 0) /
           ratings.length,
         enjoyment:
           ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
@@ -94,7 +98,8 @@ export default function BookDetails() {
 
   const filteredRatings = ratings
     ?.filter((rating) => {
-      const overallRating = calculateWeightedRating(rating);
+      // Apply user preferences to rating calculation for filtering
+      const overallRating = calculateWeightedRating(rating, undefined, userCriteriaOrder);
       switch (ratingFilter) {
         case "5":
           return overallRating >= 4.5;
@@ -114,8 +119,9 @@ export default function BookDetails() {
       // First sort by featured status
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
-      // Then by rating
-      return calculateWeightedRating(b) - calculateWeightedRating(a);
+      // Then by rating - using user preferences
+      return calculateWeightedRating(b, undefined, userCriteriaOrder) - 
+             calculateWeightedRating(a, undefined, userCriteriaOrder);
     });
 
   return (
@@ -359,8 +365,14 @@ export default function BookDetails() {
                         </span>
                       </div>
                       <div className="grid gap-2">
+                        {userCriteriaOrder ? (
+                          // If user has preferences, show a message
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Showing ratings weighted to your preferences
+                          </p>
+                        ) : null}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Enjoyment (30%)</span>
+                          <span className="text-sm">Enjoyment</span>
                           <StarRating
                             rating={Math.round(averageRatings.enjoyment)}
                             readOnly
@@ -368,7 +380,7 @@ export default function BookDetails() {
                           />
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Writing Style (30%)</span>
+                          <span className="text-sm">Writing Style</span>
                           <StarRating
                             rating={Math.round(averageRatings.writing)}
                             readOnly
@@ -376,7 +388,7 @@ export default function BookDetails() {
                           />
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Themes (20%)</span>
+                          <span className="text-sm">Themes</span>
                           <StarRating
                             rating={Math.round(averageRatings.themes)}
                             readOnly
@@ -384,7 +396,7 @@ export default function BookDetails() {
                           />
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Characters (10%)</span>
+                          <span className="text-sm">Characters</span>
                           <StarRating
                             rating={Math.round(averageRatings.characters)}
                             readOnly
@@ -392,7 +404,7 @@ export default function BookDetails() {
                           />
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">World Building (10%)</span>
+                          <span className="text-sm">World Building</span>
                           <StarRating
                             rating={Math.round(averageRatings.worldbuilding)}
                             readOnly
