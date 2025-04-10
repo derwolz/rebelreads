@@ -646,16 +646,40 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     console.log("Raw follower metrics:", JSON.stringify(followerMetrics));
     
     // Create a map to store daily counts
-    const dateMap = new Map<string, number>();
+    const dateMap = new Map<string, { follows: number, unfollows: number }>();
     const today = new Date();
     
-    // Initialize with all dates in the past timeRange days
+    // Initialize with all dates in the past timeRange days - all zeros by default
     for (let i = timeRange - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      dateMap.set(dateStr, totalFollowers); // Set the base value to the current total
+      dateMap.set(dateStr, { follows: 0, unfollows: 0 });
     }
+    
+    // Apply daily follow counts from the data
+    followerMetrics.follows.forEach(follow => {
+      // Ensure count is a valid number
+      const followCount = typeof follow.count === 'number' && isFinite(follow.count) ? follow.count : 0;
+      if (dateMap.has(follow.date)) {
+        const dailyData = dateMap.get(follow.date);
+        if (dailyData) {
+          dailyData.follows = followCount;
+        }
+      }
+    });
+    
+    // Apply daily unfollow counts from the data
+    followerMetrics.unfollows.forEach(unfollow => {
+      // Ensure count is a valid number
+      const unfollowCount = typeof unfollow.count === 'number' && isFinite(unfollow.count) ? unfollow.count : 0;
+      if (dateMap.has(unfollow.date)) {
+        const dailyData = dateMap.get(unfollow.date);
+        if (dailyData) {
+          dailyData.unfollows = unfollowCount;
+        }
+      }
+    });
     
     // Debug the ranges of counts
     const followCounts = followerMetrics.follows.map(f => f.count);
@@ -665,12 +689,14 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     console.log("Unfollow counts range:", Math.min(...(unfollowCounts.length ? unfollowCounts : [0])), 
                 "to", Math.max(...(unfollowCounts.length ? unfollowCounts : [0])));
     
-    // Convert to the format expected by Recharts
+    // Convert to the format expected by Recharts - showing daily activity, not cumulative
     const trending = Array.from(dateMap.entries())
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-      .map(([date, count]) => ({ 
+      .map(([date, counts]) => ({ 
         date,
-        followers: count  // Use property name that matches what the chart component expects
+        followers: counts.follows, // New follows on this day
+        unfollows: counts.unfollows, // Unfollows on this day
+        netChange: counts.follows - counts.unfollows // Net change for the day
       }));
     
     // Make sure total is a valid number

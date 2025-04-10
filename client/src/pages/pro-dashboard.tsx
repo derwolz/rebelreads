@@ -126,23 +126,19 @@ export default function ProDashboard() {
   const followerChartData = (() => {
     if (!followerData || !followerData.trending) return [];
 
-    // The backend now provides a 'trending' array with { date, followers } for each day
-    // where followers is the cumulative follower count for that day
-    return followerData.trending.map((dayData: { date: string; followers: number }, index: number, arr: Array<{ date: string; followers: number }>) => {
-      // Calculate daily change by comparing with previous day
-      const prevCount = index > 0 ? arr[index - 1].followers : 0;
-      const netChange = dayData.followers - prevCount;
-      
-      // For visualization, separate positive and negative changes
-      const newFollowers = netChange > 0 ? netChange : 0;
-      const lostFollowers = netChange < 0 ? Math.abs(netChange) : 0;
-      
+    // Format date for display
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(date);
+    };
+
+    // The backend now provides daily followers and unfollows directly
+    return followerData.trending.map((item) => {
       return {
-        date: dayData.date,
-        "New Followers": newFollowers,
-        "Lost Followers": lostFollowers,
-        "Net Change": netChange,
-        "Total Followers": dayData.followers,
+        date: formatDate(item.date),
+        followers: isFinite(Number(item.followers)) ? Number(item.followers) : 0,
+        unfollows: isFinite(Number(item.unfollows)) ? Number(item.unfollows) : 0,
+        netChange: isFinite(Number(item.netChange)) ? Number(item.netChange) : 0
       };
     });
   })();
@@ -258,9 +254,14 @@ export default function ProDashboard() {
                   <Tooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
                   <Legend />
                   <Bar
-                    dataKey="Total Followers"
-                    fill="hsl(200, 70%, 50%)"
-                    name="Total Followers"
+                    dataKey="followers"
+                    fill="hsl(145, 70%, 50%)"
+                    name="New Followers"
+                  />
+                  <Bar
+                    dataKey="unfollows"
+                    fill="hsl(0, 70%, 50%)"
+                    name="Unfollows"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -308,7 +309,12 @@ interface BookPerformance {
 
 interface FollowerAnalytics {
   total: number;
-  trending: Array<{ date: string; followers: number }>;
+  trending: Array<{ 
+    date: string; 
+    followers: number; 
+    unfollows: number;
+    netChange: number;
+  }>;
 }
 
 interface ProDashboardData {
