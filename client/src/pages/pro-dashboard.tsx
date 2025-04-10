@@ -100,7 +100,7 @@ export default function ProDashboard() {
 
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-metrics", timeRange],
-    queryFn: () => fetch("/api/pro/follower-metrics").then((res) => res.json()),
+    queryFn: () => fetch(`/api/pro/follower-metrics?timeRange=${timeRange}`).then((res) => res.json()),
     enabled: !!user?.isAuthor,
   });
 
@@ -159,28 +159,32 @@ export default function ProDashboard() {
     // Analytics dashboard with Pro check
     const analyticsContent = (
       <div className="flex-1 space-y-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
+          <Select
+            value={timeRange}
+            onValueChange={(value) => {
+              console.log(`Timeframe changed to: ${value} days`);
+              setTimeRange(value);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_RANGES.map((range) => (
+                <SelectItem key={range.value} value={range.value}>
+                  {range.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
        
        <Card>
           <CardHeader className="space-y-4">
             <CardTitle>Book Performance Analytics</CardTitle>
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-4">
-                <Select
-                  value={timeRange}
-                  onValueChange={(value) => setTimeRange(value)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select time range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_RANGES.map((range) => (
-                      <SelectItem key={range.value} value={range.value}>
-                        {range.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="flex flex-wrap gap-2">
                 {books?.map((book) => (
                   <Button

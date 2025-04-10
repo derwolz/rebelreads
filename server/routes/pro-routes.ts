@@ -631,15 +631,20 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
   }
 
   try {
-    // Get follower metrics for this author (past 30 days)
-    const followerMetrics = await dbStorage.getFollowerMetrics(req.user.id, 30);
+    // Get the time range from query params or default to 30 days
+    const timeRange = parseInt(req.query.timeRange as string) || 30;
+    
+    console.log(`Fetching follower metrics with timeRange: ${timeRange} days`);
+    
+    // Get follower metrics for this author based on the requested time range
+    const followerMetrics = await dbStorage.getFollowerMetrics(req.user.id, timeRange);
     
     // Create a map to store daily counts
     const dateMap = new Map<string, number>();
     const today = new Date();
     
-    // Initialize with all dates in the past 30 days
-    for (let i = 29; i >= 0; i--) {
+    // Initialize with all dates in the past timeRange days
+    for (let i = timeRange - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
