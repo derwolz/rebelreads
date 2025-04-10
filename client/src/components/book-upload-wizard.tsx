@@ -718,11 +718,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 5:
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Genres, Themes & Tropes</h2>
-            <p className="text-sm text-muted-foreground">
-              Select and prioritize taxonomies to accurately categorize your book.
-            </p>
-            {/* New Taxonomy Selector */}
+
             <TaxonomySelector
               selectedTaxonomies={formData.genreTaxonomies || []}
               onTaxonomiesChange={(taxonomies) => 

@@ -178,11 +178,40 @@ router.patch("/books/:id", async (req, res) => {
   }
 
   try {
+    // Add debugging to see what's in the request
+    console.log("Book update request body:", JSON.stringify(req.body, null, 2));
+    
     // Extract genreTaxonomies from request body to handle separately
     const { genreTaxonomies, ...bookData } = req.body;
     
-    // Update main book data first
-    const updatedBook = await dbStorage.updateBook(book.id, bookData);
+    // Ensure we're not passing any unexpected data to the update query
+    const safeBookData: Record<string, any> = {};
+    
+    // Only include existing book fields in the data we pass to the update
+    if (bookData.title) safeBookData.title = bookData.title;
+    if (bookData.description) safeBookData.description = bookData.description;
+    if (bookData.pageCount) safeBookData.pageCount = bookData.pageCount;
+    if (bookData.formats) safeBookData.formats = bookData.formats;
+    if (bookData.publishedDate) safeBookData.publishedDate = bookData.publishedDate;
+    if (bookData.awards) safeBookData.awards = bookData.awards;
+    if (bookData.originalTitle) safeBookData.originalTitle = bookData.originalTitle;
+    if (bookData.series) safeBookData.series = bookData.series;
+    if (bookData.setting) safeBookData.setting = bookData.setting;
+    if (bookData.characters) safeBookData.characters = bookData.characters;
+    if (bookData.isbn) safeBookData.isbn = bookData.isbn;
+    if (bookData.asin) safeBookData.asin = bookData.asin;
+    if (bookData.language) safeBookData.language = bookData.language;
+    if (bookData.referralLinks) safeBookData.referralLinks = bookData.referralLinks;
+    if (bookData.internal_details) safeBookData.internal_details = bookData.internal_details;
+    if (bookData.coverUrl) safeBookData.coverUrl = bookData.coverUrl;
+    
+    console.log("Safe book data:", JSON.stringify(safeBookData, null, 2));
+    
+    // Update main book data first (only if we have data to update)
+    let updatedBook = book;
+    if (Object.keys(safeBookData).length > 0) {
+      updatedBook = await dbStorage.updateBook(book.id, safeBookData);
+    }
     
     // Then handle taxonomies if present
     if (genreTaxonomies) {
