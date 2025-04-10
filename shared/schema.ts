@@ -202,7 +202,14 @@ export const rating_preferences = pgTable("rating_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
   criteriaOrder: jsonb("criteria_order").$type<string[]>().notNull(),
+  // Keep criteriaWeights for backward compatibility
   criteriaWeights: jsonb("criteria_weights").$type<Record<string, number>>().notNull().default({}),
+  // Individual columns for each rating criteria with decimal type
+  themes: decimal("themes").notNull().default("0.2"),
+  worldbuilding: decimal("worldbuilding").notNull().default("0.08"),
+  writing: decimal("writing").notNull().default("0.25"),
+  enjoyment: decimal("enjoyment").notNull().default("0.35"),
+  characters: decimal("characters").notNull().default("0.12"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -398,6 +405,12 @@ export const insertRatingPreferencesSchema = createInsertSchema(rating_preferenc
   updatedAt: true,
 }).extend({
   criteriaWeights: z.record(z.string(), z.number()).optional(),
+  // Add individual criteria fields as optional in the insert schema
+  themes: z.number().min(0).max(1).optional(),
+  worldbuilding: z.number().min(0).max(1).optional(),
+  writing: z.number().min(0).max(1).optional(),
+  enjoyment: z.number().min(0).max(1).optional(),
+  characters: z.number().min(0).max(1).optional(),
 });
 
 export const loginSchema = z.object({
@@ -518,17 +531,35 @@ export function calculateStraightAverageRating(rating: Rating): number {
  */
 export function calculateWeightedRating(
   rating: Rating, 
-  customWeights?: Record<string, number>,
+  customWeights?: Record<string, number> | RatingPreferences,
   userCriteriaOrder?: string[]
 ): number {
-  // If custom weights are directly provided, use them
-  if (customWeights) {
+  // If RatingPreferences object is provided with individual columns
+  if (customWeights && 'themes' in customWeights && 
+      typeof customWeights.themes === 'number' &&
+      typeof customWeights.writing === 'number' &&
+      typeof customWeights.enjoyment === 'number' &&
+      typeof customWeights.characters === 'number' &&
+      typeof customWeights.worldbuilding === 'number') {
+    
     return (
       rating.enjoyment * customWeights.enjoyment +
       rating.writing * customWeights.writing +
       rating.themes * customWeights.themes + 
       rating.characters * customWeights.characters +
       rating.worldbuilding * customWeights.worldbuilding
+    );
+  }
+  
+  // If custom weights are provided as a Record
+  if (customWeights && typeof customWeights === 'object' && !('id' in customWeights)) {
+    const weights = customWeights as Record<string, number>;
+    return (
+      rating.enjoyment * weights.enjoyment +
+      rating.writing * weights.writing +
+      rating.themes * weights.themes + 
+      rating.characters * weights.characters +
+      rating.worldbuilding * weights.worldbuilding
     );
   }
   
