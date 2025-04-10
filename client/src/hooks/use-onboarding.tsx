@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from './use-auth';
+import { queryClient } from '../lib/queryClient';
 
 type OnboardingContextType = {
   showRatingWizard: boolean;
@@ -32,7 +33,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // Update local user state when onboarding is completed
   const setHasCompletedOnboarding = (value: boolean) => {
     if (value) {
+      // Close the wizard
       closeRatingWizard();
+      
+      // Only update if the user exists and hasn't completed onboarding yet
+      if (user && !user.hasCompletedOnboarding) {
+        // Invalidate the user query to refresh the user data
+        // This will pick up the hasCompletedOnboarding=true set by the backend
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      }
     }
   };
   
