@@ -239,7 +239,17 @@ export default function DashboardPage(): React.JSX.Element {
             </CardHeader>
             <CardContent className="space-y-4">
               {recentReviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
+                <ReviewCard 
+                  key={review.id} 
+                  review={{
+                    ...review,
+                    book: review.bookId ? {
+                      id: review.bookId,
+                      title: review.bookTitle || 'Unknown Title',
+                      coverImageUrl: review.bookCoverUrl
+                    } : undefined
+                  }} 
+                />
               ))}
             </CardContent>
           </Card>
