@@ -126,12 +126,12 @@ export default function ProDashboard() {
   const followerChartData = (() => {
     if (!followerData || !followerData.trending) return [];
 
-    // The backend now provides a 'trending' array with { date, count } for each day
-    // where count is the cumulative follower count for that day
-    return followerData.trending.map((dayData: { date: string; count: number }, index: number, arr: Array<{ date: string; count: number }>) => {
+    // The backend now provides a 'trending' array with { date, followers } for each day
+    // where followers is the cumulative follower count for that day
+    return followerData.trending.map((dayData: { date: string; followers: number }, index: number, arr: Array<{ date: string; followers: number }>) => {
       // Calculate daily change by comparing with previous day
-      const prevCount = index > 0 ? arr[index - 1].count : 0;
-      const netChange = dayData.count - prevCount;
+      const prevCount = index > 0 ? arr[index - 1].followers : 0;
+      const netChange = dayData.followers - prevCount;
       
       // For visualization, separate positive and negative changes
       const newFollowers = netChange > 0 ? netChange : 0;
@@ -142,7 +142,7 @@ export default function ProDashboard() {
         "New Followers": newFollowers,
         "Lost Followers": lostFollowers,
         "Net Change": netChange,
-        "Total Followers": dayData.count,
+        "Total Followers": dayData.followers,
       };
     });
   })();
@@ -316,7 +316,7 @@ interface BookPerformance {
 
 interface FollowerAnalytics {
   total: number;
-  trending: Array<{ date: string; count: number }>;
+  trending: Array<{ date: string; followers: number }>;
 }
 
 interface ProDashboardData {
