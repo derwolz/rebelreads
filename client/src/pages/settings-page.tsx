@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { ReaderSettings } from "@/components/reader-settings";
 import { BookUploadDialog } from "@/components/book-upload-wizard";
 import { RatingPreferencesSettings } from "@/components/rating-preferences-settings";
-import { StoryPreferencesSettings } from "@/components/story-preferences-settings";
 import { RecommendationsSidebar } from "@/components/recommendations-sidebar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -416,8 +415,6 @@ export default function SettingsPage() {
     content = <AppearanceSettings />;
   } else if (location === "/settings/rating-preferences") {
     content = <RatingPreferencesSettings isWizard={false} />;
-  } else if (location === "/settings/story-preferences") {
-    content = <StoryPreferencesSettings isWizard={false} />;
   } else if (location === "/settings/author" && user?.isAuthor) {
     content = (
       <Card>
@@ -609,10 +606,8 @@ export default function SettingsPage() {
           {content}
         </div>
 
-        {/* Recommendations Sidebar - Only visible on desktop and only for reader settings and preferences pages */}
-        {(location === "/settings" || 
-          location === "/settings/rating-preferences" || 
-          location === "/settings/story-preferences") && (
+        {/* Recommendations Sidebar - Only visible on desktop and only for reader settings and rating preferences */}
+        {(location === "/settings" || location === "/settings/rating-preferences") && (
           <div className="hidden lg:block w-72 shrink-0">
             <RecommendationsSidebar />
           </div>
