@@ -305,7 +305,8 @@ router.get("/reviews", async (req: Request, res: Response) => {
         },
         book: {
           title: book?.title || 'Unknown Book',
-          author: book?.author || 'Unknown Author'
+          author: book?.author || 'Unknown Author',
+          coverImageUrl: book?.coverUrl
         },
         replies: repliesWithAuthor
       };
@@ -402,7 +403,8 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
         },
         book: {
           title: book?.title || 'Unknown Book',
-          author: book?.author || 'Unknown Author'
+          author: book?.author || 'Unknown Author',
+          coverImageUrl: book?.coverUrl
         },
         replies: repliesWithAuthor
       };
