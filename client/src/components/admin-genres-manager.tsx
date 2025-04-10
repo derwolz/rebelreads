@@ -85,7 +85,7 @@ export const AdminGenresManager: React.FC = () => {
   const [editItem, setEditItem] = useState<GenreTaxonomy | null>(null);
   const [bulkImportText, setBulkImportText] = useState("");
   const [expandedGenres, setExpandedGenres] = useState<Record<number, boolean>>({});
-  const [selectedParentGenreId, setSelectedParentGenreId] = useState<string>("");
+  const [selectedParentGenreId, setSelectedParentGenreId] = useState<string>("none");
 
   // Query to get all genres
   const {
@@ -421,7 +421,7 @@ export const AdminGenresManager: React.FC = () => {
         const genreMap = new Map(genres.map(g => [g.name.toLowerCase(), g.id]));
         
         // If a parent genre is selected in the dropdown, use it for all subgenres
-        if (selectedParentGenreId) {
+        if (selectedParentGenreId && selectedParentGenreId !== "none") {
           const selectedParentId = parseInt(selectedParentGenreId);
           const selectedParentGenre = genres.find(g => g.id === selectedParentId);
           
@@ -515,7 +515,7 @@ export const AdminGenresManager: React.FC = () => {
               setIsImportDialogOpen(open);
               if (!open) {
                 // Reset form state when dialog closes
-                setSelectedParentGenreId("");
+                setSelectedParentGenreId("none");
                 setBulkImportText("");
               }
             }}>
@@ -578,7 +578,7 @@ export const AdminGenresManager: React.FC = () => {
                         <SelectContent>
                           <SelectGroup>
                             <SelectLabel>Genres</SelectLabel>
-                            <SelectItem value="">None (use CSV values)</SelectItem>
+                            <SelectItem value="none">None (use CSV values)</SelectItem>
                             {genres.map((genre) => (
                               <SelectItem key={genre.id} value={genre.id.toString()}>
                                 {genre.name}
