@@ -1,6 +1,8 @@
 import {
   Book,
   books,
+  bookGenreTaxonomies,
+  genreTaxonomies
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike, sql } from "drizzle-orm";
@@ -105,21 +107,33 @@ export class BookStorage implements IBookStorage {
   async getAuthorGenres(
     authorId: number,
   ): Promise<{ genre: string; count: number }[]> {
-    const books = await this.getBooksByAuthor(authorId);
-    const genreCounts = new Map<string, number>();
-
-    books.forEach((book) => {
-      book.genres.forEach((genre) => {
-        genreCounts.set(genre, (genreCounts.get(genre) || 0) + 1);
-      });
-    });
-
-    return Array.from(genreCounts.entries())
-      .map(([genre, count]) => ({
-        genre,
-        count,
-      }))
-      .sort((a, b) => b.count - a.count);
+    // Query book_genre_taxonomies table through a join with books table
+    const result = await db
+      .select({
+        name: sql<string>`g.name`,
+        count: sql<number>`count(*)`,
+      })
+      .from(books)
+      .innerJoin(
+        bookGenreTaxonomies, 
+        eq(books.id, bookGenreTaxonomies.bookId)
+      )
+      .innerJoin(
+        genreTaxonomies.as('g'),
+        eq(bookGenreTaxonomies.taxonomyId, sql<number>`g.id`)
+      )
+      .where(and(
+        eq(books.authorId, authorId),
+        eq(sql`g.type`, 'genre')
+      ))
+      .groupBy(sql`g.name`)
+      .orderBy(sql`count(*) DESC`);
+    
+    // Transform result to expected format
+    return result.map(item => ({
+      genre: item.name,
+      count: Number(item.count)
+    }));
   }
 
   async updateInternalDetails(id: number, details: string): Promise<Book> {
