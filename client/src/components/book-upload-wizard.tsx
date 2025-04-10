@@ -171,7 +171,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [showCoverUpload, setShowCoverUpload] = useState(!book);
-  const [formData, setFormData] = useState<FormData>(() => {
+  const [formData, setFormData] = useState(() => {
     if (book) {
       return {
         title: book.title,

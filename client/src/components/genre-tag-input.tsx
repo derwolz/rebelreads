@@ -28,7 +28,7 @@ export function GenreTagInput({ selectedGenres, onGenresChange }: GenreTagInputP
   });
 
   // Create a list of genre names from the genre taxonomy objects
-  const genreNames = (customGenres || []).map(g => g.name || "").filter(Boolean);
+  const genreNames = (customGenres || []).map((g: any) => g.name || "").filter(Boolean);
   
   // Combine built-in and custom genres
   const availableGenres = Array.from(new Set([...AVAILABLE_GENRES, ...genreNames]));
