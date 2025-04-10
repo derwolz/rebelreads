@@ -645,28 +645,17 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     
     console.log("Raw follower metrics:", JSON.stringify(followerMetrics));
     
-    // Create a map to store daily counts
+    // Process the raw follower data into the format expected by the frontend
     const dateMap = new Map<string, { follows: number, unfollows: number }>();
-    const today = new Date();
-    
-    // Initialize with all dates in the past timeRange days - all zeros by default
-    for (let i = timeRange - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      dateMap.set(dateStr, { follows: 0, unfollows: 0 });
-    }
     
     // Apply daily follow counts from the data
     followerMetrics.follows.forEach(follow => {
       // Ensure count is a valid number
       const followCount = typeof follow.count === 'number' && isFinite(follow.count) ? follow.count : 0;
-      if (dateMap.has(follow.date)) {
-        const dailyData = dateMap.get(follow.date);
-        if (dailyData) {
-          dailyData.follows = followCount;
-        }
-      }
+      dateMap.set(follow.date, { 
+        follows: followCount, 
+        unfollows: dateMap.has(follow.date) ? (dateMap.get(follow.date)?.unfollows || 0) : 0
+      });
     });
     
     // Apply daily unfollow counts from the data
@@ -674,10 +663,12 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
       // Ensure count is a valid number
       const unfollowCount = typeof unfollow.count === 'number' && isFinite(unfollow.count) ? unfollow.count : 0;
       if (dateMap.has(unfollow.date)) {
-        const dailyData = dateMap.get(unfollow.date);
-        if (dailyData) {
-          dailyData.unfollows = unfollowCount;
+        const existing = dateMap.get(unfollow.date);
+        if (existing) {
+          existing.unfollows = unfollowCount;
         }
+      } else {
+        dateMap.set(unfollow.date, { follows: 0, unfollows: unfollowCount });
       }
     });
     
