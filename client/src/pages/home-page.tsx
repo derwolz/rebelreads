@@ -87,7 +87,7 @@ export default function HomePage() {
                       (books && books.length > 0 ? books[0] : null);
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8 max-w-screen-2xl">
       {/* Hero Carousel for Promoted Books */}
       <HeroCarousel />
 
