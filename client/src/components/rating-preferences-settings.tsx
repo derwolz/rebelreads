@@ -145,6 +145,15 @@ export function RatingPreferencesSettings({
       newOrder.splice(oldIndex, 1);
       newOrder.splice(newIndex, 0, active.id as string);
       
+      console.log("Criteria reordered:", newOrder);
+      
+      // Calculate new weights based on the new order
+      const newWeights = preferencesData?.criteriaWeights 
+        ? updateWeightsForNewOrder(newOrder, preferencesData.criteriaWeights)
+        : generateCriteriaWeights(newOrder);
+      
+      console.log("New weights after reordering:", newWeights);
+      
       setCriteriaOrder(newOrder);
     }
   };
@@ -186,11 +195,31 @@ export function RatingPreferencesSettings({
     return weights;
   };
   
+  // Helper function to update weights for a new order while preserving the weight values
+  const updateWeightsForNewOrder = (
+    newOrder: string[], 
+    existingWeights: Record<string, number>
+  ): Record<string, number> => {
+    const updatedWeights: Record<string, number> = {};
+    
+    // For a completely new ordering, we'll use position-based weights
+    // This preserves the relationship between position and weight
+    newOrder.forEach((criterion, index) => {
+      updatedWeights[criterion] = POSITION_WEIGHTS[index];
+    });
+    
+    console.log("Using existing weights as reference:", existingWeights);
+    console.log("Updated weights for new order:", updatedWeights);
+    return updatedWeights;
+  };
+  
   // Mutation to save preferences
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
-      // Generate weights from the current criteria order
-      const criteriaWeights = generateCriteriaWeights(criteriaOrder);
+      // If we have preferencesData, use the saved weights, otherwise generate new ones
+      const criteriaWeights = preferencesData?.criteriaWeights 
+        ? updateWeightsForNewOrder(criteriaOrder, preferencesData.criteriaWeights)
+        : generateCriteriaWeights(criteriaOrder);
       
       return apiRequest('POST', '/api/account/rating-preferences', {
         criteriaOrder,
