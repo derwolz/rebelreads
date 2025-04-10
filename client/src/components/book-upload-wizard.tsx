@@ -974,9 +974,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-1">
-                    {formData.genres.map((genre, i) => (
+                    {formData.genreTaxonomies.map((tax: any, i: number) => (
                       <Badge key={i} variant="secondary">
-                        {genre}
+                        {tax.name}
                       </Badge>
                     ))}
                   </div>
