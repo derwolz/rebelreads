@@ -15,6 +15,7 @@ import authorAnalyticsRoutes from "./routes/author-analytics-routes";
 import adminRoutes from "./routes/admin-routes";
 import betaRoutes from "./routes/beta-routes";
 import genreRoutes from "./routes/genre-routes";
+import storyPreferencesRoutes from "./routes/story-preferences-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -34,6 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/admin", adminRoutes);
   app.use("/api/beta", betaRoutes);
   app.use("/api/genres", genreRoutes);
+  app.use("/api/story-preferences", storyPreferencesRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

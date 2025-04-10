@@ -811,3 +811,25 @@ export const insertGenreTaxonomySchema = createInsertSchema(genreTaxonomies).omi
 // Define types
 export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
 export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
+
+// User story preferences - genres, subgenres, themes, tropes with rankings
+export const storyPreferences = pgTable("story_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  genres: jsonb("genres").$type<Array<{id: number, rank: number}>>().notNull().default([]),
+  subgenres: jsonb("subgenres").$type<Array<{id: number, rank: number}>>().notNull().default([]),
+  themes: jsonb("themes").$type<Array<{id: number, rank: number}>>().notNull().default([]),
+  tropes: jsonb("tropes").$type<Array<{id: number, rank: number}>>().notNull().default([]),
+  combinedRanking: jsonb("combined_ranking").$type<Array<{id: number, type: string, rank: number, weight: number}>>().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertStoryPreferencesSchema = createInsertSchema(storyPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type StoryPreferences = typeof storyPreferences.$inferSelect;
+export type InsertStoryPreferences = typeof storyPreferences.$inferInsert;
