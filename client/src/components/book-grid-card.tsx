@@ -97,15 +97,30 @@ export function BookGridCard({ book }: { book: Book }) {
 
   // We're now using individual weight columns directly
   
-  const averageRatings = ratings?.length ? {
-    // Use user preferences for weighted rating
-    overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r, ratingPreferences), 0) / ratings.length,
-    enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-    writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
-    themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-    characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-    worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
-  } : null;
+  // Calculate individual unweighted ratings per vector
+  const unweightedRatings = ratings?.length
+    ? {
+        enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
+        writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+        themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
+        characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
+        worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+      }
+    : null;
+    
+  // Calculate overall weighted rating using user preferences and the unweighted individual ratings
+  const averageRatings = unweightedRatings
+    ? {
+        ...unweightedRatings,
+        overall: calculateWeightedRating({
+          enjoyment: unweightedRatings.enjoyment,
+          writing: unweightedRatings.writing,
+          themes: unweightedRatings.themes,
+          characters: unweightedRatings.characters,
+          worldbuilding: unweightedRatings.worldbuilding
+        } as Rating, ratingPreferences)
+      }
+    : null;
 
   const handleCardClick = async (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) {

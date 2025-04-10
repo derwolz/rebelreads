@@ -167,7 +167,7 @@ export function RatingPreferencesSettings({
     createdAt: string;
     updatedAt: string;
   }>({
-    queryKey: ['/api/account/rating-preferences'],
+    queryKey: ['/api/rating-preferences'],
     staleTime: 60000,
     enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });
@@ -235,14 +235,14 @@ export function RatingPreferencesSettings({
       console.log("Saving preferences with weights:", weights);
       
       // Send just the weights (individual columns, not nested objects)
-      return apiRequest('POST', '/api/account/rating-preferences', weights);
+      return apiRequest('POST', '/api/rating-preferences', weights);
     },
     onSuccess: () => {
       toast({
         title: "Preferences Saved",
         description: "Your rating criteria preferences have been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/rating-preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rating-preferences'] });
       
       // Call onComplete callback if provided (for wizard mode)
       if (onComplete) {

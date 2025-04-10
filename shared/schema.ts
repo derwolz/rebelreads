@@ -529,42 +529,42 @@ export function calculateWeightedRating(
   rating: Rating, 
   customWeights?: Record<string, number> | RatingPreferences
 ): number {
+  let weights: Record<string, number>;
+  
   // If RatingPreferences object is provided with individual columns
-  if (customWeights && 'themes' in customWeights && 
-      typeof customWeights.themes === 'number' &&
-      typeof customWeights.writing === 'number' &&
-      typeof customWeights.enjoyment === 'number' &&
-      typeof customWeights.characters === 'number' &&
-      typeof customWeights.worldbuilding === 'number') {
-    
-    return (
-      rating.enjoyment * customWeights.enjoyment +
-      rating.writing * customWeights.writing +
-      rating.themes * customWeights.themes + 
-      rating.characters * customWeights.characters +
-      rating.worldbuilding * customWeights.worldbuilding
-    );
-  }
-  
+  if (customWeights && 'themes' in customWeights) {
+    // Handle string values from DB by converting to numbers
+    weights = {
+      enjoyment: typeof customWeights.enjoyment === 'string' ? parseFloat(customWeights.enjoyment) : Number(customWeights.enjoyment),
+      writing: typeof customWeights.writing === 'string' ? parseFloat(customWeights.writing) : Number(customWeights.writing),
+      themes: typeof customWeights.themes === 'string' ? parseFloat(customWeights.themes) : Number(customWeights.themes),
+      characters: typeof customWeights.characters === 'string' ? parseFloat(customWeights.characters) : Number(customWeights.characters),
+      worldbuilding: typeof customWeights.worldbuilding === 'string' ? parseFloat(customWeights.worldbuilding) : Number(customWeights.worldbuilding)
+    };
+  } 
   // If custom weights are provided as a Record
-  if (customWeights && typeof customWeights === 'object' && !('id' in customWeights)) {
-    const weights = customWeights as Record<string, number>;
-    return (
-      rating.enjoyment * weights.enjoyment +
-      rating.writing * weights.writing +
-      rating.themes * weights.themes + 
-      rating.characters * weights.characters +
-      rating.worldbuilding * weights.worldbuilding
-    );
+  else if (customWeights && typeof customWeights === 'object' && !('id' in customWeights)) {
+    weights = customWeights as Record<string, number>;
+  }
+  // Default fallback using system default weights
+  else {
+    weights = {...DEFAULT_RATING_WEIGHTS};
   }
   
-  // Default fallback using system default weights
+  // Ensure all weights are valid numbers
+  Object.keys(weights).forEach(key => {
+    if (isNaN(weights[key])) {
+      weights[key] = DEFAULT_RATING_WEIGHTS[key as keyof typeof DEFAULT_RATING_WEIGHTS];
+    }
+  });
+  
+  // Apply weights to each rating component
   return (
-    rating.enjoyment * DEFAULT_RATING_WEIGHTS.enjoyment +
-    rating.writing * DEFAULT_RATING_WEIGHTS.writing +
-    rating.themes * DEFAULT_RATING_WEIGHTS.themes + 
-    rating.characters * DEFAULT_RATING_WEIGHTS.characters +
-    rating.worldbuilding * DEFAULT_RATING_WEIGHTS.worldbuilding
+    rating.enjoyment * weights.enjoyment +
+    rating.writing * weights.writing +
+    rating.themes * weights.themes + 
+    rating.characters * weights.characters +
+    rating.worldbuilding * weights.worldbuilding
   );
 }
 
