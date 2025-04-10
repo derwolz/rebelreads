@@ -55,6 +55,7 @@ router.get("/rating-preferences", async (req: Request, res: Response) => {
 // Save user's rating preferences
 router.post("/rating-preferences", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
+    console.log("Rating preferences POST - User not authenticated");
     return res.status(401).json({ error: "Not authenticated" });
   }
   
@@ -64,10 +65,14 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
   });
   
   try {
+    console.log("Rating preferences POST - Request body:", req.body);
+    console.log("Rating preferences POST - User ID:", req.user.id);
+    
     const { criteriaOrder } = schema.parse(req.body);
     
     const preferences = await dbStorage.saveRatingPreferences(req.user.id, criteriaOrder);
     
+    console.log("Rating preferences POST - Successfully saved:", preferences);
     res.json(preferences);
   } catch (error) {
     console.error("Error saving rating preferences:", error);

@@ -381,47 +381,61 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async saveRatingPreferences(userId: number, criteriaOrder: string[]): Promise<RatingPreferences> {
+    console.log(`Storage: saveRatingPreferences called for user ${userId} with order:`, criteriaOrder);
+    
     // Check if preferences already exist
     const existing = await this.getRatingPreferences(userId);
+    console.log("Storage: existing preferences:", existing);
     
-    if (existing) {
-      // Update existing
-      const [updated] = await db
-        .update(rating_preferences)
-        .set({ 
-          criteriaOrder,
-          updatedAt: new Date()
-        })
-        .where(eq(rating_preferences.userId, userId))
-        .returning();
-      
-      // Mark onboarding as complete if not already
-      const user = await this.getUser(userId);
-      if (user && !user.hasCompletedOnboarding) {
+    try {
+      if (existing) {
+        console.log("Storage: updating existing preferences");
+        // Update existing
+        const [updated] = await db
+          .update(rating_preferences)
+          .set({ 
+            criteriaOrder,
+            updatedAt: new Date()
+          })
+          .where(eq(rating_preferences.userId, userId))
+          .returning();
+        
+        console.log("Storage: updated preferences:", updated);
+        
+        // Mark onboarding as complete if not already
+        const user = await this.getUser(userId);
+        if (user && !user.hasCompletedOnboarding) {
+          await db
+            .update(users)
+            .set({ hasCompletedOnboarding: true })
+            .where(eq(users.id, userId));
+        }
+        
+        return updated;
+      } else {
+        console.log("Storage: creating new preferences");
+        // Create new
+        const [created] = await db
+          .insert(rating_preferences)
+          .values({
+            userId,
+            criteriaOrder
+          })
+          .returning();
+        
+        console.log("Storage: created preferences:", created);
+        
+        // Mark onboarding as complete
         await db
           .update(users)
           .set({ hasCompletedOnboarding: true })
           .where(eq(users.id, userId));
+        
+        return created;
       }
-      
-      return updated;
-    } else {
-      // Create new
-      const [created] = await db
-        .insert(rating_preferences)
-        .values({
-          userId,
-          criteriaOrder
-        })
-        .returning();
-      
-      // Mark onboarding as complete
-      await db
-        .update(users)
-        .set({ hasCompletedOnboarding: true })
-        .where(eq(users.id, userId));
-      
-      return created;
+    } catch (error) {
+      console.error("Storage: Error saving preferences:", error);
+      throw error;
     }
   }
   

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Book, Rating, calculateWeightedRating, RATING_CRITERIA } from "@shared/schema";
+import { Book, Rating, calculateWeightedRating, RATING_CRITERIA, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
 import { Heart } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
@@ -30,6 +30,24 @@ import { ReviewCard } from "@/components/review-card";
 import { WishlistButton } from "@/components/wishlist-button";
 import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
+
+// Position-based weights for rating criteria
+const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
+
+// Helper function to get weight percentage for a criteria based on position
+function getWeightPercentage(criteriaName: string, criteriaOrder?: string[]): string {
+  if (!criteriaOrder) {
+    // Use default weights if no user preferences
+    return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
+  }
+  
+  // Find the position of the criteria in the user's order
+  const position = criteriaOrder.indexOf(criteriaName);
+  if (position === -1) return "0%"; // Not found
+  
+  // Use the weight based on position
+  return `${(POSITION_WEIGHTS[position] * 100).toFixed(0)}%`;
+}
 
 export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
