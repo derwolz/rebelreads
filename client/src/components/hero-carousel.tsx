@@ -35,9 +35,9 @@ export function HeroCarousel() {
   });
 
   return (
-    <section className="mb-12 w-full overflow-hidden">
+    <section className="mb-12">
       <h2 className="sr-only">Featured Books</h2>
-      <Carousel className="w-full max-w-full">
+      <Carousel className="w-full">
         <CarouselContent>
           {isLoading ? (
             <CarouselItem>

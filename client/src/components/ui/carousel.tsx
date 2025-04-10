@@ -136,7 +136,7 @@ const Carousel = React.forwardRef<
           ref={ref}
           onKeyDownCapture={handleKeyDown}
           className={cn("relative overflow-hidden", className)}
-          style={{ paddingBottom: "1rem", maxWidth: "100%" }}
+          style={{ paddingBottom: "1rem" }}
           role="region"
           aria-roledescription="carousel"
           {...props}

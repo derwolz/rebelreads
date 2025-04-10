@@ -87,7 +87,7 @@ export default function HomePage() {
                       (books && books.length > 0 ? books[0] : null);
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-screen-2xl">
+    <main className="container mx-auto px-4 py-8">
       {/* Hero Carousel for Promoted Books */}
       <HeroCarousel />
 
@@ -122,17 +122,48 @@ export default function HomePage() {
 
       {/* From Authors You Follow Section */}
       {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
-        <section className="mb-12 w-full overflow-hidden">
+        <section className="mb-12">
           <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
-          <div className="max-w-full overflow-hidden">
+          <Carousel className="w-full">
+            <CarouselContent>
+              {isLoadingFollowed
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <CarouselItem
+                      key={i}
+                      className="md:basis-1/3 lg:basis-1/4"
+                    >
+                      <div className="space-y-3">
+                        <div className="h-64 w-full bg-muted rounded-md"></div>
+                        <div className="h-4 w-3/4 bg-muted rounded"></div>
+                        <div className="h-4 w-1/2 bg-muted rounded"></div>
+                      </div>
+                    </CarouselItem>
+                  ))
+                : followedAuthorsBooks.slice(0, 10).map((book) => (
+                    <CarouselItem
+                      key={book.id}
+                      className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
+                    >
+                      <BookCard book={book} />
+                    </CarouselItem>
+                  ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
+        </section>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex-1">
+          {/* Popular Books Carousel */}
+          <section className="mb-12">
+            <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
             <Carousel className="w-full">
               <CarouselContent>
-                {isLoadingFollowed
+                {isLoading
                   ? Array.from({ length: 4 }).map((_, i) => (
-                      <CarouselItem
-                        key={i}
-                        className="md:basis-1/3 lg:basis-1/4"
-                      >
+                      <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
                         <div className="space-y-3">
                           <div className="h-64 w-full bg-muted rounded-md"></div>
                           <div className="h-4 w-3/4 bg-muted rounded"></div>
@@ -140,57 +171,18 @@ export default function HomePage() {
                         </div>
                       </CarouselItem>
                     ))
-                  : followedAuthorsBooks.slice(0, 10).map((book) => (
+                  : filteredBooks?.map((book) => (
                       <CarouselItem
                         key={book.id}
-                        className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-20"
+                        className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
                       >
-                        <div className="flex justify-center w-full">
-                          <BookCard book={book} />
-                        </div>
+                        <BookCard book={book} />
                       </CarouselItem>
                     ))}
               </CarouselContent>
-              <CarouselPrevious className="hidden md:flex left-4" />
-              <CarouselNext className="hidden md:flex right-4" />
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
             </Carousel>
-          </div>
-        </section>
-      )}
-
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1">
-          {/* Popular Books Carousel */}
-          <section className="mb-12 w-full overflow-hidden">
-            <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
-            <div className="max-w-full overflow-hidden">
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {isLoading
-                    ? Array.from({ length: 4 }).map((_, i) => (
-                        <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
-                          <div className="space-y-3">
-                            <div className="h-64 w-full bg-muted rounded-md"></div>
-                            <div className="h-4 w-3/4 bg-muted rounded"></div>
-                            <div className="h-4 w-1/2 bg-muted rounded"></div>
-                          </div>
-                        </CarouselItem>
-                      ))
-                    : filteredBooks?.map((book) => (
-                        <CarouselItem
-                          key={book.id}
-                          className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-20"
-                        >
-                          <div className="flex justify-center w-full">
-                            <BookCard book={book} />
-                          </div>
-                        </CarouselItem>
-                      ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden md:flex left-4" />
-                <CarouselNext className="hidden md:flex right-4" />
-              </Carousel>
-            </div>
           </section>
 
           {/* Horizontal Banner Ad */}
