@@ -352,6 +352,63 @@ async function removeOldRatingPreferencesColumns() {
   }
 }
 
+async function createTaxonomyTables() {
+  try {
+    // Check if genre_taxonomies table exists
+    const genreTaxonomiesResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'genre_taxonomies'
+    `);
+    
+    if (genreTaxonomiesResult.rows.length === 0) {
+      console.log("Creating 'genre_taxonomies' table...");
+      await db.execute(sql`
+        CREATE TABLE genre_taxonomies (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          type TEXT NOT NULL,
+          parent_id INTEGER,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          deleted_at TIMESTAMP
+        )
+      `);
+      console.log("Table 'genre_taxonomies' created successfully");
+    } else {
+      console.log("Table 'genre_taxonomies' already exists");
+    }
+    
+    // Check if book_genre_taxonomies table exists
+    const bookGenreTaxonomiesResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'book_genre_taxonomies'
+    `);
+    
+    if (bookGenreTaxonomiesResult.rows.length === 0) {
+      console.log("Creating 'book_genre_taxonomies' table...");
+      await db.execute(sql`
+        CREATE TABLE book_genre_taxonomies (
+          id SERIAL PRIMARY KEY,
+          book_id INTEGER NOT NULL,
+          taxonomy_id INTEGER NOT NULL,
+          rank INTEGER NOT NULL,
+          importance DECIMAL NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'book_genre_taxonomies' created successfully");
+    } else {
+      console.log("Table 'book_genre_taxonomies' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating taxonomy tables:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -362,5 +419,7 @@ export async function runMigrations() {
   await addCriteriaWeightsColumnToRatingPreferences();
   await addRatingMetricsColumnsToRatingPreferences();
   await removeOldRatingPreferencesColumns();
+  // Add taxonomy tables
+  await createTaxonomyTables();
   console.log("Migrations completed");
 }
