@@ -85,6 +85,7 @@ export const AdminGenresManager: React.FC = () => {
   const [editItem, setEditItem] = useState<GenreTaxonomy | null>(null);
   const [bulkImportText, setBulkImportText] = useState("");
   const [expandedGenres, setExpandedGenres] = useState<Record<number, boolean>>({});
+  const [selectedParentGenreId, setSelectedParentGenreId] = useState<string>("");
 
   // Query to get all genres
   const {
@@ -497,21 +498,80 @@ export const AdminGenresManager: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>Import {activeTab}</DialogTitle>
                 <DialogDescription>
-                  Paste your CSV data below. Format depends on the active tab:
-                  <ul className="mt-2 list-disc list-inside text-xs">
-                    {activeTab === "genres" && (
-                      <li>Format: "Genre,Subgenre,Description" (ignore Subgenre column)</li>
-                    )}
-                    {activeTab === "subgenres" && (
-                      <li>Format: "Genre,Subgenre,Description" (both Genre and Subgenre required)</li>
-                    )}
-                    {(activeTab === "tropes" || activeTab === "themes") && (
-                      <li>Format: "Name,Description"</li>
-                    )}
-                  </ul>
+                  Select the type of items you want to import and paste your CSV data below:
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleBulkImport}>
+                <div className="space-y-4 mb-4">
+                  <div>
+                    <label htmlFor="import-type" className="text-sm font-medium mb-2 block">
+                      Type to Import
+                    </label>
+                    <Select
+                      value={activeTab}
+                      onValueChange={handleTabChange}
+                    >
+                      <SelectTrigger id="import-type">
+                        <SelectValue placeholder="Select type to import" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Type</SelectLabel>
+                          <SelectItem value="genres">Genres</SelectItem>
+                          <SelectItem value="subgenres">Subgenres</SelectItem>
+                          <SelectItem value="tropes">Tropes</SelectItem>
+                          <SelectItem value="themes">Themes</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {activeTab === "subgenres" && genres && genres.length > 0 && (
+                    <div>
+                      <label htmlFor="import-parent-genre" className="text-sm font-medium mb-2 block">
+                        Parent Genre (optional)
+                      </label>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        If selected, all imported subgenres will be assigned to this parent genre.
+                        Otherwise, parent genres should be specified in the CSV data.
+                      </p>
+                      <Select
+                        value={selectedParentGenreId}
+                        onValueChange={(value) => {
+                          setSelectedParentGenreId(value);
+                        }}
+                      >
+                        <SelectTrigger id="import-parent-genre">
+                          <SelectValue placeholder="Select parent genre" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Genres</SelectLabel>
+                            <SelectItem value="">None (use CSV values)</SelectItem>
+                            {genres.map((genre) => (
+                              <SelectItem key={genre.id} value={genre.id.toString()}>
+                                {genre.name}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="text-sm text-muted-foreground mb-4">
+                  <p className="font-medium mb-1">CSV Format:</p>
+                  {activeTab === "genres" && (
+                    <p>Format: "Genre,Subgenre,Description" (ignore Subgenre column)</p>
+                  )}
+                  {activeTab === "subgenres" && (
+                    <p>Format: "Genre,Subgenre,Description" (both Genre and Subgenre required)</p>
+                  )}
+                  {(activeTab === "tropes" || activeTab === "themes") && (
+                    <p>Format: "Name,Description"</p>
+                  )}
+                </div>
                 <Textarea
                   value={bulkImportText}
                   onChange={(e) => setBulkImportText(e.target.value)}
