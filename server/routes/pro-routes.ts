@@ -636,6 +636,10 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     
     console.log(`Fetching follower metrics with timeRange: ${timeRange} days`);
     
+    // First get the total number of followers for this author
+    const totalFollowers = await dbStorage.getFollowerCount(req.user.id);
+    console.log(`Current total followers for author ${req.user.id}: ${totalFollowers}`);
+    
     // Get follower metrics for this author based on the requested time range
     const followerMetrics = await dbStorage.getFollowerMetrics(req.user.id, timeRange);
     
@@ -650,7 +654,7 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      dateMap.set(dateStr, 0);
+      dateMap.set(dateStr, totalFollowers); // Set the base value to the current total
     }
     
     // Debug the ranges of counts
@@ -660,23 +664,6 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
                 "to", Math.max(...(followCounts.length ? followCounts : [0])));
     console.log("Unfollow counts range:", Math.min(...(unfollowCounts.length ? unfollowCounts : [0])), 
                 "to", Math.max(...(unfollowCounts.length ? unfollowCounts : [0])));
-                
-    // Apply follow counts to the date map - ensure we're working with real numbers
-    let runningTotal = 0;
-    followerMetrics.follows.forEach(follow => {
-      // Ensure count is a valid number
-      const count = typeof follow.count === 'number' && isFinite(follow.count) ? follow.count : 0;
-      runningTotal += count;
-      dateMap.set(follow.date, runningTotal);
-    });
-    
-    // Apply unfollow counts to the date map - ensure we're working with real numbers
-    followerMetrics.unfollows.forEach(unfollow => {
-      // Ensure count is a valid number
-      const count = typeof unfollow.count === 'number' && isFinite(unfollow.count) ? unfollow.count : 0;
-      runningTotal -= count;
-      dateMap.set(unfollow.date, runningTotal);
-    });
     
     // Convert to the format expected by Recharts
     const trending = Array.from(dateMap.entries())
@@ -687,8 +674,7 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
       }));
     
     // Make sure total is a valid number
-    const total = trending[trending.length - 1]?.followers || 0;
-    const safeTotal = isFinite(total) ? total : 0;
+    const safeTotal = isFinite(totalFollowers) ? totalFollowers : 0;
     
     console.log("Final follower metrics response:", {
       total: safeTotal,

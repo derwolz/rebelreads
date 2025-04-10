@@ -239,7 +239,7 @@ router.get("/books/followed-authors", async (req, res) => {
         authorId: followers.followingId
       })
       .from(followers)
-      .where(eq(followers.userId, req.user!.id));
+      .where(eq(followers.followerId, req.user!.id));
     
     if (followedAuthors.length === 0) {
       return res.json([]);
