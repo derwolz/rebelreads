@@ -145,10 +145,17 @@ export const AdminGenresManager: React.FC = () => {
   // Mutation to create a new genre taxonomy item
   const createMutation = useMutation({
     mutationFn: async (item: NewGenreTaxonomy) => {
-      return apiRequest('/api/genres', {
+      const response = await fetch('/api/genres', {
         method: 'POST',
-        data: item,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(item),
       });
+      if (!response.ok) {
+        throw new Error('Failed to create item');
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -177,15 +184,22 @@ export const AdminGenresManager: React.FC = () => {
   // Mutation to update an existing genre taxonomy item
   const updateMutation = useMutation({
     mutationFn: async (item: GenreTaxonomy) => {
-      return apiRequest(`/api/genres/${item.id}`, {
+      const response = await fetch(`/api/genres/${item.id}`, {
         method: 'PUT',
-        data: {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: item.name,
           description: item.description,
           type: item.type,
           parentId: item.parentId,
-        },
+        }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to update item');
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -209,9 +223,13 @@ export const AdminGenresManager: React.FC = () => {
   // Mutation to delete a genre taxonomy item
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/genres/${id}`, {
+      const response = await fetch(`/api/genres/${id}`, {
         method: 'DELETE',
       });
+      if (!response.ok) {
+        throw new Error('Failed to delete item');
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -233,12 +251,19 @@ export const AdminGenresManager: React.FC = () => {
   // Mutation to import bulk data
   const importMutation = useMutation({
     mutationFn: async (items: any[]) => {
-      return apiRequest('/api/genres/import', {
+      const response = await fetch('/api/genres/import', {
         method: 'POST',
-        data: { items },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items }),
       });
+      if (!response.ok) {
+        throw new Error('Failed to import items');
+      }
+      return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { imported: number, total: number }) => {
       toast({
         title: "Import Complete",
         description: `Successfully imported ${data.imported} out of ${data.total} items`,
@@ -364,7 +389,7 @@ export const AdminGenresManager: React.FC = () => {
               description: description,
               type: "subgenre",
               parentGenreName: genre
-            });
+            } as any); // Using any to avoid TypeScript errors
           }
         } else {
           // For tropes and themes
@@ -394,7 +419,7 @@ export const AdminGenresManager: React.FC = () => {
       if (activeTab === "subgenres" && genres) {
         const genreMap = new Map(genres.map(g => [g.name.toLowerCase(), g.id]));
         
-        for (const item of items) {
+        for (const item of items as any[]) {
           if (item.parentGenreName) {
             const parentId = genreMap.get(item.parentGenreName.toLowerCase());
             if (parentId) {
@@ -406,7 +431,10 @@ export const AdminGenresManager: React.FC = () => {
                 description: `Parent genre '${item.parentGenreName}' not found. Subgenre will be created without a parent.`,
               });
             }
-            delete item.parentGenreName;
+            // Safe to use any as we're dealing with dynamic data
+            if ('parentGenreName' in item) {
+              delete (item as any).parentGenreName;
+            }
           }
         }
       }
