@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Book, Rating, calculateWeightedRating } from "@shared/schema";
+import { Book, Rating, calculateStraightAverageRating } from "@shared/schema";
 import {
   Card,
   CardContent,
@@ -103,7 +103,8 @@ export function ProBookManagement() {
             const ratings = bookRatings.get(book.id) || [];
 
             const averageRatings = ratings.length ? {
-              overall: ratings.reduce((acc, r) => acc + calculateWeightedRating(r), 0) / ratings.length,
+              // Using straight average calculation for Pro Book Management
+              overall: ratings.reduce((acc, r) => acc + calculateStraightAverageRating(r), 0) / ratings.length,
               enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
               writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
               themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
@@ -143,24 +144,25 @@ export function ProBookManagement() {
                             </TooltipTrigger>
                             <TooltipContent className="w-[200px]">
                               <div className="space-y-2">
+                                <p className="text-xs text-muted-foreground mb-2">Showing straight average (not preference-weighted)</p>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm">Enjoyment (30%)</span>
+                                  <span className="text-sm">Enjoyment</span>
                                   <StarRating rating={Math.round(averageRatings.enjoyment)} readOnly size="sm" />
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm">Writing (30%)</span>
+                                  <span className="text-sm">Writing</span>
                                   <StarRating rating={Math.round(averageRatings.writing)} readOnly size="sm" />
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm">Themes (20%)</span>
+                                  <span className="text-sm">Themes</span>
                                   <StarRating rating={Math.round(averageRatings.themes)} readOnly size="sm" />
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm">Characters (10%)</span>
+                                  <span className="text-sm">Characters</span>
                                   <StarRating rating={Math.round(averageRatings.characters)} readOnly size="sm" />
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm">World Building (10%)</span>
+                                  <span className="text-sm">World Building</span>
                                   <StarRating rating={Math.round(averageRatings.worldbuilding)} readOnly size="sm" />
                                 </div>
                               </div>

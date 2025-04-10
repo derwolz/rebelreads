@@ -484,6 +484,35 @@ export const insertAdImpressionSchema = createInsertSchema(adImpressions).omit({
 export type AdImpression = typeof adImpressions.$inferSelect;
 export type InsertAdImpression = typeof adImpressions.$inferInsert;
 
+/**
+ * Calculates the straight average rating (unweighted)
+ * Used for Pro Book Management section
+ */
+export function calculateStraightAverageRating(rating: Rating): number {
+  // Count the number of criteria that have values
+  const criteriaCount = [
+    rating.enjoyment, 
+    rating.writing, 
+    rating.themes, 
+    rating.characters, 
+    rating.worldbuilding
+  ].filter(Boolean).length;
+  
+  // Sum up all numerical rating criteria
+  const criteriaSum = 
+    (rating.enjoyment || 0) + 
+    (rating.writing || 0) + 
+    (rating.themes || 0) + 
+    (rating.characters || 0) + 
+    (rating.worldbuilding || 0);
+  
+  return criteriaCount > 0 ? criteriaSum / criteriaCount : 0;
+}
+
+/**
+ * Calculates a weighted rating based on user preferences
+ * Used for most of the application outside of Pro Book Management
+ */
 export function calculateWeightedRating(
   rating: Rating, 
   customWeights?: Record<string, number>,

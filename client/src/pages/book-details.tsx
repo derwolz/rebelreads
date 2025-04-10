@@ -45,6 +45,12 @@ export default function BookDetails() {
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${params?.id}/ratings`],
   });
+  
+  // Fetch user's rating preferences if logged in
+  const { data: ratingPreferences } = useQuery({
+    queryKey: ['/api/account/rating-preferences'],
+    enabled: !!user,
+  });
 
   // Record click-through when the page loads
   useEffect(() => {
