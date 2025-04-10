@@ -201,9 +201,6 @@ export const reading_status = pgTable("reading_status", {
 export const rating_preferences = pgTable("rating_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
-  criteriaOrder: jsonb("criteria_order").$type<string[]>().notNull(),
-  // Keep criteriaWeights for backward compatibility
-  criteriaWeights: jsonb("criteria_weights").$type<Record<string, number>>().notNull().default({}),
   // Individual columns for each rating criteria with decimal type
   themes: decimal("themes").notNull().default("0.2"),
   worldbuilding: decimal("worldbuilding").notNull().default("0.08"),
@@ -404,8 +401,7 @@ export const insertRatingPreferencesSchema = createInsertSchema(rating_preferenc
   createdAt: true,
   updatedAt: true,
 }).extend({
-  criteriaWeights: z.record(z.string(), z.number()).optional(),
-  // Add individual criteria fields as optional in the insert schema
+  // Individual criteria fields as optional in the insert schema
   themes: z.number().min(0).max(1).optional(),
   worldbuilding: z.number().min(0).max(1).optional(),
   writing: z.number().min(0).max(1).optional(),
@@ -531,8 +527,7 @@ export function calculateStraightAverageRating(rating: Rating): number {
  */
 export function calculateWeightedRating(
   rating: Rating, 
-  customWeights?: Record<string, number> | RatingPreferences,
-  userCriteriaOrder?: string[]
+  customWeights?: Record<string, number> | RatingPreferences
 ): number {
   // If RatingPreferences object is provided with individual columns
   if (customWeights && 'themes' in customWeights && 
@@ -560,25 +555,6 @@ export function calculateWeightedRating(
       rating.themes * weights.themes + 
       rating.characters * weights.characters +
       rating.worldbuilding * weights.worldbuilding
-    );
-  }
-  
-  // If user criteria order is provided, derive weights based on position
-  if (userCriteriaOrder && userCriteriaOrder.length === 5) {
-    const positionWeights = [0.35, 0.25, 0.20, 0.12, 0.08]; // Weights by position
-    const derivedWeights: Record<string, number> = {};
-    
-    // Assign weights based on position in the user's criteria order
-    userCriteriaOrder.forEach((criterion, index) => {
-      derivedWeights[criterion] = positionWeights[index];
-    });
-    
-    return (
-      rating.enjoyment * (derivedWeights.enjoyment || DEFAULT_RATING_WEIGHTS.enjoyment) +
-      rating.writing * (derivedWeights.writing || DEFAULT_RATING_WEIGHTS.writing) +
-      rating.themes * (derivedWeights.themes || DEFAULT_RATING_WEIGHTS.themes) + 
-      rating.characters * (derivedWeights.characters || DEFAULT_RATING_WEIGHTS.characters) +
-      rating.worldbuilding * (derivedWeights.worldbuilding || DEFAULT_RATING_WEIGHTS.worldbuilding)
     );
   }
   
