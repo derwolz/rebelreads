@@ -24,6 +24,8 @@ export interface IAnalyticsStorage {
     referrer: string,
   ): Promise<BookClickThrough>;
   updateBookStats(bookId: number, type: "impression" | "click"): Promise<void>;
+  getBookImpressions(bookId: number): Promise<BookImpression[]>;
+  getBookClickThroughs(bookId: number): Promise<BookClickThrough[]>;
   getBooksMetrics(
     bookIds: number[],
     days?: number,
@@ -93,6 +95,20 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         })
         .where(eq(books.id, bookId));
     }
+  }
+  
+  async getBookImpressions(bookId: number): Promise<BookImpression[]> {
+    return db
+      .select()
+      .from(bookImpressions)
+      .where(eq(bookImpressions.bookId, bookId));
+  }
+  
+  async getBookClickThroughs(bookId: number): Promise<BookClickThrough[]> {
+    return db
+      .select()
+      .from(bookClickThroughs)
+      .where(eq(bookClickThroughs.bookId, bookId));
   }
 
   async getBooksMetrics(

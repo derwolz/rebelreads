@@ -512,7 +512,168 @@ router.post("/reviews/:reviewId/reply", async (req: Request, res: Response) => {
   }
 });
 
-// Endpoint to report a review (available to all authors)
+// Endpoint to get metrics data for charts
+router.get("/metrics", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  // For a GET request, we'll return a simpler, empty data structure
+  // The client will then make a POST request with the specific books they want metrics for
+  res.json([
+    {
+      date: new Date().toISOString().split('T')[0],
+      impressions: 0,
+      clicks: 0,
+      ctr: 0
+    }
+  ]);
+});
+
+// POST endpoint for detailed metrics with specific book IDs
+router.post("/metrics", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  try {
+    const { bookIds, days = 30, metrics = ["impressions", "clicks", "ctr"] } = req.body;
+    
+    if (!bookIds || !Array.isArray(bookIds) || bookIds.length === 0) {
+      return res.status(400).json({ error: "Book IDs are required" });
+    }
+
+    // Generate date range for the past N days
+    const dateRange: string[] = [];
+    const today = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      dateRange.push(date.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+    }
+    
+    // Get impression and click data for each book
+    const metricsData = await Promise.all(
+      bookIds.map(async (bookId) => {
+        const impressions = await dbStorage.getBookImpressions(bookId);
+        const clickThroughs = await dbStorage.getBookClickThroughs(bookId);
+        
+        return { bookId, impressions, clickThroughs };
+      })
+    );
+    
+    // Process data by date
+    const result = dateRange.map(date => {
+      const dayData: Record<string, string | number> = { date };
+      
+      // Initialize with zero counts for each book and metric
+      bookIds.forEach(bookId => {
+        (metrics as string[]).forEach((metric: string) => {
+          dayData[`${bookId}_${metric}`] = 0;
+        });
+      });
+      
+      // Calculate metrics for each book on this date
+      metricsData.forEach(({ bookId, impressions, clickThroughs }) => {
+        // Count impressions for this date
+        const dateImpressions = impressions.filter(imp => 
+          new Date(imp.timestamp).toISOString().split('T')[0] === date
+        ).length;
+        
+        // Count clicks for this date
+        const dateClicks = clickThroughs.filter(click => 
+          new Date(click.timestamp).toISOString().split('T')[0] === date
+        ).length;
+        
+        // Set metric values
+        if (metrics.includes("impressions")) {
+          dayData[`${bookId}_impressions`] = dateImpressions;
+        }
+        
+        if (metrics.includes("clicks")) {
+          dayData[`${bookId}_clicks`] = dateClicks;
+        }
+        
+        if (metrics.includes("ctr")) {
+          dayData[`${bookId}_ctr`] = dateImpressions > 0 
+            ? Math.round((dateClicks / dateImpressions) * 100) 
+            : 0;
+        }
+      });
+      
+      return dayData;
+    });
+    
+    return res.json(result);
+  } catch (error) {
+    console.error("Error fetching metrics:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint to get follower metrics
+router.get("/follower-metrics", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  try {
+    // Get follower metrics for this author (past 30 days)
+    const followerMetrics = await dbStorage.getFollowerMetrics(req.user.id, 30);
+    
+    // Create a map to store daily counts
+    const dateMap = new Map<string, number>();
+    const today = new Date();
+    
+    // Initialize with all dates in the past 30 days
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      dateMap.set(dateStr, 0);
+    }
+    
+    // Apply follow counts to the date map
+    let runningTotal = 0;
+    followerMetrics.follows.forEach(follow => {
+      runningTotal += follow.count;
+      dateMap.set(follow.date, runningTotal);
+    });
+    
+    // Apply unfollow counts to the date map
+    followerMetrics.unfollows.forEach(unfollow => {
+      runningTotal -= unfollow.count;
+      dateMap.set(unfollow.date, runningTotal);
+    });
+    
+    // Convert to the trending format expected by the frontend
+    const trending = Array.from(dateMap.entries())
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+      .map(([date, count]) => ({ date, count }));
+    
+    return res.json({
+      total: trending[trending.length - 1]?.count || 0,
+      trending
+    });
+  } catch (error) {
+    console.error("Error fetching follower metrics:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/reviews/:reviewId/report", async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ error: "Not authenticated" });

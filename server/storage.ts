@@ -74,6 +74,8 @@ export const dbStorage = {
   recordBookClickThrough:
     analyticsStorage.recordBookClickThrough.bind(analyticsStorage),
   updateBookStats: analyticsStorage.updateBookStats.bind(analyticsStorage),
+  getBookImpressions: analyticsStorage.getBookImpressions.bind(analyticsStorage),
+  getBookClickThroughs: analyticsStorage.getBookClickThroughs.bind(analyticsStorage),
   getBooksMetrics: analyticsStorage.getBooksMetrics.bind(analyticsStorage),
 
   // Landing page
