@@ -1,150 +1,153 @@
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
 import { db } from "../db";
-import { genreTaxonomies, storyPreferences, insertStoryPreferencesSchema } from "@shared/schema";
-import { eq, and, isNull, sql } from "drizzle-orm";
-import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { storyPreferences, genreTaxonomies } from "@shared/schema";
 
 const router = Router();
 
-// Calculate weight using the formula 1 / (1 + ln(rank))
-function calculateWeight(rank: number): number {
-  return 1 / (1 + Math.log(rank));
-}
-
-// Get current user's story preferences
+// Get story preferences for the current user
 router.get("/", async (req: Request, res: Response) => {
   try {
-    // Check for authenticated user
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: "Authentication required" });
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const userId = req.user.id;
+    const userId = req.session.userId;
     
-    const result = await db.select()
-      .from(storyPreferences)
-      .where(eq(storyPreferences.userId, userId))
-      .limit(1);
-      
-    if (result.length === 0) {
-      return res.status(200).json({ 
-        genres: [],
-        subgenres: [],
-        themes: [],
-        tropes: [],
-        combinedRanking: []
-      });
-    }
+    // Get the user's story preferences
+    const preferences = await db.query.storyPreferences.findFirst({
+      where: eq(storyPreferences.userId, userId)
+    });
     
-    res.json(result[0]);
+    // Return existing preferences or an empty object
+    res.json(preferences || {});
   } catch (error) {
     console.error("Error fetching story preferences:", error);
     res.status(500).json({ error: "Failed to fetch story preferences" });
   }
 });
 
-// Schema for validating combined ranking items
-const rankingItemSchema = z.object({
-  id: z.number(),
-  type: z.enum(['genre', 'subgenre', 'theme', 'trope']),
-  rank: z.number().int().positive(),
-});
-
-// Schema for validating story preference updates
-const updateStoryPreferencesSchema = z.object({
-  genres: z.array(z.object({
-    id: z.number(),
-    rank: z.number().int().positive(),
-  })).max(2, "Maximum 2 genres allowed"),
-  
-  subgenres: z.array(z.object({
-    id: z.number(),
-    rank: z.number().int().positive(),
-  })).max(5, "Maximum 5 subgenres allowed"),
-  
-  themes: z.array(z.object({
-    id: z.number(),
-    rank: z.number().int().positive(),
-  })).max(6, "Maximum 6 themes allowed"),
-  
-  tropes: z.array(z.object({
-    id: z.number(),
-    rank: z.number().int().positive(),
-  })).max(7, "Maximum 7 tropes allowed"),
-  
-  combinedRanking: z.array(rankingItemSchema),
-}).refine(data => data.genres.length > 0, {
-  message: "At least one genre is required",
-  path: ["genres"],
-}).refine(data => data.themes.length > 0, {
-  message: "At least one theme is required",
-  path: ["themes"],
-}).refine(data => data.tropes.length > 0, {
-  message: "At least one trope is required",
-  path: ["tropes"],
-});
-
-// Save or update user's story preferences
+// Create or update story preferences
 router.post("/", async (req: Request, res: Response) => {
   try {
-    // Check for authenticated user
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: "Authentication required" });
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const userId = req.user.id;
+    const userId = req.session.userId;
+    const { genres, subgenres, themes, tropes, combinedRanking } = req.body;
     
-    // Validate input data
-    const validatedData = updateStoryPreferencesSchema.parse(req.body);
+    // Validate the data
+    // At least one genre, theme, and trope are required
+    if (!genres || genres.length === 0) {
+      return res.status(400).json({ error: "At least one genre is required" });
+    }
     
-    // Process the combined ranking to add weight values
-    const combinedRanking = validatedData.combinedRanking.map(item => ({
-      ...item,
-      weight: calculateWeight(item.rank)
-    }));
+    if (!themes || themes.length === 0) {
+      return res.status(400).json({ error: "At least one theme is required" });
+    }
     
-    // Check if the user already has preferences
-    const existingPrefs = await db.select({ id: storyPreferences.id })
-      .from(storyPreferences)
-      .where(eq(storyPreferences.userId, userId))
-      .limit(1);
+    if (!tropes || tropes.length === 0) {
+      return res.status(400).json({ error: "At least one trope is required" });
+    }
     
-    let result;
+    // First get the current preferences
+    const existingPreferences = await db.query.storyPreferences.findFirst({
+      where: eq(storyPreferences.userId, userId)
+    });
     
-    if (existingPrefs.length > 0) {
+    // Now either update or insert
+    if (existingPreferences) {
       // Update existing preferences
-      result = await db.update(storyPreferences)
+      await db
+        .update(storyPreferences)
         .set({
-          genres: validatedData.genres,
-          subgenres: validatedData.subgenres,
-          themes: validatedData.themes,
-          tropes: validatedData.tropes,
+          genres,
+          subgenres: subgenres || [],
+          themes,
+          tropes,
           combinedRanking,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
-        .where(eq(storyPreferences.userId, userId))
-        .returning();
+        .where(eq(storyPreferences.userId, userId));
+      
+      res.json({ 
+        id: existingPreferences.id,
+        message: "Story preferences updated successfully" 
+      });
     } else {
-      // Create new preferences
-      result = await db.insert(storyPreferences)
+      // Insert new preferences
+      const result = await db
+        .insert(storyPreferences)
         .values({
           userId,
-          genres: validatedData.genres,
-          subgenres: validatedData.subgenres,
-          themes: validatedData.themes,
-          tropes: validatedData.tropes,
+          genres,
+          subgenres: subgenres || [],
+          themes,
+          tropes,
           combinedRanking,
+          createdAt: new Date(),
+          updatedAt: new Date()
         })
-        .returning();
+        .returning({ id: storyPreferences.id });
+      
+      res.status(201).json({ 
+        id: result[0].id,
+        message: "Story preferences created successfully" 
+      });
     }
-    
-    res.json(result[0]);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
-    }
     console.error("Error saving story preferences:", error);
     res.status(500).json({ error: "Failed to save story preferences" });
+  }
+});
+
+// Get genres by type
+router.get("/genres/types/:type", async (req: Request, res: Response) => {
+  try {
+    const { type } = req.params;
+    const validTypes = ["genre", "subgenre", "theme", "trope"];
+    
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: "Invalid genre type" });
+    }
+    
+    // Query the database for genres of the specified type
+    const genresByType = await db.query.genreTaxonomies.findMany({
+      where: eq(genreTaxonomies.type, type as any),
+      orderBy: genreTaxonomies.name
+    });
+    
+    res.json(genresByType);
+  } catch (error) {
+    console.error(`Error fetching ${req.params.type}s:`, error);
+    res.status(500).json({ error: `Failed to fetch ${req.params.type}s` });
+  }
+});
+
+// Get a specific genre by ID
+router.get("/genres/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const genreId = parseInt(id, 10);
+    
+    if (isNaN(genreId)) {
+      return res.status(400).json({ error: "Invalid genre ID" });
+    }
+    
+    // Query the database for the specific genre
+    const genre = await db.query.genreTaxonomies.findFirst({
+      where: eq(storyPreferences.id, genreId)
+    });
+    
+    if (!genre) {
+      return res.status(404).json({ error: "Genre not found" });
+    }
+    
+    res.json(genre);
+  } catch (error) {
+    console.error("Error fetching genre:", error);
+    res.status(500).json({ error: "Failed to fetch genre" });
   }
 });
 
