@@ -260,6 +260,50 @@ async function addCriteriaWeightsColumnToRatingPreferences() {
   }
 }
 
+async function addRatingMetricsColumnsToRatingPreferences() {
+  try {
+    // Check if columns exist first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'rating_preferences' AND column_name = 'themes'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Adding individual rating metrics columns to rating_preferences table...");
+      
+      // Add individual columns for each rating metric
+      await db.execute(sql`
+        ALTER TABLE rating_preferences 
+        ADD COLUMN themes decimal DEFAULT 0.2 NOT NULL,
+        ADD COLUMN worldbuilding decimal DEFAULT 0.08 NOT NULL,
+        ADD COLUMN writing decimal DEFAULT 0.25 NOT NULL,
+        ADD COLUMN enjoyment decimal DEFAULT 0.35 NOT NULL,
+        ADD COLUMN characters decimal DEFAULT 0.12 NOT NULL
+      `);
+      
+      // Update existing records to populate the new columns from criteriaWeights JSON
+      await db.execute(sql`
+        UPDATE rating_preferences
+        SET 
+          themes = (criteria_weights->>'themes')::decimal,
+          worldbuilding = (criteria_weights->>'worldbuilding')::decimal,
+          writing = (criteria_weights->>'writing')::decimal,
+          enjoyment = (criteria_weights->>'enjoyment')::decimal,
+          characters = (criteria_weights->>'characters')::decimal
+        WHERE criteria_weights IS NOT NULL
+      `);
+      
+      console.log("Individual rating metrics columns added successfully");
+    } else {
+      console.log("Individual rating metrics columns already exist");
+    }
+  } catch (error) {
+    console.error("Error adding individual rating metrics columns:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -268,5 +312,6 @@ export async function runMigrations() {
   await createAuthorAnalyticsTables();
   await createBetaKeysTables();
   await addCriteriaWeightsColumnToRatingPreferences();
+  await addRatingMetricsColumnsToRatingPreferences();
   console.log("Migrations completed");
 }

@@ -406,10 +406,16 @@ export class AccountStorage implements IAccountStorage {
         console.log("Storage: updating existing preferences");
         // Update existing
         
-        // Explicitly create the data object to update
+        // Explicitly create the data object to update with both JSON and individual columns
         const dataToUpdate = { 
           criteriaOrder,
           criteriaWeights,
+          // Add individual columns for each criteria - convert numbers to strings for decimal columns
+          themes: String(criteriaWeights.themes || 0.2),
+          worldbuilding: String(criteriaWeights.worldbuilding || 0.08),
+          writing: String(criteriaWeights.writing || 0.25),
+          enjoyment: String(criteriaWeights.enjoyment || 0.35),
+          characters: String(criteriaWeights.characters || 0.12),
           updatedAt: new Date()
         };
         console.log("Storage: data to update:", JSON.stringify(dataToUpdate));
@@ -453,11 +459,17 @@ export class AccountStorage implements IAccountStorage {
         console.log("Storage: creating new preferences");
         // Create new
         
-        // Explicitly create the data object to insert
+        // Explicitly create the data object to insert with both JSON and individual columns
         const dataToInsert = {
           userId,
           criteriaOrder,
-          criteriaWeights
+          criteriaWeights,
+          // Add individual columns for each criteria - convert numbers to strings for decimal columns
+          themes: String(criteriaWeights.themes || 0.2),
+          worldbuilding: String(criteriaWeights.worldbuilding || 0.08),
+          writing: String(criteriaWeights.writing || 0.25),
+          enjoyment: String(criteriaWeights.enjoyment || 0.35),
+          characters: String(criteriaWeights.characters || 0.12)
         };
         console.log("Storage: data to insert:", JSON.stringify(dataToInsert));
         
@@ -507,12 +519,17 @@ export class AccountStorage implements IAccountStorage {
         const criteriaWeightsJson = JSON.stringify(criteriaWeights || {});
         
         if (existing) {
-          // Update using SQL
+          // Update using SQL with individual columns
           const result = await db.execute(sql`
             UPDATE rating_preferences 
             SET 
               criteria_order = ${criteriaOrderJson}::jsonb,
               criteria_weights = ${criteriaWeightsJson}::jsonb,
+              themes = ${String(criteriaWeights.themes || 0.2)},
+              worldbuilding = ${String(criteriaWeights.worldbuilding || 0.08)},
+              writing = ${String(criteriaWeights.writing || 0.25)},
+              enjoyment = ${String(criteriaWeights.enjoyment || 0.35)},
+              characters = ${String(criteriaWeights.characters || 0.12)},
               updated_at = NOW()
             WHERE user_id = ${userId}
             RETURNING *
@@ -524,10 +541,32 @@ export class AccountStorage implements IAccountStorage {
             return result.rows[0] as RatingPreferences;
           }
         } else {
-          // Insert using SQL
+          // Insert using SQL with individual columns
           const result = await db.execute(sql`
-            INSERT INTO rating_preferences (user_id, criteria_order, criteria_weights, created_at, updated_at)
-            VALUES (${userId}, ${criteriaOrderJson}::jsonb, ${criteriaWeightsJson}::jsonb, NOW(), NOW())
+            INSERT INTO rating_preferences (
+              user_id, 
+              criteria_order, 
+              criteria_weights, 
+              themes,
+              worldbuilding,
+              writing,
+              enjoyment,
+              characters,
+              created_at, 
+              updated_at
+            )
+            VALUES (
+              ${userId}, 
+              ${criteriaOrderJson}::jsonb, 
+              ${criteriaWeightsJson}::jsonb, 
+              ${String(criteriaWeights.themes || 0.2)},
+              ${String(criteriaWeights.worldbuilding || 0.08)},
+              ${String(criteriaWeights.writing || 0.25)},
+              ${String(criteriaWeights.enjoyment || 0.35)},
+              ${String(criteriaWeights.characters || 0.12)},
+              NOW(), 
+              NOW()
+            )
             RETURNING *
           `);
           
