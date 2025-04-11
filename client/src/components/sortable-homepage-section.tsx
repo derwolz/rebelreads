@@ -14,12 +14,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -151,8 +146,8 @@ export function SortableHomepageSection({
       
       <CardContent>
         <div className="grid grid-cols-2 gap-6">
-          <FormItem>
-            <FormLabel>Display Mode</FormLabel>
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">Display Mode</label>
             <Select
               value={section.displayMode}
               onValueChange={handleDisplayModeChange}
@@ -175,10 +170,10 @@ export function SortableHomepageSection({
                 </SelectItem>
               </SelectContent>
             </Select>
-          </FormItem>
+          </div>
           
-          <FormItem>
-            <FormLabel>Number of Items</FormLabel>
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium">Number of Items</label>
             <Input
               type="number"
               min={5}
@@ -186,7 +181,7 @@ export function SortableHomepageSection({
               value={section.itemCount}
               onChange={handleItemCountChange}
             />
-          </FormItem>
+          </div>
         </div>
         
         <div className="mt-4 flex items-center justify-between">

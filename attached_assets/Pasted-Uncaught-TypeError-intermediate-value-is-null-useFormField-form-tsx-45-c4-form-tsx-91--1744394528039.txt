@@ -1,0 +1,74 @@
+Uncaught TypeError: (intermediate value)() is null
+    useFormField form.tsx:45
+    _c4 form.tsx:91
+    React 11
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
+14 form.tsx:45:39
+Uncaught TypeError: (intermediate value)() is null
+    useFormField form.tsx:45
+    _c4 form.tsx:91
+    React 12
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
+14 form.tsx:45:39
+The above error occurred in the <FormLabel> component:
+
+_c4<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/form.tsx:95:3
+div
+_c2<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/form.tsx:71:3
+div
+div
+_c9@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/card.tsx:114:9
+div
+_c@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/card.tsx:20:8
+SortableHomepageSection@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/sortable-homepage-section.tsx:51:40
+div
+SortableContext@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@dnd-kit_sortable.js?v=dce7ce17:266:7
+DndContext2@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AW7FROCU.js?v=dce7ce17:2530:7
+div
+div
+div
+Primitive</Node<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-X3MT3SPC.js?v=dce7ce17:41:44
+ScrollAreaViewport<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=dce7ce17:114:79
+div
+Primitive</Node<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-X3MT3SPC.js?v=dce7ce17:41:44
+Provider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LSQNWB54.js?v=dce7ce17:38:47
+ScrollArea<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=dce7ce17:57:9
+_c@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/scroll-area.tsx:21:8
+div
+Primitive</Node<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-X3MT3SPC.js?v=dce7ce17:41:44
+Presence@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5KJT6J3C.js?v=dce7ce17:24:33
+TabsContent<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=dce7ce17:175:75
+_c5@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/ui/tabs.tsx:72:9
+div
+Primitive</Node<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-X3MT3SPC.js?v=dce7ce17:41:44
+Provider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LSQNWB54.js?v=dce7ce17:38:47
+Tabs<@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=dce7ce17:61:9
+div
+HomepageSettings@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/components/homepage-settings.tsx?t=1744394460548:117:43
+div
+HomepageSettingsPage@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/pages/homepage-settings-page.tsx?t=1744394460548:25:31
+component
+Route@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=dce7ce17:191:13
+ProtectedRoute@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/lib/protected-route.tsx:23:31
+Switch@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=dce7ce17:247:14
+Router@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/App.tsx?t=1744394460548&v=P25XOcssGMoYlnEkz7ioP:60:22
+OnboardingProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-onboarding.tsx:22:35
+AuthProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-auth.tsx:26:29
+BetaProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-beta.tsx:23:29
+ThemeProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/hooks/use-theme.tsx:24:30
+QueryClientProvider@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=dce7ce17:2804:27
+App@https://4ba57bfc-16ba-4317-9f91-242a6a80acdd-00-2lc3vfelajo1b.kirk.replit.dev/src/App.tsx?t=1744394460548&v=P25XOcssGMoYlnEkz7ioP:273:33
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. 14 react-dom.development.js:18704:14
+Uncaught TypeError: (intermediate value)() is null
+    useFormField form.tsx:45
+    _c4 form.tsx:91
+    React 9
+    workLoop scheduler.development.js:266
+    flushWork scheduler.development.js:239
+    performWorkUntilDeadline scheduler.development.js:533
