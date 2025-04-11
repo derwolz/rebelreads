@@ -26,7 +26,7 @@ export function RecommendationsSidebar() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [createViewDialogOpen, setCreateViewDialogOpen] = useState(false);
-  const [selectedTaxonomies, setSelectedTaxonomies] = useState<GenreTaxonomy[]>([]);
+  const [selectedTaxonomies, setSelectedTaxonomies] = useState<TaxonomyItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Fetch recommendations based on user's rating preferences
@@ -52,18 +52,24 @@ export function RecommendationsSidebar() {
   // Initialize selected taxonomies when dialog opens with current preferences
   useEffect(() => {
     if (createViewDialogOpen && userGenrePreferences.length > 0) {
-      // Extract taxonomy objects from user preferences
-      const taxonomies = userGenrePreferences.map((pref: any) => pref.taxonomy);
+      // Extract taxonomy objects from user preferences and map to TaxonomyItem format
+      const taxonomies = userGenrePreferences.map((pref: any) => ({
+        taxonomyId: pref.taxonomy.id,
+        rank: pref.position,
+        type: pref.taxonomy.type,
+        name: pref.taxonomy.name,
+        id: pref.taxonomy.id
+      }));
       setSelectedTaxonomies(taxonomies);
     }
   }, [createViewDialogOpen, userGenrePreferences]);
 
   // Mutation for saving user genre preferences
   const saveGenrePreferencesMutation = useMutation({
-    mutationFn: async (taxonomies: GenreTaxonomy[]) => {
+    mutationFn: async (taxonomies: TaxonomyItem[]) => {
       return apiRequest('POST', '/api/user-genre-taxonomies', 
         taxonomies.map((taxonomy, index) => ({
-          taxonomyId: taxonomy.id,
+          taxonomyId: taxonomy.taxonomyId || taxonomy.id as number,
           position: index,
         }))
       );
@@ -238,7 +244,19 @@ export function RecommendationsSidebar() {
             <GenreSelector 
               mode="taxonomy"
               selected={selectedTaxonomies}
-              onSelectionChange={(selected) => setSelectedTaxonomies(selected as GenreTaxonomy[])}
+              onSelectionChange={(selected) => {
+                // Convert GenreTaxonomy[] to TaxonomyItem[]
+                if (Array.isArray(selected)) {
+                  const taxonomyItems = selected.map((item: any) => ({
+                    taxonomyId: item.id,
+                    rank: 0,
+                    type: item.type || 'genre',
+                    name: item.name,
+                    id: item.id
+                  }));
+                  setSelectedTaxonomies(taxonomyItems);
+                }
+              }}
               label="Genre Preferences"
               helperText="Select and order genres to customize your reading recommendations. The order determines their importance."
               maxItems={10}
