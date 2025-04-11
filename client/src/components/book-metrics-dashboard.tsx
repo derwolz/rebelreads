@@ -48,7 +48,11 @@ const sampleBooks = [
     id: 1,
     title: "The Quantum Protocol",
     author: "Alexandra Chen",
-    coverUrl: "/images/book-cover-1.jpg",
+    images: [
+      { imageId: 1, bookId: 1, imageType: "mini", imageUrl: "/images/book-cover-1.jpg" },
+      { imageId: 2, bookId: 1, imageType: "book-card", imageUrl: "/images/book-cover-1.jpg" },
+      { imageId: 3, bookId: 1, imageType: "book-detail", imageUrl: "/images/book-cover-1.jpg" },
+    ],
     ratings: {
       overall: 4.7,
       writing: 4.8,
@@ -62,7 +66,11 @@ const sampleBooks = [
     id: 2,
     title: "Echoes of Eternity",
     author: "Marcus Winters",
-    coverUrl: "/images/book-cover-2.jpg",
+    images: [
+      { imageId: 4, bookId: 2, imageType: "mini", imageUrl: "/images/book-cover-2.jpg" },
+      { imageId: 5, bookId: 2, imageType: "book-card", imageUrl: "/images/book-cover-2.jpg" },
+      { imageId: 6, bookId: 2, imageType: "book-detail", imageUrl: "/images/book-cover-2.jpg" },
+    ],
     ratings: {
       overall: 4.3,
       writing: 4.5,
@@ -76,7 +84,11 @@ const sampleBooks = [
     id: 3,
     title: "Shadows of the Mind",
     author: "Isabel Lawrence",
-    coverUrl: "/images/manuscript.svg", // Using existing SVG
+    images: [
+      { imageId: 7, bookId: 3, imageType: "mini", imageUrl: "/images/manuscript.svg" },
+      { imageId: 8, bookId: 3, imageType: "book-card", imageUrl: "/images/manuscript.svg" },
+      { imageId: 9, bookId: 3, imageType: "book-detail", imageUrl: "/images/manuscript.svg" },
+    ], // Using existing SVG
     ratings: {
       overall: 4.8,
       writing: 4.7,
@@ -99,7 +111,7 @@ function BookMetricCard({ book }: BookMetricCardProps) {
         <div className="flex items-start gap-4">
           <div className="w-20 h-28 rounded overflow-hidden bg-muted">
             <img
-              src={book.coverUrl}
+              src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
               alt={`Cover of ${book.title}`}
               className="w-full h-full object-cover"
               onError={(e) => {
