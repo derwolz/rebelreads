@@ -146,7 +146,7 @@ router.patch("/user", async (req: Request, res: Response) => {
   }
 });
 
-// Get user's genre preferences
+// Get user's content views
 router.get("/genre-preferences", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
@@ -159,23 +159,22 @@ router.get("/genre-preferences", async (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
     
     if (!preferences) {
-      // Return empty preferences if none exist yet
+      // Return empty content views if none exist yet
       return res.json({ 
-        preferredGenres: [],
-        additionalGenres: []
+        contentViews: []
       });
     }
     
-    console.log("Returning genre preferences:", JSON.stringify(preferences));
+    console.log("Returning content views:", JSON.stringify(preferences));
     
     res.json(preferences);
   } catch (error) {
-    console.error("Error getting genre preferences:", error);
-    res.status(500).json({ error: "Failed to retrieve genre preferences" });
+    console.error("Error getting content views:", error);
+    res.status(500).json({ error: "Failed to retrieve content views" });
   }
 });
 
-// Save user's genre preferences
+// Save user's content views
 router.post("/genre-preferences", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
@@ -184,35 +183,42 @@ router.post("/genre-preferences", async (req: Request, res: Response) => {
   // Set content type header
   res.setHeader('Content-Type', 'application/json');
   
-  // Define the taxonomy item schema
-  const taxonomyItemSchema = z.object({
+  // Define the filter schema
+  const filterSchema = z.object({
     taxonomyId: z.number(),
-    rank: z.number(),
     type: z.string(),
     name: z.string()
   });
   
+  // Define the content view schema
+  const contentViewSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    rank: z.number(),
+    filters: z.array(filterSchema),
+    isDefault: z.boolean()
+  });
+  
   // Validate the request body
   const schema = z.object({
-    preferredGenres: z.array(taxonomyItemSchema).optional(),
-    additionalGenres: z.array(taxonomyItemSchema).optional()
+    contentViews: z.array(contentViewSchema).optional()
   });
   
   try {
-    console.log("Genre preferences POST - Request body:", req.body);
+    console.log("Content views POST - Request body:", req.body);
     
     const data = schema.parse(req.body);
     
     const preferences = await dbStorage.saveUserGenrePreferences(req.user.id, data);
     
-    console.log("Genre preferences POST - Successfully saved:", JSON.stringify(preferences));
+    console.log("Content views POST - Successfully saved:", JSON.stringify(preferences));
     res.json(preferences);
   } catch (error) {
-    console.error("Error saving genre preferences:", error);
+    console.error("Error saving content views:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid data", details: error.errors });
+      return res.status(400).json({ error: "Invalid content view format", details: error.errors });
     }
-    res.status(500).json({ error: "Failed to save genre preferences" });
+    res.status(500).json({ error: "Failed to save content views" });
   }
 });
 

@@ -64,8 +64,17 @@ export interface IAccountStorage {
   saveUserGenrePreferences(
     userId: number, 
     data: { 
-      preferredGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>,
-      additionalGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>
+      contentViews?: Array<{
+        id: string;
+        name: string;
+        rank: number;
+        filters: Array<{
+          taxonomyId: number;
+          type: string;
+          name: string;
+        }>;
+        isDefault: boolean;
+      }>
     }
   ): Promise<UserGenrePreference>;
   
