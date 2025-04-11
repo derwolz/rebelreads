@@ -25,7 +25,7 @@ import { Progress } from "@/components/ui/progress";
 interface CsvBook {
   title: string;
   description: string;
-  cover_url: string;
+  image_url: string; // Using image_url instead of cover_url to match bookImages table
   author: string;
   genres: string;
   formats: string;
@@ -52,7 +52,7 @@ export function BookCsvUploadWizard() {
         const coverBlobs = await Promise.all(
           books.map(async (book, index) => {
             try {
-              const response = await fetch(book.cover_url);
+              const response = await fetch(book.image_url);
               if (!response.ok) throw new Error(`Failed to fetch image ${index + 1}`);
               const blob = await response.blob();
               formData.append('covers', blob, `cover-${index}.${blob.type.split('/')[1]}`);
@@ -150,7 +150,7 @@ export function BookCsvUploadWizard() {
     const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
 
     // Validate headers
-    const requiredHeaders = ['title', 'description', 'cover_url', 'author', 'genres', 'formats', 'page_count', 'published_date', 'language', 'isbn'];
+    const requiredHeaders = ['title', 'description', 'image_url', 'author', 'genres', 'formats', 'page_count', 'published_date', 'language', 'isbn'];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
     if (missingHeaders.length > 0) {
@@ -206,7 +206,7 @@ export function BookCsvUploadWizard() {
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               Your CSV should include the following columns:<br />
-              title, description, cover_url, author, genres (semicolon-separated), formats (semicolon-separated), page_count, published_date, language, isbn
+              title, description, image_url, author, genres (semicolon-separated), formats (semicolon-separated), page_count, published_date, language, isbn
             </p>
           </div>
         ) : (
@@ -217,7 +217,7 @@ export function BookCsvUploadWizard() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead>Cover URL</TableHead>
+                    <TableHead>Image URL</TableHead>
                     <TableHead>Author</TableHead>
                     <TableHead>Genres</TableHead>
                     <TableHead>Formats</TableHead>
@@ -232,7 +232,7 @@ export function BookCsvUploadWizard() {
                     <TableRow key={index}>
                       <TableCell>{book.title}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{book.description}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{book.cover_url}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{book.image_url}</TableCell>
                       <TableCell>{book.author}</TableCell>
                       <TableCell>{book.genres}</TableCell>
                       <TableCell>{book.formats}</TableCell>
