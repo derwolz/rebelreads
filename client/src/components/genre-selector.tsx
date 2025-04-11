@@ -76,6 +76,14 @@ interface GenreSelectorProps {
   allowCustomGenres?: boolean;
   
   /**
+   * Optional: Whether to restrict taxonomy selections to the limits (taxonomy mode only)
+   * - true: Enforce limits (2 genres, 5 subgenres, 6 themes, 7 tropes)
+   * - false: No limits on selections
+   * Default: true (for book management)
+   */
+  restrictLimits?: boolean;
+  
+  /**
    * Optional: Label text for the component
    */
   label?: string;
@@ -98,6 +106,7 @@ export function GenreSelector({
   maxItems,
   showQuickSelect = true,
   allowCustomGenres = false,
+  restrictLimits = true,
   label = "Genres",
   helperText,
   className
@@ -121,6 +130,7 @@ export function GenreSelector({
       <TaxonomyGenreSelector
         selectedTaxonomies={selected as TaxonomyItem[]}
         onTaxonomiesChange={(taxonomies) => onSelectionChange(taxonomies)}
+        restrictLimits={restrictLimits}
         label={label}
         helperText={helperText}
         className={className}
@@ -306,6 +316,7 @@ function SimpleGenreSelector({
 interface TaxonomyGenreSelectorProps {
   selectedTaxonomies: TaxonomyItem[];
   onTaxonomiesChange: (taxonomies: TaxonomyItem[]) => void;
+  restrictLimits?: boolean;
   label?: string;
   helperText?: string;
   className?: string;
@@ -314,6 +325,7 @@ interface TaxonomyGenreSelectorProps {
 function TaxonomyGenreSelector({
   selectedTaxonomies,
   onTaxonomiesChange,
+  restrictLimits = true,
   label,
   helperText,
   className
@@ -397,6 +409,9 @@ function TaxonomyGenreSelector({
 
   // Check if a taxonomy type has reached its maximum allowed count
   const isMaxReached = (type: "genre" | "subgenre" | "theme" | "trope") => {
+    // If limits are not restricted, always return false (no limit)
+    if (!restrictLimits) return false;
+    
     const count = getSelectedByType(type).length;
     switch (type) {
       case "genre": return count >= 2;
@@ -409,6 +424,9 @@ function TaxonomyGenreSelector({
 
   // Check if a taxonomy is required and missing
   const isMissingRequired = (type: "genre" | "subgenre" | "theme" | "trope") => {
+    // If limits are not restricted, nothing is required
+    if (!restrictLimits) return false;
+    
     const count = getSelectedByType(type).length;
     switch (type) {
       case "genre": 
@@ -532,7 +550,11 @@ function TaxonomyGenreSelector({
                 </div>
                 
                 <TabsContent value="genre" className="m-0">
-                  <div className="font-medium mb-2">Select up to 2 genres (required)</div>
+                  <div className="font-medium mb-2">
+                    {restrictLimits 
+                      ? "Select up to 2 genres (required)" 
+                      : "Select as many genres as you want"}
+                  </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
                     <div className="space-y-2">
                       {filteredTaxonomies().map((genre) => (
@@ -566,7 +588,11 @@ function TaxonomyGenreSelector({
                 </TabsContent>
                 
                 <TabsContent value="subgenre" className="m-0">
-                  <div className="font-medium mb-2">Select up to 5 subgenres (optional)</div>
+                  <div className="font-medium mb-2">
+                    {restrictLimits 
+                      ? "Select up to 5 subgenres (optional)" 
+                      : "Select as many subgenres as you want"}
+                  </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
                     <div className="space-y-2">
                       {filteredTaxonomies().map((subgenre) => (
