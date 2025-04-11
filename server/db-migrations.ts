@@ -491,6 +491,58 @@ async function createUserGenrePreferencesTable() {
   }
 }
 
+async function addContentViewsColumnToUserGenrePreferences() {
+  try {
+    // Check if column exists first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'user_genre_preferences' AND column_name = 'content_views'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Adding 'content_views' column to user_genre_preferences table...");
+      await db.execute(sql`
+        ALTER TABLE user_genre_preferences 
+        ADD COLUMN content_views jsonb NOT NULL DEFAULT '[]'::jsonb
+      `);
+      
+      // Migrate existing data from preferred_genres and additional_genres to content_views
+      await db.execute(sql`
+        UPDATE user_genre_preferences
+        SET content_views = json_build_array(
+          json_build_object(
+            'id', 'default-view',
+            'name', 'Default View',
+            'rank', 1,
+            'filters', preferred_genres,
+            'isDefault', true
+          ),
+          CASE WHEN additional_genres::text <> '[]' THEN
+            json_build_object(
+              'id', 'additional-view',
+              'name', 'Additional View',
+              'rank', 2,
+              'filters', additional_genres,
+              'isDefault', false
+            )
+          ELSE
+            NULL
+          END
+        )::jsonb - 'null'
+        WHERE preferred_genres::text <> '[]' OR additional_genres::text <> '[]'
+      `);
+      
+      console.log("Column 'content_views' added successfully and data migrated");
+    } else {
+      console.log("Column 'content_views' already exists");
+    }
+  } catch (error) {
+    console.error("Error adding 'content_views' column:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -509,5 +561,7 @@ export async function runMigrations() {
   await removeUserTaxonomyTables();
   // Create user genre preferences table
   await createUserGenrePreferencesTable();
+  // Add content_views column to user_genre_preferences table
+  await addContentViewsColumnToUserGenrePreferences();
   console.log("Migrations completed");
 }
