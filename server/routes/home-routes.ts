@@ -758,8 +758,7 @@ router.get("/dashboard", async (req: Request, res: Response) => {
       }
       
       return {
-        ...book,
-        coverUrl: coverImage ? coverImage.imageUrl : null
+        ...book
       };
     });
     
