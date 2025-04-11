@@ -253,16 +253,18 @@ export default function BookDetails() {
                   {bookTaxonomies && bookTaxonomies.length > 0 ? (
                     bookTaxonomies.map((taxonomy) => (
                       <Tooltip key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
-                        <TooltipTrigger asChild>
-                          <Badge 
-                            variant={taxonomy.type === 'genre' ? 'default' : 
-                                    taxonomy.type === 'subgenre' ? 'secondary' : 
-                                    taxonomy.type === 'theme' ? 'outline' : 
-                                    'destructive'} 
-                            className="text-sm cursor-help"
-                          >
-                            {taxonomy.name}
-                          </Badge>
+                        <TooltipTrigger>
+                          <div>
+                            <Badge 
+                              variant={taxonomy.type === 'genre' ? 'default' : 
+                                      taxonomy.type === 'subgenre' ? 'secondary' : 
+                                      taxonomy.type === 'theme' ? 'outline' : 
+                                      'destructive'} 
+                              className="text-sm cursor-help"
+                            >
+                              {taxonomy.name}
+                            </Badge>
+                          </div>
                         </TooltipTrigger>
                         {taxonomy.description && (
                           <TooltipContent className="max-w-xs">
