@@ -1,11 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -17,17 +31,25 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
-} from '@dnd-kit/core';
+  DragEndEvent,
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable
-} from '@dnd-kit/sortable';
+  useSortable,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, Plus, PenLine, PlusCircle, Move, GripVertical, X } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  PenLine,
+  PlusCircle,
+  Move,
+  GripVertical,
+  X,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -56,24 +78,24 @@ interface GenreView {
 export function GenrePreferencesSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Local state for views and genres
   const [views, setViews] = useState<GenreView[]>([]);
   const [activeViewId, setActiveViewId] = useState<number | null>(null);
-  
+
   // State for the create/edit view dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editViewId, setEditViewId] = useState<number | null>(null);
   const [newViewName, setNewViewName] = useState("");
   const [isDefaultView, setIsDefaultView] = useState(false);
-  
+
   // Sensors for drag and drop functionality
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Fetch existing genre views from the server
@@ -85,14 +107,14 @@ export function GenrePreferencesSettings() {
         throw new Error("Failed to fetch genre views");
       }
       return response.json();
-    }
+    },
   });
 
   // Initialize local state when views are loaded
   useEffect(() => {
     if (viewsData?.views) {
       setViews(viewsData.views);
-      
+
       // Set active view to the default view or the first view if available
       if (viewsData.views.length > 0) {
         const defaultView = viewsData.views.find((v: GenreView) => v.isDefault);
@@ -102,13 +124,17 @@ export function GenrePreferencesSettings() {
   }, [viewsData]);
 
   // Get the currently active view and its genres
-  const activeView = views.find(v => v.id === activeViewId);
+  const activeView = views.find((v) => v.id === activeViewId);
   const activeViewGenres = activeView?.genres || [];
 
   // Mutations
   // Create a new view
   const createViewMutation = useMutation({
-    mutationFn: async (data: { name: string; rank: number; isDefault: boolean }) => {
+    mutationFn: async (data: {
+      name: string;
+      rank: number;
+      isDefault: boolean;
+    }) => {
       const response = await apiRequest("POST", "/api/genre-views", data);
       if (!response.ok) {
         throw new Error("Failed to create genre view");
@@ -122,25 +148,30 @@ export function GenrePreferencesSettings() {
       setIsDefaultView(false);
       toast({
         title: "View created",
-        description: "Your new genre view has been created successfully."
+        description: "Your new genre view has been created successfully.",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update an existing view
   const updateViewMutation = useMutation({
-    mutationFn: async (data: { id: number; name?: string; rank?: number; isDefault?: boolean }) => {
+    mutationFn: async (data: {
+      id: number;
+      name?: string;
+      rank?: number;
+      isDefault?: boolean;
+    }) => {
       const response = await apiRequest(
-        "PATCH", 
-        `/api/genre-views/${data.id}`, 
-        { name: data.name, rank: data.rank, isDefault: data.isDefault }
+        "PATCH",
+        `/api/genre-views/${data.id}`,
+        { name: data.name, rank: data.rank, isDefault: data.isDefault },
       );
       if (!response.ok) {
         throw new Error("Failed to update genre view");
@@ -156,16 +187,16 @@ export function GenrePreferencesSettings() {
       setEditViewId(null);
       toast({
         title: "View updated",
-        description: "Your genre view has been updated successfully."
+        description: "Your genre view has been updated successfully.",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Delete a view
@@ -180,12 +211,12 @@ export function GenrePreferencesSettings() {
       queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
       toast({
         title: "View deleted",
-        description: "Your genre view has been deleted successfully."
+        description: "Your genre view has been deleted successfully.",
       });
-      
+
       // If we deleted the active view, select another view
       if (views.length > 0 && activeViewId) {
-        const remainingViews = views.filter(v => v.id !== activeViewId);
+        const remainingViews = views.filter((v) => v.id !== activeViewId);
         if (remainingViews.length > 0) {
           setActiveViewId(remainingViews[0].id);
         } else {
@@ -197,18 +228,23 @@ export function GenrePreferencesSettings() {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Add a genre to the view
   const addGenreMutation = useMutation({
-    mutationFn: async (data: { viewId: number; taxonomyId: number; type: string; rank: number }) => {
+    mutationFn: async (data: {
+      viewId: number;
+      taxonomyId: number;
+      type: string;
+      rank: number;
+    }) => {
       const response = await apiRequest(
-        "POST", 
-        `/api/genre-views/${data.viewId}/genres`, 
-        { taxonomyId: data.taxonomyId, type: data.type, rank: data.rank }
+        "POST",
+        `/api/genre-views/${data.viewId}/genres`,
+        { taxonomyId: data.taxonomyId, type: data.type, rank: data.rank },
       );
       if (!response.ok) {
         throw new Error("Failed to add genre to view");
@@ -222,15 +258,18 @@ export function GenrePreferencesSettings() {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Remove a genre from the view
   const removeGenreMutation = useMutation({
     mutationFn: async (genreId: number) => {
-      const response = await apiRequest("DELETE", `/api/view-genres/${genreId}`);
+      const response = await apiRequest(
+        "DELETE",
+        `/api/view-genres/${genreId}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to remove genre from view");
       }
@@ -242,18 +281,18 @@ export function GenrePreferencesSettings() {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update genre ranks
   const updateGenreRankMutation = useMutation({
     mutationFn: async (data: { genreId: number; rank: number }) => {
       const response = await apiRequest(
-        "PATCH", 
-        `/api/view-genres/${data.genreId}/rank`, 
-        { rank: data.rank }
+        "PATCH",
+        `/api/view-genres/${data.genreId}/rank`,
+        { rank: data.rank },
       );
       if (!response.ok) {
         throw new Error("Failed to update genre rank");
@@ -267,9 +306,9 @@ export function GenrePreferencesSettings() {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Handler functions
@@ -279,7 +318,7 @@ export function GenrePreferencesSettings() {
       toast({
         title: "Invalid name",
         description: "Please enter a valid name for the view.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -288,18 +327,17 @@ export function GenrePreferencesSettings() {
       updateViewMutation.mutate({
         id: editViewId,
         name: newViewName,
-        isDefault: isDefaultView
+        isDefault: isDefaultView,
       });
     } else {
       // For a new view, calculate the next rank
-      const nextRank = views.length > 0 
-        ? Math.max(...views.map(v => v.rank)) + 1 
-        : 1;
-      
+      const nextRank =
+        views.length > 0 ? Math.max(...views.map((v) => v.rank)) + 1 : 1;
+
       createViewMutation.mutate({
         name: newViewName,
         rank: nextRank,
-        isDefault: isDefaultView
+        isDefault: isDefaultView,
       });
     }
   };
@@ -307,7 +345,11 @@ export function GenrePreferencesSettings() {
   // Delete view
   const handleDeleteView = () => {
     if (activeViewId) {
-      if (confirm("Are you sure you want to delete this view? This action cannot be undone.")) {
+      if (
+        confirm(
+          "Are you sure you want to delete this view? This action cannot be undone.",
+        )
+      ) {
         deleteViewMutation.mutate(activeViewId);
       }
     }
@@ -327,22 +369,22 @@ export function GenrePreferencesSettings() {
   // Handle genre selection
   const handleGenreSelectionChange = (selected: TaxonomyItem[]) => {
     if (!activeViewId) return;
-    
+
     // Find the currently selected items
-    const currentGenres = activeViewGenres.map(g => g.taxonomyId);
-    
+    const currentGenres = activeViewGenres.map((g) => g.taxonomyId);
+
     // Find new items that aren't in the current selection
-    const newGenres = selected.filter(item => 
-      !currentGenres.includes(item.taxonomyId)
+    const newGenres = selected.filter(
+      (item) => !currentGenres.includes(item.taxonomyId),
     );
-    
+
     // Add each new genre to the view
-    newGenres.forEach(genre => {
+    newGenres.forEach((genre) => {
       addGenreMutation.mutate({
         viewId: activeViewId,
         taxonomyId: genre.taxonomyId,
         type: genre.type,
-        rank: activeViewGenres.length + 1
+        rank: activeViewGenres.length + 1,
       });
     });
   };
@@ -355,82 +397,76 @@ export function GenrePreferencesSettings() {
   // Handle reordering of views
   const handleViewDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (over && active.id !== over.id && views.length > 1) {
       // Get the old and new index
-      const oldIndex = views.findIndex(item => item.id === Number(active.id));
-      const newIndex = views.findIndex(item => item.id === Number(over.id));
-      
+      const oldIndex = views.findIndex((item) => item.id === Number(active.id));
+      const newIndex = views.findIndex((item) => item.id === Number(over.id));
+
       if (oldIndex !== -1 && newIndex !== -1) {
         // Create a new array with the new order
         const reordered = arrayMove(views, oldIndex, newIndex);
-        
+
         // Update the local state immediately for better UX
         setViews(reordered);
-        
+
         // Update the ranks for all views
         reordered.forEach((view, idx) => {
           updateViewMutation.mutate({
             id: view.id,
-            rank: idx + 1
+            rank: idx + 1,
           });
         });
       }
     }
   };
-  
-// Sortable view component
-interface SortableViewProps {
-  id: number;
-  value: string;
-  isDefault: boolean;
-  children: React.ReactNode;
-}
 
-function SortableView({ id, value, isDefault, children }: SortableViewProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
+  // Sortable view component
+  interface SortableViewProps {
+    id: number;
+    value: string;
+    isDefault: boolean;
+    children: React.ReactNode;
+  }
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  function SortableView({ id, value, isDefault, children }: SortableViewProps) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id });
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "flex items-center",
-        isDragging && "opacity-50 z-10"
-      )}
-    >
-      <button
-        type="button"
-        className="cursor-grab hover:text-primary mr-1"
-        {...attributes}
-        {...listeners}
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn("flex items-center", isDragging && "opacity-50 z-10")}
       >
-        <GripVertical className="h-4 w-4" />
-      </button>
-      <TabsTrigger 
-        value={value}
-        className="relative"
-      >
-        {children}
-        {isDefault && (
-          <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full -mt-0.5 -mr-0.5"></span>
-        )}
-      </TabsTrigger>
-    </div>
-  );
-}
+        <button
+          type="button"
+          className="cursor-grab hover:text-primary mr-1"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <TabsTrigger value={value} className="relative">
+          {children}
+          {isDefault && (
+            <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full -mt-0.5 -mr-0.5"></span>
+          )}
+        </TabsTrigger>
+      </div>
+    );
+  }
 
   // Reset the dialog when it's closed
   const handleDialogChange = (open: boolean) => {
@@ -469,13 +505,14 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
           <div>
             <CardTitle>Genre Preferences</CardTitle>
             <CardDescription>
-              Create and customize multiple genre views for your reading experience
+              Create and customize multiple genre views for your reading
+              experience
             </CardDescription>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setIsEditMode(false);
                   setNewViewName("");
@@ -495,31 +532,35 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="viewName">View Name</Label>
-                  <Input 
-                    id="viewName" 
-                    value={newViewName} 
+                  <Input
+                    id="viewName"
+                    value={newViewName}
                     onChange={(e) => setNewViewName(e.target.value)}
-                    placeholder="Enter a name for this view" 
+                    placeholder="Enter a name for this view"
                   />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Switch 
-                    id="isDefault" 
-                    checked={isDefaultView} 
-                    onCheckedChange={setIsDefaultView} 
+                  <Switch
+                    id="isDefault"
+                    checked={isDefaultView}
+                    onCheckedChange={setIsDefaultView}
                   />
                   <Label htmlFor="isDefault">Make this my default view</Label>
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   onClick={handleSaveView}
-                  disabled={createViewMutation.isPending || updateViewMutation.isPending}
+                  disabled={
+                    createViewMutation.isPending || updateViewMutation.isPending
+                  }
                 >
-                  {createViewMutation.isPending || updateViewMutation.isPending 
-                    ? "Saving..." 
-                    : isEditMode ? "Update View" : "Create View"}
+                  {createViewMutation.isPending || updateViewMutation.isPending
+                    ? "Saving..."
+                    : isEditMode
+                      ? "Update View"
+                      : "Create View"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -530,7 +571,8 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
         {views.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">
-              You don't have any genre views yet. Create your first view to get started.
+              You don't have any genre views yet. Create your first view to get
+              started.
             </p>
             <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogChange}>
               <DialogTrigger asChild>
@@ -547,29 +589,31 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="viewName">View Name</Label>
-                    <Input 
-                      id="viewName" 
-                      value={newViewName} 
+                    <Input
+                      id="viewName"
+                      value={newViewName}
                       onChange={(e) => setNewViewName(e.target.value)}
-                      placeholder="Enter a name for this view" 
+                      placeholder="Enter a name for this view"
                     />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Switch 
-                      id="isDefault" 
-                      checked={isDefaultView} 
-                      onCheckedChange={setIsDefaultView} 
+                    <Switch
+                      id="isDefault"
+                      checked={isDefaultView}
+                      onCheckedChange={setIsDefaultView}
                     />
                     <Label htmlFor="isDefault">Make this my default view</Label>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     onClick={handleSaveView}
                     disabled={createViewMutation.isPending}
                   >
-                    {createViewMutation.isPending ? "Creating..." : "Create View"}
+                    {createViewMutation.isPending
+                      ? "Creating..."
+                      : "Create View"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -577,8 +621,8 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
           </div>
         ) : (
           <>
-            <Tabs 
-              value={activeViewId?.toString() || ""} 
+            <Tabs
+              value={activeViewId?.toString() || ""}
               onValueChange={(value) => setActiveViewId(parseInt(value))}
               className="mb-6"
             >
@@ -593,7 +637,7 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
                 >
                   <TabsList className="flex flex-wrap gap-1">
                     <SortableContext
-                      items={views.map(view => view.id)}
+                      items={views.map((view) => view.id)}
                       strategy={verticalListSortingStrategy}
                     >
                       {views.map((view) => (
@@ -612,7 +656,11 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
               </div>
 
               {views.map((view) => (
-                <TabsContent key={view.id} value={view.id.toString()} className="space-y-4">
+                <TabsContent
+                  key={view.id}
+                  value={view.id.toString()}
+                  className="space-y-4"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium">{view.name}</h3>
@@ -622,16 +670,16 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={handleEditView}
                       >
                         <PenLine className="h-4 w-4" />
                         <span className="sr-only">Edit</span>
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={handleDeleteView}
                         disabled={views.length === 1} // Prevent deleting the last view
@@ -642,27 +690,10 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
                     </div>
                   </div>
 
-                  <div className="text-sm text-muted-foreground">
-                    Choose genres for this view to personalize your reading experience.
-                  </div>
-                  
+
+
                   <div className="my-4">
                     <div className="space-y-2">
-                      {view.genres?.map((genre) => (
-                        <div 
-                          key={genre.id}
-                          className="flex items-center bg-background border rounded-md p-2 shadow-sm"
-                        >
-                          <span className="flex-1 text-sm">{genre.name || `${genre.type} (${genre.taxonomyId})`}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveGenre(genre.id)}
-                            className="ml-2 hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
                       {view.genres?.length === 0 && (
                         <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
                           <p>No genres added to this view yet</p>
@@ -670,18 +701,26 @@ function SortableView({ id, value, isDefault, children }: SortableViewProps) {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="bg-muted p-4 rounded-md">
-                    <h3 className="font-medium mb-2">Add Genres to This View</h3>
+  
                     <GenreSelector
                       mode="taxonomy"
-                      selected={view.genres?.map(g => ({
-                        taxonomyId: g.taxonomyId,
-                        type: g.type as "genre" | "subgenre" | "theme" | "trope",
-                        rank: g.rank,
-                        name: g.name || ""
-                      })) || []}
-                      onSelectionChange={(selected) => handleGenreSelectionChange(selected as TaxonomyItem[])}
+                      selected={
+                        view.genres?.map((g) => ({
+                          taxonomyId: g.taxonomyId,
+                          type: g.type as
+                            | "genre"
+                            | "subgenre"
+                            | "theme"
+                            | "trope",
+                          rank: g.rank,
+                          name: g.name || "",
+                        })) || []
+                      }
+                      onSelectionChange={(selected) =>
+                        handleGenreSelectionChange(selected as TaxonomyItem[])
+                      }
                       maxItems={20}
                       restrictLimits={false}
                       helperText="Select genres to add to this view - no limits on selections"
