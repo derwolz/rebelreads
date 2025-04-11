@@ -10,6 +10,7 @@ const router = Router();
 /**
  * GET /api/popular-books
  * Returns the top popular books based on the calculated sigmoid decay value
+ * This endpoint is public and does not require authentication
  */
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -40,13 +41,16 @@ router.get("/", async (req: Request, res: Response) => {
     // Join the data together
     const result = popularBooksRecords.map(record => {
       const book = bookMap.get(record.bookId);
+      if (!book) return null; // Skip if book not found
       return {
         ...book,
         sigmoidValue: record.sigmoidValue,
         popularRank: record.rank,
         firstRankedAt: record.firstRankedAt
       };
-    }).sort((a, b) => a.popularRank - b.popularRank);
+    })
+    .filter(Boolean) // Remove any null entries
+    .sort((a, b) => a!.popularRank - b!.popularRank);
     
     return res.json(result);
   } catch (error) {
@@ -62,8 +66,9 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/calculate", async (req: Request, res: Response) => {
   try {
     // Check if the user is authenticated and has admin privileges
+    // @ts-ignore - The auth middleware adds the user property
     if (!req.user || !req.user.isAuthor) {
-      return res.status(403).json({ error: "Unauthorized access" });
+      return res.status(401).json({ error: "Not authenticated" });
     }
     
     await dbStorage.calculatePopularBooks();
