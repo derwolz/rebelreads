@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -937,7 +937,7 @@ export const userPreferenceTaxonomies = pgTable("user_preference_taxonomies", {
   userId: integer("user_id").notNull(),
   taxonomyId: integer("taxonomy_id").notNull(),
   position: integer("position").notNull().default(0), // Position in the user's preference list
-  weight: decimal("weight").notNull().default("1.0"), // Weight for recommendation calculations
+  weight: real("weight").notNull().default(1.0), // Weight for recommendation calculations
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
