@@ -44,6 +44,8 @@ export const dbStorage = {
   getFollowerMetrics: accountStorage.getFollowerMetrics.bind(accountStorage),
   getRatingPreferences: accountStorage.getRatingPreferences.bind(accountStorage),
   saveRatingPreferences: accountStorage.saveRatingPreferences.bind(accountStorage),
+  getUserGenrePreferences: accountStorage.getUserGenrePreferences.bind(accountStorage),
+  saveUserGenrePreferences: accountStorage.saveUserGenrePreferences.bind(accountStorage),
   
   // Author analytics
   recordAuthorAction: authorAnalyticsStorage.recordAuthorAction.bind(authorAnalyticsStorage),

@@ -3,7 +3,7 @@ import { dbStorage } from "../storage";
 import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users } from "@shared/schema";
+import { users, userGenrePreferences } from "@shared/schema";
 
 const router = Router();
 
@@ -143,6 +143,76 @@ router.patch("/user", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// Get user's genre preferences
+router.get("/genre-preferences", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    const preferences = await dbStorage.getUserGenrePreferences(req.user.id);
+    
+    // Set content type header
+    res.setHeader('Content-Type', 'application/json');
+    
+    if (!preferences) {
+      // Return empty preferences if none exist yet
+      return res.json({ 
+        preferredGenres: [],
+        additionalGenres: []
+      });
+    }
+    
+    console.log("Returning genre preferences:", JSON.stringify(preferences));
+    
+    res.json(preferences);
+  } catch (error) {
+    console.error("Error getting genre preferences:", error);
+    res.status(500).json({ error: "Failed to retrieve genre preferences" });
+  }
+});
+
+// Save user's genre preferences
+router.post("/genre-preferences", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  // Set content type header
+  res.setHeader('Content-Type', 'application/json');
+  
+  // Define the taxonomy item schema
+  const taxonomyItemSchema = z.object({
+    taxonomyId: z.number(),
+    rank: z.number(),
+    type: z.string(),
+    name: z.string()
+  });
+  
+  // Validate the request body
+  const schema = z.object({
+    preferredGenres: z.array(taxonomyItemSchema).optional(),
+    additionalGenres: z.array(taxonomyItemSchema).optional()
+  });
+  
+  try {
+    console.log("Genre preferences POST - Request body:", req.body);
+    
+    const data = schema.parse(req.body);
+    
+    const preferences = await dbStorage.saveUserGenrePreferences(req.user.id, data);
+    
+    console.log("Genre preferences POST - Successfully saved:", JSON.stringify(preferences));
+    res.json(preferences);
+  } catch (error) {
+    console.error("Error saving genre preferences:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to save genre preferences" });
   }
 });
 
