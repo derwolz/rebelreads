@@ -50,18 +50,23 @@ router.get("/followed-authors", async (req: Request, res: Response) => {
     const authorIds = followedAuthors.map(f => f.authorId);
     const readIds = readBookIds.map(rb => rb.bookId);
     
-    let query = db
-      .select()
-      .from(books)
-      .where(inArray(books.authorId, authorIds));
+    // Set up the query conditions
+    // Start with base condition for author IDs
+    let conditions = [inArray(books.authorId, authorIds)];
     
     // Add the exclusion condition only if there are books to exclude
     if (readIds.length > 0) {
-      query = query.where(not(inArray(books.id, readIds)));
+      conditions.push(not(inArray(books.id, readIds)));
     }
     
-    // Order by random and limit
-    const allBooks = await query;
+    // Combine all conditions with AND
+    const whereClause = and(...conditions);
+    
+    // Execute query with all conditions
+    const allBooks = await db
+      .select()
+      .from(books)
+      .where(whereClause);
     
     // Shuffle array and take the requested count
     const shuffled = allBooks.sort(() => 0.5 - Math.random());

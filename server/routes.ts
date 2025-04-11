@@ -16,6 +16,7 @@ import adminRoutes from "./routes/admin-routes";
 import betaRoutes from "./routes/beta-routes";
 import genreRoutes from "./routes/genre-routes";
 import homepageRoutes from "./routes/homepage-routes";
+import bookCollectionsRoutes from "./routes/book-collections-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -36,6 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/beta", betaRoutes);
   app.use("/api/genres", genreRoutes);
   app.use("/api/homepage-layout", homepageRoutes);
+  app.use("/api/recommendations", bookCollectionsRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
