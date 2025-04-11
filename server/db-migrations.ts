@@ -434,6 +434,32 @@ async function removeFavoriteGenresFromUsers() {
   }
 }
 
+async function removeUserTaxonomyTables() {
+  try {
+    // Check if the tables exist
+    const tables = ['user_preference_taxonomies', 'user_taxonomy_items', 'user_taxonomy_preferences'];
+    
+    for (const table of tables) {
+      const checkTableResult = await db.execute(sql`
+        SELECT table_name
+        FROM information_schema.tables 
+        WHERE table_name = ${table}
+      `);
+
+      if (checkTableResult.rows.length > 0) {
+        console.log(`Dropping '${table}' table...`);
+        await db.execute(sql`DROP TABLE ${sql.raw(table)}`);
+        console.log(`Table '${table}' dropped successfully`);
+      } else {
+        console.log(`Table '${table}' doesn't exist or has already been removed`);
+      }
+    }
+  } catch (error) {
+    console.error("Error removing user taxonomy tables:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -448,5 +474,7 @@ export async function runMigrations() {
   await createTaxonomyTables();
   // Remove favorite_genres from users
   await removeFavoriteGenresFromUsers();
+  // Remove user taxonomy tables
+  await removeUserTaxonomyTables();
   console.log("Migrations completed");
 }
