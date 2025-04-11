@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DragDropFile } from "@/components/drag-drop-file";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
 
 interface ReviewBoostWizardProps {
   open: boolean;
@@ -50,6 +51,34 @@ export function ReviewBoostWizard({
   const { data: reviewCounts } = useQuery<Record<number, BookReviewCount>>({
     queryKey: ["/api/books/review-counts"],
   });
+
+  // Fetch book taxonomies for selected books
+  const [bookTaxonomiesMap, setBookTaxonomiesMap] = useState<Record<number, any[]>>({});
+
+  const fetchBookTaxonomies = async (bookId: number) => {
+    try {
+      const response = await fetch(`/api/books/${bookId}/taxonomies`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch book taxonomies");
+      }
+      const taxonomies = await response.json();
+      setBookTaxonomiesMap(prev => ({
+        ...prev,
+        [bookId]: taxonomies
+      }));
+    } catch (error) {
+      console.error(`Error fetching taxonomies for book ${bookId}:`, error);
+    }
+  };
+
+  // Fetch taxonomies for all books when component mounts
+  useEffect(() => {
+    if (books && books.length > 0) {
+      books.forEach(book => {
+        fetchBookTaxonomies(book.id);
+      });
+    }
+  }, [books]);
 
   const createBoostMutation = useMutation({
     mutationFn: async (data: {
@@ -229,9 +258,23 @@ export function ReviewBoostWizard({
                         />
                         <div className="flex-1">
                           <h3 className="font-medium">{book.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {book.genres.join(", ")}
-                          </p>
+                          <div className="text-sm text-muted-foreground">
+                            {bookTaxonomiesMap[book.id] && bookTaxonomiesMap[book.id].length > 0 ? (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {bookTaxonomiesMap[book.id]
+                                  .filter(tax => tax.type === "genre")
+                                  .slice(0, 3)
+                                  .map(tax => (
+                                    <Badge key={tax.taxonomyId} variant="secondary" className="text-xs">
+                                      {tax.name}
+                                    </Badge>
+                                  ))
+                                }
+                              </div>
+                            ) : (
+                              <p>No genres specified</p>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right text-sm">
                           <p>Reviews Purchased: {counts.purchased}</p>
