@@ -165,7 +165,7 @@ export function HomepageSettings() {
   // Add genre view sections when they load
   useEffect(() => {
     if (genreViews?.views) {
-      const customViews = genreViews.views.map((view) => ({
+      const customViews = genreViews.views.map((view: { id: number, name: string }) => ({
         id: `custom-view-${view.id}`,
         type: "custom_genre_view" as const,
         displayMode: "carousel" as const,
@@ -178,7 +178,7 @@ export function HomepageSettings() {
       // Add to available sections if they're not already in active sections
       const activeSectionIds = sections.map(s => s.customViewId?.toString());
       const filteredCustomViews = customViews.filter(
-        (view) => !activeSectionIds.includes(view.customViewId?.toString())
+        (view: { customViewId?: number }) => !activeSectionIds.includes(view.customViewId?.toString())
       );
       
       if (filteredCustomViews.length > 0) {
@@ -222,10 +222,13 @@ export function HomepageSettings() {
   });
 
   // Handle drag end event for reordering sections
-  function handleDragEnd(event: any) {
+  function handleDragEnd(event: {
+    active: { id: string };
+    over: { id: string } | null;
+  }) {
     const { active, over } = event;
     
-    if (active.id !== over.id) {
+    if (over && active.id !== over.id) {
       setSections((items) => {
         const activeIndex = items.findIndex((item) => item.id === active.id);
         const overIndex = items.findIndex((item) => item.id === over.id);

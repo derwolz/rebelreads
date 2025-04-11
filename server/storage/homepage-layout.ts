@@ -1,82 +1,140 @@
 import { db } from "../db";
-import { homepageLayouts, HomepageSection } from "@shared/schema";
+import { homepageLayouts, type HomepageSection } from "../../shared/schema";
 import { eq } from "drizzle-orm";
+import { log } from "../vite";
 
-/**
- * Interface for Homepage Layout Storage operations
- */
 export interface IHomepageLayoutStorage {
   getHomepageLayout(userId: number): Promise<HomepageSection[]>;
   updateHomepageLayout(userId: number, sections: HomepageSection[]): Promise<HomepageSection[]>;
 }
 
-/**
- * Storage class for handling homepage layout operations
- */
 export class HomepageLayoutStorage implements IHomepageLayoutStorage {
   /**
-   * Get the homepage layout for a user
-   * 
-   * @param userId The ID of the user
-   * @returns Array of homepage sections
+   * Get homepage layout for a specific user
+   * If no layout exists, returns the default layout
    */
   async getHomepageLayout(userId: number): Promise<HomepageSection[]> {
     try {
-      // Attempt to find the user's homepage layout
-      const layout = await db.query.homepageLayouts.findFirst({
-        where: eq(homepageLayouts.userId, userId),
-      });
+      // Try to get the user's custom layout
+      const layoutResults = await db
+        .select()
+        .from(homepageLayouts)
+        .where(eq(homepageLayouts.userId, userId));
 
-      // If layout exists, return the sections
-      if (layout) {
-        return layout.sections;
+      // If user has a custom layout, return it
+      if (layoutResults.length > 0 && layoutResults[0].sections) {
+        return layoutResults[0].sections as HomepageSection[];
       }
 
-      // Otherwise return empty array (will be populated with defaults by the frontend)
-      return [];
+      // Otherwise, return the default layout
+      return this.getDefaultLayout();
     } catch (error) {
-      console.error("Error getting homepage layout:", error);
-      throw new Error("Failed to get homepage layout");
+      log(`Error getting homepage layout: ${error}`, "homepage-layout");
+      throw error;
     }
   }
 
   /**
-   * Update the homepage layout for a user
-   * 
-   * @param userId The ID of the user
-   * @param sections The homepage sections to save
-   * @returns The updated homepage sections
+   * Update homepage layout for a specific user
    */
   async updateHomepageLayout(userId: number, sections: HomepageSection[]): Promise<HomepageSection[]> {
     try {
       // Check if user already has a layout
-      const existingLayout = await db.query.homepageLayouts.findFirst({
-        where: eq(homepageLayouts.userId, userId),
-      });
+      const existing = await db
+        .select()
+        .from(homepageLayouts)
+        .where(eq(homepageLayouts.userId, userId));
 
-      if (existingLayout) {
+      if (existing.length === 0) {
+        // Create new layout record
+        await db.insert(homepageLayouts).values({
+          userId,
+          sections: sections as any,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      } else {
         // Update existing layout
-        await db.update(homepageLayouts)
-          .set({ 
-            sections,
+        await db
+          .update(homepageLayouts)
+          .set({
+            sections: sections as any,
             updatedAt: new Date(),
           })
           .where(eq(homepageLayouts.userId, userId));
-      } else {
-        // Create new layout
-        await db.insert(homepageLayouts)
-          .values({
-            userId,
-            sections,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          });
       }
 
       return sections;
     } catch (error) {
-      console.error("Error updating homepage layout:", error);
-      throw new Error("Failed to update homepage layout");
+      log(`Error updating homepage layout: ${error}`, "homepage-layout");
+      throw error;
     }
   }
+
+  /**
+   * Get the default homepage layout
+   */
+  private getDefaultLayout(): HomepageSection[] {
+    return [
+      {
+        id: "default-authors-you-follow",
+        type: "authors_you_follow",
+        displayMode: "carousel",
+        title: "Authors You Follow",
+        itemCount: 10,
+        visible: true,
+      },
+      {
+        id: "default-popular",
+        type: "popular",
+        displayMode: "carousel",
+        title: "Popular Books",
+        itemCount: 10,
+        visible: true,
+      },
+      {
+        id: "default-you-may-also-like",
+        type: "you_may_also_like",
+        displayMode: "carousel",
+        title: "You May Also Like",
+        itemCount: 10,
+        visible: true,
+      },
+      {
+        id: "default-wishlist",
+        type: "wishlist",
+        displayMode: "carousel",
+        title: "Your Wishlist",
+        itemCount: 10,
+        visible: true,
+      },
+      {
+        id: "default-unreviewed",
+        type: "unreviewed",
+        displayMode: "carousel",
+        title: "Books to Review",
+        itemCount: 10,
+        visible: true,
+      },
+      {
+        id: "default-reviewed",
+        type: "reviewed",
+        displayMode: "carousel",
+        title: "Your Reviewed Books",
+        itemCount: 10,
+        visible: true,
+      },
+      {
+        id: "default-completed",
+        type: "completed",
+        displayMode: "carousel",
+        title: "Completed Books",
+        itemCount: 10,
+        visible: true,
+      },
+    ];
+  }
 }
+
+// Create a singleton instance
+export const homepageLayoutStorage = new HomepageLayoutStorage();
