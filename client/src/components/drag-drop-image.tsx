@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Upload, Image as ImageIcon } from "lucide-react";
-import { IMAGE_TYPES } from "@shared/schema";
+import React, { useRef, useState } from 'react';
+import { Upload, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { IMAGE_TYPES } from '@shared/schema';
+import { Button } from './ui/button';
 
 interface DragDropImageProps {
   value: File | null;
@@ -25,120 +25,140 @@ export function DragDropImage({
   height,
   required = false,
 }: DragDropImageProps) {
-  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(previewUrl || null);
 
-  useEffect(() => {
-    if (value) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(value);
-    } else if (previewUrl) {
-      setPreview(previewUrl);
-    } else {
-      setPreview(null);
-    }
-  }, [value, previewUrl]);
+  // Calculate display dimensions to keep aspect ratio but limit size on screen
+  const maxDisplayHeight = 200; // Maximum height for display
+  const scale = Math.min(1, maxDisplayHeight / height);
+  const displayWidth = width * scale;
+  const displayHeight = height * scale;
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(true);
+    setIsDragging(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragOver(false);
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOver(false);
-    if (e.dataTransfer.files?.[0]) {
-      onChange(e.dataTransfer.files[0]);
-    }
-  };
+    setIsDragging(false);
 
-  const handleButtonClick = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = (e) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (files?.[0]) {
-        onChange(files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        handleImageSelected(file);
       }
-    };
-    input.click();
+    }
   };
 
-  const getImageTypeLabel = () => {
-    switch (imageType) {
-      case "book-detail":
-        return "Book Detail (480×600)";
-      case "background":
-        return "Background (1300×1500)";
-      case "book-card":
-        return "Book Card (256×440)";
-      case "grid-item":
-        return "Grid Item (56×212)";
-      case "mini":
-        return "Mini (48×64)";
-      case "hero":
-        return "Hero (1500×600)";
+  const handleImageSelected = (file: File) => {
+    onChange(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleImageSelected(e.target.files[0]);
+    }
+  };
+
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
+
+  const handleClear = () => {
+    setPreview(null);
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
+  const getTypeLabel = (type: typeof IMAGE_TYPES[number]) => {
+    switch(type) {
+      case 'book-detail':
+        return 'Book Detail (480×600)';
+      case 'background':
+        return 'Background (1300×1500)';
+      case 'book-card':
+        return 'Book Card (256×440)';
+      case 'grid-item':
+        return 'Grid Item (56×212)';
+      case 'mini':
+        return 'Mini (48×64)';
+      case 'hero':
+        return 'Hero (1500×600)';
       default:
-        return imageType;
+        return type;
     }
   };
 
   return (
-    <Card
-      className={`border-2 transition-colors ${
-        dragOver ? "border-primary" : "border-dashed border-border"
-      }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="flex flex-col items-center justify-center space-y-2 p-4 h-full">
-        <div className="flex items-center justify-center text-xs font-medium bg-muted text-muted-foreground rounded-sm px-2 py-1">
-          {getImageTypeLabel()} {required && <span className="text-red-500 ml-1">*</span>}
-        </div>
-        
-        {preview ? (
-          <>
-            <div 
-              className="relative overflow-hidden border rounded-md" 
-              style={{ width: `${Math.min(width, 200)}px`, height: `${Math.min(height, 200)}px` }}
-            >
-              <img
-                src={preview}
-                alt={`${imageType} preview`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <Button variant="outline" size="sm" onClick={handleButtonClick}>
-              Change Image
-            </Button>
-          </>
-        ) : (
-          <>
-            <div className="rounded-full bg-muted p-2">
-              <ImageIcon className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">
-                Drag and drop image here
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleButtonClick}>
-              <Upload className="w-3 h-3 mr-1" />
-              Upload
-            </Button>
-          </>
-        )}
+    <div className="space-y-2 border rounded-md p-4">
+      <div className="text-sm font-medium mb-2">
+        {getTypeLabel(imageType)} {required && <span className="text-red-500">*</span>}
       </div>
-    </Card>
+      
+      {preview || value ? (
+        <div className="relative">
+          <div style={{ width: displayWidth, height: displayHeight }} className="relative mx-auto">
+            <img
+              src={preview || URL.createObjectURL(value as File)}
+              alt={title || 'Book image'}
+              className="object-contain w-full h-full"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="absolute top-0 right-0"
+              onClick={handleClear}
+            >
+              <X size={16} />
+            </Button>
+          </div>
+          <div className="mt-2 text-center text-xs text-muted-foreground">
+            Recommended size: {width}×{height}
+          </div>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer p-4',
+            isDragging ? 'border-primary bg-primary/10' : 'border-border'
+          )}
+          style={{ height: displayHeight + 40, minHeight: '100px' }}
+          onClick={handleClick}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <Upload size={24} className="text-muted-foreground mb-2" />
+          <p className="text-sm text-center text-muted-foreground">
+            Drag & drop or click to select
+          </p>
+          <p className="text-xs text-center text-muted-foreground mt-1">
+            Recommended size: {width}×{height}
+          </p>
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleChange}
+        className="hidden"
+      />
+    </div>
   );
 }

@@ -14,6 +14,16 @@ import { BookCard } from "./book-card";
 import { DragDropCover } from "@/components/drag-drop-cover";
 import { DragDropImage } from "@/components/drag-drop-image";
 import { GenreSelector, TaxonomyItem } from "@/components/genre-selector";
+
+/**
+ * Interface for storing book image files with their metadata
+ */
+interface BookImageFile {
+  type: typeof IMAGE_TYPES[number];
+  file: File | null;
+  width: number;
+  height: number;
+}
 import {
   Dialog,
   DialogContent,
@@ -55,13 +65,7 @@ const RETAILER_OPTIONS = [
   "Custom",
 ] as const;
 
-// Interface for image files
-interface BookImageFile {
-  type: typeof IMAGE_TYPES[number];
-  file: File | null;
-  width: number;
-  height: number;
-}
+// BookImageFile interface is already defined at the top of the file
 
 interface FormData {
   title: string;
@@ -350,6 +354,14 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       Object.entries(data).forEach(([key, value]) => {
         if (key === "cover" && value instanceof File) {
           formData.append(key, value);
+        } else if (key === "bookImages" && typeof value === "object") {
+          // Handle book images
+          Object.entries(value as Record<string, BookImageFile>).forEach(([imageType, imageData]) => {
+            if (imageData.file) {
+              formData.append(`bookImage_${imageType}`, imageData.file);
+              formData.append(`bookImageType_${imageType}`, imageType);
+            }
+          });
         } else if (Array.isArray(value)) {
           formData.append(key, JSON.stringify(value));
         } else if (value !== null && value !== undefined && value !== "") {
@@ -374,9 +386,58 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           ? "Book updated successfully."
           : "Book uploaded successfully.",
       });
+      
+      // Create default empty book images structure
+      const emptyBookImages = (): Record<typeof IMAGE_TYPES[number], BookImageFile> => {
+        const images: Partial<Record<typeof IMAGE_TYPES[number], BookImageFile>> = {};
+        
+        // Initialize each image type with empty values
+        IMAGE_TYPES.forEach(type => {
+          let width = 0;
+          let height = 0;
+          
+          // Set dimensions based on image type
+          switch (type) {
+            case "book-detail":
+              width = 480;
+              height = 600;
+              break;
+            case "background":
+              width = 1300;
+              height = 1500;
+              break;
+            case "book-card":
+              width = 256;
+              height = 440;
+              break;
+            case "grid-item":
+              width = 56;
+              height = 212;
+              break;
+            case "mini":
+              width = 48;
+              height = 64;
+              break;
+            case "hero":
+              width = 1500;
+              height = 600;
+              break;
+          }
+          
+          images[type] = {
+            type,
+            file: null,
+            width,
+            height
+          };
+        });
+        
+        return images as Record<typeof IMAGE_TYPES[number], BookImageFile>;
+      };
+      
+      // Reset form with empty values
       setFormData({
         title: "",
-        cover: null,
         description: "",
         series: "",
         setting: "",
@@ -393,7 +454,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         referralLinks: [],
         internal_details: "",
         genreTaxonomies: [],
+        bookImages: emptyBookImages(),
       });
+      
       setCurrentStep(0);
       onSuccess?.();
     },
@@ -472,8 +535,12 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         const hasTrope = formData.genreTaxonomies.some((t: any) => t.type === "trope");
         return hasGenre && hasTheme && hasTrope;
       case 6:
-        return true;
+        // Validate that all required images are provided
+        const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null);
+        return requiredImages;
       case 7:
+        return true;
+      case 8:
         return true;
       default:
         return false;
@@ -803,6 +870,33 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 6:
         return (
           <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Book Images</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload different images for your book to be displayed in various contexts. All images are required.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {IMAGE_TYPES.map((imageType) => {
+                const imageData = formData.bookImages[imageType];
+                return (
+                  <DragDropImage
+                    key={imageType}
+                    imageType={imageType}
+                    value={imageData.file}
+                    width={imageData.width}
+                    height={imageData.height}
+                    onChange={(file) => handleImageChange(imageType, file)}
+                    required={true}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      
+      case 7:
+        return (
+          <div className="space-y-4">
             <h2 className="text-lg font-semibold">Referral Links</h2>
             <p className="text-sm text-muted-foreground">
               Add links where readers can purchase your book
@@ -897,7 +991,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           </div>
         );
 
-      case 7:
+      case 8:
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Preview</h2>
