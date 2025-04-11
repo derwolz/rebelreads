@@ -616,26 +616,28 @@ async function createGenreViewsTables() {
         const contentViews = row.content_views || [];
         
         // For each content view in the old data
-        for (let i = 0; i < contentViews.length; i++) {
-          const view = contentViews[i];
-          
-          // Insert the view into the new table
-          const [newView] = await db.execute(sql`
-            INSERT INTO user_genre_views (user_id, name, rank, is_default)
-            VALUES (${userId}, ${view.name}, ${view.rank}, ${view.isDefault})
-            RETURNING id
-          `);
-          
-          const viewId = newView.id;
-          
-          // Insert each genre in the view into the new table
-          if (view.filters && Array.isArray(view.filters)) {
-            for (let j = 0; j < view.filters.length; j++) {
-              const genre = view.filters[j];
-              await db.execute(sql`
-                INSERT INTO view_genres (view_id, taxonomy_id, type, rank)
-                VALUES (${viewId}, ${genre.taxonomyId}, ${genre.type}, ${j + 1})
-              `);
+        if (Array.isArray(contentViews)) {
+          for (let i = 0; i < contentViews.length; i++) {
+            const view = contentViews[i];
+            
+            // Insert the view into the new table
+            const result = await db.execute(sql`
+              INSERT INTO user_genre_views (user_id, name, rank, is_default)
+              VALUES (${userId}, ${view.name}, ${view.rank}, ${view.isDefault})
+              RETURNING id
+            `);
+            
+            const viewId = result.rows[0]?.id;
+            
+            // Insert each genre in the view into the new table
+            if (view.filters && Array.isArray(view.filters)) {
+              for (let j = 0; j < view.filters.length; j++) {
+                const genre = view.filters[j];
+                await db.execute(sql`
+                  INSERT INTO view_genres (view_id, taxonomy_id, type, rank)
+                  VALUES (${viewId}, ${genre.taxonomyId}, ${genre.type}, ${j + 1})
+                `);
+              }
             }
           }
         }

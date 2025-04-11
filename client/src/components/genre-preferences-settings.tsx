@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { GenreSelector, TaxonomyItem } from "@/components/genre-selector";
 import {
@@ -22,15 +26,45 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { SortableGenre } from "@/components/sortable-genre";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus, PenLine, PlusCircle, Move } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Define types for the new schema
+interface ViewGenre {
+  id: number;
+  viewId: number;
+  taxonomyId: number;
+  type: string;
+  rank: number;
+  createdAt: string;
+  name?: string; // Added for UI display
+}
+
+interface GenreView {
+  id: number;
+  userId: number;
+  name: string;
+  rank: number;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+  genres?: ViewGenre[]; // Added from API response
+}
 
 export function GenrePreferencesSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for the selected tab
-  const [activeTab, setActiveTab] = useState<"preferred" | "additional">("preferred");
+  // Local state for views and genres
+  const [views, setViews] = useState<GenreView[]>([]);
+  const [activeViewId, setActiveViewId] = useState<number | null>(null);
+  
+  // State for the create/edit view dialog
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editViewId, setEditViewId] = useState<number | null>(null);
+  const [newViewName, setNewViewName] = useState("");
+  const [isDefaultView, setIsDefaultView] = useState(false);
   
   // Sensors for drag and drop functionality
   const sensors = useSensors(
@@ -40,47 +74,53 @@ export function GenrePreferencesSettings() {
     })
   );
 
-  // Fetch existing genre preferences from the server
-  const { data: preferences, isLoading } = useQuery({
+  // Fetch existing genre views from the server
+  const { data: viewsData, isLoading } = useQuery({
     queryKey: ["/api/genre-preferences"],
     queryFn: async () => {
       const response = await fetch("/api/genre-preferences");
       if (!response.ok) {
-        throw new Error("Failed to fetch genre preferences");
+        throw new Error("Failed to fetch genre views");
       }
       return response.json();
     }
   });
 
-  // Local state for preferred and additional genres
-  const [preferredGenres, setPreferredGenres] = useState<TaxonomyItem[]>([]);
-  const [additionalGenres, setAdditionalGenres] = useState<TaxonomyItem[]>([]);
-
-  // Initialize local state when preferences are loaded
+  // Initialize local state when views are loaded
   useEffect(() => {
-    if (preferences) {
-      setPreferredGenres(preferences.preferredGenres || []);
-      setAdditionalGenres(preferences.additionalGenres || []);
+    if (viewsData?.views) {
+      setViews(viewsData.views);
+      
+      // Set active view to the default view or the first view if available
+      if (viewsData.views.length > 0) {
+        const defaultView = viewsData.views.find((v: GenreView) => v.isDefault);
+        setActiveViewId(defaultView ? defaultView.id : viewsData.views[0].id);
+      }
     }
-  }, [preferences]);
+  }, [viewsData]);
 
-  // Mutation to save genre preferences changes
-  const saveMutation = useMutation({
-    mutationFn: async (data: {
-      preferredGenres: TaxonomyItem[],
-      additionalGenres: TaxonomyItem[]
-    }) => {
-      const response = await apiRequest("POST", "/api/genre-preferences", data);
+  // Get the currently active view and its genres
+  const activeView = views.find(v => v.id === activeViewId);
+  const activeViewGenres = activeView?.genres || [];
+
+  // Mutations
+  // Create a new view
+  const createViewMutation = useMutation({
+    mutationFn: async (data: { name: string; rank: number; isDefault: boolean }) => {
+      const response = await apiRequest("POST", "/api/genre-views", data);
       if (!response.ok) {
-        throw new Error("Failed to save genre preferences");
+        throw new Error("Failed to create genre view");
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
+      setIsCreateDialogOpen(false);
+      setNewViewName("");
+      setIsDefaultView(false);
       toast({
-        title: "Preferences saved",
-        description: "Your genre preferences have been updated successfully."
+        title: "View created",
+        description: "Your new genre view has been created successfully."
       });
     },
     onError: (error: Error) => {
@@ -92,84 +132,256 @@ export function GenrePreferencesSettings() {
     }
   });
 
+  // Update an existing view
+  const updateViewMutation = useMutation({
+    mutationFn: async (data: { id: number; name?: string; rank?: number; isDefault?: boolean }) => {
+      const response = await apiRequest(
+        "PATCH", 
+        `/api/genre-views/${data.id}`, 
+        { name: data.name, rank: data.rank, isDefault: data.isDefault }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update genre view");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
+      setIsCreateDialogOpen(false);
+      setNewViewName("");
+      setIsDefaultView(false);
+      setIsEditMode(false);
+      setEditViewId(null);
+      toast({
+        title: "View updated",
+        description: "Your genre view has been updated successfully."
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete a view
+  const deleteViewMutation = useMutation({
+    mutationFn: async (viewId: number) => {
+      const response = await apiRequest("DELETE", `/api/genre-views/${viewId}`);
+      if (!response.ok) {
+        throw new Error("Failed to delete genre view");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
+      toast({
+        title: "View deleted",
+        description: "Your genre view has been deleted successfully."
+      });
+      
+      // If we deleted the active view, select another view
+      if (views.length > 0 && activeViewId) {
+        const remainingViews = views.filter(v => v.id !== activeViewId);
+        if (remainingViews.length > 0) {
+          setActiveViewId(remainingViews[0].id);
+        } else {
+          setActiveViewId(null);
+        }
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Add a genre to the view
+  const addGenreMutation = useMutation({
+    mutationFn: async (data: { viewId: number; taxonomyId: number; type: string; rank: number }) => {
+      const response = await apiRequest(
+        "POST", 
+        `/api/genre-views/${data.viewId}/genres`, 
+        { taxonomyId: data.taxonomyId, type: data.type, rank: data.rank }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to add genre to view");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Remove a genre from the view
+  const removeGenreMutation = useMutation({
+    mutationFn: async (genreId: number) => {
+      const response = await apiRequest("DELETE", `/api/view-genres/${genreId}`);
+      if (!response.ok) {
+        throw new Error("Failed to remove genre from view");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update genre ranks
+  const updateGenreRankMutation = useMutation({
+    mutationFn: async (data: { genreId: number; rank: number }) => {
+      const response = await apiRequest(
+        "PATCH", 
+        `/api/view-genres/${data.genreId}/rank`, 
+        { rank: data.rank }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update genre rank");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/genre-preferences"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Handler functions
+  // Create/edit view
+  const handleSaveView = () => {
+    if (newViewName.trim() === "") {
+      toast({
+        title: "Invalid name",
+        description: "Please enter a valid name for the view.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isEditMode && editViewId) {
+      updateViewMutation.mutate({
+        id: editViewId,
+        name: newViewName,
+        isDefault: isDefaultView
+      });
+    } else {
+      // For a new view, calculate the next rank
+      const nextRank = views.length > 0 
+        ? Math.max(...views.map(v => v.rank)) + 1 
+        : 1;
+      
+      createViewMutation.mutate({
+        name: newViewName,
+        rank: nextRank,
+        isDefault: isDefaultView
+      });
+    }
+  };
+
+  // Delete view
+  const handleDeleteView = () => {
+    if (activeViewId) {
+      if (confirm("Are you sure you want to delete this view? This action cannot be undone.")) {
+        deleteViewMutation.mutate(activeViewId);
+      }
+    }
+  };
+
+  // Open edit dialog
+  const handleEditView = () => {
+    if (activeView) {
+      setIsEditMode(true);
+      setEditViewId(activeView.id);
+      setNewViewName(activeView.name);
+      setIsDefaultView(activeView.isDefault);
+      setIsCreateDialogOpen(true);
+    }
+  };
+
+  // Handle genre selection
+  const handleGenreSelectionChange = (selected: TaxonomyItem[]) => {
+    if (!activeViewId) return;
+    
+    // Find the currently selected items
+    const currentGenres = activeViewGenres.map(g => g.taxonomyId);
+    
+    // Find new items that aren't in the current selection
+    const newGenres = selected.filter(item => 
+      !currentGenres.includes(item.taxonomyId)
+    );
+    
+    // Add each new genre to the view
+    newGenres.forEach(genre => {
+      addGenreMutation.mutate({
+        viewId: activeViewId,
+        taxonomyId: genre.taxonomyId,
+        type: genre.type,
+        rank: activeViewGenres.length + 1
+      });
+    });
+  };
+
+  // Handle removing a genre
+  const handleRemoveGenre = (genreId: number) => {
+    removeGenreMutation.mutate(genreId);
+  };
+
   // Handle reordering of genres
-  const handleDragEnd = (event: DragEndEvent, type: "preferred" | "additional") => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (over && active.id !== over.id) {
-      if (type === "preferred") {
-        setPreferredGenres(items => {
-          const oldIndex = items.findIndex(item => item.taxonomyId === active.id);
-          const newIndex = items.findIndex(item => item.taxonomyId === over.id);
-          
-          // Update ranks after reordering
-          const reordered = arrayMove(items, oldIndex, newIndex).map((item, idx) => ({
-            ...item,
+    if (over && active.id !== over.id && activeViewGenres.length > 1) {
+      // Get the old and new index
+      const oldIndex = activeViewGenres.findIndex(item => item.id === active.id);
+      const newIndex = activeViewGenres.findIndex(item => item.id === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Create a new array with the new order
+        const reordered = arrayMove(activeViewGenres, oldIndex, newIndex);
+        
+        // Update the ranks for all genres
+        reordered.forEach((genre, idx) => {
+          updateGenreRankMutation.mutate({
+            genreId: genre.id,
             rank: idx + 1
-          }));
-          
-          return reordered;
-        });
-      } else {
-        setAdditionalGenres(items => {
-          const oldIndex = items.findIndex(item => item.taxonomyId === active.id);
-          const newIndex = items.findIndex(item => item.taxonomyId === over.id);
-          
-          // Update ranks after reordering
-          const reordered = arrayMove(items, oldIndex, newIndex).map((item, idx) => ({
-            ...item,
-            rank: idx + 1
-          }));
-          
-          return reordered;
+          });
         });
       }
     }
   };
 
-  // Handle saving changes
-  const handleSave = () => {
-    saveMutation.mutate({
-      preferredGenres,
-      additionalGenres
-    });
-  };
-
-  // Handle removing a genre
-  const handleRemoveGenre = (taxonomyId: number, type: "preferred" | "additional") => {
-    if (type === "preferred") {
-      setPreferredGenres(items => {
-        const newItems = items.filter(item => item.taxonomyId !== taxonomyId);
-        // Update ranks after removal
-        return newItems.map((item, idx) => ({
-          ...item,
-          rank: idx + 1
-        }));
-      });
-    } else {
-      setAdditionalGenres(items => {
-        const newItems = items.filter(item => item.taxonomyId !== taxonomyId);
-        // Update ranks after removal
-        return newItems.map((item, idx) => ({
-          ...item,
-          rank: idx + 1
-        }));
-      });
-    }
-  };
-
-  // Handle selection of new genres
-  const handleSelectionChange = (selected: TaxonomyItem[], type: "preferred" | "additional") => {
-    if (type === "preferred") {
-      setPreferredGenres(selected.map((item, idx) => ({
-        ...item,
-        rank: idx + 1
-      })));
-    } else {
-      setAdditionalGenres(selected.map((item, idx) => ({
-        ...item,
-        rank: idx + 1
-      })));
+  // Reset the dialog when it's closed
+  const handleDialogChange = (open: boolean) => {
+    setIsCreateDialogOpen(open);
+    if (!open) {
+      setIsEditMode(false);
+      setEditViewId(null);
+      setNewViewName("");
+      setIsDefaultView(false);
     }
   };
 
@@ -195,111 +407,222 @@ export function GenrePreferencesSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Genre Preferences</CardTitle>
-        <CardDescription>
-          Customize how genres are prioritized in your reading experience
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Genre Preferences</CardTitle>
+            <CardDescription>
+              Create and customize multiple genre views for your reading experience
+            </CardDescription>
+          </div>
+          <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogChange}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditMode(false);
+                  setNewViewName("");
+                  setIsDefaultView(false);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New View
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {isEditMode ? "Edit Genre View" : "Create New Genre View"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="viewName">View Name</Label>
+                  <Input 
+                    id="viewName" 
+                    value={newViewName} 
+                    onChange={(e) => setNewViewName(e.target.value)}
+                    placeholder="Enter a name for this view" 
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="isDefault" 
+                    checked={isDefaultView} 
+                    onCheckedChange={setIsDefaultView} 
+                  />
+                  <Label htmlFor="isDefault">Make this my default view</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  type="submit" 
+                  onClick={handleSaveView}
+                  disabled={createViewMutation.isPending || updateViewMutation.isPending}
+                >
+                  {createViewMutation.isPending || updateViewMutation.isPending 
+                    ? "Saving..." 
+                    : isEditMode ? "Update View" : "Create View"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="preferred" value={activeTab} onValueChange={(value) => setActiveTab(value as "preferred" | "additional")}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="preferred">Primary Preferences</TabsTrigger>
-            <TabsTrigger value="additional">Additional Suggestions</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="preferred" className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              Choose and order the genres you prefer most. These will determine the primary organization of your content.
-              Drag and drop to change the order of importance.
-            </div>
-            
-            <div className="my-4">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={(event) => handleDragEnd(event, "preferred")}
-              >
-                <SortableContext
-                  items={preferredGenres.map(item => item.taxonomyId)}
-                  strategy={verticalListSortingStrategy}
-                >
+        {views.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              You don't have any genre views yet. Create your first view to get started.
+            </p>
+            <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogChange}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Create First View
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                {/* Same dialog content as above */}
+                <DialogHeader>
+                  <DialogTitle>Create New Genre View</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    {preferredGenres.map((genre) => (
-                      <SortableGenre
-                        key={genre.taxonomyId}
-                        id={genre.taxonomyId}
-                        label={genre.name}
-                        onRemove={() => handleRemoveGenre(genre.taxonomyId, "preferred")}
-                      />
-                    ))}
+                    <Label htmlFor="viewName">View Name</Label>
+                    <Input 
+                      id="viewName" 
+                      value={newViewName} 
+                      onChange={(e) => setNewViewName(e.target.value)}
+                      placeholder="Enter a name for this view" 
+                    />
                   </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-            
-            <div className="bg-muted p-4 rounded-md">
-              <h3 className="font-medium mb-2">Add Primary Genres</h3>
-              <GenreSelector
-                mode="taxonomy"
-                selected={preferredGenres}
-                onSelectionChange={(selected) => handleSelectionChange(selected as TaxonomyItem[], "preferred")}
-                maxItems={8}
-                helperText="Select genres to customize your primary content view"
-              />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="additional" className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              Select additional genres you're interested in for more diverse recommendations.
-              These genres will be used for secondary suggestions.
-            </div>
-            
-            <div className="my-4">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={(event) => handleDragEnd(event, "additional")}
-              >
-                <SortableContext
-                  items={additionalGenres.map(item => item.taxonomyId)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2">
-                    {additionalGenres.map((genre) => (
-                      <SortableGenre
-                        key={genre.taxonomyId}
-                        id={genre.taxonomyId}
-                        label={genre.name}
-                        onRemove={() => handleRemoveGenre(genre.taxonomyId, "additional")}
-                      />
-                    ))}
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="isDefault" 
+                      checked={isDefaultView} 
+                      onCheckedChange={setIsDefaultView} 
+                    />
+                    <Label htmlFor="isDefault">Make this my default view</Label>
                   </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-            
-            <div className="bg-muted p-4 rounded-md">
-              <h3 className="font-medium mb-2">Add Additional Genres</h3>
-              <GenreSelector
-                mode="taxonomy"
-                selected={additionalGenres}
-                onSelectionChange={(selected) => handleSelectionChange(selected as TaxonomyItem[], "additional")}
-                maxItems={12}
-                helperText="Select genres to diversify your recommendations"
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-8 flex justify-end">
-          <Button 
-            onClick={handleSave} 
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending ? "Saving..." : "Save Preferences"}
-          </Button>
-        </div>
+                </div>
+                <DialogFooter>
+                  <Button 
+                    type="submit" 
+                    onClick={handleSaveView}
+                    disabled={createViewMutation.isPending}
+                  >
+                    {createViewMutation.isPending ? "Creating..." : "Create View"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        ) : (
+          <>
+            <Tabs 
+              value={activeViewId?.toString() || ""} 
+              onValueChange={(value) => setActiveViewId(parseInt(value))}
+              className="mb-6"
+            >
+              <TabsList className="mb-4 flex flex-wrap">
+                {views.map((view) => (
+                  <TabsTrigger 
+                    key={view.id} 
+                    value={view.id.toString()}
+                    className="relative"
+                  >
+                    {view.name}
+                    {view.isDefault && (
+                      <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full -mt-0.5 -mr-0.5"></span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {views.map((view) => (
+                <TabsContent key={view.id} value={view.id.toString()} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium">{view.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {view.isDefault ? "Default View • " : ""}
+                        {view.genres?.length || 0} genres
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleEditView}
+                      >
+                        <PenLine className="h-4 w-4" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleDeleteView}
+                        disabled={views.length === 1} // Prevent deleting the last view
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="text-sm text-muted-foreground">
+                    Choose and order the genres for this view. Drag and drop to change the order of importance.
+                  </div>
+                  
+                  <div className="my-4">
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={view.genres?.map(item => item.id) || []}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-2">
+                          {view.genres?.map((genre) => (
+                            <SortableGenre
+                              key={genre.id}
+                              id={genre.id}
+                              label={genre.name || `${genre.type} (${genre.taxonomyId})`}
+                              onRemove={() => handleRemoveGenre(genre.id)}
+                            />
+                          ))}
+                          {view.genres?.length === 0 && (
+                            <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
+                              <p>No genres added to this view yet</p>
+                            </div>
+                          )}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                  
+                  <div className="bg-muted p-4 rounded-md">
+                    <h3 className="font-medium mb-2">Add Genres to This View</h3>
+                    <GenreSelector
+                      mode="taxonomy"
+                      selected={view.genres?.map(g => ({
+                        taxonomyId: g.taxonomyId,
+                        type: g.type as "genre" | "subgenre" | "theme" | "trope",
+                        rank: g.rank,
+                        name: g.name || ""
+                      })) || []}
+                      onSelectionChange={(selected) => handleGenreSelectionChange(selected as TaxonomyItem[])}
+                      maxItems={20}
+                      helperText="Select genres to add to this view"
+                    />
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </>
+        )}
       </CardContent>
     </Card>
   );
