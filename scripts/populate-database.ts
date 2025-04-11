@@ -45,14 +45,14 @@ const BOOK_IMAGE_PATHS = {
 
 const PROFILE_IMAGE_PATH = "/images/test-images/profile-test.jpg";
 
-// Configuration
-const NUM_USERS = 100;
-const NUM_AUTHORS = 20; // Number of users who are also authors
-const NUM_BOOKS_PER_AUTHOR = 5; // Average number of books per author
-const NUM_GENRES = 15;
-const NUM_SUBGENRES = 30;
-const NUM_THEMES = 20;
-const NUM_TROPES = 25;
+// Configuration - small batches for faster execution
+const NUM_USERS = 10; 
+const NUM_AUTHORS = 3;
+const NUM_BOOKS_PER_AUTHOR = 2;
+const NUM_GENRES = 4;
+const NUM_SUBGENRES = 6;
+const NUM_THEMES = 5;
+const NUM_TROPES = 5;
 
 // Lists of names, genres, and other data for generation
 const FIRST_NAMES = [
@@ -494,39 +494,51 @@ async function populateDatabase() {
       const lastName = getRandomElement(LAST_NAMES);
       const isAuthor = i < NUM_AUTHORS;
       
-      const userData = {
-        email: generateEmail(firstName, lastName),
-        username: generateUsername(firstName, lastName),
-        password: commonPassword,
-        newsletterOptIn: Math.random() > 0.5,
-        isAuthor,
-        isPro: isAuthor || Math.random() > 0.8,
-        proExpiresAt: isAuthor ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null,
-        authorName: isAuthor ? `${firstName} ${lastName}` : null,
-        authorBio: isAuthor ? `${firstName} ${lastName} is an author who specializes in ${getRandomElement(GENRES)} and ${getRandomElement(GENRES)}.` : null,
-        authorImageUrl: isAuthor ? PROFILE_IMAGE_PATH : null,
-        profileImageUrl: Math.random() > 0.7 ? PROFILE_IMAGE_PATH : null,
-        bio: Math.random() > 0.5 ? `Reader and fan of ${getRandomElement(GENRES)} books.` : null,
-        displayName: `${firstName} ${lastName}`,
-        socialMediaLinks: isAuthor ? generateSocialMediaLinks() : [],
-        credits: isAuthor ? getRandomInt(100, 1000) : getRandomInt(0, 50),
-        hasCompletedOnboarding: true
-      };
+      // Create user with SQL to avoid TypeScript issues
+      const email = generateEmail(firstName, lastName);
+      const username = generateUsername(firstName, lastName);
+      const displayName = `${firstName} ${lastName}`;
+      const authorName = isAuthor ? `${firstName} ${lastName}` : null;
+      const authorBio = isAuthor ? `${firstName} ${lastName} is an author who specializes in ${getRandomElement(GENRES)} and ${getRandomElement(GENRES)}.` : null;
+      const bio = Math.random() > 0.5 ? `Reader and fan of ${getRandomElement(GENRES)} books.` : null;
+      const authorImageUrl = isAuthor ? PROFILE_IMAGE_PATH : null;
+      const profileImageUrl = Math.random() > 0.7 ? PROFILE_IMAGE_PATH : null;
+      const newsletterOptIn = Math.random() > 0.5;
+      const isPro = isAuthor || Math.random() > 0.8;
+      const proExpiresAt = isAuthor ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null;
+      const socialMediaLinks = isAuthor ? JSON.stringify(generateSocialMediaLinks()) : "[]";
+      const credits = isAuthor ? getRandomInt(100, 1000) : getRandomInt(0, 50);
       
-      const [insertedUser] = await db.insert(users).values(userData).returning({ id: users.id });
+      const result = await db.execute(sql`
+        INSERT INTO users 
+        (email, username, password, newsletter_opt_in, is_author, is_pro, pro_expires_at, 
+         author_name, author_bio, author_image_url, profile_image_url, bio, display_name, 
+         social_media_links, credits, has_completed_onboarding)
+        VALUES 
+        (${email}, ${username}, ${commonPassword}, ${newsletterOptIn}, ${isAuthor}, ${isPro}, ${proExpiresAt},
+         ${authorName}, ${authorBio}, ${authorImageUrl}, ${profileImageUrl}, ${bio}, ${displayName},
+         ${socialMediaLinks}, ${credits}, true)
+        RETURNING id
+      `);
+      
+      const insertedUser = { id: result.rows[0].id };
       
       userIds.push(insertedUser.id);
       if (isAuthor) authorIds.push(insertedUser.id);
       
       // Create rating preferences for this user
-      await db.insert(rating_preferences).values({
-        userId: insertedUser.id,
-        themes: (Math.random() * 0.3 + 0.05).toFixed(2),
-        worldbuilding: (Math.random() * 0.3 + 0.05).toFixed(2),
-        writing: (Math.random() * 0.3 + 0.05).toFixed(2),
-        enjoyment: (Math.random() * 0.3 + 0.05).toFixed(2),
-        characters: (Math.random() * 0.3 + 0.05).toFixed(2)
-      });
+      const themes = (Math.random() * 0.3 + 0.05).toFixed(2);
+      const worldbuilding = (Math.random() * 0.3 + 0.05).toFixed(2);
+      const writing = (Math.random() * 0.3 + 0.05).toFixed(2);
+      const enjoyment = (Math.random() * 0.3 + 0.05).toFixed(2);
+      const characters = (Math.random() * 0.3 + 0.05).toFixed(2);
+      
+      await db.execute(sql`
+        INSERT INTO rating_preferences 
+        (user_id, themes, worldbuilding, writing, enjoyment, characters)
+        VALUES 
+        (${insertedUser.id}, ${themes}, ${worldbuilding}, ${writing}, ${enjoyment}, ${characters})
+      `);
       
       // Create genre views for this user
       if (Math.random() > 0.7) {
@@ -589,41 +601,50 @@ async function populateDatabase() {
         const description = generateBookDescription();
         const [authorData] = await db.select().from(users).where(eq(users.id, authorId));
         
-        // Generate book data
-        const bookData = {
-          title,
-          author: authorData.authorName,
-          authorId,
-          description,
-          authorImageUrl: authorData.authorImageUrl,
-          promoted: Math.random() > 0.8,
-          pageCount: getRandomInt(150, 800),
-          formats: getRandomElements(BOOK_FORMATS, getRandomInt(1, BOOK_FORMATS.length)),
-          publishedDate: new Date(Date.now() - getRandomInt(0, 1825) * 24 * 60 * 60 * 1000),
-          awards: Math.random() > 0.7 ? [
-            `${getRandomElement(ADJECTIVES)} ${getRandomElement(NOUNS)} Award`,
-            `${getRandomElement(NOUNS)} Prize ${getRandomInt(2000, 2023)}`
-          ] : [],
-          originalTitle: Math.random() > 0.9 ? `The Original ${title}` : null,
-          series: Math.random() > 0.7 ? `The ${getRandomElement(ADJECTIVES)} ${getRandomElement(NOUNS)} Series` : null,
-          setting: `${getRandomElement(ADJECTIVES)} ${getRandomElement(NOUNS)}`,
-          characters: [
-            `${getRandomElement(FIRST_NAMES)} ${getRandomElement(LAST_NAMES)}`,
-            `${getRandomElement(FIRST_NAMES)} ${getRandomElement(LAST_NAMES)}`,
-            `${getRandomElement(FIRST_NAMES)} ${getRandomElement(LAST_NAMES)}`
-          ],
-          isbn: `978-${getRandomInt(1000000000, 9999999999)}`,
-          asin: `B${Math.random().toString(36).substring(2, 11).toUpperCase()}`,
-          language: "English",
-          referralLinks: generateReferralLinks(),
-          impressionCount: getRandomInt(50, 1000),
-          clickThroughCount: getRandomInt(5, 200),
-          lastImpressionAt: new Date(Date.now() - getRandomInt(0, 30) * 24 * 60 * 60 * 1000),
-          lastClickThroughAt: new Date(Date.now() - getRandomInt(0, 60) * 24 * 60 * 60 * 1000),
-          internal_details: "Generated book"
-        };
+        // Prepare book data
+        const formats = JSON.stringify(getRandomElements(BOOK_FORMATS, getRandomInt(1, BOOK_FORMATS.length)));
+        const publishedDate = new Date(Date.now() - getRandomInt(0, 1825) * 24 * 60 * 60 * 1000);
+        const awards = Math.random() > 0.7 ? JSON.stringify([
+          `${getRandomElement(ADJECTIVES)} ${getRandomElement(NOUNS)} Award`,
+          `${getRandomElement(NOUNS)} Prize ${getRandomInt(2000, 2023)}`
+        ]) : null;
+        const originalTitle = Math.random() > 0.9 ? `The Original ${title}` : null;
+        const series = Math.random() > 0.7 ? `The ${getRandomElement(ADJECTIVES)} ${getRandomElement(NOUNS)} Series` : null;
+        const setting = `${getRandomElement(ADJECTIVES)} ${getRandomElement(NOUNS)}`;
+        const characters = JSON.stringify([
+          `${getRandomElement(FIRST_NAMES)} ${getRandomElement(LAST_NAMES)}`,
+          `${getRandomElement(FIRST_NAMES)} ${getRandomElement(LAST_NAMES)}`,
+          `${getRandomElement(FIRST_NAMES)} ${getRandomElement(LAST_NAMES)}`
+        ]);
+        const isbn = `978-${getRandomInt(1000000000, 9999999999)}`;
+        const asin = `B${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+        const language = "English";
+        const referralLinks = JSON.stringify(generateReferralLinks());
+        const impressionCount = getRandomInt(50, 1000);
+        const clickThroughCount = getRandomInt(5, 200);
+        const lastImpressionAt = new Date(Date.now() - getRandomInt(0, 30) * 24 * 60 * 60 * 1000);
+        const lastClickThroughAt = new Date(Date.now() - getRandomInt(0, 60) * 24 * 60 * 60 * 1000);
+        const internal_details = "Generated book";
+        const isPromoted = Math.random() > 0.8;
+        const pageCount = getRandomInt(150, 800);
         
-        const [insertedBook] = await db.insert(books).values(bookData).returning({ id: books.id });
+        // Insert book using raw SQL to avoid TypeScript issues
+        const bookResult = await db.execute(sql`
+          INSERT INTO books 
+          (title, author, author_id, description, author_image_url, promoted, page_count, 
+          formats, published_date, awards, original_title, series, setting, characters, 
+          isbn, asin, language, referral_links, impression_count, click_through_count, 
+          last_impression_at, last_click_through_at, internal_details)
+          VALUES 
+          (${title}, ${authorData.authorName}, ${authorId}, ${description}, ${authorData.authorImageUrl}, 
+          ${isPromoted}, ${pageCount}, ${formats}, ${publishedDate}, ${awards}, ${originalTitle}, 
+          ${series}, ${setting}, ${characters}, ${isbn}, ${asin}, ${language}, ${referralLinks}, 
+          ${impressionCount}, ${clickThroughCount}, ${lastImpressionAt}, ${lastClickThroughAt}, 
+          ${internal_details})
+          RETURNING id
+        `);
+        
+        const insertedBook = { id: bookResult.rows[0].id };
         bookIds.push(insertedBook.id);
         
         // Add images for this book
@@ -652,39 +673,43 @@ async function populateDatabase() {
         let rank = 1;
         
         for (const genreId of selectedGenreIds) {
-          await db.insert(bookGenreTaxonomies).values({
-            bookId: insertedBook.id,
-            taxonomyId: genreId,
-            rank: rank++,
-            importance: 1 / (1 + Math.log(rank))
-          });
+          await db.execute(sql`
+            INSERT INTO book_genre_taxonomies 
+            (book_id, taxonomy_id, rank, importance)
+            VALUES 
+            (${insertedBook.id}, ${genreId}, ${rank}, ${1 / (1 + Math.log(rank))})
+          `);
+          rank++;
         }
         
         for (const subgenreId of selectedSubgenreIds) {
-          await db.insert(bookGenreTaxonomies).values({
-            bookId: insertedBook.id,
-            taxonomyId: subgenreId,
-            rank: rank++,
-            importance: 1 / (1 + Math.log(rank))
-          });
+          await db.execute(sql`
+            INSERT INTO book_genre_taxonomies 
+            (book_id, taxonomy_id, rank, importance)
+            VALUES 
+            (${insertedBook.id}, ${subgenreId}, ${rank}, ${1 / (1 + Math.log(rank))})
+          `);
+          rank++;
         }
         
         for (const themeId of selectedThemeIds) {
-          await db.insert(bookGenreTaxonomies).values({
-            bookId: insertedBook.id,
-            taxonomyId: themeId,
-            rank: rank++,
-            importance: 1 / (1 + Math.log(rank))
-          });
+          await db.execute(sql`
+            INSERT INTO book_genre_taxonomies 
+            (book_id, taxonomy_id, rank, importance)
+            VALUES 
+            (${insertedBook.id}, ${themeId}, ${rank}, ${1 / (1 + Math.log(rank))})
+          `);
+          rank++;
         }
         
         for (const tropeId of selectedTropeIds) {
-          await db.insert(bookGenreTaxonomies).values({
-            bookId: insertedBook.id,
-            taxonomyId: tropeId,
-            rank: rank++,
-            importance: 1 / (1 + Math.log(rank))
-          });
+          await db.execute(sql`
+            INSERT INTO book_genre_taxonomies 
+            (book_id, taxonomy_id, rank, importance)
+            VALUES 
+            (${insertedBook.id}, ${tropeId}, ${rank}, ${1 / (1 + Math.log(rank))})
+          `);
+          rank++;
         }
       }
     }
@@ -732,20 +757,18 @@ async function populateDatabase() {
           // Only some ratings have text reviews
           const hasReview = Math.random() > 0.3;
           
-          await db.insert(ratings).values({
-            userId,
-            bookId,
-            enjoyment,
-            writing,
-            themes,
-            characters,
-            worldbuilding,
-            review: hasReview ? generateReview() : null,
-            analysis: hasReview ? generateReviewAnalysis() : null,
-            featured: Math.random() > 0.8,
-            report_status: Math.random() > 0.9 ? getRandomElement(["pending", "approved", "rejected"]) : "none",
-            report_reason: Math.random() > 0.9 ? "Inappropriate content" : null
-          });
+          // Insert with proper type conversions
+          await db.execute(sql`
+            INSERT INTO ratings 
+            (user_id, book_id, enjoyment, writing, themes, characters, worldbuilding, review, analysis, featured, report_status, report_reason)
+            VALUES 
+            (${userId}, ${bookId}, ${enjoyment}, ${writing}, ${themes}, ${characters}, ${worldbuilding}, 
+            ${hasReview ? generateReview() : null}, 
+            ${hasReview ? JSON.stringify(generateReviewAnalysis()) : null}, 
+            ${Math.random() > 0.8}, 
+            ${Math.random() > 0.9 ? getRandomElement(["pending", "approved", "rejected"]) : "none"}, 
+            ${Math.random() > 0.9 ? "Inappropriate content" : null})
+          `);
           
           // Make sure the user has a reading status for this book
           const existingStatus = await db.select().from(reading_status).where(sql`${reading_status.userId} = ${userId} AND ${reading_status.bookId} = ${bookId}`);
