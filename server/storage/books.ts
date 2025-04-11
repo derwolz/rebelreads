@@ -5,7 +5,9 @@ import {
   genreTaxonomies,
   InsertBookGenreTaxonomy,
   userGenreViews,
-  viewGenres
+  viewGenres,
+  ratings,
+  reading_status
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike, sql, desc, not, inArray } from "drizzle-orm";
@@ -266,6 +268,28 @@ export class BookStorage implements IBookStorage {
           .limit(7);
       }
 
+      // Get books the user has already rated or completed
+      const userRatedBooks = await db
+        .select({ bookId: ratings.bookId })
+        .from(ratings)
+        .where(eq(ratings.userId, userId));
+      
+      const userCompletedBooks = await db
+        .select({ bookId: reading_status.bookId })
+        .from(reading_status)
+        .where(
+          and(
+            eq(reading_status.userId, userId),
+            eq(reading_status.isCompleted, true)
+          )
+        );
+      
+      // Combine all book IDs to exclude
+      const excludedBookIds = [
+        ...userRatedBooks.map(rb => rb.bookId),
+        ...userCompletedBooks.map(cb => cb.bookId)
+      ];
+
       // Extract taxonomy IDs for the query
       const taxonomyIds = userGenres.map(genre => genre.taxonomyId);
 
@@ -274,12 +298,13 @@ export class BookStorage implements IBookStorage {
       // 1. Join books with book taxonomies
       // 2. Filter only the taxonomies that match user's preferences
       // 3. Calculate a score for each book based on the taxonomies' importance and the user's ranking
-      // 4. Group by book to sum up the scores
-      // 5. Order by total score in descending order
-      // 6. Limit to the specified number
-      // 7. Select a random subset of books from the top results
+      // 4. Exclude books the user has already rated or completed
+      // 5. Group by book to sum up the scores
+      // 6. Order by total score in descending order
+      // 7. Limit to the specified number
+      // 8. Select a random subset of books from the top results
       
-      const bookScores = await db.execute(sql`
+      let bookScoresQuery = sql`
         WITH book_scores AS (
           SELECT 
             b.id,
@@ -295,6 +320,14 @@ export class BookStorage implements IBookStorage {
           WHERE 
             vg.view_id = ${defaultView.id}
             AND bgt.taxonomy_id = ANY(${taxonomyIds})
+      `;
+      
+      // Add exclusion filter if there are books to exclude
+      if (excludedBookIds.length > 0) {
+        bookScoresQuery = sql`${bookScoresQuery} AND b.id <> ALL(${excludedBookIds})`;
+      }
+      
+      bookScoresQuery = sql`${bookScoresQuery}
           GROUP BY 
             b.id
           ORDER BY 
@@ -311,7 +344,9 @@ export class BookStorage implements IBookStorage {
         ORDER BY 
           RANDOM()
         LIMIT 7
-      `);
+      `;
+      
+      const bookScores = await db.execute(bookScoresQuery);
 
       // Extract books from the results
       return bookScores.rows.map(row => ({
