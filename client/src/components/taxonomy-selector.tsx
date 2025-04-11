@@ -1,460 +1,388 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CardContent } from "@/components/ui/card";
-import { CardDescription } from "@/components/ui/card";
-import { CardHeader } from "@/components/ui/card";
-import { CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, X } from "lucide-react";
-import { GenreTaxonomy } from "@shared/schema";
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Search, Tag, GripVertical, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface TaxonomySelectorProps {
-  selectedTaxonomies: {
-    id?: number;
-    taxonomyId: number;
-    rank: number;
-    type: "genre" | "subgenre" | "theme" | "trope";
-    name: string;
-  }[];
-  onTaxonomiesChange: (taxonomies: {
-    id?: number;
-    taxonomyId: number;
-    rank: number;
-    type: "genre" | "subgenre" | "theme" | "trope";
-    name: string;
-  }[]) => void;
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+
+interface SortableTaxonomyItemProps {
+  id: string;
+  type: string;
+  name: string;
+  onRemove: () => void;
 }
 
-export function TaxonomySelector({
-  selectedTaxonomies,
-  onTaxonomiesChange,
-}: TaxonomySelectorProps) {
-  const [tab, setTab] = useState<"genre" | "subgenre" | "theme" | "trope">("genre");
-  const [search, setSearch] = useState("");
+function SortableTaxonomyItem({ id, type, name, onRemove }: SortableTaxonomyItemProps) {
+  const { 
+    attributes, 
+    listeners, 
+    setNodeRef, 
+    transform, 
+    transition,
+    isDragging 
+  } = useSortable({ id });
   
-  // Query to get all genres
-  const { data: genres = [] } = useQuery<GenreTaxonomy[]>({
-    queryKey: ["/api/genres", { type: "genre" }],
-    queryFn: async () => {
-      const response = await fetch(`/api/genres?type=genre`);
-      if (!response.ok) throw new Error("Failed to fetch genres");
-      return response.json();
-    },
-  });
-
-  // Query to get all subgenres
-  const { data: subgenres = [] } = useQuery<GenreTaxonomy[]>({
-    queryKey: ["/api/genres", { type: "subgenre" }],
-    queryFn: async () => {
-      const response = await fetch(`/api/genres?type=subgenre`);
-      if (!response.ok) throw new Error("Failed to fetch subgenres");
-      return response.json();
-    },
-  });
-
-  // Query to get all themes
-  const { data: themes = [] } = useQuery<GenreTaxonomy[]>({
-    queryKey: ["/api/genres", { type: "theme" }],
-    queryFn: async () => {
-      const response = await fetch(`/api/genres?type=theme`);
-      if (!response.ok) throw new Error("Failed to fetch themes");
-      return response.json();
-    },
-  });
-
-  // Query to get all tropes
-  const { data: tropes = [] } = useQuery<GenreTaxonomy[]>({
-    queryKey: ["/api/genres", { type: "trope" }],
-    queryFn: async () => {
-      const response = await fetch(`/api/genres?type=trope`);
-      if (!response.ok) throw new Error("Failed to fetch tropes");
-      return response.json();
-    },
-  });
-
-  // Filter taxonomies based on search term
-  const filteredTaxonomies = () => {
-    const searchLower = search.toLowerCase();
-    switch (tab) {
-      case "genre":
-        return genres.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "genre")
-        );
-      case "subgenre":
-        return subgenres.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "subgenre")
-        );
-      case "theme":
-        return themes.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "theme")
-        );
-      case "trope":
-        return tropes.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "trope")
-        );
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+  };
+  
+  const getTypeColor = () => {
+    switch (type) {
+      case 'genre':
+        return 'bg-primary text-primary-foreground';
+      case 'subgenre':
+        return 'bg-secondary text-secondary-foreground';
+      case 'theme':
+        return 'bg-muted text-muted-foreground border-border';
+      case 'trope':
+        return 'bg-destructive text-destructive-foreground';
       default:
-        return [];
+        return 'bg-primary text-primary-foreground';
     }
   };
-
-  // Get selected taxonomies by type
-  const getSelectedByType = (type: "genre" | "subgenre" | "theme" | "trope") => {
-    return selectedTaxonomies.filter(item => item.type === type);
-  };
-
-  // Check if a taxonomy type has reached its maximum allowed count
-  const isMaxReached = (type: "genre" | "subgenre" | "theme" | "trope") => {
-    const count = getSelectedByType(type).length;
-    switch (type) {
-      case "genre": return count >= 2;
-      case "subgenre": return count >= 5;
-      case "theme": return count >= 6;
-      case "trope": return count >= 7;
-      default: return false;
-    }
-  };
-
-  // Check if a taxonomy is required and missing
-  const isMissingRequired = (type: "genre" | "subgenre" | "theme" | "trope") => {
-    const count = getSelectedByType(type).length;
-    switch (type) {
-      case "genre": 
-      case "theme":
-      case "trope":
-        return count === 0;
-      default: 
-        return false;
-    }
-  };
-
-  // Add a taxonomy to the selection
-  const addTaxonomy = (taxonomy: GenreTaxonomy) => {
-    if (isMaxReached(taxonomy.type as any)) return;
-    
-    // Add to the end of the list with the next rank number
-    const newRank = selectedTaxonomies.length + 1;
-    
-    onTaxonomiesChange([
-      ...selectedTaxonomies,
-      {
-        taxonomyId: taxonomy.id,
-        type: taxonomy.type as "genre" | "subgenre" | "theme" | "trope",
-        rank: newRank,
-        name: taxonomy.name,
-      }
-    ]);
-  };
-
-  // Remove a taxonomy from the selection
-  const removeTaxonomy = (index: number) => {
-    const updatedTaxonomies = [...selectedTaxonomies];
-    updatedTaxonomies.splice(index, 1);
-    
-    // Reorder ranks after removal
-    const rerankedTaxonomies = updatedTaxonomies.map((tax, idx) => ({
-      ...tax,
-      rank: idx + 1
-    }));
-    
-    onTaxonomiesChange(rerankedTaxonomies);
-  };
-
-  // Move a taxonomy up or down in the ranking
-  const moveTaxonomy = (index: number, direction: "up" | "down") => {
-    if (
-      (direction === "up" && index === 0) || 
-      (direction === "down" && index === selectedTaxonomies.length - 1)
-    ) {
-      return; // Cannot move beyond boundaries
-    }
-    
-    const updatedTaxonomies = [...selectedTaxonomies];
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
-    
-    // Swap the items
-    [updatedTaxonomies[index], updatedTaxonomies[swapIndex]] = 
-    [updatedTaxonomies[swapIndex], updatedTaxonomies[index]];
-    
-    // Update ranks after swapping
-    const rerankedTaxonomies = updatedTaxonomies.map((tax, idx) => ({
-      ...tax,
-      rank: idx + 1
-    }));
-    
-    onTaxonomiesChange(rerankedTaxonomies);
-  };
-
-  // Calculate importance value based on rank
-  const calculateImportance = (rank: number) => {
-    return (1 / (1 + Math.log(rank))).toFixed(3);
-  };
-
+  
   return (
-    <div className="space-y-6">
-      <div className="grid gap-2">
-        <h3 className="text-lg font-medium">Genres, Themes, and Tropes</h3>
-        <p className="text-sm text-muted-foreground">
-          Select the taxonomies that best describe your book. The order determines their importance.
-        </p>
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className={cn(
+        "flex items-center justify-between p-2 mb-2 rounded-md border",
+        isDragging ? "opacity-50 bg-muted" : "bg-card"
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <Badge className={cn("capitalize", getTypeColor())}>
+          {type}
+        </Badge>
+        <span className="text-sm">{name}</span>
+      </div>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="h-7 w-7 p-0 rounded-full"
+        onClick={onRemove}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
+interface TaxonomyOption {
+  id: number;
+  name: string;
+  description: string | null;
+  parentId: number | null;
+  type: string;
+}
+
+interface TaxonomySelectorProps {
+  selectedTaxonomies: any[];
+  onTaxonomiesChange: (taxonomies: any[]) => void;
+}
+
+export function TaxonomySelector({ selectedTaxonomies, onTaxonomiesChange }: TaxonomySelectorProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const [currentTab, setCurrentTab] = useState('browse');
+  
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  // Fetch all available taxonomies from the server
+  const { data: taxonomies, isLoading } = useQuery<TaxonomyOption[]>({
+    queryKey: ['/api/genres/taxonomies'],
+    staleTime: 600000, // Cache for 10 minutes
+  });
+  
+  // Filter taxonomies based on search query and type
+  const filteredTaxonomies = taxonomies ? taxonomies.filter(taxonomy => {
+    const matchesSearch = taxonomy.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         (taxonomy.description && taxonomy.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesType = selectedType === 'all' || taxonomy.type === selectedType;
+    return matchesSearch && matchesType;
+  }) : [];
+  
+  // Check if a taxonomy is already selected
+  const isTaxonomySelected = (taxonomyId: number) => {
+    return selectedTaxonomies.some(item => item.taxonomyId === taxonomyId);
+  };
+  
+  // Handle adding a taxonomy to the selection
+  const handleAddTaxonomy = (taxonomy: TaxonomyOption) => {
+    if (isTaxonomySelected(taxonomy.id)) return;
+    
+    const newItem = {
+      taxonomyId: taxonomy.id,
+      type: taxonomy.type,
+      rank: selectedTaxonomies.length,
+      name: taxonomy.name // Add this for UI display purposes
+    };
+    
+    onTaxonomiesChange([...selectedTaxonomies, newItem]);
+  };
+  
+  // Handle removing a taxonomy from the selection
+  const handleRemoveTaxonomy = (index: number) => {
+    const newItems = [...selectedTaxonomies];
+    newItems.splice(index, 1);
+    
+    // Update ranks after removal
+    const updatedItems = newItems.map((item, idx) => ({
+      ...item,
+      rank: idx
+    }));
+    
+    onTaxonomiesChange(updatedItems);
+  };
+  
+  // Handle reordering of taxonomies
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
+    
+    if (active.id !== over.id) {
+      const oldIndex = selectedTaxonomies.findIndex(item => `${item.taxonomyId}` === active.id);
+      const newIndex = selectedTaxonomies.findIndex(item => `${item.taxonomyId}` === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(selectedTaxonomies, oldIndex, newIndex);
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {/* Taxonomy selection panel */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Add Taxonomies</CardTitle>
-              <CardDescription>
-                Select from available taxonomies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="genre" value={tab} onValueChange={(v: string) => setTab(v as "genre" | "subgenre" | "theme" | "trope")}>
-                <TabsList className="grid grid-cols-4 mb-4">
-                  <TabsTrigger value="genre" className={isMissingRequired("genre") ? "border-destructive" : ""}>
-                    Genres {isMaxReached("genre") ? "(2/2)" : `(${getSelectedByType("genre").length}/2)`}
-                  </TabsTrigger>
-                  <TabsTrigger value="subgenre">
-                    Subgenres {isMaxReached("subgenre") ? "(5/5)" : `(${getSelectedByType("subgenre").length}/5)`}
-                  </TabsTrigger>
-                  <TabsTrigger value="theme" className={isMissingRequired("theme") ? "border-destructive" : ""}>
-                    Themes {isMaxReached("theme") ? "(6/6)" : `(${getSelectedByType("theme").length}/6)`}
-                  </TabsTrigger>
-                  <TabsTrigger value="trope" className={isMissingRequired("trope") ? "border-destructive" : ""}>
-                    Tropes {isMaxReached("trope") ? "(7/7)" : `(${getSelectedByType("trope").length}/7)`}
-                  </TabsTrigger>
-                </TabsList>
-                
-                <div className="relative mb-4">
+        // Update ranks after reordering
+        const updatedItems = newItems.map((item, idx) => ({
+          ...item,
+          rank: idx
+        }));
+        
+        onTaxonomiesChange(updatedItems);
+      }
+    }
+  };
+  
+  return (
+    <Card className="border-dashed">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">
+          Taxonomy Preferences
+        </CardTitle>
+        <CardDescription>
+          Select and prioritize the genres, themes, and tropes you prefer
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs 
+          defaultValue="browse" 
+          value={currentTab} 
+          onValueChange={setCurrentTab}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="browse">Browse</TabsTrigger>
+            <TabsTrigger value="selected">
+              Selected
+              {selectedTaxonomies.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {selectedTaxonomies.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Browse Tab Content */}
+          <TabsContent value="browse" className="pt-4">
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder={`Search ${tab}s...`}
-                    value={search}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                    placeholder="Search genres, themes, tropes..."
                     className="pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                
-                <TabsContent value="genre" className="m-0">
-                  <div className="font-medium mb-2">Select up to 2 genres (required)</div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((genre) => (
-                        <div key={genre.id} className="flex items-center justify-between">
-                          <Label
-                            htmlFor={`genre-${genre.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
+                <Select
+                  value={selectedType}
+                  onValueChange={setSelectedType}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="genre">Genres</SelectItem>
+                    <SelectItem value="subgenre">Subgenres</SelectItem>
+                    <SelectItem value="theme">Themes</SelectItem>
+                    <SelectItem value="trope">Tropes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="border rounded-md">
+                {isLoading ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    Loading taxonomies...
+                  </div>
+                ) : filteredTaxonomies.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No taxonomies found. Try adjusting your search.
+                  </div>
+                ) : (
+                  <div className="max-h-[300px] overflow-y-auto p-2">
+                    {filteredTaxonomies.map((taxonomy) => (
+                      <div key={taxonomy.id} className="flex items-center justify-between p-2 hover:bg-muted rounded-md">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={
+                              taxonomy.type === 'genre' ? 'default' :
+                              taxonomy.type === 'subgenre' ? 'secondary' :
+                              taxonomy.type === 'theme' ? 'outline' : 'destructive'
+                            } 
+                            className="capitalize"
                           >
-                            <Checkbox
-                              id={`genre-${genre.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) => t.taxonomyId === genre.id && t.type === "genre"
-                              )}
-                              disabled={isMaxReached("genre")}
-                              onCheckedChange={() => addTaxonomy(genre)}
-                            />
-                            <span>{genre.name}</span>
-                          </Label>
-                          {genre.description && (
-                            <span className="text-xs text-muted-foreground">{genre.description}</span>
-                          )}
+                            {taxonomy.type}
+                          </Badge>
+                          <span className="text-sm font-medium">{taxonomy.name}</span>
                         </div>
-                      ))}
-                      {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
-                          No additional genres found
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-                
-                <TabsContent value="subgenre" className="m-0">
-                  <div className="font-medium mb-2">Select up to 5 subgenres (optional)</div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((subgenre) => (
-                        <div key={subgenre.id} className="flex items-center justify-between">
-                          <Label
-                            htmlFor={`subgenre-${subgenre.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`subgenre-${subgenre.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) => t.taxonomyId === subgenre.id && t.type === "subgenre"
-                              )}
-                              disabled={isMaxReached("subgenre")}
-                              onCheckedChange={() => addTaxonomy(subgenre)}
-                            />
-                            <span>{subgenre.name}</span>
-                          </Label>
-                          {subgenre.description && (
-                            <span className="text-xs text-muted-foreground">{subgenre.description}</span>
-                          )}
-                        </div>
-                      ))}
-                      {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
-                          No additional subgenres found
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-                
-                <TabsContent value="theme" className="m-0">
-                  <div className="font-medium mb-2">Select up to 6 themes (at least 1 required)</div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((theme) => (
-                        <div key={theme.id} className="flex items-center justify-between">
-                          <Label
-                            htmlFor={`theme-${theme.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`theme-${theme.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) => t.taxonomyId === theme.id && t.type === "theme"
-                              )}
-                              disabled={isMaxReached("theme")}
-                              onCheckedChange={() => addTaxonomy(theme)}
-                            />
-                            <span>{theme.name}</span>
-                          </Label>
-                          {theme.description && (
-                            <span className="text-xs text-muted-foreground">{theme.description}</span>
-                          )}
-                        </div>
-                      ))}
-                      {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
-                          No additional themes found
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-                
-                <TabsContent value="trope" className="m-0">
-                  <div className="font-medium mb-2">Select up to 7 tropes (at least 1 required)</div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((trope) => (
-                        <div key={trope.id} className="flex items-center justify-between">
-                          <Label
-                            htmlFor={`trope-${trope.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`trope-${trope.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) => t.taxonomyId === trope.id && t.type === "trope"
-                              )}
-                              disabled={isMaxReached("trope")}
-                              onCheckedChange={() => addTaxonomy(trope)}
-                            />
-                            <span>{trope.name}</span>
-                          </Label>
-                          {trope.description && (
-                            <span className="text-xs text-muted-foreground">{trope.description}</span>
-                          )}
-                        </div>
-                      ))}
-                      {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
-                          No additional tropes found
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAddTaxonomy(taxonomy)}
+                          disabled={isTaxonomySelected(taxonomy.id)}
+                          className="h-7"
+                        >
+                          {isTaxonomySelected(taxonomy.id) ? 'Added' : 'Add'}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
           
-          {/* Selected taxonomies and reordering */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Selected Taxonomies</CardTitle>
-              <CardDescription>
-                Drag and drop to reorder by importance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedTaxonomies.length === 0 ? (
-                <div className="text-center p-4 text-muted-foreground border rounded-md">
-                  No taxonomies selected yet
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {selectedTaxonomies.map((taxonomy, index) => (
-                    <div 
-                      key={`${taxonomy.type}-${taxonomy.taxonomyId}`} 
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={
-                          taxonomy.type === "genre" ? "default" :
-                          taxonomy.type === "subgenre" ? "secondary" :
-                          taxonomy.type === "theme" ? "outline" :
-                          "destructive"
-                        }>
-                          {taxonomy.type}
-                        </Badge>
-                        <span className="font-medium">{taxonomy.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-muted-foreground">
-                          Rank: {taxonomy.rank}, Importance: {calculateImportance(taxonomy.rank)}
-                        </span>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => moveTaxonomy(index, "up")}
-                            disabled={index === 0}
-                          >
-                            ↑
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => moveTaxonomy(index, "down")}
-                            disabled={index === selectedTaxonomies.length - 1}
-                          >
-                            ↓
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-destructive"
-                            onClick={() => removeTaxonomy(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Selected Tab Content */}
+          <TabsContent value="selected" className="pt-4">
+            {selectedTaxonomies.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Tag className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-1">No taxonomies selected</h3>
+                <p className="text-sm">
+                  Switch to the Browse tab to select genres, themes, and tropes.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Drag items to reorder them based on priority. Items at the top will have higher priority in recommendations.
+                </p>
+                
+                <DndContext 
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={selectedTaxonomies.map(item => `${item.taxonomyId}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {selectedTaxonomies.map((item, index) => (
+                      <SortableTaxonomyItem
+                        key={item.taxonomyId}
+                        id={`${item.taxonomyId}`}
+                        type={item.type}
+                        name={item.name}
+                        onRemove={() => handleRemoveTaxonomy(index)}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter>
+        <div className="w-full flex justify-between items-center">
+          <div className="text-sm text-muted-foreground">
+            {selectedTaxonomies.length} taxonomies selected
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => onTaxonomiesChange([])}
+              disabled={selectedTaxonomies.length === 0}
+            >
+              Clear All
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setCurrentTab(currentTab === 'browse' ? 'selected' : 'browse')}
+            >
+              {currentTab === 'browse' ? 'View Selected' : 'Browse More'}
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

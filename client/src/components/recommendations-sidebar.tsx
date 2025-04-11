@@ -51,6 +51,9 @@ export function RecommendationsSidebar() {
   const { data: defaultPreference, isLoading: isLoadingPreference } = useQuery<UserTaxonomyPreference>({
     queryKey: ['/api/user-taxonomy/default-preference'],
     enabled: !!user,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     onError: () => {
       // Silently fail - user might not have created a preference yet
     }
@@ -60,12 +63,18 @@ export function RecommendationsSidebar() {
   const { data: taxonomyItems, isLoading: isLoadingItems } = useQuery<Array<UserTaxonomyItem & { name: string; description: string | null }>>({
     queryKey: ['/api/user-taxonomy/preferences', defaultPreference?.id, 'items'],
     enabled: !!defaultPreference?.id,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   
   // Fetch custom view preferences
   const { data: customViews, isLoading: isLoadingCustomViews } = useQuery<UserTaxonomyPreference[]>({
     queryKey: ['/api/user-taxonomy/custom-views'],
     enabled: !!user,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   
   // Fetch recommendations based on user's taxonomy preferences

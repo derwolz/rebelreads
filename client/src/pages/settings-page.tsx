@@ -30,7 +30,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Trash2, PlusCircle } from "lucide-react";
 import {
   Form,
   FormControl,

@@ -7,6 +7,7 @@ import { PublisherStorage } from "./storage/publisher";
 import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
 import { UserTaxonomyStorage } from "./storage/user-taxonomy";
+import { UserTaxonomyStorage } from "./storage/user-taxonomy";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
