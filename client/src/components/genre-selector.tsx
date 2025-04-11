@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown, Search, X } from "lucide-react";
+import { Check, ChevronsUpDown, GripVertical, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -25,6 +25,22 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GenreTaxonomy } from "@shared/schema";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
 
 // Types for various genre selection modes
 export type SimpleGenre = string;
@@ -313,6 +329,79 @@ function SimpleGenreSelector({
   );
 }
 
+// Sortable genre item with drag and drop capability
+interface SortableGenreItemProps {
+  id: string;
+  taxonomy: TaxonomyItem;
+  index: number;
+  calculateImportance: (rank: number) => string;
+  onRemove: () => void;
+}
+
+function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove }: SortableGenreItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center justify-between p-2 border rounded-md",
+        isDragging && "opacity-50 z-10 shadow-md"
+      )}
+    >
+      <div className="flex items-center space-x-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-7 w-7 cursor-grab touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </Button>
+        <Badge variant={
+          taxonomy.type === "genre" ? "default" :
+          taxonomy.type === "subgenre" ? "secondary" :
+          taxonomy.type === "theme" ? "outline" :
+          "destructive"
+        }>
+          {taxonomy.type}
+        </Badge>
+        <span className="font-medium">{taxonomy.name}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className="text-xs text-muted-foreground">
+          Rank: {taxonomy.rank}, Importance: {calculateImportance(taxonomy.rank)}
+        </span>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-7 w-7 text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 interface TaxonomyGenreSelectorProps {
   selectedTaxonomies: TaxonomyItem[];
   onTaxonomiesChange: (taxonomies: TaxonomyItem[]) => void;
@@ -470,30 +559,41 @@ function TaxonomyGenreSelector({
     onTaxonomiesChange(rerankedTaxonomies);
   };
 
-  // Move a taxonomy up or down in the ranking
-  const moveTaxonomy = (index: number, direction: "up" | "down") => {
-    if (
-      (direction === "up" && index === 0) || 
-      (direction === "down" && index === selectedTaxonomies.length - 1)
-    ) {
-      return; // Cannot move beyond boundaries
+  // Handle drag end for taxonomy reordering
+  const handleGenreDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      // Get the old and new index from the ids
+      const oldIndex = selectedTaxonomies.findIndex(
+        (item) => `${item.type}-${item.taxonomyId}` === active.id
+      );
+      const newIndex = selectedTaxonomies.findIndex(
+        (item) => `${item.type}-${item.taxonomyId}` === over.id
+      );
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Create a new array with the new order
+        const reordered = arrayMove(selectedTaxonomies, oldIndex, newIndex);
+        
+        // Update the ranks based on the new order
+        const rerankedTaxonomies = reordered.map((tax, idx) => ({
+          ...tax,
+          rank: idx + 1
+        }));
+        
+        onTaxonomiesChange(rerankedTaxonomies);
+      }
     }
-    
-    const updatedTaxonomies = [...selectedTaxonomies];
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
-    
-    // Swap the items
-    [updatedTaxonomies[index], updatedTaxonomies[swapIndex]] = 
-    [updatedTaxonomies[swapIndex], updatedTaxonomies[index]];
-    
-    // Update ranks after swapping
-    const rerankedTaxonomies = updatedTaxonomies.map((tax, idx) => ({
-      ...tax,
-      rank: idx + 1
-    }));
-    
-    onTaxonomiesChange(rerankedTaxonomies);
   };
+  
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Calculate importance value based on rank
   const calculateImportance = (rank: number) => {
@@ -734,59 +834,29 @@ function TaxonomyGenreSelector({
                   No taxonomies selected yet
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {selectedTaxonomies.map((taxonomy, index) => (
-                    <div 
-                      key={`${taxonomy.type}-${taxonomy.taxonomyId}`} 
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={
-                          taxonomy.type === "genre" ? "default" :
-                          taxonomy.type === "subgenre" ? "secondary" :
-                          taxonomy.type === "theme" ? "outline" :
-                          "destructive"
-                        }>
-                          {taxonomy.type}
-                        </Badge>
-                        <span className="font-medium">{taxonomy.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-muted-foreground">
-                          Rank: {taxonomy.rank}, Importance: {calculateImportance(taxonomy.rank)}
-                        </span>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => moveTaxonomy(index, "up")}
-                            disabled={index === 0}
-                          >
-                            ↑
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => moveTaxonomy(index, "down")}
-                            disabled={index === selectedTaxonomies.length - 1}
-                          >
-                            ↓
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-destructive"
-                            onClick={() => removeTaxonomy(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleGenreDragEnd}
+                >
+                  <SortableContext
+                    items={selectedTaxonomies.map(item => `${item.type}-${item.taxonomyId}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {selectedTaxonomies.map((taxonomy, index) => (
+                        <SortableGenreItem 
+                          key={`${taxonomy.type}-${taxonomy.taxonomyId}`}
+                          id={`${taxonomy.type}-${taxonomy.taxonomyId}`}
+                          taxonomy={taxonomy}
+                          index={index}
+                          calculateImportance={calculateImportance}
+                          onRemove={() => removeTaxonomy(index)}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </CardContent>
           </Card>
