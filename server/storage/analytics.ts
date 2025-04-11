@@ -4,11 +4,14 @@ import {
   bookImpressions,
   bookClickThroughs,
   books,
-  followers
+  followers,
+  popularBooks,
+  PopularBook,
+  InsertPopularBook
 } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, inArray, sql, isNull } from "drizzle-orm";
-import { subDays, format } from "date-fns";
+import { eq, and, inArray, sql, isNull, desc, asc, gt, like } from "drizzle-orm";
+import { subDays, format, addDays } from "date-fns";
 
 export interface IAnalyticsStorage {
   recordBookImpression(
@@ -40,6 +43,8 @@ export interface IAnalyticsStorage {
     follows: Array<{ date: string; count: number }>;
     unfollows: Array<{ date: string; count: number }>;
   }>;
+  calculatePopularBooks(): Promise<void>;
+  getPopularBooks(limit?: number): Promise<PopularBook[]>;
 }
 
 export class AnalyticsStorage implements IAnalyticsStorage {
@@ -269,5 +274,143 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         count: Number(u.count)
       }))
     };
+  }
+
+  /**
+   * Calculate popular books using a sigmoid function with a threshold of 14 days
+   * This function should be run daily at 00:00:00 GMT
+   */
+  async calculatePopularBooks(): Promise<void> {
+    try {
+      // Get current date for calculation
+      const now = new Date();
+      const threshold = 14; // 14 days threshold
+
+      // Find all books with referral click-throughs
+      const clickThroughResults = await db
+        .select({
+          bookId: bookClickThroughs.bookId,
+          totalClicks: sql<number>`count(*)`,
+        })
+        .from(bookClickThroughs)
+        .where(like(bookClickThroughs.source, 'referral_%'))
+        .groupBy(bookClickThroughs.bookId)
+        .orderBy(sql<number>`count(*)`, 'desc')
+        .limit(50); // Get top 50 candidates to process further
+      
+      if (clickThroughResults.length === 0) {
+        console.log('No books with referral click-throughs found');
+        return;
+      }
+      
+      // Get book data for calculating sigmoid
+      const bookIds = clickThroughResults.map(result => result.bookId);
+      const bookData = await db
+        .select({
+          id: books.id,
+          impressionCount: books.impressionCount,
+          clickThroughCount: books.clickThroughCount,
+        })
+        .from(books)
+        .where(inArray(books.id, bookIds));
+      
+      // Get existing popular books for rank comparison and first ranked date
+      const existingPopularBooks = await db
+        .select()
+        .from(popularBooks)
+        .where(eq(popularBooks.isActive, true));
+      
+      // Create a map for easy lookup
+      const existingPopularBooksMap = new Map<number, PopularBook>();
+      existingPopularBooks.forEach(book => {
+        existingPopularBooksMap.set(book.bookId, book);
+      });
+      
+      // Calculate sigmoid values for each book
+      const scoreData = bookData.map(book => {
+        const clickThroughData = clickThroughResults.find(ct => ct.bookId === book.id);
+        const totalClicks = clickThroughData ? clickThroughData.totalClicks : 0;
+        
+        const existingPopular = existingPopularBooksMap.get(book.id);
+        let firstRankedAt = now;
+        
+        if (existingPopular) {
+          firstRankedAt = existingPopular.firstRankedAt;
+        }
+        
+        // Calculate days since first ranked
+        const daysSinceFirstRanked = Math.max(
+          0, 
+          (now.getTime() - firstRankedAt.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        
+        // Sigmoid function: 1 / (1 + e^((days_since_first_ranked - threshold) / 2))
+        const sigmoidDecay = 1 / (1 + Math.exp((daysSinceFirstRanked - threshold) / 2));
+        
+        // Final score is totalClicks * sigmoidDecay
+        const score = totalClicks * sigmoidDecay;
+        
+        return {
+          bookId: book.id,
+          totalImpressions: book.impressionCount,
+          totalClickThroughs: book.clickThroughCount,
+          referralClicks: totalClicks,
+          sigmoidValue: score,
+          firstRankedAt: firstRankedAt,
+        };
+      });
+      
+      // Sort by sigmoid value and take top 10
+      const topBooks = scoreData
+        .sort((a, b) => b.sigmoidValue - a.sigmoidValue)
+        .slice(0, 10);
+      
+      // Begin transaction to update popular books
+      await db.transaction(async (tx) => {
+        // Set all current entries to inactive
+        await tx
+          .update(popularBooks)
+          .set({ isActive: false })
+          .where(eq(popularBooks.isActive, true));
+        
+        // Insert new entries
+        for (let i = 0; i < topBooks.length; i++) {
+          const book = topBooks[i];
+          
+          await tx.insert(popularBooks).values({
+            bookId: book.bookId,
+            totalImpressions: book.totalImpressions,
+            totalClickThroughs: book.totalClickThroughs,
+            sigmoidValue: book.sigmoidValue,
+            rank: i + 1,
+            isActive: true,
+            firstRankedAt: book.firstRankedAt,
+          });
+        }
+      });
+      
+      console.log(`Calculated popular books - ${topBooks.length} entries updated`);
+    } catch (error) {
+      console.error("Error calculating popular books:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves the current active popular books
+   * @param limit Maximum number of books to return, defaults to 10
+   */
+  async getPopularBooks(limit: number = 10): Promise<PopularBook[]> {
+    try {
+      return db
+        .select()
+        .from(popularBooks)
+        .where(eq(popularBooks.isActive, true))
+        .orderBy(asc(popularBooks.rank))
+        .limit(limit);
+    } catch (error) {
+      console.error("Error getting popular books:", error);
+      return [];
+    }
   }
 }

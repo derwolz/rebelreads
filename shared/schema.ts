@@ -996,3 +996,24 @@ export interface HomepageSection {
 
 export type HomepageLayout = typeof homepageLayouts.$inferSelect;
 export type InsertHomepageLayout = typeof homepageLayouts.$inferInsert;
+
+// Table for popular books recommendation with sigmoid decay
+export const popularBooks = pgTable("popular_books", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull(),
+  totalImpressions: integer("total_impressions").notNull(),
+  totalClickThroughs: integer("total_click_throughs").notNull(),
+  sigmoidValue: decimal("sigmoid_value").notNull(),
+  rank: integer("rank").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  firstRankedAt: timestamp("first_ranked_at").notNull(),
+  calculatedAt: timestamp("calculated_at").notNull().defaultNow(),
+});
+
+export const insertPopularBookSchema = createInsertSchema(popularBooks).omit({
+  id: true,
+  calculatedAt: true,
+});
+
+export type PopularBook = typeof popularBooks.$inferSelect;
+export type InsertPopularBook = typeof popularBooks.$inferInsert;
