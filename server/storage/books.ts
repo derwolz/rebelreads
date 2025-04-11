@@ -39,44 +39,61 @@ export interface IBookStorage {
 
 export class BookStorage implements IBookStorage {
   async getBooks(): Promise<Book[]> {
-    // Get all books
-    const allBooks = await db.select().from(books);
-    
-    if (allBooks.length === 0) return [];
-    
-    // Get all books IDs
-    const bookIds = allBooks.map(book => book.id);
-    
-    console.log(`getBooks: Found ${allBooks.length} books with IDs:`, bookIds);
-    
-    // Fetch all images for these books
-    const allImages = await db.select()
-      .from(bookImages)
-      .where(inArray(bookImages.bookId, bookIds));
-    
-    console.log(`getBooks: Found ${allImages.length} total book images`);
-    
-    // Group images by book ID for easy lookup
-    const imagesByBookId = new Map<number, BookImage[]>();
-    
-    allImages.forEach(image => {
-      if (!imagesByBookId.has(image.bookId)) {
-        imagesByBookId.set(image.bookId, []);
+    try {
+      // Get all books
+      const allBooks = await db.select().from(books);
+      
+      if (allBooks.length === 0) return [];
+      
+      // Get all books IDs
+      const bookIds = allBooks.map(book => book.id);
+      
+      console.log(`getBooks: Found ${allBooks.length} books with IDs:`, bookIds);
+      
+      // Fetch all images for these books
+      const allImages = await db.select()
+        .from(bookImages)
+        .where(inArray(bookImages.bookId, bookIds));
+      
+      console.log(`getBooks: Found ${allImages.length} total book images`);
+      console.log('Book image details:', allImages.map(img => ({
+        bookId: img.bookId,
+        imageType: img.imageType,
+        imageUrl: img.imageUrl
+      })));
+      
+      // Group images by book ID for easy lookup
+      const imagesByBookId = new Map<number, BookImage[]>();
+      
+      allImages.forEach(image => {
+        if (!imagesByBookId.has(image.bookId)) {
+          imagesByBookId.set(image.bookId, []);
+        }
+        imagesByBookId.get(image.bookId)!.push(image);
+      });
+      
+      // Log each book's image count
+      bookIds.forEach(bookId => {
+        const images = imagesByBookId.get(bookId) || [];
+        console.log(`getBooks: Book ID ${bookId} has ${images.length} images`);
+      });
+      
+      // Add images to books and log all book objects for debugging
+      const result = allBooks.map(book => ({
+        ...book,
+        images: imagesByBookId.get(book.id) || []
+      })) as Book[];
+      
+      // Log one book with its complete data for debugging
+      if (result.length > 0) {
+        console.log('First book complete data:', JSON.stringify(result[0], null, 2));
       }
-      imagesByBookId.get(image.bookId)!.push(image);
-    });
-    
-    // Log each book's image count
-    bookIds.forEach(bookId => {
-      const images = imagesByBookId.get(bookId) || [];
-      console.log(`getBooks: Book ID ${bookId} has ${images.length} images`);
-    });
-    
-    // Add images to books
-    return allBooks.map(book => ({
-      ...book,
-      images: imagesByBookId.get(book.id) || []
-    })) as Book[];
+      
+      return result;
+    } catch (error) {
+      console.error('Error in getBooks():', error);
+      return [];
+    }
   }
 
   async selectBooks(query: string): Promise<Book[]> {
