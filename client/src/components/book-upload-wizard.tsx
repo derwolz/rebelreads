@@ -72,13 +72,7 @@ interface FormData {
   originalTitle: string;
   referralLinks: ReferralLink[];
   internal_details: string; // Added new field
-  genreTaxonomies: { // Taxonomy field
-    id?: number;
-    taxonomyId: number;
-    rank: number;
-    type: "genre" | "subgenre" | "theme" | "trope";
-    name: string;
-  }[];
+  genreTaxonomies: TaxonomyItem[]; // Using our TaxonomyItem type
 }
 
 const STEPS = [
@@ -169,7 +163,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [showCoverUpload, setShowCoverUpload] = useState(!book);
-  const [formData, setFormData] = useState(() => {
+  const [formData, setFormData] = useState<FormData>(() => {
     if (book) {
       return {
         title: book.title,
@@ -181,12 +175,12 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         hasAwards: (book.awards || []).length > 0,
         awards: book.awards || [],
         formats: book.formats,
-        pageCount: book.pageCount,
-        publishedDate: book.publishedDate,
+        pageCount: book.pageCount ?? 0,
+        publishedDate: book.publishedDate ?? "",
         isbn: book.isbn || "",
         asin: book.asin || "",
         language: book.language,
-        genreTaxonomies: (book as any).genreTaxonomies || [],
+        genreTaxonomies: ((book as any).genreTaxonomies as TaxonomyItem[]) || [],
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "", // Initialize from book data
