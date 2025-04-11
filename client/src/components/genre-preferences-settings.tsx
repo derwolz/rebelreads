@@ -615,7 +615,8 @@ export function GenrePreferencesSettings() {
                       })) || []}
                       onSelectionChange={(selected) => handleGenreSelectionChange(selected as TaxonomyItem[])}
                       maxItems={20}
-                      helperText="Select genres to add to this view"
+                      restrictLimits={false}
+                      helperText="Select genres to add to this view - no limits on selections"
                     />
                   </div>
                 </TabsContent>

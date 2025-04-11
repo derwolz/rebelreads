@@ -526,16 +526,32 @@ function TaxonomyGenreSelector({
               <Tabs defaultValue="genre" value={tab} onValueChange={(v: string) => setTab(v as "genre" | "subgenre" | "theme" | "trope")}>
                 <TabsList className="grid grid-cols-4 mb-4">
                   <TabsTrigger value="genre" className={isMissingRequired("genre") ? "border-destructive" : ""}>
-                    Genres {isMaxReached("genre") ? "(2/2)" : `(${getSelectedByType("genre").length}/2)`}
+                    Genres {
+                      restrictLimits
+                        ? isMaxReached("genre") ? "(2/2)" : `(${getSelectedByType("genre").length}/2)`
+                        : `(${getSelectedByType("genre").length})`
+                    }
                   </TabsTrigger>
                   <TabsTrigger value="subgenre">
-                    Subgenres {isMaxReached("subgenre") ? "(5/5)" : `(${getSelectedByType("subgenre").length}/5)`}
+                    Subgenres {
+                      restrictLimits
+                        ? isMaxReached("subgenre") ? "(5/5)" : `(${getSelectedByType("subgenre").length}/5)`
+                        : `(${getSelectedByType("subgenre").length})`
+                    }
                   </TabsTrigger>
                   <TabsTrigger value="theme" className={isMissingRequired("theme") ? "border-destructive" : ""}>
-                    Themes {isMaxReached("theme") ? "(6/6)" : `(${getSelectedByType("theme").length}/6)`}
+                    Themes {
+                      restrictLimits
+                        ? isMaxReached("theme") ? "(6/6)" : `(${getSelectedByType("theme").length}/6)`
+                        : `(${getSelectedByType("theme").length})`
+                    }
                   </TabsTrigger>
                   <TabsTrigger value="trope" className={isMissingRequired("trope") ? "border-destructive" : ""}>
-                    Tropes {isMaxReached("trope") ? "(7/7)" : `(${getSelectedByType("trope").length}/7)`}
+                    Tropes {
+                      restrictLimits
+                        ? isMaxReached("trope") ? "(7/7)" : `(${getSelectedByType("trope").length}/7)`
+                        : `(${getSelectedByType("trope").length})`
+                    }
                   </TabsTrigger>
                 </TabsList>
                 
@@ -626,7 +642,11 @@ function TaxonomyGenreSelector({
                 </TabsContent>
                 
                 <TabsContent value="theme" className="m-0">
-                  <div className="font-medium mb-2">Select up to 6 themes (at least 1 required)</div>
+                  <div className="font-medium mb-2">
+                    {restrictLimits 
+                      ? "Select up to 6 themes (at least 1 required)" 
+                      : "Select as many themes as you want"}
+                  </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
                     <div className="space-y-2">
                       {filteredTaxonomies().map((theme) => (
@@ -660,7 +680,11 @@ function TaxonomyGenreSelector({
                 </TabsContent>
                 
                 <TabsContent value="trope" className="m-0">
-                  <div className="font-medium mb-2">Select up to 7 tropes (at least 1 required)</div>
+                  <div className="font-medium mb-2">
+                    {restrictLimits 
+                      ? "Select up to 7 tropes (at least 1 required)" 
+                      : "Select as many tropes as you want"}
+                  </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
                     <div className="space-y-2">
                       {filteredTaxonomies().map((trope) => (
