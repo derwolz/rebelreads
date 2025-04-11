@@ -88,6 +88,11 @@ router.get("/books/:id", async (req, res) => {
 
   const book = await dbStorage.getBook(bookId);
   if (!book) return res.sendStatus(404);
+  
+  // Add debugging to check if images are attached to the book
+  console.log(`Book ID ${bookId} has ${book.images?.length || 0} images:`, 
+    book.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
+  
   res.json(book);
 });
 
