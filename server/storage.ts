@@ -6,7 +6,6 @@ import { CampaignStorage } from "./storage/campaigns";
 import { PublisherStorage } from "./storage/publisher";
 import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
-import { UserTaxonomyStorage } from "./storage/user-taxonomy";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -17,7 +16,6 @@ const campaignStorage = new CampaignStorage();
 const publisherStorage = new PublisherStorage();
 const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 const betaKeyStorage = new BetaKeyStorage();
-const userTaxonomyStorage = new UserTaxonomyStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -155,18 +153,6 @@ export const dbStorage = {
   recordBetaKeyUsage: betaKeyStorage.recordBetaKeyUsage.bind(betaKeyStorage),
   getBetaKeyUsage: betaKeyStorage.getBetaKeyUsage.bind(betaKeyStorage),
   isBetaActive: betaKeyStorage.isBetaActive.bind(betaKeyStorage),
-  
-  // User taxonomy preferences
-  getUserTaxonomyPreferences: userTaxonomyStorage.getUserTaxonomyPreferences.bind(userTaxonomyStorage),
-  getUserDefaultTaxonomyPreference: userTaxonomyStorage.getUserDefaultTaxonomyPreference.bind(userTaxonomyStorage),
-  getUserCustomViewPreferences: userTaxonomyStorage.getUserCustomViewPreferences.bind(userTaxonomyStorage),
-  getTaxonomyPreferenceById: userTaxonomyStorage.getTaxonomyPreferenceById.bind(userTaxonomyStorage),
-  createTaxonomyPreference: userTaxonomyStorage.createTaxonomyPreference.bind(userTaxonomyStorage),
-  updateTaxonomyPreference: userTaxonomyStorage.updateTaxonomyPreference.bind(userTaxonomyStorage),
-  deleteTaxonomyPreference: userTaxonomyStorage.deleteTaxonomyPreference.bind(userTaxonomyStorage),
-  getTaxonomyItems: userTaxonomyStorage.getTaxonomyItems.bind(userTaxonomyStorage),
-  addTaxonomyItems: userTaxonomyStorage.addTaxonomyItems.bind(userTaxonomyStorage),
-  replaceTaxonomyItems: userTaxonomyStorage.replaceTaxonomyItems.bind(userTaxonomyStorage),
 };
 
 // Export interfaces from their respective modules
@@ -178,18 +164,6 @@ export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
-export interface IUserTaxonomyStorage extends Pick<UserTaxonomyStorage, 
-  'getUserTaxonomyPreferences' | 
-  'getUserDefaultTaxonomyPreference' | 
-  'getUserCustomViewPreferences' | 
-  'getTaxonomyPreferenceById' | 
-  'createTaxonomyPreference' | 
-  'updateTaxonomyPreference' | 
-  'deleteTaxonomyPreference' | 
-  'getTaxonomyItems' | 
-  'addTaxonomyItems' | 
-  'replaceTaxonomyItems'
-> {}
 
 // Re-export storage classes
 export {
@@ -201,5 +175,4 @@ export {
   PublisherStorage,
   AuthorAnalyticsStorage,
   BetaKeyStorage,
-  UserTaxonomyStorage,
 };

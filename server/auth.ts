@@ -66,14 +66,6 @@ export function setupAuth(app: Express) {
     const user = await dbStorage.getUser(id);
     done(null, user);
   });
-  
-  // Add middleware to store userId in session
-  app.use((req, res, next) => {
-    if (req.isAuthenticated() && req.user) {
-      req.session.userId = req.user.id;
-    }
-    next();
-  });
 
   app.post("/api/register", async (req, res, next) => {
     try {

@@ -97,7 +97,6 @@ function Router() {
         <ProtectedRoute path="/settings/account" component={SettingsPage} />
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
         <ProtectedRoute path="/settings/rating-preferences" component={SettingsPage} />
-        <ProtectedRoute path="/settings/recommendations" component={SettingsPage} />
         <ProtectedRoute path="/settings/author" component={SettingsPage} />
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />

@@ -878,42 +878,6 @@ export type BetaKey = typeof betaKeys.$inferSelect;
 export type InsertBetaKey = typeof betaKeys.$inferInsert;
 export type BetaKeyUsage = typeof betaKeyUsage.$inferSelect;
 
-// User taxonomy preferences for recommendations
-export const userTaxonomyPreferences = pgTable("user_taxonomy_preferences", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  isDefault: boolean("is_default").notNull().default(false),
-  isCustomView: boolean("is_custom_view").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const userTaxonomyItems = pgTable("user_taxonomy_items", {
-  id: serial("id").primaryKey(),
-  preferenceId: integer("preference_id").notNull().references(() => userTaxonomyPreferences.id, { onDelete: "cascade" }),
-  taxonomyId: integer("taxonomy_id").notNull().references(() => genreTaxonomies.id, { onDelete: "cascade" }),
-  type: text("type", { enum: ["genre", "subgenre", "theme", "trope"] }).notNull(),
-  rank: integer("rank").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const insertUserTaxonomyPreferenceSchema = createInsertSchema(userTaxonomyPreferences).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertUserTaxonomyItemSchema = createInsertSchema(userTaxonomyItems).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type UserTaxonomyPreference = typeof userTaxonomyPreferences.$inferSelect;
-export type InsertUserTaxonomyPreference = typeof userTaxonomyPreferences.$inferInsert;
-export type UserTaxonomyItem = typeof userTaxonomyItems.$inferSelect;
-export type InsertUserTaxonomyItem = typeof userTaxonomyItems.$inferInsert;
-
 // Genre taxonomy tables
 export const genreTaxonomies = pgTable("genre_taxonomies", {
   id: serial("id").primaryKey(),

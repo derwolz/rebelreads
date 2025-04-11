@@ -30,7 +30,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, PlusCircle } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -415,44 +415,6 @@ export default function SettingsPage() {
     content = <AppearanceSettings />;
   } else if (location === "/settings/rating-preferences") {
     content = <RatingPreferencesSettings isWizard={false} />;
-  } else if (location === "/settings/recommendations") {
-    content = (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recommendation Preferences</CardTitle>
-          <CardDescription>
-            Configure how books are recommended to you based on genres, themes, and tropes
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">Default Preferences</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Set your default genre preferences for book recommendations across the site.
-                These preferences will be used to suggest books that match your interests.
-              </p>
-              <RecommendationsSidebar />
-            </div>
-            <div>
-              <h3 className="text-lg font-medium mb-4">Custom Views</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Create custom views for your home page based on specific genres or themes you're
-                interested in. Each view will show books that match those specific criteria.
-              </p>
-              
-              <div className="space-y-4">
-                {/* Custom views will be listed here */}
-                <Button variant="outline" className="w-full flex items-center gap-2">
-                  <PlusCircle className="h-4 w-4" />
-                  <span>Add Custom View</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
   } else if (location === "/settings/author" && user?.isAuthor) {
     content = (
       <Card>

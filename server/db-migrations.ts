@@ -409,62 +409,6 @@ async function createTaxonomyTables() {
   }
 }
 
-async function createUserTaxonomyTables() {
-  try {
-    // Check if user_taxonomy_preferences table exists
-    const userTaxonomyPreferencesResult = await db.execute(sql`
-      SELECT table_name
-      FROM information_schema.tables 
-      WHERE table_name = 'user_taxonomy_preferences'
-    `);
-    
-    if (userTaxonomyPreferencesResult.rows.length === 0) {
-      console.log("Creating 'user_taxonomy_preferences' table...");
-      await db.execute(sql`
-        CREATE TABLE user_taxonomy_preferences (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          name TEXT NOT NULL,
-          is_default BOOLEAN NOT NULL DEFAULT false,
-          is_custom_view BOOLEAN NOT NULL DEFAULT false,
-          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-        )
-      `);
-      console.log("Table 'user_taxonomy_preferences' created successfully");
-    } else {
-      console.log("Table 'user_taxonomy_preferences' already exists");
-    }
-    
-    // Check if user_taxonomy_items table exists
-    const userTaxonomyItemsResult = await db.execute(sql`
-      SELECT table_name
-      FROM information_schema.tables 
-      WHERE table_name = 'user_taxonomy_items'
-    `);
-    
-    if (userTaxonomyItemsResult.rows.length === 0) {
-      console.log("Creating 'user_taxonomy_items' table...");
-      await db.execute(sql`
-        CREATE TABLE user_taxonomy_items (
-          id SERIAL PRIMARY KEY,
-          preference_id INTEGER NOT NULL REFERENCES user_taxonomy_preferences(id) ON DELETE CASCADE,
-          taxonomy_id INTEGER NOT NULL REFERENCES genre_taxonomies(id) ON DELETE CASCADE,
-          type TEXT NOT NULL,
-          rank INTEGER NOT NULL,
-          created_at TIMESTAMP NOT NULL DEFAULT NOW()
-        )
-      `);
-      console.log("Table 'user_taxonomy_items' created successfully");
-    } else {
-      console.log("Table 'user_taxonomy_items' already exists");
-    }
-  } catch (error) {
-    console.error("Error creating user taxonomy tables:", error);
-    throw error;
-  }
-}
-
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -477,7 +421,5 @@ export async function runMigrations() {
   await removeOldRatingPreferencesColumns();
   // Add taxonomy tables
   await createTaxonomyTables();
-  // Add user taxonomy preference tables
-  await createUserTaxonomyTables();
   console.log("Migrations completed");
 }

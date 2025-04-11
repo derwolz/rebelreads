@@ -15,7 +15,6 @@ import authorAnalyticsRoutes from "./routes/author-analytics-routes";
 import adminRoutes from "./routes/admin-routes";
 import betaRoutes from "./routes/beta-routes";
 import genreRoutes from "./routes/genre-routes";
-import userTaxonomyRoutes from "./routes/user-taxonomy-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -35,7 +34,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/admin", adminRoutes);
   app.use("/api/beta", betaRoutes);
   app.use("/api/genres", genreRoutes);
-  app.use("/api/user-taxonomy", userTaxonomyRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
