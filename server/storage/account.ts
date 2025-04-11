@@ -14,6 +14,8 @@ import {
   rating_preferences,
   RatingPreferences,
   replies,
+  userGenreTaxonomies,
+  genreTaxonomies,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
@@ -65,6 +67,10 @@ export interface IAccountStorage {
     follows: Array<{ date: string; count: number }>;
     unfollows: Array<{ date: string; count: number }>;
   }>;
+  
+  // User genre taxonomies
+  getUserGenreTaxonomies(userId: number): Promise<any[]>;
+  saveUserGenreTaxonomies(userId: number, taxonomies: {taxonomyId: number, position: number}[]): Promise<any[]>;
 }
 
 export class AccountStorage implements IAccountStorage {
