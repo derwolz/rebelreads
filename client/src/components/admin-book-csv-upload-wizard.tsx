@@ -226,7 +226,7 @@ export function AdminBookCsvUploadWizard() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead>Cover URL</TableHead>
+                    <TableHead>Image URL</TableHead>
                     <TableHead>Author</TableHead>
                     <TableHead>Genres</TableHead>
                     <TableHead>Formats</TableHead>
@@ -245,7 +245,7 @@ export function AdminBookCsvUploadWizard() {
                     <TableRow key={index}>
                       <TableCell>{book.title}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{book.description}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{book.cover_url}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{book.image_url}</TableCell>
                       <TableCell>{book.author}</TableCell>
                       <TableCell>{book.genres}</TableCell>
                       <TableCell>{book.formats}</TableCell>
