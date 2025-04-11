@@ -679,8 +679,17 @@ export class AccountStorage implements IAccountStorage {
   async saveUserGenrePreferences(
     userId: number, 
     data: { 
-      preferredGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>,
-      additionalGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>
+      contentViews?: Array<{
+        id: string;
+        name: string;
+        rank: number;
+        filters: Array<{
+          taxonomyId: number;
+          type: string;
+          name: string;
+        }>;
+        isDefault: boolean;
+      }>
     }
   ): Promise<UserGenrePreference> {
     console.log(`Storage: saveUserGenrePreferences called for user ${userId}`);
@@ -690,19 +699,15 @@ export class AccountStorage implements IAccountStorage {
     
     try {
       if (existing) {
-        console.log("Storage: updating existing genre preferences");
+        console.log("Storage: updating existing content views");
         
         // Update the existing preferences with any new data
         const dataToUpdate: any = {
           updatedAt: new Date()
         };
         
-        if (data.preferredGenres !== undefined) {
-          dataToUpdate.preferredGenres = data.preferredGenres;
-        }
-        
-        if (data.additionalGenres !== undefined) {
-          dataToUpdate.additionalGenres = data.additionalGenres;
+        if (data.contentViews !== undefined) {
+          dataToUpdate.contentViews = data.contentViews;
         }
         
         const [updated] = await db
@@ -722,27 +727,26 @@ export class AccountStorage implements IAccountStorage {
             return checkResult[0];
           }
           
-          throw new Error("Failed to update user genre preferences");
+          throw new Error("Failed to update user content views");
         }
         
         return updated;
       } else {
-        console.log("Storage: creating new genre preferences");
+        console.log("Storage: creating new content views");
         
         // Create new preferences
         const [newPreferences] = await db
           .insert(userGenrePreferences)
           .values({
             userId: userId,
-            preferredGenres: data.preferredGenres || [],
-            additionalGenres: data.additionalGenres || [],
+            contentViews: data.contentViews || [],
           })
           .returning();
         
         return newPreferences;
       }
     } catch (error) {
-      console.error("Storage: Error saving user genre preferences:", error);
+      console.error("Storage: Error saving user content views:", error);
       throw error;
     }
   }

@@ -899,22 +899,21 @@ export const bookGenreTaxonomies = pgTable("book_genre_taxonomies", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// User genre preferences table - stores user's genre preferences for recommendations and content order
+// User genre preferences table - stores user's custom content views and their order
 export const userGenrePreferences = pgTable("user_genre_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique(), // One record per user
-  preferredGenres: jsonb("preferred_genres").$type<Array<{
-    taxonomyId: number;
-    rank: number;
-    type: "genre" | "subgenre" | "theme" | "trope";
+  contentViews: jsonb("content_views").$type<Array<{
+    id: string;
     name: string;
-  }>>().default([]), // Primary genre preferences for ordering content
-  additionalGenres: jsonb("additional_genres").$type<Array<{
-    taxonomyId: number;
     rank: number;
-    type: "genre" | "subgenre" | "theme" | "trope";
-    name: string;
-  }>>().default([]), // Secondary genre preferences for recommendations
+    filters: Array<{
+      taxonomyId: number;
+      type: "genre" | "subgenre" | "theme" | "trope";
+      name: string;
+    }>;
+    isDefault: boolean;
+  }>>().default([]), // User-defined content views with ordering
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
