@@ -193,8 +193,9 @@ router.post("/books", multipleImageUpload, async (req, res) => {
 
   try {
     // Log the request body and files for debugging
-    console.log("Book creation request:", req.body);
-    console.log("Uploaded files:", req.files);
+    console.log("Book creation request:", JSON.stringify(req.body, null, 2));
+    console.log("Uploaded files:", JSON.stringify(req.files, null, 2));
+    console.log("Fields starting with bookImage_:", Object.keys(req.files || {}).filter(key => key.startsWith('bookImage_')));
     
     // Check if we have at least one image
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -318,7 +319,8 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
   try {
     // Add debugging to see what's in the request
     console.log("Book update request body:", JSON.stringify(req.body, null, 2));
-    console.log("Uploaded files:", req.files);
+    console.log("Uploaded files:", JSON.stringify(req.files, null, 2));
+    console.log("Fields starting with bookImage_:", Object.keys(req.files || {}).filter(key => key.startsWith('bookImage_')));
     
     // Extract genreTaxonomies from request body to handle separately
     const { genreTaxonomies, ...bookData } = req.body;

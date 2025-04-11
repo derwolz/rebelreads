@@ -356,10 +356,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           formData.append(key, value);
         } else if (key === "bookImages" && typeof value === "object") {
           // Handle book images
+          console.log("Processing bookImages in formData:", value);
           Object.entries(value as Record<string, BookImageFile>).forEach(([imageType, imageData]) => {
+            console.log(`Processing image type: ${imageType}, has file:`, !!imageData.file);
             if (imageData.file) {
               formData.append(`bookImage_${imageType}`, imageData.file);
               formData.append(`bookImageType_${imageType}`, imageType);
+              console.log(`Added image file for ${imageType} to formData`);
             }
           });
         } else if (Array.isArray(value)) {
@@ -499,6 +502,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   };
   
   const handleImageChange = (imageType: typeof IMAGE_TYPES[number], file: File) => {
+    console.log(`Image changed for ${imageType}:`, file.name, file.size);
     setFormData((prev) => ({
       ...prev,
       bookImages: {
@@ -509,6 +513,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         }
       }
     }));
+    console.log(`Updated form data bookImages for ${imageType}:`, !!file);
   };
 
   // Legacy genre toggle removed
@@ -536,7 +541,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         return hasGenre && hasTheme && hasTrope;
       case 6:
         // Validate that all required images are provided
+        console.log("Checking required images:", formData.bookImages);
+        const imageStatuses = Object.entries(formData.bookImages).map(([type, img]) => 
+          `${type}: ${img.file ? 'Yes' : 'No'}`
+        );
+        console.log("Image statuses:", imageStatuses);
         const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null);
+        console.log("All required images provided:", requiredImages);
         return requiredImages;
       case 7:
         return true;
