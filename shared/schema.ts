@@ -919,22 +919,3 @@ export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
 export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
 export type BookGenreTaxonomy = typeof bookGenreTaxonomies.$inferSelect;
 export type InsertBookGenreTaxonomy = typeof bookGenreTaxonomies.$inferInsert;
-
-// User genre taxonomy relationship table - similar to book_genre_taxonomies but for users
-export const userGenreTaxonomies = pgTable("user_genre_taxonomies", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  taxonomyId: integer("taxonomy_id").notNull(),
-  position: integer("position").notNull().default(0), // Position for ordering importance
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Create insert schema for user genre taxonomies
-export const insertUserGenreTaxonomySchema = createInsertSchema(userGenreTaxonomies).omit({
-  id: true,
-  createdAt: true,
-});
-
-// Define types for user genre taxonomies
-export type UserGenreTaxonomy = typeof userGenreTaxonomies.$inferSelect;
-export type InsertUserGenreTaxonomy = typeof userGenreTaxonomies.$inferInsert;

@@ -146,46 +146,4 @@ router.patch("/user", async (req: Request, res: Response) => {
   }
 });
 
-// Get user's genre taxonomies
-router.get("/user-genre-taxonomies", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-  
-  try {
-    const userGenreTaxonomies = await dbStorage.getUserGenreTaxonomies(req.user.id);
-    res.json(userGenreTaxonomies);
-  } catch (error) {
-    console.error("Error getting user genre taxonomies:", error);
-    res.status(500).json({ error: "Failed to retrieve user genre taxonomies" });
-  }
-});
-
-// Save user's genre taxonomies
-router.post("/user-genre-taxonomies", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-  
-  // Validate the request body
-  const taxonomiesSchema = z.array(
-    z.object({
-      taxonomyId: z.number(),
-      position: z.number()
-    })
-  );
-  
-  try {
-    const taxonomies = taxonomiesSchema.parse(req.body);
-    const result = await dbStorage.saveUserGenreTaxonomies(req.user.id, taxonomies);
-    res.json(result);
-  } catch (error) {
-    console.error("Error saving user genre taxonomies:", error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid data", details: error.errors });
-    }
-    res.status(500).json({ error: "Failed to save user genre taxonomies" });
-  }
-});
-
 export default router;

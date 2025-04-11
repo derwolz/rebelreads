@@ -35,7 +35,6 @@ import { ImageCropperDialog } from "./image-cropper-dialog";
 import { PlusCircle, Trash2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { GenreSelector } from "@/components/genre-selector";
 
 export function ReaderSettings() {
   const { user } = useAuth();
@@ -243,25 +242,44 @@ export function ReaderSettings() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Favorite Genres</FormLabel>
-                <FormControl>
-                  <div className={cn(
-                    "border rounded-md p-4",
-                    formState.errors.favoriteGenres && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}>
-                    <GenreSelector
-                      mode="simple"
-                      selected={field.value || []}
-                      onSelectionChange={(selected) => field.onChange(selected)}
-                      maxItems={5}
-                      showQuickSelect={true}
-                      allowCustomGenres={true}
-                      helperText="Select up to 5 genres that you enjoy reading the most."
-                    />
-                  </div>
-                </FormControl>
+                <Select
+                  onValueChange={(value) => {
+                    const currentGenres = field.value || [];
+                    if (currentGenres.includes(value)) {
+                      field.onChange(currentGenres.filter((g) => g !== value));
+                    } else {
+                      field.onChange([...currentGenres, value]);
+                    }
+                  }}
+                  value={field.value?.[0]}
+                >
+                  <FormControl>
+                    <SelectTrigger className={cn(
+                      formState.errors.favoriteGenres && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}>
+                      <SelectValue placeholder="Select your favorite genres" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {AVAILABLE_GENRES.map((genre) => (
+                      <SelectItem
+                        key={genre}
+                        value={genre}
+                        className={
+                          field.value?.includes(genre) ? "bg-primary/10" : ""
+                        }
+                      >
+                        {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormDescription>
-                  These genres will be used to personalize your book recommendations.
+                  Selected genres:{" "}
+                  {field.value
+                    ?.map((g) => g.charAt(0).toUpperCase() + g.slice(1))
+                    .join(", ")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
