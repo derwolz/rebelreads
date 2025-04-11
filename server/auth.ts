@@ -196,7 +196,7 @@ export function setupAuth(app: Express) {
         !req.isAuthenticated() && 
         !req.path.startsWith('/api/auth/') && 
         !req.path.startsWith('/api/beta/') &&
-        !req.path.match(/^\/api\/books(\/\d+)?(\/ratings|\/reading-status)?$/) && 
+        !req.path.match(/^\/api\/books(\/\d+)?(\/ratings|\/reading-status|\/taxonomies)?$/) && 
         req.method !== 'OPTIONS') {
       // Set content type explicitly to prevent HTML responses
       res.setHeader('Content-Type', 'application/json');
