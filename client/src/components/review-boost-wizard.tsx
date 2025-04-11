@@ -252,7 +252,9 @@ export function ReviewBoostWizard({
                       />
                       <div className="flex items-center gap-4 flex-1">
                         <img
-                          src={book.coverUrl}
+                          src={book.images?.find(img => img.imageType === 'mini')?.imageUrl || 
+                              book.images?.find(img => img.imageType === 'book-card')?.imageUrl || 
+                              book.images?.[0]?.imageUrl || '/placeholder-book.png'}
                           alt={book.title}
                           className="h-16 w-12 object-cover rounded"
                         />
