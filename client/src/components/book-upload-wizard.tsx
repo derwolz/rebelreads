@@ -719,6 +719,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               onSelectionChange={(taxonomies) => 
                 setFormData((prev) => ({ ...prev, genreTaxonomies: taxonomies as TaxonomyItem[] }))
               }
+              restrictLimits={true}
               label="Book Taxonomies"
               helperText="Select and rank categories that describe your book. The order determines their importance in search results."
             />
