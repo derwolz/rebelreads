@@ -5,247 +5,273 @@ import { insertUserTaxonomyPreferenceSchema, insertUserTaxonomyItemSchema } from
 
 const router = Router();
 
-// Get all taxonomy preferences for the logged-in user
-router.get("/preferences", async (req: Request, res: Response) => {
-  if (!req.user) {
+// Check if user is authenticated
+function requireAuth(req: Request, res: Response, next: Function) {
+  if (!req.session.userId) {
     return res.status(401).json({ error: "Not authenticated" });
   }
+  next();
+}
 
+// Get user's default taxonomy preference
+router.get("/default-preference", requireAuth, async (req: Request, res: Response) => {
   try {
-    const preferences = await dbStorage.getUserTaxonomyPreferences(req.user.id);
-    res.json(preferences);
-  } catch (error) {
-    console.error("Error fetching user taxonomy preferences:", error);
-    res.status(500).json({ error: "Failed to fetch user taxonomy preferences" });
-  }
-});
-
-// Get default taxonomy preference for the logged-in user
-router.get("/default-preference", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
-  try {
-    const preference = await dbStorage.getUserDefaultTaxonomyPreference(req.user.id);
+    const userId = req.session.userId as number;
+    const preference = await dbStorage.getUserDefaultTaxonomyPreference(userId);
+    
     if (!preference) {
       return res.status(404).json({ error: "No default preference found" });
     }
+    
     res.json(preference);
-  } catch (error) {
-    console.error("Error fetching default taxonomy preference:", error);
-    res.status(500).json({ error: "Failed to fetch default taxonomy preference" });
+  } catch (error: any) {
+    console.error("Error fetching default preference:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Get custom view preferences for the logged-in user
-router.get("/custom-views", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
+// Get user's custom view preferences
+router.get("/custom-views", requireAuth, async (req: Request, res: Response) => {
   try {
-    const preferences = await dbStorage.getUserCustomViewPreferences(req.user.id);
+    const userId = req.session.userId as number;
+    const preferences = await dbStorage.getUserCustomViewPreferences(userId);
     res.json(preferences);
-  } catch (error) {
-    console.error("Error fetching custom view preferences:", error);
-    res.status(500).json({ error: "Failed to fetch custom view preferences" });
+  } catch (error: any) {
+    console.error("Error fetching custom views:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Get taxonomy preference by ID
-router.get("/preferences/:id", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
+// Get all user taxonomy preferences
+router.get("/preferences", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId as number;
+    const preferences = await dbStorage.getUserTaxonomyPreferences(userId);
+    res.json(preferences);
+  } catch (error: any) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({ error: error.message });
   }
+});
 
+// Get a specific preference by ID
+router.get("/preferences/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const preferenceId = parseInt(req.params.id);
     if (isNaN(preferenceId)) {
       return res.status(400).json({ error: "Invalid preference ID" });
     }
-
+    
     const preference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
+    
     if (!preference) {
       return res.status(404).json({ error: "Preference not found" });
     }
-
-    // Check if the preference belongs to the logged-in user
-    if (preference.userId !== req.user.id) {
-      return res.status(403).json({ error: "You don't have permission to access this preference" });
+    
+    // Check if preference belongs to the authenticated user
+    if (preference.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
     }
-
+    
     res.json(preference);
-  } catch (error) {
-    console.error("Error fetching taxonomy preference:", error);
-    res.status(500).json({ error: "Failed to fetch taxonomy preference" });
+  } catch (error: any) {
+    console.error("Error fetching preference:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Create a new taxonomy preference
-router.post("/preferences", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
+// Create a new preference
+router.post("/preferences", requireAuth, async (req: Request, res: Response) => {
   try {
-    // Validate the request body
-    const validatedData = insertUserTaxonomyPreferenceSchema.parse({
-      ...req.body,
-      userId: req.user.id,
+    const userId = req.session.userId as number;
+    
+    // Validate request body
+    const schema = insertUserTaxonomyPreferenceSchema.extend({
+      name: z.string().min(1, "Name is required"),
     });
-
+    
+    const validatedData = schema.parse({
+      ...req.body,
+      userId
+    });
+    
     const newPreference = await dbStorage.createTaxonomyPreference(validatedData);
     res.status(201).json(newPreference);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid data", details: error.errors });
+  } catch (error: any) {
+    console.error("Error creating preference:", error);
+    
+    if (error.name === "ZodError") {
+      return res.status(400).json({ error: error.errors });
     }
-    console.error("Error creating taxonomy preference:", error);
-    res.status(500).json({ error: "Failed to create taxonomy preference" });
+    
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Update an existing taxonomy preference
-router.patch("/preferences/:id", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
+// Update a preference
+router.patch("/preferences/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const preferenceId = parseInt(req.params.id);
     if (isNaN(preferenceId)) {
       return res.status(400).json({ error: "Invalid preference ID" });
     }
-
-    // Check if the preference exists and belongs to the user
-    const existingPreference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
-    if (!existingPreference) {
+    
+    // Check if preference exists and belongs to the user
+    const preference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
+    
+    if (!preference) {
       return res.status(404).json({ error: "Preference not found" });
     }
-
-    if (existingPreference.userId !== req.user.id) {
-      return res.status(403).json({ error: "You don't have permission to update this preference" });
+    
+    if (preference.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
     }
-
-    // Validate the request body
-    const validatedData = z.object({
-      name: z.string().optional(),
+    
+    // Create a schema for update data
+    const updateSchema = z.object({
+      name: z.string().min(1).optional(),
       isDefault: z.boolean().optional(),
       isCustomView: z.boolean().optional(),
-    }).parse(req.body);
-
+    });
+    
+    const validatedData = updateSchema.parse(req.body);
+    
     const updatedPreference = await dbStorage.updateTaxonomyPreference(preferenceId, validatedData);
     res.json(updatedPreference);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid data", details: error.errors });
+  } catch (error: any) {
+    console.error("Error updating preference:", error);
+    
+    if (error.name === "ZodError") {
+      return res.status(400).json({ error: error.errors });
     }
-    console.error("Error updating taxonomy preference:", error);
-    res.status(500).json({ error: "Failed to update taxonomy preference" });
+    
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Delete a taxonomy preference
-router.delete("/preferences/:id", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
+// Delete a preference
+router.delete("/preferences/:id", requireAuth, async (req: Request, res: Response) => {
   try {
     const preferenceId = parseInt(req.params.id);
     if (isNaN(preferenceId)) {
       return res.status(400).json({ error: "Invalid preference ID" });
     }
-
-    // Check if the preference exists and belongs to the user
-    const existingPreference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
-    if (!existingPreference) {
+    
+    // Check if preference exists and belongs to the user
+    const preference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
+    
+    if (!preference) {
       return res.status(404).json({ error: "Preference not found" });
     }
-
-    if (existingPreference.userId !== req.user.id) {
-      return res.status(403).json({ error: "You don't have permission to delete this preference" });
+    
+    if (preference.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
     }
-
+    
     await dbStorage.deleteTaxonomyPreference(preferenceId);
     res.status(204).end();
-  } catch (error) {
-    console.error("Error deleting taxonomy preference:", error);
-    res.status(500).json({ error: "Failed to delete taxonomy preference" });
+  } catch (error: any) {
+    console.error("Error deleting preference:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Get taxonomy items for a preference
-router.get("/preferences/:id/items", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
+router.get("/preferences/:id/items", requireAuth, async (req: Request, res: Response) => {
   try {
     const preferenceId = parseInt(req.params.id);
     if (isNaN(preferenceId)) {
       return res.status(400).json({ error: "Invalid preference ID" });
     }
-
-    // Check if the preference exists and belongs to the user
-    const existingPreference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
-    if (!existingPreference) {
+    
+    // Check if preference exists and belongs to the user
+    const preference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
+    
+    if (!preference) {
       return res.status(404).json({ error: "Preference not found" });
     }
-
-    if (existingPreference.userId !== req.user.id) {
-      return res.status(403).json({ error: "You don't have permission to access this preference" });
+    
+    if (preference.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
     }
-
+    
     const items = await dbStorage.getTaxonomyItems(preferenceId);
     res.json(items);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching taxonomy items:", error);
-    res.status(500).json({ error: "Failed to fetch taxonomy items" });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Replace taxonomy items for a preference
-router.put("/preferences/:id/items", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
+// Add taxonomy items to a preference
+router.post("/preferences/:id/items", requireAuth, async (req: Request, res: Response) => {
   try {
     const preferenceId = parseInt(req.params.id);
     if (isNaN(preferenceId)) {
       return res.status(400).json({ error: "Invalid preference ID" });
     }
-
-    // Check if the preference exists and belongs to the user
-    const existingPreference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
-    if (!existingPreference) {
+    
+    // Check if preference exists and belongs to the user
+    const preference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
+    
+    if (!preference) {
       return res.status(404).json({ error: "Preference not found" });
     }
-
-    if (existingPreference.userId !== req.user.id) {
-      return res.status(403).json({ error: "You don't have permission to modify this preference" });
+    
+    if (preference.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
     }
-
-    // Validate the request body (array of taxonomy items)
-    const taxonomyItemsSchema = z.array(
-      z.object({
-        taxonomyId: z.number(),
-        type: z.enum(["genre", "subgenre", "theme", "trope"]),
-        rank: z.number(),
-      })
-    );
-
-    const validatedData = taxonomyItemsSchema.parse(req.body);
-    const updatedItems = await dbStorage.replaceTaxonomyItems(preferenceId, validatedData);
-    res.json(updatedItems);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid data", details: error.errors });
+    
+    // Validate request body
+    const schema = z.array(insertUserTaxonomyItemSchema.omit({ preferenceId: true }));
+    const validatedData = schema.parse(req.body);
+    
+    const newItems = await dbStorage.addTaxonomyItems(preferenceId, validatedData);
+    res.status(201).json(newItems);
+  } catch (error: any) {
+    console.error("Error adding taxonomy items:", error);
+    
+    if (error.name === "ZodError") {
+      return res.status(400).json({ error: error.errors });
     }
-    console.error("Error updating taxonomy items:", error);
-    res.status(500).json({ error: "Failed to update taxonomy items" });
+    
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Replace all taxonomy items for a preference
+router.put("/preferences/:id/items", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const preferenceId = parseInt(req.params.id);
+    if (isNaN(preferenceId)) {
+      return res.status(400).json({ error: "Invalid preference ID" });
+    }
+    
+    // Check if preference exists and belongs to the user
+    const preference = await dbStorage.getTaxonomyPreferenceById(preferenceId);
+    
+    if (!preference) {
+      return res.status(404).json({ error: "Preference not found" });
+    }
+    
+    if (preference.userId !== req.session.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+    
+    // Validate request body
+    const schema = z.array(insertUserTaxonomyItemSchema.omit({ preferenceId: true }));
+    const validatedData = schema.parse(req.body);
+    
+    const newItems = await dbStorage.replaceTaxonomyItems(preferenceId, validatedData);
+    res.json(newItems);
+  } catch (error: any) {
+    console.error("Error replacing taxonomy items:", error);
+    
+    if (error.name === "ZodError") {
+      return res.status(400).json({ error: error.errors });
+    }
+    
+    res.status(500).json({ error: error.message });
   }
 });
 
