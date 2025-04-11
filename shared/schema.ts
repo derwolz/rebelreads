@@ -120,7 +120,7 @@ export const books = pgTable("books", {
   author: text("author").notNull(),
   authorId: integer("author_id").notNull(), // Reference to users table
   description: text("description").notNull(),
-  coverUrl: text("cover_url").notNull(),
+  // coverUrl column removed - using book_images table instead
   authorImageUrl: text("author_image_url"),
   promoted: boolean("promoted").default(false),
   // genres column removed - using book_genre_taxonomies relationship table instead
@@ -141,6 +141,29 @@ export const books = pgTable("books", {
   lastImpressionAt: timestamp("last_impression_at"),
   lastClickThroughAt: timestamp("last_click_through_at"),
   internal_details: text("internal_details"), // Added new field
+});
+
+// Define the image types for books
+export const IMAGE_TYPES = [
+  "book-detail",    // 480x600 - Used on book details page
+  "background",     // 1300x1500 - Used as background on book details page
+  "book-card",      // 256x440 - Used in recommendations
+  "grid-item",      // 56x212 - Used in grid layouts
+  "mini",           // 48x64 - Used in reviews and what's hot sections
+  "hero"            // 1500x600 - Used in hero sections
+] as const;
+
+// Book images table to store different image sizes for each book
+export const bookImages = pgTable("book_images", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  imageUrl: text("image_url").notNull(),
+  imageType: text("image_type").notNull(), // One of IMAGE_TYPES
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  sizeKb: integer("size_kb"), // Size of image in kilobytes
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export interface ReviewAnalysis {
