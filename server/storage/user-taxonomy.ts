@@ -82,26 +82,23 @@ export class UserTaxonomyStorage {
    * Create a new taxonomy preference
    */
   async createTaxonomyPreference(data: InsertUserTaxonomyPreference): Promise<UserTaxonomyPreference> {
-    // Start a transaction
-    return pool.transaction(async (tx) => {
-      // If this is set as default, update any existing default to non-default
-      if (data.isDefault) {
-        await tx.update(userTaxonomyPreferences)
-          .set({ isDefault: false })
-          .where(
-            and(
-              eq(userTaxonomyPreferences.userId, data.userId),
-              eq(userTaxonomyPreferences.isDefault, true)
-            )
-          );
-      }
-      
-      const result = await tx.insert(userTaxonomyPreferences)
-        .values(data)
-        .returning();
-      
-      return result[0];
-    });
+    // If this is set as default, update any existing default to non-default
+    if (data.isDefault) {
+      await db.update(userTaxonomyPreferences)
+        .set({ isDefault: false })
+        .where(
+          and(
+            eq(userTaxonomyPreferences.userId, data.userId),
+            eq(userTaxonomyPreferences.isDefault, true)
+          )
+        );
+    }
+    
+    const result = await db.insert(userTaxonomyPreferences)
+      .values(data)
+      .returning();
+    
+    return result[0];
   }
   
   /**

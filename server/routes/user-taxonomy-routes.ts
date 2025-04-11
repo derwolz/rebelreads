@@ -6,6 +6,13 @@ import { insertUserTaxonomyPreferenceSchema, insertUserTaxonomyItemSchema } from
 const router = Router();
 
 // Check if user is authenticated
+// Extend the session type to include userId
+declare module 'express-session' {
+  interface SessionData {
+    userId?: number;
+  }
+}
+
 function requireAuth(req: Request, res: Response, next: Function) {
   if (!req.session.userId) {
     return res.status(401).json({ error: "Not authenticated" });
