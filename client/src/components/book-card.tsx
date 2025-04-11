@@ -183,7 +183,7 @@ export function BookCard({ book }: { book: Book }) {
                 <WishlistButton bookId={book.id} variant="ghost" size="icon" />
               </div>
               <img
-                src={book.coverUrl}
+                src={book.images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
                 alt={book.title}
                 className="w-full h-64 object-cover object-center"
                 style={{ aspectRatio: "1/1" }}

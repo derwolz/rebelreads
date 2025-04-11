@@ -177,7 +177,7 @@ export default function BookDetails() {
           <div>
             <div className="relative">
               <img
-                src={book.coverUrl}
+                src={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
                 alt={book.title}
                 className="w-full rounded-lg shadow-lg"
               />

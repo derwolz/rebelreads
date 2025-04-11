@@ -104,7 +104,7 @@ export default function HomePage() {
           <HeroBannerAd
             campaignId={1}
             bookId={featuredBook.id}
-            imageSrc={featuredBook.coverUrl}
+            imageSrc={featuredBook.images?.find(img => img.imageType === "hero")?.imageUrl || "/images/placeholder-book.png"}
             title={featuredBook.title}
             description={featuredBook.description?.substring(0, 120) + '...'}
             ctaText="Discover Now"
@@ -175,7 +175,7 @@ export default function HomePage() {
               <HorizontalBannerAd
                 campaignId={1}
                 bookId={books[2].id}
-                imageSrc={books[2].coverUrl}
+                imageSrc={books[2].images?.find(img => img.imageType === "background")?.imageUrl || "/images/placeholder-book.png"}
                 title={books[2].title}
                 description={books[2].description?.substring(0, 100) + '...'}
                 source="home-mid-content"
@@ -201,7 +201,7 @@ export default function HomePage() {
             <VerticalBannerAd
               campaignId={1}
               bookId={books[1].id}
-              imageSrc={books[1].coverUrl}
+              imageSrc={books[1].images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
               title={books[1].title}
               description={books[1].description?.substring(0, 80) + '...'}
               source="home-sidebar"

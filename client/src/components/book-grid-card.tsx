@@ -187,7 +187,7 @@ export function BookGridCard({ book }: { book: Book }) {
               </div>
               <div className="flex h-full">
                 <img
-                  src={book.coverUrl}
+                  src={book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png"}
                   alt={book.title}
                   className="w-1/3 object-cover"
                 />

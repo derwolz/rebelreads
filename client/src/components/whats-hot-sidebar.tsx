@@ -51,7 +51,7 @@ export function WhatsHotSidebar() {
               >
                 <div className="font-bold text-lg w-6 text-center text-muted-foreground">{book.popularRank}</div>
                 <img 
-                  src={book.coverUrl} 
+                  src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"} 
                   alt={book.title} 
                   className="w-12 h-16 object-cover rounded-sm flex-shrink-0" 
                 />
