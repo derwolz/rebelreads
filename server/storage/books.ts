@@ -400,6 +400,10 @@ export class BookStorage implements IBookStorage {
       // 7. Limit to the specified number
       // 8. Select a random subset of books from the top results
       
+      // Ensure we have arrays that can be passed to SQL
+      const taxonomyIdsArray = taxonomyIds.length > 0 ? taxonomyIds : [0];
+      const excludedBookIdsArray = excludedBookIds.length > 0 ? excludedBookIds : [0];
+      
       let bookScoresQuery = sql`
         WITH book_scores AS (
           SELECT 
@@ -415,12 +419,12 @@ export class BookStorage implements IBookStorage {
             view_genres vg ON bgt.taxonomy_id = vg.taxonomy_id
           WHERE 
             vg.view_id = ${defaultView.id}
-            AND bgt.taxonomy_id = ANY(${taxonomyIds})
+            AND bgt.taxonomy_id = ANY(${taxonomyIdsArray})
       `;
       
       // Add exclusion filter if there are books to exclude
       if (excludedBookIds.length > 0) {
-        bookScoresQuery = sql`${bookScoresQuery} AND b.id <> ALL(${excludedBookIds})`;
+        bookScoresQuery = sql`${bookScoresQuery} AND b.id <> ALL(${excludedBookIdsArray})`;
       }
       
       bookScoresQuery = sql`${bookScoresQuery}
@@ -444,47 +448,82 @@ export class BookStorage implements IBookStorage {
       
       const bookScores = await db.execute(bookScoresQuery);
 
-      // Extract books from the results
+      // Get all book IDs from the results
+      const bookIds = bookScores.rows.map(row => row.id);
+      
+      // Fetch all images for these books
+      const allImages = await db.select()
+        .from(bookImages)
+        .where(inArray(bookImages.bookId, bookIds));
+      
+      // Group images by book ID for efficient lookup
+      const imagesByBookId = new Map<number, BookImage[]>();
+      
+      allImages.forEach(image => {
+        if (!imagesByBookId.has(image.bookId)) {
+          imagesByBookId.set(image.bookId, []);
+        }
+        imagesByBookId.get(image.bookId)!.push(image);
+      });
+      
+      // Extract books from the results and add image data
       return bookScores.rows.map(row => ({
         id: row.id,
         title: row.title,
         author: row.author,
         description: row.description,
-        genres: row.genres || [],
-        coverUrl: row.cover_url,
         authorId: row.author_id,
         publishedDate: row.published_date,
         promoted: row.promoted,
-        impressionCount: row.impression_count,
-        clickThroughCount: row.click_through_count,
-        lastImpressionAt: row.last_impression_at,
-        lastClickThroughAt: row.last_click_through_at,
         authorImageUrl: row.author_image_url,
         pageCount: row.page_count,
         formats: row.formats || [],
         awards: row.awards || [],
-        publisher: row.publisher,
+        originalTitle: row.original_title,
+        series: row.series,
+        setting: row.setting,
+        characters: row.characters,
         isbn: row.isbn,
+        asin: row.asin,
         language: row.language,
-        rating: row.rating,
-        reviewCount: row.review_count,
-        price: row.price,
-        purchaseUrl: row.purchase_url,
-        availableFormats: row.available_formats || [],
-        publicationYear: row.publication_year,
-        edition: row.edition,
-        seriesInfo: row.series_info,
-        pricingInfo: row.pricing_info,
-        internal_details: row.internal_details
+        internal_details: row.internal_details,
+        // Add images array
+        images: imagesByBookId.get(row.id) || []
       }));
     } catch (error) {
       console.error("Error getting recommendations:", error);
       // Fall back to popular books if there's an error
-      return db
+      const popularBooks = await db
         .select()
         .from(books)
         .orderBy(desc(books.impressionCount))
         .limit(7);
+      
+      if (popularBooks.length === 0) return [];
+      
+      // Get all book IDs
+      const bookIds = popularBooks.map(book => book.id);
+      
+      // Fetch all images for these books
+      const allImages = await db.select()
+        .from(bookImages)
+        .where(inArray(bookImages.bookId, bookIds));
+      
+      // Group images by book ID
+      const imagesByBookId = new Map<number, BookImage[]>();
+      
+      allImages.forEach(image => {
+        if (!imagesByBookId.has(image.bookId)) {
+          imagesByBookId.set(image.bookId, []);
+        }
+        imagesByBookId.get(image.bookId)!.push(image);
+      });
+      
+      // Add images to books
+      return popularBooks.map(book => ({
+        ...book,
+        images: imagesByBookId.get(book.id) || []
+      })) as Book[];
     }
   }
 }
