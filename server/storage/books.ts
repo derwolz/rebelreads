@@ -3,10 +3,12 @@ import {
   books,
   bookGenreTaxonomies,
   genreTaxonomies,
-  InsertBookGenreTaxonomy
+  InsertBookGenreTaxonomy,
+  userGenreViews,
+  viewGenres
 } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, ilike, sql } from "drizzle-orm";
+import { eq, and, ilike, sql, desc, not, inArray } from "drizzle-orm";
 
 export interface IBookStorage {
   getBooks(): Promise<Book[]>;
@@ -28,6 +30,7 @@ export interface IBookStorage {
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   selectBooks(query: string): Promise<Book[]>;
   updateInternalDetails(id: number, details: string): Promise<Book>;
+  getRecommendations(userId: number, limit?: number): Promise<Book[]>;
 }
 
 export class BookStorage implements IBookStorage {
@@ -158,8 +161,8 @@ export class BookStorage implements IBookStorage {
         eq(books.id, bookGenreTaxonomies.bookId)
       )
       .innerJoin(
-        genreTaxonomies.as('g'),
-        eq(bookGenreTaxonomies.taxonomyId, sql<number>`g.id`)
+        genreTaxonomies,
+        eq(bookGenreTaxonomies.taxonomyId, genreTaxonomies.id)
       )
       .where(and(
         eq(books.authorId, authorId),
@@ -218,5 +221,139 @@ export class BookStorage implements IBookStorage {
       .where(eq(books.id, id))
       .returning();
     return book;
+  }
+
+  async getRecommendations(userId: number, limit: number = 40): Promise<Book[]> {
+    try {
+      // First, find user's default genre view
+      const userViews = await db
+        .select()
+        .from(userGenreViews)
+        .where(
+          and(
+            eq(userGenreViews.userId, userId),
+            eq(userGenreViews.isDefault, true)
+          )
+        );
+
+      // If no default view is found, return some popular books
+      if (!userViews || userViews.length === 0) {
+        return db
+          .select()
+          .from(books)
+          .orderBy(desc(books.impressionCount))
+          .limit(7);
+      }
+
+      const defaultView = userViews[0];
+      
+      // Get taxonomies from the default view
+      const userGenres = await db
+        .select({
+          taxonomyId: viewGenres.taxonomyId,
+          rank: viewGenres.rank
+        })
+        .from(viewGenres)
+        .where(eq(viewGenres.viewId, defaultView.id))
+        .orderBy(viewGenres.rank);
+
+      // If no genres in view, return popular books
+      if (!userGenres || userGenres.length === 0) {
+        return db
+          .select()
+          .from(books)
+          .orderBy(desc(books.impressionCount))
+          .limit(7);
+      }
+
+      // Extract taxonomy IDs for the query
+      const taxonomyIds = userGenres.map(genre => genre.taxonomyId);
+
+      // Calculate a weighted similarity score for each book based on user's genre preferences
+      // This query performs the following steps:
+      // 1. Join books with book taxonomies
+      // 2. Filter only the taxonomies that match user's preferences
+      // 3. Calculate a score for each book based on the taxonomies' importance and the user's ranking
+      // 4. Group by book to sum up the scores
+      // 5. Order by total score in descending order
+      // 6. Limit to the specified number
+      // 7. Select a random subset of books from the top results
+      
+      const bookScores = await db.execute(sql`
+        WITH book_scores AS (
+          SELECT 
+            b.id,
+            SUM(
+              bgt.importance::float * (1.0 / (vg.rank::float + 0.1))
+            ) AS score
+          FROM 
+            books b
+          JOIN 
+            book_genre_taxonomies bgt ON b.id = bgt.book_id
+          JOIN 
+            view_genres vg ON bgt.taxonomy_id = vg.taxonomy_id
+          WHERE 
+            vg.view_id = ${defaultView.id}
+            AND bgt.taxonomy_id = ANY(${taxonomyIds})
+          GROUP BY 
+            b.id
+          ORDER BY 
+            score DESC
+          LIMIT ${limit}
+        )
+        SELECT 
+          b.*,
+          bs.score
+        FROM 
+          book_scores bs
+        JOIN 
+          books b ON bs.id = b.id
+        ORDER BY 
+          RANDOM()
+        LIMIT 7
+      `);
+
+      // Extract books from the results
+      return bookScores.rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        author: row.author,
+        description: row.description,
+        genres: row.genres || [],
+        coverUrl: row.cover_url,
+        authorId: row.author_id,
+        publishedDate: row.published_date,
+        promoted: row.promoted,
+        impressionCount: row.impression_count,
+        clickThroughCount: row.click_through_count,
+        lastImpressionAt: row.last_impression_at,
+        lastClickThroughAt: row.last_click_through_at,
+        authorImageUrl: row.author_image_url,
+        pageCount: row.page_count,
+        formats: row.formats || [],
+        awards: row.awards || [],
+        publisher: row.publisher,
+        isbn: row.isbn,
+        language: row.language,
+        rating: row.rating,
+        reviewCount: row.review_count,
+        price: row.price,
+        purchaseUrl: row.purchase_url,
+        availableFormats: row.available_formats || [],
+        publicationYear: row.publication_year,
+        edition: row.edition,
+        seriesInfo: row.series_info,
+        pricingInfo: row.pricing_info,
+        internal_details: row.internal_details
+      }));
+    } catch (error) {
+      console.error("Error getting recommendations:", error);
+      // Fall back to popular books if there's an error
+      return db
+        .select()
+        .from(books)
+        .orderBy(desc(books.impressionCount))
+        .limit(7);
+    }
   }
 }
