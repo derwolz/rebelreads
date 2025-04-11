@@ -28,7 +28,32 @@ const fileStorage = multer.diskStorage({
   },
 });
 
+// Create a field name filter that accepts form fields matching bookImage_ pattern
+const bookImageFieldFilter = (fieldname: string) => {
+  return fieldname.startsWith('bookImage_');
+};
+
+// Multer for single cover upload (legacy)
 const upload = multer({ storage: fileStorage });
+
+// Multer for multiple book images with dynamic field names
+const multipleImageUpload = multer({
+  storage: fileStorage,
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'));
+  }
+}).fields([
+  { name: 'bookImage_book-detail', maxCount: 1 },
+  { name: 'bookImage_background', maxCount: 1 },
+  { name: 'bookImage_book-card', maxCount: 1 },
+  { name: 'bookImage_grid-item', maxCount: 1 },
+  { name: 'bookImage_mini', maxCount: 1 },
+  { name: 'bookImage_hero', maxCount: 1 }
+]);
 
 const router = Router();
 
@@ -161,21 +186,22 @@ router.get("/my-books", async (req, res) => {
   res.json(books);
 });
 
-router.post("/books", upload.single("cover"), async (req, res) => {
+router.post("/books", multipleImageUpload, async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
     return res.sendStatus(401);
   }
 
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "Cover image is required" });
+    // Log the request body and files for debugging
+    console.log("Book creation request:", req.body);
+    console.log("Uploaded files:", req.files);
+    
+    // Check if we have at least one image
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ message: "At least one book image is required" });
     }
 
-    // Log the request body for debugging
-    console.log("Book creation request:", req.body);
-
     // Parse form data fields
-    const coverUrl = `/uploads/covers/${req.file.filename}`;
     const formats = req.body.formats ? JSON.parse(req.body.formats) : [];
     const characters = req.body.characters ? JSON.parse(req.body.characters) : [];
     const awards = req.body.awards ? JSON.parse(req.body.awards) : [];
@@ -184,12 +210,11 @@ router.post("/books", upload.single("cover"), async (req, res) => {
     // Extract and handle taxonomy data separately
     const genreTaxonomies = req.body.genreTaxonomies ? JSON.parse(req.body.genreTaxonomies) : [];
 
-    // Create the book first (without taxonomies)
+    // Create the book first (without taxonomies and without cover URL)
     const book = await dbStorage.createBook({
       title: req.body.title,
       description: req.body.description,
       authorId: req.user!.id,
-      coverUrl,
       author: req.user!.authorName || req.user!.username,
       formats: formats,
       promoted: false,
@@ -206,13 +231,76 @@ router.post("/books", upload.single("cover"), async (req, res) => {
       language: req.body.language || "English",
     });
 
+    // Now process all uploaded images and add them to book_images table
+    const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const bookImageEntries = [];
+
+    // Extract image type info from field names
+    for (const fieldName in uploadedFiles) {
+      if (fieldName.startsWith('bookImage_')) {
+        const imageType = fieldName.replace('bookImage_', '');
+        const file = uploadedFiles[fieldName][0]; // Get first file from array
+        const imageUrl = `/uploads/covers/${file.filename}`;
+        
+        // Get dimensions from request body
+        let width = 0;
+        let height = 0;
+        
+        // Set dimensions based on image type
+        switch (imageType) {
+          case "book-detail":
+            width = 480;
+            height = 600;
+            break;
+          case "background":
+            width = 1300;
+            height = 1500;
+            break;
+          case "book-card":
+            width = 256;
+            height = 440;
+            break;
+          case "grid-item":
+            width = 56;
+            height = 212;
+            break;
+          case "mini":
+            width = 48;
+            height = 64;
+            break;
+          case "hero":
+            width = 1500;
+            height = 600;
+            break;
+        }
+        
+        // Add to array of images to insert
+        bookImageEntries.push({
+          bookId: book.id,
+          imageUrl,
+          imageType,
+          width,
+          height,
+          sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
+        });
+      }
+    }
+
+    // Insert all book images using a single database operation
+    if (bookImageEntries.length > 0) {
+      console.log("Inserting book images:", bookImageEntries);
+      await db.insert(bookImages).values(bookImageEntries);
+    }
+
     // Now handle the taxonomies separately if present
     if (genreTaxonomies && genreTaxonomies.length > 0) {
       console.log("Adding taxonomies for new book:", genreTaxonomies);
       await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
     }
 
-    res.json(book);
+    // Fetch the complete book with images to return to client
+    const completeBook = await dbStorage.getBook(book.id);
+    res.json(completeBook);
   } catch (error) {
     console.error("Error creating book:", error);
     res.status(500).json({ error: "Failed to create book" });

@@ -7,7 +7,9 @@ import {
   userGenreViews,
   viewGenres,
   ratings,
-  reading_status
+  reading_status,
+  bookImages,
+  BookImage
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike, sql, desc, not, inArray } from "drizzle-orm";
@@ -37,7 +39,34 @@ export interface IBookStorage {
 
 export class BookStorage implements IBookStorage {
   async getBooks(): Promise<Book[]> {
-    return await db.select().from(books);
+    // Get all books
+    const allBooks = await db.select().from(books);
+    
+    if (allBooks.length === 0) return [];
+    
+    // Get all books IDs
+    const bookIds = allBooks.map(book => book.id);
+    
+    // Fetch all images for these books
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID for easy lookup
+    const imagesByBookId = new Map<number, BookImage[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push(image);
+    });
+    
+    // Add images to books
+    return allBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    })) as Book[];
   }
 
   async selectBooks(query: string): Promise<Book[]> {
@@ -62,32 +91,99 @@ export class BookStorage implements IBookStorage {
         author: books.author,
         description: books.description,
         internal_details: books.internal_details,
-        // genres removed - using relationship table instead
-        coverUrl: books.coverUrl,
         publishedDate: books.publishedDate,
         promoted: books.promoted,
         authorId: books.authorId,
-        impressionCount: books.impressionCount,
-        clickThroughCount: books.clickThroughCount,
-        lastImpressionAt: books.lastImpressionAt,
-        lastClickThroughAt: books.lastClickThroughAt,
+        authorImageUrl: books.authorImageUrl,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
         search_rank: sql<number>`ts_rank(${searchVector}, ${searchQuery})`.as('search_rank')
       })
       .from(books)
       .where(sql`${searchVector} @@ ${searchQuery}`)
       .orderBy(sql`ts_rank(${searchVector}, ${searchQuery}) DESC`)
       .limit(20);
-
-    return results.map(({ search_rank, ...book }) => book);
+      
+    // Extract all book IDs for fetching images
+    const bookIds = results.map(book => book.id);
+    
+    if (bookIds.length === 0) return [];
+    
+    // Fetch all images for the search results
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID for efficient lookup
+    const imagesByBookId = new Map<number, BookImage[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push(image);
+    });
+    
+    // Add images to the search results
+    return results.map(({ search_rank, ...book }) => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    })) as Book[];
   }
 
   async getBook(id: number): Promise<Book | undefined> {
+    // Get the book data
     const [book] = await db.select().from(books).where(eq(books.id, id));
-    return book;
+    
+    if (!book) return undefined;
+    
+    // Get the book images
+    const images = await db.select().from(bookImages).where(eq(bookImages.bookId, id));
+    
+    // Attach the images to the book object
+    return {
+      ...book,
+      images: images
+    } as Book;
   }
 
   async getBooksByAuthor(authorId: number): Promise<Book[]> {
-    return await db.select().from(books).where(eq(books.authorId, authorId));
+    // Get all books by this author
+    const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
+    
+    // Get all book IDs to fetch images
+    const bookIds = authorBooks.map(book => book.id);
+    
+    if (bookIds.length === 0) return [];
+    
+    // Fetch all images for these books in a single query for efficiency
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID for easy lookup
+    const imagesByBookId = new Map<number, BookImage[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push(image);
+    });
+    
+    // Add images to books
+    return authorBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    })) as Book[];
   }
 
   async createBook(book: Omit<Book, "id">): Promise<Book> {
