@@ -66,6 +66,13 @@ export function SettingsSidebar() {
       >
         Genre Preferences
       </NavItem>
+      <NavItem
+        href="/settings/homepage"
+        active={location === "/settings/homepage"}
+        icon={<LayoutGrid className="h-4 w-4" />}
+      >
+        Homepage Layout
+      </NavItem>
     </nav>
   );
 }

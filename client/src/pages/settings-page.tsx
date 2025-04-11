@@ -12,6 +12,7 @@ import { ReaderSettings } from "@/components/reader-settings";
 import { BookUploadDialog } from "@/components/book-upload-wizard";
 import { RatingPreferencesSettings } from "@/components/rating-preferences-settings";
 import { GenrePreferencesSettings } from "@/components/genre-preferences-settings";
+import { HomepageSettings } from "@/components/homepage-settings";
 import { RecommendationsSidebar } from "@/components/recommendations-sidebar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -418,6 +419,8 @@ export default function SettingsPage() {
     content = <RatingPreferencesSettings isWizard={false} />;
   } else if (location === "/settings/genre-preferences") {
     content = <GenrePreferencesSettings />;
+  } else if (location === "/settings/homepage") {
+    content = <HomepageSettings />;
   } else if (location === "/settings/author" && user?.isAuthor) {
     content = (
       <Card>
