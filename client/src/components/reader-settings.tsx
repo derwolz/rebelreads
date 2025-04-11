@@ -51,7 +51,6 @@ export function ReaderSettings() {
       email: user?.email || "",
       displayName: user?.displayName || "",
       bio: user?.bio || "",
-      favoriteGenres: user?.favoriteGenres || [AVAILABLE_GENRES[0]],
       profileImageUrl: user?.profileImageUrl || "",
       socialMediaLinks: user?.socialMediaLinks || [],
     },

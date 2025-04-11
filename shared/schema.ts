@@ -99,7 +99,7 @@ export const users = pgTable("users", {
   birthDate: date("birth_date"),
   deathDate: date("death_date"),
   website: text("website"),
-  favoriteGenres: text("favorite_genres").array(), // Updated to array
+  // favoriteGenres column removed
   displayName: text("display_name"), // Added display name field
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
   credits: decimal("credits").notNull().default("0"), // Add credits field
@@ -345,7 +345,6 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   displayName: true,
   bio: true,
   profileImageUrl: true,
-  favoriteGenres: true,
   socialMediaLinks: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
