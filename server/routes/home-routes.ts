@@ -5,7 +5,7 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 import { db } from "../db";
-import { ratings, books, followers } from "@shared/schema";
+import { ratings, books, followers, bookImages } from "@shared/schema";
 import { eq, and, inArray, notInArray, desc, avg, count, sql } from "drizzle-orm";
 
 // Configure multer for file uploads

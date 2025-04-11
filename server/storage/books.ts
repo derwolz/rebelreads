@@ -400,10 +400,7 @@ export class BookStorage implements IBookStorage {
       // 7. Limit to the specified number
       // 8. Select a random subset of books from the top results
       
-      // Ensure we have arrays that can be passed to SQL
-      const taxonomyIdsArray = taxonomyIds.length > 0 ? taxonomyIds : [0];
-      const excludedBookIdsArray = excludedBookIds.length > 0 ? excludedBookIds : [0];
-      
+      // We need a different approach to avoid the PostgreSQL array issues
       let bookScoresQuery = sql`
         WITH book_scores AS (
           SELECT 
@@ -419,12 +416,18 @@ export class BookStorage implements IBookStorage {
             view_genres vg ON bgt.taxonomy_id = vg.taxonomy_id
           WHERE 
             vg.view_id = ${defaultView.id}
-            AND bgt.taxonomy_id = ANY(${taxonomyIdsArray})
       `;
+      
+      // Add taxonomy filter using multiple conditions instead of ANY operator
+      if (taxonomyIds.length > 0) {
+        const taxonomyConditions = taxonomyIds.map(id => `bgt.taxonomy_id = ${id}`).join(' OR ');
+        bookScoresQuery = sql`${bookScoresQuery} AND (${sql.raw(taxonomyConditions)})`;
+      }
       
       // Add exclusion filter if there are books to exclude
       if (excludedBookIds.length > 0) {
-        bookScoresQuery = sql`${bookScoresQuery} AND b.id <> ALL(${excludedBookIdsArray})`;
+        const exclusionConditions = excludedBookIds.map(id => `b.id <> ${id}`).join(' AND ');
+        bookScoresQuery = sql`${bookScoresQuery} AND (${sql.raw(exclusionConditions)})`;
       }
       
       bookScoresQuery = sql`${bookScoresQuery}
