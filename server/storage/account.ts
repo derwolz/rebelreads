@@ -14,6 +14,8 @@ import {
   rating_preferences,
   RatingPreferences,
   replies,
+  userGenrePreferences,
+  UserGenrePreference,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
@@ -57,6 +59,15 @@ export interface IAccountStorage {
 
   getRatingPreferences(userId: number): Promise<RatingPreferences | undefined>;
   saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences>;
+  
+  getUserGenrePreferences(userId: number): Promise<UserGenrePreference | undefined>;
+  saveUserGenrePreferences(
+    userId: number, 
+    data: { 
+      preferredGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>,
+      additionalGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>
+    }
+  ): Promise<UserGenrePreference>;
   
   getFollowerMetrics(
     authorId: number,
@@ -654,5 +665,85 @@ export class AccountStorage implements IAccountStorage {
       })
       .returning();
     return reply;
+  }
+  
+  async getUserGenrePreferences(userId: number): Promise<UserGenrePreference | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(userGenrePreferences)
+      .where(eq(userGenrePreferences.userId, userId));
+    
+    return preferences;
+  }
+  
+  async saveUserGenrePreferences(
+    userId: number, 
+    data: { 
+      preferredGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>,
+      additionalGenres?: Array<{taxonomyId: number, rank: number, type: string, name: string}>
+    }
+  ): Promise<UserGenrePreference> {
+    console.log(`Storage: saveUserGenrePreferences called for user ${userId}`);
+    
+    // Check if preferences already exist
+    const existing = await this.getUserGenrePreferences(userId);
+    
+    try {
+      if (existing) {
+        console.log("Storage: updating existing genre preferences");
+        
+        // Update the existing preferences with any new data
+        const dataToUpdate: any = {
+          updatedAt: new Date()
+        };
+        
+        if (data.preferredGenres !== undefined) {
+          dataToUpdate.preferredGenres = data.preferredGenres;
+        }
+        
+        if (data.additionalGenres !== undefined) {
+          dataToUpdate.additionalGenres = data.additionalGenres;
+        }
+        
+        const [updated] = await db
+          .update(userGenrePreferences)
+          .set(dataToUpdate)
+          .where(eq(userGenrePreferences.userId, userId))
+          .returning();
+        
+        if (!updated) {
+          // Check if row still exists
+          const checkResult = await db
+            .select()
+            .from(userGenrePreferences)
+            .where(eq(userGenrePreferences.userId, userId));
+          
+          if (checkResult.length > 0) {
+            return checkResult[0];
+          }
+          
+          throw new Error("Failed to update user genre preferences");
+        }
+        
+        return updated;
+      } else {
+        console.log("Storage: creating new genre preferences");
+        
+        // Create new preferences
+        const [newPreferences] = await db
+          .insert(userGenrePreferences)
+          .values({
+            userId,
+            preferredGenres: data.preferredGenres || [],
+            additionalGenres: data.additionalGenres || [],
+          })
+          .returning();
+        
+        return newPreferences;
+      }
+    } catch (error) {
+      console.error("Storage: Error saving user genre preferences:", error);
+      throw error;
+    }
   }
 }

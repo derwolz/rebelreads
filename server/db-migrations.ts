@@ -460,6 +460,37 @@ async function removeUserTaxonomyTables() {
   }
 }
 
+async function createUserGenrePreferencesTable() {
+  try {
+    // Check if table exists first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'user_genre_preferences'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Creating 'user_genre_preferences' table...");
+      await db.execute(sql`
+        CREATE TABLE user_genre_preferences (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL UNIQUE,
+          preferred_genres JSONB NOT NULL DEFAULT '[]',
+          additional_genres JSONB NOT NULL DEFAULT '[]',
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'user_genre_preferences' created successfully");
+    } else {
+      console.log("Table 'user_genre_preferences' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating 'user_genre_preferences' table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -476,5 +507,7 @@ export async function runMigrations() {
   await removeFavoriteGenresFromUsers();
   // Remove user taxonomy tables
   await removeUserTaxonomyTables();
+  // Create user genre preferences table
+  await createUserGenrePreferencesTable();
   console.log("Migrations completed");
 }
