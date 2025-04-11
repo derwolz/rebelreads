@@ -349,9 +349,10 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
   } = useSortable({ id });
 
   const style = {
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : '',
     transition,
-  };
+    zIndex: isDragging ? 50 : undefined,
+  } as React.CSSProperties;
 
   return (
     <div
@@ -359,7 +360,7 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
       style={style}
       className={cn(
         "flex items-center justify-between p-2 border rounded-md",
-        isDragging && "opacity-50 z-10 shadow-md"
+        isDragging && "opacity-80 shadow-lg"
       )}
     >
       <div className="flex items-center space-x-2">
