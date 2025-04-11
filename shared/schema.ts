@@ -919,3 +919,44 @@ export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
 export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
 export type BookGenreTaxonomy = typeof bookGenreTaxonomies.$inferSelect;
 export type InsertBookGenreTaxonomy = typeof bookGenreTaxonomies.$inferInsert;
+
+// Preference taxonomies for the recommendation system
+export const preferenceTaxonomies = pgTable("preference_taxonomies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  taxonomyType: text("taxonomy_type").notNull(), // genre, theme, trope, etc.
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// User preference taxonomy relationship table
+export const userPreferenceTaxonomies = pgTable("user_preference_taxonomies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  taxonomyId: integer("taxonomy_id").notNull(),
+  position: integer("position").notNull().default(0), // Position in the user's preference list
+  weight: decimal("weight").notNull().default("1.0"), // Weight for recommendation calculations
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Create insert schemas for preference taxonomies
+export const insertPreferenceTaxonomySchema = createInsertSchema(preferenceTaxonomies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserPreferenceTaxonomySchema = createInsertSchema(userPreferenceTaxonomies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Define types for preference taxonomies
+export type PreferenceTaxonomy = typeof preferenceTaxonomies.$inferSelect;
+export type InsertPreferenceTaxonomy = typeof preferenceTaxonomies.$inferInsert;
+export type UserPreferenceTaxonomy = typeof userPreferenceTaxonomies.$inferSelect;
+export type InsertUserPreferenceTaxonomy = typeof userPreferenceTaxonomies.$inferInsert;
