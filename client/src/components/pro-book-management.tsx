@@ -120,7 +120,7 @@ export function ProBookManagement() {
               >
                 <div className="flex items-center space-x-4">
                   <img
-                    src={book.coverUrl}
+                    src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
                     alt={book.title}
                     className="w-16 h-24 object-cover rounded"
                   />

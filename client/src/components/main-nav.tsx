@@ -74,7 +74,7 @@ console.log(searchResults, "searchResults");
               onClick={() => setOpen(false)}
             >
               <img
-                src={book.coverUrl}
+                src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
                 alt={book.title}
                 className="w-8 h-12 object-cover rounded"
               />

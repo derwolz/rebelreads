@@ -49,7 +49,7 @@ export function HeroCarousel() {
                 <div 
                   className="w-full h-[400px] rounded-xl relative overflow-hidden flex items-center"
                   style={{
-                    backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url(${book.coverUrl})`,
+                    backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url(${book.images?.find(img => img.imageType === "hero")?.imageUrl || "/images/placeholder-book.png"})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                   }}

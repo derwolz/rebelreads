@@ -530,7 +530,7 @@ export default function BookDetails() {
                       <HorizontalBannerAd
                         campaignId={1}
                         bookId={book.id}
-                        imageSrc={book.coverUrl}
+                        imageSrc={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
                         title={`Readers also enjoyed: ${book.title}`}
                         description="More from this author and similar titles you might enjoy."
                         ctaText="Explore More"

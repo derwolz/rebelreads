@@ -46,7 +46,7 @@ export function RecommendationsSidebar() {
                 <div className="block w-10 h-14 shrink-0">
                   <Link href={`/books/${book.id}`}>
                     <img
-                      src={book.coverUrl}
+                      src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
                       alt={book.title}
                       className="w-full h-full object-cover rounded cursor-pointer"
                     />

@@ -95,7 +95,7 @@ export function ReviewInviteDialog() {
         <div className="grid gap-6 py-4">
           <div className="flex items-center gap-4">
             <img
-              src={availableBook.book.coverUrl}
+              src={availableBook.book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
               alt={availableBook.book.title}
               className="h-32 w-24 object-cover rounded"
             />
