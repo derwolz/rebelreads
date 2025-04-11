@@ -606,12 +606,7 @@ export default function SettingsPage() {
           {content}
         </div>
 
-        {/* Recommendations Sidebar - Only visible on desktop and only for reader settings and rating preferences */}
-        {(location === "/settings" || location === "/settings/rating-preferences") && (
-          <div className="hidden lg:block w-72 shrink-0">
-            <RecommendationsSidebar />
-          </div>
-        )}
+        {/* Recommendations Sidebar removed as requested */}
 
         {/* Overlay */}
         {isSidebarOpen && (

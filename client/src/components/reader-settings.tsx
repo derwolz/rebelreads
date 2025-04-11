@@ -237,36 +237,7 @@ export function ReaderSettings() {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="favoriteGenres"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Favorite Genres</FormLabel>
-                <FormControl>
-                  <div className={cn(
-                    "border rounded-md p-4",
-                    formState.errors.favoriteGenres && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}>
-                    <GenreSelector
-                      mode="simple"
-                      selected={field.value || []}
-                      onSelectionChange={(selected) => field.onChange(selected)}
-                      maxItems={5}
-                      showQuickSelect={true}
-                      allowCustomGenres={true}
-                      helperText="Select up to 5 genres that you enjoy reading the most."
-                    />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  These genres will be used to personalize your book recommendations.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Genre selection removed as requested */}
 
           <FormField
             control={form.control}
