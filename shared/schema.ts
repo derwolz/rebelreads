@@ -899,6 +899,26 @@ export const bookGenreTaxonomies = pgTable("book_genre_taxonomies", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// User genre preferences table - stores user's genre preferences for recommendations and content order
+export const userGenrePreferences = pgTable("user_genre_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(), // One record per user
+  preferredGenres: jsonb("preferred_genres").$type<Array<{
+    taxonomyId: number;
+    rank: number;
+    type: "genre" | "subgenre" | "theme" | "trope";
+    name: string;
+  }>>().default([]), // Primary genre preferences for ordering content
+  additionalGenres: jsonb("additional_genres").$type<Array<{
+    taxonomyId: number;
+    rank: number;
+    type: "genre" | "subgenre" | "theme" | "trope";
+    name: string;
+  }>>().default([]), // Secondary genre preferences for recommendations
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Create insert schemas
 export const insertGenreTaxonomySchema = createInsertSchema(genreTaxonomies).omit({
   id: true,
@@ -913,8 +933,16 @@ export const insertBookGenreTaxonomySchema = createInsertSchema(bookGenreTaxonom
   importance: true,
 });
 
+export const insertUserGenrePreferencesSchema = createInsertSchema(userGenrePreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Define types
 export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
 export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
 export type BookGenreTaxonomy = typeof bookGenreTaxonomies.$inferSelect;
 export type InsertBookGenreTaxonomy = typeof bookGenreTaxonomies.$inferInsert;
+export type UserGenrePreference = typeof userGenrePreferences.$inferSelect;
+export type InsertUserGenrePreference = typeof userGenrePreferences.$inferInsert;
