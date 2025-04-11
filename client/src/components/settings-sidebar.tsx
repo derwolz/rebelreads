@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Monitor, Star } from "lucide-react";
+import { User, Settings, Monitor, Star, BookOpen } from "lucide-react";
 
 interface NavItemProps {
   href: string;
@@ -58,6 +58,13 @@ export function SettingsSidebar() {
         icon={<Star className="h-4 w-4" />}
       >
         Rating Preferences
+      </NavItem>
+      <NavItem
+        href="/settings/genre-preferences"
+        active={location === "/settings/genre-preferences"}
+        icon={<BookOpen className="h-4 w-4" />}
+      >
+        Genre Preferences
       </NavItem>
     </nav>
   );
