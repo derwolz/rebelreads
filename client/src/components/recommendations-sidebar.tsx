@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Book, GenreTaxonomy } from "@shared/schema";
+import { TaxonomyItem } from "@/components/genre-selector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/star-rating";
@@ -35,18 +36,27 @@ export function RecommendationsSidebar() {
   });
 
   // Fetch user's existing genre taxonomies for preferences
-  const { data: userGenrePreferences, isLoading: isLoadingPreferences } = useQuery({
+  const { data: userGenrePreferences = [], isLoading: isLoadingPreferences } = useQuery<any[]>({
     queryKey: ['/api/user-genre-taxonomies'],
     staleTime: 60000,
     enabled: !!user,
   });
 
   // Fetch all available genres for selection
-  const { data: allGenreTaxonomies, isLoading: isLoadingGenres } = useQuery({
+  const { data: allGenreTaxonomies = [], isLoading: isLoadingGenres } = useQuery<GenreTaxonomy[]>({
     queryKey: ['/api/genres', { type: 'genre' }],
     staleTime: 60000,
     enabled: createViewDialogOpen,
   });
+  
+  // Initialize selected taxonomies when dialog opens with current preferences
+  useEffect(() => {
+    if (createViewDialogOpen && userGenrePreferences.length > 0) {
+      // Extract taxonomy objects from user preferences
+      const taxonomies = userGenrePreferences.map((pref: any) => pref.taxonomy);
+      setSelectedTaxonomies(taxonomies);
+    }
+  }, [createViewDialogOpen, userGenrePreferences]);
 
   // Mutation for saving user genre preferences
   const saveGenrePreferencesMutation = useMutation({
@@ -179,7 +189,7 @@ export function RecommendationsSidebar() {
                       key={pref.id} 
                       className="flex items-center justify-between p-2 bg-muted rounded-md"
                     >
-                      <span className="text-sm">{pref.name}</span>
+                      <span className="text-sm">{pref.taxonomy?.name || 'Unknown Genre'}</span>
                       <span className="text-xs text-muted-foreground">Position: {index + 1}</span>
                     </div>
                   ))}
