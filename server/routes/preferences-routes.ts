@@ -7,9 +7,32 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 
+// Add isAdmin to the User type for route authorization
+declare global {
+  namespace Express {
+    interface User {
+      id: number;
+      username: string;
+      email: string;
+      isAdmin?: boolean;
+    }
+  }
+}
+
 const router = Router();
 
-// Get all user preference taxonomies
+// Get all available preference taxonomies
+router.get("/preferences/taxonomies", async (req: Request, res: Response) => {
+  try {
+    const taxonomies = await dbStorage.getPreferenceTaxonomies();
+    res.json(taxonomies);
+  } catch (error) {
+    console.error("Error fetching preference taxonomies:", error);
+    res.status(500).json({ error: "Failed to fetch preference taxonomies" });
+  }
+});
+
+// Get user's preference taxonomies
 router.get("/user/preference-taxonomies", async (req: Request, res: Response) => {
   try {
     if (!req.user) {
@@ -24,55 +47,68 @@ router.get("/user/preference-taxonomies", async (req: Request, res: Response) =>
   }
 });
 
-// Save user preferences (favorite genres and preference taxonomies)
-router.post("/user/preferences", async (req: Request, res: Response) => {
+// Update user favorite genres
+router.post("/preferences/update-favorites", async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { favoriteGenres } = req.body;
+    const { genreNames } = req.body;
 
-    // Validate favorite genres
-    if (!Array.isArray(favoriteGenres)) {
-      return res.status(400).json({ error: "Invalid favorite genres format" });
+    // Validate genres
+    if (!Array.isArray(genreNames)) {
+      return res.status(400).json({ error: "Invalid genres format" });
     }
 
     // Update user's favorite genres
-    await dbStorage.updateUserFavoriteGenres(req.user.id, favoriteGenres);
+    await dbStorage.updateUserFavoriteGenres(req.user.id, genreNames);
 
-    res.json({ message: "Preferences saved successfully" });
+    res.json({ 
+      success: true,
+      message: "Preferences saved successfully" 
+    });
   } catch (error) {
     console.error("Error saving user preferences:", error);
     res.status(500).json({ error: "Failed to save preferences" });
   }
 });
 
-// Record a preference view
-router.post("/user/preference-view", async (req: Request, res: Response) => {
+// Create a view from selected taxonomies
+router.post("/preferences/create-view", async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
     const schema = z.object({
-      taxonomyId: z.number(),
-      position: z.number().default(0),
-      weight: z.number().default(1)
+      taxonomyIds: z.array(z.number()),
+      defaultPosition: z.number().default(0),
+      defaultWeight: z.number().default(1.0)
     });
 
     const validatedData = schema.parse(req.body);
     
-    // Create a preference taxonomy view for the user
-    const data = {
-      userId: req.user.id,
-      taxonomyId: validatedData.taxonomyId,
-      position: validatedData.position,
-      weight: validatedData.weight
-    };
+    // Create preference taxonomy views for each taxonomy ID
+    const results = [];
+    
+    for (const taxonomyId of validatedData.taxonomyIds) {
+      const data = {
+        userId: req.user.id,
+        taxonomyId,
+        position: validatedData.defaultPosition,
+        weight: validatedData.defaultWeight
+      };
 
-    const userPreference = await dbStorage.createUserPreferenceTaxonomy(data);
-    res.status(201).json(userPreference);
+      const userPreference = await dbStorage.createUserPreferenceTaxonomy(data);
+      results.push(userPreference);
+    }
+    
+    res.status(201).json({ 
+      success: true,
+      message: `Created ${results.length} preference views`,
+      views: results
+    });
   } catch (error) {
     console.error("Error creating preference view:", error);
     res.status(500).json({ error: "Failed to create preference view" });
