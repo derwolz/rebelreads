@@ -47,10 +47,14 @@ export class BookStorage implements IBookStorage {
     // Get all books IDs
     const bookIds = allBooks.map(book => book.id);
     
+    console.log(`getBooks: Found ${allBooks.length} books with IDs:`, bookIds);
+    
     // Fetch all images for these books
     const allImages = await db.select()
       .from(bookImages)
       .where(inArray(bookImages.bookId, bookIds));
+    
+    console.log(`getBooks: Found ${allImages.length} total book images`);
     
     // Group images by book ID for easy lookup
     const imagesByBookId = new Map<number, BookImage[]>();
@@ -60,6 +64,12 @@ export class BookStorage implements IBookStorage {
         imagesByBookId.set(image.bookId, []);
       }
       imagesByBookId.get(image.bookId)!.push(image);
+    });
+    
+    // Log each book's image count
+    bookIds.forEach(bookId => {
+      const images = imagesByBookId.get(bookId) || [];
+      console.log(`getBooks: Book ID ${bookId} has ${images.length} images`);
     });
     
     // Add images to books
@@ -147,6 +157,9 @@ export class BookStorage implements IBookStorage {
     
     // Get the book images
     const images = await db.select().from(bookImages).where(eq(bookImages.bookId, id));
+    
+    console.log(`getBook(${id}): Found ${images.length} images:`, 
+      images.map(img => `${img.imageType}: ${img.imageUrl}`));
     
     // Attach the images to the book object
     return {

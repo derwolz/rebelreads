@@ -62,6 +62,14 @@ router.use("/uploads", express.static("uploads"));
 
 router.get("/books", async (_req, res) => {
   const books = await dbStorage.getBooks();
+  
+  // Add debugging
+  console.log(`Returning ${books.length} books`);
+  if (books.length > 0) {
+    console.log(`First book has ${books[0]?.images?.length || 0} images:`, 
+      books[0]?.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
+  }
+  
   res.json(books);
 });
 
