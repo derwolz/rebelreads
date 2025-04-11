@@ -64,6 +64,7 @@ export const dbStorage = {
   promoteBook: bookStorage.promoteBook.bind(bookStorage),
   updateBook: bookStorage.updateBook.bind(bookStorage),
   updateBookTaxonomies: bookStorage.updateBookTaxonomies.bind(bookStorage),
+  getBookTaxonomies: bookStorage.getBookTaxonomies.bind(bookStorage),
   deleteBook: bookStorage.deleteBook.bind(bookStorage),
   getAuthorGenres: bookStorage.getAuthorGenres.bind(bookStorage),
   selectBooks: bookStorage.selectBooks.bind(bookStorage),

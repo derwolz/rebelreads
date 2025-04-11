@@ -61,6 +61,28 @@ router.get("/books/:id/ratings", async (req, res) => {
   res.json(ratings);
 });
 
+router.get("/books/:id/taxonomies", async (req, res) => {
+  // Public endpoint - no authentication required
+  const bookId = parseInt(req.params.id);
+  if (isNaN(bookId)) {
+    return res.status(400).json({ error: "Invalid book ID" });
+  }
+
+  try {
+    // Check if the bookId exists first
+    const book = await dbStorage.getBook(bookId);
+    if (!book) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    const taxonomies = await dbStorage.getBookTaxonomies(bookId);
+    return res.json(taxonomies);
+  } catch (error) {
+    console.error("Error fetching book taxonomies:", error);
+    return res.status(500).json({ error: "Failed to fetch book taxonomies" });
+  }
+});
+
 router.post("/books/:id/ratings", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 

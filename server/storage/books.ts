@@ -16,6 +16,14 @@ export interface IBookStorage {
   promoteBook(id: number): Promise<Book>;
   updateBook(id: number, data: Partial<Book>): Promise<Book>;
   updateBookTaxonomies(bookId: number, taxonomyData: any[]): Promise<void>;
+  getBookTaxonomies(bookId: number): Promise<{
+    taxonomyId: number;
+    rank: number;
+    importance: number;
+    name: string;
+    type: string;
+    description?: string;
+  }[]>;
   deleteBook(id: number, authorId: number): Promise<void>;
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   selectBooks(query: string): Promise<Book[]>;
@@ -167,6 +175,42 @@ export class BookStorage implements IBookStorage {
     }));
   }
 
+  async getBookTaxonomies(bookId: number): Promise<{
+    taxonomyId: number;
+    rank: number;
+    importance: number;
+    name: string;
+    type: string;
+    description?: string;
+  }[]> {
+    // Query book taxonomies with details from the genre_taxonomies table
+    const result = await db
+      .select({
+        taxonomyId: bookGenreTaxonomies.taxonomyId,
+        rank: bookGenreTaxonomies.rank,
+        importance: bookGenreTaxonomies.importance,
+        name: genreTaxonomies.name,
+        type: genreTaxonomies.type,
+        description: genreTaxonomies.description,
+      })
+      .from(bookGenreTaxonomies)
+      .innerJoin(
+        genreTaxonomies,
+        eq(bookGenreTaxonomies.taxonomyId, genreTaxonomies.id)
+      )
+      .where(eq(bookGenreTaxonomies.bookId, bookId))
+      .orderBy(bookGenreTaxonomies.rank);
+    
+    return result.map(item => ({
+      taxonomyId: Number(item.taxonomyId),
+      rank: Number(item.rank),
+      importance: Number(item.importance),
+      name: item.name,
+      type: item.type,
+      description: item.description || undefined,
+    }));
+  }
+  
   async updateInternalDetails(id: number, details: string): Promise<Book> {
     const [book] = await db
       .update(books)
