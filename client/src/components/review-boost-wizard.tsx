@@ -36,6 +36,31 @@ interface SelectedBookData {
   file: File | null;
 }
 
+// Helper function to get the best image URL for a book
+const getBookImageUrl = (book: Book, imageType?: string): string => {
+  // First try to find the specific requested image type
+  if (imageType && book.images) {
+    const specificImage = book.images.find(img => img.imageType === imageType);
+    if (specificImage) return specificImage.imageUrl;
+  }
+  
+  // Then try mini images first (best for review display)
+  if (book.images) {
+    const miniImage = book.images.find(img => img.imageType === 'mini');
+    if (miniImage) return miniImage.imageUrl;
+    
+    // Then book-card images
+    const cardImage = book.images.find(img => img.imageType === 'book-card');
+    if (cardImage) return cardImage.imageUrl;
+    
+    // Then any available image
+    if (book.images.length > 0) return book.images[0].imageUrl;
+  }
+  
+  // Fallback to placeholder
+  return '/placeholder-book.png';
+};
+
 export function ReviewBoostWizard({
   open,
   onClose,
@@ -252,9 +277,7 @@ export function ReviewBoostWizard({
                       />
                       <div className="flex items-center gap-4 flex-1">
                         <img
-                          src={book.images?.find(img => img.imageType === 'mini')?.imageUrl || 
-                              book.images?.find(img => img.imageType === 'book-card')?.imageUrl || 
-                              book.images?.[0]?.imageUrl || '/placeholder-book.png'}
+                          src={getBookImageUrl(book, 'mini')}
                           alt={book.title}
                           className="h-16 w-12 object-cover rounded"
                         />
@@ -310,7 +333,7 @@ export function ReviewBoostWizard({
                   <div key={book.id} className="grid gap-2">
                     <div className="flex items-center gap-4">
                       <img
-                        src={book.coverUrl}
+                        src={getBookImageUrl(book, 'mini')}
                         alt={book.title}
                         className="h-16 w-12 object-cover rounded"
                       />
@@ -367,7 +390,7 @@ export function ReviewBoostWizard({
                   <div key={book.id} className="grid gap-2">
                     <div className="flex items-center gap-4 mb-2">
                       <img
-                        src={book.coverUrl}
+                        src={getBookImageUrl(book, 'mini')}
                         alt={book.title}
                         className="h-16 w-12 object-cover rounded"
                       />
@@ -407,7 +430,7 @@ export function ReviewBoostWizard({
                   return (
                     <div key={book.id} className="flex items-center gap-4">
                       <img
-                        src={book.coverUrl}
+                        src={getBookImageUrl(book, 'mini')}
                         alt={book.title}
                         className="h-16 w-12 object-cover rounded"
                       />
