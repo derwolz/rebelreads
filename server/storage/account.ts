@@ -733,7 +733,7 @@ export class AccountStorage implements IAccountStorage {
         const [newPreferences] = await db
           .insert(userGenrePreferences)
           .values({
-            userId,
+            userId: userId,
             preferredGenres: data.preferredGenres || [],
             additionalGenres: data.additionalGenres || [],
           })
