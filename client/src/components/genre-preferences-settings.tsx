@@ -24,10 +24,12 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  useSortable
 } from '@dnd-kit/sortable';
-import { SortableGenre } from "@/components/sortable-genre";
-import { Trash2, Plus, PenLine, PlusCircle, Move } from "lucide-react";
+import { CSS } from "@dnd-kit/utilities";
+import { Trash2, Plus, PenLine, PlusCircle, Move, GripVertical, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 // Define types for the new schema
 interface ViewGenre {
@@ -571,36 +573,32 @@ export function GenrePreferencesSettings() {
                   </div>
 
                   <div className="text-sm text-muted-foreground">
-                    Choose and order the genres for this view. Drag and drop to change the order of importance.
+                    Choose genres for this view to personalize your reading experience.
                   </div>
                   
                   <div className="my-4">
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={view.genres?.map(item => item.id) || []}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="space-y-2">
-                          {view.genres?.map((genre) => (
-                            <SortableGenre
-                              key={genre.id}
-                              id={genre.id}
-                              label={genre.name || `${genre.type} (${genre.taxonomyId})`}
-                              onRemove={() => handleRemoveGenre(genre.id)}
-                            />
-                          ))}
-                          {view.genres?.length === 0 && (
-                            <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
-                              <p>No genres added to this view yet</p>
-                            </div>
-                          )}
+                    <div className="space-y-2">
+                      {view.genres?.map((genre) => (
+                        <div 
+                          key={genre.id}
+                          className="flex items-center bg-background border rounded-md p-2 shadow-sm"
+                        >
+                          <span className="flex-1 text-sm">{genre.name || `${genre.type} (${genre.taxonomyId})`}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGenre(genre.id)}
+                            className="ml-2 hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
-                      </SortableContext>
-                    </DndContext>
+                      ))}
+                      {view.genres?.length === 0 && (
+                        <div className="p-4 border border-dashed rounded-md text-center text-muted-foreground">
+                          <p>No genres added to this view yet</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="bg-muted p-4 rounded-md">
