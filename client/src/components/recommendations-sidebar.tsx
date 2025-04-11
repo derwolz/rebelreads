@@ -36,24 +36,30 @@ export function RecommendationsSidebar() {
 
   // Fetch user's existing genre taxonomies for preferences
   const { data: userGenrePreferences, isLoading: isLoadingPreferences } = useQuery({
-    queryKey: ['/api/user/genre-preferences'],
+    queryKey: ['/api/user-genre-taxonomies'],
     staleTime: 60000,
-    // This endpoint doesn't exist yet, but we're preparing for it
     enabled: !!user,
+  });
+
+  // Fetch all available genres for selection
+  const { data: allGenreTaxonomies, isLoading: isLoadingGenres } = useQuery({
+    queryKey: ['/api/genres', { type: 'genre' }],
+    staleTime: 60000,
+    enabled: createViewDialogOpen,
   });
 
   // Mutation for saving user genre preferences
   const saveGenrePreferencesMutation = useMutation({
     mutationFn: async (taxonomies: GenreTaxonomy[]) => {
-      return apiRequest('POST', '/api/user/genre-preferences', {
-        taxonomies: taxonomies.map((taxonomy, index) => ({
+      return apiRequest('POST', '/api/user-genre-taxonomies', 
+        taxonomies.map((taxonomy, index) => ({
           taxonomyId: taxonomy.id,
           position: index,
-        })),
-      });
+        }))
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/genre-preferences'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user-genre-taxonomies'] });
       toast({
         title: "Success",
         description: "Your genre preferences have been saved",

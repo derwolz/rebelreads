@@ -661,4 +661,54 @@ export class AccountStorage implements IAccountStorage {
       .returning();
     return reply;
   }
+
+  // User genre taxonomies methods
+  async getUserGenreTaxonomies(userId: number): Promise<any[]> {
+    // Join user genre taxonomies with the genre taxonomies table to get the full taxonomy details
+    const userTaxonomies = await db
+      .select({
+        id: userGenreTaxonomies.id,
+        userId: userGenreTaxonomies.userId,
+        taxonomyId: userGenreTaxonomies.taxonomyId,
+        position: userGenreTaxonomies.position,
+        createdAt: userGenreTaxonomies.createdAt,
+        // Include genre taxonomy details
+        taxonomy: genreTaxonomies
+      })
+      .from(userGenreTaxonomies)
+      .innerJoin(
+        genreTaxonomies,
+        eq(userGenreTaxonomies.taxonomyId, genreTaxonomies.id)
+      )
+      .where(eq(userGenreTaxonomies.userId, userId))
+      .orderBy(userGenreTaxonomies.position);
+    
+    return userTaxonomies;
+  }
+
+  async saveUserGenreTaxonomies(userId: number, taxonomies: {taxonomyId: number, position: number}[]): Promise<any[]> {
+    // First delete any existing user genre taxonomies
+    await db
+      .delete(userGenreTaxonomies)
+      .where(eq(userGenreTaxonomies.userId, userId));
+    
+    // If no taxonomies to add, return empty array
+    if (taxonomies.length === 0) {
+      return [];
+    }
+    
+    // Insert new user genre taxonomies
+    const valuesToInsert = taxonomies.map(({ taxonomyId, position }) => ({
+      userId,
+      taxonomyId,
+      position
+    }));
+    
+    const insertedTaxonomies = await db
+      .insert(userGenreTaxonomies)
+      .values(valuesToInsert)
+      .returning();
+    
+    return insertedTaxonomies;
+  }
 }
