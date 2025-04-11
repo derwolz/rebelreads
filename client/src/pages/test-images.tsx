@@ -12,9 +12,13 @@ export function TestImages() {
     const fetchBook = async () => {
       try {
         setLoading(true);
-        const response = await apiRequest<any>("/api/books/24");
-        setBook(response);
-        console.log("Loaded book:", response);
+        const response = await fetch("/api/books/24");
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        const data = await response.json();
+        setBook(data);
+        console.log("Loaded book:", data);
       } catch (err) {
         console.error("Error loading book:", err);
         setError("Failed to load book");
@@ -32,6 +36,24 @@ export function TestImages() {
       
       {loading && <p>Loading book...</p>}
       {error && <p className="text-red-500">{error}</p>}
+      
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Debug Controls</h2>
+        <div className="flex gap-2">
+          <button 
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => window.location.href = '/test-images'}
+          >
+            Reload Page
+          </button>
+          <button 
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            onClick={() => window.location.href = '/'}
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
       
       {book && (
         <div className="space-y-8">
@@ -53,15 +75,18 @@ export function TestImages() {
                     <h3 className="text-lg font-medium mb-2">
                       Type: {image.imageType}
                     </h3>
-                    <div className="aspect-w-3 aspect-h-4 mb-2">
+                    <div className="relative aspect-w-3 aspect-h-4 mb-2">
                       <img
                         src={image.imageUrl}
                         alt={`${image.imageType} image`}
-                        className="object-cover rounded"
+                        className="object-cover rounded w-full h-auto"
                       />
                     </div>
                     <p className="text-sm text-gray-500">
                       Size: {image.width}x{image.height} ({image.sizeKb}KB)
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1 break-all">
+                      URL: {image.imageUrl}
                     </p>
                   </Card>
                 ))}

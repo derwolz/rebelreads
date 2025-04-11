@@ -167,10 +167,17 @@ export class BookStorage implements IBookStorage {
   }
 
   async getBook(id: number): Promise<Book | undefined> {
+    console.log(`getBook called with ID: ${id}`);
+    
     // Get the book data
     const [book] = await db.select().from(books).where(eq(books.id, id));
     
-    if (!book) return undefined;
+    if (!book) {
+      console.log(`Book with ID ${id} not found`);
+      return undefined;
+    }
+    
+    console.log(`Book data found:`, JSON.stringify(book, null, 2));
     
     // Get the book images
     const images = await db.select().from(bookImages).where(eq(bookImages.bookId, id));
@@ -179,10 +186,15 @@ export class BookStorage implements IBookStorage {
       images.map(img => `${img.imageType}: ${img.imageUrl}`));
     
     // Attach the images to the book object
-    return {
+    const result = {
       ...book,
       images: images
     } as Book;
+    
+    console.log(`Returning book with ${images.length} images`, 
+      images.length > 0 ? `First image: ${images[0].imageType}` : 'No images');
+    
+    return result;
   }
 
   async getBooksByAuthor(authorId: number): Promise<Book[]> {

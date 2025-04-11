@@ -93,6 +93,7 @@ function Router() {
         <Route path="/authors/:id" component={AuthorPage} />
         <Route path="/publishers/:id" component={PublisherPage} />
         <Route path="/ad-showcase" component={AdShowcasePage} />
+        <Route path="/test-images" component={TestImages} />
 
         {/* Protected routes (always require login) */}
         <ProtectedRoute path="/settings" component={SettingsPage} />
