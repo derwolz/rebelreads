@@ -75,6 +75,10 @@ export function SortableHomepageSection({
   const handleDisplayModeChange = (value: string) => {
     onUpdate({ displayMode: value as typeof DISPLAY_MODE_TYPES[number] });
   };
+  
+  const updateItemCount = (count: number) => {
+    onUpdate({ itemCount: count });
+  };
 
   return (
     <Card
@@ -85,125 +89,86 @@ export function SortableHomepageSection({
         isDragging ? "border-primary" : "border-input"
       )}
     >
-      <div className="absolute top-3 left-3 cursor-grab touch-none" {...attributes} {...listeners}>
+      <div className="absolute top-0 bottom-0 left-0 w-8 flex items-center justify-center cursor-grab touch-none" {...attributes} {...listeners}>
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </div>
       
-      <CardHeader className="pl-12">
-        <div className="flex items-center justify-between">
-          {isEditing ? (
-            <Input
-              value={section.title}
-              onChange={handleTitleChange}
-              className="max-w-[250px]"
-              onBlur={() => setIsEditing(false)}
-              autoFocus
-            />
-          ) : (
-            <CardTitle className="flex items-center gap-2">
-              {section.title}
-              {section.visible ? (
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <EyeOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </CardTitle>
+      <div className="flex items-center p-4 pl-10">
+        {isEditing ? (
+          <Input
+            value={section.title}
+            onChange={handleTitleChange}
+            className="max-w-[250px] mr-auto"
+            onBlur={() => setIsEditing(false)}
+            autoFocus
+          />
+        ) : (
+          <div 
+            className="font-medium text-lg mr-auto cursor-pointer hover:underline" 
+            onClick={() => setIsEditing(true)}
+            title="Click to edit title"
+          >
+            {section.title}
+          </div>
+        )}
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant={section.displayMode === "carousel" ? "default" : "outline"}
+                size="sm"
+                onClick={() => section.displayMode !== "carousel" && handleDisplayModeChange("carousel")}
+              >
+                Carousel
+              </Button>
+              <Button 
+                variant={section.displayMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => section.displayMode !== "grid" && handleDisplayModeChange("grid")}
+              >
+                Grid
+              </Button>
+            </div>
+          </div>
+          
+          {section.displayMode === "grid" && (
+            <div className="flex items-center gap-2">
+              <Button 
+                variant={section.itemCount === 10 ? "default" : "outline"}
+                size="sm"
+                onClick={() => updateItemCount(10)}
+              >
+                10
+              </Button>
+              <Button 
+                variant={section.itemCount === 20 ? "default" : "outline"}
+                size="sm"
+                onClick={() => updateItemCount(20)}
+              >
+                20
+              </Button>
+              <Button 
+                variant={section.itemCount === 30 ? "default" : "outline"}
+                size="sm"
+                onClick={() => updateItemCount(30)}
+              >
+                30
+              </Button>
+            </div>
           )}
           
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setIsEditing(!isEditing)}
-              title="Edit Section"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleVisibilityToggle}
-              title={section.visible ? "Hide Section" : "Show Section"}
-            >
-              {section.visible ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onRemove}
-              title="Remove Section"
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onRemove}
+            title="Remove Section"
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
         </div>
-      </CardHeader>
-      
-      <CardContent>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium">Display Mode</label>
-            <Select
-              value={section.displayMode}
-              onValueChange={handleDisplayModeChange}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select display mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="carousel">
-                  <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    <span>Carousel</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="grid">
-                  <div className="flex items-center gap-2">
-                    <LayoutGrid className="h-4 w-4" />
-                    <span>Grid</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium">Number of Items</label>
-            <Input
-              type="number"
-              min={5}
-              max={30}
-              value={section.itemCount}
-              onChange={handleItemCountChange}
-            />
-          </div>
-        </div>
-        
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id={`visible-${section.id}`}
-              checked={section.visible}
-              onCheckedChange={handleVisibilityToggle}
-            />
-            <label
-              htmlFor={`visible-${section.id}`}
-              className="text-sm font-medium leading-none cursor-pointer"
-            >
-              {section.visible ? "Visible" : "Hidden"}
-            </label>
-          </div>
-          
-          <p className="text-sm text-muted-foreground">
-            {section.type.replace(/_/g, " ")}
-          </p>
-        </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }
