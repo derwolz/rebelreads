@@ -26,6 +26,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
 import FollowerTest from "@/pages/follower-test";
 import PublisherPage from "@/pages/publisher-page";
+import { HomepageSettingsPage } from "@/pages/homepage-settings-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 import HowItWorks from "@/pages/how-it-works";

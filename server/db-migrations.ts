@@ -656,6 +656,36 @@ async function createGenreViewsTables() {
   }
 }
 
+async function createHomepageLayoutsTable() {
+  try {
+    // Check if table exists first
+    const checkResult = await db.execute(sql`
+      SELECT * 
+      FROM information_schema.tables 
+      WHERE table_name = 'homepage_layouts'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Creating 'homepage_layouts' table...");
+      await db.execute(sql`
+        CREATE TABLE homepage_layouts (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL UNIQUE,
+          sections JSONB NOT NULL DEFAULT '[]',
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'homepage_layouts' created successfully");
+    } else {
+      console.log("Table 'homepage_layouts' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating 'homepage_layouts' table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -678,5 +708,7 @@ export async function runMigrations() {
   await addContentViewsColumnToUserGenrePreferences();
   // Create the new genre views tables and migrate data from the old table
   await createGenreViewsTables();
+  // Create homepage layouts table
+  await createHomepageLayoutsTable();
   console.log("Migrations completed");
 }
