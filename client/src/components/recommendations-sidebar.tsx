@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation } from "@tanstack/react-query";
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Book, InsertUserPreferenceTaxonomy } from "@shared/schema";
+import { Book, InsertUserPreferenceTaxonomy, PreferenceTaxonomy } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/star-rating";
@@ -12,10 +12,26 @@ import { GenreSelector } from "@/components/genre-selector";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
+// Define interface for preference taxonomy items with position and weight
+interface PreferenceTaxonomyItem {
+  id: number;
+  name: string;
+  taxonomyType: string;
+  position: number;
+  weight: number;
+}
+
+// Import the TaxonomyItem type from the GenreSelector component
+import { TaxonomyItem } from "@/components/genre-selector";
+
 export function RecommendationsSidebar() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(user?.favoriteGenres || []);
+  const queryClient = useQueryClient();
+  
+  // State for managing selected taxonomies
+  const [selectedTaxonomies, setSelectedTaxonomies] = useState<TaxonomyItem[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isCreatingView, setIsCreatingView] = useState(false);
 
@@ -25,16 +41,48 @@ export function RecommendationsSidebar() {
     staleTime: 60000,
   });
 
-  // Fetch user preference taxonomies
-  const { data: preferenceTaxonomies, isLoading: isLoadingPreferences } = useQuery({
-    queryKey: ['/api/user/preference-taxonomies'],
-    // If the API route doesn't exist yet, this will fail silently and show empty state
+  // Fetch all available preference taxonomies
+  const { data: availableTaxonomies, isLoading: isLoadingTaxonomies } = useQuery<PreferenceTaxonomy[]>({
+    queryKey: ['/api/preferences/taxonomies'],
     enabled: !!user?.id,
   });
 
+  // Fetch user preference taxonomies
+  const { data: userPreferenceTaxonomies, isLoading: isLoadingPreferences } = useQuery<PreferenceTaxonomyItem[]>({
+    queryKey: ['/api/user/preference-taxonomies'],
+    enabled: !!user?.id,
+  });
+
+  // Load user preferences when available
+  useEffect(() => {
+    if (userPreferenceTaxonomies?.length) {
+      // Convert to TaxonomyItem format for the genre selector
+      const convertedTaxonomies = userPreferenceTaxonomies.map(tax => ({
+        id: tax.id,
+        taxonomyId: tax.id,
+        rank: tax.position || 0,
+        type: (tax.taxonomyType === 'genre' ? 'genre' : 
+               tax.taxonomyType === 'subgenre' ? 'subgenre' : 
+               tax.taxonomyType === 'theme' ? 'theme' : 'trope') as "genre" | "subgenre" | "theme" | "trope",
+        name: tax.name
+      }));
+      setSelectedTaxonomies(convertedTaxonomies);
+      
+      // Extract genre names for simple mode
+      const genreNames = userPreferenceTaxonomies
+        .filter(tax => tax.taxonomyType === 'genre')
+        .map(tax => tax.name);
+      setSelectedGenres(genreNames);
+    } else if (user?.favoriteGenres?.length) {
+      // Fallback to user's favorite genres if no taxonomies
+      setSelectedGenres(user.favoriteGenres);
+    }
+  }, [userPreferenceTaxonomies, user]);
+
+  // Save user preferences mutation
   const savePreferencesMutation = useMutation({
-    mutationFn: async (data: { genres: string[] }) => {
-      return await fetch("/api/user/preferences", {
+    mutationFn: async (data: { genreNames: string[] }) => {
+      return await fetch("/api/preferences/update-favorites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -48,6 +96,9 @@ export function RecommendationsSidebar() {
         title: "Preferences saved",
         description: "Your recommendation preferences have been updated."
       });
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/preference-taxonomies'] });
     },
     onError: () => {
       toast({
@@ -58,12 +109,26 @@ export function RecommendationsSidebar() {
     }
   });
 
+  // Create user preference view mutation
   const createViewMutation = useMutation({
     mutationFn: async () => {
-      return await fetch("/api/user/preference-view", {
+      // Map selected genres to taxonomy IDs if available
+      const taxonomyIds = availableTaxonomies
+        ? selectedGenres.map(genreName => {
+            const taxonomy = availableTaxonomies.find(t => t.name === genreName);
+            return taxonomy ? taxonomy.id : 0;
+          }).filter(id => id !== 0)
+        : [];
+        
+      return await fetch("/api/preferences/create-view", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxonomies: selectedGenres }),
+        body: JSON.stringify({ 
+          taxonomyIds,
+          // Add default position and weight
+          defaultPosition: 0,
+          defaultWeight: 1.0
+        }),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to create view");
         return res.json();
@@ -75,6 +140,8 @@ export function RecommendationsSidebar() {
         description: "Your custom view has been created and is now available."
       });
       setIsCreatingView(false);
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/user/preference-taxonomies'] });
     },
     onError: () => {
       toast({
@@ -86,21 +153,40 @@ export function RecommendationsSidebar() {
     }
   });
 
+  // Handle saving preferences
   const handleSavePreferences = async () => {
     setIsSaving(true);
     try {
-      await savePreferencesMutation.mutateAsync({ genres: selectedGenres });
+      await savePreferencesMutation.mutateAsync({ genreNames: selectedGenres });
     } finally {
       setIsSaving(false);
     }
   };
 
+  // Handle creating a view
   const handleCreateView = async () => {
+    if (selectedGenres.length === 0) {
+      toast({
+        title: "No genres selected",
+        description: "Please select at least one genre to create a view.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsCreatingView(true);
     try {
       await createViewMutation.mutateAsync();
     } catch (error) {
       setIsCreatingView(false);
+    }
+  };
+
+  // Helper function to handle the type conversion for GenreSelector
+  const handleGenreSelectionChange = (selected: string[] | TaxonomyItem[]) => {
+    // When in simple mode, we'll always get string[]
+    if (Array.isArray(selected) && selected.length > 0 && typeof selected[0] === 'string') {
+      setSelectedGenres(selected as string[]);
     }
   };
 
@@ -122,7 +208,7 @@ export function RecommendationsSidebar() {
             <GenreSelector 
               mode="simple"
               selected={selectedGenres}
-              onSelectionChange={setSelectedGenres}
+              onSelectionChange={handleGenreSelectionChange}
               maxItems={3}
               showQuickSelect={true}
               allowCustomGenres={false}
