@@ -955,3 +955,44 @@ export type UserGenreView = typeof userGenreViews.$inferSelect;
 export type InsertUserGenreView = typeof userGenreViews.$inferInsert;
 export type ViewGenre = typeof viewGenres.$inferSelect;
 export type InsertViewGenre = typeof viewGenres.$inferInsert;
+
+// Homepage section types
+export const HOMEPAGE_SECTION_TYPES = [
+  "authors_you_follow",
+  "popular",
+  "you_may_also_like", 
+  "wishlist", 
+  "unreviewed", 
+  "reviewed", 
+  "completed",
+  "custom_genre_view"
+] as const;
+
+export const DISPLAY_MODE_TYPES = ["carousel", "grid"] as const;
+
+export const homepageLayouts = pgTable("homepage_layouts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  sections: jsonb("sections").$type<HomepageSection[]>().notNull().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertHomepageLayoutSchema = createInsertSchema(homepageLayouts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export interface HomepageSection {
+  id: string;
+  type: typeof HOMEPAGE_SECTION_TYPES[number];
+  displayMode: typeof DISPLAY_MODE_TYPES[number];
+  title: string;
+  itemCount: number;
+  customViewId?: number; // Only for custom_genre_view type
+  visible: boolean;
+}
+
+export type HomepageLayout = typeof homepageLayouts.$inferSelect;
+export type InsertHomepageLayout = typeof homepageLayouts.$inferInsert;
