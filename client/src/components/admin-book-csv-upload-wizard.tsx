@@ -50,16 +50,18 @@ export function AdminBookCsvUploadWizard() {
     mutationFn: async (books: CsvBook[]) => {
       setIsProcessing(true);
       try {
-        // Download all cover images
+        // Prepare form data and track progress
         const formData = new FormData();
-        const coverBlobs = await Promise.all(
+        
+        // Process books and update progress 
+        await Promise.all(
           books.map(async (book, index) => {
             try {
               // No image handling needed - images are uploaded separately through the book-upload-wizard
               setUploadProgress((index + 1) / books.length * 100);
               return null;
             } catch (error) {
-              console.error(`Error downloading cover for ${book.title}:`, error);
+              console.error(`Error processing book ${book.title}:`, error);
               return null;
             }
           })
@@ -261,7 +263,7 @@ export function AdminBookCsvUploadWizard() {
               <div className="space-y-2">
                 <Progress value={uploadProgress} />
                 <p className="text-sm text-muted-foreground text-center">
-                  Processing images... {Math.round(uploadProgress)}%
+                  Processing books... {Math.round(uploadProgress)}%
                 </p>
               </div>
             )}
