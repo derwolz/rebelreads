@@ -26,6 +26,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { HOMEPAGE_SECTION_TYPES, DISPLAY_MODE_TYPES, HomepageSection } from "@shared/schema";
 import { PlusCircle, Save, Undo, Info } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { SortableHomepageSection } from "./sortable-homepage-section";
 
 // Define default sections that will be available
 const DEFAULT_SECTIONS: HomepageSection[] = [
@@ -222,10 +223,7 @@ export function HomepageSettings() {
   });
 
   // Handle drag end event for reordering sections
-  function handleDragEnd(event: {
-    active: { id: string };
-    over: { id: string } | null;
-  }) {
+  function handleDragEnd(event: any) {
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -381,92 +379,16 @@ export function HomepageSettings() {
                   <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-3">
                       {sections.map((section) => (
-                        <div key={section.id}>
-                          <Card className={!section.visible ? "opacity-60" : ""}>
-                            <CardHeader className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <CardTitle className="flex items-center gap-2">
-                                    {section.title}
-                                    {!section.visible && <Badge variant="outline">Hidden</Badge>}
-                                    {section.customViewId && <Badge>Custom View</Badge>}
-                                  </CardTitle>
-                                  <CardDescription>
-                                    {getSectionTypeName(section.type)}
-                                  </CardDescription>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => toggleSectionVisibility(section.id)}
-                                  >
-                                    {section.visible ? "Hide" : "Show"}
-                                  </Button>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => removeSection(section.id)}
-                                  >
-                                    Remove
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="p-4 pt-0">
-                              <div className="flex flex-col gap-3">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm font-medium">Display Mode:</span>
-                                  <div className="flex gap-2">
-                                    <Button 
-                                      variant={section.displayMode === "carousel" ? "default" : "outline"}
-                                      size="sm"
-                                      onClick={() => section.displayMode !== "carousel" && toggleDisplayMode(section.id)}
-                                    >
-                                      Carousel
-                                    </Button>
-                                    <Button 
-                                      variant={section.displayMode === "grid" ? "default" : "outline"}
-                                      size="sm"
-                                      onClick={() => section.displayMode !== "grid" && toggleDisplayMode(section.id)}
-                                    >
-                                      Grid
-                                    </Button>
-                                  </div>
-                                </div>
-                                
-                                {section.displayMode === "grid" && (
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium">Number of items:</span>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        variant={section.itemCount === 10 ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => updateItemCount(section.id, 10)}
-                                      >
-                                        10
-                                      </Button>
-                                      <Button 
-                                        variant={section.itemCount === 20 ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => updateItemCount(section.id, 20)}
-                                      >
-                                        20
-                                      </Button>
-                                      <Button 
-                                        variant={section.itemCount === 30 ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => updateItemCount(section.id, 30)}
-                                      >
-                                        30
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
+                        <SortableHomepageSection
+                          key={section.id}
+                          section={section}
+                          onUpdate={(updates) => {
+                            setSections(sections.map(s => 
+                              s.id === section.id ? { ...s, ...updates } : s
+                            ));
+                          }}
+                          onRemove={() => removeSection(section.id)}
+                        />
                       ))}
                     </div>
                   </SortableContext>
