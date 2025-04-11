@@ -12,8 +12,7 @@ import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
 import { DragDropCover } from "@/components/drag-drop-cover";
-import { GenreTagInput } from "@/components/genre-tag-input";
-import { TaxonomySelector } from "@/components/taxonomy-selector";
+import { GenreSelector, TaxonomyItem } from "@/components/genre-selector";
 import {
   Dialog,
   DialogContent,
@@ -718,12 +717,16 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 5:
         return (
           <div className="space-y-4">
-
-            <TaxonomySelector
-              selectedTaxonomies={formData.genreTaxonomies || []}
-              onTaxonomiesChange={(taxonomies) => 
-                setFormData((prev) => ({ ...prev, genreTaxonomies: taxonomies }))
+            <h2 className="text-lg font-semibold">Select Genres, Themes, and Tropes</h2>
+            
+            <GenreSelector
+              mode="taxonomy"
+              selected={formData.genreTaxonomies || []}
+              onSelectionChange={(taxonomies) => 
+                setFormData((prev) => ({ ...prev, genreTaxonomies: taxonomies as TaxonomyItem[] }))
               }
+              label="Book Taxonomies"
+              helperText="Select and rank categories that describe your book. The order determines their importance in search results."
             />
           
           </div>
