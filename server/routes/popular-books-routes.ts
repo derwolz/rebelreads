@@ -11,13 +11,24 @@ const router = Router();
  * GET /api/popular-books
  * Returns the top popular books based on the calculated sigmoid decay value
  * This endpoint is public and does not require authentication
+ * 
+ * Query parameters:
+ * - limit: Maximum number of books to return (default: 10)
+ * - random: If "true", returns N random books from the top 50
+ * - count: Number of random books to return when random=true (default: 5)
  */
 router.get("/", async (req: Request, res: Response) => {
   try {
-    // Get limit from query param or default to 10
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    // Check if we want random selection
+    const randomize = req.query.random === "true";
     
-    // Get popular book records
+    // Get limit - this is either the final limit or the pool size for randomization
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : (randomize ? 50 : 10);
+    
+    // For random selection, we'll pick this many books from the pool
+    const randomCount = req.query.count ? parseInt(req.query.count as string) : 5;
+    
+    // Get popular book records - always get the top 'limit' books first
     const popularBooksRecords = await dbStorage.getPopularBooks(limit);
     
     if (popularBooksRecords.length === 0) {
@@ -39,7 +50,7 @@ router.get("/", async (req: Request, res: Response) => {
     });
     
     // Join the data together
-    const result = popularBooksRecords.map(record => {
+    let result = popularBooksRecords.map(record => {
       const book = bookMap.get(record.bookId);
       if (!book) return null; // Skip if book not found
       return {
@@ -51,6 +62,15 @@ router.get("/", async (req: Request, res: Response) => {
     })
     .filter(Boolean) // Remove any null entries
     .sort((a, b) => a!.popularRank - b!.popularRank);
+    
+    // If randomize is true, select N random books from the result
+    if (randomize && result.length > 0) {
+      // Get a random subset of books
+      const shuffled = [...result].sort(() => 0.5 - Math.random());
+      // Pick the number requested or the max available
+      const count = Math.min(randomCount, shuffled.length);
+      result = shuffled.slice(0, count);
+    }
     
     return res.json(result);
   } catch (error) {
