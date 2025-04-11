@@ -165,10 +165,10 @@ export function HomepageSettings() {
   // Add genre view sections when they load
   useEffect(() => {
     if (genreViews?.views) {
-      const customViews = genreViews.views.map((view: any) => ({
+      const customViews = genreViews.views.map((view) => ({
         id: `custom-view-${view.id}`,
-        type: "custom_genre_view",
-        displayMode: "carousel",
+        type: "custom_genre_view" as const,
+        displayMode: "carousel" as const,
         title: view.name,
         itemCount: 10,
         customViewId: view.id,
@@ -190,10 +190,19 @@ export function HomepageSettings() {
   // Mutation for saving homepage layout
   const saveMutation = useMutation({
     mutationFn: async (newSections: HomepageSection[]) => {
-      return apiRequest("/api/homepage-layout", {
+      const response = await fetch("/api/homepage-layout", {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ sections: newSections }),
       });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update homepage layout");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({

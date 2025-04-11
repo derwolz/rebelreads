@@ -1,22 +1,36 @@
-import { SettingsSidebar } from "@/components/settings-sidebar";
+import { useEffect } from "react";
 import { HomepageSettings } from "@/components/homepage-settings";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export function HomepageSettingsPage() {
+  const { user, isLoading } = useAuth();
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
+
+  // Redirect to login if not logged in
+  useEffect(() => {
+    if (!isLoading && !user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to access your homepage settings.",
+      });
+      navigate("/");
+    }
+  }, [user, isLoading, navigate, toast]);
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Loading...</div>;
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
+
   return (
-    <div className="container py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Customize your homepage layout and preferences
-        </p>
-      </div>
-      
-      <div className="flex flex-col md:flex-row gap-6">
-        <SettingsSidebar />
-        <div className="flex-1">
-          <HomepageSettings />
-        </div>
-      </div>
+    <div className="container py-8">
+      <HomepageSettings />
     </div>
   );
 }
