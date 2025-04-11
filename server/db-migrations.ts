@@ -786,6 +786,36 @@ async function migrateCoverUrlToBookImages() {
   }
 }
 
+async function removeCoverUrlColumn() {
+  try {
+    console.log("Checking for cover_url column in books table...");
+    
+    // Check if cover_url column exists in books table
+    const columnResult = await db.execute(sql`
+      SELECT column_name
+      FROM information_schema.columns 
+      WHERE table_name = 'books' AND column_name = 'cover_url'
+    `);
+    
+    if (columnResult.rows.length > 0) {
+      console.log("cover_url column exists, removing it...");
+      
+      // Remove the cover_url column from the books table
+      await db.execute(sql`
+        ALTER TABLE books 
+        DROP COLUMN cover_url
+      `);
+      
+      console.log("cover_url column removed successfully");
+    } else {
+      console.log("cover_url column does not exist, skipping removal");
+    }
+  } catch (error) {
+    console.error("Error removing cover_url column:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -813,5 +843,7 @@ export async function runMigrations() {
   // Create book_images table and migrate data
   await createBookImagesTable();
   await migrateCoverUrlToBookImages();
+  // Remove cover_url column from books table
+  await removeCoverUrlColumn();
   console.log("Migrations completed");
 }
