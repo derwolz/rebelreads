@@ -565,38 +565,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Book Cover
-              </label>
-              {book && !showCoverUpload ? (
-                <div className="space-y-4">
-                  <div className="relative w-32">
-                    <img
-                      src={book.coverUrl}
-                      alt={book.title}
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowCoverUpload(true)}
-                  >
-                    Change Cover
-                  </Button>
-                </div>
-              ) : (
-                <DragDropCover
-                  title={formData.title}
-                  value={formData.cover}
-                  onChange={(file) => {
-                    setFormData((prev) => ({ ...prev, cover: file }));
-                    setShowCoverUpload(false);
-                  }}
-                />
-              )}
-            </div>
+      
             <div>
               <label className="block text-sm font-medium mb-1">
                 Description
