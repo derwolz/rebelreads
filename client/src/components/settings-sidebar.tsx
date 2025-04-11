@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Monitor, Star, BookOpen } from "lucide-react";
+import { User, Settings, Monitor, Star, BookOpen, LayoutGrid } from "lucide-react";
 
 interface NavItemProps {
   href: string;

@@ -6,6 +6,7 @@ import { CampaignStorage } from "./storage/campaigns";
 import { PublisherStorage } from "./storage/publisher";
 import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
+import { HomepageLayoutStorage } from "./storage/homepage-layout";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -16,6 +17,7 @@ const campaignStorage = new CampaignStorage();
 const publisherStorage = new PublisherStorage();
 const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 const betaKeyStorage = new BetaKeyStorage();
+const homepageLayoutStorage = new HomepageLayoutStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -162,6 +164,10 @@ export const dbStorage = {
   recordBetaKeyUsage: betaKeyStorage.recordBetaKeyUsage.bind(betaKeyStorage),
   getBetaKeyUsage: betaKeyStorage.getBetaKeyUsage.bind(betaKeyStorage),
   isBetaActive: betaKeyStorage.isBetaActive.bind(betaKeyStorage),
+  
+  // Homepage layout
+  getHomepageLayout: homepageLayoutStorage.getHomepageLayout.bind(homepageLayoutStorage),
+  saveHomepageLayout: homepageLayoutStorage.saveHomepageLayout.bind(homepageLayoutStorage),
 };
 
 // Export interfaces from their respective modules
@@ -173,6 +179,7 @@ export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
+export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 
 // Re-export storage classes
 export {
@@ -184,4 +191,5 @@ export {
   PublisherStorage,
   AuthorAnalyticsStorage,
   BetaKeyStorage,
+  HomepageLayoutStorage,
 };
