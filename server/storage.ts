@@ -90,6 +90,8 @@ export const dbStorage = {
   getBookImpressions: analyticsStorage.getBookImpressions.bind(analyticsStorage),
   getBookClickThroughs: analyticsStorage.getBookClickThroughs.bind(analyticsStorage),
   getBooksMetrics: analyticsStorage.getBooksMetrics.bind(analyticsStorage),
+  calculatePopularBooks: analyticsStorage.calculatePopularBooks.bind(analyticsStorage),
+  getPopularBooks: analyticsStorage.getPopularBooks.bind(analyticsStorage),
 
   // Landing page
   createLandingSession:

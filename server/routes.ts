@@ -17,6 +17,7 @@ import betaRoutes from "./routes/beta-routes";
 import genreRoutes from "./routes/genre-routes";
 import homepageRoutes from "./routes/homepage-routes";
 import bookCollectionsRoutes from "./routes/book-collections-routes";
+import popularBooksRoutes from "./routes/popular-books-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -38,6 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/genres", genreRoutes);
   app.use("/api/homepage-layout", homepageRoutes);
   app.use("/api/recommendations", bookCollectionsRoutes);
+  app.use("/api/popular-books", popularBooksRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

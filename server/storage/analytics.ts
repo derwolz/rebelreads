@@ -295,7 +295,7 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         .from(bookClickThroughs)
         .where(like(bookClickThroughs.source, 'referral_%'))
         .groupBy(bookClickThroughs.bookId)
-        .orderBy(sql<number>`count(*)`, 'desc')
+        .orderBy(desc(sql<number>`count(*)`))
         .limit(50); // Get top 50 candidates to process further
       
       if (clickThroughResults.length === 0) {
@@ -376,12 +376,13 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         // Insert new entries
         for (let i = 0; i < topBooks.length; i++) {
           const book = topBooks[i];
+          const sigmoidValueStr = book.sigmoidValue.toString(); // Convert to string for decimal column
           
           await tx.insert(popularBooks).values({
             bookId: book.bookId,
             totalImpressions: book.totalImpressions,
             totalClickThroughs: book.totalClickThroughs,
-            sigmoidValue: book.sigmoidValue,
+            sigmoidValue: sigmoidValueStr,
             rank: i + 1,
             isActive: true,
             firstRankedAt: book.firstRankedAt,

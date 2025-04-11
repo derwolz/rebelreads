@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./db-migrations";
+import { Scheduler } from "./scheduler";
 
 // Run database migrations before starting the server
 (async () => {
