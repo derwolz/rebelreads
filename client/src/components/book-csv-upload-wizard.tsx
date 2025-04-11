@@ -227,7 +227,6 @@ export function BookCsvUploadWizard() {
                     <TableRow key={index}>
                       <TableCell>{book.title}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{book.description}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{book.image_url}</TableCell>
                       <TableCell>{book.author}</TableCell>
                       <TableCell>{book.genres}</TableCell>
                       <TableCell>{book.formats}</TableCell>
@@ -245,7 +244,7 @@ export function BookCsvUploadWizard() {
               <div className="space-y-2">
                 <Progress value={uploadProgress} />
                 <p className="text-sm text-muted-foreground text-center">
-                  Processing images... {Math.round(uploadProgress)}%
+                  Processing books... {Math.round(uploadProgress)}%
                 </p>
               </div>
             )}

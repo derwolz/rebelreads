@@ -25,7 +25,6 @@ import { Progress } from "@/components/ui/progress";
 interface CsvBook {
   title: string;
   description: string;
-  image_url: string; // Using image_url instead of cover_url to match bookImages table
   author: string;
   genres: string;
   formats: string;
@@ -56,12 +55,9 @@ export function AdminBookCsvUploadWizard() {
         const coverBlobs = await Promise.all(
           books.map(async (book, index) => {
             try {
-              const response = await fetch(book.image_url);
-              if (!response.ok) throw new Error(`Failed to fetch image ${index + 1}`);
-              const blob = await response.blob();
-              formData.append('covers', blob, `cover-${index}.${blob.type.split('/')[1]}`);
+              // No image handling needed - images are uploaded separately through the book-upload-wizard
               setUploadProgress((index + 1) / books.length * 100);
-              return blob;
+              return null;
             } catch (error) {
               console.error(`Error downloading cover for ${book.title}:`, error);
               return null;
@@ -155,7 +151,7 @@ export function AdminBookCsvUploadWizard() {
 
     // Validate headers
     const requiredHeaders = [
-      'title', 'description', 'image_url', 'author', 'genres', 'formats', 
+      'title', 'description', 'author', 'genres', 'formats', 
       'page_count', 'published_date', 'language', 'isbn', 'amazon_link',
       'barnes_noble_link', 'indiebound_link', 'custom_link'
     ];
@@ -214,7 +210,7 @@ export function AdminBookCsvUploadWizard() {
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               Your CSV should include the following columns:<br />
-              title, description, image_url, author, genres (semicolon-separated), formats (semicolon-separated),<br />
+              title, description, author, genres (semicolon-separated), formats (semicolon-separated),<br />
               page_count, published_date, language, isbn, amazon_link, barnes_noble_link, indiebound_link, custom_link
             </p>
           </div>
@@ -226,7 +222,6 @@ export function AdminBookCsvUploadWizard() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead>Image URL</TableHead>
                     <TableHead>Author</TableHead>
                     <TableHead>Genres</TableHead>
                     <TableHead>Formats</TableHead>
@@ -245,7 +240,6 @@ export function AdminBookCsvUploadWizard() {
                     <TableRow key={index}>
                       <TableCell>{book.title}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{book.description}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{book.image_url}</TableCell>
                       <TableCell>{book.author}</TableCell>
                       <TableCell>{book.genres}</TableCell>
                       <TableCell>{book.formats}</TableCell>
