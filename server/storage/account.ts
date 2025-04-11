@@ -14,8 +14,10 @@ import {
   rating_preferences,
   RatingPreferences,
   replies,
-  userGenrePreferences,
-  UserGenrePreference,
+  userGenreViews,
+  viewGenres,
+  UserGenreView,
+  ViewGenre,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, inArray, ilike, desc, isNull, sql } from "drizzle-orm";
@@ -60,23 +62,14 @@ export interface IAccountStorage {
   getRatingPreferences(userId: number): Promise<RatingPreferences | undefined>;
   saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences>;
   
-  getUserGenrePreferences(userId: number): Promise<UserGenrePreference | undefined>;
-  saveUserGenrePreferences(
-    userId: number, 
-    data: { 
-      contentViews?: Array<{
-        id: string;
-        name: string;
-        rank: number;
-        filters: Array<{
-          taxonomyId: number;
-          type: string;
-          name: string;
-        }>;
-        isDefault: boolean;
-      }>
-    }
-  ): Promise<UserGenrePreference>;
+  getUserGenreViews(userId: number): Promise<UserGenreView[]>;
+  getViewGenres(viewId: number): Promise<ViewGenre[]>;
+  createGenreView(userId: number, name: string, rank: number, isDefault: boolean): Promise<UserGenreView>;
+  updateGenreView(viewId: number, data: Partial<{name: string, rank: number, isDefault: boolean}>): Promise<UserGenreView>;
+  deleteGenreView(viewId: number): Promise<void>;
+  addGenreToView(viewId: number, taxonomyId: number, type: string, rank: number): Promise<ViewGenre>;
+  removeGenreFromView(viewGenreId: number): Promise<void>;
+  updateGenreRank(viewGenreId: number, newRank: number): Promise<ViewGenre>;
   
   getFollowerMetrics(
     authorId: number,
@@ -676,87 +669,100 @@ export class AccountStorage implements IAccountStorage {
     return reply;
   }
   
-  async getUserGenrePreferences(userId: number): Promise<UserGenrePreference | undefined> {
-    const [preferences] = await db
+  async getUserGenreViews(userId: number): Promise<UserGenreView[]> {
+    const views = await db
       .select()
-      .from(userGenrePreferences)
-      .where(eq(userGenrePreferences.userId, userId));
+      .from(userGenreViews)
+      .where(eq(userGenreViews.userId, userId))
+      .orderBy(userGenreViews.rank);
     
-    return preferences;
+    return views;
   }
-  
-  async saveUserGenrePreferences(
-    userId: number, 
-    data: { 
-      contentViews?: Array<{
-        id: string;
-        name: string;
-        rank: number;
-        filters: Array<{
-          taxonomyId: number;
-          type: string;
-          name: string;
-        }>;
-        isDefault: boolean;
-      }>
-    }
-  ): Promise<UserGenrePreference> {
-    console.log(`Storage: saveUserGenrePreferences called for user ${userId}`);
+
+  async getViewGenres(viewId: number): Promise<ViewGenre[]> {
+    const genres = await db
+      .select()
+      .from(viewGenres)
+      .where(eq(viewGenres.viewId, viewId))
+      .orderBy(viewGenres.rank);
     
-    // Check if preferences already exist
-    const existing = await this.getUserGenrePreferences(userId);
+    return genres;
+  }
+
+  async createGenreView(userId: number, name: string, rank: number, isDefault: boolean): Promise<UserGenreView> {
+    const [view] = await db
+      .insert(userGenreViews)
+      .values({
+        userId,
+        name,
+        rank,
+        isDefault,
+      })
+      .returning();
     
-    try {
-      if (existing) {
-        console.log("Storage: updating existing content views");
-        
-        // Update the existing preferences with any new data
-        const dataToUpdate: any = {
-          updatedAt: new Date()
-        };
-        
-        if (data.contentViews !== undefined) {
-          dataToUpdate.contentViews = data.contentViews;
-        }
-        
-        const [updated] = await db
-          .update(userGenrePreferences)
-          .set(dataToUpdate)
-          .where(eq(userGenrePreferences.userId, userId))
-          .returning();
-        
-        if (!updated) {
-          // Check if row still exists
-          const checkResult = await db
-            .select()
-            .from(userGenrePreferences)
-            .where(eq(userGenrePreferences.userId, userId));
-          
-          if (checkResult.length > 0) {
-            return checkResult[0];
-          }
-          
-          throw new Error("Failed to update user content views");
-        }
-        
-        return updated;
-      } else {
-        console.log("Storage: creating new content views");
-        
-        // Create new preferences
-        const [newPreferences] = await db
-          .insert(userGenrePreferences)
-          .values({
-            userId: userId,
-            contentViews: data.contentViews || [],
-          })
-          .returning();
-        
-        return newPreferences;
-      }
-    } catch (error) {
-      console.error("Storage: Error saving user content views:", error);
-      throw error;
+    return view;
+  }
+
+  async updateGenreView(viewId: number, data: Partial<{name: string, rank: number, isDefault: boolean}>): Promise<UserGenreView> {
+    const [updatedView] = await db
+      .update(userGenreViews)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(userGenreViews.id, viewId))
+      .returning();
+    
+    if (!updatedView) {
+      throw new Error("Failed to update genre view");
     }
+    
+    return updatedView;
+  }
+
+  async deleteGenreView(viewId: number): Promise<void> {
+    // First delete all genres in this view
+    await db
+      .delete(viewGenres)
+      .where(eq(viewGenres.viewId, viewId));
+    
+    // Then delete the view itself
+    await db
+      .delete(userGenreViews)
+      .where(eq(userGenreViews.id, viewId));
+  }
+
+  async addGenreToView(viewId: number, taxonomyId: number, type: string, rank: number): Promise<ViewGenre> {
+    const [genre] = await db
+      .insert(viewGenres)
+      .values({
+        viewId,
+        taxonomyId,
+        type,
+        rank,
+      })
+      .returning();
+    
+    return genre;
+  }
+
+  async removeGenreFromView(viewGenreId: number): Promise<void> {
+    await db
+      .delete(viewGenres)
+      .where(eq(viewGenres.id, viewGenreId));
+  }
+
+  async updateGenreRank(viewGenreId: number, newRank: number): Promise<ViewGenre> {
+    const [updatedGenre] = await db
+      .update(viewGenres)
+      .set({ rank: newRank })
+      .where(eq(viewGenres.id, viewGenreId))
+      .returning();
+    
+    if (!updatedGenre) {
+      throw new Error("Failed to update genre rank");
+    }
+    
+    return updatedGenre;
   }
 }

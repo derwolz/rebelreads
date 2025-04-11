@@ -899,23 +899,25 @@ export const bookGenreTaxonomies = pgTable("book_genre_taxonomies", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// User genre preferences table - stores user's custom content views and their order
-export const userGenrePreferences = pgTable("user_genre_preferences", {
+// User genre views table - stores user's custom content views
+export const userGenreViews = pgTable("user_genre_views", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(), // One record per user
-  contentViews: jsonb("content_views").$type<Array<{
-    id: string;
-    name: string;
-    rank: number;
-    filters: Array<{
-      taxonomyId: number;
-      type: "genre" | "subgenre" | "theme" | "trope";
-      name: string;
-    }>;
-    isDefault: boolean;
-  }>>().default([]), // User-defined content views with ordering
+  userId: integer("user_id").notNull(), // Links to a user
+  name: text("name").notNull(), // Name of the view (e.g., "Science Fiction", "Fantasy", etc.)
+  rank: integer("rank").notNull(), // Order of the view in the user's preference list
+  isDefault: boolean("is_default").default(false), // Whether this is the default view
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// View genres table - stores genres associated with each genre view
+export const viewGenres = pgTable("view_genres", {
+  id: serial("id").primaryKey(),
+  viewId: integer("view_id").notNull(), // Links to user_genre_views
+  taxonomyId: integer("taxonomy_id").notNull(), // Links to genre_taxonomies
+  type: text("type").notNull(), // "genre", "subgenre", "theme", "trope"
+  rank: integer("rank").notNull(), // Order of the genre within the view
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Create insert schemas
@@ -932,10 +934,15 @@ export const insertBookGenreTaxonomySchema = createInsertSchema(bookGenreTaxonom
   importance: true,
 });
 
-export const insertUserGenrePreferencesSchema = createInsertSchema(userGenrePreferences).omit({
+export const insertUserGenreViewSchema = createInsertSchema(userGenreViews).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertViewGenreSchema = createInsertSchema(viewGenres).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Define types
@@ -943,5 +950,8 @@ export type GenreTaxonomy = typeof genreTaxonomies.$inferSelect;
 export type InsertGenreTaxonomy = typeof genreTaxonomies.$inferInsert;
 export type BookGenreTaxonomy = typeof bookGenreTaxonomies.$inferSelect;
 export type InsertBookGenreTaxonomy = typeof bookGenreTaxonomies.$inferInsert;
-export type UserGenrePreference = typeof userGenrePreferences.$inferSelect;
-export type InsertUserGenrePreference = typeof userGenrePreferences.$inferInsert;
+
+export type UserGenreView = typeof userGenreViews.$inferSelect;
+export type InsertUserGenreView = typeof userGenreViews.$inferInsert;
+export type ViewGenre = typeof viewGenres.$inferSelect;
+export type InsertViewGenre = typeof viewGenres.$inferInsert;

@@ -44,8 +44,14 @@ export const dbStorage = {
   getFollowerMetrics: accountStorage.getFollowerMetrics.bind(accountStorage),
   getRatingPreferences: accountStorage.getRatingPreferences.bind(accountStorage),
   saveRatingPreferences: accountStorage.saveRatingPreferences.bind(accountStorage),
-  getUserGenrePreferences: accountStorage.getUserGenrePreferences.bind(accountStorage),
-  saveUserGenrePreferences: accountStorage.saveUserGenrePreferences.bind(accountStorage),
+  getUserGenreViews: accountStorage.getUserGenreViews.bind(accountStorage),
+  getViewGenres: accountStorage.getViewGenres.bind(accountStorage),
+  createGenreView: accountStorage.createGenreView.bind(accountStorage),
+  updateGenreView: accountStorage.updateGenreView.bind(accountStorage),
+  deleteGenreView: accountStorage.deleteGenreView.bind(accountStorage),
+  addGenreToView: accountStorage.addGenreToView.bind(accountStorage),
+  removeGenreFromView: accountStorage.removeGenreFromView.bind(accountStorage),
+  updateGenreRank: accountStorage.updateGenreRank.bind(accountStorage),
   
   // Author analytics
   recordAuthorAction: authorAnalyticsStorage.recordAuthorAction.bind(authorAnalyticsStorage),

@@ -543,6 +543,117 @@ async function addContentViewsColumnToUserGenrePreferences() {
   }
 }
 
+async function createGenreViewsTables() {
+  try {
+    // Check if old user_genre_preferences table exists
+    const oldTableExists = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'user_genre_preferences'
+    `);
+    
+    // First, check if the new tables already exist
+    const userGenreViewsExists = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'user_genre_views'
+    `);
+    
+    const viewGenresExists = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'view_genres'
+    `);
+    
+    // If the new tables don't exist, create them
+    if (userGenreViewsExists.rows.length === 0) {
+      console.log("Creating 'user_genre_views' table...");
+      await db.execute(sql`
+        CREATE TABLE user_genre_views (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          rank INTEGER NOT NULL,
+          is_default BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'user_genre_views' created successfully");
+    } else {
+      console.log("Table 'user_genre_views' already exists");
+    }
+    
+    if (viewGenresExists.rows.length === 0) {
+      console.log("Creating 'view_genres' table...");
+      await db.execute(sql`
+        CREATE TABLE view_genres (
+          id SERIAL PRIMARY KEY,
+          view_id INTEGER NOT NULL,
+          taxonomy_id INTEGER NOT NULL,
+          type TEXT NOT NULL,
+          rank INTEGER NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'view_genres' created successfully");
+    } else {
+      console.log("Table 'view_genres' already exists");
+    }
+    
+    // If the old table exists, migrate the data
+    if (oldTableExists.rows.length > 0) {
+      console.log("Migrating data from 'user_genre_preferences' to new tables...");
+      
+      // Get all data from the old table
+      const oldData = await db.execute(sql`
+        SELECT * FROM user_genre_preferences
+      `);
+      
+      // For each record in the old table
+      for (const row of oldData.rows) {
+        const userId = row.user_id;
+        const contentViews = row.content_views || [];
+        
+        // For each content view in the old data
+        for (let i = 0; i < contentViews.length; i++) {
+          const view = contentViews[i];
+          
+          // Insert the view into the new table
+          const [newView] = await db.execute(sql`
+            INSERT INTO user_genre_views (user_id, name, rank, is_default)
+            VALUES (${userId}, ${view.name}, ${view.rank}, ${view.isDefault})
+            RETURNING id
+          `);
+          
+          const viewId = newView.id;
+          
+          // Insert each genre in the view into the new table
+          if (view.filters && Array.isArray(view.filters)) {
+            for (let j = 0; j < view.filters.length; j++) {
+              const genre = view.filters[j];
+              await db.execute(sql`
+                INSERT INTO view_genres (view_id, taxonomy_id, type, rank)
+                VALUES (${viewId}, ${genre.taxonomyId}, ${genre.type}, ${j + 1})
+              `);
+            }
+          }
+        }
+      }
+      
+      console.log("Data migration completed");
+      
+      // Drop the old table
+      console.log("Dropping 'user_genre_preferences' table...");
+      await db.execute(sql`DROP TABLE user_genre_preferences`);
+      console.log("Table 'user_genre_preferences' dropped successfully");
+    }
+  } catch (error) {
+    console.error("Error creating genre views tables:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -563,5 +674,7 @@ export async function runMigrations() {
   await createUserGenrePreferencesTable();
   // Add content_views column to user_genre_preferences table
   await addContentViewsColumnToUserGenrePreferences();
+  // Create the new genre views tables and migrate data from the old table
+  await createGenreViewsTables();
   console.log("Migrations completed");
 }

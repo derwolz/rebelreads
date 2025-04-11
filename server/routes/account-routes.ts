@@ -3,7 +3,7 @@ import { dbStorage } from "../storage";
 import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users, userGenrePreferences } from "@shared/schema";
+import { users, userGenreViews, viewGenres } from "@shared/schema";
 
 const router = Router();
 
@@ -146,36 +146,48 @@ router.patch("/user", async (req: Request, res: Response) => {
   }
 });
 
-// Get user's content views
+// Get user's genre views
 router.get("/genre-preferences", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
   
   try {
-    const preferences = await dbStorage.getUserGenrePreferences(req.user.id);
+    // Get all the user's views
+    const views = await dbStorage.getUserGenreViews(req.user.id);
     
     // Set content type header
     res.setHeader('Content-Type', 'application/json');
     
-    if (!preferences) {
-      // Return empty content views if none exist yet
+    if (views.length === 0) {
+      // Return empty data if no views exist yet
       return res.json({ 
-        contentViews: []
+        views: []
       });
     }
     
-    console.log("Returning content views:", JSON.stringify(preferences));
+    // For each view, get the associated genres
+    const viewsWithGenres = await Promise.all(
+      views.map(async (view) => {
+        const genres = await dbStorage.getViewGenres(view.id);
+        return {
+          ...view,
+          genres
+        };
+      })
+    );
     
-    res.json(preferences);
+    console.log("Returning genre views:", JSON.stringify(viewsWithGenres));
+    
+    res.json({ views: viewsWithGenres });
   } catch (error) {
-    console.error("Error getting content views:", error);
-    res.status(500).json({ error: "Failed to retrieve content views" });
+    console.error("Error getting genre views:", error);
+    res.status(500).json({ error: "Failed to retrieve genre views" });
   }
 });
 
-// Save user's content views
-router.post("/genre-preferences", async (req: Request, res: Response) => {
+// Create a new genre view
+router.post("/genre-views", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -183,42 +195,193 @@ router.post("/genre-preferences", async (req: Request, res: Response) => {
   // Set content type header
   res.setHeader('Content-Type', 'application/json');
   
-  // Define the filter schema
-  const filterSchema = z.object({
-    taxonomyId: z.number(),
-    type: z.string(),
-    name: z.string()
-  });
-  
-  // Define the content view schema
-  const contentViewSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    rank: z.number(),
-    filters: z.array(filterSchema),
-    isDefault: z.boolean()
-  });
-  
   // Validate the request body
   const schema = z.object({
-    contentViews: z.array(contentViewSchema).optional()
+    name: z.string().min(1, "View name is required"),
+    rank: z.number().int().min(0),
+    isDefault: z.boolean().optional().default(false)
   });
   
   try {
-    console.log("Content views POST - Request body:", req.body);
-    
     const data = schema.parse(req.body);
     
-    const preferences = await dbStorage.saveUserGenrePreferences(req.user.id, data);
+    // Create the view
+    const view = await dbStorage.createGenreView(
+      req.user.id, 
+      data.name, 
+      data.rank, 
+      data.isDefault
+    );
     
-    console.log("Content views POST - Successfully saved:", JSON.stringify(preferences));
-    res.json(preferences);
+    console.log("Genre view created:", JSON.stringify(view));
+    res.status(201).json(view);
   } catch (error) {
-    console.error("Error saving content views:", error);
+    console.error("Error creating genre view:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: "Invalid content view format", details: error.errors });
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
     }
-    res.status(500).json({ error: "Failed to save content views" });
+    res.status(500).json({ error: "Failed to create genre view" });
+  }
+});
+
+// Update a genre view
+router.patch("/genre-views/:id", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  // Set content type header
+  res.setHeader('Content-Type', 'application/json');
+  
+  const viewId = parseInt(req.params.id);
+  if (isNaN(viewId)) {
+    return res.status(400).json({ error: "Invalid view ID" });
+  }
+  
+  // Validate the request body
+  const schema = z.object({
+    name: z.string().min(1).optional(),
+    rank: z.number().int().min(0).optional(),
+    isDefault: z.boolean().optional()
+  });
+  
+  try {
+    const data = schema.parse(req.body);
+    
+    // Update the view
+    const updatedView = await dbStorage.updateGenreView(viewId, data);
+    
+    console.log("Genre view updated:", JSON.stringify(updatedView));
+    res.json(updatedView);
+  } catch (error) {
+    console.error("Error updating genre view:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to update genre view" });
+  }
+});
+
+// Delete a genre view
+router.delete("/genre-views/:id", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  const viewId = parseInt(req.params.id);
+  if (isNaN(viewId)) {
+    return res.status(400).json({ error: "Invalid view ID" });
+  }
+  
+  try {
+    await dbStorage.deleteGenreView(viewId);
+    
+    console.log("Genre view deleted:", viewId);
+    res.status(204).end();
+  } catch (error) {
+    console.error("Error deleting genre view:", error);
+    res.status(500).json({ error: "Failed to delete genre view" });
+  }
+});
+
+// Add a genre to a view
+router.post("/genre-views/:id/genres", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  // Set content type header
+  res.setHeader('Content-Type', 'application/json');
+  
+  const viewId = parseInt(req.params.id);
+  if (isNaN(viewId)) {
+    return res.status(400).json({ error: "Invalid view ID" });
+  }
+  
+  // Validate the request body
+  const schema = z.object({
+    taxonomyId: z.number().int().positive(),
+    type: z.string(),
+    rank: z.number().int().min(0)
+  });
+  
+  try {
+    const data = schema.parse(req.body);
+    
+    // Add the genre to the view
+    const genre = await dbStorage.addGenreToView(
+      viewId, 
+      data.taxonomyId, 
+      data.type, 
+      data.rank
+    );
+    
+    console.log("Genre added to view:", JSON.stringify(genre));
+    res.status(201).json(genre);
+  } catch (error) {
+    console.error("Error adding genre to view:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to add genre to view" });
+  }
+});
+
+// Remove a genre from a view
+router.delete("/view-genres/:id", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  const genreId = parseInt(req.params.id);
+  if (isNaN(genreId)) {
+    return res.status(400).json({ error: "Invalid genre ID" });
+  }
+  
+  try {
+    await dbStorage.removeGenreFromView(genreId);
+    
+    console.log("Genre removed from view:", genreId);
+    res.status(204).end();
+  } catch (error) {
+    console.error("Error removing genre from view:", error);
+    res.status(500).json({ error: "Failed to remove genre from view" });
+  }
+});
+
+// Update genre rank within a view
+router.patch("/view-genres/:id/rank", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  // Set content type header
+  res.setHeader('Content-Type', 'application/json');
+  
+  const genreId = parseInt(req.params.id);
+  if (isNaN(genreId)) {
+    return res.status(400).json({ error: "Invalid genre ID" });
+  }
+  
+  // Validate the request body
+  const schema = z.object({
+    rank: z.number().int().min(0)
+  });
+  
+  try {
+    const data = schema.parse(req.body);
+    
+    // Update the genre rank
+    const updatedGenre = await dbStorage.updateGenreRank(genreId, data.rank);
+    
+    console.log("Genre rank updated:", JSON.stringify(updatedGenre));
+    res.json(updatedGenre);
+  } catch (error) {
+    console.error("Error updating genre rank:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to update genre rank" });
   }
 });
 
