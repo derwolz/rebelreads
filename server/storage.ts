@@ -167,7 +167,7 @@ export const dbStorage = {
   
   // Homepage layout
   getHomepageLayout: homepageLayoutStorage.getHomepageLayout.bind(homepageLayoutStorage),
-  saveHomepageLayout: homepageLayoutStorage.saveHomepageLayout.bind(homepageLayoutStorage),
+  updateHomepageLayout: homepageLayoutStorage.updateHomepageLayout.bind(homepageLayoutStorage),
 };
 
 // Export interfaces from their respective modules
@@ -179,7 +179,7 @@ export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
-export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
+// No interface for HomepageLayoutStorage
 
 // Re-export storage classes
 export {
