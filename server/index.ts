@@ -84,5 +84,10 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start the scheduler for periodic tasks
+    const scheduler = Scheduler.getInstance();
+    scheduler.startAll();
+    log("Scheduler started for periodic tasks including popular books calculation");
   });
 })();

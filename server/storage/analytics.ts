@@ -386,6 +386,7 @@ export class AnalyticsStorage implements IAnalyticsStorage {
             rank: i + 1,
             isActive: true,
             firstRankedAt: book.firstRankedAt,
+            calculatedAt: new Date()
           });
         }
       });

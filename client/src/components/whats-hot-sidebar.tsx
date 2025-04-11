@@ -1,11 +1,15 @@
-import { Book, Rating } from "@shared/schema";
+import { Book } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { StarRating } from "@/components/star-rating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 
-interface BookWithRatingCount extends Book {
-  ratingCount: number;
+// Extended interface to include popularity data
+interface PopularBook extends Book {
+  sigmoidValue: string;
+  popularRank: number;
+  firstRankedAt: string;
+  ratingCount?: number;
 }
 
 function BookItemSkeleton() {
@@ -23,26 +27,11 @@ function BookItemSkeleton() {
 export function WhatsHotSidebar() {
   const [, navigate] = useLocation();
 
-  const { data: books, isLoading } = useQuery<Book[]>({
-    queryKey: ["/api/books"],
+  // Fetch popular books from our new API endpoint
+  const { data: popularBooks, isLoading } = useQuery<PopularBook[]>({
+    queryKey: ["/api/popular-books"],
+    staleTime: 1000 * 60 * 60, // 1 hour - since these are calculated daily
   });
-
-  const { data: allRatings } = useQuery<Rating[]>({
-    queryKey: ["/api/books"],
-    select: (data) => {
-      // This would ideally be a server-side operation
-      // Here we're just simulating the count of ratings per book
-      return data.map(() => ({ bookId: Math.floor(Math.random() * 20) + 1 })) as Rating[];
-    }
-  });
-
-  // In a real app, this would be calculated server-side
-  const topBooks = books?.map(book => {
-    const ratingCount = allRatings?.filter(r => r.bookId === book.id).length || 0;
-    return { ...book, ratingCount };
-  })
-  .sort((a, b) => b.ratingCount - a.ratingCount)
-  .slice(0, 10);
 
   return (
     <div className="w-full lg:w-72 flex-shrink-0">
@@ -53,14 +42,14 @@ export function WhatsHotSidebar() {
             Array.from({ length: 5 }).map((_, i) => (
               <BookItemSkeleton key={i} />
             ))
-          ) : topBooks?.length ? (
-            topBooks.map((book, index) => (
+          ) : popularBooks?.length ? (
+            popularBooks.map((book) => (
               <div 
                 key={book.id}
                 className="flex items-center gap-3 cursor-pointer hover:bg-muted/30 p-2 rounded-md transition-colors"
                 onClick={() => navigate(`/books/${book.id}`)}
               >
-                <div className="font-bold text-lg w-6 text-center text-muted-foreground">{index + 1}</div>
+                <div className="font-bold text-lg w-6 text-center text-muted-foreground">{book.popularRank}</div>
                 <img 
                   src={book.coverUrl} 
                   alt={book.title} 
@@ -71,13 +60,13 @@ export function WhatsHotSidebar() {
                   <p className="text-xs text-muted-foreground line-clamp-1">{book.author}</p>
                   <div className="flex items-center mt-1 gap-1">
                     <StarRating rating={3} readOnly size="xs" />
-                    <span className="text-xs text-muted-foreground">({book.ratingCount})</span>
+                    <span className="text-xs text-muted-foreground">({book.clickThroughCount || 0})</span>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-muted-foreground text-sm">No books available</p>
+            <p className="text-muted-foreground text-sm">No popular books available</p>
           )}
         </div>
       </div>
