@@ -179,7 +179,7 @@ export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
-// No interface for HomepageLayoutStorage
+export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 
 // Re-export storage classes
 export {
