@@ -6,13 +6,6 @@ import { CampaignStorage } from "./storage/campaigns";
 import { PublisherStorage } from "./storage/publisher";
 import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
-import { PreferencesStorage } from "./storage/preferences";
-import { 
-  PreferenceTaxonomy, 
-  UserPreferenceTaxonomy, 
-  InsertPreferenceTaxonomy,
-  InsertUserPreferenceTaxonomy 
-} from "@shared/schema";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -23,7 +16,6 @@ const campaignStorage = new CampaignStorage();
 const publisherStorage = new PublisherStorage();
 const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 const betaKeyStorage = new BetaKeyStorage();
-const preferencesStorage = new PreferencesStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -161,14 +153,6 @@ export const dbStorage = {
   recordBetaKeyUsage: betaKeyStorage.recordBetaKeyUsage.bind(betaKeyStorage),
   getBetaKeyUsage: betaKeyStorage.getBetaKeyUsage.bind(betaKeyStorage),
   isBetaActive: betaKeyStorage.isBetaActive.bind(betaKeyStorage),
-
-  // Preference taxonomies
-  getPreferenceTaxonomies: preferencesStorage.getPreferenceTaxonomies.bind(preferencesStorage),
-  getUserPreferenceTaxonomies: preferencesStorage.getUserPreferenceTaxonomies.bind(preferencesStorage),
-  createPreferenceTaxonomy: preferencesStorage.createPreferenceTaxonomy.bind(preferencesStorage),
-  createUserPreferenceTaxonomy: preferencesStorage.createUserPreferenceTaxonomy.bind(preferencesStorage),
-  updateUserFavoriteGenres: preferencesStorage.updateUserFavoriteGenres.bind(preferencesStorage),
-  deleteUserPreferenceTaxonomy: preferencesStorage.deleteUserPreferenceTaxonomy.bind(preferencesStorage),
 };
 
 // Export interfaces from their respective modules
@@ -180,14 +164,6 @@ export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
-export interface IPreferencesStorage {
-  getPreferenceTaxonomies(): Promise<PreferenceTaxonomy[]>;
-  getUserPreferenceTaxonomies(userId: number): Promise<(PreferenceTaxonomy & { position: number, weight: number })[]>;
-  createPreferenceTaxonomy(data: InsertPreferenceTaxonomy): Promise<PreferenceTaxonomy>;
-  createUserPreferenceTaxonomy(data: InsertUserPreferenceTaxonomy): Promise<UserPreferenceTaxonomy>;
-  updateUserFavoriteGenres(userId: number, genres: string[]): Promise<void>;
-  deleteUserPreferenceTaxonomy(userId: number, taxonomyId: number): Promise<void>;
-}
 
 // Re-export storage classes
 export {
@@ -199,5 +175,4 @@ export {
   PublisherStorage,
   AuthorAnalyticsStorage,
   BetaKeyStorage,
-  PreferencesStorage,
 };
