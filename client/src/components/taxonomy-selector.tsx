@@ -1,5 +1,21 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,6 +30,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, X } from "lucide-react";
 import { GenreTaxonomy } from "@shared/schema";
+import { SortableGenre } from "@/components/sortable-genre";
 
 interface TaxonomySelectorProps {
   selectedTaxonomies: {
@@ -38,6 +55,14 @@ export function TaxonomySelector({
 }: TaxonomySelectorProps) {
   const [tab, setTab] = useState<"genre" | "subgenre" | "theme" | "trope">("genre");
   const [search, setSearch] = useState("");
+  
+  // Set up drag sensors for DnD
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   // Query to get all genres
   const { data: genres = [] } = useQuery<GenreTaxonomy[]>({
@@ -198,6 +223,37 @@ export function TaxonomySelector({
   // Calculate importance value based on rank
   const calculateImportance = (rank: number) => {
     return (1 / (1 + Math.log(rank))).toFixed(3);
+  };
+  
+  // Handle drag end event for reordering taxonomies
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = selectedTaxonomies.findIndex(
+        item => `${item.type}-${item.taxonomyId}` === active.id
+      );
+      const newIndex = selectedTaxonomies.findIndex(
+        item => `${item.type}-${item.taxonomyId}` === over.id
+      );
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Reorder the items
+        const reorderedItems = arrayMove(
+          [...selectedTaxonomies],
+          oldIndex,
+          newIndex
+        );
+        
+        // Update the ranks
+        const rerankedItems = reorderedItems.map((item, idx) => ({
+          ...item,
+          rank: idx + 1
+        }));
+        
+        onTaxonomiesChange(rerankedItems);
+      }
+    }
   };
 
   return (
