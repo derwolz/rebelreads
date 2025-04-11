@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Book, Rating, calculateWeightedRating, RATING_CRITERIA, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
+import { Book, Rating, calculateWeightedRating, RATING_CRITERIA, DEFAULT_RATING_WEIGHTS, RatingPreferences, GenreTaxonomy } from "@shared/schema";
 import { Heart } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
@@ -24,6 +24,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 import type { ReferralLink } from "@shared/schema";
 import { ReviewCard } from "@/components/review-card";
@@ -66,6 +72,19 @@ export default function BookDetails() {
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${params?.id}/ratings`],
+  });
+  
+  // Fetch taxonomies for this book
+  const { data: bookTaxonomies = [] } = useQuery<{
+    taxonomyId: number;
+    type: string;
+    rank: number;
+    name: string;
+    description?: string;
+  }[]>({
+    queryKey: [`/api/books/${params?.id}/taxonomies`],
+    // This endpoint might return 401 if not authenticated, so we'll handle empty results
+    enabled: !!book?.id,
   });
   
   // Fetch user's rating preferences if logged in
@@ -230,11 +249,37 @@ export default function BookDetails() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {book.genres.map((genre) => (
-                  <Badge key={genre} variant="secondary" className="text-sm">
-                    {genre}
-                  </Badge>
-                ))}
+                <TooltipProvider>
+                  {bookTaxonomies && bookTaxonomies.length > 0 ? (
+                    bookTaxonomies.map((taxonomy) => (
+                      <Tooltip key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
+                        <TooltipTrigger asChild>
+                          <Badge 
+                            variant={taxonomy.type === 'genre' ? 'default' : 
+                                    taxonomy.type === 'subgenre' ? 'secondary' : 
+                                    taxonomy.type === 'theme' ? 'outline' : 
+                                    'destructive'} 
+                            className="text-sm cursor-help"
+                          >
+                            {taxonomy.name}
+                          </Badge>
+                        </TooltipTrigger>
+                        {taxonomy.description && (
+                          <TooltipContent className="max-w-xs">
+                            <p>{taxonomy.description}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    ))
+                  ) : (
+                    // Fallback for compatibility with older books that still use the genres array
+                    Array.isArray((book as any).genres) && (book as any).genres.map((genre: string) => (
+                      <Badge key={genre} variant="secondary" className="text-sm">
+                        {genre}
+                      </Badge>
+                    ))
+                  )}
+                </TooltipProvider>
               </div>
 
               {book.formats && book.formats.length > 0 && (
