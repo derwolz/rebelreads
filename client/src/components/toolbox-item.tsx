@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Package } from "lucide-react";
 
 interface ToolboxItemProps {
   id: string;
@@ -9,25 +8,17 @@ interface ToolboxItemProps {
 
 export function ToolboxItem({ id, title, onClick }: ToolboxItemProps) {
   return (
-    <div
-      className="flex items-center justify-between p-2 border rounded-md hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-colors"
+    <Button
+      variant="outline"
+      className="w-full justify-start py-6 mb-2 cursor-pointer"
       onClick={onClick}
     >
-      <div className="flex items-center gap-2">
-        <Package className="h-4 w-4 text-muted-foreground" />
-        <span className="font-medium text-sm">{title}</span>
+      <div className="flex flex-col items-start">
+        <span className="font-medium">{title}</span>
+        <span className="text-xs text-muted-foreground mt-1">
+          Click to add to your homepage
+        </span>
       </div>
-      <Button
-        variant="ghost" 
-        size="icon"
-        className="h-6 w-6 text-muted-foreground hover:text-primary"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
-    </div>
+    </Button>
   );
 }
