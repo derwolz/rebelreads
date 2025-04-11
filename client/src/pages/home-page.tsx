@@ -14,6 +14,7 @@ import { HeroCarousel } from "@/components/hero-carousel";
 import { BookGrid } from "@/components/book-grid";
 import { WhatsHotSidebar } from "@/components/whats-hot-sidebar";
 import { HeroBannerAd, VerticalBannerAd, HorizontalBannerAd } from "@/components/banner-ads";
+import { DynamicHomeSections } from "@/components/dynamic-home-sections";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export default function HomePage() {
   const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<
     Book[]
   >({
-    queryKey: ["/api/books/followed-authors"],
+    queryKey: ["/api/recommendations/followed-authors"],
     enabled: !!user,
   });
 
@@ -126,69 +127,29 @@ export default function HomePage() {
         <WhatsHotSidebar />
       </div>
 
-      {/* From Authors You Follow Section */}
-      {user && followedAuthorsBooks && followedAuthorsBooks.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">From Authors You Follow</h2>
-          <Carousel className="w-full">
-            <CarouselContent>
-              {isLoadingFollowed
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <CarouselItem
-                      key={i}
-                      className="md:basis-1/3 lg:basis-1/4"
-                    >
-                      <div className="space-y-3">
-                        <div className="h-64 w-full bg-muted rounded-md"></div>
-                        <div className="h-4 w-3/4 bg-muted rounded"></div>
-                        <div className="h-4 w-1/2 bg-muted rounded"></div>
-                      </div>
-                    </CarouselItem>
-                  ))
-                : followedAuthorsBooks.slice(0, 10).map((book) => (
-                    <CarouselItem
-                      key={book.id}
-                      className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
-                    >
-                      <BookCard book={book} />
-                    </CarouselItem>
-                  ))}
-            </CarouselContent>
-            <CarouselPrevious className="hidden md:flex" />
-            <CarouselNext className="hidden md:flex" />
-          </Carousel>
-        </section>
-      )}
-
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1">
-          {/* Recommended Books Carousel */}
-          <section className="mb-12">
-            <h2 className="text-3xl font-bold mb-6">
-              {user ? "Recommended for You" : "Popular Books"}
-            </h2>
-            <Carousel className="w-full">
-              <CarouselContent>
-                {user && isLoadingRecommended
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
-                        <div className="space-y-3">
-                          <div className="h-64 w-full bg-muted rounded-md"></div>
-                          <div className="h-4 w-3/4 bg-muted rounded"></div>
-                          <div className="h-4 w-1/2 bg-muted rounded"></div>
-                        </div>
-                      </CarouselItem>
-                    ))
-                  : (!user || !recommendedBooks || recommendedBooks.length === 0)
-                    ? filteredBooks?.map((book) => (
-                        <CarouselItem
-                          key={book.id}
-                          className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
-                        >
-                          <BookCard book={book} />
+      {/* Dynamic Home Sections based on user's layout preferences */}
+      {user && <DynamicHomeSections />}
+      
+      {/* Fallback content for non-authenticated users */}
+      {!user && (
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            {/* Popular Books Carousel */}
+            <section className="mb-12">
+              <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {isLoading
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
+                          <div className="space-y-3">
+                            <div className="h-64 w-full bg-muted rounded-md"></div>
+                            <div className="h-4 w-3/4 bg-muted rounded"></div>
+                            <div className="h-4 w-1/2 bg-muted rounded"></div>
+                          </div>
                         </CarouselItem>
                       ))
-                    : recommendedBooks.map((book) => (
+                    : filteredBooks?.map((book) => (
                         <CarouselItem
                           key={book.id}
                           className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
@@ -196,11 +157,17 @@ export default function HomePage() {
                           <BookCard book={book} />
                         </CarouselItem>
                       ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
-            </Carousel>
-          </section>
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex" />
+                <CarouselNext className="hidden md:flex" />
+              </Carousel>
+            </section>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex-1">
 
           {/* Horizontal Banner Ad */}
           {books && books.length > 2 && (
