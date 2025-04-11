@@ -108,36 +108,33 @@ export class UserTaxonomyStorage {
     id: number, 
     data: Partial<Omit<UserTaxonomyPreference, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
   ): Promise<UserTaxonomyPreference> {
-    // Start a transaction
-    return pool.transaction(async (tx) => {
-      // If this is set as default, update any existing default to non-default
-      if (data.isDefault) {
-        const preference = await this.getTaxonomyPreferenceById(id);
-        if (preference) {
-          await tx.update(userTaxonomyPreferences)
-            .set({ isDefault: false })
-            .where(
-              and(
-                eq(userTaxonomyPreferences.userId, preference.userId),
-                eq(userTaxonomyPreferences.isDefault, true),
-                sql`${userTaxonomyPreferences.id} != ${id}`
-              )
-            );
-        }
+    // If this is set as default, update any existing default to non-default
+    if (data.isDefault) {
+      const preference = await this.getTaxonomyPreferenceById(id);
+      if (preference) {
+        await db.update(userTaxonomyPreferences)
+          .set({ isDefault: false })
+          .where(
+            and(
+              eq(userTaxonomyPreferences.userId, preference.userId),
+              eq(userTaxonomyPreferences.isDefault, true),
+              sql`${userTaxonomyPreferences.id} != ${id}`
+            )
+          );
       }
-      
-      const updateData = {
-        ...data,
-        updatedAt: new Date()
-      };
-      
-      const result = await tx.update(userTaxonomyPreferences)
-        .set(updateData)
-        .where(eq(userTaxonomyPreferences.id, id))
-        .returning();
-      
-      return result[0];
-    });
+    }
+    
+    const updateData = {
+      ...data,
+      updatedAt: new Date()
+    };
+    
+    const result = await db.update(userTaxonomyPreferences)
+      .set(updateData)
+      .where(eq(userTaxonomyPreferences.id, id))
+      .returning();
+    
+    return result[0];
   }
   
   /**
@@ -203,25 +200,23 @@ export class UserTaxonomyStorage {
     preferenceId: number, 
     items: Array<Omit<InsertUserTaxonomyItem, 'preferenceId'>>
   ): Promise<UserTaxonomyItem[]> {
-    return pool.transaction(async (tx) => {
-      // Delete existing items
-      await tx.delete(userTaxonomyItems)
-        .where(eq(userTaxonomyItems.preferenceId, preferenceId));
-      
-      // Skip insert if no items provided
-      if (items.length === 0) {
-        return [];
-      }
-      
-      // Insert new items
-      const result = await tx.insert(userTaxonomyItems)
-        .values(items.map(item => ({
-          ...item,
-          preferenceId
-        })))
-        .returning();
-      
-      return result;
-    });
+    // Delete existing items
+    await db.delete(userTaxonomyItems)
+      .where(eq(userTaxonomyItems.preferenceId, preferenceId));
+    
+    // Skip insert if no items provided
+    if (items.length === 0) {
+      return [];
+    }
+    
+    // Insert new items
+    const result = await db.insert(userTaxonomyItems)
+      .values(items.map(item => ({
+        ...item,
+        preferenceId
+      })))
+      .returning();
+    
+    return result;
   }
 }
