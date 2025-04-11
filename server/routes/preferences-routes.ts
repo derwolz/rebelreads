@@ -1,91 +1,117 @@
 import { Router, Request, Response } from "express";
 import { dbStorage } from "../storage";
-import { insertUserPreferenceTaxonomySchema } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
-import { preferenceTaxonomies, userPreferenceTaxonomies, users } from "@shared/schema";
+import { 
+  insertPreferenceTaxonomySchema,
+  insertUserPreferenceTaxonomySchema,
+  userPreferenceTaxonomies
+} from "@shared/schema";
 import { z } from "zod";
 
 const router = Router();
 
-// Get user preference taxonomies
+// Get all user preference taxonomies
 router.get("/user/preference-taxonomies", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
   try {
-    const userPrefs = await dbStorage.getUserPreferenceTaxonomies(req.user.id);
-    return res.json(userPrefs);
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const taxonomies = await dbStorage.getUserPreferenceTaxonomies(req.user.id);
+    res.json(taxonomies);
   } catch (error) {
     console.error("Error fetching user preference taxonomies:", error);
-    return res.status(500).json({ error: "Error fetching preferences" });
+    res.status(500).json({ error: "Failed to fetch user preference taxonomies" });
   }
 });
 
-// Save user preferences 
+// Save user preferences (favorite genres and preference taxonomies)
 router.post("/user/preferences", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
-  const schema = z.object({
-    genres: z.array(z.string())
-  });
-
   try {
-    const { genres } = schema.parse(req.body);
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { favoriteGenres } = req.body;
+
+    // Validate favorite genres
+    if (!Array.isArray(favoriteGenres)) {
+      return res.status(400).json({ error: "Invalid favorite genres format" });
+    }
 
     // Update user's favorite genres
-    await dbStorage.updateUserFavoriteGenres(req.user.id, genres);
+    await dbStorage.updateUserFavoriteGenres(req.user.id, favoriteGenres);
 
-    return res.json({ success: true });
+    res.json({ message: "Preferences saved successfully" });
   } catch (error) {
     console.error("Error saving user preferences:", error);
-    return res.status(500).json({ error: "Error saving preferences" });
+    res.status(500).json({ error: "Failed to save preferences" });
   }
 });
 
-// Create a preference view for the user
+// Record a preference view
 router.post("/user/preference-view", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-
-  const schema = z.object({
-    taxonomies: z.array(z.string())
-  });
-
   try {
-    const { taxonomies } = schema.parse(req.body);
-    
-    // Create preference taxonomy entries for each taxonomy
-    const createdTaxonomies = await Promise.all(
-      taxonomies.map(async (name, index) => {
-        const taxonomy = await dbStorage.createPreferenceTaxonomy({
-          name,
-          taxonomyType: "genre",
-          isActive: true,
-        });
-        
-        // Link the taxonomy to the user with a position
-        await dbStorage.createUserPreferenceTaxonomy({
-          userId: req.user!.id,
-          taxonomyId: taxonomy.id,
-          position: index,
-          weight: 1.0,
-        });
-        
-        return taxonomy;
-      })
-    );
-    
-    return res.json({ 
-      success: true,
-      taxonomies: createdTaxonomies
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const schema = z.object({
+      taxonomyId: z.number(),
+      position: z.number().default(0),
+      weight: z.number().default(1)
     });
+
+    const validatedData = schema.parse(req.body);
+    
+    // Create a preference taxonomy view for the user
+    const data = {
+      userId: req.user.id,
+      taxonomyId: validatedData.taxonomyId,
+      position: validatedData.position,
+      weight: validatedData.weight
+    };
+
+    const userPreference = await dbStorage.createUserPreferenceTaxonomy(data);
+    res.status(201).json(userPreference);
   } catch (error) {
     console.error("Error creating preference view:", error);
-    return res.status(500).json({ error: "Error creating view" });
+    res.status(500).json({ error: "Failed to create preference view" });
+  }
+});
+
+// Create a new preference taxonomy (admin only)
+router.post("/admin/preference-taxonomies", async (req: Request, res: Response) => {
+  try {
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const data = insertPreferenceTaxonomySchema.parse(req.body);
+    const taxonomy = await dbStorage.createPreferenceTaxonomy(data);
+    res.status(201).json(taxonomy);
+  } catch (error) {
+    console.error("Error creating preference taxonomy:", error);
+    res.status(500).json({ error: "Failed to create preference taxonomy" });
+  }
+});
+
+// Delete a user preference taxonomy
+router.delete("/user/preference-taxonomies/:id", async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const taxonomyId = Number(req.params.id);
+    if (isNaN(taxonomyId)) {
+      return res.status(400).json({ error: "Invalid taxonomy ID" });
+    }
+
+    await dbStorage.deleteUserPreferenceTaxonomy(req.user.id, taxonomyId);
+    res.json({ message: "Preference taxonomy deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user preference taxonomy:", error);
+    res.status(500).json({ error: "Failed to delete preference taxonomy" });
   }
 });
 
