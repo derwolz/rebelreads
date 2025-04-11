@@ -77,6 +77,7 @@ export const dbStorage = {
   getAuthorGenres: bookStorage.getAuthorGenres.bind(bookStorage),
   selectBooks: bookStorage.selectBooks.bind(bookStorage),
   updateInternalDetails: bookStorage.updateInternalDetails.bind(bookStorage),
+  getRecommendations: bookStorage.getRecommendations.bind(bookStorage),
 
   // Analytics
   recordBookImpression:

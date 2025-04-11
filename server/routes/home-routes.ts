@@ -40,6 +40,21 @@ router.get("/books", async (_req, res) => {
   res.json(books);
 });
 
+router.get("/recommendations", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  try {
+    const userId = req.user!.id;
+    const recommendations = await dbStorage.getRecommendations(userId);
+    res.json(recommendations);
+  } catch (error) {
+    console.error("Error getting recommendations:", error);
+    res.status(500).json({ error: "Failed to get recommendations" });
+  }
+});
+
 router.get("/books/:id", async (req, res) => {
   const bookId = parseInt(req.params.id);
   if (isNaN(bookId)) {

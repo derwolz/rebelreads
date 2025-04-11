@@ -24,6 +24,12 @@ export default function HomePage() {
     queryKey: ["/api/books"],
   });
 
+  // Get personalized recommendations if user is logged in
+  const { data: recommendedBooks, isLoading: isLoadingRecommended } = useQuery<Book[]>({
+    queryKey: ["/api/recommendations"],
+    enabled: !!user,
+  });
+
   // Filter new books (published in the last 7 days)
   const newBooks = books?.filter(book => {
     if (!book.publishedDate) return false;
@@ -156,12 +162,14 @@ export default function HomePage() {
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
-          {/* Popular Books Carousel */}
+          {/* Recommended Books Carousel */}
           <section className="mb-12">
-            <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
+            <h2 className="text-3xl font-bold mb-6">
+              {user ? "Recommended for You" : "Popular Books"}
+            </h2>
             <Carousel className="w-full">
               <CarouselContent>
-                {isLoading
+                {user && isLoadingRecommended
                   ? Array.from({ length: 4 }).map((_, i) => (
                       <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
                         <div className="space-y-3">
@@ -171,14 +179,23 @@ export default function HomePage() {
                         </div>
                       </CarouselItem>
                     ))
-                  : filteredBooks?.map((book) => (
-                      <CarouselItem
-                        key={book.id}
-                        className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
-                      >
-                        <BookCard book={book} />
-                      </CarouselItem>
-                    ))}
+                  : (!user || !recommendedBooks || recommendedBooks.length === 0)
+                    ? filteredBooks?.map((book) => (
+                        <CarouselItem
+                          key={book.id}
+                          className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
+                        >
+                          <BookCard book={book} />
+                        </CarouselItem>
+                      ))
+                    : recommendedBooks.map((book) => (
+                        <CarouselItem
+                          key={book.id}
+                          className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
+                        >
+                          <BookCard book={book} />
+                        </CarouselItem>
+                      ))}
               </CarouselContent>
               <CarouselPrevious className="hidden md:flex" />
               <CarouselNext className="hidden md:flex" />
