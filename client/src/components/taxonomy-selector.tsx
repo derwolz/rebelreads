@@ -453,59 +453,43 @@ export function TaxonomySelector({
                   No taxonomies selected yet
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {selectedTaxonomies.map((taxonomy, index) => (
-                    <div 
-                      key={`${taxonomy.type}-${taxonomy.taxonomyId}`} 
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={
-                          taxonomy.type === "genre" ? "default" :
-                          taxonomy.type === "subgenre" ? "secondary" :
-                          taxonomy.type === "theme" ? "outline" :
-                          "destructive"
-                        }>
-                          {taxonomy.type}
-                        </Badge>
-                        <span className="font-medium">{taxonomy.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-muted-foreground">
-                          Rank: {taxonomy.rank}, Importance: {calculateImportance(taxonomy.rank)}
-                        </span>
-                        <div className="flex space-x-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => moveTaxonomy(index, "up")}
-                            disabled={index === 0}
-                          >
-                            ↑
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => moveTaxonomy(index, "down")}
-                            disabled={index === selectedTaxonomies.length - 1}
-                          >
-                            ↓
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-destructive"
-                            onClick={() => removeTaxonomy(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={selectedTaxonomies.map(t => `${t.type}-${t.taxonomyId}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {selectedTaxonomies.map((taxonomy, index) => (
+                        <div key={`${taxonomy.type}-${taxonomy.taxonomyId}`} className="relative">
+                          <SortableGenre 
+                            id={`${taxonomy.type}-${taxonomy.taxonomyId}`} 
+                            label={
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={
+                                  taxonomy.type === "genre" ? "default" :
+                                  taxonomy.type === "subgenre" ? "secondary" :
+                                  taxonomy.type === "theme" ? "outline" :
+                                  "destructive"
+                                }>
+                                  {taxonomy.type}
+                                </Badge>
+                                <span className="font-medium">{taxonomy.name}</span>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  Rank: {taxonomy.rank}, Importance: {calculateImportance(taxonomy.rank)}
+                                </span>
+                              </div>
+                            }
+                            onRemove={() => removeTaxonomy(index)}
+                          />
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </CardContent>
           </Card>

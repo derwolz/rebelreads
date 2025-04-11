@@ -2,10 +2,11 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface SortableGenreProps {
-  id: number;
-  label: string;
+  id: string | number;
+  label: ReactNode;
   onRemove: () => void;
 }
 
