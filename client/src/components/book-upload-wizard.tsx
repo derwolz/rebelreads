@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
+import { AVAILABLE_GENRES, FORMAT_OPTIONS, IMAGE_TYPES } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
 import { DragDropCover } from "@/components/drag-drop-cover";
+import { DragDropImage } from "@/components/drag-drop-image";
 import { GenreSelector, TaxonomyItem } from "@/components/genre-selector";
 import {
   Dialog,
@@ -45,7 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Edit } from "lucide-react";
-import type { Book } from "@shared/schema";
+import type { Book, BookImage } from "@shared/schema";
 
 const RETAILER_OPTIONS = [
   "Amazon",
@@ -54,9 +55,16 @@ const RETAILER_OPTIONS = [
   "Custom",
 ] as const;
 
+// Interface for image files
+interface BookImageFile {
+  type: typeof IMAGE_TYPES[number];
+  file: File | null;
+  width: number;
+  height: number;
+}
+
 interface FormData {
   title: string;
-  cover: File | null;
   description: string;
   series: string;
   setting: string;
@@ -71,8 +79,10 @@ interface FormData {
   language: string;
   originalTitle: string;
   referralLinks: ReferralLink[];
-  internal_details: string; // Added new field
-  genreTaxonomies: TaxonomyItem[]; // Using our TaxonomyItem type
+  internal_details: string;
+  genreTaxonomies: TaxonomyItem[];
+  // New field for book images
+  bookImages: Record<typeof IMAGE_TYPES[number], BookImageFile>;
 }
 
 const STEPS = [
@@ -82,6 +92,7 @@ const STEPS = [
   "Formats",
   "Publication",
   "Genres",
+  "Images",
   "Referral Links",
   "Preview",
 ] as const;
@@ -164,10 +175,57 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showCoverUpload, setShowCoverUpload] = useState(!book);
   const [formData, setFormData] = useState<FormData>(() => {
+    // Create default empty book images structure
+    const createEmptyBookImages = (): Record<typeof IMAGE_TYPES[number], BookImageFile> => {
+      const images: Partial<Record<typeof IMAGE_TYPES[number], BookImageFile>> = {};
+      
+      // Initialize each image type with empty values
+      IMAGE_TYPES.forEach(type => {
+        let width = 0;
+        let height = 0;
+        
+        // Set dimensions based on image type
+        switch (type) {
+          case "book-detail":
+            width = 480;
+            height = 600;
+            break;
+          case "background":
+            width = 1300;
+            height = 1500;
+            break;
+          case "book-card":
+            width = 256;
+            height = 440;
+            break;
+          case "grid-item":
+            width = 56;
+            height = 212;
+            break;
+          case "mini":
+            width = 48;
+            height = 64;
+            break;
+          case "hero":
+            width = 1500;
+            height = 600;
+            break;
+        }
+        
+        images[type] = {
+          type,
+          file: null,
+          width,
+          height
+        };
+      });
+      
+      return images as Record<typeof IMAGE_TYPES[number], BookImageFile>;
+    };
+    
     if (book) {
       return {
         title: book.title,
-        cover: null,
         description: book.description,
         series: book.series || "",
         setting: book.setting || "",
@@ -184,11 +242,12 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "", // Initialize from book data
+        bookImages: createEmptyBookImages(),
       };
     }
+    
     return {
       title: "",
-      cover: null,
       description: "",
       series: "",
       setting: "",
@@ -203,8 +262,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       language: "English",
       originalTitle: "",
       referralLinks: [],
-      internal_details: "", // Initialize empty for new books
-      genreTaxonomies: [], // Initialize empty taxonomy array for new books
+      internal_details: "",
+      genreTaxonomies: [],
+      bookImages: createEmptyBookImages(),
     };
   });
   const [characterInput, setCharacterInput] = useState("");
@@ -372,6 +432,19 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       formats: prev.formats.includes(format)
         ? prev.formats.filter((f) => f !== format)
         : [...prev.formats, format],
+    }));
+  };
+  
+  const handleImageChange = (imageType: typeof IMAGE_TYPES[number], file: File) => {
+    setFormData((prev) => ({
+      ...prev,
+      bookImages: {
+        ...prev.bookImages,
+        [imageType]: {
+          ...prev.bookImages[imageType],
+          file
+        }
+      }
     }));
   };
 

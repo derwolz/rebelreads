@@ -166,6 +166,25 @@ export const bookImages = pgTable("book_images", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Schema for inserting book images
+export const insertBookImageSchema = createInsertSchema(bookImages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Schema for image data in book upload
+export const imageUploadSchema = z.object({
+  file: z.any(), // File object (will be handled by multer)
+  type: z.enum(IMAGE_TYPES),
+  width: z.number(),
+  height: z.number(),
+});
+
+// Define the book image types
+export type BookImage = typeof bookImages.$inferSelect;
+export type InsertBookImage = typeof bookImages.$inferInsert;
+
 export interface ReviewAnalysis {
   sentiment: {
     label: string;

@@ -686,6 +686,106 @@ async function createHomepageLayoutsTable() {
   }
 }
 
+async function createBookImagesTable() {
+  try {
+    console.log("Checking for book_images table...");
+    
+    // Check if book_images table exists
+    const tableResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'book_images'
+    `);
+    
+    if (tableResult.rows.length === 0) {
+      console.log("Creating 'book_images' table...");
+      await db.execute(sql`
+        CREATE TABLE book_images (
+          id SERIAL PRIMARY KEY,
+          book_id INTEGER NOT NULL REFERENCES books(id),
+          image_url TEXT NOT NULL,
+          image_type TEXT NOT NULL,
+          width INTEGER NOT NULL,
+          height INTEGER NOT NULL,
+          size_kb INTEGER,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("Table 'book_images' created successfully");
+    } else {
+      console.log("Table 'book_images' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating book_images table:", error);
+    throw error;
+  }
+}
+
+async function migrateCoverUrlToBookImages() {
+  try {
+    console.log("Migrating cover_url data to book_images table...");
+    
+    // Check if cover_url column exists in books table
+    const columnResult = await db.execute(sql`
+      SELECT column_name
+      FROM information_schema.columns 
+      WHERE table_name = 'books' AND column_name = 'cover_url'
+    `);
+    
+    if (columnResult.rows.length > 0) {
+      console.log("cover_url column exists, migrating data...");
+      
+      // Get all books with cover_url
+      const books = await db.execute(sql`
+        SELECT id, cover_url FROM books WHERE cover_url IS NOT NULL
+      `);
+      
+      console.log(`Found ${books.rows.length} books with cover URLs to migrate`);
+      
+      // Insert each book's cover into book_images as book-detail type
+      for (const book of books.rows) {
+        const bookId = book.id;
+        const coverUrl = book.cover_url;
+        
+        // Check if we already have an image for this book to avoid duplicates
+        const existingImage = await db.execute(sql`
+          SELECT id FROM book_images 
+          WHERE book_id = ${bookId} AND image_type = 'book-detail'
+        `);
+        
+        if (existingImage.rows.length === 0) {
+          await db.execute(sql`
+            INSERT INTO book_images 
+            (book_id, image_url, image_type, width, height, created_at, updated_at)
+            VALUES 
+            (${bookId}, ${coverUrl}, 'book-detail', 480, 600, NOW(), NOW())
+          `);
+          
+          // Also add as mini image
+          await db.execute(sql`
+            INSERT INTO book_images 
+            (book_id, image_url, image_type, width, height, created_at, updated_at)
+            VALUES 
+            (${bookId}, ${coverUrl}, 'mini', 48, 64, NOW(), NOW())
+          `);
+          
+          console.log(`Migrated cover_url for book ${bookId}`);
+        } else {
+          console.log(`Book ${bookId} already has images, skipping`);
+        }
+      }
+      
+      console.log("Cover URL migration completed");
+    } else {
+      console.log("cover_url column no longer exists, skipping migration");
+    }
+  } catch (error) {
+    console.error("Error migrating cover_url data:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -710,5 +810,8 @@ export async function runMigrations() {
   await createGenreViewsTables();
   // Create homepage layouts table
   await createHomepageLayoutsTable();
+  // Create book_images table and migrate data
+  await createBookImagesTable();
+  await migrateCoverUrlToBookImages();
   console.log("Migrations completed");
 }
