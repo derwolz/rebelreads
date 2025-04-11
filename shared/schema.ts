@@ -558,7 +558,9 @@ export const insertPublisherSchema = createInsertSchema(publishers, {
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
-export type Book = typeof books.$inferSelect;
+export type Book = typeof books.$inferSelect & {
+  images?: BookImage[];
+};
 export type Rating = typeof ratings.$inferSelect;
 export type ReadingStatus = typeof reading_status.$inferSelect;
 export type InsertReadingStatus = typeof reading_status.$inferInsert;
