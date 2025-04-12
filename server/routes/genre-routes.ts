@@ -2,8 +2,15 @@ import { Router, Request, Response } from "express";
 import { dbStorage } from "../storage";
 import { adminAuthMiddleware } from "../middleware/admin-auth";
 import { db } from "../db";
-import { genreTaxonomies, insertGenreTaxonomySchema } from "@shared/schema";
-import { eq, and, isNull, sql } from "drizzle-orm";
+import { 
+  genreTaxonomies, 
+  insertGenreTaxonomySchema, 
+  viewGenres, 
+  bookGenreTaxonomies, 
+  books,
+  bookImages
+} from "@shared/schema";
+import { eq, and, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -166,6 +173,91 @@ router.post("/import", adminAuthMiddleware, async (req: Request, res: Response) 
   } catch (error) {
     console.error("Error importing genres:", error);
     res.status(500).json({ error: "Failed to import genres" });
+  }
+});
+
+/**
+ * Get books for a specific genre view
+ * This route is used by the dynamic home sections to display books by genre view
+ */
+router.get("/view/:id", async (req: Request, res: Response) => {
+  try {
+    const viewId = parseInt(req.params.id);
+    const count = parseInt(req.query.count as string) || 10;
+    
+    if (isNaN(viewId)) {
+      return res.status(400).json({ error: "Invalid view ID" });
+    }
+    
+    console.log(`Fetching books for genre view ID: ${viewId}`);
+    
+    // 1. Get all genre taxonomy IDs from this view
+    const viewGenresResult = await db
+      .select({ taxonomyId: viewGenres.taxonomyId })
+      .from(viewGenres)
+      .where(eq(viewGenres.viewId, viewId));
+    
+    if (!viewGenresResult || viewGenresResult.length === 0) {
+      console.log(`No genres found for view ID: ${viewId}`);
+      return res.json([]);
+    }
+    
+    const taxonomyIds = viewGenresResult.map(g => g.taxonomyId);
+    console.log(`Found taxonomy IDs for view: ${taxonomyIds.join(', ')}`);
+    
+    // 2. Get all books that have these taxonomies
+    const bookGenresResult = await db
+      .select({ bookId: bookGenreTaxonomies.bookId })
+      .from(bookGenreTaxonomies)
+      .where(inArray(bookGenreTaxonomies.taxonomyId, taxonomyIds));
+    
+    if (!bookGenresResult || bookGenresResult.length === 0) {
+      console.log(`No books found for view taxonomies`);
+      return res.json([]);
+    }
+    
+    // Use a simple array with filter to get unique book IDs
+    const bookIds = bookGenresResult.map(bg => bg.bookId)
+      .filter((id, index, self) => self.indexOf(id) === index);
+    console.log(`Found book IDs: ${bookIds.join(', ')}`);
+    
+    // 3. Get the complete book data
+    const booksResult = await db
+      .select()
+      .from(books)
+      .where(inArray(books.id, bookIds))
+      .limit(count);
+    
+    // 4. Get book images
+    const imagesResult = await db
+      .select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID
+    const imagesByBookId = new Map();
+    imagesResult.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId).push({
+        imageUrl: image.imageUrl,
+        imageType: image.imageType
+      });
+    });
+    
+    // Add images to books
+    const booksWithImages = booksResult.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    }));
+    
+    // Log and return results
+    console.log(`Returning ${booksWithImages.length} books for genre view ID: ${viewId}`);
+    res.json(booksWithImages);
+  } catch (error) {
+    console.error("Error fetching books for genre view:", error);
+    res.status(500).json({ error: "Failed to fetch books for genre view" });
   }
 });
 
