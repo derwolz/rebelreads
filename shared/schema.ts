@@ -89,7 +89,6 @@ export const users = pgTable("users", {
   newsletterOptIn: boolean("newsletter_opt_in").notNull().default(false),
   provider: text("provider"), // google, amazon, x, or null for email/password
   providerId: text("provider_id"), // external provider's user ID
-  isAuthor: boolean("is_author").notNull().default(false),
   profileImageUrl: text("profile_image_url"), // General user profile image
   bio: text("bio"), // General user bio
   displayName: text("display_name"), // Added display name field
@@ -281,6 +280,7 @@ export const bookClickThroughs = pgTable("book_click_throughs", {
 
 export const publishers = pgTable("publishers", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique().references(() => users.id),
   name: text("name").notNull(), // For backwards compatibility
   publisher_name: text("publisher_name").notNull(),
   publisher_description: text("publisher_description"),
@@ -386,11 +386,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   newsletterOptIn: true,
-  isAuthor: true, // Add isAuthor to the schema
 }).extend({
   email: z.string().email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  isAuthor: z.boolean().default(false),
   betaKey: z.string().optional(),
 });
 
@@ -543,6 +541,7 @@ export type LoginData = z.infer<typeof loginSchema>;
 export const insertPublisherSchema = createInsertSchema(publishers)
   .omit({ id: true, createdAt: true })
   .extend({
+    userId: z.number(),
     publisher_name: z.string().min(1, "Publisher name is required"),
     publisher_description: z.string().optional(),
     business_email: z.string().email("Please enter a valid email").optional(),
