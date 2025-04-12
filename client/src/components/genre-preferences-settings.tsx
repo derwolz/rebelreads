@@ -45,6 +45,13 @@ interface ViewGenre {
   name?: string; // Added for UI display
 }
 
+interface GenreMeta {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 interface GenreView {
   id: number;
   userId: number;
@@ -54,6 +61,7 @@ interface GenreView {
   createdAt: string;
   updatedAt: string;
   genres?: ViewGenre[]; // Added from API response
+  genreMeta?: GenreMeta; // Metadata for pagination
 }
 
 export function GenrePreferencesSettings() {
@@ -63,6 +71,12 @@ export function GenrePreferencesSettings() {
   // Local state for views and genres
   const [views, setViews] = useState<GenreView[]>([]);
   const [activeViewId, setActiveViewId] = useState<number | null>(null);
+  
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(20); // Load 20 genres at a time
+  const [hasMoreGenres, setHasMoreGenres] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // State for the create/edit view dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -71,13 +85,11 @@ export function GenrePreferencesSettings() {
   const [newViewName, setNewViewName] = useState("");
   const [isDefaultView, setIsDefaultView] = useState(false);
 
-  // Sensors for drag and drop functionality removed
-
-  // Fetch existing genre views from the server
+  // Fetch existing genre views from the server with pagination
   const { data: viewsData, isLoading } = useQuery({
-    queryKey: ["/api/genre-preferences"],
+    queryKey: ["/api/genre-preferences", { page, limit }],
     queryFn: async () => {
-      const response = await fetch("/api/genre-preferences");
+      const response = await fetch(`/api/genre-preferences?page=${page}&limit=${limit}`);
       if (!response.ok) {
         throw new Error("Failed to fetch genre views");
       }
@@ -85,10 +97,64 @@ export function GenrePreferencesSettings() {
     },
   });
 
+  // Function to load more genres for the active view
+  const loadMoreGenres = async () => {
+    if (!activeViewId || !activeView?.genreMeta) return;
+    
+    // Don't load more if we're already loading or if there are no more to load
+    if (isLoadingMore || page >= (activeView.genreMeta.pages - 1)) return;
+    
+    setIsLoadingMore(true);
+    try {
+      // Make a direct request to fetch the next page of genres for the active view
+      const nextPage = page + 1;
+      const response = await fetch(`/api/genre-preferences?page=${nextPage}&limit=${limit}`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to load more genres");
+      }
+      
+      const data = await response.json();
+      
+      // Update the views with the new genres loaded for the active view
+      setViews(prevViews => {
+        return prevViews.map(view => {
+          if (view.id === activeViewId) {
+            const matchingView = data.views.find((v: GenreView) => v.id === activeViewId);
+            // Combine previously loaded genres with new ones if we found a matching view
+            if (matchingView && matchingView.genres) {
+              return {
+                ...view,
+                genres: [...(view.genres || []), ...(matchingView.genres || [])],
+                genreMeta: matchingView.genreMeta // Update metadata
+              };
+            }
+          }
+          return view;
+        });
+      });
+      
+      // Update the page number
+      setPage(nextPage);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load more genres",
+        variant: "destructive",
+      });
+      console.error("Error loading more genres:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   // Initialize local state when views are loaded
   useEffect(() => {
     if (viewsData?.views) {
-      setViews(viewsData.views);
+      // Check if we're loading the first page
+      if (page === 0) {
+        setViews(viewsData.views);
+      }
 
       // Only set the active view if it hasn't been set yet or if the current active view doesn't exist anymore
       if (
@@ -101,8 +167,18 @@ export function GenrePreferencesSettings() {
         const defaultView = viewsData.views.find((v: GenreView) => v.isDefault);
         setActiveViewId(defaultView ? defaultView.id : viewsData.views[0].id);
       }
+      
+      // Update hasMoreGenres based on metadata
+      if (activeViewId) {
+        const activeView = viewsData.views.find(v => v.id === activeViewId);
+        if (activeView && activeView.genreMeta) {
+          const { total, limit, page: currentPage } = activeView.genreMeta;
+          const hasMore = limit > 0 && total > (currentPage + 1) * limit;
+          setHasMoreGenres(hasMore);
+        }
+      }
     }
-  }, [viewsData, activeViewId]);
+  }, [viewsData, activeViewId, page, limit]);
 
   // Get the currently active view and its genres
   const activeView = views.find((v) => v.id === activeViewId);

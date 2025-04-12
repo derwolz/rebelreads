@@ -153,6 +153,13 @@ router.get("/genre-preferences", async (req: Request, res: Response) => {
   }
   
   try {
+    // Parse pagination parameters
+    const page = req.query.page ? parseInt(req.query.page as string) : 0;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 0;
+    
+    // Check if we're only fetching structure without genres
+    const structureOnly = req.query.structureOnly === 'true';
+    
     // Get all the user's views
     const views = await dbStorage.getUserGenreViews(req.user.id);
     
@@ -162,24 +169,57 @@ router.get("/genre-preferences", async (req: Request, res: Response) => {
     if (views.length === 0) {
       // Return empty data if no views exist yet
       return res.json({ 
-        views: []
+        views: [],
+        pagination: {
+          total: 0,
+          page: 0,
+          limit: 0,
+          pages: 0
+        }
       });
     }
     
-    // For each view, get the associated genres
+    // If we only need the structure, return just the views without genres
+    if (structureOnly) {
+      return res.json({ 
+        views: views,
+        pagination: {
+          total: views.length,
+          page: 0,
+          limit: 0,
+          pages: 1
+        }
+      });
+    }
+    
+    // For each view, get the associated genres with pagination
     const viewsWithGenres = await Promise.all(
       views.map(async (view) => {
-        const genres = await dbStorage.getViewGenres(view.id);
+        const { genres, total } = await dbStorage.getViewGenres(view.id, page, limit);
         return {
           ...view,
-          genres
+          genres,
+          genreMeta: {
+            total,
+            page: page,
+            limit: limit,
+            pages: limit > 0 ? Math.ceil(total / limit) : 1
+          }
         };
       })
     );
     
     console.log("Returning genre views:", JSON.stringify(viewsWithGenres));
     
-    res.json({ views: viewsWithGenres });
+    res.json({ 
+      views: viewsWithGenres,
+      pagination: {
+        total: views.length,
+        page: 0,
+        limit: 0,
+        pages: 1
+      }
+    });
   } catch (error) {
     console.error("Error getting genre views:", error);
     res.status(500).json({ error: "Failed to retrieve genre views" });

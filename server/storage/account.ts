@@ -64,7 +64,7 @@ export interface IAccountStorage {
   saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences>;
   
   getUserGenreViews(userId: number): Promise<UserGenreView[]>;
-  getViewGenres(viewId: number): Promise<ViewGenre[]>;
+  getViewGenres(viewId: number, page?: number, limit?: number): Promise<{ genres: ViewGenre[], total: number }>;
   createGenreView(userId: number, name: string, rank: number, isDefault: boolean): Promise<UserGenreView>;
   updateGenreView(viewId: number, data: Partial<{name: string, rank: number, isDefault: boolean}>): Promise<UserGenreView>;
   deleteGenreView(viewId: number): Promise<void>;
@@ -680,8 +680,17 @@ export class AccountStorage implements IAccountStorage {
     return views;
   }
 
-  async getViewGenres(viewId: number): Promise<ViewGenre[]> {
-    const genres = await db
+  async getViewGenres(viewId: number, page: number = 0, limit: number = 0): Promise<{ genres: ViewGenre[], total: number }> {
+    // First get the total count of genres for pagination metadata
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(viewGenres)
+      .where(eq(viewGenres.viewId, viewId));
+      
+    const total = Number(countResult[0]?.count || 0);
+    
+    // Build the query
+    let query = db
       .select({
         id: viewGenres.id,
         viewId: viewGenres.viewId,
@@ -700,7 +709,16 @@ export class AccountStorage implements IAccountStorage {
       .where(eq(viewGenres.viewId, viewId))
       .orderBy(viewGenres.rank);
     
-    return genres;
+    // Apply pagination if requested
+    if (limit > 0) {
+      const offset = page * limit;
+      query = query.limit(limit).offset(offset);
+    }
+    
+    // Execute the query
+    const genres = await query;
+    
+    return { genres, total };
   }
 
   async createGenreView(userId: number, name: string, rank: number, isDefault: boolean): Promise<UserGenreView> {
