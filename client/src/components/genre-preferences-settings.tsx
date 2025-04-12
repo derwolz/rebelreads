@@ -696,7 +696,7 @@ export function GenrePreferencesSettings() {
                   >
                     {view.name}
                     {view.isDefault && (
-                      <span className="ml-1 text-xs text-muted-foreground">(Default)</span>
+                      <span className="ml-1 text-[8px] text-primary">●</span>
                     )}
                   </TabsTrigger>
                 ))}
