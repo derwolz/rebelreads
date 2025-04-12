@@ -90,13 +90,19 @@ export function GenrePreferencesSettings() {
     if (viewsData?.views) {
       setViews(viewsData.views);
 
-      // Set active view to the default view or the first view if available
-      if (viewsData.views.length > 0) {
+      // Only set the active view if it hasn't been set yet or if the current active view doesn't exist anymore
+      if (
+        viewsData.views.length > 0 && 
+        (
+          activeViewId === null || 
+          !viewsData.views.some(v => v.id === activeViewId)
+        )
+      ) {
         const defaultView = viewsData.views.find((v: GenreView) => v.isDefault);
         setActiveViewId(defaultView ? defaultView.id : viewsData.views[0].id);
       }
     }
-  }, [viewsData]);
+  }, [viewsData, activeViewId]);
 
   // Get the currently active view and its genres
   const activeView = views.find((v) => v.id === activeViewId);
