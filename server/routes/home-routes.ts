@@ -459,6 +459,38 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
   }
 });
 
+// Add DELETE endpoint for books
+router.delete("/books/:id", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+
+  const bookId = parseInt(req.params.id);
+  if (isNaN(bookId)) {
+    return res.status(400).json({ error: "Invalid book ID" });
+  }
+
+  try {
+    // Get the book to verify ownership
+    const book = await dbStorage.getBook(bookId);
+    if (!book) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+
+    // Verify that the authenticated user owns this book
+    if (book.authorId !== req.user!.id) {
+      return res.status(403).json({ error: "You don't have permission to delete this book" });
+    }
+
+    // Delete the book
+    await dbStorage.deleteBook(bookId, req.user!.id);
+    
+    console.log(`Book ID ${bookId} deleted by user ID ${req.user!.id}`);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("Error deleting book:", error);
+    res.status(500).json({ error: "Failed to delete book" });
+  }
+});
+
 router.get("/books/:id/reading-status", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
