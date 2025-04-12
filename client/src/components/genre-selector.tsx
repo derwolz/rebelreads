@@ -565,15 +565,17 @@ function TaxonomyGenreSelector({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      // Get the old and new index from the ids
-      const oldIndex = selectedTaxonomies.findIndex(
-        (item) => `${item.type}-${item.taxonomyId}` === active.id
-      );
-      const newIndex = selectedTaxonomies.findIndex(
-        (item) => `${item.type}-${item.taxonomyId}` === over.id
-      );
+      // Extract the indexes from the ids
+      const activeIdParts = String(active.id).split('-');
+      const overIdParts = String(over.id).split('-');
+      
+      // The last part of the id is the index
+      const oldIndex = parseInt(activeIdParts[activeIdParts.length - 1]);
+      const newIndex = parseInt(overIdParts[overIdParts.length - 1]);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
+      if (!isNaN(oldIndex) && !isNaN(newIndex) && 
+          oldIndex >= 0 && oldIndex < selectedTaxonomies.length && 
+          newIndex >= 0 && newIndex < selectedTaxonomies.length) {
         // Create a new array with the new order
         const reordered = arrayMove(selectedTaxonomies, oldIndex, newIndex);
         
@@ -841,14 +843,14 @@ function TaxonomyGenreSelector({
                   onDragEnd={handleGenreDragEnd}
                 >
                   <SortableContext
-                    items={selectedTaxonomies.map(item => `${item.type}-${item.taxonomyId}`)}
+                    items={selectedTaxonomies.map((item, index) => `${item.type}-${item.taxonomyId}-${index}`)}
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="space-y-2">
                       {selectedTaxonomies.map((taxonomy, index) => (
                         <SortableGenreItem 
-                          key={`${taxonomy.type}-${taxonomy.taxonomyId}`}
-                          id={`${taxonomy.type}-${taxonomy.taxonomyId}`}
+                          key={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
+                          id={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
                           taxonomy={taxonomy}
                           index={index}
                           calculateImportance={calculateImportance}
