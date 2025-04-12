@@ -16,6 +16,7 @@ import {
   replies,
   userGenreViews,
   viewGenres,
+  genreTaxonomies,
   UserGenreView,
   ViewGenre,
 } from "@shared/schema";
@@ -681,8 +682,21 @@ export class AccountStorage implements IAccountStorage {
 
   async getViewGenres(viewId: number): Promise<ViewGenre[]> {
     const genres = await db
-      .select()
+      .select({
+        id: viewGenres.id,
+        viewId: viewGenres.viewId,
+        taxonomyId: viewGenres.taxonomyId,
+        type: viewGenres.type,
+        rank: viewGenres.rank,
+        createdAt: viewGenres.createdAt,
+        name: genreTaxonomies.name,  // Include the name from taxonomies
+        description: genreTaxonomies.description // Include description for potential future use
+      })
       .from(viewGenres)
+      .leftJoin(
+        genreTaxonomies, 
+        eq(viewGenres.taxonomyId, genreTaxonomies.id)
+      )
       .where(eq(viewGenres.viewId, viewId))
       .orderBy(viewGenres.rank);
     
