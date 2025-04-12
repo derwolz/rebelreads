@@ -684,7 +684,7 @@ export function GenrePreferencesSettings() {
                     </div>
                   </div>
 
-                  <div className="bg-muted p-4 rounded-md">
+                  <div className="rounded-md">
   
                     <GenreSelector
                       mode="taxonomy"

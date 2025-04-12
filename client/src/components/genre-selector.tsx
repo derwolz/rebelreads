@@ -613,18 +613,9 @@ function TaxonomyGenreSelector({
   };
 
   return (
-    <div className={cn("space-y-6", className)}>
-      <div className="grid gap-2">
-        {label && <h3 className="text-lg font-medium">{label}</h3>}
-        
-        {helperText ? (
-          <p className="text-sm text-muted-foreground">{helperText}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Select the taxonomies that best describe your book. The order determines their importance.
-          </p>
-        )}
-        
+    <div className={cn("space-y-1", className)}>
+      <div className="">
+     
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           {/* Taxonomy selection panel */}
           <Card>
