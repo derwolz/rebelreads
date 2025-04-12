@@ -124,7 +124,7 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
     // This is a placeholder and would need to be implemented properly
     displayBooks = books.slice(0, section.itemCount);
   }
-  
+  console.log("Display Books:",section.title,displayBooks)
   // Render the section with the appropriate display mode
   return section.displayMode === "carousel" ? (
     <BookCarousel 

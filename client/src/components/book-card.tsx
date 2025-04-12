@@ -182,7 +182,7 @@ export function BookCard({ book }: { book: Book }) {
               <div className="absolute bg-black/20 rounded-full top-2 left-2  z-10">
                 <WishlistButton bookId={book.id} variant="ghost" size="icon" />
               </div>
-              {console.log(`Book ${book.id} images:`, book.images)}
+             
               <img
                 src={book.images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
                 alt={book.title}
