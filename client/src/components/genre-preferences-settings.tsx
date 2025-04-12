@@ -77,6 +77,9 @@ export function GenrePreferencesSettings() {
   const [limit, setLimit] = useState(20); // Load 20 genres at a time
   const [hasMoreGenres, setHasMoreGenres] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  // Ref for intersection observer target
+  const observerTargetRef = useRef<HTMLDivElement>(null);
 
   // State for the create/edit view dialog
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -793,6 +796,33 @@ export function GenrePreferencesSettings() {
                       restrictLimits={false}
                       helperText="Select genres to add to this view - no limits on selections. Drag to reorder."
                     />
+                    
+                    {/* Invisible element for intersection observer to trigger infinite scrolling */}
+                    {view.genreMeta && hasMoreGenres && (
+                      <div 
+                        ref={(el) => {
+                          if (!el) return;
+                          const observer = new IntersectionObserver(
+                            (entries) => {
+                              if (entries[0].isIntersecting && !isLoadingMore) {
+                                loadMoreGenres();
+                              }
+                            },
+                            { threshold: 0.1 }
+                          );
+                          observer.observe(el);
+                          return () => observer.disconnect();
+                        }}
+                        className="h-4 mt-2"
+                      />
+                    )}
+                    
+                    {/* Loading indicator - only shown when loading more genres */}
+                    {isLoadingMore && (
+                      <div className="flex justify-center items-center py-2 text-sm text-muted-foreground">
+                        <span className="animate-pulse mr-2">Loading more genres...</span>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               ))}
