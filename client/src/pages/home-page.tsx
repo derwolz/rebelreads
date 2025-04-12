@@ -98,20 +98,6 @@ export default function HomePage() {
       {/* Hero Carousel for Promoted Books */}
       <HeroCarousel />
 
-      {/* Hero Banner Ad */}
-      {featuredBook && (
-        <div className="my-8">
-          <HeroBannerAd
-            campaignId={1}
-            bookId={featuredBook.id}
-            imageSrc={featuredBook.images?.find(img => img.imageType === "hero")?.imageUrl || "/images/placeholder-book.png"}
-            title={featuredBook.title}
-            description={featuredBook.description?.substring(0, 120) + '...'}
-            ctaText="Discover Now"
-            source="home"
-          />
-        </div>
-      )}
 
       {/* New Books Section */}
       {newBooks && newBooks.length > 0 && (

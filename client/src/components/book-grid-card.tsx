@@ -164,8 +164,6 @@ export function BookGridCard({ book }: { book: Book }) {
                 position: showDetailed ? "absolute" : "relative",
                 transform: showDetailed ? "scale(1.05)" : "scale(1)",
                 transformOrigin: "center center",
-                top: showDetailed ? "-5%" : "auto",
-                left: showDetailed ? "-2.5%" : "auto",
                 width: showDetailed ? "105%" : "100%"
               }}
               onClick={handleCardClick}
