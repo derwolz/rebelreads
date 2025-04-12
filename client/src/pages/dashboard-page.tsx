@@ -9,6 +9,7 @@ import { SocialMediaLinks } from "@/components/social-media-links";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { Book } from "@shared/schema";
+import { CompletedBooksGrid } from "@/components/completed-books-grid";
 
 interface DashboardData {
   user: {
@@ -45,6 +46,11 @@ export default function DashboardPage(): React.JSX.Element {
 
   const { data: wishlistedBooks } = useQuery<Book[]>({
     queryKey: ["/api/wishlist/books"],
+    enabled: !!user,
+  });
+  
+  const { data: completedBooks, isLoading: isLoadingCompletedBooks } = useQuery<Book[]>({
+    queryKey: ["/api/collections/completed"],
     enabled: !!user,
   });
 
@@ -251,6 +257,23 @@ export default function DashboardPage(): React.JSX.Element {
                   }} 
                 />
               ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {readingStats.completed > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed Books</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Books you've finished reading. Books that need a review are highlighted.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <CompletedBooksGrid 
+                books={completedBooks || []}
+                isLoading={isLoadingCompletedBooks}
+              />
             </CardContent>
           </Card>
         )}

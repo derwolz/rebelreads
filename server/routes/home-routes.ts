@@ -546,6 +546,41 @@ router.get("/wishlist/books", async (req, res) => {
   }
 });
 
+// Get the current user's rating for a specific book
+router.get("/books/:id/user-rating", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+
+  const bookId = parseInt(req.params.id);
+  if (isNaN(bookId)) {
+    return res.status(400).json({ error: "Invalid book ID" });
+  }
+
+  try {
+    const userId = req.user!.id;
+    
+    // Fetch the user's rating for this book
+    const userRating = await db
+      .select()
+      .from(ratings)
+      .where(
+        and(
+          eq(ratings.userId, userId),
+          eq(ratings.bookId, bookId)
+        )
+      )
+      .limit(1);
+    
+    if (userRating.length === 0) {
+      return res.json(null);
+    }
+    
+    res.json(userRating[0]);
+  } catch (error) {
+    console.error("Error fetching user rating:", error);
+    res.status(500).json({ error: "Failed to fetch user rating" });
+  }
+});
+
 router.get("/books/followed-authors", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
