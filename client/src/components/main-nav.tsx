@@ -128,7 +128,7 @@ console.log(searchResults, "searchResults");
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
-              {user.isAuthor && (
+              {isAuthor && (
                 <Link href="/pro">
                   <Button variant="outline">Author Dashboard</Button>
                 </Link>
@@ -205,7 +205,7 @@ console.log(searchResults, "searchResults");
                       </Link>
                     </div>
                     <div className="grid gap-2">
-                      {user.isAuthor && (
+                      {isAuthor && (
                         <Link href="/pro">
                           <Button
                             variant="outline"

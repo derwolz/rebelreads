@@ -11,7 +11,7 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAuthor } = useAuth();
   const { toast } = useToast();
   
   // Check if this is a Pro route that needs analytics tracking
@@ -19,11 +19,11 @@ export function ProtectedRoute({
   
   // Check if user is an author for Pro routes
   const isAuthorRequired = isProRoute;
-  const hasPermission = !isAuthorRequired || (user && user.isAuthor);
+  const hasPermission = !isAuthorRequired || isAuthor;
 
   const renderComponent = () => {
     // Show toast if trying to access Pro route without author permissions
-    if (isProRoute && user && !user.isAuthor) {
+    if (isProRoute && user && !isAuthor) {
       toast({
         title: "Author access required",
         description: "You need author privileges to access this area.",
@@ -33,7 +33,7 @@ export function ProtectedRoute({
     }
     
     // For Pro routes with proper author permissions, wrap with AuthorAnalyticsProvider
-    if (isProRoute && user && user.isAuthor) {
+    if (isProRoute && user && isAuthor) {
       console.log("Rendering Pro route with analytics tracking");
       return (
         <AuthorAnalyticsProvider>

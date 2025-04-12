@@ -465,7 +465,7 @@ router.post("/become-author", async (req: Request, res: Response) => {
     // Validate the request body
     const authorData = insertAuthorSchema.parse({
       userId: req.user.id,
-      authorName: req.body.authorName || req.user.name || req.user.username,
+      authorName: req.body.authorName || req.user.username || req.user.email.split('@')[0],
       bio: req.body.bio || "",
       isPro: false, // Default to not pro
     });
