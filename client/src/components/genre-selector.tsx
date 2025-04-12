@@ -800,7 +800,7 @@ function TaxonomyGenreSelector({
                 <TabsContent value="trope" className="m-0">
                   <div className="font-medium mb-2">
                     {restrictLimits 
-                      ? "Select up to 7 tropes (at least 1 required)" 
+                      ? "Select up to 7 tropes" 
                       : "Select as many tropes as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
