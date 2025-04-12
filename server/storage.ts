@@ -4,6 +4,7 @@ import { AnalyticsStorage } from "./storage/analytics";
 import { LandingPageStorage } from "./storage/landing-page";
 import { CampaignStorage } from "./storage/campaigns";
 import { PublisherStorage } from "./storage/publisher";
+import { AuthorStorage } from "./storage/author";
 import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
 import { HomepageLayoutStorage } from "./storage/homepage-layout";
@@ -15,6 +16,7 @@ const analyticsStorage = new AnalyticsStorage();
 const landingPageStorage = new LandingPageStorage();
 const campaignStorage = new CampaignStorage();
 const publisherStorage = new PublisherStorage();
+const authorStorage = new AuthorStorage();
 const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 const betaKeyStorage = new BetaKeyStorage();
 const homepageLayoutStorage = new HomepageLayoutStorage();
@@ -141,7 +143,10 @@ export const dbStorage = {
   // Publisher
   getPublishers: publisherStorage.getPublishers.bind(publisherStorage),
   getPublisher: publisherStorage.getPublisher.bind(publisherStorage),
+  getPublisherByUserId: publisherStorage.getPublisherByUserId.bind(publisherStorage),
   createPublisher: publisherStorage.createPublisher.bind(publisherStorage),
+  isUserPublisher: publisherStorage.isUserPublisher.bind(publisherStorage),
+  updatePublisher: publisherStorage.updatePublisher.bind(publisherStorage),
   getPublisherAuthors:
     publisherStorage.getPublisherAuthors.bind(publisherStorage),
   addAuthorToPublisher:
@@ -150,6 +155,14 @@ export const dbStorage = {
     publisherStorage.removeAuthorFromPublisher.bind(publisherStorage),
   getAuthorPublisher:
     publisherStorage.getAuthorPublisher.bind(publisherStorage),
+    
+  // Author
+  getAuthors: authorStorage.getAuthors.bind(authorStorage),
+  getAuthor: authorStorage.getAuthor.bind(authorStorage),
+  getAuthorByUserId: authorStorage.getAuthorByUserId.bind(authorStorage),
+  createAuthor: authorStorage.createAuthor.bind(authorStorage),
+  isUserAuthor: authorStorage.isUserAuthor.bind(authorStorage),
+  updateAuthor: authorStorage.updateAuthor.bind(authorStorage),
 
   // Session store for auth
   sessionStore: accountStorage.sessionStore,
@@ -179,6 +192,7 @@ export type { IAnalyticsStorage } from "./storage/analytics";
 export type { ILandingPageStorage } from "./storage/landing-page";
 export type { ICampaignStorage } from "./storage/campaigns";
 export type { IPublisherStorage } from "./storage/publisher";
+export type { IAuthorStorage } from "./storage/author";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
 export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
@@ -191,6 +205,7 @@ export {
   LandingPageStorage,
   CampaignStorage,
   PublisherStorage,
+  AuthorStorage,
   AuthorAnalyticsStorage,
   BetaKeyStorage,
   HomepageLayoutStorage,

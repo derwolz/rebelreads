@@ -72,11 +72,15 @@ export class PublisherStorage implements IPublisherStorage {
         user: users,
       })
       .from(publishersAuthors)
-      .where(eq(publishersAuthors.publisherId, publisherId))
-      .innerJoin(users, eq(users.id, publishersAuthors.authorId))
-      .where(isNull(publishersAuthors.contractEnd));
+      .where(
+        and(
+          eq(publishersAuthors.publisherId, publisherId),
+          isNull(publishersAuthors.contractEnd)
+        )
+      )
+      .innerJoin(users, eq(users.id, publishersAuthors.authorId));
 
-    return result.map(r => r.user);
+    return result.map((r: { user: User }) => r.user);
   }
 
   async addAuthorToPublisher(
