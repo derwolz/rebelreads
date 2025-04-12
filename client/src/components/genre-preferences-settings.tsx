@@ -25,29 +25,10 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { GenreSelector, TaxonomyItem } from "@/components/genre-selector";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
   Trash2,
   Plus,
   PenLine,
   PlusCircle,
-  Move,
-  GripVertical,
   X,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,13 +71,7 @@ export function GenrePreferencesSettings() {
   const [newViewName, setNewViewName] = useState("");
   const [isDefaultView, setIsDefaultView] = useState(false);
 
-  // Sensors for drag and drop functionality
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  // Sensors for drag and drop functionality removed
 
   // Fetch existing genre views from the server
   const { data: viewsData, isLoading } = useQuery({
@@ -483,79 +458,9 @@ export function GenrePreferencesSettings() {
     removeGenreMutation.mutate(genreId);
   };
 
-  // Handle reordering of views
-  const handleViewDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  // View reordering has been removed
 
-    if (over && active.id !== over.id && views.length > 1) {
-      // Get the old and new index
-      const oldIndex = views.findIndex((item) => item.id === Number(active.id));
-      const newIndex = views.findIndex((item) => item.id === Number(over.id));
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        // Create a new array with the new order
-        const reordered = arrayMove(views, oldIndex, newIndex);
-
-        // Update the local state immediately for better UX
-        setViews(reordered);
-
-        // Update the ranks for all views
-        reordered.forEach((view, idx) => {
-          updateViewMutation.mutate({
-            id: view.id,
-            rank: idx + 1,
-          });
-        });
-      }
-    }
-  };
-
-  // Sortable view component
-  interface SortableViewProps {
-    id: number;
-    value: string;
-    isDefault: boolean;
-    children: React.ReactNode;
-  }
-
-  function SortableView({ id, value, isDefault, children }: SortableViewProps) {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={cn("flex items-center", isDragging && "opacity-50 z-10")}
-      >
-        <button
-          type="button"
-          className="cursor-grab hover:text-primary mr-1"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-4 w-4" />
-        </button>
-        <TabsTrigger value={value} className="relative">
-          {children}
-          {isDefault && (
-            <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full -mt-0.5 -mr-0.5"></span>
-          )}
-        </TabsTrigger>
-      </div>
-    );
-  }
+  // Sortable view component has been removed
 
   // Reset the dialog when it's closed
   const handleDialogChange = (open: boolean) => {
@@ -716,32 +621,20 @@ export function GenrePreferencesSettings() {
               className="mb-6"
             >
               <div className="mb-4">
-                <div className="mb-2 text-sm text-muted-foreground">
-                  Drag and drop to reorder your views.
-                </div>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleViewDragEnd}
-                >
-                  <TabsList className="flex flex-wrap gap-1">
-                    <SortableContext
-                      items={views.map((view) => view.id)}
-                      strategy={verticalListSortingStrategy}
+                <TabsList className="flex flex-wrap gap-1">
+                  {views.map((view) => (
+                    <TabsTrigger 
+                      key={view.id} 
+                      value={view.id.toString()} 
+                      className="relative"
                     >
-                      {views.map((view) => (
-                        <SortableView
-                          key={view.id}
-                          id={view.id}
-                          value={view.id.toString()}
-                          isDefault={view.isDefault}
-                        >
-                          {view.name}
-                        </SortableView>
-                      ))}
-                    </SortableContext>
-                  </TabsList>
-                </DndContext>
+                      {view.name}
+                      {view.isDefault && (
+                        <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full -mt-0.5 -mr-0.5"></span>
+                      )}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
               </div>
 
               {views.map((view) => (
