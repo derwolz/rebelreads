@@ -404,7 +404,7 @@ export default function SettingsPage() {
     content = <GenrePreferencesSettings />;
   } else if (location === "/settings/homepage") {
     content = <HomepageSettings />;
-  } else if (location === "/settings/author" && user?.isAuthor) {
+  } else if (location === "/settings/author" && isAuthor) {
     content = (
       <Card>
         <CardHeader>
