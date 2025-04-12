@@ -733,7 +733,10 @@ router.get("/dashboard", async (req: Request, res: Response) => {
     // Get recommendations - for now simple recommendations based on user's most read genres
     const userGenres = new Set<string>();
     [...wishlistedBooks, ...completedBooks].forEach(book => {
-      book.genres.forEach(genre => userGenres.add(genre));
+      // Check if book.genres exists before iterating
+      if (book.genres && Array.isArray(book.genres)) {
+        book.genres.forEach(genre => userGenres.add(genre));
+      }
     });
     
     // Get books in user's preferred genres that they haven't rated yet
