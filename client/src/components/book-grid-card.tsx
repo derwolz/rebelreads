@@ -59,6 +59,7 @@ export function BookGridCard({ book }: { book: Book }) {
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
+  const [cardPosition, setCardPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
@@ -147,20 +148,29 @@ export function BookGridCard({ book }: { book: Book }) {
   };
 
   return (
-    <div className="relative group" style={{ height: "12rem" }}>
+    <div className="relative group" style={{ height: "12rem", width: "100%" }}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Card
               id={`book-grid-card-${book.id}`}
               className={`
-                overflow-hidden cursor-pointer h-48
+                overflow-hidden cursor-pointer h-48 w-full
                 transition-all duration-300 ease-in-out
-                ${showDetailed ? "absolute inset-0 scale-105 shadow-xl z-50" : "relative z-0"}
+                ${showDetailed ? "fixed shadow-xl z-50 translate-x-0" : "relative z-0"}
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
               `}
               onClick={handleCardClick}
-              onMouseEnter={() => setShowDetailed(true)}
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setCardPosition({
+                  top: rect.top,
+                  left: rect.left,
+                  width: rect.width,
+                  height: rect.height
+                });
+                setShowDetailed(true);
+              }}
               onMouseLeave={() => setShowDetailed(false)}
             >
               {/* New Book Banner */}

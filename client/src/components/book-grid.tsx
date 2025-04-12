@@ -22,13 +22,13 @@ export function BookGrid({ title, books, isLoading }: BookGridProps) {
   return (
     <section className="mb-12 overflow-hidden">
       <h2 className="text-3xl font-bold mb-6">{title}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1 mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mx-auto">
         {isLoading
           ? Array.from({ length: 12 }).map((_, i) => (
               <BookCardSkeleton key={i} />
             ))
           : books?.map((book) => (
-              <div key={book.id} className="relative flex justify-center">
+              <div key={book.id} className="relative w-full">
                 <BookGridCard book={book} />
               </div>
             ))}
