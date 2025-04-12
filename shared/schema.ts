@@ -734,7 +734,8 @@ export const landing_events = pgTable("landing_events", {
 export const signup_interests = pgTable("signup_interests", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
-  isAuthor: boolean("is_author").notNull(),
+  isPublisher: boolean("is_publisher").default(false),
+  isAuthorInterest: boolean("is_author_interest").default(false),
   sessionId: text("session_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
