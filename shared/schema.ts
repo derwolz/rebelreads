@@ -80,6 +80,7 @@ export const DEFAULT_RATING_WEIGHTS = {
   worldbuilding: 0.08
 } as const;
 
+// Base users table with common authentication and profile fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -89,22 +90,29 @@ export const users = pgTable("users", {
   provider: text("provider"), // google, amazon, x, or null for email/password
   providerId: text("provider_id"), // external provider's user ID
   isAuthor: boolean("is_author").notNull().default(false),
-  isPro: boolean("is_pro").notNull().default(false), // Pro user status
-  proExpiresAt: timestamp("pro_expires_at"), // When pro subscription expires
-  authorName: text("author_name"), // Name to display for authored books
-  authorBio: text("author_bio"),
-  authorImageUrl: text("author_image_url"), // Author profile image
   profileImageUrl: text("profile_image_url"), // General user profile image
   bio: text("bio"), // General user bio
-  birthDate: date("birth_date"),
-  deathDate: date("death_date"),
-  website: text("website"),
-  // favoriteGenres column removed
   displayName: text("display_name"), // Added display name field
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
-  credits: decimal("credits").notNull().default("0"), // Add credits field
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
 });
+
+// Authors table with author-specific information
+export const authors = pgTable("authors", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique().references(() => users.id),
+  author_name: text("author_name").notNull(), // Name to display for authored books
+  author_image_url: text("author_image_url"), // Author profile image
+  birth_date: date("birth_date"),
+  death_date: date("death_date"),
+  website: text("website"),
+  bio: text("bio"), // Author-specific bio
+  is_pro: boolean("is_pro").notNull().default(false), // Pro author status
+  pro_expires_at: timestamp("pro_expires_at"), // When pro subscription expires
+  credits: decimal("credits").notNull().default("0"), // Credits for authors
+});
+
+// Publisher-specific information is contained in the publishers table already defined below
 
 export const followers = pgTable("followers", {
   id: serial("id").primaryKey(),
@@ -273,8 +281,13 @@ export const bookClickThroughs = pgTable("book_click_throughs", {
 
 export const publishers = pgTable("publishers", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
+  name: text("name").notNull(), // For backwards compatibility
+  publisher_name: text("publisher_name").notNull(),
+  publisher_description: text("publisher_description"),
+  business_email: text("business_email"),
+  business_phone: text("business_phone"),
+  business_address: text("business_address"),
+  description: text("description"), // For backwards compatibility
   website: text("website"),
   logoUrl: text("logo_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -548,16 +561,29 @@ export const loginSchema = z.object({
 
 export type LoginData = z.infer<typeof loginSchema>;
 
-export const insertPublisherSchema = createInsertSchema(publishers, {
-  name: z.string().min(1, "Publisher name is required"),
-  description: z.string().optional(),
-  website: z.string().url("Please enter a valid URL").optional(),
-  logoUrl: z.string().optional(),
-});
+export const insertPublisherSchema = createInsertSchema(publishers)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    publisher_name: z.string().min(1, "Publisher name is required"),
+    publisher_description: z.string().optional(),
+    business_email: z.string().email("Please enter a valid email").optional(),
+    business_phone: z.string().optional(),
+    business_address: z.string().optional(),
+    website: z.string().url("Please enter a valid URL").optional(),
+    logoUrl: z.string().optional(),
+  });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
+export type Author = typeof authors.$inferSelect;
+
+export const insertAuthorSchema = createInsertSchema(authors)
+  .omit({ id: true })
+  .extend({
+    author_name: z.string().min(1, "Author name is required"),
+    bio: z.string().optional(),
+  });
 export type Book = typeof books.$inferSelect & {
   images?: BookImage[];
 };

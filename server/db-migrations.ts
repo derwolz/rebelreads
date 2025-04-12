@@ -816,6 +816,107 @@ async function removeCoverUrlColumn() {
   }
 }
 
+async function splitUserTable() {
+  try {
+    // Check if authors table exists
+    const checkAuthorsTable = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'authors'
+    `);
+    
+    if (checkAuthorsTable.rows.length === 0) {
+      console.log("Creating 'authors' table and migrating author data...");
+      
+      // Create the authors table
+      await db.execute(sql`
+        CREATE TABLE authors (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+          author_name TEXT NOT NULL,
+          author_image_url TEXT,
+          birth_date DATE,
+          death_date DATE,
+          website TEXT,
+          bio TEXT,
+          is_pro BOOLEAN NOT NULL DEFAULT false,
+          pro_expires_at TIMESTAMP,
+          credits DECIMAL NOT NULL DEFAULT '0'
+        )
+      `);
+      
+      // Migrate data from users table to authors table for users who are authors
+      await db.execute(sql`
+        INSERT INTO authors (
+          user_id, 
+          author_name, 
+          author_image_url, 
+          birth_date, 
+          death_date, 
+          website, 
+          bio, 
+          is_pro, 
+          pro_expires_at, 
+          credits
+        )
+        SELECT 
+          id AS user_id,
+          COALESCE(author_name, username) AS author_name,
+          author_image_url,
+          birth_date,
+          death_date,
+          website,
+          author_bio AS bio,
+          is_pro,
+          pro_expires_at,
+          credits
+        FROM users 
+        WHERE is_author = true
+      `);
+      
+      console.log("Authors table created and data migrated successfully");
+    } else {
+      console.log("Authors table already exists, skipping creation");
+    }
+    
+    // Update the publishers table to add new fields if it's already created
+    const checkPublishersFields = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'publishers' AND column_name = 'publisher_name'
+    `);
+    
+    if (checkPublishersFields.rows.length === 0) {
+      console.log("Updating publishers table with new fields...");
+      
+      // Add new columns to publishers table
+      await db.execute(sql`
+        ALTER TABLE publishers
+        ADD COLUMN publisher_name TEXT NOT NULL DEFAULT '',
+        ADD COLUMN publisher_description TEXT,
+        ADD COLUMN business_email TEXT,
+        ADD COLUMN business_phone TEXT,
+        ADD COLUMN business_address TEXT
+      `);
+      
+      // Migrate existing data to new column names
+      await db.execute(sql`
+        UPDATE publishers
+        SET publisher_name = name,
+            publisher_description = description
+      `);
+      
+      console.log("Publishers table updated successfully");
+    } else {
+      console.log("Publishers table already has the new columns, skipping update");
+    }
+    
+  } catch (error) {
+    console.error("Error splitting users table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -845,5 +946,7 @@ export async function runMigrations() {
   await migrateCoverUrlToBookImages();
   // Remove cover_url column from books table
   await removeCoverUrlColumn();
+  // Split the users table into users, authors, and publishers tables
+  await splitUserTable();
   console.log("Migrations completed");
 }
