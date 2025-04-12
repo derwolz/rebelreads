@@ -534,11 +534,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 4:
         return formData.publishedDate !== "";
       case 5:
-        // Validate taxonomy requirements
-        const hasGenre = formData.genreTaxonomies.some((t: any) => t.type === "genre");
-        const hasTheme = formData.genreTaxonomies.some((t: any) => t.type === "theme");
-        const hasTrope = formData.genreTaxonomies.some((t: any) => t.type === "trope");
-        return hasGenre && hasTheme && hasTrope;
+        // Validate that there are at least 5 taxonomies total
+        return formData.genreTaxonomies.length >= 5;
       case 6:
         // Validate that all required images are provided
         console.log("Checking required images:", formData.bookImages);

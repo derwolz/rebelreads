@@ -450,22 +450,23 @@ export const insertBookSchema = createInsertSchema(books).extend({
     type: z.enum(["genre", "subgenre", "theme", "trope"]),
     name: z.string() // For display purposes
   })).superRefine((val, ctx) => {
-    // Check the constraints for each taxonomy type
+    // Check total number of taxonomies
+    if (val.length < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_small,
+        minimum: 5,
+        type: "array",
+        inclusive: true,
+        path: ["genreTaxonomies"],
+        message: "At least 5 taxonomies are required (in total across all types)",
+      });
+    }
+    
+    // Still keep maximum limits per type to prevent overloading
     const genres = val.filter(item => item.type === "genre");
     const subgenres = val.filter(item => item.type === "subgenre");
     const themes = val.filter(item => item.type === "theme");
     const tropes = val.filter(item => item.type === "trope");
-    
-    if (genres.length < 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.too_small,
-        minimum: 1,
-        type: "array",
-        inclusive: true,
-        path: ["genreTaxonomies", "genre"],
-        message: "At least 1 genre is required",
-      });
-    }
     
     if (genres.length > 2) {
       ctx.addIssue({
@@ -489,17 +490,6 @@ export const insertBookSchema = createInsertSchema(books).extend({
       });
     }
     
-    if (themes.length < 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.too_small,
-        minimum: 1,
-        type: "array",
-        inclusive: true,
-        path: ["genreTaxonomies", "theme"],
-        message: "At least 1 theme is required",
-      });
-    }
-    
     if (themes.length > 6) {
       ctx.addIssue({
         code: z.ZodIssueCode.too_big,
@@ -508,17 +498,6 @@ export const insertBookSchema = createInsertSchema(books).extend({
         inclusive: true,
         path: ["genreTaxonomies", "theme"],
         message: "Maximum 6 themes allowed",
-      });
-    }
-    
-    if (tropes.length < 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.too_small,
-        minimum: 1,
-        type: "array",
-        inclusive: true,
-        path: ["genreTaxonomies", "trope"],
-        message: "At least 1 trope is required",
       });
     }
     
