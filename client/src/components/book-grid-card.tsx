@@ -157,9 +157,17 @@ export function BookGridCard({ book }: { book: Book }) {
               className={`
                 overflow-hidden cursor-pointer h-48 w-full
                 transition-all duration-300 ease-in-out
-                ${showDetailed ? "fixed shadow-xl z-50 translate-x-0" : "relative z-0"}
+                ${showDetailed ? "shadow-xl z-50" : "z-0"}
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
               `}
+              style={{
+                position: showDetailed ? "absolute" : "relative",
+                transform: showDetailed ? "scale(1.05)" : "scale(1)",
+                transformOrigin: "center center",
+                top: showDetailed ? "-5%" : "auto",
+                left: showDetailed ? "-2.5%" : "auto",
+                width: showDetailed ? "105%" : "100%"
+              }}
               onClick={handleCardClick}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
