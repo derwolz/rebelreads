@@ -27,7 +27,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 
 export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
-  const { user, logoutMutation } = useAuth();
+  const { user, isAuthor, logoutMutation } = useAuth();
   const { setIsOpen } = useAuthModal();
   const [, navigate] = useLocation();
   const [open, setOpen] = useState(false);
