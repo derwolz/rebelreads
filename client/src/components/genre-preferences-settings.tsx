@@ -127,16 +127,90 @@ export function GenrePreferencesSettings() {
   const activeView = views.find((v) => v.id === activeViewId);
   const activeViewGenres = activeView?.genres || [];
 
-  // Handle the reordering of genres in a view
+  // Handle the reordering of genres in a view with optimistic updates
   const handleTaxonomiesReorder = (viewId: number, reorderedTaxonomies: TaxonomyItem[]) => {
     if (!viewId) return;
+    
+    // Find the current view and store its genres as backup in case we need to revert
+    const currentView = views.find(v => v.id === viewId);
+    const backupGenres = currentView?.genres ? [...currentView.genres] : [];
+    
+    // Find the view index for optimistic update
+    const viewIndex = views.findIndex(v => v.id === viewId);
+    if (viewIndex === -1) return;
+    
+    // Make an optimistic update to the local state
+    const updatedViews = [...views];
+    if (currentView && updatedViews[viewIndex]) {
+      // Update the genres with the new ordering in the local state
+      updatedViews[viewIndex] = {
+        ...currentView,
+        genres: reorderedTaxonomies.map((tax, idx) => ({
+          id: tax.id as number,
+          viewId: viewId,
+          taxonomyId: tax.taxonomyId,
+          type: tax.type,
+          rank: idx + 1,
+          createdAt: new Date().toISOString(),
+          name: tax.name
+        }))
+      };
+      
+      // Apply optimistic update
+      setViews(updatedViews);
+    }
+    
+    // Track success of all rank update operations
+    let updatePromises: Promise<any>[] = [];
+    let successCount = 0;
+    let failureCount = 0;
     
     // For each reordered taxonomy, update its rank in the database
     reorderedTaxonomies.forEach((taxonomy, idx) => {
       if (taxonomy.id) {
-        updateGenreRankMutation.mutate({
-          genreId: taxonomy.id,
-          rank: idx + 1,
+        // Create a promise that resolves or rejects based on the mutation outcome
+        const updatePromise = new Promise((resolve, reject) => {
+          updateGenreRankMutation.mutate(
+            {
+              genreId: taxonomy.id as number,
+              rank: idx + 1,
+            },
+            {
+              onSuccess: () => {
+                successCount++;
+                resolve(true);
+              },
+              onError: (error) => {
+                failureCount++;
+                reject(error);
+              }
+            }
+          );
+        });
+        
+        updatePromises.push(updatePromise);
+      }
+    });
+    
+    // Wait for all updates to complete
+    Promise.allSettled(updatePromises).then((results) => {
+      // If any updates failed, revert to the backup
+      if (failureCount > 0) {
+        // Revert the view to its original state
+        const revertedViews = [...views];
+        if (viewIndex !== -1 && revertedViews[viewIndex]) {
+          revertedViews[viewIndex] = {
+            ...currentView!,
+            genres: backupGenres
+          };
+          setViews(revertedViews);
+        }
+        
+        // Show an error toast
+        toast({
+          title: "Error reordering taxonomies",
+          description: `${failureCount} out of ${updatePromises.length} updates failed. The order has been reverted.`,
+          variant: "destructive"
         });
       }
     });
