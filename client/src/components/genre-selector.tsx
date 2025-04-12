@@ -521,20 +521,14 @@ function TaxonomyGenreSelector({
     }
   };
 
-  // Check if a taxonomy is required and missing
+  // Check if taxonomy selection is below the total required count
   const isMissingRequired = (type: "genre" | "subgenre" | "theme" | "trope") => {
     // If limits are not restricted, nothing is required
     if (!restrictLimits) return false;
     
-    const count = getSelectedByType(type).length;
-    switch (type) {
-      case "genre": 
-      case "theme":
-      case "trope":
-        return count === 0;
-      default: 
-        return false;
-    }
+    // Return true for any tab if total taxonomies are less than 5
+    const totalSelected = selectedTaxonomies.length;
+    return totalSelected < 5;
   };
 
   // Add a taxonomy to the selection
@@ -673,6 +667,12 @@ function TaxonomyGenreSelector({
                   </TabsTrigger>
                 </TabsList>
                 
+                {restrictLimits && (
+                  <div className={`text-sm font-medium mb-4 ${selectedTaxonomies.length < 5 ? "text-destructive" : "text-green-600"}`}>
+                    Total taxonomies selected: {selectedTaxonomies.length}/5 {selectedTaxonomies.length < 5 ? "(need to select at least 5 total)" : "✓"}
+                  </div>
+                )}
+                
                 <div className="relative mb-4">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -686,7 +686,7 @@ function TaxonomyGenreSelector({
                 <TabsContent value="genre" className="m-0">
                   <div className="font-medium mb-2">
                     {restrictLimits 
-                      ? "Select up to 2 genres (required)" 
+                      ? "Select up to 2 genres" 
                       : "Select as many genres as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
@@ -762,7 +762,7 @@ function TaxonomyGenreSelector({
                 <TabsContent value="theme" className="m-0">
                   <div className="font-medium mb-2">
                     {restrictLimits 
-                      ? "Select up to 6 themes (at least 1 required)" 
+                      ? "Select up to 6 themes" 
                       : "Select as many themes as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
