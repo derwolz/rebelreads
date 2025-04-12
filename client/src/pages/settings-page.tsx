@@ -116,7 +116,7 @@ function SortableReferralLink({ link, index, onChange, onRemove }: SortableRefer
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, isAuthor, authorDetails, becomeAuthorMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
@@ -167,7 +167,7 @@ export default function SettingsPage() {
 
   const { data: userBooks } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
-    enabled: user?.isAuthor,
+    enabled: isAuthor,
   });
 
   const updateProfileMutation = useMutation({
@@ -195,24 +195,7 @@ export default function SettingsPage() {
     },
   });
 
-  const toggleAuthorMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/user/toggle-author", {
-        method: "POST",
-        credentials: "include",
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({
-        title: "Author status updated",
-        description: user?.isAuthor
-          ? "You are no longer registered as an author."
-          : "You are now registered as an author!",
-      });
-    },
-  });
+  // Using becomeAuthorMutation from useAuth hook instead of standalone toggleAuthorMutation
 
   const promoteBookMutation = useMutation({
     mutationFn: async (bookId: number) => {
@@ -393,8 +376,8 @@ export default function SettingsPage() {
               <div className="flex justify-between items-center pt-4">
                 <div className="flex items-center space-x-4">
                   <Switch
-                    checked={user?.isAuthor}
-                    onCheckedChange={() => toggleAuthorMutation.mutate()}
+                    checked={isAuthor}
+                    onCheckedChange={() => becomeAuthorMutation.mutate(undefined)}
                   />
                   <span>Register as an author</span>
                 </div>
