@@ -972,14 +972,37 @@ async function splitUserTable() {
       }
     }
     
-    // Check if publishers_authors table exists and needs to be updated to reference author_id to the authors table
+    // Check if publishers_authors table exists
     const checkPublishersAuthorsTable = await db.execute(sql`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_name = 'publishers_authors'
     `);
     
-    if (checkPublishersAuthorsTable.rows.length > 0) {
+    console.log(`Publishers_authors table check result: ${JSON.stringify(checkPublishersAuthorsTable.rows)}`);
+    
+    if (checkPublishersAuthorsTable.rows.length === 0) {
+      console.log("Creating 'publishers_authors' table...");
+      
+      try {
+        // Create the publishers_authors table
+        await db.execute(sql`
+          CREATE TABLE publishers_authors (
+            id SERIAL PRIMARY KEY,
+            publisher_id INTEGER NOT NULL REFERENCES publishers(id),
+            author_id INTEGER NOT NULL REFERENCES authors(id),
+            contract_start TIMESTAMP NOT NULL,
+            contract_end TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        
+        console.log("Publishers_authors table created successfully");
+      } catch (err) {
+        console.error("Error during publishers_authors table creation:", err);
+        throw err;
+      }
+    } else {
       console.log("Publishers_authors table exists, checking if it needs updates...");
       
       // Check if there are any foreign key constraints on publishers_authors.author_id
@@ -991,6 +1014,8 @@ async function splitUserTable() {
         AND tc.constraint_type = 'FOREIGN KEY'
         AND ccu.column_name = 'author_id'
       `);
+      
+      console.log(`Publishers_authors foreign key check result: ${JSON.stringify(checkPublishersAuthorsFk.rows)}`);
       
       // If there's no foreign key constraint, add it to reference the authors table
       if (checkPublishersAuthorsFk.rows.length === 0) {
