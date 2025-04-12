@@ -127,6 +127,21 @@ export function GenrePreferencesSettings() {
   const activeView = views.find((v) => v.id === activeViewId);
   const activeViewGenres = activeView?.genres || [];
 
+  // Handle the reordering of genres in a view
+  const handleTaxonomiesReorder = (viewId: number, reorderedTaxonomies: TaxonomyItem[]) => {
+    if (!viewId) return;
+    
+    // For each reordered taxonomy, update its rank in the database
+    reorderedTaxonomies.forEach((taxonomy, idx) => {
+      if (taxonomy.id) {
+        updateGenreRankMutation.mutate({
+          genreId: taxonomy.id,
+          rank: idx + 1,
+        });
+      }
+    });
+  };
+
   // Mutations
   // Create a new view
   const createViewMutation = useMutation({
@@ -708,6 +723,7 @@ export function GenrePreferencesSettings() {
                       mode="taxonomy"
                       selected={
                         view.genres?.map((g) => ({
+                          id: g.id, // Pass the ID for drag-and-drop reordering
                           taxonomyId: g.taxonomyId,
                           type: g.type as
                             | "genre"
@@ -721,9 +737,12 @@ export function GenrePreferencesSettings() {
                       onSelectionChange={(selected) =>
                         handleGenreSelectionChange(selected as TaxonomyItem[])
                       }
+                      onReorder={(reordered) => 
+                        handleTaxonomiesReorder(view.id, reordered as TaxonomyItem[])
+                      }
                       maxItems={20}
                       restrictLimits={false}
-                      helperText="Select genres to add to this view - no limits on selections"
+                      helperText="Select genres to add to this view - no limits on selections. Drag to reorder."
                     />
                   </div>
                 </TabsContent>

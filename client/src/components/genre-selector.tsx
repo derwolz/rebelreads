@@ -74,6 +74,11 @@ interface GenreSelectorProps {
   onSelectionChange: (selected: SimpleGenre[] | TaxonomyItem[]) => void;
   
   /**
+   * Optional: Callback for when items are reordered through drag-and-drop (taxonomy mode only)
+   */
+  onReorder?: (reordered: TaxonomyItem[]) => void;
+  
+  /**
    * Optional: Max number of genres that can be selected (for simple mode)
    * Default: Unlimited
    */
@@ -119,6 +124,7 @@ export function GenreSelector({
   mode = "simple",
   selected,
   onSelectionChange,
+  onReorder,
   maxItems,
   showQuickSelect = true,
   allowCustomGenres = false,
@@ -146,6 +152,7 @@ export function GenreSelector({
       <TaxonomyGenreSelector
         selectedTaxonomies={selected as TaxonomyItem[]}
         onTaxonomiesChange={(taxonomies) => onSelectionChange(taxonomies)}
+        onTaxonomiesReorder={onReorder}
         restrictLimits={restrictLimits}
         label={label}
         helperText={helperText}
@@ -406,6 +413,7 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
 interface TaxonomyGenreSelectorProps {
   selectedTaxonomies: TaxonomyItem[];
   onTaxonomiesChange: (taxonomies: TaxonomyItem[]) => void;
+  onTaxonomiesReorder?: (taxonomies: TaxonomyItem[]) => void;
   restrictLimits?: boolean;
   label?: string;
   helperText?: string;
@@ -415,6 +423,7 @@ interface TaxonomyGenreSelectorProps {
 function TaxonomyGenreSelector({
   selectedTaxonomies,
   onTaxonomiesChange,
+  onTaxonomiesReorder,
   restrictLimits = true,
   label,
   helperText,
@@ -585,7 +594,13 @@ function TaxonomyGenreSelector({
           rank: idx + 1
         }));
         
+        // Update local state
         onTaxonomiesChange(rerankedTaxonomies);
+        
+        // Call the reorder callback if provided, for backend persistence
+        if (onTaxonomiesReorder) {
+          onTaxonomiesReorder(rerankedTaxonomies);
+        }
       }
     }
   };
