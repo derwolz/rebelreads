@@ -3,7 +3,7 @@ import { dbStorage } from "../storage";
 import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users, userGenreViews, viewGenres } from "@shared/schema";
+import { users, userGenreViews, viewGenres, insertAuthorSchema } from "@shared/schema";
 
 const router = Router();
 
@@ -422,6 +422,88 @@ router.patch("/view-genres/:id/rank", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid data format", details: error.errors });
     }
     res.status(500).json({ error: "Failed to update genre rank" });
+  }
+});
+
+// Check if the user is an author
+router.get("/author-status", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is an author
+    const isAuthor = await dbStorage.isUserAuthor(req.user.id);
+    
+    // Get the author details if the user is an author
+    let authorDetails = null;
+    if (isAuthor) {
+      authorDetails = await dbStorage.getAuthorByUserId(req.user.id);
+    }
+    
+    res.json({ isAuthor, authorDetails });
+  } catch (error) {
+    console.error("Error checking author status:", error);
+    res.status(500).json({ error: "Failed to check author status" });
+  }
+});
+
+// Become an author
+router.post("/become-author", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is already an author
+    const isExistingAuthor = await dbStorage.isUserAuthor(req.user.id);
+    
+    if (isExistingAuthor) {
+      return res.status(400).json({ error: "User is already registered as an author" });
+    }
+    
+    // Validate the request body
+    const authorData = insertAuthorSchema.parse({
+      userId: req.user.id,
+      authorName: req.body.authorName || req.user.name || req.user.username,
+      bio: req.body.bio || "",
+      isPro: false, // Default to not pro
+    });
+    
+    // Create a new author record
+    const author = await dbStorage.createAuthor(authorData);
+    
+    res.status(201).json(author);
+  } catch (error) {
+    console.error("Error creating author:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to register as an author" });
+  }
+});
+
+// Update author profile
+router.patch("/author-profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is an author
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
+    
+    if (!author) {
+      return res.status(404).json({ error: "Author profile not found" });
+    }
+    
+    // Update author profile
+    const updatedAuthor = await dbStorage.updateAuthor(author.id, req.body);
+    
+    res.json(updatedAuthor);
+  } catch (error) {
+    console.error("Error updating author profile:", error);
+    res.status(500).json({ error: "Failed to update author profile" });
   }
 });
 

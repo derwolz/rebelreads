@@ -1049,6 +1049,45 @@ async function splitUserTable() {
   }
 }
 
+// Function to remove isAuthor field from users
+async function removeIsAuthorFromUsers() {
+  try {
+    console.log("Checking for isAuthor column in users table...");
+    
+    // Check if isAuthor column exists in users table
+    const checkIsAuthorColumn = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name = 'is_author'
+    `);
+    
+    if (checkIsAuthorColumn.rows.length > 0) {
+      console.log("isAuthor column exists in users table, removing it...");
+      
+      try {
+        // Remove isAuthor column from users table
+        await db.execute(sql`
+          ALTER TABLE users 
+          DROP COLUMN IF EXISTS is_author
+        `);
+        
+        console.log("isAuthor column successfully removed from users table");
+      } catch (err) {
+        console.error("Error removing isAuthor column from users:", err);
+        // Not throwing an error here as this is not critical for the application to function
+        console.log("Continuing with other migrations...");
+      }
+    } else {
+      console.log("isAuthor column doesn't exist or has already been removed");
+    }
+  } catch (error) {
+    console.error("Error in removeIsAuthorFromUsers:", error);
+    // Not throwing an error here as this is not critical for the application to function
+    console.log("Continuing with other migrations...");
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -1078,7 +1117,9 @@ export async function runMigrations() {
   await migrateCoverUrlToBookImages();
   // Remove cover_url column from books table
   await removeCoverUrlColumn();
-  // Split the users table into users, authors, and publishers tables
+  // Split user table to separate authors and publishers tables
   await splitUserTable();
+  // Remove isAuthor field from users table
+  await removeIsAuthorFromUsers();
   console.log("Migrations completed");
 }
