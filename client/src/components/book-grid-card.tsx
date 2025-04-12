@@ -148,14 +148,14 @@ export function BookGridCard({ book }: { book: Book }) {
   };
 
   return (
-    <div className="relative group" style={{ height: "200px", width: "200px" }}>
+    <div className="relative group" style={{ height: "12rem", width: "100%" }}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Card
               id={`book-grid-card-${book.id}`}
               className={`
-                overflow-hidden cursor-pointer
+                overflow-hidden cursor-pointer h-48 w-full
                 transition-all duration-300 ease-in-out
                 ${showDetailed ? "shadow-xl z-50" : "z-0"}
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
@@ -164,8 +164,7 @@ export function BookGridCard({ book }: { book: Book }) {
                 position: showDetailed ? "absolute" : "relative",
                 transform: showDetailed ? "scale(1.05)" : "scale(1)",
                 transformOrigin: "center center",
-                width: showDetailed ? "210px" : "200px",
-                height: showDetailed ? "210px" : "200px"
+                width: showDetailed ? "105%" : "100%"
               }}
               onClick={handleCardClick}
               onMouseEnter={(e) => {
@@ -199,19 +198,17 @@ export function BookGridCard({ book }: { book: Book }) {
                   </Badge>
                 </div>
               )}
-              <div className="absolute bg-black/20 rounded-full top-2 right-2 z-10">
+              <div className="absolute bg-black/20 top-2 left-[40%] z-10">
                 <WishlistButton bookId={book.id} variant="ghost" size="icon" />
               </div>
-              <div className="flex flex-col h-full">
-                <div className="h-[130px] overflow-hidden flex justify-center">
-                  <img
-                    src={book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png"}
-                    alt={book.title}
-                    className="object-contain h-full"
-                  />
-                </div>
-                <CardContent className="flex flex-col justify-between p-2 h-[70px]">
-                  <h3 className="text-xs font-semibold line-clamp-1 mb-1">
+              <div className="flex h-full">
+                <img
+                  src={book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png"}
+                  alt={book.title}
+                  className="w-1/3 object-cover"
+                />
+                <CardContent className="flex flex-col justify-end gap-3 p-3 mt-16 w-2/3">
+                  <h3 className="text-sm font-semibold line-clamp-2 mb-1">
                     {book.title}
                   </h3>
                   <Link
@@ -222,12 +219,14 @@ export function BookGridCard({ book }: { book: Book }) {
                     {book.author}
                   </Link>
 
-                  <div className="mt-1">
-                    <StarRating
-                      rating={averageRatings?.overall || 0}
-                      readOnly
-                      size="sm"
-                    />
+                  <div className="mt-2">
+                    <div className="flex flex-col items-left gap-1">
+                      <StarRating
+                        rating={averageRatings?.overall || 0}
+                        readOnly
+                        size="sm"
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </div>
