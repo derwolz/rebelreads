@@ -5,7 +5,14 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 import { db } from "../db";
-import { ratings, books, followers, bookImages } from "@shared/schema";
+import { 
+  ratings, 
+  books, 
+  followers, 
+  bookImages, 
+  bookGenreTaxonomies, 
+  genreTaxonomies 
+} from "@shared/schema";
 import { eq, and, inArray, notInArray, desc, avg, count, sql } from "drizzle-orm";
 
 // Configure multer for file uploads
@@ -730,14 +737,39 @@ router.get("/dashboard", async (req: Request, res: Response) => {
       };
     });
     
-    // Get recommendations - for now simple recommendations based on user's most read genres
-    const userGenres = new Set<string>();
-    [...wishlistedBooks, ...completedBooks].forEach(book => {
-      // Check if book.genres exists before iterating
-      if (book.genres && Array.isArray(book.genres)) {
-        book.genres.forEach(genre => userGenres.add(genre));
+    // Get recommendations - using book taxonomies instead of direct genre arrays
+    const userGenres = new Set<number>();
+    
+    // Collect book IDs from wishlisted and completed books
+    const bookIds = [...wishlistedBooks, ...completedBooks].map(book => book.id);
+    
+    // Skip taxonomy lookup if no books found
+    if (bookIds.length > 0) {
+      try {
+        // Fetch taxonomies for these books
+        const bookTaxonomies = await db
+          .select({
+            taxonomyId: bookGenreTaxonomies.taxonomyId,
+            type: genreTaxonomies.type
+          })
+          .from(bookGenreTaxonomies)
+          .innerJoin(
+            genreTaxonomies,
+            eq(bookGenreTaxonomies.taxonomyId, genreTaxonomies.id)
+          )
+          .where(
+            and(
+              inArray(bookGenreTaxonomies.bookId, bookIds),
+              eq(genreTaxonomies.type, 'genre') // Only consider main genres
+            )
+          );
+        
+        // Add taxonomy IDs to the set
+        bookTaxonomies.forEach(taxonomy => userGenres.add(taxonomy.taxonomyId));
+      } catch (error) {
+        console.error("Error fetching book taxonomies for recommendation:", error);
       }
-    });
+    }
     
     // Get books in user's preferred genres that they haven't rated yet
     let recommendationsRaw = [];
@@ -748,22 +780,67 @@ router.get("/dashboard", async (req: Request, res: Response) => {
         // Get books that the user has not rated yet
         const userRatedBookIds = userRatings.map(rating => rating.bookId);
         
-        // Query for books, excluding ones the user has already rated
+        // Convert the Set of taxonomy IDs to an array
+        const taxonomyIdsArray = Array.from(userGenres);
+        
+        // Query for books with matching taxonomies, excluding ones the user has already rated
         if (userRatedBookIds.length === 0) {
-          // If user hasn't rated any books, just get some popular ones
-          recommendationsRaw = await db
-            .select()
-            .from(books)
-            .orderBy(desc(books.impressionCount))
-            .limit(6);
+          // If user hasn't rated any books, get books with matching taxonomies
+          // First get book IDs that match the user's genres
+          const bookIdsWithUserGenres = await db
+            .select({
+              bookId: bookGenreTaxonomies.bookId
+            })
+            .from(bookGenreTaxonomies)
+            .where(inArray(bookGenreTaxonomies.taxonomyId, taxonomyIdsArray))
+            .groupBy(bookGenreTaxonomies.bookId);
+            
+          // Then fetch those books
+          if (bookIdsWithUserGenres.length > 0) {
+            const matchingBookIds = bookIdsWithUserGenres.map(item => item.bookId);
+            recommendationsRaw = await db
+              .select()
+              .from(books)
+              .where(inArray(books.id, matchingBookIds))
+              .orderBy(desc(books.impressionCount))
+              .limit(6);
+          } else {
+            // Fallback to popular books if no matching genre books found
+            recommendationsRaw = await db
+              .select()
+              .from(books)
+              .orderBy(desc(books.impressionCount))
+              .limit(6);
+          }
         } else {
-          // Get books excluding the ones user has already rated
-          recommendationsRaw = await db
-            .select()
-            .from(books)
-            .where(notInArray(books.id, userRatedBookIds))
-            .orderBy(desc(books.impressionCount))
-            .limit(6);
+          // Get books with matching taxonomies, excluding ones the user has already rated
+          const bookIdsWithUserGenres = await db
+            .select({
+              bookId: bookGenreTaxonomies.bookId
+            })
+            .from(bookGenreTaxonomies)
+            .where(inArray(bookGenreTaxonomies.taxonomyId, taxonomyIdsArray))
+            .groupBy(bookGenreTaxonomies.bookId);
+            
+          if (bookIdsWithUserGenres.length > 0) {
+            const matchingBookIds = bookIdsWithUserGenres.map(item => item.bookId)
+              .filter(id => !userRatedBookIds.includes(id));
+              
+            recommendationsRaw = await db
+              .select()
+              .from(books)
+              .where(inArray(books.id, matchingBookIds))
+              .orderBy(desc(books.impressionCount))
+              .limit(6);
+          } else {
+            // Fallback to popular books if no matching genre books found
+            recommendationsRaw = await db
+              .select()
+              .from(books)
+              .where(notInArray(books.id, userRatedBookIds))
+              .orderBy(desc(books.impressionCount))
+              .limit(6);
+          }
         }
       } catch (error) {
         console.error("Error getting recommendations:", error);
