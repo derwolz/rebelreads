@@ -818,6 +818,8 @@ async function removeCoverUrlColumn() {
 
 async function splitUserTable() {
   try {
+    console.log("Starting splitUserTable migration function...");
+    
     // Check if authors table exists
     const checkAuthorsTable = await db.execute(sql`
       SELECT table_name 
@@ -825,91 +827,196 @@ async function splitUserTable() {
       WHERE table_name = 'authors'
     `);
     
+    console.log(`Authors table check result: ${JSON.stringify(checkAuthorsTable.rows)}`);
+    
     if (checkAuthorsTable.rows.length === 0) {
       console.log("Creating 'authors' table and migrating author data...");
       
-      // Create the authors table
-      await db.execute(sql`
-        CREATE TABLE authors (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
-          author_name TEXT NOT NULL,
-          author_image_url TEXT,
-          birth_date DATE,
-          death_date DATE,
-          website TEXT,
-          bio TEXT,
-          is_pro BOOLEAN NOT NULL DEFAULT false,
-          pro_expires_at TIMESTAMP,
-          credits DECIMAL NOT NULL DEFAULT '0'
-        )
-      `);
-      
-      // Migrate data from users table to authors table for users who are authors
-      await db.execute(sql`
-        INSERT INTO authors (
-          user_id, 
-          author_name, 
-          author_image_url, 
-          birth_date, 
-          death_date, 
-          website, 
-          bio, 
-          is_pro, 
-          pro_expires_at, 
-          credits
-        )
-        SELECT 
-          id AS user_id,
-          COALESCE(author_name, username) AS author_name,
-          author_image_url,
-          birth_date,
-          death_date,
-          website,
-          author_bio AS bio,
-          is_pro,
-          pro_expires_at,
-          credits
-        FROM users 
-        WHERE is_author = true
-      `);
-      
-      console.log("Authors table created and data migrated successfully");
+      try {
+        // Create the authors table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS authors (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+            author_name TEXT NOT NULL,
+            author_image_url TEXT,
+            birth_date DATE,
+            death_date DATE,
+            website TEXT,
+            bio TEXT,
+            is_pro BOOLEAN NOT NULL DEFAULT false,
+            pro_expires_at TIMESTAMP,
+            credits DECIMAL NOT NULL DEFAULT '0'
+          )
+        `);
+        console.log("Authors table structure created successfully");
+        
+        // Check if there are any users with is_author = true
+        const checkAuthors = await db.execute(sql`
+          SELECT COUNT(*) as author_count FROM users WHERE is_author = true
+        `);
+        console.log(`Found ${checkAuthors.rows[0]?.author_count || 0} users who are authors`);
+        
+        // Migrate data from users table to authors table for users who are authors
+        await db.execute(sql`
+          INSERT INTO authors (
+            user_id, 
+            author_name, 
+            author_image_url, 
+            birth_date, 
+            death_date, 
+            website, 
+            bio, 
+            is_pro, 
+            pro_expires_at, 
+            credits
+          )
+          SELECT 
+            id AS user_id,
+            COALESCE(author_name, username) AS author_name,
+            author_image_url,
+            birth_date,
+            death_date,
+            website,
+            author_bio AS bio,
+            is_pro,
+            pro_expires_at,
+            credits
+          FROM users 
+          WHERE is_author = true
+        `);
+        
+        console.log("Authors data migrated successfully");
+      } catch (err) {
+        console.error("Error during authors table creation or data migration:", err);
+        throw err;
+      }
     } else {
       console.log("Authors table already exists, skipping creation");
     }
     
-    // Update the publishers table to add new fields if it's already created
-    const checkPublishersFields = await db.execute(sql`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'publishers' AND column_name = 'publisher_name'
+    // Check if publishers table exists
+    const checkPublishersTable = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'publishers'
     `);
     
-    if (checkPublishersFields.rows.length === 0) {
-      console.log("Updating publishers table with new fields...");
+    console.log(`Publishers table check result: ${JSON.stringify(checkPublishersTable.rows)}`);
+    
+    if (checkPublishersTable.rows.length === 0) {
+      console.log("Creating 'publishers' table...");
       
-      // Add new columns to publishers table
-      await db.execute(sql`
-        ALTER TABLE publishers
-        ADD COLUMN publisher_name TEXT NOT NULL DEFAULT '',
-        ADD COLUMN publisher_description TEXT,
-        ADD COLUMN business_email TEXT,
-        ADD COLUMN business_phone TEXT,
-        ADD COLUMN business_address TEXT
-      `);
-      
-      // Migrate existing data to new column names
-      await db.execute(sql`
-        UPDATE publishers
-        SET publisher_name = name,
-            publisher_description = description
-      `);
-      
-      console.log("Publishers table updated successfully");
+      try {
+        // Create the publishers table
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS publishers (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL,
+            publisher_name TEXT NOT NULL,
+            publisher_description TEXT,
+            description TEXT,
+            business_email TEXT,
+            business_phone TEXT,
+            business_address TEXT,
+            website TEXT,
+            logo_url TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+          )
+        `);
+        
+        console.log("Publishers table created successfully");
+      } catch (err) {
+        console.error("Error during publishers table creation:", err);
+        throw err;
+      }
     } else {
-      console.log("Publishers table already has the new columns, skipping update");
+      // Check if the publishers table needs to be updated with new fields
+      const checkPublishersFields = await db.execute(sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'publishers' AND column_name = 'publisher_name'
+      `);
+      
+      console.log(`Publishers fields check result: ${JSON.stringify(checkPublishersFields.rows)}`);
+      
+      if (checkPublishersFields.rows.length === 0) {
+        console.log("Updating publishers table with new fields...");
+        
+        try {
+          // Add new columns to publishers table
+          await db.execute(sql`
+            ALTER TABLE publishers
+            ADD COLUMN IF NOT EXISTS publisher_name TEXT NOT NULL DEFAULT '',
+            ADD COLUMN IF NOT EXISTS publisher_description TEXT,
+            ADD COLUMN IF NOT EXISTS business_email TEXT,
+            ADD COLUMN IF NOT EXISTS business_phone TEXT,
+            ADD COLUMN IF NOT EXISTS business_address TEXT
+          `);
+          
+          // Migrate existing data to new column names
+          await db.execute(sql`
+            UPDATE publishers
+            SET publisher_name = name,
+                publisher_description = description
+            WHERE publisher_name = ''
+          `);
+          
+          console.log("Publishers table updated successfully");
+        } catch (err) {
+          console.error("Error during publishers table update:", err);
+          throw err;
+        }
+      } else {
+        console.log("Publishers table already has the new columns, skipping update");
+      }
     }
+    
+    // Check if publishers_authors table exists and needs to be updated to reference author_id to the authors table
+    const checkPublishersAuthorsTable = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'publishers_authors'
+    `);
+    
+    if (checkPublishersAuthorsTable.rows.length > 0) {
+      console.log("Publishers_authors table exists, checking if it needs updates...");
+      
+      // Check if there are any foreign key constraints on publishers_authors.author_id
+      const checkPublishersAuthorsFk = await db.execute(sql`
+        SELECT tc.constraint_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
+        WHERE tc.table_name = 'publishers_authors' 
+        AND tc.constraint_type = 'FOREIGN KEY'
+        AND ccu.column_name = 'author_id'
+      `);
+      
+      // If there's no foreign key constraint, add it to reference the authors table
+      if (checkPublishersAuthorsFk.rows.length === 0) {
+        console.log("Updating publishers_authors table to reference the authors table...");
+        
+        try {
+          // Add foreign key constraint to authors table
+          await db.execute(sql`
+            ALTER TABLE publishers_authors
+            ADD CONSTRAINT fk_publishers_authors_author
+            FOREIGN KEY (author_id)
+            REFERENCES authors (id)
+          `);
+          
+          console.log("Publishers_authors table updated successfully");
+        } catch (err) {
+          console.error("Error during publishers_authors table update:", err);
+          // Not throwing an error here as this is not critical for the application to function
+          console.log("Continuing with other migrations...");
+        }
+      } else {
+        console.log("Publishers_authors table already has the correct references");
+      }
+    }
+    
+    console.log("splitUserTable migration completed successfully");
     
   } catch (error) {
     console.error("Error splitting users table:", error);
