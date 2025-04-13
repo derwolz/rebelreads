@@ -24,6 +24,7 @@ import { SearchBooksPage } from "@/pages/search-books-page";
 import { SearchAuthorsPage } from "@/pages/search-authors-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import ProActionPage from "@/pages/pro-action-page";
+import ProAuthorProfilePage from "@/pages/pro-author-profile-page";
 import FollowerTest from "@/pages/follower-test";
 import PublisherPage from "@/pages/publisher-page";
 import { HomepageSettingsPage } from "@/pages/homepage-settings-page";
@@ -108,6 +109,7 @@ function Router() {
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
         <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
+        <ProtectedRoute path="/pro/author" component={ProAuthorProfilePage} />
         <ProtectedRoute path="/follower-test" component={FollowerTest} />
 
         {/* Admin routes */}

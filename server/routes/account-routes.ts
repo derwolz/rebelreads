@@ -3,7 +3,7 @@ import { dbStorage } from "../storage";
 import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users, userGenreViews, viewGenres, insertAuthorSchema } from "@shared/schema";
+import { users, userGenreViews, viewGenres, insertAuthorSchema, authors } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
