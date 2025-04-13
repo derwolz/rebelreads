@@ -170,382 +170,411 @@ export default function BookDetails() {
     });
 
   return (
-    <div>
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Left column with book cover and action buttons */}
-          <div>
-            <div className="relative">
-              <img
-                src={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
-                alt={book.title}
-                className="w-full rounded-lg shadow-lg"
-              />
-              <div className="absolute top-2 left-2">
-                <WishlistButton
-                  bookId={book.id}
-                  variant="ghost"
-                  size="icon"
-                  className="bg-black/40 hover:bg-black/60 rounded-full w-10 h-10 text-white hover:text-white [&[data-wishlisted='true']]:text-red-500 [&[data-wishlisted='true']]:hover:text-red-600 transition-colors"
-                />
-              </div>
-            </div>
-            <div className="mt-4 space-y-2">
-              {Array.isArray(book.referralLinks) &&
-                book.referralLinks.length > 0 && (
-                  <>
-                    {book.referralLinks.map(
-                      (link: ReferralLink, index: number) => (
-                        <a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full"
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            await apiRequest(
-                              "POST",
-                              `/api/books/${book.id}/click-through`,
-                              {
-                                source: `referral_${link.retailer.toLowerCase()}`,
-                                referrer: window.location.pathname,
-                              },
-                            );
-                            window.open(link.url, "_blank");
-                          }}
-                        >
-                          <Button variant="outline" className="w-full">
-                            {link.customName || link.retailer}
-                            <ExternalLink className="ml-2 h-4 w-4" />
-                          </Button>
-                        </a>
-                      ),
-                    )}
-                  </>
-                )}
-            </div>
-          </div>
-
-          {/* Right column with book details */}
-          <div className="md:col-span-2 space-y-8">
+    <div className="relative min-h-screen">
+      {/* Background image with blue overlay */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"})`,
+        }}
+      >
+        <div className="absolute inset-0 bg-primary/70"></div>
+      </div>
+      
+      {/* Main content */}
+      <main className="container relative z-10 mx-auto px-4 py-8">
+        <div className="bg-background/95 rounded-lg shadow-lg p-6 backdrop-blur-md">
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Left column with book cover and action buttons */}
             <div>
-              <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
-              <div className="flex items-center gap-4 mb-4">
-                <p className="text-xl">
-                  by{" "}
-                  <Link
-                    href={`/authors/${book.authorId}`}
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {book.author}
-                  </Link>
-                </p>
-                <FollowButton
-                  authorId={book.authorId}
-                  authorName={book.author}
-                  className="ml-2"
+              <div className="relative">
+                <img
+                  src={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
+                  alt={book.title}
+                  className="w-full rounded-lg shadow-lg"
                 />
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                <TooltipProvider>
-                  {bookTaxonomies && bookTaxonomies.length > 0 ? (
-                    bookTaxonomies.map((taxonomy) => (
-                      <Tooltip key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
-                        <TooltipTrigger>
-                          <div>
-                            <Badge 
-                              variant={taxonomy.type === 'genre' ? 'default' : 
-                                      taxonomy.type === 'subgenre' ? 'secondary' : 
-                                      taxonomy.type === 'theme' ? 'outline' : 
-                                      'destructive'} 
-                              className="text-sm cursor-help"
-                            >
-                              {taxonomy.name}
-                            </Badge>
-                          </div>
-                        </TooltipTrigger>
-                        {taxonomy.description && (
-                          <TooltipContent className="max-w-xs">
-                            <p>{taxonomy.description}</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    ))
-                  ) : (
-                    // Fallback for compatibility with older books that still use the genres array
-                    Array.isArray((book as any).genres) && (book as any).genres.map((genre: string) => (
-                      <Badge key={genre} variant="secondary" className="text-sm">
-                        {genre}
-                      </Badge>
-                    ))
-                  )}
-                </TooltipProvider>
-              </div>
-
-              {book.formats && book.formats.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold mb-2">
-                    Available Formats
-                  </h3>
-                  <div className="flex gap-4">
-                    {book.formats.map((format) => (
-                      <span
-                        key={format}
-                        className="text-sm bg-muted px-4 py-2 rounded-md"
-                      >
-                        {format.charAt(0).toUpperCase() + format.slice(1)}
-                      </span>
-                    ))}
-                  </div>
+                <div className="absolute top-2 left-2">
+                  <WishlistButton
+                    bookId={book.id}
+                    variant="ghost"
+                    size="icon"
+                    className="bg-black/40 hover:bg-black/60 rounded-full w-10 h-10 text-white hover:text-white [&[data-wishlisted='true']]:text-red-500 [&[data-wishlisted='true']]:hover:text-red-600 transition-colors"
+                  />
                 </div>
-              )}
+              </div>
+              <div className="mt-4 space-y-2">
+                {Array.isArray(book.referralLinks) &&
+                  book.referralLinks.length > 0 && (
+                    <>
+                      {book.referralLinks.map(
+                        (link: ReferralLink, index: number) => (
+                          <a
+                            key={index}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              await apiRequest(
+                                "POST",
+                                `/api/books/${book.id}/click-through`,
+                                {
+                                  source: `referral_${link.retailer.toLowerCase()}`,
+                                  referrer: window.location.pathname,
+                                },
+                              );
+                              window.open(link.url, "_blank");
+                            }}
+                          >
+                            <Button variant="outline" className="w-full">
+                              {link.customName || link.retailer}
+                              <ExternalLink className="ml-2 h-4 w-4" />
+                            </Button>
+                          </a>
+                        ),
+                      )}
+                    </>
+                  )}
+              </div>
+            </div>
 
-              <p className="text-lg">{book.description}</p>
+            {/* Right column with book details */}
+            <div className="md:col-span-2 space-y-8">
+              <div>
+                <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
+                <div className="flex items-center gap-4 mb-4">
+                  <p className="text-xl">
+                    by{" "}
+                    <Link
+                      href={`/authors/${book.authorId}`}
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {book.author}
+                    </Link>
+                  </p>
+                  <FollowButton
+                    authorId={book.authorId}
+                    authorName={book.author}
+                    className="ml-2"
+                  />
+                </div>
 
-              <div className="grid gap-8">
-                <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold">More Details</h2>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <ChevronDown
-                          className={`h-4 w-4 transition-transform ${
-                            isOpen ? "transform rotate-180" : ""
-                          }`}
-                        />
-                        <span className="sr-only">Toggle details</span>
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <TooltipProvider>
+                    {bookTaxonomies && bookTaxonomies.length > 0 ? (
+                      bookTaxonomies.map((taxonomy) => (
+                        <Tooltip key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
+                          <TooltipTrigger>
+                            <div>
+                              <Badge 
+                                variant={taxonomy.type === 'genre' ? 'default' : 
+                                        taxonomy.type === 'subgenre' ? 'secondary' : 
+                                        taxonomy.type === 'theme' ? 'outline' : 
+                                        'destructive'} 
+                                className="text-sm cursor-help"
+                              >
+                                {taxonomy.name}
+                              </Badge>
+                            </div>
+                          </TooltipTrigger>
+                          {taxonomy.description && (
+                            <TooltipContent className="max-w-xs">
+                              <p>{taxonomy.description}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      ))
+                    ) : (
+                      // Fallback for compatibility with older books that still use the genres array
+                      Array.isArray((book as any).genres) && (book as any).genres.map((genre: string) => (
+                        <Badge key={genre} variant="secondary" className="text-sm">
+                          {genre}
+                        </Badge>
+                      ))
+                    )}
+                  </TooltipProvider>
+                </div>
 
-                  <CollapsibleContent className="space-y-4 mt-4">
-                    {book.originalTitle && (
-                      <div>
-                        <span className="font-medium">Original Title:</span>{" "}
-                        {book.originalTitle}
-                      </div>
-                    )}
-                    {book.series && (
-                      <div>
-                        <span className="font-medium">Series:</span>{" "}
-                        {book.series}
-                      </div>
-                    )}
-                    {book.setting && (
-                      <div>
-                        <span className="font-medium">Setting:</span>{" "}
-                        {book.setting}
-                      </div>
-                    )}
-                    {book.characters && book.characters.length > 0 && (
-                      <div>
-                        <span className="font-medium">Characters:</span>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {book.characters.map((character, index) => (
-                            <Badge key={index} variant="outline">
-                              {character}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {book.awards && book.awards.length > 0 && (
-                      <div>
-                        <span className="font-medium">Awards:</span>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {book.awards.map((award, index) => (
-                            <Badge key={index} variant="outline">
-                              {award}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {book.pageCount && (
-                      <div>
-                        <span className="font-medium">Pages:</span>{" "}
-                        {book.pageCount}
-                      </div>
-                    )}
-                    {book.publishedDate && (
-                      <div>
-                        <span className="font-medium">Published:</span>{" "}
-                        {format(new Date(book.publishedDate), "MMMM d, yyyy")}
-                      </div>
-                    )}
-                    {book.isbn && (
-                      <div>
-                        <span className="font-medium">ISBN:</span> {book.isbn}
-                      </div>
-                    )}
-                    {book.asin && (
-                      <div>
-                        <span className="font-medium">ASIN:</span> {book.asin}
-                      </div>
-                    )}
-                    <div>
-                      <span className="font-medium">Language:</span>{" "}
-                      {book.language}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-semibold">
-                      Ratings & Reviews
-                    </h2>
-                    <div className="flex items-center gap-4">
-                      <RatingDialog
-                        bookId={book.id}
-                        trigger={
-                          <Button onClick={handleRateClick}>
-                            Rate this book
-                          </Button>
-                        }
-                      />
-                      <Select
-                        value={ratingFilter}
-                        onValueChange={setRatingFilter}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Filter by rating" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Ratings</SelectItem>
-                          <SelectItem value="5">5 Stars</SelectItem>
-                          <SelectItem value="4">4 Stars</SelectItem>
-                          <SelectItem value="3">3 Stars</SelectItem>
-                          <SelectItem value="2">2 Stars</SelectItem>
-                          <SelectItem value="1">1 Star</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {averageRatings ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings.overall}
-                          readOnly
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          ({averageRatings.overall.toFixed(2)})
+                {book.formats && book.formats.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">
+                      Available Formats
+                    </h3>
+                    <div className="flex gap-4">
+                      {book.formats.map((format) => (
+                        <span
+                          key={format}
+                          className="text-sm bg-muted px-4 py-2 rounded-md"
+                        >
+                          {format.charAt(0).toUpperCase() + format.slice(1)}
                         </span>
-                      </div>
-                      <div className="grid gap-2">
-                        {ratingPreferences ? (
-                          // If user has preferences, show a message
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Showing ratings weighted to your preferences
-                          </p>
-                        ) : null}
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.enjoyment}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.enjoyment.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Writing ({getWeightPercentage("writing", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.writing}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.writing.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Themes ({getWeightPercentage("themes", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.themes}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.themes.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Characters ({getWeightPercentage("characters", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.characters}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.characters.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.worldbuilding}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.worldbuilding.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">No ratings yet</p>
-                  )}
-
-                  {/* Horizontal Banner Ad */}
-                  {book.id && (
-                    <div className="my-8">
-                      <HorizontalBannerAd
-                        campaignId={1}
-                        bookId={book.id}
-                        imageSrc={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
-                        title={`Readers also enjoyed: ${book.title}`}
-                        description="More from this author and similar titles you might enjoy."
-                        ctaText="Explore More"
-                        source="book-details"
-                        position="before-reviews"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="space-y-4 mt-8">
-                    <h3 className="text-xl font-semibold">Reviews</h3>
-                    <div className="max-w-3xl space-y-4">
-                      {filteredRatings?.map((review) => (
-                        <ReviewCard key={review.id} review={review} />
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-lg">{book.description}</p>
+
+                <div className="grid gap-8">
+                  <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-semibold">More Details</h2>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${
+                              isOpen ? "transform rotate-180" : ""
+                            }`}
+                          />
+                          <span className="sr-only">Toggle details</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+
+                    <CollapsibleContent className="space-y-4 mt-4">
+                      {book.originalTitle && (
+                        <div>
+                          <span className="font-medium">Original Title:</span>{" "}
+                          {book.originalTitle}
+                        </div>
+                      )}
+                      {book.series && (
+                        <div>
+                          <span className="font-medium">Series:</span>{" "}
+                          {book.series}
+                        </div>
+                      )}
+                      {book.setting && (
+                        <div>
+                          <span className="font-medium">Setting:</span>{" "}
+                          {book.setting}
+                        </div>
+                      )}
+                      {book.characters && book.characters.length > 0 && (
+                        <div>
+                          <span className="font-medium">Characters:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {book.characters.map((character, index) => (
+                              <Badge key={index} variant="outline">
+                                {character}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {book.awards && book.awards.length > 0 && (
+                        <div>
+                          <span className="font-medium">Awards:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {book.awards.map((award, index) => (
+                              <Badge key={index} variant="outline">
+                                {award}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {book.pageCount && (
+                        <div>
+                          <span className="font-medium">Pages:</span>{" "}
+                          {book.pageCount}
+                        </div>
+                      )}
+                      {book.publishedDate && (
+                        <div>
+                          <span className="font-medium">Published:</span>{" "}
+                          {format(new Date(book.publishedDate), "MMMM d, yyyy")}
+                        </div>
+                      )}
+                      {book.isbn && (
+                        <div>
+                          <span className="font-medium">ISBN:</span> {book.isbn}
+                        </div>
+                      )}
+                      {book.asin && (
+                        <div>
+                          <span className="font-medium">ASIN:</span> {book.asin}
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium">Language:</span>{" "}
+                        {book.language}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-semibold">
+                        Ratings & Reviews
+                      </h2>
+                      <div className="flex items-center gap-4">
+                        <RatingDialog
+                          bookId={book.id}
+                          trigger={
+                            <Button onClick={handleRateClick}>
+                              Rate this book
+                            </Button>
+                          }
+                        />
+                        <Select
+                          value={ratingFilter}
+                          onValueChange={setRatingFilter}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by rating" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Ratings</SelectItem>
+                            <SelectItem value="5">5 Stars</SelectItem>
+                            <SelectItem value="4">4 Stars</SelectItem>
+                            <SelectItem value="3">3 Stars</SelectItem>
+                            <SelectItem value="2">2 Stars</SelectItem>
+                            <SelectItem value="1">1 Star</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {averageRatings ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <StarRating
+                            rating={averageRatings.overall}
+                            readOnly
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            ({averageRatings.overall.toFixed(2)})
+                          </span>
+                        </div>
+                        <div className="grid gap-2">
+                          {ratingPreferences ? (
+                            // If user has preferences, show a message
+                            <p className="text-xs text-muted-foreground mb-2">
+                              Showing ratings weighted to your preferences
+                            </p>
+                          ) : null}
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">
+                              Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences)})
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <StarRating
+                                rating={averageRatings.enjoyment}
+                                readOnly
+                                size="sm"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                ({averageRatings.enjoyment.toFixed(2)})
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">
+                              Writing ({getWeightPercentage("writing", ratingPreferences)})
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <StarRating
+                                rating={averageRatings.writing}
+                                readOnly
+                                size="sm"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                ({averageRatings.writing.toFixed(2)})
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">
+                              Themes ({getWeightPercentage("themes", ratingPreferences)})
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <StarRating
+                                rating={averageRatings.themes}
+                                readOnly
+                                size="sm"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                ({averageRatings.themes.toFixed(2)})
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">
+                              Characters ({getWeightPercentage("characters", ratingPreferences)})
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <StarRating
+                                rating={averageRatings.characters}
+                                readOnly
+                                size="sm"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                ({averageRatings.characters.toFixed(2)})
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">
+                              World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <StarRating
+                                rating={averageRatings.worldbuilding}
+                                readOnly
+                                size="sm"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                ({averageRatings.worldbuilding.toFixed(2)})
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center bg-muted/50 p-6 rounded-lg">
+                        <p className="text-center text-muted-foreground mb-2">
+                          No ratings yet! Be the first to rate this book.
+                        </p>
+                        <RatingDialog
+                          bookId={book.id}
+                          trigger={
+                            <Button
+                              onClick={handleRateClick}
+                              className="mt-2"
+                              variant="outline"
+                            >
+                              Rate this book
+                            </Button>
+                          }
+                        />
+                      </div>
+                    )}
+
+                    {/* Horizontal Banner Ad */}
+                    {book.id && (
+                      <div className="my-8">
+                        <HorizontalBannerAd
+                          campaignId={1}
+                          bookId={book.id}
+                          imageSrc={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
+                          title={`Readers also enjoyed: ${book.title}`}
+                          description="More from this author and similar titles you might enjoy."
+                          ctaText="Explore More"
+                          source="book-details"
+                          position="before-reviews"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-4 mt-8">
+                      <h3 className="text-xl font-semibold">Reviews</h3>
+                      <div className="max-w-3xl space-y-4">
+                        {filteredRatings?.map((review) => (
+                          <ReviewCard key={review.id} review={review} />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
