@@ -20,6 +20,7 @@ import bookCollectionsRoutes from "./routes/book-collections-routes";
 import popularBooksRoutes from "./routes/popular-books-routes";
 import feedbackRoutes from "./routes/feedback-routes";
 import salesRoutes from "./routes/sales-routes";
+import catalogueRoutes from "./routes/catalogue-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -76,6 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Regular authenticated sales routes
   app.use("/api/sales", salesRoutes);
+  
+  // Register catalogue routes
+  app.use("/api/catalogue", catalogueRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
