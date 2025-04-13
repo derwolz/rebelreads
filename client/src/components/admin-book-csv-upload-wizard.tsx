@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -19,23 +19,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, FileUp, Image } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CsvBook {
-  title: string;
-  description: string;
-  author: string;
-  genres: string;
-  formats: string;
-  page_count: string;
-  published_date: string;
+  Title: string;
+  Author: string;
   language: string;
+  publish_date: string;
+  genres: string;
+  subgenres: string;
+  themes: string;
+  tropes: string;
+  background: string;
+  hero: string;
+  'book-detail': string;
+  'book-card': string;
+  'grid-item': string;
+  mini: string;
+  pages: string;
   isbn: string;
-  amazon_link: string;
-  barnes_noble_link: string;
-  indieBound_link: string;
-  custom_link: string;
+  asin: string;
+  Description: string;
+  internal_details: string;
+  series: string;
+  setting: string;
+  characters: string;
+  awards: string;
+  formats: string;
+  referralLinks: string;
 }
 
 export function AdminBookCsvUploadWizard() {
@@ -45,6 +60,22 @@ export function AdminBookCsvUploadWizard() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [bookImages, setBookImages] = useState<Record<string, File | null>>({
+    'book-detail': null,
+    'background': null,
+    'hero': null,
+    'book-card': null,
+    'grid-item': null,
+    'mini': null,
+  });
+  const fileInputRefs = {
+    'book-detail': useRef<HTMLInputElement>(null),
+    'background': useRef<HTMLInputElement>(null), 
+    'hero': useRef<HTMLInputElement>(null),
+    'book-card': useRef<HTMLInputElement>(null),
+    'grid-item': useRef<HTMLInputElement>(null),
+    'mini': useRef<HTMLInputElement>(null),
+  };
 
   const uploadMutation = useMutation({
     mutationFn: async (books: CsvBook[]) => {
@@ -53,15 +84,21 @@ export function AdminBookCsvUploadWizard() {
         // Prepare form data and track progress
         const formData = new FormData();
         
+        // Add image files to form data
+        Object.entries(bookImages).forEach(([type, file]) => {
+          if (file) {
+            formData.append(`bookImage_${type}`, file);
+          }
+        });
+        
         // Process books and update progress 
         await Promise.all(
           books.map(async (book, index) => {
             try {
-              // No image handling needed - images are uploaded separately through the book-upload-wizard
               setUploadProgress((index + 1) / books.length * 100);
               return null;
             } catch (error) {
-              console.error(`Error processing book ${book.title}:`, error);
+              console.error(`Error processing book ${book.Title}:`, error);
               return null;
             }
           })
@@ -84,13 +121,21 @@ export function AdminBookCsvUploadWizard() {
         setUploadProgress(0);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/books"] });
       toast({
         title: "Success",
-        description: "Books have been uploaded successfully.",
+        description: `Successfully uploaded ${data.successful} books. ${data.failed} failed.`,
       });
       setCsvData([]);
+      setBookImages({
+        'book-detail': null,
+        'background': null,
+        'hero': null,
+        'book-card': null,
+        'grid-item': null,
+        'mini': null,
+      });
       setOpen(false);
     },
     onError: (error: Error) => {
@@ -101,6 +146,15 @@ export function AdminBookCsvUploadWizard() {
       });
     },
   });
+  
+  const handleFileChange = (imageType: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setBookImages(prev => ({
+        ...prev,
+        [imageType]: e.target.files![0]
+      }));
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -149,13 +203,11 @@ export function AdminBookCsvUploadWizard() {
 
     const text = await file.text();
     const lines = text.split('\n').filter(line => line.trim());
-    const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+    const headers = parseCSVLine(lines[0]);
 
     // Validate headers
     const requiredHeaders = [
-      'title', 'description', 'author', 'genres', 'formats', 
-      'page_count', 'published_date', 'language', 'isbn', 'amazon_link',
-      'barnes_noble_link', 'indiebound_link', 'custom_link'
+      'Title', 'Author', 'formats'
     ];
     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
@@ -212,52 +264,97 @@ export function AdminBookCsvUploadWizard() {
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
               Your CSV should include the following columns:<br />
-              title, description, author, genres (semicolon-separated), formats (semicolon-separated),<br />
-              page_count, published_date, language, isbn, amazon_link, barnes_noble_link, indiebound_link, custom_link
+              Title, Author, language, publish_date, genres, subgenres, themes, tropes, formats (comma-separated)<br />
+              The required fields are: Title, Author, and formats
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <ScrollArea className="h-[400px] border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Genres</TableHead>
-                    <TableHead>Formats</TableHead>
-                    <TableHead>Page Count</TableHead>
-                    <TableHead>Published Date</TableHead>
-                    <TableHead>Language</TableHead>
-                    <TableHead>ISBN</TableHead>
-                    <TableHead>Amazon</TableHead>
-                    <TableHead>Barnes & Noble</TableHead>
-                    <TableHead>IndieBound</TableHead>
-                    <TableHead>Custom Link</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {csvData.map((book, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{book.title}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{book.description}</TableCell>
-                      <TableCell>{book.author}</TableCell>
-                      <TableCell>{book.genres}</TableCell>
-                      <TableCell>{book.formats}</TableCell>
-                      <TableCell>{book.page_count}</TableCell>
-                      <TableCell>{book.published_date}</TableCell>
-                      <TableCell>{book.language}</TableCell>
-                      <TableCell>{book.isbn}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{book.amazon_link}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{book.barnes_noble_link}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{book.indieBound_link}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{book.custom_link}</TableCell>
-                    </TableRow>
+          <div className="space-y-6">
+            <Tabs defaultValue="books">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="books">Books Data</TabsTrigger>
+                <TabsTrigger value="images">Book Images</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="books" className="space-y-4">
+                <ScrollArea className="h-[300px] border rounded-md">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Author</TableHead>
+                        <TableHead>Genres</TableHead>
+                        <TableHead>Subgenres</TableHead>
+                        <TableHead>Themes</TableHead>
+                        <TableHead>Tropes</TableHead>
+                        <TableHead>Formats</TableHead>
+                        <TableHead>Pages</TableHead>
+                        <TableHead>Published Date</TableHead>
+                        <TableHead>Language</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {csvData.map((book, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{book.Title}</TableCell>
+                          <TableCell>{book.Author}</TableCell>
+                          <TableCell>{book.genres}</TableCell>
+                          <TableCell>{book.subgenres}</TableCell>
+                          <TableCell>{book.themes}</TableCell>
+                          <TableCell>{book.tropes}</TableCell>
+                          <TableCell>{book.formats}</TableCell>
+                          <TableCell>{book.pages}</TableCell>
+                          <TableCell>{book.publish_date}</TableCell>
+                          <TableCell>{book.language}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              </TabsContent>
+              
+              <TabsContent value="images" className="space-y-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(fileInputRefs).map(([type, ref]) => (
+                    <Card key={type} className="overflow-hidden">
+                      <CardContent className="p-4 space-y-2">
+                        <div className="space-y-1">
+                          <Label htmlFor={`image-${type}`}>{type}</Label>
+                          <div className="relative w-full aspect-[3/4] bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                            {bookImages[type] ? (
+                              <img 
+                                src={URL.createObjectURL(bookImages[type]!)} 
+                                alt={`${type} preview`}
+                                className="object-cover w-full h-full"
+                              />
+                            ) : (
+                              <Image className="w-12 h-12 text-muted-foreground" />
+                            )}
+                          </div>
+                        </div>
+                        <input
+                          type="file"
+                          id={`image-${type}`}
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(type, e)}
+                          ref={ref as React.RefObject<HTMLInputElement>}
+                          className="hidden"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => fileInputRefs[type]?.current?.click()}
+                        >
+                          <FileUp className="w-4 h-4 mr-2" />
+                          Upload {type}
+                        </Button>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             {isProcessing && (
               <div className="space-y-2">
@@ -271,14 +368,30 @@ export function AdminBookCsvUploadWizard() {
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                onClick={() => setCsvData([])}
+                onClick={() => {
+                  setCsvData([]);
+                  setBookImages({
+                    'book-detail': null,
+                    'background': null,
+                    'hero': null,
+                    'book-card': null,
+                    'grid-item': null,
+                    'mini': null,
+                  });
+                }}
                 disabled={isProcessing}
               >
                 Clear
               </Button>
               <Button
                 onClick={() => uploadMutation.mutate(csvData)}
-                disabled={uploadMutation.isPending || isProcessing}
+                disabled={uploadMutation.isPending || isProcessing || 
+                         !bookImages['book-detail'] || // Required image
+                         !bookImages['background'] || // Required image
+                         !bookImages['hero'] || // Required image
+                         !bookImages['book-card'] || // Required image
+                         !bookImages['grid-item'] || // Required image
+                         !bookImages['mini']} // Required image
               >
                 {(uploadMutation.isPending || isProcessing) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
