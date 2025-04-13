@@ -540,24 +540,6 @@ export default function SettingsPage() {
     content = <ReaderSettings />;
   }
 
-  // Handle drag end for closing the sidebar
-  const handleDragEnd = (event: any) => {
-    // If dragged to the left (negative delta x), close the sidebar
-    if (event.delta.x < -50) {
-      setIsSidebarOpen(false);
-    }
-  };
-
-  // Initialize sensors for drag detection
-  const dragSensors = useSensors(
-    useSensor(PointerSensor, {
-      // Customize sensor activation constraints if needed
-      activationConstraint: {
-        distance: 10, // Minimum distance required to start dragging
-      },
-    })
-  );
-
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -571,26 +553,24 @@ export default function SettingsPage() {
           <PanelLeft className="h-6 w-6" />
         </Button>
       </div>
-      <DndContext sensors={dragSensors} onDragEnd={handleDragEnd}>
-        <div className="flex gap-8">
-          {/* Desktop Sidebar */}
-          <div className="hidden md:block">
-            <SettingsSidebar isMobile={false} />
-          </div>
-
-          {/* Mobile Sidebar with custom drag wrapper */}
-          <SettingsSidebar 
-            isMobile={true} 
-            isOpen={isSidebarOpen} 
-            onClose={() => setIsSidebarOpen(false)} 
-          />
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {content}
-          </div>
+      <div className="flex gap-8">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block">
+          <SettingsSidebar isMobile={false} />
         </div>
-      </DndContext>
+
+        {/* Mobile Sidebar with framer motion drag */}
+        <SettingsSidebar 
+          isMobile={true} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
+
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          {content}
+        </div>
+      </div>
     </main>
   );
 }

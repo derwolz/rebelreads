@@ -11,7 +11,8 @@ import {
   LayoutGrid,
   ChevronRight,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { useState } from "react";
 
 interface NavItemProps {
   href: string;
@@ -47,6 +48,14 @@ export function SettingsSidebar({
 }: SettingsSidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
+
+  // Handle drag end event
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    // If dragged to the left (negative x value), close the sidebar
+    if (info.offset.x < -50) {
+      onClose?.();
+    }
+  };
 
   const navItems = (
     <>
@@ -100,7 +109,7 @@ export function SettingsSidebar({
     return <nav className="space-y-2 w-60">{navItems}</nav>;
   }
 
-  // For mobile, render a sidebar with animations (without swipe functionality)
+  // For mobile, render a sidebar with animations and drag-to-close functionality
   return (
     <AnimatePresence>
       {isOpen && (
@@ -114,13 +123,17 @@ export function SettingsSidebar({
             onClick={onClose}
           />
 
-          {/* Sidebar container - now on the left (without drag functionality) */}
+          {/* Sidebar container with drag functionality */}
           <motion.div
             className="fixed inset-y-0 left-0 w-64 bg-background border-r z-50 md:hidden"
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.1}
+            onDragEnd={handleDragEnd}
           >
             <div className="h-full overflow-y-auto pt-16 px-4">
               <div className="mb-4 flex items-center">
