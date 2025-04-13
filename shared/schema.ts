@@ -1107,6 +1107,7 @@ export const feedbackTickets = pgTable("feedback_tickets", {
   status: text("status").notNull().default("new"), // One of FEEDBACK_STATUS_OPTIONS
   priority: integer("priority").default(1), // 1-3 (low, medium, high)
   assignedTo: integer("assigned_to"), // Optional - user ID of admin assigned to ticket
+  adminNotes: text("admin_notes"), // Private notes only visible to admins
   deviceInfo: jsonb("device_info"), // Browser, OS, screen size, etc.
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
