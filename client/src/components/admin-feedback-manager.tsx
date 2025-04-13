@@ -8,6 +8,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -78,6 +79,16 @@ const KanbanColumn: React.FC<{
   tickets: FeedbackTicket[];
   onTicketClick: (ticket: FeedbackTicket) => void;
 }> = ({ title, status, tickets, onTicketClick }) => {
+  // Set up droppable for the column
+  const { setNodeRef: setColumnRef } = useDroppable({
+    id: `container-${status}`
+  });
+  
+  // Set up droppable for the content area
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `droppable-${status}`
+  });
+  
   // Style based on status
   const getHeaderStyle = () => {
     switch (status) {
@@ -94,12 +105,25 @@ const KanbanColumn: React.FC<{
     }
   };
 
+  // Add highlight style when a draggable is over the droppable area
+  const getDroppableStyle = () => {
+    return isOver 
+      ? "flex-1 overflow-y-auto bg-slate-100 p-2 rounded-b-md border-2 border-primary" 
+      : "flex-1 overflow-y-auto bg-slate-50 p-2 rounded-b-md border border-slate-200";
+  };
+
   return (
-    <div className="flex flex-col min-w-[300px] max-w-[350px] h-full">
+    <div 
+      ref={setColumnRef}
+      className="flex flex-col min-w-[300px] max-w-[350px] h-full"
+    >
       <div className={`p-3 font-medium rounded-t-md ${getHeaderStyle()}`}>
         {title} ({tickets.length})
       </div>
-      <div className="flex-1 overflow-y-auto bg-slate-50 p-2 rounded-b-md border border-slate-200">
+      <div 
+        ref={setDroppableRef}
+        className={getDroppableStyle()}
+      >
         <SortableContext items={tickets.map(t => t.id.toString())} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {tickets.map((ticket) => (
@@ -231,12 +255,19 @@ export function AdminFeedbackManager() {
     
     if (dropContainerId.startsWith("container-")) {
       newStatus = dropContainerId.replace("container-", "");
+    } else if (dropContainerId.startsWith("droppable-")) {
+      // Check if it was dropped in a droppable area
+      newStatus = dropContainerId.replace("droppable-", "");
     } else {
       // If dropped on another ticket, determine which container that ticket is in
-      const overTicketId = parseInt(over.id.toString());
-      const overTicket = tickets?.find(t => t.id === overTicketId);
-      if (overTicket) {
-        newStatus = overTicket.status;
+      try {
+        const overTicketId = parseInt(over.id.toString());
+        const overTicket = tickets?.find(t => t.id === overTicketId);
+        if (overTicket) {
+          newStatus = overTicket.status;
+        }
+      } catch (error) {
+        console.log("Error parsing ticket ID:", error);
       }
     }
     
