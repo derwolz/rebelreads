@@ -522,6 +522,27 @@ router.post("/become-author", async (req: Request, res: Response) => {
   }
 });
 
+// Get author profile
+router.get("/author-profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is an author
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
+    
+    if (!author) {
+      return res.status(404).json({ error: "Author profile not found" });
+    }
+    
+    res.json(author);
+  } catch (error) {
+    console.error("Error getting author profile:", error);
+    res.status(500).json({ error: "Failed to get author profile" });
+  }
+});
+
 // Update author profile
 router.patch("/author-profile", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
