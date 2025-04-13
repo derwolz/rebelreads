@@ -48,7 +48,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MessageSquare, Calendar, User } from "lucide-react";
+import { Loader2, MessageSquare, Calendar, User, Plus, AlertTriangle, HelpCircle, Lightbulb } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { SortableTicket } from "./sortable-ticket";
@@ -200,8 +205,19 @@ export function AdminFeedbackManager() {
   const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<FeedbackTicket | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [initialStatus, setInitialStatus] = useState<string | null>(null);
+  
+  // Form for creating new tickets
+  const createForm = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      type: "bug_report",
+      priority: "2" // Default to medium priority
+    }
+  });
 
   // Setup DnD sensors
   const sensors = useSensors(
@@ -442,6 +458,10 @@ export function AdminFeedbackManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Feedback Ticket Management</h3>
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="flex items-center gap-1.5">
+          <Plus className="h-4 w-4" />
+          Create New Ticket
+        </Button>
       </div>
 
       <DndContext 
