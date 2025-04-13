@@ -2,7 +2,15 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Monitor, Star, BookOpen, LayoutGrid, ChevronRight } from "lucide-react";
+import {
+  User,
+  Settings,
+  Monitor,
+  Star,
+  BookOpen,
+  LayoutGrid,
+  ChevronRight,
+} from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState } from "react";
 
@@ -33,7 +41,11 @@ interface SettingsSidebarProps {
   onClose?: () => void;
 }
 
-export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarProps) {
+export function SettingsSidebar({
+  isMobile,
+  isOpen,
+  onClose,
+}: SettingsSidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
   const [isDragging, setIsDragging] = useState(false);
@@ -104,14 +116,14 @@ export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarPr
       {isOpen && (
         <>
           {/* Backdrop overlay */}
-          <motion.div 
+          <motion.div
             className="fixed inset-0 bg-black/20 z-40 md:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
-          
+
           {/* Sidebar container - now on the left */}
           <motion.div
             className="fixed inset-y-0 left-0 w-64 bg-background border-r z-50 md:hidden"
@@ -127,9 +139,9 @@ export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarPr
           >
             <div className="h-full overflow-y-auto pt-16 px-4">
               <div className="mb-4 flex items-center">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={onClose}
                   className="mb-2"
                 >
@@ -137,9 +149,7 @@ export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarPr
                   Back
                 </Button>
               </div>
-              <nav className="space-y-2">
-                {navItems}
-              </nav>
+              <nav className="space-y-2">{navItems}</nav>
             </div>
           </motion.div>
         </>
