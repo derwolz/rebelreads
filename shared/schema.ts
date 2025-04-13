@@ -110,8 +110,6 @@ export const authors = pgTable("authors", {
   death_date: date("death_date"),
   website: text("website"),
   bio: text("bio"), // Author-specific bio
-  is_pro: boolean("is_pro").notNull().default(false), // Pro author status
-  pro_expires_at: timestamp("pro_expires_at"), // When pro subscription expires
   credits: decimal("credits").notNull().default("0"), // Credits for authors
 });
 
