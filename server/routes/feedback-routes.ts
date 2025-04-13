@@ -1,127 +1,157 @@
-import { Router, Request, Response } from "express";
-import { dbStorage } from "../storage";
+import { Router } from "express";
 import { feedbackStorage } from "../storage/feedback";
-import { insertFeedbackTicketSchema, FEEDBACK_TYPE_OPTIONS } from "@shared/schema";
-import { log } from "../vite";
+import { insertFeedbackTicketSchema } from "@shared/schema";
+import { Request } from "express";
+import { User } from "@shared/schema";
 
+interface RequestWithUser extends Request {
+  user?: User;
+}
+
+/**
+ * Router for feedback-related API routes
+ */
 const router = Router();
 
-// Create a new feedback ticket
-router.post("/", async (req: Request, res: Response) => {
+/**
+ * Create a new feedback ticket
+ * @route POST /api/feedback
+ */
+router.post("/", async (req: RequestWithUser, res) => {
   try {
-    // Get the current user ID if authenticated
-    const userId = req.isAuthenticated() ? req.user.id : undefined;
-    
-    // Parse and validate the feedback data
-    const result = insertFeedbackTicketSchema.safeParse(req.body);
-    
-    if (!result.success) {
-      return res.status(400).json({ 
-        error: "Invalid feedback data", 
-        details: result.error.format() 
+    // Validate request body
+    const validationResult = insertFeedbackTicketSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: "Invalid request data",
+        details: validationResult.error.format(),
       });
     }
     
-    // Collect device info
-    const deviceInfo = {
-      userAgent: req.headers['user-agent'],
-      ip: req.ip,
-      referrer: req.headers.referer,
-      // Add more device info as needed
-    };
+    // Get user ID if authenticated
+    const userId = req.user?.id;
     
     // Create the feedback ticket
-    const ticket = await feedbackStorage.createFeedbackTicket(
-      {
-        ...result.data,
-        deviceInfo
-      },
-      userId
-    );
+    const ticket = await feedbackStorage.createFeedbackTicket(validationResult.data, userId);
     
-    // Return the created ticket
-    res.status(201).json(ticket);
+    // Return the ticket with its number
+    return res.status(201).json({
+      message: "Feedback submitted successfully",
+      ticketNumber: ticket.ticketNumber,
+      ticket,
+    });
   } catch (error) {
     console.error("Error creating feedback ticket:", error);
-    res.status(500).json({ error: "Failed to create feedback ticket" });
+    return res.status(500).json({ error: "Failed to submit feedback" });
   }
 });
 
-// Get all feedback tickets (admin only)
-router.get("/admin", async (req: Request, res: Response) => {
+/**
+ * Get a feedback ticket by ticket number
+ * @route GET /api/feedback/:ticketNumber
+ */
+router.get("/:ticketNumber", async (req, res) => {
   try {
-    // Check if user is authenticated and is an admin
-    if (!req.isAuthenticated() || !req.user.isAuthor) {
-      return res.status(403).json({ error: "Unauthorized" });
+    const { ticketNumber } = req.params;
+    
+    // Get the ticket
+    const ticket = await feedbackStorage.getFeedbackTicketByNumber(ticketNumber);
+    
+    if (!ticket) {
+      return res.status(404).json({ error: "Feedback ticket not found" });
     }
     
-    const tickets = await feedbackStorage.getFeedbackTickets();
-    res.json(tickets);
+    // Check if the ticket belongs to the user or if user is an admin
+    if (req.user && (ticket.userId === req.user.id || req.user.isAuthor)) {
+      return res.json(ticket);
+    }
+    
+    // If ticket is not associated with a user, return limited info
+    if (!ticket.userId) {
+      // Return limited info for anonymous tickets
+      return res.json({
+        ticketNumber: ticket.ticketNumber,
+        status: ticket.status,
+        createdAt: ticket.createdAt,
+        type: ticket.type,
+      });
+    }
+    
+    // If it's another user's ticket, don't allow access
+    return res.status(403).json({ error: "Not authorized to view this ticket" });
   } catch (error) {
-    console.error("Error getting feedback tickets:", error);
-    res.status(500).json({ error: "Failed to get feedback tickets" });
+    console.error("Error getting feedback ticket:", error);
+    return res.status(500).json({ error: "Failed to get feedback ticket" });
   }
 });
 
-// Get current user's feedback tickets
-router.get("/", async (req: Request, res: Response) => {
+/**
+ * Get all feedback tickets for the authenticated user
+ * @route GET /api/feedback/user/tickets
+ */
+router.get("/user/tickets", async (req: RequestWithUser, res) => {
   try {
-    // Check if user is authenticated
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Not authenticated" });
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
     }
     
+    // Get all tickets for the user
     const tickets = await feedbackStorage.getUserFeedbackTickets(req.user.id);
-    res.json(tickets);
+    
+    return res.json(tickets);
   } catch (error) {
     console.error("Error getting user feedback tickets:", error);
-    res.status(500).json({ error: "Failed to get user feedback tickets" });
+    return res.status(500).json({ error: "Failed to get user feedback tickets" });
   }
 });
 
-// Get feedback ticket types
-router.get("/types", (_req: Request, res: Response) => {
+/**
+ * Admin route: Get all feedback tickets
+ * @route GET /api/feedback/admin/all
+ */
+router.get("/admin/all", async (req: RequestWithUser, res) => {
   try {
-    res.json(FEEDBACK_TYPE_OPTIONS);
+    if (!req.user || !req.user.isAuthor) {
+      return res.status(403).json({ error: "Unauthorized. Admin access required." });
+    }
+    
+    // Get all tickets
+    const tickets = await dbStorage.getFeedbackTickets();
+    
+    return res.json(tickets);
   } catch (error) {
-    console.error("Error getting feedback types:", error);
-    res.status(500).json({ error: "Failed to get feedback types" });
+    console.error("Error getting all feedback tickets:", error);
+    return res.status(500).json({ error: "Failed to get all feedback tickets" });
   }
 });
 
-// Update a feedback ticket status (admin only)
-router.patch("/:id", async (req: Request, res: Response) => {
+/**
+ * Admin route: Update a feedback ticket
+ * @route PATCH /api/feedback/admin/:id
+ */
+router.patch("/admin/:id", async (req: RequestWithUser, res) => {
   try {
-    // Check if user is authenticated and is an admin
-    if (!req.isAuthenticated() || !req.user.isAuthor) {
-      return res.status(403).json({ error: "Unauthorized" });
+    if (!req.user || !req.user.isAuthor) {
+      return res.status(403).json({ error: "Unauthorized. Admin access required." });
     }
     
-    const ticketId = parseInt(req.params.id, 10);
-    if (isNaN(ticketId)) {
-      return res.status(400).json({ error: "Invalid ticket ID" });
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Get the ticket first to make sure it exists
+    const existingTicket = await dbStorage.getFeedbackTicket(parseInt(id));
+    
+    if (!existingTicket) {
+      return res.status(404).json({ error: "Feedback ticket not found" });
     }
     
-    // Get the ticket to make sure it exists
-    const ticket = await feedbackStorage.getFeedbackTicket(ticketId);
-    if (!ticket) {
-      return res.status(404).json({ error: "Ticket not found" });
-    }
+    // Update the ticket
+    const updatedTicket = await dbStorage.updateFeedbackTicket(parseInt(id), updates);
     
-    // Update the ticket status
-    const updatedTicket = await feedbackStorage.updateFeedbackTicket(
-      ticketId,
-      {
-        status: req.body.status,
-        priority: req.body.priority,
-        assignedTo: req.body.assignedTo
-      }
-    );
-    
-    res.json(updatedTicket);
+    return res.json(updatedTicket);
   } catch (error) {
     console.error("Error updating feedback ticket:", error);
-    res.status(500).json({ error: "Failed to update feedback ticket" });
+    return res.status(500).json({ error: "Failed to update feedback ticket" });
   }
 });
 

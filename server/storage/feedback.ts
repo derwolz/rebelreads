@@ -1,146 +1,154 @@
-import { 
-  feedbackTickets, 
-  type FeedbackTicket,
-  type InsertFeedbackTicket,
-  FEEDBACK_STATUS_OPTIONS
-} from "@shared/schema";
+import { FeedbackTicket, InsertFeedbackTicket, feedbackTickets } from "@shared/schema";
 import { db } from "../db";
-import { eq, desc } from "drizzle-orm";
-import { nanoid } from 'nanoid';
+import { eq, and, ne } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
+/**
+ * Interface for feedback ticket storage operations
+ */
 export interface IFeedbackStorage {
-  createFeedbackTicket(
-    data: InsertFeedbackTicket,
-    userId?: number
-  ): Promise<FeedbackTicket>;
-  
+  createFeedbackTicket(data: InsertFeedbackTicket, userId?: number): Promise<FeedbackTicket>;
   getFeedbackTickets(): Promise<FeedbackTicket[]>;
-  
   getFeedbackTicket(id: number): Promise<FeedbackTicket | undefined>;
-  
   getFeedbackTicketByNumber(ticketNumber: string): Promise<FeedbackTicket | undefined>;
-  
-  updateFeedbackTicket(
-    id: number,
-    data: Partial<Omit<FeedbackTicket, 'id' | 'ticketNumber' | 'createdAt'>>
-  ): Promise<FeedbackTicket>;
-  
+  updateFeedbackTicket(id: number, updates: Partial<FeedbackTicket>): Promise<FeedbackTicket | undefined>;
   getUserFeedbackTickets(userId: number): Promise<FeedbackTicket[]>;
-  
   getNewTickets(): Promise<FeedbackTicket[]>;
-  
   getResolvedTickets(): Promise<FeedbackTicket[]>;
 }
 
+/**
+ * Implementation of feedback ticket storage
+ */
 export class FeedbackStorage implements IFeedbackStorage {
-  
-  // Generate a unique ticket number with prefix FDB-
-  private generateTicketNumber(): string {
-    return `FDB-${nanoid(8).toUpperCase()}`;
-  }
-  
-  async createFeedbackTicket(
-    data: InsertFeedbackTicket,
-    userId?: number
-  ): Promise<FeedbackTicket> {
-    const [ticket] = await db
-      .insert(feedbackTickets)
-      .values({
-        ticketNumber: this.generateTicketNumber(),
-        userId: userId || null,
-        type: data.type,
-        title: data.title,
-        description: data.description,
-        status: data.status || 'new',
-        priority: data.priority || 1,
-        deviceInfo: data.deviceInfo || null,
-      })
-      .returning();
+  /**
+   * Create a new feedback ticket
+   * @param data Ticket data
+   * @param userId Optional user ID if authenticated
+   * @returns The created ticket
+   */
+  async createFeedbackTicket(data: InsertFeedbackTicket, userId?: number): Promise<FeedbackTicket> {
+    // Generate a unique ticket number using nanoid - 6 characters is enough
+    const ticketNumber = nanoid(6).toUpperCase();
     
-    return ticket;
+    const result = await db.insert(feedbackTickets).values({
+      ...data,
+      ticketNumber,
+      userId: userId || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    
+    return result[0];
   }
   
+  /**
+   * Get all feedback tickets
+   * @returns Array of all feedback tickets
+   */
   async getFeedbackTickets(): Promise<FeedbackTicket[]> {
-    const tickets = await db
-      .select()
-      .from(feedbackTickets)
-      .orderBy(desc(feedbackTickets.createdAt));
-    
-    return tickets;
+    return db.select().from(feedbackTickets).orderBy(feedbackTickets.createdAt);
   }
   
+  /**
+   * Get a single feedback ticket by ID
+   * @param id Ticket ID
+   * @returns The ticket or undefined if not found
+   */
   async getFeedbackTicket(id: number): Promise<FeedbackTicket | undefined> {
-    const [ticket] = await db
+    const result = await db
       .select()
       .from(feedbackTickets)
       .where(eq(feedbackTickets.id, id));
     
-    return ticket;
+    return result[0];
   }
   
+  /**
+   * Get a single feedback ticket by its ticket number
+   * @param ticketNumber The unique ticket number
+   * @returns The ticket or undefined if not found
+   */
   async getFeedbackTicketByNumber(ticketNumber: string): Promise<FeedbackTicket | undefined> {
-    const [ticket] = await db
+    const result = await db
       .select()
       .from(feedbackTickets)
       .where(eq(feedbackTickets.ticketNumber, ticketNumber));
     
-    return ticket;
+    return result[0];
   }
   
-  async updateFeedbackTicket(
-    id: number,
-    data: Partial<Omit<FeedbackTicket, 'id' | 'ticketNumber' | 'createdAt'>>
-  ): Promise<FeedbackTicket> {
-    // Always update the updatedAt field
-    const updateData = {
-      ...data,
-      updatedAt: new Date()
+  /**
+   * Update a feedback ticket
+   * @param id Ticket ID
+   * @param updates Partial ticket data to update
+   * @returns The updated ticket or undefined if not found
+   */
+  async updateFeedbackTicket(id: number, updates: Partial<FeedbackTicket>): Promise<FeedbackTicket | undefined> {
+    // Set the updatedAt timestamp
+    const updatedData = {
+      ...updates,
+      updatedAt: new Date(),
     };
     
-    // If the status is being set to resolved, also set resolvedAt
-    if (data.status === 'resolved') {
-      updateData.resolvedAt = new Date();
+    // If resolving the ticket, set the resolvedAt timestamp
+    if (updates.status === "resolved" && !updates.resolvedAt) {
+      updatedData.resolvedAt = new Date();
     }
     
-    const [updatedTicket] = await db
+    const result = await db
       .update(feedbackTickets)
-      .set(updateData)
+      .set(updatedData)
       .where(eq(feedbackTickets.id, id))
       .returning();
     
-    return updatedTicket;
+    return result[0];
   }
   
+  /**
+   * Get all feedback tickets for a specific user
+   * @param userId User ID
+   * @returns Array of the user's feedback tickets
+   */
   async getUserFeedbackTickets(userId: number): Promise<FeedbackTicket[]> {
-    const tickets = await db
+    return db
       .select()
       .from(feedbackTickets)
       .where(eq(feedbackTickets.userId, userId))
-      .orderBy(desc(feedbackTickets.createdAt));
-    
-    return tickets;
+      .orderBy(feedbackTickets.createdAt);
   }
   
+  /**
+   * Get all new (unresolved) tickets
+   * @returns Array of new tickets
+   */
   async getNewTickets(): Promise<FeedbackTicket[]> {
-    const tickets = await db
+    return db
       .select()
       .from(feedbackTickets)
-      .where(eq(feedbackTickets.status, 'new'))
-      .orderBy(desc(feedbackTickets.createdAt));
-    
-    return tickets;
+      .where(eq(feedbackTickets.status, "new"))
+      .orderBy(feedbackTickets.createdAt);
   }
   
+  /**
+   * Get all resolved tickets
+   * @returns Array of resolved tickets
+   */
   async getResolvedTickets(): Promise<FeedbackTicket[]> {
-    const tickets = await db
+    return db
       .select()
       .from(feedbackTickets)
-      .where(eq(feedbackTickets.status, 'resolved'))
-      .orderBy(desc(feedbackTickets.createdAt));
-    
-    return tickets;
+      .where(
+        and(
+          eq(feedbackTickets.status, "resolved"),
+          ne(feedbackTickets.resolvedAt, null)
+        )
+      )
+      .orderBy(feedbackTickets.resolvedAt);
   }
 }
 
-// Create a singleton instance
+/**
+ * Singleton instance of FeedbackStorage
+ */
 export const feedbackStorage = new FeedbackStorage();
