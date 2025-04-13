@@ -48,7 +48,8 @@ export const SortableTicket: React.FC<SortableTicketProps> = ({ ticket, onClick 
     transition,
     opacity: isDragging ? 0.8 : 1,
     zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? 'relative' : 'static',
+    // Use specific CSS position values that won't cause type errors
+    position: isDragging ? 'relative' as const : 'static' as const,
   };
 
   // Get appropriate icon based on ticket type

@@ -450,19 +450,14 @@ export function AdminFeedbackManager() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         modifiers={[
-          // This modifier makes the dragged item follow the mouse cursor exactly
-          {
-            options: {},
-            fn: ({ transform: dragTransform }) => {
-              return {
-                ...dragTransform,
-                x: dragTransform.x,
-                y: dragTransform.y,
-                scaleX: 1,
-                scaleY: 1,
-              };
-            },
-          }
+          // Define a custom modifier to make the dragged item follow mouse exactly
+          ({transform: dragTransform}: {transform: {x: number, y: number, scaleX: number, scaleY: number}}) => ({
+            ...dragTransform,
+            x: dragTransform.x,
+            y: dragTransform.y, 
+            scaleX: 1,
+            scaleY: 1,
+          })
         ]}
       >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[calc(100vh-300px)]">
