@@ -4,6 +4,45 @@ import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 import { users, userGenreViews, viewGenres, insertAuthorSchema } from "@shared/schema";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure directories for profile image uploads
+const uploadsDir = "./uploads";
+const profileImagesDir = path.join(uploadsDir, "profile-images");
+
+// Create directories if they don't exist
+[uploadsDir, profileImagesDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+// Configure multer for profile image uploads
+const profileImageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, profileImagesDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const profileImageUpload = multer({
+  storage: profileImageStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB size limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'));
+  }
+});
 
 const router = Router();
 
@@ -504,6 +543,46 @@ router.patch("/author-profile", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating author profile:", error);
     res.status(500).json({ error: "Failed to update author profile" });
+  }
+});
+
+// Upload profile image
+router.post("/user/profile-image", profileImageUpload.single('profileImage'), async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    
+    // Create profile image URL path
+    const profileImageUrl = `/uploads/profile-images/${req.file.filename}`;
+    
+    // Update user profile image URL in database
+    await db
+      .update(users)
+      .set({ profileImageUrl })
+      .where(eq(users.id, req.user.id));
+    
+    // Get updated user to verify changes
+    const updatedUser = await dbStorage.getUser(req.user.id);
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Update the session user object with new profile image URL
+    req.user.profileImageUrl = profileImageUrl;
+    
+    console.log(`Profile image updated for user ${req.user.id}: ${profileImageUrl}`);
+    
+    // Return success response with new profile image URL
+    res.json({ profileImageUrl });
+  } catch (error) {
+    console.error("Error uploading profile image:", error);
+    res.status(500).json({ error: "Failed to upload profile image" });
   }
 });
 
