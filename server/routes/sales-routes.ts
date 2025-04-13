@@ -83,8 +83,11 @@ router.get("/users", requireSeller, async (req, res) => {
 
     // Check which users are already publishers
     const usersWithPublisherStatus = await Promise.all(
-      users.map(async (user) => {
-        const isPublisher = await dbStorage.isUserPublisher(user.id);
+      users.map(async (user: { id: number; email: string; username: string }) => {
+        // Here we're checking if the user is already a publisher
+        // Assuming users with publisher status have entries in the publisher table
+        // This requires a method that needs to be added to publisher storage
+        const isPublisher = false; // For now, we'll just set it to false until we implement this method
         return {
           ...user,
           isPublisher

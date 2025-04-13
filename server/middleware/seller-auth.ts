@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { dbStorage } from '../storage';
+import { Request, Response, NextFunction } from "express";
+import { dbStorage } from "../storage";
 
 /**
  * Middleware to require seller authentication
@@ -7,21 +7,28 @@ import { dbStorage } from '../storage';
  */
 export async function requireSeller(req: Request, res: Response, next: NextFunction) {
   try {
+    // First, check if the user is authenticated
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: "Authentication required" });
     }
 
-    // Check if the user is a seller using the storage method
-    const isUserSeller = await dbStorage.isUserSeller(req.user!.id);
-    
-    if (!isUserSeller) {
-      return res.status(403).json({ error: 'Seller access required' });
+    // Then check if the authenticated user is a seller
+    const userId = req.user!.id;
+    const isSeller = await dbStorage.isUserSeller(userId);
+
+    if (!isSeller) {
+      return res.status(403).json({ error: "Seller access required" });
     }
 
-    next();
+    // Get the seller information and attach it to the request
+    const sellerInfo = await dbStorage.getSellerByUserId(userId);
+    req.sellerInfo = sellerInfo;
+
+    // Continue to the route handler
+    return next();
   } catch (error) {
-    console.error('Error verifying seller status:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error("Error in seller authentication:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 
@@ -31,20 +38,23 @@ export async function requireSeller(req: Request, res: Response, next: NextFunct
  */
 export async function attachSellerInfo(req: Request, res: Response, next: NextFunction) {
   try {
+    // Skip if not authenticated
     if (!req.isAuthenticated()) {
       return next();
     }
 
-    // Get seller info if the user is a seller
-    const sellerInfo = await dbStorage.getSellerByUserId(req.user!.id);
-    
-    // Attach seller info to the request object
-    req.sellerInfo = sellerInfo || null;
-    
-    next();
+    // Check if the authenticated user is a seller
+    const userId = req.user!.id;
+    const sellerInfo = await dbStorage.getSellerByUserId(userId);
+
+    // Attach seller info to the request if found
+    req.sellerInfo = sellerInfo;
+
+    // Continue to the route handler
+    return next();
   } catch (error) {
-    console.error('Error getting seller info:', error);
-    // Don't block the request on error, just continue
-    next();
+    console.error("Error attaching seller info:", error);
+    // Don't block the request, just continue
+    return next();
   }
 }
