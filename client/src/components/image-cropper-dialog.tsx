@@ -120,12 +120,10 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
       canvas.width = size;
       canvas.height = size;
 
-      // Create circular clipping path if using circular crop
-      if (crop.aspect === 1) {
-        ctx.beginPath();
-        ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-        ctx.clip();
-      }
+      // Create circular clipping path for circular profile photo
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+      ctx.clip();
 
       // Draw the cropped image
       ctx.drawImage(

@@ -67,6 +67,12 @@ const router = Router();
 // Serve uploaded files
 router.use("/uploads", express.static("uploads"));
 
+// Ensure the profile-images directory exists
+const profileImagesDir = path.join(uploadsDir, "profile-images");
+if (!fs.existsSync(profileImagesDir)) {
+  fs.mkdirSync(profileImagesDir, { recursive: true });
+}
+
 router.get("/books", async (_req, res) => {
   const books = await dbStorage.getBooks();
   
