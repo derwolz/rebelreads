@@ -71,7 +71,7 @@ function Router() {
   }
 
   // Component selection based on landing page setting
-  const HomeComponent = showLandingPage ? LandingPage : HomePage;
+  const HomeComponent = showLandingPage ? ScrollLandingPage : HomePage;
 
   return (
     <>
