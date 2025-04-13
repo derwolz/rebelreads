@@ -16,11 +16,13 @@ function centerAspectCrop(
   mediaHeight: number,
   aspect: number,
 ) {
+  // Use a larger initial crop area (95% of available area)
+  // This helps ensure the crop starts with most of the image visible
   return centerCrop(
     makeAspectCrop(
       {
         unit: '%',
-        width: 90,
+        width: 95,
       },
       aspect,
       mediaWidth,
@@ -112,6 +114,7 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
       }
 
       const image = imageRef.current;
+      // Calculate the proper scaling factor for the image
       const scaleX = image.naturalWidth / image.width;
       const scaleY = image.naturalHeight / image.height;
 
@@ -119,24 +122,38 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
       const size = 500;
       canvas.width = size;
       canvas.height = size;
-
+      
+      // Calculate source coordinates
+      const sourceX = crop.x * scaleX;
+      const sourceY = crop.y * scaleY;
+      const sourceWidth = crop.width * scaleX;
+      const sourceHeight = crop.height * scaleY;
+      
+      // Clear the canvas first
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, size, size);
+      
       // Create circular clipping path for circular profile photo
+      ctx.save();
       ctx.beginPath();
       ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
       ctx.clip();
-
-      // Draw the cropped image
+      
+      // Draw the cropped image centered in the canvas
       ctx.drawImage(
         image,
-        crop.x * scaleX,
-        crop.y * scaleY,
-        crop.width * scaleX,
-        crop.height * scaleY,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
         0,
         0,
-        canvas.width,
-        canvas.height
+        size,
+        size
       );
+      
+      // Restore the context to remove the clipping path
+      ctx.restore();
 
       // Convert to blob with specific format and quality
       canvas.toBlob(
