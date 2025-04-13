@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
-import { Search, Settings, Menu } from "lucide-react";
+import { Search, Settings, Menu, PanelLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Command,
@@ -25,6 +25,7 @@ import { Book } from "@shared/schema";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const { user, isAuthor, logoutMutation } = useAuth();
@@ -33,6 +34,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const { openMobile, setOpenMobile } = useSidebar();
 
   const { data: searchResults } = useQuery<{ books: Book[], metadata: { total: number, query: string } }>({
     queryKey: ["/api/search", debouncedSearch],
@@ -168,7 +170,17 @@ console.log(searchResults, "searchResults");
         </div>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center space-x-2">
+          {/* Sidebar Toggle Button */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setOpenMobile(true)}
+            aria-label="Toggle Sidebar"
+          >
+            <PanelLeft className="h-5 w-5" />
+          </Button>
+
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon">
