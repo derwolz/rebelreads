@@ -7,9 +7,13 @@ import { eq, and, inArray, isNull } from "drizzle-orm";
 
 const router = Router();
 
+// Log for debugging
+console.log("Catalogue routes registered");
+
 /**
  * GET /api/catalogue/author/:authorId
  * Get all books by an author with complete information
+ * Public route - no authentication required
  */
 router.get("/author/:authorId", async (req: Request, res: Response) => {
   try {
@@ -43,6 +47,7 @@ router.get("/author/:authorId", async (req: Request, res: Response) => {
 /**
  * GET /api/catalogue/publisher/:publisherId
  * Get a publisher's catalogue of authors with their books
+ * Public route - no authentication required
  */
 router.get("/publisher/:publisherId", async (req: Request, res: Response) => {
   try {

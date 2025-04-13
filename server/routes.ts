@@ -23,13 +23,16 @@ import salesRoutes from "./routes/sales-routes";
 import catalogueRoutes from "./routes/catalogue-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure file uploads path (public before auth)
+  app.use("/uploads", express.static("uploads"));
+  
+  // Register public routes (these need to be registered before auth middleware is added)
+  app.use("/api/catalogue", catalogueRoutes);
+  
   // Setup authentication
   setupAuth(app);
 
-  // Configure file uploads path
-  app.use("/uploads", express.static("uploads"));
-
-  // Register all route modules
+  // Register authenticated route modules
   app.use("/api/landing", landingRoutes);
   app.use("/api", accountRoutes);
   app.use("/api/pro", proRoutes);
@@ -77,9 +80,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Regular authenticated sales routes
   app.use("/api/sales", salesRoutes);
-  
-  // Register catalogue routes
-  app.use("/api/catalogue", catalogueRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
