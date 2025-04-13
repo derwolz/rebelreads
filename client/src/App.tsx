@@ -11,6 +11,8 @@ import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
 import { RatingCriteriaWizard } from "@/components/rating-criteria-wizard";
 import { FloatingSignup } from "@/components/floating-signup";
+import { SidebarProvider, Sidebar } from "@/components/ui/sidebar";
+import { MobileSidebarContent } from "@/components/mobile-sidebar-content";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import LandingPage from "@/pages/landing-page";
@@ -39,7 +41,7 @@ import { useBeta } from "@/hooks/use-beta";
 import { useAuth } from "@/hooks/use-auth";
 import { TestImages } from "@/pages/test-images";
 
-function Router() {
+function RouterContent() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
   const [location] = useLocation();
   const { isBetaActive, isLoading: isBetaLoading } = useBeta();
@@ -121,6 +123,18 @@ function Router() {
 
       {allowedPaths.includes(path) && <FloatingSignup />}
     </>
+  );
+}
+
+function Router() {
+  return (
+    <SidebarProvider>
+      <RouterContent />
+      {/* Mobile Sidebar */}
+      <Sidebar>
+        <MobileSidebarContent />
+      </Sidebar>
+    </SidebarProvider>
   );
 }
 
