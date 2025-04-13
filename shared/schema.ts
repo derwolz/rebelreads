@@ -415,10 +415,20 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   socialMediaLinks: z.array(socialMediaLinkSchema).max(4, "Maximum 4 social media links allowed").optional(),
   socialLinks: z.array(socialMediaLinkSchema).max(4, "Maximum 4 social media links allowed").optional(),
 }).refine((data) => {
-  // If any password field is filled, all password fields must be filled
-  if (data.newPassword || data.currentPassword || data.confirmPassword) {
-    return data.newPassword && data.currentPassword && data.confirmPassword;
+  // Only validate password fields if we're trying to change the password
+  // If newPassword is provided, all password fields must be filled
+  if (data.newPassword) {
+    return data.currentPassword && data.confirmPassword;
   }
+  // If currentPassword is provided, all password fields must be filled
+  if (data.currentPassword) {
+    return data.newPassword && data.confirmPassword;
+  }
+  // If confirmPassword is provided, all password fields must be filled
+  if (data.confirmPassword) {
+    return data.newPassword && data.currentPassword;
+  }
+  // Otherwise, profile can be updated without password fields
   return true;
 }, {
   message: "All password fields are required when changing password",

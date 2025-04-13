@@ -3,7 +3,8 @@ import { dbStorage } from "../storage";
 import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users, userGenreViews, viewGenres, insertAuthorSchema, authors } from "@shared/schema";
+import { users, userGenreViews, viewGenres, insertAuthorSchema, authors, UpdateProfile } from "@shared/schema";
+import { comparePasswords, hashPassword } from "../auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -167,10 +168,54 @@ router.patch("/user", async (req: Request, res: Response) => {
       return res.json(userWithoutPassword);
     }
     
-    // Here you would handle other profile updates
-    // by validating with updateProfileSchema
+    // Handle profile updates by validating with updateProfileSchema
+    const updateData: Partial<UpdateProfile> = {};
     
-    // For now, just return the current user
+    // Check if we're updating the basic profile fields
+    if (req.body.username) updateData.username = req.body.username;
+    if (req.body.email) updateData.email = req.body.email;
+    if (req.body.displayName) updateData.displayName = req.body.displayName;
+    if (req.body.bio) updateData.bio = req.body.bio;
+    if (req.body.profileImageUrl) updateData.profileImageUrl = req.body.profileImageUrl;
+    if (req.body.socialMediaLinks) updateData.socialMediaLinks = req.body.socialMediaLinks;
+    if (req.body.socialLinks) updateData.socialLinks = req.body.socialLinks;
+    
+    // Handle password change if requested
+    if (req.body.currentPassword && req.body.newPassword && req.body.confirmPassword) {
+      // Get current user with password
+      const user = await dbStorage.getUser(req.user.id);
+      if (!user || !user.password) {
+        return res.status(404).json({ error: "User not found or no password set" });
+      }
+      
+      // Verify current password
+      const isPasswordValid = await comparePasswords(req.body.currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+      
+      // Verify passwords match
+      if (req.body.newPassword !== req.body.confirmPassword) {
+        return res.status(400).json({ error: "New passwords do not match" });
+      }
+      
+      // Hash new password
+      updateData.password = await hashPassword(req.body.newPassword);
+    }
+    
+    // Only proceed with update if there's something to update
+    if (Object.keys(updateData).length > 0) {
+      // Update the user
+      const updatedUser = await dbStorage.updateUser(req.user.id, updateData);
+      
+      // Update the session user object
+      const { password, ...userWithoutPassword } = updatedUser;
+      req.user = userWithoutPassword as Express.User;
+      
+      return res.json(userWithoutPassword);
+    }
+    
+    // If no update data provided, just return the current user
     const user = await dbStorage.getUser(req.user.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
