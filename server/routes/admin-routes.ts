@@ -18,24 +18,84 @@ import { subDays, parse } from "date-fns";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import AdmZip from "adm-zip";
+import sanitizeFilename from "sanitize-filename";
+import clamav from "clamav.js";
 
-// Configure multer for file uploads
+// Configure dirs
 const uploadsDir = "./uploads";
 const coversDir = path.join(uploadsDir, "covers");
+const tempDir = path.join(uploadsDir, "temp");
+const safeExtractDir = path.join(uploadsDir, "safe_extract");
 
-[uploadsDir, coversDir].forEach((dir) => {
+// Ensure all required directories exist
+[uploadsDir, coversDir, tempDir, safeExtractDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 });
 
+// Initialize ClamAV
+const clamavScanner = clamav.createScanner({
+  active: true,
+  debug_mode: false,
+  preference: 'clamdscan', // Use daemon if available, fallback to clamscan
+  clamscan: {
+    path: '/usr/bin/clamscan',
+    db: '/var/lib/clamav',
+    scan_archives: true,
+    remove_infected: false,
+    file_list: null
+  },
+  clamdscan: {
+    socket: '/tmp/clamd.socket',
+    local_fallback: true,
+    host: '127.0.0.1',
+    port: 3310,
+    timeout: 60000,
+    config_file: null
+  }
+});
+
+// File security helper functions
+const isFileNameSafe = (filename: string): boolean => {
+  const sanitized = sanitizeFilename(filename);
+  return sanitized === filename && !filename.includes("../") && !filename.includes("/");
+};
+
+const scanFile = async (filePath: string): Promise<boolean> => {
+  try {
+    return new Promise((resolve) => {
+      clamavScanner.scan_file(filePath, (err, file, is_infected) => {
+        if (err) {
+          console.error(`Error scanning file ${filePath}:`, err);
+          resolve(false); // Fail safe - treat as infected if scan fails
+        } else {
+          resolve(!is_infected);
+        }
+      });
+    });
+  } catch (error) {
+    console.error("ClamAV scan error:", error);
+    return false; // Fail safe
+  }
+};
+
+// Configure multer for file uploads
 const fileStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, coversDir);
+    // Store ZIP files in temp directory, images directly in covers
+    if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed') {
+      cb(null, tempDir);
+    } else {
+      cb(null, coversDir);
+    }
   },
   filename: (req, file, cb) => {
+    // Safe filename generation
+    const originalName = sanitizeFilename(file.originalname);
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    cb(null, uniqueSuffix + path.extname(originalName));
   },
 });
 
@@ -43,13 +103,19 @@ const fileStorage = multer.diskStorage({
 const multipleImageUpload = multer({
   storage: fileStorage,
   fileFilter: (req, file, cb) => {
-    // Only allow image files
-    if (file.mimetype.startsWith('image/')) {
+    // Allow image files and ZIP files
+    if (file.mimetype.startsWith('image/') || 
+        file.mimetype === 'application/zip' || 
+        file.mimetype === 'application/x-zip-compressed') {
       return cb(null, true);
     }
-    cb(new Error('Only image files are allowed'));
+    cb(new Error('Only image files and ZIP archives are allowed'));
+  },
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB max file size
   }
 }).fields([
+  { name: 'bookZip', maxCount: 1 },
   { name: 'bookImage_book-detail', maxCount: 1 },
   { name: 'bookImage_background', maxCount: 1 },
   { name: 'bookImage_book-card', maxCount: 1 },
@@ -303,23 +369,198 @@ router.get("/search", adminAuthMiddleware, async (req: Request, res: Response) =
   }
 });
 
-// Bulk upload books with advanced CSV processing
+// Helper function to extract CSV from a ZIP file
+const extractCsvFromZip = async (zipFilePath: string): Promise<{ csvContent: string, imageFiles: Map<string, Buffer> }> => {
+  try {
+    // Create a new zip object
+    const zip = new AdmZip(zipFilePath);
+    const zipEntries = zip.getEntries();
+
+    // Variables to store CSV content and images
+    let csvContent = '';
+    const imageFiles = new Map<string, Buffer>();
+
+    // Scan for viruses in zip file
+    // For zip handling security we're implementing both whitelist and sanitization
+    // First validate the zip file is virus-free
+    const isClean = await scanFile(zipFilePath);
+    if (!isClean) {
+      throw new Error("Virus detected in ZIP file. Upload rejected.");
+    }
+
+    // Process each entry in the zip
+    for (const entry of zipEntries) {
+      const entryName = entry.entryName;
+      
+      // Skip directories and hidden files
+      if (entry.isDirectory || entryName.startsWith('__MACOSX/') || entryName.startsWith('.')) {
+        continue;
+      }
+
+      // All filenames must be safe
+      if (!isFileNameSafe(path.basename(entryName))) {
+        console.warn(`Skipping file with unsafe name: ${entryName}`);
+        continue;
+      }
+
+      // Check file extension for CSV
+      if (entryName.toLowerCase().endsWith('.csv')) {
+        csvContent = entry.getData().toString('utf8');
+      } 
+      // Check for image files
+      else if (/\.(jpg|jpeg|png|gif|webp)$/i.test(entryName)) {
+        // Extract the image and add to our collection
+        const imageData = entry.getData();
+        
+        // Additional virus scan for each image file
+        const tempImagePath = path.join(tempDir, sanitizeFilename(path.basename(entryName)));
+        fs.writeFileSync(tempImagePath, imageData);
+        
+        const isImageClean = await scanFile(tempImagePath);
+        if (!isImageClean) {
+          fs.unlinkSync(tempImagePath); // Delete infected file
+          console.warn(`Infected image detected: ${entryName} - Skipping`);
+          continue;
+        }
+        
+        // Clean up temp file
+        fs.unlinkSync(tempImagePath);
+        
+        // Store the image with a normalized key name
+        const imageType = path.basename(entryName, path.extname(entryName)).toLowerCase();
+        imageFiles.set(imageType, imageData);
+      }
+    }
+
+    // Validate that we found a CSV file
+    if (!csvContent) {
+      throw new Error("No CSV file found in the ZIP archive");
+    }
+
+    return { csvContent, imageFiles };
+  } catch (error) {
+    console.error("Error extracting from ZIP:", error);
+    throw error;
+  }
+};
+
+// Helper function to save image from buffer to disk
+const saveImageFromBuffer = (buffer: Buffer, imageType: string): string => {
+  // Create a unique filename with a timestamp
+  const filename = Date.now() + "-" + Math.round(Math.random() * 1e9) + ".png";
+  const filePath = path.join(coversDir, filename);
+  
+  // Write the buffer to file
+  fs.writeFileSync(filePath, buffer);
+  
+  // Return the relative URL
+  return '/uploads/covers/' + filename;
+};
+
+// Utility function to calculate taxonomy importance based on rank
+const calculateImportance = (rank: number): number => {
+  if (rank === 0) return 1; // First item has importance 1
+  return 1 / (1 + Math.log(rank + 1));
+};
+
+// Bulk upload books with ZIP file processing
 router.post("/books/bulk", adminAuthMiddleware, multipleImageUpload, async (req: Request, res: Response) => {
   try {
     console.log('Admin bulk book upload request received');
     
-    // Check if CSV data was provided
-    if (!req.body.csvData) {
-      return res.status(400).json({ error: "No CSV data provided" });
-    }
-    
-    // Parse CSV data
-    const csvBooks = JSON.parse(req.body.csvData);
-    console.log(`Processing ${csvBooks.length} books from CSV`);
-    
     // Process uploaded files
     const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] };
+    let csvBooks: any[] = [];
+    let extractedImages: Map<string, Buffer> | null = null;
     
+    // Check if a ZIP file was uploaded
+    if (uploadedFiles.bookZip && uploadedFiles.bookZip.length > 0) {
+      const zipFile = uploadedFiles.bookZip[0];
+      console.log(`Processing ZIP file: ${zipFile.originalname}`);
+      
+      try {
+        // Extract CSV and images from ZIP
+        const { csvContent, imageFiles } = await extractCsvFromZip(zipFile.path);
+        
+        // Parse the CSV data
+        const lines = csvContent.split('\n').filter(line => line.trim());
+        
+        // Simple CSV parser logic for header detection and parsing
+        const parseCSVLine = (line: string): string[] => {
+          const values: string[] = [];
+          let currentValue = '';
+          let insideQuotes = false;
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+
+            if (char === '"') {
+              insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+              values.push(currentValue.trim());
+              currentValue = '';
+            } else {
+              currentValue += char;
+            }
+          }
+
+          values.push(currentValue.trim());
+          return values.map(value => value.replace(/^"|"$/g, ''));
+        };
+        
+        const headers = parseCSVLine(lines[0]);
+        
+        // Validate required headers
+        const requiredHeaders = ['Title', 'Author', 'formats'];
+        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+        
+        if (missingHeaders.length > 0) {
+          throw new Error(`Missing required CSV columns: ${missingHeaders.join(', ')}`);
+        }
+        
+        // Parse the books
+        csvBooks = lines.slice(1).map(line => {
+          const values = parseCSVLine(line);
+          const book: any = {};
+          headers.forEach((header, index) => {
+            if (index < values.length) {
+              book[header] = values[index] ? values[index].trim() : '';
+            } else {
+              book[header] = '';
+            }
+          });
+          return book;
+        });
+        
+        console.log(`Extracted ${csvBooks.length} books from ZIP CSV`);
+        
+        // Save extracted images for processing
+        extractedImages = imageFiles;
+      } catch (error) {
+        console.error('Error processing ZIP file:', error);
+        return res.status(400).json({ 
+          error: `Error processing ZIP file: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        });
+      } finally {
+        // Clean up the temporary zip file
+        try {
+          if (fs.existsSync(zipFile.path)) {
+            fs.unlinkSync(zipFile.path);
+          }
+        } catch (cleanupError) {
+          console.error('Error cleaning up temporary zip file:', cleanupError);
+        }
+      }
+    } 
+    // Otherwise check for direct CSV upload
+    else if (req.body.csvData) {
+      csvBooks = JSON.parse(req.body.csvData);
+      console.log(`Processing ${csvBooks.length} books from direct CSV upload`);
+    } 
+    else {
+      return res.status(400).json({ error: "No CSV data or ZIP file provided" });
+    }
+
     // Process books one by one
     const results = [];
     let successCount = 0;
