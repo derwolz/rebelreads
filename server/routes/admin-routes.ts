@@ -40,6 +40,14 @@ const isFileNameSafe = (filename: string): boolean => {
   return sanitized === filename && !filename.includes("../") && !filename.includes("/");
 };
 
+// Simple function to check file validity - used for standard file uploads
+// Virus scanning functionality has been removed in favor of external client solution
+const isSafeFile = (filePath: string): boolean => {
+  // Check only the filename for security
+  const filename = path.basename(filePath);
+  return isFileNameSafe(filename);
+};
+
 // Configure multer for file uploads
 const fileStorage = multer.diskStorage({
   destination: function (req, file, cb) {

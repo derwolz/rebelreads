@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked } from "lucide-react";
 import { Redirect } from "wouter";
-import { AdminBookCsvUploadWizard } from "@/components/admin-book-csv-upload-wizard";
 import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
 import { AdminBetaKeysManager } from "@/components/admin-beta-keys-manager";
 import { AdminGenresManager } from "@/components/admin-genres-manager";
@@ -84,7 +83,10 @@ export default function AdminPanel() {
             
             <TabsContent value="books" className="py-4">
               <h3 className="text-lg font-semibold mb-4">Book Management</h3>
-              <AdminBookCsvUploadWizard />
+              <div className="text-center text-muted-foreground py-10">
+                <p>The bulk upload functionality has been removed.</p>
+                <p className="mt-2">Please use the external client for batch processing of books.</p>
+              </div>
             </TabsContent>
             
             <TabsContent value="genres" className="py-4">
