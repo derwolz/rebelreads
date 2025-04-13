@@ -7,6 +7,34 @@ import { InsertSeller, InsertPublisherSeller, InsertPublisher } from "../../shar
 const router = express.Router();
 
 /**
+ * Check if the current user has seller status
+ * This is a public endpoint that works without seller authentication
+ */
+router.get("/check-status", attachSellerInfo, async (req, res) => {
+  try {
+    // Return false if not authenticated
+    if (!req.isAuthenticated()) {
+      return res.json({
+        isSeller: false,
+        isAuthenticated: false
+      });
+    }
+
+    // Check if the user is a seller
+    const userId = req.user!.id;
+    const isSeller = await dbStorage.isUserSeller(userId);
+
+    return res.json({
+      isSeller,
+      isAuthenticated: true
+    });
+  } catch (error) {
+    console.error("Error checking seller status:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
  * Get the current seller's information
  * This includes any verification codes they've created
  * 
@@ -205,6 +233,7 @@ router.patch("/profile", requireSeller, async (req, res) => {
 /**
  * Check the status of a verification code
  * This endpoint is public and can be used by any user
+ * This doesn't require authentication
  */
 router.get("/verify-code/:code", async (req, res) => {
   try {
