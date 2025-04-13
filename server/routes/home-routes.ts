@@ -466,6 +466,62 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
   }
 });
 
+// Record an impression for a book
+router.post("/books/:id/impression", async (req, res) => {
+  try {
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const { source, context } = req.body;
+    
+    if (!source || !context) {
+      return res.status(400).json({ error: "Source and context are required" });
+    }
+
+    const impression = await dbStorage.recordBookImpression(
+      bookId,
+      req.isAuthenticated() ? req.user!.id : null,
+      source,
+      context
+    );
+
+    res.status(201).json(impression);
+  } catch (error) {
+    console.error("Error recording book impression:", error);
+    res.status(500).json({ error: "Failed to record book impression" });
+  }
+});
+
+// Record a click-through for a book
+router.post("/books/:id/click-through", async (req, res) => {
+  try {
+    const bookId = parseInt(req.params.id);
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+
+    const { source, referrer } = req.body;
+    
+    if (!source) {
+      return res.status(400).json({ error: "Source is required" });
+    }
+
+    const clickThrough = await dbStorage.recordBookClickThrough(
+      bookId,
+      req.isAuthenticated() ? req.user!.id : null,
+      source,
+      referrer || ""
+    );
+
+    res.status(201).json(clickThrough);
+  } catch (error) {
+    console.error("Error recording book click-through:", error);
+    res.status(500).json({ error: "Failed to record book click-through" });
+  }
+});
+
 // Add DELETE endpoint for books
 router.delete("/books/:id", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
