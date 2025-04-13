@@ -54,7 +54,7 @@ const TIME_RANGES = [
 ] as const;
 
 export default function ProDashboard() {
-  const { user } = useAuth();
+  const { user, isAuthor } = useAuth();
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
@@ -71,7 +71,7 @@ export default function ProDashboard() {
 
   const { data: books } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
-    enabled: !!user?.isAuthor,
+    enabled: isAuthor,
   });
 
   const { data: performanceData } = useQuery<MetricsResponse[]>({
@@ -93,7 +93,7 @@ export default function ProDashboard() {
       }
       return response.json();
     },
-    enabled: !!user?.isAuthor && selectedBookIds.length > 0,
+    enabled: isAuthor && selectedBookIds.length > 0,
   });
   console.log("performanceData", performanceData);
   const { data: dashboardData } = useQuery<ProDashboardData>({

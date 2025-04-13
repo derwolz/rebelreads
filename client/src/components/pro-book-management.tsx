@@ -33,14 +33,14 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ProBookManagement() {
-  const { user } = useAuth();
+  const { user, isAuthor } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
 
   const { data: userBooks } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
-    enabled: user?.isAuthor,
+    enabled: isAuthor,
   });
 
   // Fetch all ratings for user's books
