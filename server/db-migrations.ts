@@ -1374,5 +1374,52 @@ export async function runMigrations() {
   await addAdminNotesToFeedbackTickets();
   // Add admin_notes_data column to feedback_tickets table for structured notes with timestamps
   await addAdminNotesDataToFeedbackTickets();
+  // Add user_id column to publishers table with foreign key to users
+  await addUserIdToPublishers();
   console.log("Migrations completed");
+}
+
+// Add user_id column to publishers table with a foreign key reference to users
+async function addUserIdToPublishers() {
+  try {
+    console.log("Checking if user_id column exists in publishers table...");
+    
+    // Check if the column already exists
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'publishers' AND column_name = 'user_id'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Adding user_id column to publishers table...");
+      
+      // First add the column
+      await db.execute(sql`
+        ALTER TABLE publishers 
+        ADD COLUMN user_id INTEGER
+      `);
+      
+      // Then add the foreign key constraint
+      await db.execute(sql`
+        ALTER TABLE publishers
+        ADD CONSTRAINT fk_publishers_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+      `);
+      
+      // Add unique constraint
+      await db.execute(sql`
+        ALTER TABLE publishers
+        ADD CONSTRAINT unique_user_publisher UNIQUE (user_id)
+      `);
+      
+      console.log("user_id column added to publishers table with foreign key constraint");
+    } else {
+      console.log("user_id column already exists in publishers table");
+    }
+  } catch (error) {
+    console.error("Error adding user_id column to publishers table:", error);
+    throw error;
+  }
 }
