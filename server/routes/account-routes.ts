@@ -3,7 +3,16 @@ import { dbStorage } from "../storage";
 import { z } from "zod";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
-import { users, userGenreViews, viewGenres, insertAuthorSchema, authors, UpdateProfile } from "@shared/schema";
+import { 
+  users, 
+  userGenreViews, 
+  viewGenres, 
+  insertAuthorSchema, 
+  insertPublisherSchema, 
+  authors, 
+  publishers, 
+  UpdateProfile 
+} from "@shared/schema";
 import { comparePasswords, hashPassword } from "../auth";
 import multer from "multer";
 import path from "path";
@@ -532,6 +541,29 @@ router.get("/author-status", async (req: Request, res: Response) => {
   }
 });
 
+// Check if the user is a publisher
+router.get("/publisher-status", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher
+    const isPublisher = await dbStorage.isUserPublisher(req.user.id);
+    
+    // Get the publisher details if the user is a publisher
+    let publisherDetails = null;
+    if (isPublisher) {
+      publisherDetails = await dbStorage.getPublisherByUserId(req.user.id);
+    }
+    
+    res.json({ isPublisher, publisherDetails });
+  } catch (error) {
+    console.error("Error checking publisher status:", error);
+    res.status(500).json({ error: "Failed to check publisher status" });
+  }
+});
+
 // Become an author
 router.post("/become-author", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
@@ -567,6 +599,47 @@ router.post("/become-author", async (req: Request, res: Response) => {
   }
 });
 
+// Become a publisher
+router.post("/become-publisher", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is already a publisher
+    const isExistingPublisher = await dbStorage.isUserPublisher(req.user.id);
+    
+    if (isExistingPublisher) {
+      return res.status(400).json({ error: "User is already registered as a publisher" });
+    }
+    
+    // Validate the request body
+    const publisherData = insertPublisherSchema.parse({
+      userId: req.user.id,
+      name: req.body.name || req.user.username || req.user.email.split('@')[0],
+      publisher_name: req.body.publisher_name || req.body.name || req.user.username || req.user.email.split('@')[0],
+      publisher_description: req.body.publisher_description || "",
+      description: req.body.description || "",
+      business_email: req.body.business_email || req.user.email,
+      business_phone: req.body.business_phone || "",
+      business_address: req.body.business_address || "",
+      website: req.body.website || "",
+      logoUrl: req.body.logoUrl || "",
+    });
+    
+    // Create a new publisher record
+    const publisher = await dbStorage.createPublisher(publisherData);
+    
+    res.status(201).json(publisher);
+  } catch (error) {
+    console.error("Error creating publisher:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to register as a publisher" });
+  }
+});
+
 // Get author profile
 router.get("/author-profile", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
@@ -585,6 +658,27 @@ router.get("/author-profile", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error getting author profile:", error);
     res.status(500).json({ error: "Failed to get author profile" });
+  }
+});
+
+// Get publisher profile
+router.get("/publisher-profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher
+    const publisher = await dbStorage.getPublisherByUserId(req.user.id);
+    
+    if (!publisher) {
+      return res.status(404).json({ error: "Publisher profile not found" });
+    }
+    
+    res.json(publisher);
+  } catch (error) {
+    console.error("Error getting publisher profile:", error);
+    res.status(500).json({ error: "Failed to get publisher profile" });
   }
 });
 
@@ -644,6 +738,30 @@ router.patch("/author-profile", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating author profile:", error);
     res.status(500).json({ error: "Failed to update author profile" });
+  }
+});
+
+// Update publisher profile
+router.patch("/publisher-profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher
+    const publisher = await dbStorage.getPublisherByUserId(req.user.id);
+    
+    if (!publisher) {
+      return res.status(404).json({ error: "Publisher profile not found" });
+    }
+    
+    // Update publisher profile
+    const updatedPublisher = await dbStorage.updatePublisher(publisher.id, req.body);
+    
+    res.json(updatedPublisher);
+  } catch (error) {
+    console.error("Error updating publisher profile:", error);
+    res.status(500).json({ error: "Failed to update publisher profile" });
   }
 });
 
