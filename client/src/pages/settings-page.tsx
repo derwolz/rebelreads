@@ -542,7 +542,17 @@ export default function SettingsPage() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">Settings</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden"
+          onClick={() => setIsSidebarOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+      </div>
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
