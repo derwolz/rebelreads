@@ -546,6 +546,22 @@ export function AdminFeedbackManager() {
     }
   };
   
+  // Note display component for consistent rendering
+  const NoteItem = ({ note }: { note: AdminNote }) => (
+    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
+      <div className="flex justify-between text-xs text-gray-500 mb-1">
+        <span>{formatNoteTime(note.createdAt)}</span>
+        {note.createdBy && (
+          <span className="flex items-center">
+            <User className="h-3 w-3 mr-1" />
+            ID: {note.createdBy}
+          </span>
+        )}
+      </div>
+      <div className="whitespace-pre-wrap">{note.content}</div>
+    </div>
+  );
+  
   // Legacy - handle update of the old admin notes field
   const handleUpdateAdminNotes = (event: React.FocusEvent<HTMLTextAreaElement>) => {
     if (!selectedTicket) return;
@@ -845,10 +861,7 @@ export function AdminFeedbackManager() {
                                 <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Today</h4>
                                 <div className="space-y-3">
                                   {groupedNotes.today.map(note => (
-                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
-                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
-                                      <div className="whitespace-pre-wrap">{note.content}</div>
-                                    </div>
+                                    <NoteItem key={note.id} note={note} />
                                   ))}
                                 </div>
                               </div>
@@ -860,10 +873,7 @@ export function AdminFeedbackManager() {
                                 <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">This Week</h4>
                                 <div className="space-y-3">
                                   {groupedNotes.thisWeek.map(note => (
-                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
-                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
-                                      <div className="whitespace-pre-wrap">{note.content}</div>
-                                    </div>
+                                    <NoteItem key={note.id} note={note} />
                                   ))}
                                 </div>
                               </div>
@@ -875,10 +885,7 @@ export function AdminFeedbackManager() {
                                 <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">This Month</h4>
                                 <div className="space-y-3">
                                   {groupedNotes.thisMonth.map(note => (
-                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
-                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
-                                      <div className="whitespace-pre-wrap">{note.content}</div>
-                                    </div>
+                                    <NoteItem key={note.id} note={note} />
                                   ))}
                                 </div>
                               </div>
@@ -890,10 +897,7 @@ export function AdminFeedbackManager() {
                                 <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">This Year</h4>
                                 <div className="space-y-3">
                                   {groupedNotes.thisYear.map(note => (
-                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
-                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
-                                      <div className="whitespace-pre-wrap">{note.content}</div>
-                                    </div>
+                                    <NoteItem key={note.id} note={note} />
                                   ))}
                                 </div>
                               </div>
@@ -905,10 +909,7 @@ export function AdminFeedbackManager() {
                                 <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Older</h4>
                                 <div className="space-y-3">
                                   {groupedNotes.older.map(note => (
-                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
-                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
-                                      <div className="whitespace-pre-wrap">{note.content}</div>
-                                    </div>
+                                    <NoteItem key={note.id} note={note} />
                                   ))}
                                 </div>
                               </div>
