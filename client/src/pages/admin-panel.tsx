@@ -2,11 +2,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked } from "lucide-react";
+import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare } from "lucide-react";
 import { Redirect } from "wouter";
 import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
 import { AdminBetaKeysManager } from "@/components/admin-beta-keys-manager";
 import { AdminGenresManager } from "@/components/admin-genres-manager";
+import { AdminFeedbackManager } from "@/components/admin-feedback-manager";
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -42,7 +43,7 @@ export default function AdminPanel() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="analytics">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
@@ -58,6 +59,10 @@ export default function AdminPanel() {
               <TabsTrigger value="genres" className="flex items-center gap-2">
                 <BookMarked className="h-4 w-4" />
                 <span>Genres</span>
+              </TabsTrigger>
+              <TabsTrigger value="feedback" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span>Feedback</span>
               </TabsTrigger>
               <TabsTrigger value="beta" className="flex items-center gap-2">
                 <Key className="h-4 w-4" />
