@@ -223,18 +223,20 @@ export function AdminFeedbackManager() {
       return response.json();
     },
     onSuccess: () => {
+      // Silently update by invalidating queries
       queryClient.invalidateQueries({ queryKey: ["/api/feedback/admin/all"] });
-      toast({
-        title: "Ticket Updated",
-        description: "The ticket has been updated successfully.",
-      });
+      // No success toast
     },
     onError: (error: Error) => {
+      // Only show toast on error
       toast({
         title: "Error",
         description: `Failed to update ticket: ${error.message}`,
         variant: "destructive",
       });
+      
+      // Invalidate queries to revert to server state
+      queryClient.invalidateQueries({ queryKey: ["/api/feedback/admin/all"] });
     },
   });
 
@@ -272,6 +274,19 @@ export function AdminFeedbackManager() {
     }
     
     if (newStatus && newStatus !== ticket.status) {
+      // First, get a copy of all tickets
+      const updatedTickets = tickets?.map(t => {
+        // Update the status of the dragged ticket locally
+        if (t.id === ticket.id) {
+          return { ...t, status: newStatus as any };
+        }
+        return t;
+      });
+      
+      // Update the local state immediately through the queryClient
+      queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
+      
+      // Then update the backend silently
       updateTicketMutation.mutate({
         id: ticket.id,
         updates: { status: newStatus }
@@ -289,15 +304,31 @@ export function AdminFeedbackManager() {
   const handleUpdatePriority = (priority: string) => {
     if (!selectedTicket) return;
     
-    updateTicketMutation.mutate({
-      id: selectedTicket.id,
-      updates: { priority: parseInt(priority) }
-    });
+    const priorityValue = parseInt(priority);
     
     // Update the selected ticket locally to show the change immediately
     setSelectedTicket(prev => {
       if (!prev) return null;
-      return { ...prev, priority: parseInt(priority) };
+      return { ...prev, priority: priorityValue };
+    });
+    
+    // Update all tickets data in case it's visible in the board
+    if (tickets) {
+      const updatedTickets = tickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, priority: priorityValue };
+        }
+        return t;
+      });
+      
+      // Update local state immediately
+      queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
+    }
+    
+    // Then update the backend silently
+    updateTicketMutation.mutate({
+      id: selectedTicket.id,
+      updates: { priority: priorityValue }
     });
   };
 
@@ -305,15 +336,29 @@ export function AdminFeedbackManager() {
   const handleUpdateStatus = (status: string) => {
     if (!selectedTicket) return;
     
-    updateTicketMutation.mutate({
-      id: selectedTicket.id,
-      updates: { status }
-    });
-    
     // Update the selected ticket locally to show the change immediately
     setSelectedTicket(prev => {
       if (!prev) return null;
       return { ...prev, status: status as any };
+    });
+    
+    // Update all tickets data in case it's visible in the board
+    if (tickets) {
+      const updatedTickets = tickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, status: status as any };
+        }
+        return t;
+      });
+      
+      // Update local state immediately
+      queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
+    }
+    
+    // Then update the backend silently
+    updateTicketMutation.mutate({
+      id: selectedTicket.id,
+      updates: { status }
     });
   };
 
