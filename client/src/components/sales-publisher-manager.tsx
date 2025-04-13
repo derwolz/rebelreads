@@ -137,12 +137,18 @@ export function SalesPublisherManager() {
       const res = await fetch('/api/account/generate-verification-code', {
         method: 'POST',
       });
+      
+      const data = await res.json();
+      
       if (!res.ok) {
-        throw new Error('Failed to generate verification code');
+        console.error('Failed to generate verification code', data);
+        throw new Error(data.details || data.error || 'Failed to generate verification code');
       }
-      return res.json();
+      
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Successfully generated verification code:", data);
       toast({
         title: "Success",
         description: "Verification code generated successfully",
@@ -150,6 +156,7 @@ export function SalesPublisherManager() {
       queryClient.invalidateQueries({ queryKey: ['/api/account/verification-codes'] });
     },
     onError: (error) => {
+      console.error("Error generating verification code:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate verification code",

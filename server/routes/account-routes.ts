@@ -905,24 +905,48 @@ router.post("/generate-verification-code", async (req: Request, res: Response) =
   }
   
   try {
+    console.log("Generating verification code for user:", req.user.id);
+    
     // Check if the user is a seller
     const seller = await dbStorage.getSellerByUserId(req.user.id);
     
     if (!seller) {
+      console.log("Seller profile not found for user:", req.user.id);
       return res.status(404).json({ error: "Seller profile not found" });
     }
     
-    // Generate a new verification code
-    const code = await dbStorage.createPublisherSellerVerificationCode(seller.id);
+    console.log("Found seller profile:", seller.id);
     
-    if (!code) {
-      return res.status(500).json({ error: "Failed to generate verification code" });
+    try {
+      // Generate a new verification code
+      const code = await dbStorage.createPublisherSellerVerificationCode(seller.id);
+      
+      console.log("Generated verification code:", code);
+      
+      if (!code) {
+        return res.status(500).json({ error: "Failed to generate verification code" });
+      }
+      
+      // Return a formatted response
+      return res.status(200).json({
+        id: code.id,
+        sellerId: code.sellerId,
+        verification_code: code.verification_code,
+        createdAt: code.createdAt
+      });
+    } catch (codeError) {
+      console.error("Error in createPublisherSellerVerificationCode:", codeError);
+      return res.status(500).json({ 
+        error: "Failed to generate verification code",
+        details: codeError instanceof Error ? codeError.message : String(codeError) 
+      });
     }
-    
-    res.json(code);
   } catch (error) {
     console.error("Error generating verification code:", error);
-    res.status(500).json({ error: "Failed to generate verification code" });
+    return res.status(500).json({ 
+      error: "Failed to generate verification code",
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

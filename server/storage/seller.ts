@@ -148,10 +148,31 @@ export class SellerStorage implements ISellerStorage {
    * @param sellerId The ID of the seller
    * @returns The created publisher seller verification code object
    */
+  /**
+   * Generate a random verification code
+   * @returns A 12-character random verification code
+   */
+  private generateVerificationCode(): string {
+    // If nanoid isn't working, we'll create our own random code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 12; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  /**
+   * Create a publisher seller verification code
+   * @param sellerId The ID of the seller
+   * @returns The created publisher seller verification code object
+   */
   async createPublisherSellerVerificationCode(sellerId: number): Promise<PublisherSeller | null> {
     try {
       // Generate a unique verification code
-      const verificationCode = nanoid(12);
+      const verificationCode = this.generateVerificationCode();
+      
+      console.log(`Creating verification code: ${verificationCode} for seller ID: ${sellerId}`);
       
       const data: InsertPublisherSeller = {
         sellerId,
@@ -162,10 +183,12 @@ export class SellerStorage implements ISellerStorage {
         .values(data)
         .returning();
       
+      console.log(`Created verification code, result:`, result);
+      
       return result[0] || null;
     } catch (error) {
       console.error("Error creating publisher seller verification code:", error);
-      return null;
+      throw error; // Rethrow to see the actual error
     }
   }
   
