@@ -170,8 +170,17 @@ export default function BookDetails() {
     });
 
   return (
-    <div>
-      <main className="container mx-auto px-4 py-8">
+    <div className="relative">
+      {/* Background image */}
+      {book.images?.find(img => img.imageType === "background") && (
+        <div 
+          className="fixed inset-0 w-full h-full z-[-1] opacity-10 pointer-events-none bg-no-repeat bg-cover bg-center"
+          style={{
+            backgroundImage: `url('${book.images.find(img => img.imageType === "background")?.imageUrl}')`,
+          }}
+        />
+      )}
+      <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left column with book cover and action buttons */}
           <div>
