@@ -225,8 +225,10 @@ export const dbStorage = {
   updateSeller: sellerStorage.updateSeller.bind(sellerStorage),
   getAllActiveSellers: sellerStorage.getAllActiveSellers.bind(sellerStorage),
   createPublisherSellerVerificationCode: sellerStorage.createPublisherSellerVerificationCode.bind(sellerStorage),
-  getPublisherSellerByVerificationCode: sellerStorage.getPublisherSellerByVerificationCode.bind(sellerStorage),
+  getSPVerificationCode: sellerStorage.getPublisherSellerByVerificationCode.bind(sellerStorage),
   getSellerDetailsByVerificationCode: sellerStorage.getSellerDetailsByVerificationCode.bind(sellerStorage),
+  getSellerVerificationCodes: sellerStorage.getSellerVerificationCodes.bind(sellerStorage),
+  searchUsers: sellerStorage.searchUsers.bind(sellerStorage),
 };
 
 // Export interfaces from their respective modules

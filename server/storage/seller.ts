@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { eq } from "drizzle-orm";
-import { Seller, InsertSeller, sellers, PublisherSeller, InsertPublisherSeller, publisherSellers } from "../../shared/schema";
+import { eq, like, or, desc, sql } from "drizzle-orm";
+import { Seller, InsertSeller, sellers, PublisherSeller, InsertPublisherSeller, publisherSellers, users } from "../../shared/schema";
 import { nanoid } from "nanoid";
 
 export interface ISellerStorage {
@@ -13,9 +13,11 @@ export interface ISellerStorage {
   createPublisherSellerVerificationCode(sellerId: number): Promise<PublisherSeller | null>;
   getPublisherSellerByVerificationCode(code: string): Promise<PublisherSeller | null>;
   getSellerDetailsByVerificationCode(code: string): Promise<Seller | null>;
+  getSellerVerificationCodes(sellerId: number): Promise<PublisherSeller[]>;
+  searchUsers(query: string, page: number, limit: number): Promise<{ id: number; email: string; username: string }[]>;
 }
 
-export class SellerStorage {
+export class SellerStorage implements ISellerStorage {
   /**
    * Check if a user is a seller
    * @param userId The user ID to check
@@ -208,6 +210,78 @@ export class SellerStorage {
     } catch (error) {
       console.error("Error getting seller details by verification code:", error);
       return null;
+    }
+  }
+
+  /**
+   * Get all verification codes created by a seller
+   * @param sellerId The ID of the seller
+   * @returns Array of verification codes
+   */
+  async getSellerVerificationCodes(sellerId: number): Promise<PublisherSeller[]> {
+    if (!sellerId) return [];
+    
+    try {
+      const result = await db.select()
+        .from(publisherSellers)
+        .where(eq(publisherSellers.sellerId, sellerId))
+        .orderBy(desc(publisherSellers.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error("Error getting seller verification codes:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Search for users by name or email
+   * This is used by sellers to find users to assign publisher status to
+   * @param query The search query
+   * @param page The page number (1-based)
+   * @param limit The number of results per page
+   * @returns Array of user objects with minimal information
+   */
+  async searchUsers(query: string, page: number, limit: number): Promise<{ id: number; email: string; username: string }[]> {
+    try {
+      const offset = (page - 1) * limit;
+      
+      // If query is empty, just return the most recent users
+      if (!query) {
+        const result = await db.select({
+          id: users.id,
+          email: users.email,
+          username: users.username
+        })
+        .from(users)
+        .orderBy(desc(users.id))
+        .limit(limit)
+        .offset(offset);
+        
+        return result;
+      }
+      
+      // Otherwise, search by email or username
+      const result = await db.select({
+        id: users.id,
+        email: users.email,
+        username: users.username
+      })
+      .from(users)
+      .where(
+        or(
+          like(users.email, `%${query}%`),
+          like(users.username, `%${query}%`)
+        )
+      )
+      .orderBy(desc(users.id))
+      .limit(limit)
+      .offset(offset);
+      
+      return result;
+    } catch (error) {
+      console.error("Error searching users:", error);
+      return [];
     }
   }
 }
