@@ -32,7 +32,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Trash2, Menu } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -123,36 +123,7 @@ export default function SettingsPage() {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    let touchStartX = 0;
-    let touchEndX = 0;
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      touchEndX = e.touches[0].clientX;
-      const deltaX = touchEndX - touchStartX;
-
-      // Only open sidebar if swipe starts from right edge
-      if (touchStartX > window.innerWidth - 30 && deltaX < -50) {
-        setIsSidebarOpen(true);
-      }
-      // Close sidebar if swipe starts from left side of screen
-      else if (touchStartX < window.innerWidth / 2 && deltaX > 50) {
-        setIsSidebarOpen(false);
-      }
-    };
-
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, []);
 
   const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
@@ -575,20 +546,15 @@ export default function SettingsPage() {
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <SettingsSidebar />
+          <SettingsSidebar isMobile={false} />
         </div>
 
-        {/* Mobile Swipeable Sidebar */}
-        <div
-          className={cn(
-            "fixed inset-y-0 right-0 w-64 bg-background border-l transform transition-transform duration-200 ease-in-out z-50 md:hidden",
-            isSidebarOpen ? "translate-x-0" : "translate-x-full"
-          )}
-        >
-          <div className="h-full overflow-y-auto pt-20 px-4">
-            <SettingsSidebar />
-          </div>
-        </div>
+        {/* Mobile Swipeable Sidebar with motion */}
+        <SettingsSidebar 
+          isMobile={true} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
 
         {/* Main Content */}
         <div className="flex-1 min-w-0">
@@ -596,14 +562,6 @@ export default function SettingsPage() {
         </div>
 
         {/* Recommendations Sidebar removed as requested */}
-
-        {/* Overlay */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/20 z-40 md:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
       </div>
     </main>
   );
