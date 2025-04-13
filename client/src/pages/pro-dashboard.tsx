@@ -30,7 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useLocation } from "wouter";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BarChart3, AreaChart, Star } from "lucide-react";
+import { BarChart3, AreaChart, Star, Menu } from "lucide-react";
 import type { Book } from "@shared/schema";
 
 interface MetricsResponse {
@@ -367,8 +367,23 @@ export default function ProDashboard() {
         <div className="hidden md:block w-60">
           <ProDashboardSidebar />
         </div>
-
-        <div className="flex-1 min-w-0">{renderContent()}</div>
+        
+        <div className="flex-1 min-w-0">
+          {/* Mobile menu button - only visible on mobile */}
+          <div className="md:hidden mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-4 w-4" />
+              <span>Menu</span>
+            </Button>
+          </div>
+          
+          {renderContent()}
+        </div>
       </div>
     </main>
   );

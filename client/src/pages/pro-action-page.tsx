@@ -8,7 +8,7 @@ import { Book } from "@shared/schema";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Megaphone, Star, LineChart, Wallet, Plus, LockIcon } from "lucide-react";
+import { Megaphone, Star, LineChart, Wallet, Plus, LockIcon, Menu } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
 import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
 import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
@@ -200,6 +200,19 @@ export default function ProActionPage() {
         </div>
 
         <div className="flex-1">
+          {/* Mobile menu button - only visible on mobile */}
+          <div className="md:hidden mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-4 w-4" />
+              <span>Menu</span>
+            </Button>
+          </div>
+          
           {/* Wrap action content in ProActionWrapper */}
           <ProActionWrapper>
             {actionContent}
