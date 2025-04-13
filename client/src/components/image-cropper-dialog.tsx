@@ -111,15 +111,25 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
         return;
       }
 
-      const scaleX = imageRef.current.naturalWidth / imageRef.current.width;
-      const scaleY = imageRef.current.naturalHeight / imageRef.current.height;
+      const image = imageRef.current;
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
 
-      // Set desired output size
-      canvas.width = 500;
-      canvas.height = 500;
+      // Set desired output size for profile picture
+      const size = 500;
+      canvas.width = size;
+      canvas.height = size;
 
+      // Create circular clipping path if using circular crop
+      if (crop.aspect === 1) {
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+        ctx.clip();
+      }
+
+      // Draw the cropped image
       ctx.drawImage(
-        imageRef.current,
+        image,
         crop.x * scaleX,
         crop.y * scaleY,
         crop.width * scaleX,
@@ -147,7 +157,7 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
           setCrop(undefined);
         },
         'image/jpeg',
-        0.9
+        0.95 // Higher quality to maintain image clarity
       );
     } catch (error) {
       toast({
@@ -160,68 +170,72 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Upload Profile Picture</DialogTitle>
           <DialogDescription>
             Drag and drop an image or click to select. Then adjust the crop area to your liking.
           </DialogDescription>
         </DialogHeader>
 
-        {!imgSrc ? (
-          <div
-            className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onSelectFile}
-            onClick={() => document.getElementById('image-input')?.click()}
-          >
-            <input
-              id="image-input"
-              type="file"
-              accept="image/*"
-              onChange={onSelectFile}
-              className="hidden"
-            />
-            <p>Drag image here or click to upload</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Recommended: Square image, 500x500px or larger
-            </p>
-            {error && (
-              <p className="text-sm text-destructive mt-2">{error}</p>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <ReactCrop
-              crop={crop}
-              onChange={(_, percentCrop) => setCrop(percentCrop)}
-              aspect={1}
-              circularCrop
+        <div className="p-6 pt-2">
+          {!imgSrc ? (
+            <div
+              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onSelectFile}
+              onClick={() => document.getElementById('image-input')?.click()}
             >
-              <img
-                ref={imageRef}
-                alt="Upload"
-                src={imgSrc}
-                onLoad={onImageLoad}
-                className="max-h-[400px] w-auto mx-auto"
+              <input
+                id="image-input"
+                type="file"
+                accept="image/*"
+                onChange={onSelectFile}
+                className="hidden"
               />
-            </ReactCrop>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setImgSrc('');
-                  setCrop(undefined);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button onClick={cropImage}>
-                Upload
-              </Button>
+              <p>Drag image here or click to upload</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Recommended: Square image, 500x500px or larger
+              </p>
+              {error && (
+                <p className="text-sm text-destructive mt-2">{error}</p>
+              )}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-4">
+              <div className="relative max-w-full overflow-hidden rounded-md">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  aspect={1}
+                  circularCrop
+                >
+                  <img
+                    ref={imageRef}
+                    alt="Upload"
+                    src={imgSrc}
+                    onLoad={onImageLoad}
+                    className="max-h-[400px] w-auto mx-auto"
+                  />
+                </ReactCrop>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImgSrc('');
+                    setCrop(undefined);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={cropImage}>
+                  Upload
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
