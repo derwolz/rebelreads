@@ -235,13 +235,16 @@ router.patch("/profile", requireSeller, async (req, res) => {
  * This endpoint is public and can be used by any user
  * This doesn't require authentication
  */
-router.get("/verify-code/:code", async (req, res) => {
+router.get("/verify-code/:code", (req, res, next) => {
+  // Skip authentication for this public route
+  if (req.params.code) {
+    next();
+  } else {
+    res.status(400).json({ error: "Verification code is required" });
+  }
+}, async (req, res) => {
   try {
     const code = req.params.code;
-
-    if (!code) {
-      return res.status(400).json({ error: "Verification code is required" });
-    }
 
     // Get the seller information from the verification code
     const sellerInfo = await dbStorage.getSellerDetailsByVerificationCode(code);
