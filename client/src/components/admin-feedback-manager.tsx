@@ -598,6 +598,172 @@ export function AdminFeedbackManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Ticket Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create New Feedback Ticket</DialogTitle>
+            <DialogDescription>
+              Create a new feedback ticket to track issues or feature requests
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...createForm}>
+            <form onSubmit={createForm.handleSubmit(async (data) => {
+              try {
+                // Send the new ticket data to the server
+                const response = await apiRequest("POST", "/api/feedback/admin/create", {
+                  title: data.title,
+                  description: data.description,
+                  type: data.type,
+                  priority: parseInt(data.priority),
+                  status: "new"
+                });
+                
+                if (!response.ok) {
+                  throw new Error("Failed to create ticket");
+                }
+                
+                // Success notification
+                toast({
+                  title: "Success",
+                  description: "Ticket has been created successfully",
+                  variant: "default",
+                });
+                
+                // Close the dialog and reset form
+                setIsCreateDialogOpen(false);
+                createForm.reset();
+                
+                // Refresh the ticket list
+                queryClient.invalidateQueries({ queryKey: ["/api/feedback/admin/all"] });
+              } catch (error) {
+                // Error notification
+                toast({
+                  title: "Error",
+                  description: `Failed to create ticket: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                  variant: "destructive",
+                });
+              }
+            })} className="space-y-4">
+              <FormField
+                control={createForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Brief description of the issue or request" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={createForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Detailed description of the issue or feature request" 
+                        className="min-h-[100px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={createForm.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="bug_report">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-red-500" />
+                              <span>Bug Report</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="feature_request">
+                            <div className="flex items-center gap-2">
+                              <Lightbulb className="h-4 w-4 text-amber-500" />
+                              <span>Feature Request</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="general_feedback">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4 text-slate-500" />
+                              <span>General Feedback</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="question">
+                            <div className="flex items-center gap-2">
+                              <HelpCircle className="h-4 w-4 text-blue-500" />
+                              <span>Question</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={createForm.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">Low</SelectItem>
+                          <SelectItem value="2">Medium</SelectItem>
+                          <SelectItem value="3">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Create Ticket</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

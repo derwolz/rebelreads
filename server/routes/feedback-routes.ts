@@ -130,6 +130,42 @@ router.get("/admin/all", async (req: RequestWithUser, res) => {
 });
 
 /**
+ * Admin route: Create a new feedback ticket
+ * @route POST /api/feedback/admin/create
+ */
+router.post("/admin/create", async (req: RequestWithUser, res) => {
+  try {
+    // Check if user is admin (currently hardcoded for users 1 & 2)
+    const isAdmin = req.user && [1, 2].includes(req.user.id);
+    if (!req.user || !isAdmin) {
+      return res.status(403).json({ error: "Unauthorized. Admin access required." });
+    }
+    
+    // Validate request body
+    const validationResult = insertFeedbackTicketSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({
+        error: "Invalid request data",
+        details: validationResult.error.format(),
+      });
+    }
+    
+    // Create the feedback ticket
+    const ticket = await feedbackStorage.createFeedbackTicket(validationResult.data, null);
+    
+    // Return the ticket with its number
+    return res.status(201).json({
+      message: "Feedback ticket created successfully",
+      ticketNumber: ticket.ticketNumber,
+      ticket,
+    });
+  } catch (error) {
+    console.error("Error creating feedback ticket:", error);
+    return res.status(500).json({ error: "Failed to create feedback ticket" });
+  }
+});
+
+/**
  * Admin route: Update a feedback ticket
  * @route PATCH /api/feedback/admin/:id
  */

@@ -50,6 +50,7 @@ export const SortableTicket: React.FC<SortableTicketProps> = ({ ticket, onClick 
     zIndex: isDragging ? 1000 : 1,
     // Use specific CSS position values that won't cause type errors
     position: isDragging ? 'relative' as const : 'static' as const,
+    boxShadow: isDragging ? '0 5px 15px rgba(0, 0, 0, 0.1)' : 'none',
   };
 
   // Get appropriate icon based on ticket type
@@ -66,42 +67,64 @@ export const SortableTicket: React.FC<SortableTicketProps> = ({ ticket, onClick 
     }
   };
 
-  // Get priority badge color
-  const getPriorityBadge = () => {
+  // Format priority badge variant
+  const getPriorityBadgeVariant = () => {
     switch (ticket.priority) {
-      case 3:
-        return <Badge variant="destructive">High</Badge>;
+      case 1:
+        return "default";
       case 2:
-        return <Badge variant="secondary">Medium</Badge>;
+        return "secondary";
+      case 3:
+        return "destructive";
       default:
-        return <Badge variant="outline">Low</Badge>;
+        return "default";
+    }
+  };
+
+  // Format priority text
+  const getPriorityText = () => {
+    switch (ticket.priority) {
+      case 1:
+        return "Low";
+      case 2:
+        return "Medium";
+      case 3:
+        return "High";
+      default:
+        return "Unknown";
     }
   };
 
   return (
-    <div
+    <Card
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="touch-manipulation"
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md"
+      onClick={onClick}
     >
-      <Card 
-        className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow border-l-4 border-l-primary"
-        onClick={onClick}
-      >
-        <CardContent className="p-3 space-y-1.5">
+      <CardContent className="p-3">
+        <div className="space-y-2">
           <div className="flex justify-between items-start">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 text-sm text-gray-500">
               {getTicketIcon()}
-              <span className="text-xs font-mono text-slate-500">#{ticket.ticketNumber}</span>
+              <span>{ticket.ticketNumber}</span>
             </div>
-            {getPriorityBadge()}
+            <Badge variant={getPriorityBadgeVariant() as any}>
+              {getPriorityText()}
+            </Badge>
           </div>
-          <div className="font-medium line-clamp-2">{ticket.title}</div>
-          <div className="text-xs text-slate-500 line-clamp-2">{ticket.description}</div>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="font-medium line-clamp-2">
+            {ticket.title}
+          </div>
+          <div className="text-xs text-gray-500 line-clamp-2">
+            {ticket.description.length > 100
+              ? `${ticket.description.substring(0, 100)}...`
+              : ticket.description}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
