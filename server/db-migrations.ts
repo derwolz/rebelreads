@@ -1418,7 +1418,130 @@ export async function runMigrations() {
   await addUserIdToPublishers();
   // Create publisher_sellers table for authenticating salesmen
   await createPublisherSellersTable();
+  await createSellersTableAndUpdatePublisherSellers();
   console.log("Migrations completed");
+}
+
+async function createSellersTableAndUpdatePublisherSellers() {
+  try {
+    console.log("Checking for sellers table...");
+    
+    // Check if the table already exists
+    const checkResult = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'sellers'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Creating sellers table and modifying publisher_sellers table...");
+      
+      // First, create the sellers table
+      await db.execute(sql`
+        CREATE TABLE sellers (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          company TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'active',
+          notes TEXT,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      
+      // Check if publisher_sellers table exists
+      const publisherSellersCheckResult = await db.execute(sql`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_name = 'publisher_sellers'
+      `);
+      
+      if (publisherSellersCheckResult.rows.length > 0) {
+        console.log("Migrating data from publisher_sellers to sellers table...");
+        
+        // Check if user_id column exists in publisher_sellers
+        const userIdCheckResult = await db.execute(sql`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'publisher_sellers' AND column_name = 'user_id'
+        `);
+        
+        if (userIdCheckResult.rows.length > 0) {
+          // Migrate existing data from publisher_sellers to sellers
+          await db.execute(sql`
+            INSERT INTO sellers (user_id, name, email, company, status, notes, created_at, updated_at)
+            SELECT user_id, name, email, company, status, notes, created_at, updated_at
+            FROM publisher_sellers
+          `);
+          
+          // Create a temporary table to store the mapping
+          await db.execute(sql`
+            CREATE TEMP TABLE seller_mapping AS
+            SELECT ps.id AS publisher_seller_id, s.id AS seller_id
+            FROM publisher_sellers ps
+            JOIN sellers s ON ps.user_id = s.user_id
+          `);
+          
+          // Backup the existing publisher_sellers table
+          await db.execute(sql`
+            CREATE TABLE publisher_sellers_backup AS
+            SELECT * FROM publisher_sellers
+          `);
+          
+          // Drop the old publisher_sellers table
+          await db.execute(sql`DROP TABLE publisher_sellers`);
+          
+          // Create the new publisher_sellers table with seller_id
+          await db.execute(sql`
+            CREATE TABLE publisher_sellers (
+              id SERIAL PRIMARY KEY,
+              seller_id INTEGER NOT NULL REFERENCES sellers(id),
+              verification_code TEXT,
+              created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+              updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+          `);
+          
+          // Migrate the data to the new publisher_sellers table
+          await db.execute(sql`
+            INSERT INTO publisher_sellers (id, seller_id, verification_code, created_at, updated_at)
+            SELECT psb.id, sm.seller_id, psb.verification_code, psb.created_at, psb.updated_at
+            FROM publisher_sellers_backup psb
+            JOIN seller_mapping sm ON psb.id = sm.publisher_seller_id
+          `);
+          
+          // Drop the temporary tables
+          await db.execute(sql`DROP TABLE seller_mapping`);
+          await db.execute(sql`DROP TABLE publisher_sellers_backup`);
+          
+          console.log("Successfully migrated publisher_sellers table to use seller_id");
+        } else {
+          console.log("publisher_sellers table already has the updated schema with seller_id");
+        }
+      }
+      
+      console.log("sellers table created successfully");
+    } else {
+      console.log("sellers table already exists");
+      
+      // Check if publisher_sellers has seller_id instead of user_id
+      const sellerIdCheckResult = await db.execute(sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'publisher_sellers' AND column_name = 'seller_id'
+      `);
+      
+      if (sellerIdCheckResult.rows.length > 0) {
+        console.log("publisher_sellers table already has the updated schema with seller_id");
+      } else {
+        console.log("publisher_sellers table needs to be updated but sellers table exists - skipping to avoid conflicts");
+      }
+    }
+  } catch (error) {
+    console.error("Error creating sellers table and updating publisher_sellers:", error);
+  }
 }
 
 // Add user_id column to publishers table with a foreign key reference to users
