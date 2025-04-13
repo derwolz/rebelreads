@@ -153,6 +153,7 @@ export function BookGridCard({ book }: { book: Book }) {
               className={`
                 overflow-hidden cursor-pointer h-48 w-full
                 transition-all duration-300 ease-in-out
+                hover:scale-105
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
               `}
               onClick={handleCardClick}
