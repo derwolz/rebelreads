@@ -11,10 +11,10 @@ export default function SalesPanel() {
 
   // Check if the user is a seller
   const { data: sellerStatus, isLoading } = useQuery({
-    queryKey: ['/api/account/publisher-seller-status'],
+    queryKey: ['/api/sales/check-status'],
     queryFn: async () => {
-      if (!user) return { isPublisherSeller: false };
-      const res = await fetch('/api/account/publisher-seller-status');
+      if (!user) return { isSeller: false };
+      const res = await fetch('/api/sales/check-status');
       if (!res.ok) {
         const error = await res.json();
         toast({
@@ -22,7 +22,7 @@ export default function SalesPanel() {
           description: error.error || "Failed to check seller status",
           variant: "destructive"
         });
-        return { isPublisherSeller: false };
+        return { isSeller: false };
       }
       return res.json();
     },
@@ -39,7 +39,7 @@ export default function SalesPanel() {
   }
 
   // Verify seller access
-  if (!sellerStatus?.isPublisherSeller) {
+  if (!sellerStatus?.isSeller) {
     return (
       <div className="container mx-auto p-6">
         <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
