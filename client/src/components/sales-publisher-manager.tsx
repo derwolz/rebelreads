@@ -1,20 +1,55 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Search, Plus, Loader2, UserPlus, Copy, Check, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { PlusCircle, Search, Copy, RefreshCw, UserPlus } from "lucide-react";
 
 interface User {
   id: number;
@@ -54,450 +89,408 @@ interface VerificationCode {
 export function SalesPublisherManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isNewVerificationOpen, setIsNewVerificationOpen] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showUserSearch, setShowUserSearch] = useState(false);
-  const [formData, setFormData] = useState({
-    userId: 0,
-    name: "",
-    publisher_name: "",
-    publisher_description: "",
-    business_email: "",
-    notes: ""
-  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showUserDialog, setShowUserDialog] = useState(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
 
-  // Fetch seller info
-  const { data: sellerInfo } = useQuery({
-    queryKey: ['/api/account/publisher-seller-profile'],
+  // Fetch list of users for publisher assignment
+  const { data: users, isLoading: isLoadingUsers } = useQuery<User[]>({
+    queryKey: ['/api/sales/users', searchTerm],
     queryFn: async () => {
-      const response = await fetch('/api/account/publisher-seller-profile');
-      if (!response.ok) {
-        throw new Error('Failed to fetch seller profile');
+      const query = searchTerm ? `?query=${encodeURIComponent(searchTerm)}` : '';
+      const res = await fetch(`/api/sales/users${query}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch users');
       }
-      return response.json();
-    }
+      return res.json();
+    },
   });
 
   // Fetch verification codes
-  const { data: verificationCodes, isLoading: loadingCodes } = useQuery({
+  const { data: codes, isLoading: isLoadingCodes } = useQuery<VerificationCode[]>({
     queryKey: ['/api/account/verification-codes'],
     queryFn: async () => {
-      const response = await fetch('/api/account/verification-codes');
-      if (!response.ok) {
+      const res = await fetch('/api/account/verification-codes');
+      if (!res.ok) {
         throw new Error('Failed to fetch verification codes');
       }
-      return response.json() as Promise<VerificationCode[]>;
-    }
+      return res.json();
+    },
   });
 
-  // Fetch publishers verified by this seller
-  const { data: publishers, isLoading: loadingPublishers } = useQuery({
+  // Fetch verified publishers
+  const { data: publishers, isLoading: isLoadingPublishers } = useQuery<Publisher[]>({
     queryKey: ['/api/account/verified-publishers'],
     queryFn: async () => {
-      const response = await fetch('/api/account/verified-publishers');
-      if (!response.ok) {
+      const res = await fetch('/api/account/verified-publishers');
+      if (!res.ok) {
         throw new Error('Failed to fetch verified publishers');
       }
-      return response.json() as Promise<Publisher[]>;
-    }
-  });
-
-  // Search for users
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ['/api/admin/users/search', searchQuery],
-    queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return [];
-      const response = await fetch(`/api/admin/users/search?query=${encodeURIComponent(searchQuery)}`);
-      if (!response.ok) {
-        throw new Error('Failed to search users');
-      }
-      return response.json() as Promise<User[]>;
+      return res.json();
     },
-    enabled: searchQuery.length >= 2
   });
 
-  // Generate verification code mutation
+  // Generate a new verification code
   const generateCodeMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('/api/account/generate-verification-code', 'POST');
-    },
-    onSuccess: (data) => {
-      setVerificationCode(data.verification_code);
-      queryClient.invalidateQueries({ queryKey: ['/api/account/verification-codes'] });
-      toast({
-        title: "Verification code generated",
-        description: "The code has been generated successfully.",
+      const res = await fetch('/api/account/generate-verification-code', {
+        method: 'POST',
       });
+      if (!res.ok) {
+        throw new Error('Failed to generate verification code');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Verification code generated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/verification-codes'] });
     },
     onError: (error) => {
       toast({
-        title: "Failed to generate code",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate verification code",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  // Select a user for publisher assignment
+  const selectUser = (user: User) => {
+    setSelectedUser(user);
+    setShowUserDialog(true);
+  };
+
+  // Setup form validation for publisher assignment
+  const assignPublisherSchema = z.object({
+    publisher_name: z.string().min(1, "Publisher name is required"),
+    publisher_description: z.string().optional(),
+    business_email: z.string().email("Invalid email format").optional(),
+  });
+
+  const assignForm = useForm<z.infer<typeof assignPublisherSchema>>({
+    resolver: zodResolver(assignPublisherSchema),
+    defaultValues: {
+      publisher_name: "",
+      publisher_description: "",
+      business_email: "",
+    },
   });
 
   // Assign publisher status mutation
   const assignPublisherMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      return apiRequest('/api/sales/assign-publisher', 'POST', data);
+    mutationFn: async (data: z.infer<typeof assignPublisherSchema>) => {
+      if (!selectedUser) {
+        throw new Error('No user selected');
+      }
+
+      const res = await fetch('/api/sales/assign-publisher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          ...data,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to assign publisher status');
+      }
+
+      return res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Publisher status assigned",
-        description: "The user has been assigned publisher status successfully.",
+        title: "Success",
+        description: `Publisher status assigned to ${selectedUser?.username}`,
       });
-      // Reset form and refresh data
-      setFormData({
-        userId: 0,
-        name: "",
-        publisher_name: "",
-        publisher_description: "",
-        business_email: "",
-        notes: ""
-      });
+      setShowUserDialog(false);
       setSelectedUser(null);
+      assignForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/sales/users'] });
       queryClient.invalidateQueries({ queryKey: ['/api/account/verified-publishers'] });
     },
     onError: (error) => {
       toast({
-        title: "Failed to assign publisher status",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to assign publisher status",
         variant: "destructive",
       });
-    }
+    },
   });
 
-  const handleGenerateCode = () => {
-    generateCodeMutation.mutate();
+  const onSubmitAssignPublisher = (data: z.infer<typeof assignPublisherSchema>) => {
+    assignPublisherMutation.mutate(data);
   };
 
+  // Copy verification code to clipboard
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(
-      () => {
-        setCopiedCode(true);
-        setTimeout(() => setCopiedCode(false), 2000);
-        toast({
-          title: "Copied to clipboard",
-          description: "The verification code has been copied to your clipboard.",
-        });
-      },
-      (err) => {
-        console.error('Could not copy text: ', err);
-        toast({
-          title: "Failed to copy",
-          description: "Please try copying the code manually.",
-          variant: "destructive",
-        });
-      }
-    );
-  };
-
-  const selectUser = (user: User) => {
-    setSelectedUser(user);
-    setFormData({
-      ...formData,
-      userId: user.id,
-      name: user.username || "",
-      business_email: user.email || "",
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: "Verification code copied to clipboard",
     });
-    setShowUserSearch(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.userId || !formData.publisher_name) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    assignPublisherMutation.mutate(formData);
   };
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="publishers">
+      <Tabs defaultValue="users">
         <TabsList>
-          <TabsTrigger value="publishers">Publishers</TabsTrigger>
+          <TabsTrigger value="users">Manage Users</TabsTrigger>
           <TabsTrigger value="codes">Verification Codes</TabsTrigger>
+          <TabsTrigger value="publishers">Verified Publishers</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="publishers" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Verified Publishers</h3>
-            <Dialog open={isNewVerificationOpen} onOpenChange={setIsNewVerificationOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <UserPlus size={16} />
-                  <span>Verify New Publisher</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Verify New Publisher</DialogTitle>
-                  <DialogDescription>
-                    Assign publisher status to a user, allowing them to publish books and manage authors.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                  <div>
-                    <Label htmlFor="user">User</Label>
-                    <div className="relative">
-                      {selectedUser ? (
-                        <div className="flex justify-between items-center p-2 border rounded-md">
-                          <div>
-                            <span className="font-medium">{selectedUser.username}</span>
-                            <span className="text-sm text-muted-foreground ml-2">({selectedUser.email})</span>
-                          </div>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setShowUserSearch(true)}
-                          >
-                            Change
-                          </Button>
-                        </div>
-                      ) : (
-                        <div>
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Search for a user by email or username"
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              onClick={() => setShowUserSearch(true)}
-                            />
-                            <Button type="button" variant="ghost" size="icon">
-                              <Search size={18} />
+
+        {/* Users Tab - For assigning publisher status */}
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Publisher Assignment</CardTitle>
+              <CardDescription>
+                Assign publisher status to users in the system.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search users by name or email..."
+                    className="pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {isLoadingUsers ? (
+                <div className="py-6 text-center">Loading users...</div>
+              ) : (
+                <Table>
+                  <TableCaption>
+                    {users?.length === 0
+                      ? "No users found"
+                      : `Showing ${users?.length} user${users?.length === 1 ? "" : "s"}`}
+                  </TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.username}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          {user.isPublisher ? (
+                            <Badge>Publisher</Badge>
+                          ) : (
+                            <Badge variant="outline">Regular User</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {!user.isPublisher && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => selectUser(user)}
+                            >
+                              <UserPlus className="mr-1 h-4 w-4" />
+                              Assign Publisher
                             </Button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {showUserSearch && searchResults && searchResults.length > 0 && (
-                        <Card className="absolute w-full mt-1 z-50">
-                          <CardContent className="p-2">
-                            {isSearching ? (
-                              <div className="flex justify-center p-4">
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                              </div>
-                            ) : (
-                              <ul className="max-h-60 overflow-auto">
-                                {searchResults.map((user) => (
-                                  <li 
-                                    key={user.id} 
-                                    className={`p-2 hover:bg-accent rounded-md cursor-pointer flex justify-between items-center
-                                      ${user.isPublisher ? 'opacity-50' : ''}`}
-                                    onClick={() => !user.isPublisher && selectUser(user)}
-                                  >
-                                    <div>
-                                      <div className="font-medium">{user.username}</div>
-                                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                                    </div>
-                                    {user.isPublisher && (
-                                      <Badge variant="outline">Already a publisher</Badge>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="publisher_name">Publisher Name</Label>
-                    <Input
-                      id="publisher_name"
-                      value={formData.publisher_name}
-                      onChange={(e) => setFormData({ ...formData, publisher_name: e.target.value })}
-                      required
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">The official name of the publishing company</p>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="publisher_description">Publisher Description</Label>
-                    <Textarea
-                      id="publisher_description"
-                      value={formData.publisher_description}
-                      onChange={(e) => setFormData({ ...formData, publisher_description: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="business_email">Business Email</Label>
-                    <Input
-                      id="business_email"
-                      type="email"
-                      value={formData.business_email}
-                      onChange={(e) => setFormData({ ...formData, business_email: e.target.value })}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      rows={3}
-                      placeholder="Optional notes about this publisher (only visible to sales)"
-                    />
-                  </div>
-                  
-                  <DialogFooter>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsNewVerificationOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={assignPublisherMutation.isPending || !selectedUser}
-                    >
-                      {assignPublisherMutation.isPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Verify Publisher
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          
-          {loadingPublishers ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : publishers && publishers.length > 0 ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Publisher Name</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Contact Email</TableHead>
-                    <TableHead>Verified On</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {publishers.map((publisher) => (
-                    <TableRow key={publisher.id}>
-                      <TableCell className="font-medium">{publisher.publisher_name}</TableCell>
-                      <TableCell>
-                        {publisher.user ? `${publisher.user.username} (${publisher.user.email})` : publisher.name}
-                      </TableCell>
-                      <TableCell>{publisher.business_email || 'N/A'}</TableCell>
-                      <TableCell>
-                        {new Date(publisher.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No publishers verified yet.</p>
-              <p>You can verify a new publisher using the button above.</p>
-            </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="codes" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Verification Codes</h3>
-            <Button 
-              onClick={handleGenerateCode} 
-              disabled={generateCodeMutation.isPending}
-              className="flex items-center gap-2"
-            >
-              {generateCodeMutation.isPending && (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
-              <Plus size={16} />
-              <span>Generate New Code</span>
-            </Button>
-          </div>
-          
-          {verificationCode && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>New Verification Code</AlertTitle>
-              <AlertDescription className="flex items-center justify-between mt-2">
-                <code className="bg-muted px-3 py-1 rounded-md">{verificationCode}</code>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => copyToClipboard(verificationCode)}
-                  className="ml-2"
-                >
-                  {copiedCode ? <Check size={16} /> : <Copy size={16} />}
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {loadingCodes ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : verificationCodes && verificationCodes.length > 0 ? (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Verification Code</TableHead>
-                    <TableHead>Generated</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {verificationCodes.map((code) => (
-                    <TableRow key={code.id}>
-                      <TableCell className="font-mono">{code.verification_code}</TableCell>
-                      <TableCell>{new Date(code.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">Active</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => copyToClipboard(code.verification_code)}
-                        >
-                          <Copy size={16} />
-                        </Button>
-                      </TableCell>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Verification Codes Tab */}
+        <TabsContent value="codes" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Verification Codes</CardTitle>
+              <CardDescription>
+                Generate and manage verification codes for publisher assignment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => generateCodeMutation.mutate()} 
+                disabled={generateCodeMutation.isPending}
+                className="mb-4"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                {generateCodeMutation.isPending ? "Generating..." : "Generate New Code"}
+              </Button>
+
+              {isLoadingCodes ? (
+                <div className="py-6 text-center">Loading verification codes...</div>
+              ) : (
+                <Table>
+                  <TableCaption>
+                    {!codes || codes.length === 0 
+                      ? "No verification codes found" 
+                      : `Showing ${codes.length} verification code${codes.length === 1 ? "" : "s"}`}
+                  </TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Verification Code</TableHead>
+                      <TableHead>Created At</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No verification codes generated yet.</p>
-              <p>Generate a code to allow users to become publishers.</p>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {codes?.map((code) => (
+                      <TableRow key={code.id}>
+                        <TableCell className="font-mono">{code.verification_code}</TableCell>
+                        <TableCell>{new Date(code.createdAt).toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(code.verification_code)}
+                          >
+                            <Copy className="mr-1 h-4 w-4" />
+                            Copy
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Verified Publishers Tab */}
+        <TabsContent value="publishers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Verified Publishers</CardTitle>
+              <CardDescription>
+                View and manage publishers in the system.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingPublishers ? (
+                <div className="py-6 text-center">Loading publishers...</div>
+              ) : (
+                <Table>
+                  <TableCaption>
+                    {!publishers || publishers.length === 0 
+                      ? "No publishers found" 
+                      : `Showing ${publishers.length} publisher${publishers.length === 1 ? "" : "s"}`}
+                  </TableCaption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Publisher Name</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Business Email</TableHead>
+                      <TableHead>Created At</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {publishers?.map((publisher) => (
+                      <TableRow key={publisher.id}>
+                        <TableCell className="font-medium">{publisher.publisher_name}</TableCell>
+                        <TableCell>{publisher.user?.username || "Unknown"}</TableCell>
+                        <TableCell>{publisher.business_email || "—"}</TableCell>
+                        <TableCell>{new Date(publisher.createdAt).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog for assigning publisher status */}
+      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Publisher Status</DialogTitle>
+            <DialogDescription>
+              {selectedUser
+                ? `Assign publisher status to ${selectedUser.username} (${selectedUser.email})`
+                : "Select a user to assign publisher status"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...assignForm}>
+            <form onSubmit={assignForm.handleSubmit(onSubmitAssignPublisher)} className="space-y-4">
+              <FormField
+                control={assignForm.control}
+                name="publisher_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Publisher Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Publisher Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={assignForm.control}
+                name="publisher_description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Publisher Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Publisher Description" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={assignForm.control}
+                name="business_email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Business Email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowUserDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={assignPublisherMutation.isPending}>
+                  {assignPublisherMutation.isPending ? "Assigning..." : "Assign Publisher Status"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

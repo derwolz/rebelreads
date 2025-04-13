@@ -1,6 +1,15 @@
 import { db } from "../db";
-import { eq, like, or, desc, sql } from "drizzle-orm";
-import { Seller, InsertSeller, sellers, PublisherSeller, InsertPublisherSeller, publisherSellers, users } from "../../shared/schema";
+import { eq, like, or, desc, sql, inArray } from "drizzle-orm";
+import { 
+  Seller, 
+  InsertSeller, 
+  sellers, 
+  PublisherSeller, 
+  InsertPublisherSeller, 
+  publisherSellers, 
+  users,
+  publishers
+} from "../../shared/schema";
 import { nanoid } from "nanoid";
 
 export interface ISellerStorage {
@@ -15,6 +24,7 @@ export interface ISellerStorage {
   getSellerDetailsByVerificationCode(code: string): Promise<Seller | null>;
   getSellerVerificationCodes(sellerId: number): Promise<PublisherSeller[]>;
   searchUsers(query: string, page: number, limit: number): Promise<{ id: number; email: string; username: string }[]>;
+  getVerifiedPublishers(sellerId: number): Promise<any[]>;
 }
 
 export class SellerStorage implements ISellerStorage {
@@ -281,6 +291,39 @@ export class SellerStorage implements ISellerStorage {
       return result;
     } catch (error) {
       console.error("Error searching users:", error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get all publishers verified or assigned by a seller
+   * This joins publishers with users to get full publisher details
+   * @param sellerId The ID of the seller
+   * @returns Array of publisher objects with user information
+   */
+  async getVerifiedPublishers(sellerId: number): Promise<any[]> {
+    if (!sellerId) return [];
+    
+    try {
+      const result = await db.select({
+        publisher: publishers,
+        user: {
+          id: users.id,
+          email: users.email,
+          username: users.username,
+          displayName: users.displayName
+        }
+      })
+      .from(publishers)
+      .leftJoin(users, eq(users.id, publishers.userId))
+      .where(eq(publishers.assignedBySellerId, sellerId));
+      
+      return result.map(r => ({
+        ...r.publisher,
+        user: r.user
+      }));
+    } catch (error) {
+      console.error("Error getting verified publishers:", error);
       return [];
     }
   }
