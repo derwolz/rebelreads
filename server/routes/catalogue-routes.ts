@@ -80,6 +80,47 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/catalogue/author
+ * Get all authors along with their books
+ * Authenticated route
+ */
+router.get("/author", requireAuth, async (req: Request, res: Response) => {
+  try {
+    // Get all authors from the database
+    const authorsList = await db.select().from(authors);
+    
+    // For each author, get their books and user information
+    const authorsWithBooks = await Promise.all(
+      authorsList.map(async (author) => {
+        // Get all books by this author
+        const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+        
+        // Get user profile for this author
+        const user = await db.select().from(users).where(eq(users.id, author.userId)).limit(1);
+        
+        return {
+          author: {
+            ...author,
+            user: user.length > 0 ? {
+              id: user[0].id,
+              username: user[0].username,
+              email: user[0].email,
+              displayName: user[0].displayName
+            } : null
+          },
+          books: authorBooks
+        };
+      })
+    );
+    
+    res.json(authorsWithBooks);
+  } catch (error) {
+    console.error("Error getting all authors' catalogues:", error);
+    res.status(500).json({ error: "Failed to retrieve authors catalogues" });
+  }
+});
+
+/**
  * GET /api/catalogue/author/:authorId
  * Get all books by an author with complete information
  * Authenticated route
