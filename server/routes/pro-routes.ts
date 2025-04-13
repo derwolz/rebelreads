@@ -148,8 +148,17 @@ router.post("/test-upgrade", async (req: Request, res: Response) => {
 
 // Endpoint to get basic Pro dashboard data
 router.get("/dashboard", async (req: Request, res: Response) => {
-  if (!req.user || !req.user.isAuthor) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  if (!req.user.isAuthor) {
     return res.status(403).json({ error: "Author access required" });
+  }
+  
+  // Check if the user is a Pro user
+  if (!req.user.isPro) {
+    return res.status(403).json({ error: "Pro membership required" });
   }
 
   try {
@@ -226,8 +235,17 @@ router.get("/dashboard", async (req: Request, res: Response) => {
 // Endpoint to get reviews for books by the author
 // Main review endpoint for authors
 router.get("/reviews", async (req: Request, res: Response) => {
-  if (!req.user || !req.user.isAuthor) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  if (!req.user.isAuthor) {
     return res.status(403).json({ error: "Author access required" });
+  }
+  
+  // Check if the user is a Pro user
+  if (!req.user.isPro) {
+    return res.status(403).json({ error: "Pro membership required" });
   }
 
   try {

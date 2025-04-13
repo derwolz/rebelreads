@@ -63,8 +63,36 @@ export function setupAuth(app: Express) {
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
+    // Get basic user info
     const user = await dbStorage.getUser(id);
-    done(null, user);
+    
+    if (user) {
+      // Check if user is an author
+      const isAuthor = await dbStorage.isUserAuthor(user.id);
+      
+      // If user is an author, get Pro status from authors table
+      if (isAuthor) {
+        const authorDetails = await dbStorage.getAuthorByUserId(user.id);
+        
+        // Ensure user session has isPro and isAuthor flags
+        const userWithAuthorInfo = {
+          ...user,
+          isAuthor, // Add isAuthor flag
+          isPro: authorDetails?.is_pro || false // Set isPro based on author record 
+        };
+        
+        done(null, userWithAuthorInfo);
+      } else {
+        // Regular user
+        done(null, {
+          ...user,
+          isAuthor: false,
+          isPro: false
+        });
+      }
+    } else {
+      done(null, null);
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {
