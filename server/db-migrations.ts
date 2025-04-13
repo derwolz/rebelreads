@@ -1249,6 +1249,34 @@ async function createFeedbackTicketsTable() {
   }
 }
 
+async function addAdminNotesToFeedbackTickets() {
+  try {
+    // Check if admin_notes column exists
+    const checkResult = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'feedback_tickets' AND column_name = 'admin_notes'
+      )
+    `);
+    
+    const columnExists = checkResult.rows[0].exists;
+    
+    if (!columnExists) {
+      console.log("Adding admin_notes column to feedback_tickets table...");
+      await db.execute(sql`
+        ALTER TABLE feedback_tickets 
+        ADD COLUMN admin_notes TEXT
+      `);
+      console.log("admin_notes column added successfully");
+    } else {
+      console.log("admin_notes column already exists in feedback_tickets table");
+    }
+  } catch (error) {
+    console.error("Error adding admin_notes column:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -1288,5 +1316,7 @@ export async function runMigrations() {
   await removeProColumnsFromAuthors();
   // Create feedback tickets table for beta feedback
   await createFeedbackTicketsTable();
+  // Add admin_notes column to feedback_tickets table
+  await addAdminNotesToFeedbackTickets();
   console.log("Migrations completed");
 }
