@@ -112,7 +112,7 @@ const multipleImageUpload = multer({
     cb(new Error('Only image files and ZIP archives are allowed'));
   },
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB max file size
+    fileSize: 100 * 1024 * 1024, // 100MB max file size
   }
 }).fields([
   { name: 'bookZip', maxCount: 1 },

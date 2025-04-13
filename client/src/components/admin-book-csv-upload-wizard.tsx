@@ -184,7 +184,20 @@ export function AdminBookCsvUploadWizard() {
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+      
+      // Check file type
       if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
+        // Check file size - 100MB limit
+        const MAX_SIZE = 100 * 1024 * 1024; // 100MB in bytes
+        if (file.size > MAX_SIZE) {
+          toast({
+            title: "File too large",
+            description: `Your file is ${Math.round(file.size / (1024 * 1024))}MB. Maximum size is 100MB.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
         setZipFile(file);
       } else {
         toast({
@@ -334,7 +347,8 @@ export function AdminBookCsvUploadWizard() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your ZIP should include:<br />
                 1. A CSV file with columns: Title, Author, language, genres, subgenres, themes, tropes, formats<br />
-                2. Book cover images with filenames matching the image types: book-detail, background, hero, etc.
+                2. Book cover images with filenames matching the image types: book-detail, background, hero, etc.<br />
+                <span className="text-amber-500 font-semibold">Maximum file size: 100MB</span>
               </p>
               
               <div className="flex flex-col items-center justify-center space-y-2 pt-4 border-t border-border">
