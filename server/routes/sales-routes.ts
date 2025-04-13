@@ -84,10 +84,8 @@ router.get("/users", requireSeller, async (req, res) => {
     // Check which users are already publishers
     const usersWithPublisherStatus = await Promise.all(
       users.map(async (user: { id: number; email: string; username: string }) => {
-        // Here we're checking if the user is already a publisher
-        // Assuming users with publisher status have entries in the publisher table
-        // This requires a method that needs to be added to publisher storage
-        const isPublisher = false; // For now, we'll just set it to false until we implement this method
+        // Check if the user is already a publisher using the PublisherStorage's isUserPublisher method
+        const isPublisher = await dbStorage.isUserPublisher(user.id);
         return {
           ...user,
           isPublisher
@@ -234,6 +232,81 @@ router.get("/verify-code/:code", async (req, res) => {
     });
   } catch (error) {
     console.error("Error verifying code:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+/**
+ * Assign publisher status to a user
+ * A seller can use this endpoint to assign publisher status to any user
+ * 
+ * Requires: Seller authentication
+ */
+router.post("/assign-publisher", requireSeller, async (req, res) => {
+  try {
+    const sellerId = req.sellerInfo?.id;
+
+    if (!sellerId) {
+      return res.status(404).json({ error: "Seller profile not found" });
+    }
+
+    // Validate the request body
+    const schema = z.object({
+      userId: z.number().positive("Valid user ID is required"),
+      publisherName: z.string().min(1, "Publisher name is required"),
+      publisherDescription: z.string().optional(),
+    });
+
+    const validationResult = schema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({ 
+        error: "Invalid publisher data", 
+        details: validationResult.error.format() 
+      });
+    }
+
+    const { userId, publisherName, publisherDescription } = validationResult.data;
+
+    // Check if the user already has publisher status
+    const isAlreadyPublisher = await dbStorage.isUserPublisher(userId);
+    if (isAlreadyPublisher) {
+      return res.status(400).json({ error: "User already has publisher status" });
+    }
+
+    // Create a new publisher record for the user
+    const publisherData = {
+      userId,
+      publisherName,
+      description: publisherDescription || null,
+    };
+
+    const newPublisher = await dbStorage.createPublisher(publisherData);
+
+    if (!newPublisher) {
+      return res.status(500).json({ error: "Failed to assign publisher status" });
+    }
+
+    // Create a publisher-seller relationship
+    try {
+      const publisherSeller = {
+        sellerId,
+        verification_code: null // No verification code for this relationship as it's directly created
+      };
+
+      await dbStorage.createPublisherSeller(publisherSeller);
+    } catch (error) {
+      console.error("Error creating publisher-seller relationship:", error);
+      // Don't fail the whole process if this secondary step fails
+      // The user is still a publisher, but the relationship with the seller isn't recorded
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Publisher status assigned successfully",
+      publisher: newPublisher
+    });
+  } catch (error) {
+    console.error("Error assigning publisher status:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
