@@ -2,7 +2,7 @@ import express from "express";
 import { z } from "zod";
 import { dbStorage } from "../storage";
 import { requireSeller, attachSellerInfo } from "../middleware/seller-auth";
-import { InsertSeller, InsertPublisherSeller } from "../../shared/schema";
+import { InsertSeller, InsertPublisherSeller, InsertPublisher } from "../../shared/schema";
 
 const router = express.Router();
 
@@ -274,10 +274,12 @@ router.post("/assign-publisher", requireSeller, async (req, res) => {
     }
 
     // Create a new publisher record for the user
-    const publisherData = {
+    const publisherData: InsertPublisher = {
       userId,
-      publisherName,
-      description: publisherDescription || null,
+      name: publisherName, // Required for backward compatibility
+      publisher_name: publisherName,
+      publisher_description: publisherDescription || undefined,
+      description: publisherDescription || undefined, // Required for backward compatibility
     };
 
     const newPublisher = await dbStorage.createPublisher(publisherData);
@@ -288,9 +290,9 @@ router.post("/assign-publisher", requireSeller, async (req, res) => {
 
     // Create a publisher-seller relationship
     try {
-      const publisherSeller = {
+      const publisherSeller: InsertPublisherSeller = {
         sellerId,
-        verification_code: null // No verification code for this relationship as it's directly created
+        verification_code: undefined // No verification code for this relationship as it's directly created
       };
 
       await dbStorage.createPublisherSeller(publisherSeller);
