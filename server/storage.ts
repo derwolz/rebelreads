@@ -186,6 +186,16 @@ export const dbStorage = {
   // Homepage layout
   getHomepageLayout: homepageLayoutStorage.getHomepageLayout.bind(homepageLayoutStorage),
   updateHomepageLayout: homepageLayoutStorage.updateHomepageLayout.bind(homepageLayoutStorage),
+  
+  // Feedback
+  createFeedbackTicket: feedbackStorage.createFeedbackTicket.bind(feedbackStorage),
+  getFeedbackTickets: feedbackStorage.getFeedbackTickets.bind(feedbackStorage),
+  getFeedbackTicket: feedbackStorage.getFeedbackTicket.bind(feedbackStorage),
+  getFeedbackTicketByNumber: feedbackStorage.getFeedbackTicketByNumber.bind(feedbackStorage),
+  updateFeedbackTicket: feedbackStorage.updateFeedbackTicket.bind(feedbackStorage),
+  getUserFeedbackTickets: feedbackStorage.getUserFeedbackTickets.bind(feedbackStorage),
+  getNewTickets: feedbackStorage.getNewTickets.bind(feedbackStorage),
+  getResolvedTickets: feedbackStorage.getResolvedTickets.bind(feedbackStorage),
 };
 
 // Export interfaces from their respective modules
@@ -199,6 +209,7 @@ export type { IAuthorStorage } from "./storage/author";
 export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
 export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
+export type { IFeedbackStorage } from "./storage/feedback";
 
 // Re-export storage classes
 export {
@@ -212,4 +223,5 @@ export {
   AuthorAnalyticsStorage,
   BetaKeyStorage,
   HomepageLayoutStorage,
+  FeedbackStorage,
 };
