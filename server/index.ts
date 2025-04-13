@@ -20,8 +20,9 @@ app.use(express.urlencoded({ extended: false, limit: '100mb' }));
 
 // Increase the request size limit for large file uploads
 app.use((req, res, next) => {
-  // Set timeout to 5 minutes for large uploads
-  req.setTimeout(300000); // 5 minutes in milliseconds
+  // Set timeout to 10 minutes for large uploads
+  req.setTimeout(600000); // 10 minutes in milliseconds
+  res.setTimeout(600000); // Also set response timeout
   next();
 });
 

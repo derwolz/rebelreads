@@ -21,7 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Loader2, Upload, FileUp, Image, FileArchive, 
-  CheckCircle, AlertTriangle, AlertCircle 
+  CheckCircle, AlertTriangle, AlertCircle, Info
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,9 +100,62 @@ export function AdminBookCsvUploadWizard() {
         // Prepare form data and track progress
         const formData = new FormData();
         
-        // If in ZIP mode, add the ZIP file
+        // If in ZIP mode, handle ZIP file upload with progress tracking
         if (uploadMode === 'zip' && zipFile) {
-          formData.append('bookZip', zipFile);
+          // File size check - Show warning for files > 50MB
+          const MAX_OPTIMAL_SIZE = 50 * 1024 * 1024; // 50MB
+          if (zipFile.size > MAX_OPTIMAL_SIZE) {
+            console.log(`Large file detected (${Math.round(zipFile.size / (1024 * 1024))}MB). Using optimized upload.`);
+            
+            // Add the ZIP file with optimized upload
+            formData.append('bookZip', zipFile);
+            
+            // Update progress based on the XHR upload
+            return new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              
+              // Handle progress
+              xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable) {
+                  const progress = (event.loaded / event.total) * 100;
+                  setUploadProgress(progress);
+                }
+              });
+              
+              // Handle completion
+              xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  try {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response);
+                  } catch (error) {
+                    reject(new Error('Invalid server response'));
+                  }
+                } else {
+                  reject(new Error(`Server responded with status: ${xhr.status}`));
+                }
+              });
+              
+              // Handle network errors
+              xhr.addEventListener('error', () => {
+                reject(new Error('Network error occurred during upload'));
+              });
+              
+              // Handle timeouts
+              xhr.addEventListener('timeout', () => {
+                reject(new Error('Upload timed out'));
+              });
+              
+              // Open connection and send data
+              xhr.open('POST', '/api/admin/books/bulk', true);
+              xhr.withCredentials = true; // Include credentials
+              xhr.timeout = 600000; // 10 minute timeout
+              xhr.send(formData);
+            });
+          } else {
+            // For smaller files, use standard approach
+            formData.append('bookZip', zipFile);
+          }
         } 
         // Otherwise, add individual image files and CSV data
         else {
@@ -130,7 +183,7 @@ export function AdminBookCsvUploadWizard() {
           formData.append('csvData', JSON.stringify(books));
         }
 
-        // Upload to server using admin endpoint
+        // Only do standard fetch if we haven't already returned from XHR
         const res = await fetch("/api/admin/books/bulk", {
           method: "POST",
           body: formData,
@@ -256,6 +309,17 @@ export function AdminBookCsvUploadWizard() {
     
     // Handle ZIP files
     if (file.name.endsWith('.zip') || file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
+      // Check file size - 100MB limit
+      const MAX_SIZE = 100 * 1024 * 1024; // 100MB in bytes
+      if (file.size > MAX_SIZE) {
+        toast({
+          title: "File too large",
+          description: `Your file is ${Math.round(file.size / (1024 * 1024))}MB. Maximum size is 100MB.`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setZipFile(file);
       setUploadMode('zip');
       
@@ -374,6 +438,15 @@ export function AdminBookCsvUploadWizard() {
                       <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                       {zipFile.name} ({Math.round(zipFile.size / 1024)} KB)
                     </p>
+                    {zipFile.size > 50 * 1024 * 1024 && (
+                      <Alert className="mt-2 mb-2">
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Large File Detected</AlertTitle>
+                        <AlertDescription>
+                          For files over 50MB, uploading may take some time. Please be patient.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                     <Button
                       className="w-full mt-2"
                       onClick={() => uploadMutation.mutate([])}
