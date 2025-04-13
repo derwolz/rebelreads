@@ -70,6 +70,7 @@ type FeedbackTicket = {
   status: "new" | "in_progress" | "resolved" | "closed";
   priority: number;
   assignedTo: number | null;
+  adminNotes: string | null;
   deviceInfo: any;
   createdAt: string;
   updatedAt: string;
@@ -80,6 +81,7 @@ type TicketUpdate = {
   status?: string;
   priority?: number;
   assignedTo?: number | null;
+  adminNotes?: string | null;
 };
 
 // Component for the Kanban board column
