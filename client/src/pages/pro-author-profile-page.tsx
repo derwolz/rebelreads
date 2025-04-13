@@ -16,12 +16,16 @@ import { Author } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { apiRequest } from "@/lib/queryClient";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ImageCropperDialog } from "@/components/image-cropper-dialog";
 
 export default function ProAuthorProfilePage() {
   const { user, isAuthor } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -83,6 +87,45 @@ export default function ProAuthorProfilePage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const handleCroppedImage = async (blob: Blob) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('profileImage', blob, 'profile.jpg');
+      
+      const response = await fetch("/api/author-profile-image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error("Failed to upload image");
+
+      const { author_image_url } = await response.json();
+
+      setFormData(prev => ({
+        ...prev,
+        author_image_url,
+      }));
+
+      queryClient.invalidateQueries({ queryKey: ["/api/author-profile"] });
+
+      toast({
+        title: "Success",
+        description: "Profile image updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload profile image",
+        variant: "destructive",
+      });
+      console.error("Profile image upload error:", error);
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   return (
@@ -231,16 +274,35 @@ export default function ProAuthorProfilePage() {
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="author_image_url">Profile Image URL</Label>
-                    <Input 
-                      id="author_image_url" 
-                      name="author_image_url" 
-                      value={formData.author_image_url} 
-                      onChange={handleInputChange}
-                      placeholder="https://example.com/your-image.jpg"
+                  <div className="space-y-4">
+                    <Label>Profile Image</Label>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage
+                          src={formData.author_image_url}
+                          alt={formData.author_name}
+                        />
+                        <AvatarFallback>👤</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCropperOpen(true)}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? "Uploading..." : "Change Profile Picture"}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          Click to upload or drag and drop
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <ImageCropperDialog
+                      open={cropperOpen}
+                      onOpenChange={setCropperOpen}
+                      onCropComplete={handleCroppedImage}
                     />
-                    <p className="text-sm text-muted-foreground">Direct link to your author profile image</p>
                   </div>
                   
                   <div className="pt-4">

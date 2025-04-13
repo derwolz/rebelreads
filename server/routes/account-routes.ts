@@ -543,6 +543,41 @@ router.get("/author-profile", async (req: Request, res: Response) => {
   }
 });
 
+// Upload author profile image
+router.post("/author-profile-image", profileImageUpload.single('profileImage'), async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    
+    // Get author profile
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
+    
+    if (!author) {
+      return res.status(404).json({ error: "Author profile not found" });
+    }
+    
+    // Create profile image URL path
+    const author_image_url = `/uploads/profile-images/${req.file.filename}`;
+    
+    // Update author profile image URL in database
+    await db
+      .update(authors)
+      .set({ author_image_url })
+      .where(eq(authors.id, author.id));
+    
+    res.status(200).json({ author_image_url });
+  } catch (error) {
+    console.error("Error uploading author profile image:", error);
+    res.status(500).json({ error: "Failed to upload author profile image" });
+  }
+});
+
 // Update author profile
 router.patch("/author-profile", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
