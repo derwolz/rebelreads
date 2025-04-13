@@ -8,9 +8,11 @@ import {
   userGenreViews, 
   viewGenres, 
   insertAuthorSchema, 
-  insertPublisherSchema, 
+  insertPublisherSchema,
+  insertPublisherSellerSchema,
   authors, 
-  publishers, 
+  publishers,
+  publisherSellers,
   UpdateProfile 
 } from "@shared/schema";
 import { comparePasswords, hashPassword } from "../auth";
