@@ -937,12 +937,14 @@ router.get("/verified-publishers", async (req: Request, res: Response) => {
     const seller = await dbStorage.getSellerByUserId(req.user.id);
     
     if (!seller) {
-      return res.status(404).json({ error: "Seller profile not found" });
+      // If not a seller, return all publishers (default behavior)
+      const publishers = await dbStorage.getPublishers();
+      return res.json(publishers);
     }
     
-    // TODO: This endpoint needs to be implemented in the seller storage module
-    // For now, return an empty array
-    res.json([]);
+    // Get publishers verified by this seller
+    const verifiedPublishers = await dbStorage.getVerifiedPublishers(seller.id);
+    res.json(verifiedPublishers);
   } catch (error) {
     console.error("Error getting verified publishers:", error);
     res.status(500).json({ error: "Failed to get verified publishers" });

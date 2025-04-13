@@ -305,6 +305,17 @@ export class SellerStorage implements ISellerStorage {
     if (!sellerId) return [];
     
     try {
+      // First get verification codes created by this seller
+      const publisherLinks = await db.select({
+        id: publisherSellers.id
+      })
+      .from(publisherSellers)
+      .where(eq(publisherSellers.sellerId, sellerId));
+      
+      // If no codes found, return empty array
+      if (!publisherLinks.length) return [];
+      
+      // Get all publishers and include user information
       const result = await db.select({
         publisher: publishers,
         user: {
@@ -315,8 +326,7 @@ export class SellerStorage implements ISellerStorage {
         }
       })
       .from(publishers)
-      .leftJoin(users, eq(users.id, publishers.userId))
-      .where(eq(publishers.assignedBySellerId, sellerId));
+      .leftJoin(users, eq(users.id, publishers.userId));
       
       return result.map(r => ({
         ...r.publisher,

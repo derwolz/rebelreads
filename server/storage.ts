@@ -229,6 +229,7 @@ export const dbStorage = {
   getSellerDetailsByVerificationCode: sellerStorage.getSellerDetailsByVerificationCode.bind(sellerStorage),
   getSellerVerificationCodes: sellerStorage.getSellerVerificationCodes.bind(sellerStorage),
   searchUsers: sellerStorage.searchUsers.bind(sellerStorage),
+  getVerifiedPublishers: sellerStorage.getVerifiedPublishers.bind(sellerStorage),
 };
 
 // Export interfaces from their respective modules
