@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DndContext,
   closestCenter,
@@ -215,6 +216,7 @@ const formatTicketType = (type: string): string => {
 export function AdminFeedbackManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [selectedTicket, setSelectedTicket] = useState<FeedbackTicket | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -588,6 +590,7 @@ export function AdminFeedbackManager() {
       id: generateNoteId(),
       content: newNote.trim(),
       createdAt: new Date(),
+      createdBy: user?.id // Add the current user ID
     };
     
     // Create a new array with existing notes plus the new one
