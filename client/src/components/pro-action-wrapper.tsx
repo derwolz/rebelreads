@@ -12,16 +12,16 @@ interface ProActionWrapperProps {
 }
 
 export function ProActionWrapper({ children }: ProActionWrapperProps) {
-  const { user } = useAuth();
+  const { user, isAuthor } = useAuth();
   const [showFullPaywall, setShowFullPaywall] = useState(false);
   
   const { data: credits } = useQuery<string>({
     queryKey: ["/api/credits"],
-    enabled: !!user?.isAuthor,
+    enabled: isAuthor,
   });
 
-  // Check if user is pro
-  const isPro = user?.isPro;
+  // Check if user is pro (using any as a temporary solution since the type definition might be outdated)
+  const isPro = user && (user as any).isPro;
 
   // If user is pro, show the full content
   if (isPro) {

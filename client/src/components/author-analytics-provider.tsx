@@ -14,19 +14,19 @@ interface AuthorAnalyticsProviderProps {
 export function AuthorAnalyticsProvider({ children }: AuthorAnalyticsProviderProps) {
   const [location] = useLocation();
   const { trackPageView } = useAuthorAnalytics();
-  const { user } = useAuth();
+  const { user, isAuthor } = useAuth();
 
   // Track page view whenever location changes
   useEffect(() => {
     // Only track for authors
-    if (user?.isAuthor) {
+    if (isAuthor) {
       const referrer = document.referrer || "";
       
       // Log for debugging
       console.log("Tracking page view:", {
         pageUrl: location,
         referrer,
-        authorId: user.id
+        authorId: user?.id
       });
       
       // We use a ref to track if this is the first render to avoid duplicate calls
