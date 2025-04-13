@@ -60,7 +60,17 @@ export default function ProAuthorProfilePage() {
   // Mutation for updating author profile
   const updateProfileMutation = useMutation({
     mutationFn: (data: typeof formData) => {
-      return apiRequest("/api/author-profile", "PATCH", data);
+      return fetch("/api/author-profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        credentials: "include",
+      }).then(res => {
+        if (!res.ok) throw new Error("Failed to update profile");
+        return res.json();
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/author-profile"] });
