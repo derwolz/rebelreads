@@ -294,6 +294,20 @@ export const publishers = pgTable("publishers", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Publisher sellers table to authenticate salesmen
+export const publisherSellers = pgTable("publisher_sellers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  company: text("company").notNull(),
+  status: text("status").notNull().default("active"), // "active", "inactive", "suspended"
+  verification_code: text("verification_code"), // Code used to verify seller status
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const publishersAuthors = pgTable("publishers_authors", {
   id: serial("id").primaryKey(),
   publisherId: integer("publisher_id").notNull(),
@@ -564,6 +578,18 @@ export const insertPublisherSchema = createInsertSchema(publishers)
     logoUrl: z.string().optional(),
   });
 
+export const insertPublisherSellerSchema = createInsertSchema(publisherSellers)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    userId: z.number(),
+    name: z.string().min(1, "Seller name is required"),
+    email: z.string().email("Please enter a valid email"),
+    company: z.string().min(1, "Company name is required"),
+    status: z.enum(["active", "inactive", "suspended"]).default("active"),
+    verification_code: z.string().optional(),
+    notes: z.string().optional(),
+  });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type User = typeof users.$inferSelect;
@@ -591,6 +617,8 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
 export type Publisher = typeof publishers.$inferSelect;
 export type InsertPublisher = z.infer<typeof insertPublisherSchema>;
+export type PublisherSeller = typeof publisherSellers.$inferSelect;
+export type InsertPublisherSeller = z.infer<typeof insertPublisherSellerSchema>;
 export type PublisherAuthor = typeof publishersAuthors.$inferSelect;
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;

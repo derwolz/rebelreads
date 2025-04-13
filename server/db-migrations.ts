@@ -1331,6 +1331,46 @@ async function addAdminNotesDataToFeedbackTickets() {
   }
 }
 
+// Create publisher_sellers table for authenticating salesmen
+async function createPublisherSellersTable() {
+  try {
+    console.log("Checking for publisher_sellers table...");
+    
+    // Check if the table already exists
+    const checkResult = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'publisher_sellers'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Creating publisher_sellers table...");
+      
+      await db.execute(sql`
+        CREATE TABLE publisher_sellers (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          company TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'active',
+          verification_code TEXT,
+          notes TEXT,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      
+      console.log("publisher_sellers table created successfully");
+    } else {
+      console.log("publisher_sellers table already exists");
+    }
+  } catch (error) {
+    console.error("Error creating publisher_sellers table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -1376,6 +1416,8 @@ export async function runMigrations() {
   await addAdminNotesDataToFeedbackTickets();
   // Add user_id column to publishers table with foreign key to users
   await addUserIdToPublishers();
+  // Create publisher_sellers table for authenticating salesmen
+  await createPublisherSellersTable();
   console.log("Migrations completed");
 }
 
