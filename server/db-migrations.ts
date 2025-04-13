@@ -1088,6 +1088,64 @@ async function removeIsAuthorFromUsers() {
   }
 }
 
+// Function to remove remaining author and publisher fields from users table
+async function removeAuthorPublisherFieldsFromUsers() {
+  try {
+    console.log("Starting removal of author and publisher fields from users table...");
+    
+    // Fields to check and remove
+    const authorPublisherFields = [
+      'author_bio',
+      'author_name',
+      'author_image_url',
+      'birth_date',
+      'death_date',
+      'website',
+      'is_publisher',
+      'publisher_name',
+      'publisher_description',
+      'business_email',
+      'business_phone',
+      'business_address'
+    ];
+    
+    // Check if each field exists and remove it if it does
+    for (const field of authorPublisherFields) {
+      const checkColumnResult = await db.execute(sql`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'users' 
+        AND column_name = ${field}
+      `);
+      
+      if (checkColumnResult.rows.length > 0) {
+        console.log(`Removing '${field}' column from users table...`);
+        
+        try {
+          await db.execute(sql`
+            ALTER TABLE users 
+            DROP COLUMN IF EXISTS ${sql.raw(field)}
+          `);
+          
+          console.log(`Column '${field}' successfully removed from users table`);
+        } catch (err) {
+          console.error(`Error removing ${field} column:`, err);
+          // Not throwing an error here as this is not critical for the application to function
+          console.log("Continuing with other migrations...");
+        }
+      } else {
+        console.log(`Column '${field}' doesn't exist or has already been removed`);
+      }
+    }
+    
+    console.log("All author and publisher fields have been removed from users table");
+  } catch (error) {
+    console.error("Error during author/publisher fields removal:", error);
+    // Not throwing an error here as this is not critical for the application to function
+    console.log("Continuing with other migrations...");
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
