@@ -150,8 +150,8 @@ router.post("/admin/create", async (req: RequestWithUser, res) => {
       });
     }
     
-    // Create the feedback ticket
-    const ticket = await feedbackStorage.createFeedbackTicket(validationResult.data, null);
+    // Create the feedback ticket (passing undefined for userId as it's not linked to a user)
+    const ticket = await feedbackStorage.createFeedbackTicket(validationResult.data, undefined);
     
     // Return the ticket with its number
     return res.status(201).json({

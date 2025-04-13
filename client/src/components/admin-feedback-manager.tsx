@@ -209,13 +209,64 @@ export function AdminFeedbackManager() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [initialStatus, setInitialStatus] = useState<string | null>(null);
   
+  // Define form validation schema
+  const createTicketSchema = z.object({
+    title: z.string().min(5, "Title must be at least 5 characters"),
+    description: z.string().min(10, "Description must be at least 10 characters"),
+    type: z.enum(["bug_report", "feature_request", "general_feedback", "question"]),
+    priority: z.string().refine(value => ["1", "2", "3"].includes(value), "Priority must be 1, 2, or 3")
+  });
+  
   // Form for creating new tickets
-  const createForm = useForm({
+  const createForm = useForm<z.infer<typeof createTicketSchema>>({
+    resolver: zodResolver(createTicketSchema),
     defaultValues: {
       title: "",
       description: "",
       type: "bug_report",
       priority: "2" // Default to medium priority
+    }
+  });
+  
+  // Create ticket mutation
+  const createTicketMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof createTicketSchema>) => {
+      const response = await apiRequest("POST", "/api/feedback/admin/create", {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        priority: parseInt(data.priority),
+        status: "new"
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to create ticket");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Success notification
+      toast({
+        title: "Success",
+        description: "Ticket has been created successfully",
+        variant: "default",
+      });
+      
+      // Close the dialog and reset form
+      setIsCreateDialogOpen(false);
+      createForm.reset();
+      
+      // Refresh the ticket list
+      queryClient.invalidateQueries({ queryKey: ["/api/feedback/admin/all"] });
+    },
+    onError: (error: Error) => {
+      // Error notification
+      toast({
+        title: "Error",
+        description: `Failed to create ticket: ${error.message}`,
+        variant: "destructive",
+      });
     }
   });
 
@@ -610,42 +661,9 @@ export function AdminFeedbackManager() {
           </DialogHeader>
 
           <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit(async (data) => {
-              try {
-                // Send the new ticket data to the server
-                const response = await apiRequest("POST", "/api/feedback/admin/create", {
-                  title: data.title,
-                  description: data.description,
-                  type: data.type,
-                  priority: parseInt(data.priority),
-                  status: "new"
-                });
-                
-                if (!response.ok) {
-                  throw new Error("Failed to create ticket");
-                }
-                
-                // Success notification
-                toast({
-                  title: "Success",
-                  description: "Ticket has been created successfully",
-                  variant: "default",
-                });
-                
-                // Close the dialog and reset form
-                setIsCreateDialogOpen(false);
-                createForm.reset();
-                
-                // Refresh the ticket list
-                queryClient.invalidateQueries({ queryKey: ["/api/feedback/admin/all"] });
-              } catch (error) {
-                // Error notification
-                toast({
-                  title: "Error",
-                  description: `Failed to create ticket: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                  variant: "destructive",
-                });
-              }
+            <form onSubmit={createForm.handleSubmit((data) => {
+              // Use the mutation to create the ticket
+              createTicketMutation.mutate(data);
             })} className="space-y-4">
               <FormField
                 control={createForm.control}
