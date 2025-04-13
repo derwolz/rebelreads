@@ -91,12 +91,12 @@ interface FormData {
 
 const STEPS = [
   "Basic Information",
-  "Book Details",
+  "Images",
   "Awards",
   "Formats",
   "Publication",
   "Genres",
-  "Images",
+  "Book Details",
   "Referral Links",
   "Preview",
 ] as const;
@@ -523,7 +523,15 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 0:
         return formData.title && formData.description;
       case 1:
-        return true;
+        // Validate that all required images are provided
+        console.log("Checking required images:", formData.bookImages);
+        const imageStatuses = Object.entries(formData.bookImages).map(([type, img]) => 
+          `${type}: ${img.file ? 'Yes' : 'No'}`
+        );
+        console.log("Image statuses:", imageStatuses);
+        const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null);
+        console.log("All required images provided:", requiredImages);
+        return requiredImages;
       case 2:
         return (
           !formData.hasAwards ||
@@ -537,15 +545,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         // Validate that there are at least 5 taxonomies total
         return formData.genreTaxonomies.length >= 5;
       case 6:
-        // Validate that all required images are provided
-        console.log("Checking required images:", formData.bookImages);
-        const imageStatuses = Object.entries(formData.bookImages).map(([type, img]) => 
-          `${type}: ${img.file ? 'Yes' : 'No'}`
-        );
-        console.log("Image statuses:", imageStatuses);
-        const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null);
-        console.log("All required images provided:", requiredImages);
-        return requiredImages;
+        // Images were moved to page 2, so this step is now something else
+        return true;
       case 7:
         return true;
       case 8:
@@ -613,67 +614,26 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Book Details</h2>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Series (if part of one)
-              </label>
-              <Input
-                value={formData.series}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, series: e.target.value }))
-                }
-                placeholder="Name of the series"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Setting</label>
-              <Input
-                value={formData.setting}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, setting: e.target.value }))
-                }
-                placeholder="Where/when does the story take place?"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Characters
-              </label>
-              <div className="flex gap-2 mb-2">
-                <Input
-                  value={characterInput}
-                  onChange={(e) => setCharacterInput(e.target.value)}
-                  placeholder="Add a character"
-                  onKeyPress={(e) => e.key === "Enter" && handleAddCharacter()}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddCharacter}
-                >
-                  Add
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.characters.map((char, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="cursor-pointer"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        characters: prev.characters.filter(
-                          (_, i) => i !== index,
-                        ),
-                      }))
-                    }
-                  >
-                    {char} ×
-                  </Badge>
-                ))}
-              </div>
+            <h2 className="text-lg font-semibold">Book Images</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload different images for your book to be displayed in various contexts. All images are required.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {IMAGE_TYPES.map((imageType) => {
+                const imageData = formData.bookImages[imageType];
+                return (
+                  <DragDropImage
+                    key={imageType}
+                    imageType={imageType}
+                    value={imageData.file}
+                    width={imageData.width}
+                    height={imageData.height}
+                    onChange={(file) => handleImageChange(imageType, file)}
+                    required={true}
+                  />
+                );
+              })}
             </div>
           </div>
         );
@@ -847,26 +807,67 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 6:
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Book Images</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Upload different images for your book to be displayed in various contexts. All images are required.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {IMAGE_TYPES.map((imageType) => {
-                const imageData = formData.bookImages[imageType];
-                return (
-                  <DragDropImage
-                    key={imageType}
-                    imageType={imageType}
-                    value={imageData.file}
-                    width={imageData.width}
-                    height={imageData.height}
-                    onChange={(file) => handleImageChange(imageType, file)}
-                    required={true}
-                  />
-                );
-              })}
+            <h2 className="text-lg font-semibold">Book Details</h2>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Series (if part of one)
+              </label>
+              <Input
+                value={formData.series}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, series: e.target.value }))
+                }
+                placeholder="Name of the series"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Setting</label>
+              <Input
+                value={formData.setting}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, setting: e.target.value }))
+                }
+                placeholder="Where/when does the story take place?"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Characters
+              </label>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  value={characterInput}
+                  onChange={(e) => setCharacterInput(e.target.value)}
+                  placeholder="Add a character"
+                  onKeyPress={(e) => e.key === "Enter" && handleAddCharacter()}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddCharacter}
+                >
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.characters.map((char, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        characters: prev.characters.filter(
+                          (_, i) => i !== index,
+                        ),
+                      }))
+                    }
+                  >
+                    {char} ×
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
         );
