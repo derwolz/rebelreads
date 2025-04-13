@@ -1,6 +1,9 @@
 @tailwind base;
 @tailwind components;
 
+/* Import Open Sans font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
+
 /* Animation keyframes for floating shapes */
 @keyframes float {
   0% {
@@ -546,6 +549,34 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-['Open_Sans',sans-serif] font-normal;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-['Open_Sans',sans-serif];
+  }
+  
+  h1 {
+    @apply font-bold text-3xl md:text-4xl lg:text-5xl;
+  }
+  
+  h2 {
+    @apply font-bold text-2xl md:text-3xl lg:text-4xl;
+  }
+  
+  h3 {
+    @apply font-semibold text-xl md:text-2xl lg:text-3xl;
+  }
+  
+  h4 {
+    @apply font-semibold text-lg md:text-xl;
+  }
+  
+  h5 {
+    @apply font-medium text-base md:text-lg;
+  }
+  
+  h6 {
+    @apply font-medium text-sm md:text-base;
   }
 }
