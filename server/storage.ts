@@ -158,6 +158,24 @@ export const dbStorage = {
   getAuthorPublisher:
     publisherStorage.getAuthorPublisher.bind(publisherStorage),
     
+  // Publisher Sellers
+  createPublisherSeller:
+    publisherStorage.createPublisherSeller.bind(publisherStorage),
+  getPublisherSeller:
+    publisherStorage.getPublisherSeller.bind(publisherStorage),
+  getPublisherSellerByUserId:
+    publisherStorage.getPublisherSellerByUserId.bind(publisherStorage),
+  getPublisherSellerByEmail:
+    publisherStorage.getPublisherSellerByEmail.bind(publisherStorage),
+  getPublisherSellerByVerificationCode:
+    publisherStorage.getPublisherSellerByVerificationCode.bind(publisherStorage),
+  updatePublisherSeller:
+    publisherStorage.updatePublisherSeller.bind(publisherStorage),
+  isPublisherSeller:
+    publisherStorage.isPublisherSeller.bind(publisherStorage),
+  generateVerificationCode:
+    publisherStorage.generateVerificationCode.bind(publisherStorage),
+    
   // Author
   getAuthors: authorStorage.getAuthors.bind(authorStorage),
   getAuthor: authorStorage.getAuthor.bind(authorStorage),
