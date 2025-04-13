@@ -20,6 +20,7 @@ export interface IBetaKeyStorage {
   validateBetaKey(key: string): Promise<boolean>;
   recordBetaKeyUsage(betaKeyId: number, userId: number): Promise<BetaKeyUsage>;
   getBetaKeyUsage(betaKeyId: number): Promise<BetaKeyUsage[]>;
+  hasUserUsedBetaKey(userId: number): Promise<boolean>;
   isBetaActive(): Promise<boolean>;
 }
 
@@ -126,6 +127,17 @@ export class BetaKeyStorage implements IBetaKeyStorage {
       .from(betaKeyUsage)
       .where(eq(betaKeyUsage.betaKeyId, betaKeyId))
       .orderBy(betaKeyUsage.usedAt);
+  }
+
+  async hasUserUsedBetaKey(userId: number): Promise<boolean> {
+    // Check if the user has used any beta key before
+    const usages = await db
+      .select()
+      .from(betaKeyUsage)
+      .where(eq(betaKeyUsage.userId, userId))
+      .limit(1);
+    
+    return usages.length > 0;
   }
 
   async isBetaActive(): Promise<boolean> {

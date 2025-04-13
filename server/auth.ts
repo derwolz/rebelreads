@@ -153,25 +153,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", async (req, res, next) => {
     try {
-      // Check if beta is active
-      const isBetaActive = await dbStorage.isBetaActive();
-      
-      // If beta is active, validate the beta key
-      if (isBetaActive && !req.isAuthenticated()) {
-        const { betaKey } = req.body;
-        
-        if (!betaKey) {
-          return res.status(400).json({ error: "Beta key is required during beta testing phase" });
-        }
-        
-        const isValidKey = await dbStorage.validateBetaKey(betaKey);
-        
-        if (!isValidKey) {
-          return res.status(400).json({ error: "Invalid beta key" });
-        }
-      }
-      
-      // Proceed with passport authentication
+      // Proceed with passport authentication first to get the user
       passport.authenticate("local", async (err: any, user: SelectUser | false, info: any) => {
         if (err) {
           return next(err);
@@ -180,13 +162,36 @@ export function setupAuth(app: Express) {
         if (!user) {
           return res.status(401).json({ error: "Invalid email/username or password" });
         }
+
+        // Check if beta is active
+        const isBetaActive = await dbStorage.isBetaActive();
         
-        // If beta is active, record the beta key usage
-        if (isBetaActive && req.body.betaKey) {
-          const betaKeyObj = await dbStorage.getBetaKeyByKey(req.body.betaKey);
-          if (betaKeyObj) {
-            await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
+        // If beta is active and the user is not authenticated, we need to check beta key requirements
+        if (isBetaActive && !req.isAuthenticated()) {
+          // Check if the user has used a beta key before
+          const hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(user.id);
+
+          // If they haven't used a beta key before, they need to provide one
+          if (!hasUsedBetaKey) {
+            const { betaKey } = req.body;
+            
+            if (!betaKey) {
+              return res.status(400).json({ error: "Beta key is required during beta testing phase" });
+            }
+            
+            const isValidKey = await dbStorage.validateBetaKey(betaKey);
+            
+            if (!isValidKey) {
+              return res.status(400).json({ error: "Invalid beta key" });
+            }
+            
+            // Record the beta key usage
+            const betaKeyObj = await dbStorage.getBetaKeyByKey(betaKey);
+            if (betaKeyObj) {
+              await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
+            }
           }
+          // If they have used a beta key before, no need to validate again
         }
         
         // Login the user
