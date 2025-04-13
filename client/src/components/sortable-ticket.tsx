@@ -102,7 +102,15 @@ export const SortableTicket: React.FC<SortableTicketProps> = ({ ticket, onClick 
       {...attributes}
       {...listeners}
       className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md"
-      onClick={onClick}
+      onClick={(e) => {
+        // Only proceed with click handler if not dragging
+        if (!isDragging) {
+          // Prevent default action
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }
+      }}
     >
       <CardContent className="p-3">
         <div className="space-y-2">
