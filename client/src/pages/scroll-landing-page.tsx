@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
-import { WaveBackground } from "@/components/wave-background";
 import { BookMetricsDashboard } from "@/components/book-metrics-dashboard";
 import { useTheme } from "@/hooks/use-theme";
 import { useLocation } from "wouter";
@@ -265,8 +264,6 @@ export function ScrollLandingPage(): React.JSX.Element {
     <div className="overflow-hidden" ref={containerRef}>
       <BrandedNav />
 
-      {/* Add the wave background with water surface and ocean effect */}
-      <WaveBackground scrollEnabled={true} />
 
       {/* User type toggle button - only show in first section or when scrolling to it */}
       {currentSectionIndex === 0 && (
