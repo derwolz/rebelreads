@@ -19,11 +19,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Upload, FileUp, Image } from "lucide-react";
+import { 
+  Loader2, Upload, FileUp, Image, FileArchive, 
+  CheckCircle, AlertTriangle, AlertCircle 
+} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 
 interface CsvBook {
   Title: string;
@@ -297,13 +305,13 @@ export function AdminBookCsvUploadWizard() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full mt-4">
-          <Upload className="w-4 h-4 mr-2" />
-          Upload Books CSV (Admin)
+          <FileArchive className="w-4 h-4 mr-2" />
+          Upload Books (ZIP Package)
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Bulk Upload Books (Admin)</DialogTitle>
+          <DialogTitle>Bulk Upload Books with ZIP Package</DialogTitle>
         </DialogHeader>
 
         {csvData.length === 0 ? (
