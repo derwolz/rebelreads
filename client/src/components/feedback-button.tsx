@@ -1,14 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageSquarePlus } from "lucide-react";
+import { MessageSquareText } from "lucide-react";
 import FeedbackForm from "./feedback-form";
 
 /**
- * FeedbackButton component
- * 
- * A floating button in the bottom right corner that opens a feedback form
- * when clicked. Used for beta users to submit feedback, report issues,
- * or request features.
+ * A small button placed in the bottom right corner that opens the feedback form
  */
 export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,17 +12,16 @@ export default function FeedbackButton() {
   return (
     <>
       <Button
-        className="fixed bottom-5 right-5 rounded-full p-3 shadow-lg z-50"
         onClick={() => setIsOpen(true)}
-        aria-label="Open feedback form"
+        className="fixed bottom-4 right-4 rounded-full p-3 shadow-md"
+        size="icon"
+        aria-label="Submit Feedback"
+        title="Submit Feedback"
       >
-        <MessageSquarePlus className="h-5 w-5" />
+        <MessageSquareText className="h-5 w-5" />
       </Button>
       
-      <FeedbackForm 
-        isOpen={isOpen} 
-        onClose={() => setIsOpen(false)} 
-      />
+      <FeedbackForm isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }

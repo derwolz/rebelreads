@@ -1,6 +1,6 @@
 import { FeedbackTicket, InsertFeedbackTicket, feedbackTickets } from "@shared/schema";
 import { db } from "../db";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 /**
@@ -141,7 +141,7 @@ export class FeedbackStorage implements IFeedbackStorage {
       .where(
         and(
           eq(feedbackTickets.status, "resolved"),
-          ne(feedbackTickets.resolvedAt, null)
+          sql`${feedbackTickets.resolvedAt} IS NOT NULL`
         )
       )
       .orderBy(feedbackTickets.resolvedAt);
