@@ -70,15 +70,16 @@ export function setupAuth(app: Express) {
       // Check if user is an author
       const isAuthor = await dbStorage.isUserAuthor(user.id);
       
-      // If user is an author, get Pro status from authors table
+      // If user is an author, get author details
       if (isAuthor) {
         const authorDetails = await dbStorage.getAuthorByUserId(user.id);
         
         // Ensure user session has isPro and isAuthor flags
+        // Pro status is tracked in the user table, not in authors table anymore
         const userWithAuthorInfo = {
           ...user,
           isAuthor, // Add isAuthor flag
-          isPro: authorDetails?.is_pro || false // Set isPro based on author record 
+          isPro: user.is_pro || false // Set isPro based on user's is_pro property
         };
         
         done(null, userWithAuthorInfo);
