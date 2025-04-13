@@ -33,6 +33,18 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
+  
+  // Check if user is a seller
+  const { data: sellerStatus } = useQuery({
+    queryKey: ['/api/account/publisher-seller-status'],
+    queryFn: async () => {
+      if (!user) return { isPublisherSeller: false };
+      const res = await fetch('/api/account/publisher-seller-status');
+      if (!res.ok) return { isPublisherSeller: false };
+      return res.json();
+    },
+    enabled: !!user,
+  });
 
   const { data: searchResults } = useQuery<{ books: Book[], metadata: { total: number, query: string } }>({
     queryKey: ["/api/search", debouncedSearch],
@@ -133,6 +145,11 @@ console.log(searchResults, "searchResults");
                   <Button variant="outline">Author Dashboard</Button>
                 </Link>
               )}
+              {sellerStatus?.isPublisherSeller && (
+                <Link href="/sales">
+                  <Button variant="outline">Sales Panel</Button>
+                </Link>
+              )}
               <Link href="/settings">
                 <Button variant="ghost" size="icon">
                   <Settings className="h-5 w-5" />
@@ -212,6 +229,16 @@ console.log(searchResults, "searchResults");
                             className="w-full justify-start"
                           >
                             Author Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      {sellerStatus?.isPublisherSeller && (
+                        <Link href="/sales">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                          >
+                            Sales Panel
                           </Button>
                         </Link>
                       )}
