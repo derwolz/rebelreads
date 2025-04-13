@@ -482,6 +482,41 @@ export function AdminFeedbackManager() {
       updates: { status }
     });
   };
+  
+  // Handle update admin notes
+  const handleUpdateAdminNotes = (event: React.FocusEvent<HTMLTextAreaElement>) => {
+    if (!selectedTicket) return;
+    
+    const adminNotes = event.target.value;
+    
+    // Only update if the value actually changed
+    if (adminNotes === selectedTicket.adminNotes) return;
+    
+    // Update the selected ticket locally to show the change immediately
+    setSelectedTicket(prev => {
+      if (!prev) return null;
+      return { ...prev, adminNotes };
+    });
+    
+    // Update all tickets data in case it's visible in the board
+    if (tickets) {
+      const updatedTickets = tickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, adminNotes };
+        }
+        return t;
+      });
+      
+      // Update local state immediately
+      queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
+    }
+    
+    // Then update the backend silently
+    updateTicketMutation.mutate({
+      id: selectedTicket.id,
+      updates: { adminNotes }
+    });
+  };
 
   // Format date for display
   const formatDate = (dateString: string | null) => {
@@ -643,6 +678,20 @@ export function AdminFeedbackManager() {
                   </div>
                 </div>
               )}
+              
+              {/* Admin Notes Section */}
+              <div className="mt-4 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium mb-1">Admin Notes</div>
+                  <span className="text-xs text-gray-500">(Private - Only visible to admins)</span>
+                </div>
+                <Textarea
+                  className="min-h-[100px] mt-1"
+                  placeholder="Add private administrative notes about this ticket..."
+                  defaultValue={selectedTicket.adminNotes || ""}
+                  onBlur={handleUpdateAdminNotes}
+                />
+              </div>
             </div>
           )}
 
