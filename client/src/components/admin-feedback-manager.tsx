@@ -57,7 +57,15 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { SortableTicket } from "./sortable-ticket";
-import { format } from "date-fns";
+import { format, isToday, isThisWeek, isThisMonth, isThisYear } from "date-fns";
+
+// Admin note type
+type AdminNote = {
+  id: string;
+  content: string;
+  createdAt: string | Date;
+  createdBy?: number;
+};
 
 // Types for our feedback tickets
 type FeedbackTicket = {
@@ -70,7 +78,8 @@ type FeedbackTicket = {
   status: "new" | "in_progress" | "resolved" | "closed";
   priority: number;
   assignedTo: number | null;
-  adminNotes: string | null;
+  adminNotes: string | null; // Legacy field - keeping for backward compatibility
+  adminNotesData: AdminNote[]; // Structured notes with timestamps
   deviceInfo: any;
   createdAt: string;
   updatedAt: string;
@@ -82,6 +91,7 @@ type TicketUpdate = {
   priority?: number;
   assignedTo?: number | null;
   adminNotes?: string | null;
+  adminNotesData?: AdminNote[];
 };
 
 // Component for the Kanban board column

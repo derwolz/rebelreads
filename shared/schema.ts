@@ -1096,6 +1096,14 @@ export const FEEDBACK_TYPE_OPTIONS = [
   "question"
 ] as const;
 
+// Define the admin note structure
+export type AdminNote = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  createdBy?: number; // Optional admin user ID
+};
+
 // Feedback tickets table for beta feedback
 export const feedbackTickets = pgTable("feedback_tickets", {
   id: serial("id").primaryKey(),
@@ -1107,7 +1115,8 @@ export const feedbackTickets = pgTable("feedback_tickets", {
   status: text("status").notNull().default("new"), // One of FEEDBACK_STATUS_OPTIONS
   priority: integer("priority").default(1), // 1-3 (low, medium, high)
   assignedTo: integer("assigned_to"), // Optional - user ID of admin assigned to ticket
-  adminNotes: text("admin_notes"), // Private notes only visible to admins
+  adminNotes: text("admin_notes"), // Legacy field - keeping for backward compatibility
+  adminNotesData: jsonb("admin_notes_data").$type<AdminNote[]>().default([]), // Structured notes with timestamps
   deviceInfo: jsonb("device_info"), // Browser, OS, screen size, etc.
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

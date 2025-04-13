@@ -1277,6 +1277,60 @@ async function addAdminNotesToFeedbackTickets() {
   }
 }
 
+async function addAdminNotesDataToFeedbackTickets() {
+  try {
+    // Check if admin_notes_data column exists
+    const checkResult = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.columns 
+        WHERE table_name = 'feedback_tickets' AND column_name = 'admin_notes_data'
+      )
+    `);
+    
+    const columnExists = checkResult.rows[0].exists;
+    
+    if (!columnExists) {
+      console.log("Adding admin_notes_data column to feedback_tickets table...");
+      await db.execute(sql`
+        ALTER TABLE feedback_tickets 
+        ADD COLUMN admin_notes_data JSONB DEFAULT '[]'::jsonb
+      `);
+      
+      // Migrate existing admin_notes to the new structured format
+      console.log("Migrating existing admin notes to structured format...");
+      const existingTickets = await db.execute(sql`
+        SELECT id, admin_notes, updated_at
+        FROM feedback_tickets
+        WHERE admin_notes IS NOT NULL AND admin_notes != ''
+      `);
+      
+      for (const ticket of existingTickets.rows) {
+        if (ticket.admin_notes) {
+          const noteId = Date.now().toString(); // Simple ID generation
+          const noteData = [{
+            id: noteId,
+            content: ticket.admin_notes,
+            createdAt: ticket.updated_at || new Date()
+          }];
+          
+          await db.execute(sql`
+            UPDATE feedback_tickets
+            SET admin_notes_data = ${JSON.stringify(noteData)}::jsonb
+            WHERE id = ${ticket.id}
+          `);
+        }
+      }
+      
+      console.log("admin_notes_data column added and migration completed successfully");
+    } else {
+      console.log("admin_notes_data column already exists in feedback_tickets table");
+    }
+  } catch (error) {
+    console.error("Error adding admin_notes_data column to feedback_tickets:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -1318,5 +1372,7 @@ export async function runMigrations() {
   await createFeedbackTicketsTable();
   // Add admin_notes column to feedback_tickets table
   await addAdminNotesToFeedbackTickets();
+  // Add admin_notes_data column to feedback_tickets table for structured notes with timestamps
+  await addAdminNotesDataToFeedbackTickets();
   console.log("Migrations completed");
 }
