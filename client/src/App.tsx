@@ -35,7 +35,7 @@ import SalesPanel from "@/pages/sales-panel";
 import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
-import WaveDemoPage from "@/pages/wave-demo-page";
+
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
 import { useBeta } from "@/hooks/use-beta";
@@ -48,7 +48,7 @@ function Router() {
   const { isBetaActive, isLoading: isBetaLoading } = useBeta();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing"];
   const isApiPath = location.startsWith("/api");
   const isAuthWallPath = location === "/auth";
   const [path, hash] = location.split("#");
@@ -81,7 +81,7 @@ function Router() {
         {/* Always accessible routes */}
         <Route path="/landing" component={ScrollLandingPage} />
         <Route path="/scroll-landing" component={ScrollLandingPage} />
-        <Route path="/wave-demo" component={WaveDemoPage} />
+
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/partner" component={PartnerWithUs} />
         
