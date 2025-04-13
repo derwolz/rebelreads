@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MessageSquare, Calendar, User, Plus, AlertTriangle, HelpCircle, Lightbulb } from "lucide-react";
+import { Loader2, MessageSquare, Calendar, User, Plus, AlertTriangle, HelpCircle, Lightbulb, ClipboardList } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -493,7 +493,58 @@ export function AdminFeedbackManager() {
     });
   };
   
-  // Handle update admin notes
+  // Function to generate a unique ID for new notes
+  const generateNoteId = () => {
+    return Date.now().toString();
+  };
+  
+  // State for the new note being added
+  const [newNote, setNewNote] = useState<string>("");
+  
+  // Group notes by date category (today, this week, this month, this year, older)
+  const groupNotesByDate = (notes: AdminNote[]) => {
+    const today: AdminNote[] = [];
+    const thisWeek: AdminNote[] = [];
+    const thisMonth: AdminNote[] = [];
+    const thisYear: AdminNote[] = [];
+    const older: AdminNote[] = [];
+    
+    notes.forEach(note => {
+      const noteDate = new Date(note.createdAt);
+      
+      if (isToday(noteDate)) {
+        today.push(note);
+      } else if (isThisWeek(noteDate)) {
+        thisWeek.push(note);
+      } else if (isThisMonth(noteDate)) {
+        thisMonth.push(note);
+      } else if (isThisYear(noteDate)) {
+        thisYear.push(note);
+      } else {
+        older.push(note);
+      }
+    });
+    
+    // Return object with grouped notes, sorted in reverse chronological order (newest first)
+    return {
+      today: today.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      thisWeek: thisWeek.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      thisMonth: thisMonth.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      thisYear: thisYear.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+      older: older.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    };
+  };
+  
+  // Format time for notes display
+  const formatNoteTime = (dateString: string | Date) => {
+    try {
+      return format(new Date(dateString), "MMM dd, yyyy h:mm a");
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+  
+  // Legacy - handle update of the old admin notes field
   const handleUpdateAdminNotes = (event: React.FocusEvent<HTMLTextAreaElement>) => {
     if (!selectedTicket) return;
     
@@ -525,6 +576,51 @@ export function AdminFeedbackManager() {
     updateTicketMutation.mutate({
       id: selectedTicket.id,
       updates: { adminNotes }
+    });
+  };
+  
+  // Add a new note to the ticket
+  const handleAddNote = () => {
+    if (!selectedTicket || !newNote.trim()) return;
+    
+    // Create the new note object
+    const note: AdminNote = {
+      id: generateNoteId(),
+      content: newNote.trim(),
+      createdAt: new Date(),
+    };
+    
+    // Create a new array with existing notes plus the new one
+    const updatedNotes = selectedTicket.adminNotesData 
+      ? [note, ...selectedTicket.adminNotesData]  // Add to beginning of array (newest first)
+      : [note];
+    
+    // Update the selected ticket locally to show the change immediately
+    setSelectedTicket(prev => {
+      if (!prev) return null;
+      return { ...prev, adminNotesData: updatedNotes };
+    });
+    
+    // Update all tickets data in case it's visible in the board
+    if (tickets) {
+      const updatedTickets = tickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, adminNotesData: updatedNotes };
+        }
+        return t;
+      });
+      
+      // Update local state immediately
+      queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
+    }
+    
+    // Clear the input field
+    setNewNote("");
+    
+    // Then update the backend silently
+    updateTicketMutation.mutate({
+      id: selectedTicket.id,
+      updates: { adminNotesData: updatedNotes }
     });
   };
 
@@ -608,7 +704,7 @@ export function AdminFeedbackManager() {
 
       {/* Ticket Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
             <DialogTitle>Ticket #{selectedTicket?.ticketNumber}</DialogTitle>
             <DialogDescription>
@@ -617,90 +713,213 @@ export function AdminFeedbackManager() {
           </DialogHeader>
 
           {selectedTicket && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm font-medium mb-1">Type</div>
-                  <div>{formatTicketType(selectedTicket.type)}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium mb-1">Priority</div>
-                  <Select
-                    defaultValue={selectedTicket.priority.toString()}
-                    onValueChange={handleUpdatePriority}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Low</SelectItem>
-                      <SelectItem value="2">Medium</SelectItem>
-                      <SelectItem value="3">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm font-medium mb-1">Status</div>
-                  <Select
-                    defaultValue={selectedTicket.status}
-                    onValueChange={handleUpdateStatus}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <div className="text-sm font-medium mb-1">Created</div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    {formatDate(selectedTicket.createdAt)}
+            <div className="flex gap-6">
+              {/* Main ticket details */}
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium mb-1">Type</div>
+                    <div>{formatTicketType(selectedTicket.type)}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium mb-1">Priority</div>
+                    <Select
+                      defaultValue={selectedTicket.priority.toString()}
+                      onValueChange={handleUpdatePriority}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Low</SelectItem>
+                        <SelectItem value="2">Medium</SelectItem>
+                        <SelectItem value="3">High</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <div className="text-sm font-medium mb-1">Title</div>
-                <div className="p-2 bg-gray-50 rounded border">{selectedTicket.title}</div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium mb-1">Description</div>
-                <div className="p-3 bg-gray-50 rounded border whitespace-pre-wrap max-h-[200px] overflow-y-auto">
-                  {selectedTicket.description}
-                </div>
-              </div>
-
-              {selectedTicket.deviceInfo && (
-                <div>
-                  <div className="text-sm font-medium mb-1">Device Information</div>
-                  <div className="p-2 bg-gray-50 rounded border text-xs font-mono overflow-x-auto">
-                    <pre>{JSON.stringify(selectedTicket.deviceInfo, null, 2)}</pre>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium mb-1">Status</div>
+                    <Select
+                      defaultValue={selectedTicket.status}
+                      onValueChange={handleUpdateStatus}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium mb-1">Created</div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      {formatDate(selectedTicket.createdAt)}
+                    </div>
                   </div>
                 </div>
-              )}
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Title</div>
+                  <div className="p-2 bg-gray-50 rounded border">{selectedTicket.title}</div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Description</div>
+                  <div className="p-3 bg-gray-50 rounded border whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                    {selectedTicket.description}
+                  </div>
+                </div>
+
+                {selectedTicket.deviceInfo && (
+                  <div>
+                    <div className="text-sm font-medium mb-1">Device Information</div>
+                    <div className="p-2 bg-gray-50 rounded border text-xs font-mono overflow-x-auto">
+                      <pre>{JSON.stringify(selectedTicket.deviceInfo, null, 2)}</pre>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Legacy Admin Notes Section - hidden */}
+                <div className="hidden">
+                  <Textarea
+                    placeholder="Legacy notes field - not displayed"
+                    defaultValue={selectedTicket.adminNotes || ""}
+                    onBlur={handleUpdateAdminNotes}
+                  />
+                </div>
+              </div>
               
-              {/* Admin Notes Section */}
-              <div className="mt-4 border-t pt-4">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium mb-1">Admin Notes</div>
-                  <span className="text-xs text-gray-500">(Private - Only visible to admins)</span>
+              {/* Admin Notes Sidebar */}
+              <div className="w-80 border-l pl-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-gray-500" />
+                    <h3 className="text-md font-medium">Admin Notes</h3>
+                  </div>
+                  <div className="text-xs text-gray-500 italic">Private to admins</div>
                 </div>
-                <Textarea
-                  className="min-h-[100px] mt-1"
-                  placeholder="Add private administrative notes about this ticket..."
-                  defaultValue={selectedTicket.adminNotes || ""}
-                  onBlur={handleUpdateAdminNotes}
-                />
+                
+                {/* Add new note input */}
+                <div className="mb-4">
+                  <Textarea
+                    className="min-h-[80px] text-sm"
+                    placeholder="Add a new note..."
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={handleAddNote}
+                    disabled={!newNote.trim()}
+                    className="mt-2 w-full"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    Add Note
+                  </Button>
+                </div>
+                
+                {/* Notes list with date grouping */}
+                <div className="max-h-[350px] overflow-y-auto pr-2">
+                  {selectedTicket.adminNotesData && selectedTicket.adminNotesData.length > 0 ? (
+                    <>
+                      {/* Group and display notes */}
+                      {(() => {
+                        const groupedNotes = groupNotesByDate(selectedTicket.adminNotesData);
+                        
+                        return (
+                          <div className="space-y-4">
+                            {/* Today's notes */}
+                            {groupedNotes.today.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Today</h4>
+                                <div className="space-y-3">
+                                  {groupedNotes.today.map(note => (
+                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
+                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
+                                      <div className="whitespace-pre-wrap">{note.content}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* This week's notes */}
+                            {groupedNotes.thisWeek.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">This Week</h4>
+                                <div className="space-y-3">
+                                  {groupedNotes.thisWeek.map(note => (
+                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
+                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
+                                      <div className="whitespace-pre-wrap">{note.content}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* This month's notes */}
+                            {groupedNotes.thisMonth.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">This Month</h4>
+                                <div className="space-y-3">
+                                  {groupedNotes.thisMonth.map(note => (
+                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
+                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
+                                      <div className="whitespace-pre-wrap">{note.content}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* This year's notes */}
+                            {groupedNotes.thisYear.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">This Year</h4>
+                                <div className="space-y-3">
+                                  {groupedNotes.thisYear.map(note => (
+                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
+                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
+                                      <div className="whitespace-pre-wrap">{note.content}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Older notes */}
+                            {groupedNotes.older.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-medium uppercase text-gray-500 mb-2">Older</h4>
+                                <div className="space-y-3">
+                                  {groupedNotes.older.map(note => (
+                                    <div key={note.id} className="bg-gray-50 p-3 rounded-md border text-sm">
+                                      <div className="text-xs text-gray-500 mb-1">{formatNoteTime(note.createdAt)}</div>
+                                      <div className="whitespace-pre-wrap">{note.content}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 italic text-sm">
+                      No notes yet. Add the first note above.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
