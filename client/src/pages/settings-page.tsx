@@ -32,7 +32,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, PanelLeft } from "lucide-react";
+import { GripVertical, Trash2, PanelLeft, Menu } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -550,7 +550,7 @@ export default function SettingsPage() {
           className="md:hidden"
           onClick={() => setIsSidebarOpen(true)}
         >
-          <Menu className="h-6 w-6" />
+          <PanelLeft className="h-6 w-6" />
         </Button>
       </div>
       <div className="flex gap-8">

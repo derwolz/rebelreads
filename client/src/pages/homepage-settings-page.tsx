@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { SettingsSidebar } from "@/components/settings-sidebar";
-import { Menu } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +43,7 @@ export function HomepageSettingsPage() {
           className="md:hidden"
           onClick={() => setIsSidebarOpen(true)}
         >
-          <Menu className="h-6 w-6" />
+          <PanelLeft className="h-6 w-6" />
         </Button>
       </div>
       <div className="flex gap-8">
