@@ -96,6 +96,8 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
 }
 
 export function WhatsHotSidebar() {
+  const [, navigate] = useLocation();
+  
   // Fetch popular books from our new API endpoint
   const { data: popularBooks, isLoading } = useQuery<PopularBook[]>({
     queryKey: ["/api/popular-books"],
