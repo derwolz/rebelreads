@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LineChart, Flag, MessageSquare, User } from "lucide-react";
+import { LineChart, Flag, MessageSquare, User, Settings } from "lucide-react";
 
 interface NavItemProps {
   href: string;
@@ -56,6 +56,13 @@ export function ProDashboardSidebar() {
         icon={<User className="h-4 w-4" />}
       >
         Book Management
+      </NavItem>
+      <NavItem
+        href="/pro/author"
+        active={location === "/pro/author"}
+        icon={<Settings className="h-4 w-4" />}
+      >
+        Author Profile
       </NavItem>
     </nav>
   );
