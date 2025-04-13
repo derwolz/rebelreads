@@ -601,7 +601,136 @@ router.post("/become-author", async (req: Request, res: Response) => {
   }
 });
 
-// Become a publisher
+// Check if the user is a publisher seller
+router.get("/publisher-seller-status", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher seller
+    const isPublisherSeller = await dbStorage.isPublisherSeller(req.user.id);
+    
+    // Get the seller details if the user is a seller
+    let sellerDetails = null;
+    if (isPublisherSeller) {
+      sellerDetails = await dbStorage.getPublisherSellerByUserId(req.user.id);
+    }
+    
+    res.json({ isPublisherSeller, sellerDetails });
+  } catch (error) {
+    console.error("Error checking publisher seller status:", error);
+    res.status(500).json({ error: "Failed to check publisher seller status" });
+  }
+});
+
+// Register as a publisher seller
+router.post("/register-publisher-seller", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is already a publisher seller
+    const isExistingSeller = await dbStorage.isPublisherSeller(req.user.id);
+    
+    if (isExistingSeller) {
+      return res.status(400).json({ error: "User is already registered as a publisher seller" });
+    }
+    
+    // Validate the request body
+    const sellerData = insertPublisherSellerSchema.parse({
+      userId: req.user.id,
+      name: req.body.name || req.user.username || req.user.email.split('@')[0],
+      email: req.body.email || req.user.email,
+      company: req.body.company,
+      status: "active",
+      notes: req.body.notes || "",
+    });
+    
+    // Create a new publisher seller record
+    const seller = await dbStorage.createPublisherSeller(sellerData);
+    
+    res.status(201).json(seller);
+  } catch (error) {
+    console.error("Error creating publisher seller:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to register as a publisher seller" });
+  }
+});
+
+// Generate a new verification code for publisher seller
+router.post("/publisher-seller/generate-code", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher seller
+    const seller = await dbStorage.getPublisherSellerByUserId(req.user.id);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Publisher seller not found" });
+    }
+    
+    // Generate a new verification code
+    const verificationCode = await dbStorage.generateVerificationCode(req.user.id);
+    
+    res.json({ verificationCode });
+  } catch (error) {
+    console.error("Error generating verification code:", error);
+    res.status(500).json({ error: "Failed to generate verification code" });
+  }
+});
+
+// Verify a publisher seller code
+router.post("/verify-publisher-seller", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Validate the request body
+    const schema = z.object({
+      verificationCode: z.string().min(1, "Verification code is required")
+    });
+    
+    const data = schema.parse(req.body);
+    
+    // Verify the code and get the seller
+    const seller = await dbStorage.getPublisherSellerByVerificationCode(data.verificationCode);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Invalid verification code" });
+    }
+    
+    // Check if the seller is active
+    if (seller.status !== "active") {
+      return res.status(403).json({ error: "Publisher seller account is not active" });
+    }
+    
+    // Return the verified seller info
+    res.json({
+      verified: true,
+      seller: {
+        id: seller.id,
+        name: seller.name,
+        email: seller.email,
+        company: seller.company
+      }
+    });
+  } catch (error) {
+    console.error("Error verifying publisher seller:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to verify publisher seller" });
+  }
+});
+
+// Become a publisher (now requires verification code)
 router.post("/become-publisher", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
@@ -615,24 +744,64 @@ router.post("/become-publisher", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "User is already registered as a publisher" });
     }
     
-    // Validate the request body
+    // Validate the request body which must now include a verification code
+    const schema = z.object({
+      name: z.string().optional(),
+      publisher_name: z.string().min(1, "Publisher name is required"),
+      publisher_description: z.string().optional(),
+      description: z.string().optional(),
+      business_email: z.string().email("Invalid email format").optional(),
+      business_phone: z.string().optional(),
+      business_address: z.string().optional(),
+      website: z.string().url("Invalid URL format").optional(),
+      logoUrl: z.string().optional(),
+      verificationCode: z.string().min(1, "Verification code is required")
+    });
+    
+    const data = schema.parse(req.body);
+    
+    // Verify the publisher seller code
+    const seller = await dbStorage.getPublisherSellerByVerificationCode(data.verificationCode);
+    
+    if (!seller) {
+      return res.status(403).json({ error: "Invalid verification code" });
+    }
+    
+    // Check if the seller is active
+    if (seller.status !== "active") {
+      return res.status(403).json({ error: "This seller account is not active and cannot authorize new publishers" });
+    }
+    
+    // Prepare publisher data
     const publisherData = insertPublisherSchema.parse({
       userId: req.user.id,
-      name: req.body.name || req.user.username || req.user.email.split('@')[0],
-      publisher_name: req.body.publisher_name || req.body.name || req.user.username || req.user.email.split('@')[0],
-      publisher_description: req.body.publisher_description || "",
-      description: req.body.description || "",
-      business_email: req.body.business_email || req.user.email,
-      business_phone: req.body.business_phone || "",
-      business_address: req.body.business_address || "",
-      website: req.body.website || "",
-      logoUrl: req.body.logoUrl || "",
+      name: data.name || req.user.username || req.user.email.split('@')[0],
+      publisher_name: data.publisher_name,
+      publisher_description: data.publisher_description || "",
+      description: data.description || "",
+      business_email: data.business_email || req.user.email,
+      business_phone: data.business_phone || "",
+      business_address: data.business_address || "",
+      website: data.website || "",
+      logoUrl: data.logoUrl || "",
     });
     
     // Create a new publisher record
     const publisher = await dbStorage.createPublisher(publisherData);
     
-    res.status(201).json(publisher);
+    // Invalidate the verification code to prevent reuse
+    await dbStorage.updatePublisherSeller(seller.id, {
+      verification_code: "" // Empty the verification code
+    });
+    
+    // Return the new publisher with seller info
+    res.status(201).json({
+      publisher,
+      verifiedBy: {
+        sellerName: seller.name,
+        sellerCompany: seller.company
+      }
+    });
   } catch (error) {
     console.error("Error creating publisher:", error);
     if (error instanceof z.ZodError) {
@@ -681,6 +850,64 @@ router.get("/publisher-profile", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error getting publisher profile:", error);
     res.status(500).json({ error: "Failed to get publisher profile" });
+  }
+});
+
+// Get publisher seller profile
+router.get("/publisher-seller-profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher seller
+    const seller = await dbStorage.getPublisherSellerByUserId(req.user.id);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Publisher seller profile not found" });
+    }
+    
+    res.json(seller);
+  } catch (error) {
+    console.error("Error getting publisher seller profile:", error);
+    res.status(500).json({ error: "Failed to get publisher seller profile" });
+  }
+});
+
+// Update publisher seller profile
+router.patch("/publisher-seller-profile", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a publisher seller
+    const seller = await dbStorage.getPublisherSellerByUserId(req.user.id);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Publisher seller profile not found" });
+    }
+    
+    // Validate update data
+    const schema = z.object({
+      name: z.string().min(1).optional(),
+      email: z.string().email("Invalid email format").optional(),
+      company: z.string().min(1).optional(),
+      notes: z.string().optional()
+    });
+    
+    const data = schema.parse(req.body);
+    
+    // Update seller profile
+    const updatedSeller = await dbStorage.updatePublisherSeller(seller.id, data);
+    
+    res.json(updatedSeller);
+  } catch (error) {
+    console.error("Error updating publisher seller profile:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to update publisher seller profile" });
   }
 });
 
