@@ -1179,5 +1179,7 @@ export async function runMigrations() {
   await splitUserTable();
   // Remove isAuthor field from users table
   await removeIsAuthorFromUsers();
+  // Remove remaining author/publisher fields from users table
+  await removeAuthorPublisherFieldsFromUsers();
   console.log("Migrations completed");
 }

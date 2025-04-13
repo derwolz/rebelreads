@@ -92,7 +92,11 @@ export const users = pgTable("users", {
   profileImageUrl: text("profile_image_url"), // General user profile image
   bio: text("bio"), // General user bio
   displayName: text("display_name"), // Added display name field
+  socialLinks: jsonb("social_links").$type<SocialMediaLink[]>().default([]),
   socialMediaLinks: jsonb("social_media_links").$type<SocialMediaLink[]>().default([]),
+  credits: decimal("credits").notNull().default("0"), // Credits for users
+  is_pro: boolean("is_pro").notNull().default(false), // Pro user status
+  pro_expires_at: timestamp("pro_expires_at"), // When pro subscription expires
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
 });
 
@@ -399,6 +403,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   bio: true,
   profileImageUrl: true,
   socialMediaLinks: true,
+  socialLinks: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email format"),
@@ -411,6 +416,7 @@ export const updateProfileSchema = createInsertSchema(users).pick({
     .optional(),
   confirmPassword: z.string().optional(),
   socialMediaLinks: z.array(socialMediaLinkSchema).max(4, "Maximum 4 social media links allowed").optional(),
+  socialLinks: z.array(socialMediaLinkSchema).max(4, "Maximum 4 social media links allowed").optional(),
 }).refine((data) => {
   // If any password field is filled, all password fields must be filled
   if (data.newPassword || data.currentPassword || data.confirmPassword) {
