@@ -33,11 +33,22 @@ export const SortableTicket: React.FC<SortableTicketProps> = ({ ticket, onClick 
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: ticket.id.toString() });
+    isDragging,
+  } = useSortable({ 
+    id: ticket.id.toString(),
+    transition: {
+      duration: 150, // Faster transitions for more responsive feel
+      easing: 'cubic-bezier(0.25, 1, 0.5, 1)' // Custom easing for smoother drag feel
+    }
+  });
 
+  // Apply styles for dragging
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 1,
+    position: isDragging ? 'relative' : 'static',
   };
 
   // Get appropriate icon based on ticket type

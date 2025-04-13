@@ -9,6 +9,11 @@ import {
   useSensors,
   DragEndEvent,
   useDroppable,
+  DragStartEvent,
+  DragOverEvent,
+  DragCancelEvent,
+  pointerWithin,
+  rectIntersection,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -195,14 +200,36 @@ export function AdminFeedbackManager() {
   const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<FeedbackTicket | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [initialStatus, setInitialStatus] = useState<string | null>(null);
 
   // Setup DnD sensors
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      // Configure the PointerSensor to use activationConstraint for better control
+      activationConstraint: {
+        // Require a small delay or movement before starting drag
+        delay: 100,
+        tolerance: 5,
+      }
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id.toString());
+    
+    // Store the original status for return if dropped in invalid area
+    const ticketId = parseInt(active.id.toString());
+    const ticket = tickets?.find(t => t.id === ticketId);
+    if (ticket) {
+      setInitialStatus(ticket.status);
+    }
+  };
 
   // Fetch all feedback tickets
   const { data: tickets, isLoading } = useQuery<FeedbackTicket[]>({
@@ -244,7 +271,23 @@ export function AdminFeedbackManager() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over) return;
+    // Clear active ID
+    setActiveId(null);
+    
+    // If there's no valid drop target, return to original column
+    if (!over) {
+      if (initialStatus && tickets) {
+        const ticketId = parseInt(active.id.toString());
+        const updatedTickets = tickets.map(t => {
+          if (t.id === ticketId) {
+            return { ...t, status: initialStatus as any };
+          }
+          return t;
+        });
+        queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
+      }
+      return;
+    }
     
     const ticketId = parseInt(active.id.toString());
     const ticket = tickets?.find(t => t.id === ticketId);
@@ -267,12 +310,18 @@ export function AdminFeedbackManager() {
         const overTicket = tickets?.find(t => t.id === overTicketId);
         if (overTicket) {
           newStatus = overTicket.status;
+        } else {
+          // If no valid target, revert to original column
+          newStatus = initialStatus || ticket.status;
         }
       } catch (error) {
         console.log("Error parsing ticket ID:", error);
+        // Revert to original column on error
+        newStatus = initialStatus || ticket.status;
       }
     }
     
+    // Only update if there's a valid status and it's different from current
     if (newStatus && newStatus !== ticket.status) {
       // First, get a copy of all tickets
       const updatedTickets = tickets?.map(t => {
@@ -286,11 +335,14 @@ export function AdminFeedbackManager() {
       // Update the local state immediately through the queryClient
       queryClient.setQueryData(["/api/feedback/admin/all"], updatedTickets);
       
-      // Then update the backend silently
-      updateTicketMutation.mutate({
-        id: ticket.id,
-        updates: { status: newStatus }
-      });
+      // Then update the backend silently only if it's a valid column status change
+      // (not a revert to original position)
+      if (newStatus !== initialStatus) {
+        updateTicketMutation.mutate({
+          id: ticket.id,
+          updates: { status: newStatus }
+        });
+      }
     }
   };
 
@@ -395,7 +447,23 @@ export function AdminFeedbackManager() {
       <DndContext 
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        modifiers={[
+          // This modifier makes the dragged item follow the mouse cursor exactly
+          {
+            options: {},
+            fn: ({ transform: dragTransform }) => {
+              return {
+                ...dragTransform,
+                x: dragTransform.x,
+                y: dragTransform.y,
+                scaleX: 1,
+                scaleY: 1,
+              };
+            },
+          }
+        ]}
       >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-[calc(100vh-300px)]">
           <KanbanColumn 
