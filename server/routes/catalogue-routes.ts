@@ -7,15 +7,84 @@ import { eq, and, inArray, isNull } from "drizzle-orm";
 
 const router = Router();
 
+// Authentication middleware
+function requireAuth(req: Request, res: Response, next: Function) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  next();
+}
+
 // Log for debugging
 console.log("Catalogue routes registered");
 
 /**
+ * GET /api/catalogue/publisher
+ * Get all publishers along with their authors and books
+ * Authenticated route
+ */
+router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
+  try {
+    // Get all publishers
+    const publishersList = await dbStorage.getPublishers();
+    
+    // Process each publisher to get their authors and books
+    const publishersWithAuthors = await Promise.all(
+      publishersList.map(async (publisher) => {
+        // Get authors for this publisher
+        const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
+        
+        // For each author, get their books
+        const authorsWithBooks = await Promise.all(
+          publisherAuthors.map(async (user) => {
+            // Get author profile
+            const authorProfile = await dbStorage.getAuthorByUserId(user.id);
+            
+            if (!authorProfile) {
+              return null;
+            }
+            
+            // Get books by this author
+            const authorBooks = await dbStorage.getBooksByAuthor(authorProfile.id);
+            
+            return {
+              author: {
+                ...authorProfile,
+                user: {
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  displayName: user.displayName
+                }
+              },
+              books: authorBooks
+            };
+          })
+        );
+        
+        // Filter out null values
+        const catalogue = authorsWithBooks.filter(item => item !== null);
+        
+        return {
+          publisher,
+          catalogue
+        };
+      })
+    );
+    
+    res.json(publishersWithAuthors);
+  } catch (error) {
+    console.error("Error getting all publishers' catalogues:", error);
+    res.status(500).json({ error: "Failed to retrieve publishers catalogues" });
+  }
+});
+
+/**
  * GET /api/catalogue/author/:authorId
  * Get all books by an author with complete information
- * Public route - no authentication required
+ * Authenticated route
  */
-router.get("/author/:authorId", async (req: Request, res: Response) => {
+router.get("/author/:authorId", requireAuth, async (req: Request, res: Response) => {
   try {
     const authorId = parseInt(req.params.authorId);
     
@@ -47,9 +116,9 @@ router.get("/author/:authorId", async (req: Request, res: Response) => {
 /**
  * GET /api/catalogue/publisher/:publisherId
  * Get a publisher's catalogue of authors with their books
- * Public route - no authentication required
+ * Authenticated route
  */
-router.get("/publisher/:publisherId", async (req: Request, res: Response) => {
+router.get("/publisher/:publisherId", requireAuth, async (req: Request, res: Response) => {
   try {
     const publisherId = parseInt(req.params.publisherId);
     

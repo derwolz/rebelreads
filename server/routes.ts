@@ -26,9 +26,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
   app.use("/uploads", express.static("uploads"));
   
-  // Register public routes (these need to be registered before auth middleware is added)
-  app.use("/api/catalogue", catalogueRoutes);
-  
   // Setup authentication
   setupAuth(app);
 
@@ -80,6 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Regular authenticated sales routes
   app.use("/api/sales", salesRoutes);
+  
+  // Register authenticated catalogue routes
+  app.use("/api/catalogue", catalogueRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
