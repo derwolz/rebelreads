@@ -9,6 +9,7 @@ import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
 import { HomepageLayoutStorage } from "./storage/homepage-layout";
 import { FeedbackStorage } from "./storage/feedback";
+import { SellerStorage } from "./storage/seller";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -22,6 +23,7 @@ const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 const betaKeyStorage = new BetaKeyStorage();
 const homepageLayoutStorage = new HomepageLayoutStorage();
 const feedbackStorage = new FeedbackStorage();
+const sellerStorage = new SellerStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -214,6 +216,17 @@ export const dbStorage = {
   getUserFeedbackTickets: feedbackStorage.getUserFeedbackTickets.bind(feedbackStorage),
   getNewTickets: feedbackStorage.getNewTickets.bind(feedbackStorage),
   getResolvedTickets: feedbackStorage.getResolvedTickets.bind(feedbackStorage),
+  
+  // Seller management
+  isUserSeller: sellerStorage.isUserSeller.bind(sellerStorage),
+  getSellerByUserId: sellerStorage.getSellerByUserId.bind(sellerStorage),
+  getSellerById: sellerStorage.getSellerById.bind(sellerStorage),
+  createSeller: sellerStorage.createSeller.bind(sellerStorage),
+  updateSeller: sellerStorage.updateSeller.bind(sellerStorage),
+  getAllActiveSellers: sellerStorage.getAllActiveSellers.bind(sellerStorage),
+  createPublisherSellerVerificationCode: sellerStorage.createPublisherSellerVerificationCode.bind(sellerStorage),
+  getPublisherSellerByVerificationCode: sellerStorage.getPublisherSellerByVerificationCode.bind(sellerStorage),
+  getSellerDetailsByVerificationCode: sellerStorage.getSellerDetailsByVerificationCode.bind(sellerStorage),
 };
 
 // Export interfaces from their respective modules
@@ -228,6 +241,7 @@ export type { IAuthorAnalyticsStorage } from "./storage/author-analytics";
 export type { IBetaKeyStorage } from "./storage/beta-keys";
 export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 export type { IFeedbackStorage } from "./storage/feedback";
+export type { ISellerStorage } from "./storage/seller";
 
 // Re-export storage classes
 export {
@@ -242,4 +256,5 @@ export {
   BetaKeyStorage,
   HomepageLayoutStorage,
   FeedbackStorage,
+  SellerStorage,
 };
