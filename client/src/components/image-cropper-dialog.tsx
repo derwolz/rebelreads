@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import ReactCrop, { centerCrop, makeAspectCrop, Crop } from 'react-image-crop';
+import ReactCrop, { centerCrop, makeAspectCrop, Crop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import {
   Dialog,
@@ -11,26 +11,49 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
+// This function creates a centered crop with the correct aspect ratio
 function centerAspectCrop(
   mediaWidth: number,
   mediaHeight: number,
-  aspect: number,
+  aspect: number
 ) {
-  // Use a larger initial crop area (95% of available area)
-  // This helps ensure the crop starts with most of the image visible
-  return centerCrop(
-    makeAspectCrop(
-      {
-        unit: '%',
-        width: 95,
-      },
-      aspect,
-      mediaWidth,
-      mediaHeight,
-    ),
-    mediaWidth,
-    mediaHeight,
-  )
+  // Calculate the maximum size we can make the crop while maintaining aspect ratio
+  let cropWidth = mediaWidth;
+  let cropHeight = cropWidth / aspect;
+  
+  // If crop height is greater than media height, calculate based on height instead
+  if (cropHeight > mediaHeight) {
+    cropHeight = mediaHeight;
+    cropWidth = cropHeight * aspect;
+  }
+  
+  // Center the crop
+  const x = (mediaWidth - cropWidth) / 2;
+  const y = (mediaHeight - cropHeight) / 2;
+  
+  // Return values in percentage for react-image-crop
+  return {
+    unit: '%',
+    width: (cropWidth * 100) / mediaWidth,
+    height: (cropHeight * 100) / mediaHeight,
+    x: (x * 100) / mediaWidth,
+    y: (y * 100) / mediaHeight,
+  };
+}
+
+// This function converts a percentage crop to a pixel crop
+function convertToPixelCrop(
+  crop: Crop,
+  imageWidth: number,
+  imageHeight: number
+): PixelCrop {
+  return {
+    unit: 'px',
+    x: Math.round((crop.x * imageWidth) / 100),
+    y: Math.round((crop.y * imageHeight) / 100),
+    width: Math.round((crop.width * imageWidth) / 100),
+    height: Math.round((crop.height * imageHeight) / 100),
+  };
 }
 
 interface ImageCropperDialogProps {
@@ -43,7 +66,7 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
   const [imgSrc, setImgSrc] = useState('');
   const [crop, setCrop] = useState<Crop>();
   const [error, setError] = useState<string | null>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const { toast } = useToast();
 
   function onSelectFile(e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) {
@@ -94,87 +117,104 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
-    setCrop(centerAspectCrop(width, height, 1));
-    imageRef.current = e.currentTarget;
+    // Set the image ref
+    imgRef.current = e.currentTarget;
+    
+    // Calculate initial crop
+    const initialCrop = centerAspectCrop(width, height, 1);
+    setCrop(initialCrop);
+    
+    // Debug info - log the image dimensions and initial crop
+    console.log('Image dimensions:', width, height);
+    console.log('Initial crop:', initialCrop);
   }
 
   async function cropImage() {
-    try {
-      if (!imageRef.current || !crop) return;
+    if (!imgRef.current || !crop) {
+      toast({
+        title: "Error",
+        description: "Unable to process the image",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    try {
+      const image = imgRef.current;
+      
+      // Convert from percentage crop to pixel crop
+      const pixelCrop = convertToPixelCrop(
+        crop,
+        image.naturalWidth,
+        image.naturalHeight
+      );
+      
+      // Debug info - log the pixel crop
+      console.log('Pixel crop:', pixelCrop);
+      
+      // Create a canvas for the cropped image
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+      
       if (!ctx) {
         toast({
           title: "Error",
-          description: "Failed to process image",
+          description: "Canvas context not available",
           variant: "destructive",
         });
         return;
       }
 
-      const image = imageRef.current;
-      // Calculate the proper scaling factor for the image
-      const scaleX = image.naturalWidth / image.width;
-      const scaleY = image.naturalHeight / image.height;
+      // Set the canvas size (output size for our profile picture)
+      const outputSize = 500;
+      canvas.width = outputSize;
+      canvas.height = outputSize;
 
-      // Set desired output size for profile picture
-      const size = 500;
-      canvas.width = size;
-      canvas.height = size;
-      
-      // Calculate source coordinates
-      const sourceX = crop.x * scaleX;
-      const sourceY = crop.y * scaleY;
-      const sourceWidth = crop.width * scaleX;
-      const sourceHeight = crop.height * scaleY;
-      
-      // Clear the canvas first
+      // Fill with white background (for transparent images)
       ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, size, size);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Create circular clipping path for circular profile photo
-      ctx.save();
+      // Create circular clipping path
       ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+      ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+      ctx.closePath();
       ctx.clip();
       
-      // Draw the cropped image centered in the canvas
+      // Draw the cropped portion of the image
       ctx.drawImage(
         image,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
         0,
         0,
-        size,
-        size
+        canvas.width,
+        canvas.height
       );
-      
-      // Restore the context to remove the clipping path
-      ctx.restore();
 
-      // Convert to blob with specific format and quality
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            toast({
-              title: "Error",
-              description: "Failed to process image",
-              variant: "destructive",
-            });
-            return;
-          }
-          onCropComplete(blob);
-          onOpenChange(false);
-          setImgSrc('');
-          setCrop(undefined);
-        },
-        'image/jpeg',
-        0.95 // Higher quality to maintain image clarity
-      );
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast({
+            title: "Error",
+            description: "Failed to create image",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Send the cropped image to the parent component
+        onCropComplete(blob);
+        
+        // Reset the component state
+        setImgSrc('');
+        setCrop(undefined);
+        onOpenChange(false);
+      }, 'image/jpeg', 0.95);
+
     } catch (error) {
+      console.error('Error cropping image:', error);
       toast({
         title: "Error",
         description: "Failed to process image",
@@ -226,11 +266,12 @@ export function ImageCropperDialog({ open, onOpenChange, onCropComplete }: Image
                   circularCrop
                 >
                   <img
-                    ref={imageRef}
+                    ref={imgRef}
                     alt="Upload"
                     src={imgSrc}
                     onLoad={onImageLoad}
                     className="max-h-[400px] w-auto mx-auto"
+                    crossOrigin="anonymous"
                   />
                 </ReactCrop>
               </div>
