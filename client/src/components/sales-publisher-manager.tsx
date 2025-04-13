@@ -134,9 +134,21 @@ export function SalesPublisherManager() {
   // Generate a new verification code
   const generateCodeMutation = useMutation({
     mutationFn: async () => {
+      // Set specific headers to ensure we get JSON back
       const res = await fetch('/api/account/generate-verification-code', {
         method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
       });
+      
+      // Check if the response is JSON
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response received:', await res.text());
+        throw new Error('Server returned non-JSON response. Please try again later.');
+      }
       
       const data = await res.json();
       

@@ -900,6 +900,9 @@ router.get("/verification-codes", async (req: Request, res: Response) => {
 
 // Generate a new verification code
 router.post("/generate-verification-code", async (req: Request, res: Response) => {
+  // Explicitly set the content type to application/json for this endpoint
+  res.setHeader('Content-Type', 'application/json');
+  
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -917,32 +920,25 @@ router.post("/generate-verification-code", async (req: Request, res: Response) =
     
     console.log("Found seller profile:", seller.id);
     
-    try {
-      // Generate a new verification code
-      const code = await dbStorage.createPublisherSellerVerificationCode(seller.id);
-      
-      console.log("Generated verification code:", code);
-      
-      if (!code) {
-        return res.status(500).json({ error: "Failed to generate verification code" });
-      }
-      
-      // Return a formatted response
-      return res.status(200).json({
-        id: code.id,
-        sellerId: code.sellerId,
-        verification_code: code.verification_code,
-        createdAt: code.createdAt
-      });
-    } catch (codeError) {
-      console.error("Error in createPublisherSellerVerificationCode:", codeError);
-      return res.status(500).json({ 
-        error: "Failed to generate verification code",
-        details: codeError instanceof Error ? codeError.message : String(codeError) 
-      });
+    // Generate a new verification code
+    const code = await dbStorage.createPublisherSellerVerificationCode(seller.id);
+    
+    console.log("Generated verification code:", code);
+    
+    if (!code) {
+      return res.status(500).json({ error: "Failed to generate verification code" });
     }
+    
+    // Return a formatted response
+    return res.status(200).json({
+      id: code.id,
+      sellerId: code.sellerId,
+      verification_code: code.verification_code,
+      createdAt: code.createdAt
+    });
   } catch (error) {
     console.error("Error generating verification code:", error);
+    // Ensure we're still sending JSON even for errors
     return res.status(500).json({ 
       error: "Failed to generate verification code",
       details: error instanceof Error ? error.message : String(error)

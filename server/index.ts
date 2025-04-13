@@ -34,6 +34,13 @@ app.use((req, res, next) => {
   // Set default content type header for API routes
   if (path.startsWith('/api/')) {
     res.setHeader('Content-Type', 'application/json');
+    
+    // Check if the client is requesting JSON
+    const acceptHeader = req.headers.accept || '';
+    if (!acceptHeader.includes('application/json')) {
+      // Add JSON as acceptable response type to prevent HTML fallback
+      req.headers.accept = 'application/json, ' + acceptHeader;
+    }
   }
 
   const originalResJson = res.json;
