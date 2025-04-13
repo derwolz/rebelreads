@@ -55,11 +55,9 @@ function isNewBook(book: Book) {
 }
 
 export function BookGridCard({ book }: { book: Book }) {
-  const [showDetailed, setShowDetailed] = useState(false);
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
-  const [cardPosition, setCardPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
@@ -100,8 +98,6 @@ export function BookGridCard({ book }: { book: Book }) {
       recordImpression();
     }
   }, [isVisible, hasRecordedImpression, book.id]);
-
-  // We're now using individual weight columns directly
 
   // Calculate individual unweighted ratings per vector
   const unweightedRatings = ratings?.length
@@ -148,36 +144,18 @@ export function BookGridCard({ book }: { book: Book }) {
   };
 
   return (
-    <div className="relative group" style={{ height: "12rem", width: "100%" }}>
+    <div className="relative" style={{ height: "12rem", width: "100%" }}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Card
               id={`book-grid-card-${book.id}`}
               className={`
-                overflow-hidden cursor-pointer h-48 w-48
+                overflow-hidden cursor-pointer h-48 w-full
                 transition-all duration-300 ease-in-out
-                ${showDetailed ? "shadow-xl z-50" : "z-0"}
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
               `}
-              style={{
-                position: showDetailed ? "absolute" : "relative",
-                transform: showDetailed ? "scale(1.05)" : "scale(1)",
-                transformOrigin: "center center",
-                width: showDetailed ? "105%" : "100%"
-              }}
               onClick={handleCardClick}
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setCardPosition({
-                  top: rect.top,
-                  left: rect.left,
-                  width: rect.width,
-                  height: rect.height
-                });
-                setShowDetailed(true);
-              }}
-              onMouseLeave={() => setShowDetailed(false)}
             >
               {/* New Book Banner */}
               {isNewBook(book) && (
@@ -229,106 +207,6 @@ export function BookGridCard({ book }: { book: Book }) {
                     </div>
                   </div>
                 </CardContent>
-              </div>
-
-              {/* Expanded Rating Details */}
-              <div
-                className={`
-                  absolute left-0 right-0 bg-background/95 backdrop-blur-sm
-                  transition-all duration-300 ease-in-out
-                  shadow-lg rounded-b-lg
-                  ${showDetailed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}
-                `}
-                style={{
-                  top: "100%",
-                  borderTop: "1px solid var(--border)",
-                  zIndex: 100,
-                  width: "100%",
-                  maxWidth: "100%"
-                }}
-              >
-                <div className="p-3 space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">
-                      Enjoyment (
-                      {getWeightPercentage("enjoyment", ratingPreferences)})
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <StarRating
-                        rating={averageRatings?.enjoyment || 0}
-                        readOnly
-                        size="sm"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.enjoyment.toFixed(2) || "0.00"})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">
-                      Writing (
-                      {getWeightPercentage("writing", ratingPreferences)})
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <StarRating
-                        rating={averageRatings?.writing || 0}
-                        readOnly
-                        size="sm"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.writing.toFixed(2) || "0.00"})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">
-                      Themes ({getWeightPercentage("themes", ratingPreferences)}
-                      )
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <StarRating
-                        rating={averageRatings?.themes || 0}
-                        readOnly
-                        size="sm"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.themes.toFixed(2) || "0.00"})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">
-                      Characters (
-                      {getWeightPercentage("characters", ratingPreferences)})
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <StarRating
-                        rating={averageRatings?.characters || 0}
-                        readOnly
-                        size="sm"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.characters.toFixed(2) || "0.00"})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">
-                      World Building (
-                      {getWeightPercentage("worldbuilding", ratingPreferences)})
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <StarRating
-                        rating={averageRatings?.worldbuilding || 0}
-                        readOnly
-                        size="sm"
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        ({averageRatings?.worldbuilding.toFixed(2) || "0.00"})
-                      </span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </Card>
           </TooltipTrigger>
