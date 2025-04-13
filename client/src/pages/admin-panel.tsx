@@ -99,6 +99,10 @@ export default function AdminPanel() {
               <AdminGenresManager />
             </TabsContent>
             
+            <TabsContent value="feedback" className="py-4">
+              <AdminFeedbackManager />
+            </TabsContent>
+            
             <TabsContent value="beta" className="py-4">
               <AdminBetaKeysManager />
             </TabsContent>
