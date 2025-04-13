@@ -1079,3 +1079,51 @@ export const insertPopularBookSchema = createInsertSchema(popularBooks).omit({
 
 export type PopularBook = typeof popularBooks.$inferSelect;
 export type InsertPopularBook = typeof popularBooks.$inferInsert;
+
+// Feedback ticket status options
+export const FEEDBACK_STATUS_OPTIONS = [
+  "new",
+  "in_progress",
+  "resolved",
+  "closed"
+] as const;
+
+// Feedback type options
+export const FEEDBACK_TYPE_OPTIONS = [
+  "bug_report",
+  "feature_request",
+  "general_feedback",
+  "question"
+] as const;
+
+// Feedback tickets table for beta feedback
+export const feedbackTickets = pgTable("feedback_tickets", {
+  id: serial("id").primaryKey(),
+  ticketNumber: text("ticket_number").notNull().unique(),
+  userId: integer("user_id"),
+  type: text("type").notNull(), // One of FEEDBACK_TYPE_OPTIONS
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("new"), // One of FEEDBACK_STATUS_OPTIONS
+  priority: integer("priority").default(1), // 1-3 (low, medium, high)
+  assignedTo: integer("assigned_to"), // Optional - user ID of admin assigned to ticket
+  deviceInfo: jsonb("device_info"), // Browser, OS, screen size, etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+// Schema for inserting feedback tickets
+export const insertFeedbackTicketSchema = createInsertSchema(feedbackTickets, {
+  type: z.enum(FEEDBACK_TYPE_OPTIONS),
+  status: z.enum(FEEDBACK_STATUS_OPTIONS).default("new"),
+}).omit({
+  id: true,
+  ticketNumber: true, // Auto-generated
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+});
+
+export type FeedbackTicket = typeof feedbackTickets.$inferSelect;
+export type InsertFeedbackTicket = z.infer<typeof insertFeedbackTicketSchema>;

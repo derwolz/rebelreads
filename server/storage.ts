@@ -8,6 +8,7 @@ import { AuthorStorage } from "./storage/author";
 import { AuthorAnalyticsStorage } from "./storage/author-analytics";
 import { BetaKeyStorage } from "./storage/beta-keys";
 import { HomepageLayoutStorage } from "./storage/homepage-layout";
+import { FeedbackStorage } from "./storage/feedback";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -20,6 +21,7 @@ const authorStorage = new AuthorStorage();
 const authorAnalyticsStorage = new AuthorAnalyticsStorage();
 const betaKeyStorage = new BetaKeyStorage();
 const homepageLayoutStorage = new HomepageLayoutStorage();
+const feedbackStorage = new FeedbackStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {

@@ -1208,6 +1208,47 @@ async function removeProColumnsFromAuthors() {
   }
 }
 
+async function createFeedbackTicketsTable() {
+  try {
+    // Check if feedback_tickets table exists
+    const checkResult = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'feedback_tickets'
+      )
+    `);
+    
+    const tableExists = checkResult.rows[0].exists;
+    
+    if (!tableExists) {
+      console.log("Creating feedback_tickets table...");
+      await db.execute(sql`
+        CREATE TABLE feedback_tickets (
+          id SERIAL PRIMARY KEY,
+          ticket_number TEXT NOT NULL UNIQUE,
+          user_id INTEGER,
+          type TEXT NOT NULL,
+          title TEXT NOT NULL,
+          description TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'new',
+          priority INTEGER DEFAULT 1,
+          assigned_to INTEGER,
+          device_info JSONB,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          resolved_at TIMESTAMP
+        )
+      `);
+      console.log("feedback_tickets table created successfully");
+    } else {
+      console.log("feedback_tickets table already exists");
+    }
+  } catch (error) {
+    console.error("Error creating feedback_tickets table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await addFeaturedColumnToRatings();
@@ -1245,5 +1286,7 @@ export async function runMigrations() {
   await removeAuthorPublisherFieldsFromUsers();
   // Remove pro columns from authors table (already tracked in users table)
   await removeProColumnsFromAuthors();
+  // Create feedback tickets table for beta feedback
+  await createFeedbackTicketsTable();
   console.log("Migrations completed");
 }
