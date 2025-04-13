@@ -178,6 +178,7 @@ export const dbStorage = {
   validateBetaKey: betaKeyStorage.validateBetaKey.bind(betaKeyStorage),
   recordBetaKeyUsage: betaKeyStorage.recordBetaKeyUsage.bind(betaKeyStorage),
   getBetaKeyUsage: betaKeyStorage.getBetaKeyUsage.bind(betaKeyStorage),
+  hasUserUsedBetaKey: betaKeyStorage.hasUserUsedBetaKey.bind(betaKeyStorage),
   isBetaActive: betaKeyStorage.isBetaActive.bind(betaKeyStorage),
   
   // Homepage layout

@@ -167,7 +167,8 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                           <Input placeholder="Enter your beta key" {...field} />
                         </FormControl>
                         <FormDescription>
-                          Required during beta testing phase
+                          Required for first-time login during beta testing phase.
+                          Returning users who have already used a beta key don't need to enter it again.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
