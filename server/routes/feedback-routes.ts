@@ -61,8 +61,10 @@ router.get("/:ticketNumber", async (req, res) => {
       return res.status(404).json({ error: "Feedback ticket not found" });
     }
     
-    // Check if the ticket belongs to the user or if user is an admin
-    if (req.user && (ticket.userId === req.user.id || req.user.isAuthor)) {
+    // Check if the ticket belongs to the user or if user is an admin/author
+    // Since we're using an existing author system, we'll check for user.id == 1 or 2 as admin for now
+    const isAdmin = req.user && [1, 2].includes(req.user.id);
+    if (req.user && (ticket.userId === req.user.id || isAdmin)) {
       return res.json(ticket);
     }
     
@@ -111,12 +113,14 @@ router.get("/user/tickets", async (req: RequestWithUser, res) => {
  */
 router.get("/admin/all", async (req: RequestWithUser, res) => {
   try {
-    if (!req.user || !req.user.isAuthor) {
+    // Check if user is admin (currently hardcoded for users 1 & 2)
+    const isAdmin = req.user && [1, 2].includes(req.user.id);
+    if (!req.user || !isAdmin) {
       return res.status(403).json({ error: "Unauthorized. Admin access required." });
     }
     
     // Get all tickets
-    const tickets = await dbStorage.getFeedbackTickets();
+    const tickets = await feedbackStorage.getFeedbackTickets();
     
     return res.json(tickets);
   } catch (error) {
@@ -131,7 +135,9 @@ router.get("/admin/all", async (req: RequestWithUser, res) => {
  */
 router.patch("/admin/:id", async (req: RequestWithUser, res) => {
   try {
-    if (!req.user || !req.user.isAuthor) {
+    // Check if user is admin (currently hardcoded for users 1 & 2)
+    const isAdmin = req.user && [1, 2].includes(req.user.id);
+    if (!req.user || !isAdmin) {
       return res.status(403).json({ error: "Unauthorized. Admin access required." });
     }
     
@@ -139,14 +145,14 @@ router.patch("/admin/:id", async (req: RequestWithUser, res) => {
     const updates = req.body;
     
     // Get the ticket first to make sure it exists
-    const existingTicket = await dbStorage.getFeedbackTicket(parseInt(id));
+    const existingTicket = await feedbackStorage.getFeedbackTicket(parseInt(id));
     
     if (!existingTicket) {
       return res.status(404).json({ error: "Feedback ticket not found" });
     }
     
     // Update the ticket
-    const updatedTicket = await dbStorage.updateFeedbackTicket(parseInt(id), updates);
+    const updatedTicket = await feedbackStorage.updateFeedbackTicket(parseInt(id), updates);
     
     return res.json(updatedTicket);
   } catch (error) {
