@@ -11,6 +11,7 @@ import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
 import { RatingCriteriaWizard } from "@/components/rating-criteria-wizard";
 import { FloatingSignup } from "@/components/floating-signup";
+import FeedbackButton from "@/components/feedback-button";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import LandingPage from "@/pages/landing-page";
@@ -139,6 +140,7 @@ function App() {
               <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
               <ReviewInviteDialog />
               <RatingCriteriaWizard />
+              <FeedbackButton />
               <Toaster />
             </OnboardingProvider>
           </AuthProvider>
