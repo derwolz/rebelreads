@@ -174,7 +174,7 @@ export default function BookDetails() {
       {/* Background image */}
       {book.images?.find(img => img.imageType === "background") && (
         <div 
-          className="fixed inset-0 w-full h-full z-[-1] opacity-10 pointer-events-none bg-no-repeat bg-cover bg-center"
+          className="fixed inset-0 w-full h-full z-[-1] opacity-30 pointer-events-none bg-no-repeat bg-cover bg-center"
           style={{
             backgroundImage: `url('${book.images.find(img => img.imageType === "background")?.imageUrl}')`,
           }}
