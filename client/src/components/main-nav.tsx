@@ -170,17 +170,7 @@ console.log(searchResults, "searchResults");
         </div>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden flex items-center space-x-2">
-          {/* Sidebar Toggle Button */}
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setOpenMobile(true)}
-            aria-label="Toggle Sidebar"
-          >
-            <PanelLeft className="h-5 w-5" />
-          </Button>
-
+        <div className="md:hidden flex items-center">
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon">
