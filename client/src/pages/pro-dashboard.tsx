@@ -98,13 +98,13 @@ export default function ProDashboard() {
   console.log("performanceData", performanceData);
   const { data: dashboardData } = useQuery<ProDashboardData>({
     queryKey: ["/api/pro/dashboard"],
-    enabled: !!user?.isAuthor,
+    enabled: isAuthor,
   });
 
   const { data: followerData } = useQuery<FollowerAnalytics>({
     queryKey: ["/api/pro/follower-metrics", timeRange],
     queryFn: () => fetch(`/api/pro/follower-metrics?timeRange=${timeRange}`).then((res) => res.json()),
-    enabled: !!user?.isAuthor,
+    enabled: isAuthor,
   });
 
   const handleBookSelect = (bookId: number) => {
