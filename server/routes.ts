@@ -43,6 +43,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/recommendations", bookCollectionsRoutes);
   app.use("/api/popular-books", popularBooksRoutes);
   app.use("/api/feedback", feedbackRoutes);
+  // Register the public verification endpoint before authentication middlewares
+  app.get("/api/public/verify-seller-code/:code", async (req, res) => {
+    try {
+      const code = req.params.code;
+
+      if (!code) {
+        return res.status(400).json({ error: "Verification code is required" });
+      }
+
+      // Get the seller information from the verification code
+      const sellerInfo = await dbStorage.getSellerDetailsByVerificationCode(code);
+
+      if (!sellerInfo) {
+        return res.status(404).json({ error: "Invalid verification code" });
+      }
+
+      // Don't expose seller's notes to public, just return necessary info
+      return res.json({
+        valid: true,
+        seller: {
+          name: sellerInfo.name,
+          company: sellerInfo.company,
+          status: sellerInfo.status
+        }
+      });
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  // Regular authenticated sales routes
   app.use("/api/sales", salesRoutes);
 
   const httpServer = createServer(app);
