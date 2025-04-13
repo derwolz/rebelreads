@@ -110,7 +110,6 @@ export const authors = pgTable("authors", {
   death_date: date("death_date"),
   website: text("website"),
   bio: text("bio"), // Author-specific bio
-  credits: decimal("credits").notNull().default("0"), // Credits for authors
 });
 
 // Publisher-specific information is contained in the publishers table already defined below

@@ -1161,6 +1161,12 @@ async function removeProColumnsFromAuthors() {
       WHERE table_name = 'authors' AND column_name = 'pro_expires_at'
     `);
     
+    const checkCreditsResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'authors' AND column_name = 'credits'
+    `);
+    
     // If is_pro exists, remove it
     if (checkIsProResult.rows.length > 0) {
       console.log("Removing 'is_pro' column from authors table...");
@@ -1184,8 +1190,20 @@ async function removeProColumnsFromAuthors() {
     } else {
       console.log("Column 'pro_expires_at' doesn't exist or has already been removed from authors table");
     }
+    
+    // If credits exists, remove it
+    if (checkCreditsResult.rows.length > 0) {
+      console.log("Removing 'credits' column from authors table...");
+      await db.execute(sql`
+        ALTER TABLE authors 
+        DROP COLUMN credits
+      `);
+      console.log("Column 'credits' removed successfully from authors table");
+    } else {
+      console.log("Column 'credits' doesn't exist or has already been removed from authors table");
+    }
   } catch (error) {
-    console.error("Error removing pro columns from authors table:", error);
+    console.error("Error removing columns from authors table:", error);
     throw error;
   }
 }
