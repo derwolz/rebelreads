@@ -31,6 +31,7 @@ import PublisherPage from "@/pages/publisher-page";
 import { HomepageSettingsPage } from "@/pages/homepage-settings-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
+import SalesPanel from "@/pages/sales-panel";
 import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
@@ -118,6 +119,9 @@ function Router() {
         <ProtectedRoute path="/admin/users" component={AdminPanel} />
         <ProtectedRoute path="/admin/settings" component={AdminPanel} />
         <ProtectedRoute path="/admin/reports" component={AdminPanel} />
+        
+        {/* Sales routes */}
+        <ProtectedRoute path="/sales" component={SalesPanel} />
 
         <Route component={NotFound} />
       </Switch>

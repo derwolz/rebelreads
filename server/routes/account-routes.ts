@@ -861,7 +861,7 @@ router.get("/publisher-seller-profile", async (req: Request, res: Response) => {
   
   try {
     // Check if the user is a publisher seller
-    const seller = await dbStorage.getPublisherSellerByUserId(req.user.id);
+    const seller = await dbStorage.getSellerByUserId(req.user.id);
     
     if (!seller) {
       return res.status(404).json({ error: "Publisher seller profile not found" });
@@ -871,6 +871,81 @@ router.get("/publisher-seller-profile", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error getting publisher seller profile:", error);
     res.status(500).json({ error: "Failed to get publisher seller profile" });
+  }
+});
+
+// Get seller verification codes
+router.get("/verification-codes", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a seller
+    const seller = await dbStorage.getSellerByUserId(req.user.id);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Seller profile not found" });
+    }
+    
+    // Get the verification codes for this seller
+    const codes = await dbStorage.getSellerVerificationCodes(seller.id);
+    
+    res.json(codes);
+  } catch (error) {
+    console.error("Error getting verification codes:", error);
+    res.status(500).json({ error: "Failed to get verification codes" });
+  }
+});
+
+// Generate a new verification code
+router.post("/generate-verification-code", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a seller
+    const seller = await dbStorage.getSellerByUserId(req.user.id);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Seller profile not found" });
+    }
+    
+    // Generate a new verification code
+    const code = await dbStorage.createPublisherSellerVerificationCode(seller.id);
+    
+    if (!code) {
+      return res.status(500).json({ error: "Failed to generate verification code" });
+    }
+    
+    res.json(code);
+  } catch (error) {
+    console.error("Error generating verification code:", error);
+    res.status(500).json({ error: "Failed to generate verification code" });
+  }
+});
+
+// Get publishers verified by this seller
+router.get("/verified-publishers", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Check if the user is a seller
+    const seller = await dbStorage.getSellerByUserId(req.user.id);
+    
+    if (!seller) {
+      return res.status(404).json({ error: "Seller profile not found" });
+    }
+    
+    // TODO: This endpoint needs to be implemented in the seller storage module
+    // For now, return an empty array
+    res.json([]);
+  } catch (error) {
+    console.error("Error getting verified publishers:", error);
+    res.status(500).json({ error: "Failed to get verified publishers" });
   }
 });
 

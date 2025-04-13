@@ -285,8 +285,11 @@ router.post("/assign-publisher", requireSeller, async (req, res) => {
     // Validate the request body
     const schema = z.object({
       userId: z.number().positive("Valid user ID is required"),
-      publisherName: z.string().min(1, "Publisher name is required"),
-      publisherDescription: z.string().optional(),
+      publisher_name: z.string().min(1, "Publisher name is required"),
+      publisher_description: z.string().optional(),
+      name: z.string().optional(),
+      business_email: z.string().email("Valid email is required").optional(),
+      notes: z.string().optional(),
     });
 
     const validationResult = schema.safeParse(req.body);
@@ -297,7 +300,7 @@ router.post("/assign-publisher", requireSeller, async (req, res) => {
       });
     }
 
-    const { userId, publisherName, publisherDescription } = validationResult.data;
+    const { userId, publisher_name, publisher_description, business_email, notes } = validationResult.data;
 
     // Check if the user already has publisher status
     const isAlreadyPublisher = await dbStorage.isUserPublisher(userId);
@@ -308,10 +311,11 @@ router.post("/assign-publisher", requireSeller, async (req, res) => {
     // Create a new publisher record for the user
     const publisherData: InsertPublisher = {
       userId,
-      name: publisherName, // Required for backward compatibility
-      publisher_name: publisherName,
-      publisher_description: publisherDescription || undefined,
-      description: publisherDescription || undefined, // Required for backward compatibility
+      name: publisher_name, // Required for backward compatibility
+      publisher_name,
+      publisher_description: publisher_description || undefined,
+      description: publisher_description || undefined, // Required for backward compatibility
+      business_email: business_email || undefined,
     };
 
     const newPublisher = await dbStorage.createPublisher(publisherData);
