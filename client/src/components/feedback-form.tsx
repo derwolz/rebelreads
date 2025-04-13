@@ -37,7 +37,7 @@ import {
 const feedbackFormSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  type: z.enum(["bug", "feature", "general", "other"], {
+  type: z.enum(["bug_report", "feature_request", "general_feedback", "question"], {
     required_error: "Please select a feedback type",
   }),
   email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
@@ -69,7 +69,7 @@ export default function FeedbackForm({ isOpen, onClose }: FeedbackFormProps) {
     defaultValues: {
       title: "",
       description: "",
-      type: "general",
+      type: "general_feedback",
       email: "",
     },
   });
@@ -150,10 +150,10 @@ export default function FeedbackForm({ isOpen, onClose }: FeedbackFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="bug">Bug Report</SelectItem>
-                        <SelectItem value="feature">Feature Request</SelectItem>
-                        <SelectItem value="general">General Feedback</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="bug_report">Bug Report</SelectItem>
+                        <SelectItem value="feature_request">Feature Request</SelectItem>
+                        <SelectItem value="general_feedback">General Feedback</SelectItem>
+                        <SelectItem value="question">Question</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
