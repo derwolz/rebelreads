@@ -2,8 +2,8 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { User, Settings, Monitor, Star, BookOpen, LayoutGrid, ChevronLeft } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { User, Settings, Monitor, Star, BookOpen, LayoutGrid, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState } from "react";
 
 interface NavItemProps {
@@ -38,7 +38,8 @@ export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarPr
   const [location] = useLocation();
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDragEnd = (_: any, info: any) => {
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    // For left sidebar, close when dragged to the left (negative x value)
     if (isMobile && info.offset.x < -50) {
       onClose?.();
     }
@@ -111,12 +112,12 @@ export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarPr
             onClick={onClose}
           />
           
-          {/* Sidebar container */}
+          {/* Sidebar container - now on the left */}
           <motion.div
-            className="fixed inset-y-0 right-0 w-64 bg-background border-l z-50 md:hidden"
-            initial={{ x: "100%" }}
+            className="fixed inset-y-0 left-0 w-64 bg-background border-r z-50 md:hidden"
+            initial={{ x: "-100%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
+            exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
@@ -132,7 +133,7 @@ export function SettingsSidebar({ isMobile, isOpen, onClose }: SettingsSidebarPr
                   onClick={onClose}
                   className="mb-2"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  <ChevronRight className="h-4 w-4 mr-2" />
                   Back
                 </Button>
               </div>

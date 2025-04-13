@@ -32,7 +32,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, Menu } from "lucide-react";
+import { GripVertical, Trash2, PanelLeft } from "lucide-react";
 import {
   Form,
   FormControl,
