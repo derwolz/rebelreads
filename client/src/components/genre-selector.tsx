@@ -364,17 +364,21 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        background: `linear-gradient(to bottom, #3366cc, #000000 ${Math.min(100, 20 + 80 * parseFloat(calculateImportance(taxonomy.rank)))}%)`,
+      }}
       className={cn(
-        "flex items-center justify-between p-2 border rounded-md",
+        "flex items-center justify-between p-2 border rounded-md text-white",
         isDragging && "opacity-80 shadow-lg"
       )}
+      title={`Rank: ${taxonomy.rank}, Importance: ${calculateImportance(taxonomy.rank)}`}
     >
       <div className="flex items-center space-x-2">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-7 w-7 cursor-grab touch-none"
+          className="h-7 w-7 cursor-grab touch-none text-white hover:bg-white/10"
           {...attributes}
           {...listeners}
         >
@@ -391,17 +395,10 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
         <span className="font-medium">{taxonomy.name}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <div 
-          className="w-16 h-4 rounded-full" 
-          style={{
-            background: `linear-gradient(to right, hsl(var(--primary) / 0.2), hsl(var(--primary) / ${0.2 + 0.8 * (1 - calculateImportance(taxonomy.rank))}))`,
-          }}
-          title={`Rank: ${taxonomy.rank}, Importance: ${calculateImportance(taxonomy.rank)}`}
-        />
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-7 w-7 text-destructive"
+          className="h-7 w-7 text-white hover:bg-white/10"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
@@ -613,6 +610,8 @@ function TaxonomyGenreSelector({
 
   // Calculate importance value based on rank
   const calculateImportance = (rank: number) => {
+    // Return a string representation of the importance value (0-1)
+    // Higher ranks have lower importance values
     return (1 / (1 + Math.log(rank))).toFixed(3);
   };
 
