@@ -185,6 +185,8 @@ export const dbStorage = {
   createAuthor: authorStorage.createAuthor.bind(authorStorage),
   isUserAuthor: authorStorage.isUserAuthor.bind(authorStorage),
   updateAuthor: authorStorage.updateAuthor.bind(authorStorage),
+  getAuthorFollowerCount: authorStorage.getAuthorFollowerCount.bind(authorStorage),
+  getAuthorAggregateRatings: authorStorage.getAuthorAggregateRatings.bind(authorStorage),
 
   // Session store for auth
   sessionStore: accountStorage.sessionStore,

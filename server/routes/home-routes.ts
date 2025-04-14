@@ -720,7 +720,7 @@ router.get("/authors/:id", async (req, res) => {
       followerCount,
       genres,
       aggregateRatings: ratings,
-      socialMediaLinks: author.social_media_links || []
+      socialMediaLinks: [] // Authors don't have social media links stored in DB yet
     };
 
     res.json(authorDetails);
