@@ -710,53 +710,71 @@ const NewLandingPage = () => {
               </ResponsiveContainer>
             </div>
 
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Audience Intelligence
-              </h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                Make data-informed decisions with comprehensive analytics that are easy to understand.
-              </p>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Engagement Insights</h4>
-                    <p className="text-muted-foreground">
-                      See which chapters keep readers engaged and where they drop off.
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
-                    <Filter className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Demographic Filters</h4>
-                    <p className="text-muted-foreground">
-                      Understand your audience with detailed demographic and interest data.
-                    </p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
-                    <Layers className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Conversion Tracking</h4>
-                    <p className="text-muted-foreground">
-                      Follow the journey from discovery to purchase with detailed conversion analytics.
-                    </p>
-                  </div>
-                </li>
-              </ul>
-              <div className="mt-6">
-                <Button className="bg-primary/90 hover:bg-primary">
-                  <span>Learn More</span>
-                  <ArrowRight size={16} className="ml-1" />
-                </Button>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
+                <h3 className="text-xl font-bold mb-4">
+                  Find Your Perfect Match
+                </h3>
+                {/* Use the actual GenreSelector component */}
+                <GenreSelector
+                  mode="taxonomy"
+                  selected={selectedGenres}
+                  onSelectionChange={setSelectedGenres}
+                  restrictLimits={false}
+                  label=""
+                  helperText="Select genres, themes, and tropes that interest you"
+                  className="pb-6"
+                />
+              </div>
+              
+              <div>
+                <h3 className="text-2xl font-bold mb-4 text-primary">
+                  Audience Intelligence
+                </h3>
+                <p className="text-lg text-muted-foreground mb-6">
+                  Make data-informed decisions with comprehensive analytics that are easy to understand.
+                </p>
+                <ul className="space-y-4">
+                  <li className="flex items-start">
+                    <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Engagement Insights</h4>
+                      <p className="text-muted-foreground">
+                        See which chapters keep readers engaged and where they drop off.
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                      <Filter className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Demographic Filters</h4>
+                      <p className="text-muted-foreground">
+                        Understand your audience with detailed demographic and interest data.
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                      <Layers className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Conversion Tracking</h4>
+                      <p className="text-muted-foreground">
+                        Follow the journey from discovery to purchase with detailed conversion analytics.
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+                <div className="mt-6">
+                  <Button className="bg-primary/90 hover:bg-primary">
+                    <span>Learn More</span>
+                    <ArrowRight size={16} className="ml-1" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
