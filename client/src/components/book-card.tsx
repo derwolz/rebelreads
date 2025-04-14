@@ -1,4 +1,10 @@
-import { Book, Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
+import {
+  Book,
+  Rating,
+  calculateWeightedRating,
+  DEFAULT_RATING_WEIGHTS,
+  RatingPreferences,
+} from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
@@ -15,23 +21,26 @@ import {
 } from "@/components/ui/tooltip";
 
 // Position-based weights for rating criteria
-const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
+const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
 
 // Helper function to get weight percentage for a criteria based on stored weights or position
-function getWeightPercentage(criteriaName: string, prefs?: RatingPreferences): string {
+function getWeightPercentage(
+  criteriaName: string,
+  prefs?: RatingPreferences,
+): string {
   if (!prefs) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
-  
+
   // If we have individual weights columns, use those directly
   if (prefs[criteriaName as keyof RatingPreferences] !== undefined) {
     // Convert any string values to numbers for percentage calculation
     const value = prefs[criteriaName as keyof RatingPreferences];
-    const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
     return `${(Number(numericValue) * 100).toFixed(0)}%`;
   }
-  
+
   // Fall back to default weights if we don't have the specific property
   return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
 }
@@ -52,10 +61,10 @@ export function BookCard({ book }: { book: Book }) {
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
   });
-  
+
   // Fetch user's rating preferences
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
-    queryKey: ['/api/rating-preferences'],
+    queryKey: ["/api/rating-preferences"],
   });
 
   // Set up intersection observer to track when the card becomes visible
@@ -90,29 +99,36 @@ export function BookCard({ book }: { book: Book }) {
   }, [isVisible, hasRecordedImpression, book.id]);
 
   // We no longer need to derive criteria order as we're using the weight columns directly
-  
+
   // Calculate individual unweighted ratings per vector
   const unweightedRatings = ratings?.length
     ? {
-        enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-        writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+        enjoyment:
+          ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
+        writing:
+          ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
         themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-        characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-        worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+        characters:
+          ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
+        worldbuilding:
+          ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
       }
     : null;
-    
+
   // Calculate overall weighted rating using user preferences and the unweighted individual ratings
   const averageRatings = unweightedRatings
     ? {
         ...unweightedRatings,
-        overall: calculateWeightedRating({
-          enjoyment: unweightedRatings.enjoyment,
-          writing: unweightedRatings.writing,
-          themes: unweightedRatings.themes,
-          characters: unweightedRatings.characters,
-          worldbuilding: unweightedRatings.worldbuilding
-        } as Rating, ratingPreferences)
+        overall: calculateWeightedRating(
+          {
+            enjoyment: unweightedRatings.enjoyment,
+            writing: unweightedRatings.writing,
+            themes: unweightedRatings.themes,
+            characters: unweightedRatings.characters,
+            worldbuilding: unweightedRatings.worldbuilding,
+          } as Rating,
+          ratingPreferences,
+        ),
       }
     : null;
 
@@ -147,23 +163,26 @@ export function BookCard({ book }: { book: Book }) {
     }
   }, [book.promoted]);
   return (
-    <div className="relative group" style={{ width: "256px", height: "512px", maxWidth: "100%" }}>
+    <div
+      className="relative group"
+      style={{ width: "256px", height: "512px", maxWidth: "100%" }}
+    >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Card
               id={`book-card-${book.id}`}
               className={`
-                overflow-visible cursor-pointer w-full
+                 cursor-pointer w-full rounded-none shadow-xl shadow-black/15
                 transition-all duration-300 ease-in-out
                 ${showDetailed ? "absolute inset-0 scale-105 shadow-xl z-50" : "relative z-10"}
                 ${book.promoted ? "animate-pulse-shadow border-primary/20" : ""}
               `}
-              style={{ 
+              style={{
                 width: "100%",
                 height: "100%",
                 aspectRatio: "1/2",
-                position: showDetailed ? "absolute" : "relative"
+                position: showDetailed ? "absolute" : "relative",
               }}
               onClick={handleCardClick}
               onMouseEnter={() => setShowDetailed(true)}
@@ -182,15 +201,18 @@ export function BookCard({ book }: { book: Book }) {
               <div className="absolute bg-black/20 rounded-full top-2 left-2  z-10">
                 <WishlistButton bookId={book.id} variant="ghost" size="icon" />
               </div>
-             
+
               <img
-                src={book.images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
+                src={
+                  book.images?.find((img) => img.imageType === "book-card")
+                    ?.imageUrl || "/images/placeholder-book.png"
+                }
                 alt={book.title}
-                className="w-full h-64 object-cover object-center"
+                className="w-full h-96 object-cover object-center"
                 style={{ aspectRatio: "1/1" }}
               />
               <CardContent className="p-4 relative">
-                <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%] overflow-hidden">
+                <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%] ">
                   {/* New Book Banner */}
                   {isNewBook(book) && (
                     <div className="absolute -bottom-8 -right-12 z-20">
@@ -211,11 +233,17 @@ export function BookCard({ book }: { book: Book }) {
 
                 <div className="flex flex-wrap gap-1 mt-2 mb-2">
                   {/* Temporarily handling missing genres field during migration to taxonomy system */}
-                  {((book as any).genres || []).slice(0, 3).map((genre: string) => (
-                    <Badge key={genre} variant="secondary" className="text-xs">
-                      {genre}
-                    </Badge>
-                  ))}
+                  {((book as any).genres || [])
+                    .slice(0, 3)
+                    .map((genre: string) => (
+                      <Badge
+                        key={genre}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {genre}
+                      </Badge>
+                    ))}
                 </div>
 
                 <div className="mt-2">
@@ -232,37 +260,33 @@ export function BookCard({ book }: { book: Book }) {
 
                 <div
                   className={`
-                    absolute left-0 right-0 bg-background/95 backdrop-blur-sm
+                    absolute t-0 l-0 r-0 inset-x-0 bg-background/95 backdrop-blur-sm
                     transition-all duration-300 ease-in-out
-                    shadow-lg rounded-b-lg
-                    ${showDetailed ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}
+                    shadow-lg rounded-t-lg w-full h-120 rounded-b-none
+                    ${showDetailed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
                   `}
                   style={{
-                    top: "100%",
-                    borderTop: "1px solid var(--border)",
+                    bottom: "100%",
+
+                    borderBottom: "1px solid var(--border)",
                     zIndex: 100,
-                    transformOrigin: "top",
-                    width: "100%"
+                    transformOrigin: "bottom",
+                    width: "100%",
                   }}
                 >
                   <div className="p-4 space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">
-                        Enjoyment 
-                      </span>
+                      <span className="text-sm">Enjoyment</span>
                       <div className="flex items-center gap-2">
                         <StarRating
                           rating={averageRatings?.enjoyment || 0}
                           readOnly
                           size="sm"
                         />
-                  
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">
-                        Writing 
-                      </span>
+                      <span className="text-sm">Writing</span>
                       <div className="flex items-center gap-2">
                         <StarRating
                           rating={averageRatings?.writing || 0}
@@ -272,9 +296,7 @@ export function BookCard({ book }: { book: Book }) {
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">
-                        Themes 
-                      </span>
+                      <span className="text-sm">Themes</span>
                       <div className="flex items-center gap-2">
                         <StarRating
                           rating={averageRatings?.themes || 0}
@@ -284,9 +306,7 @@ export function BookCard({ book }: { book: Book }) {
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">
-                        Characters 
-                      </span>
+                      <span className="text-sm">Characters</span>
                       <div className="flex items-center gap-2">
                         <StarRating
                           rating={averageRatings?.characters || 0}
@@ -296,9 +316,7 @@ export function BookCard({ book }: { book: Book }) {
                       </div>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">
-                        World Building 
-                      </span>
+                      <span className="text-sm">World Building</span>
                       <div className="flex items-center gap-2">
                         <StarRating
                           rating={averageRatings?.worldbuilding || 0}
