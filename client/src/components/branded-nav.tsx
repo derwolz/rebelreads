@@ -1,16 +1,26 @@
 import { Link } from "wouter";
 import { useState } from "react";
-import logo from "@/assets/logo.png"
+import { useTheme } from "@/hooks/use-theme";
+import logo from "@/public/images/logo.svg";
+import logoWhite from "@/public/images/logowhite.svg";
+import icon from "@/public/images/icon.svg";
+import iconWhite from "@/public/images/iconwhite.svg";
 export function BrandedNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme } = useTheme();
 
   return (
     <nav className="bg-background border-b block fixed w-screen h-16 z-10">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-primary">Sirened</span>
+            <Link href="/" className="flex items-center">
+              <img 
+                src={theme === "light" ? logo : logoWhite} 
+                alt="Sirened Logo" 
+                height="64px" 
+                width={"144px"}
+              />
             </Link>
           </div>
 

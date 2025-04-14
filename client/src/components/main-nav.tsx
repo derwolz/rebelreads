@@ -3,7 +3,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { Search, Settings, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "@/hooks/use-theme";
 import logo from "@/public/images/logo.svg";
+import logoWhite from "@/public/images/logowhite.svg";
+import icon from "@/public/images/icon.svg";
+import iconWhite from "@/public/images/iconwhite.svg";
 
 import {
   Command,
@@ -35,6 +39,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const { theme } = useTheme();
 
   // Check if user is a seller
   const { data: sellerStatus } = useQuery({
@@ -127,7 +132,11 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
           <Link href="/">
-            <img src={logo} alt="Sirened Logo" className="h-8 w-8" />
+            <img 
+              src={theme === "light" ? icon : iconWhite} 
+              alt="Sirened Logo" 
+              className="h-8 w-8" 
+            />
           </Link>
 
           <div className="hidden md:flex items-center gap-2 relative">
