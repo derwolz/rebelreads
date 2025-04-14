@@ -16,13 +16,20 @@ router.post("/signup-interest", async (req, res) => {
       return res.status(400).json({ error: "Email and session ID are required" });
     }
 
-    // Create signup interest record
-    const signupInterest = await dbStorage.createSignupInterest({
+    // Create signup interest record with both is_author and is_author_interest
+    // The special case here is we need to handle both columns due to a legacy schema
+    const signupData = {
       email,
-      isAuthorInterest,
-      isPublisher,
+      isAuthorInterest: isAuthorInterest === true,
+      isPublisher: isPublisher === true,
       sessionId,
-    });
+    };
+    
+    // Add the is_author field directly to the data
+    // @ts-ignore - Handle legacy column
+    signupData.is_author = isAuthorInterest === true;
+    
+    const signupInterest = await dbStorage.createSignupInterest(signupData);
 
     // Record this as an event in the landing session if it exists
     try {
