@@ -292,43 +292,102 @@ const NewLandingPage = () => {
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
-            Our Values
+            Direct Author-to-Reader Connection
           </h2>
 
-          <ValueProposition
-            title="Freedom"
-            description="Literary independence is at the core of everything we build."
-            forAuthors="Sirened offers the tools and data to build a loyal readership and market books directly—without relying on third parties."
-            forReaders="It's a discovery hub for fresh, bold, independent voices. No gatekeepers."
-          />
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+            <div>
+              <h3 className="text-2xl font-bold mb-4 text-primary">Personal Stories for Unique Readers</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Authors write personal stories for readers as unique as they are. On Sirened, we believe that every reader deserves content that speaks directly to them.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Personalized reading recommendations based on your preferences</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Connect with authors who share your values and interests</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Discover hidden gems that traditional publishing might overlook</span>
+                </li>
+              </ul>
+            </div>
+            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20">
+              <div className="flex flex-col gap-4 h-full justify-center">
+                <div className="text-center">
+                  <div className="mb-4 inline-block p-4 rounded-full bg-primary/10">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-primary"
+                    >
+                      <path d="M18 6H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h13l4-3.5L18 6Z" />
+                      <path d="M12 13v8" />
+                      <path d="M12 3v3" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Direct Communication</h3>
+                  <p className="text-muted-foreground">No more barriers between you and your favorite authors</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <ValueProposition
-            title="Independence"
-            description="Take control of your literary journey."
-            forAuthors="Own your brand, your audience, your data, and your future. Sirened helps you grow your empire."
-            forReaders="Connect directly with authors. Support them without middlemen. Choose what matters to you."
-          />
-
-          <ValueProposition
-            title="Creativity"
-            description="Express yourself without limits."
-            forAuthors="Sirened supports unique genres, experimental formats, multilingual content, and the weird and wonderful."
-            forReaders="Find stories you won't get anywhere else. Unpolished gems, unheard voices, and daring perspectives."
-          />
-
-          <ValueProposition
-            title="Quality"
-            description="Excellence in everything we offer."
-            forAuthors="Access pro-level tools, analytics, and design that help your content shine — without selling your soul."
-            forReaders="Every author on Sirened is building something meaningful. Curation happens through craft, not clout."
-          />
-
-          <ValueProposition
-            title="Boldness"
-            description="Stand out and make your mark."
-            forAuthors="Be unapologetically you. Say what needs to be said. Sirened exists to amplify fearless, forward-thinking creators."
-            forReaders="Dive into stories that take risks — emotionally, culturally, and creatively. Books that challenge, not just entertain."
-          />
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20">
+              <div className="flex flex-col gap-4 h-full justify-center">
+                <div className="text-center">
+                  <div className="mb-4 inline-block p-4 rounded-full bg-primary/10">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-primary"
+                    >
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">Author-Owned Stores</h3>
+                  <p className="text-muted-foreground">Support creators directly without middlemen taking a cut</p>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <h3 className="text-2xl font-bold mb-4 text-primary">Own Your Author Store</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                We connect readers directly to their favorite authors through personalized author stores. When you own your store, you control your destiny.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Authors keep 100% of their sales revenue</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Complete creative control over your brand and marketing</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Build meaningful relationships with your audience</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
