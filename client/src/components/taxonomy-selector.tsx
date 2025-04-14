@@ -386,6 +386,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("genre")}
                                 onClick={() => addTaxonomy(genre)}
                               >
+                                <Badge variant="secondary" className="mr-1">genre</Badge>
                                 {genre.name}
                               </Button>
                             </TooltipTrigger>
@@ -426,6 +427,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("subgenre")}
                                 onClick={() => addTaxonomy(subgenre)}
                               >
+                                <Badge variant="secondary" className="mr-1">subgenre</Badge>
                                 {subgenre.name}
                               </Button>
                             </TooltipTrigger>
@@ -466,6 +468,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("theme")}
                                 onClick={() => addTaxonomy(theme)}
                               >
+                                <Badge variant="outline" className="mr-1">theme</Badge>
                                 {theme.name}
                               </Button>
                             </TooltipTrigger>
@@ -506,6 +509,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("trope")}
                                 onClick={() => addTaxonomy(trope)}
                               >
+                                <Badge variant="destructive" className="mr-1">trope</Badge>
                                 {trope.name}
                               </Button>
                             </TooltipTrigger>
