@@ -27,10 +27,18 @@ export function FloatingSignup() {
     }
 
     try {
+      // Generate a random session ID for this signup if we don't have one from landing page
+      const sessionId = window.localStorage.getItem('landingSessionId') || `floating-${Date.now()}-${Math.round(Math.random() * 1000000)}`;
+      
       const response = await fetch("/api/signup-interest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, isAuthor: false }),
+        body: JSON.stringify({ 
+          email, 
+          isAuthorInterest: false, 
+          isPublisher: false,
+          sessionId
+        }),
       });
 
       if (response.ok) {
