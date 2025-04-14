@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ArrowRight, CheckCircle, BarChart2, TrendingUp, Layers, Filter } from "lucide-react";
+import { GenreSelector } from "@/components/genre-selector";
 import { 
   LineChart, 
   Line, 
@@ -94,13 +95,7 @@ const ValueProposition = ({ title, description, forAuthors, forReaders }: ValueP
 );
 
 // Main component
-// Sample data for taxonomy selector
-const taxonomyCategories = [
-  { id: 1, name: "Themes", items: ["Romance", "Dystopian", "Coming of Age", "Political", "Philosophical"] },
-  { id: 2, name: "Settings", items: ["Urban Fantasy", "High Fantasy", "Space Opera", "Historical", "Contemporary"] },
-  { id: 3, name: "Tones", items: ["Dark", "Humorous", "Whimsical", "Serious", "Hopeful"] },
-  { id: 4, name: "Formats", items: ["Novel", "Short Story", "Anthology", "Series", "Standalone"] }
-];
+// No need for sample taxonomy data as we're using the GenreSelector component
 
 // Sample data for analytics chart
 const analyticsData = [
@@ -119,27 +114,12 @@ const NewLandingPage = () => {
   const [, setLocation] = useLocation();
   const { setTheme } = useTheme();
   const [sessionId] = useState(() => crypto.randomUUID());
-  const [selectedTaxonomies, setSelectedTaxonomies] = useState<Record<string, string[]>>({});
+  const [selectedGenres, setSelectedGenres] = useState<any[]>([]);
 
   // Set theme
   useEffect(() => {
     setTheme("dark");
   }, [setTheme]);
-  
-  // Handle taxonomy selection
-  const toggleTaxonomyItem = (category: string, item: string) => {
-    setSelectedTaxonomies(prev => {
-      const currentItems = prev[category] || [];
-      const newItems = currentItems.includes(item)
-        ? currentItems.filter(i => i !== item)
-        : [...currentItems, item];
-        
-      return {
-        ...prev,
-        [category]: newItems
-      };
-    });
-  };
 
   // Handle email sign up
   const handleSignup = async (e: React.FormEvent) => {
@@ -405,36 +385,16 @@ const NewLandingPage = () => {
             
             <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
               <h3 className="text-xl font-bold mb-4">Find Your Perfect Match</h3>
-              <div className="space-y-6">
-                {taxonomyCategories.map(category => (
-                  <div key={category.id} className="space-y-2">
-                    <h4 className="font-medium text-primary">{category.name}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {category.items.map(item => (
-                        <button
-                          key={item}
-                          className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                            selectedTaxonomies[category.name]?.includes(item)
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-background/60 hover:bg-background text-muted-foreground hover:text-foreground border border-primary/20'
-                          }`}
-                          onClick={() => toggleTaxonomyItem(category.name, item)}
-                        >
-                          {item}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-4 border-t border-muted">
-                <div className="flex justify-between items-center">
-                  <span>Selected: {Object.values(selectedTaxonomies).flat().length} items</span>
-                  <Button size="sm" disabled={Object.values(selectedTaxonomies).flat().length === 0}>
-                    Apply Filters
-                  </Button>
-                </div>
-              </div>
+              {/* Use the actual GenreSelector component */}
+              <GenreSelector 
+                mode="taxonomy"
+                selected={selectedGenres}
+                onSelectionChange={setSelectedGenres}
+                restrictLimits={false}
+                label=""
+                helperText="Select genres, themes, and tropes that interest you"
+                className="pb-6"
+              />
             </div>
           </div>
         </div>
