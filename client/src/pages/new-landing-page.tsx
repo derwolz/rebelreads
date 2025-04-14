@@ -249,10 +249,10 @@ const NewLandingPage = () => {
                 className="px-8"
                 onClick={() => setLocation("/auth")}
               >
-                Sign up now!
+                Sign up to get beta access
               </Button>
               <Button size="lg" variant="outline" className="px-8">
-                Learn more
+                Learn more about beta
               </Button>
             </div>
           </div>
@@ -662,7 +662,7 @@ const NewLandingPage = () => {
               className="px-8"
               onClick={() => setLocation("/auth")}
             >
-              Sign up now!
+              Sign up to get beta access
             </Button>
           </div>
         </div>
@@ -722,7 +722,7 @@ const NewLandingPage = () => {
                 authors who create the stories you love.
               </p>
               <Button className="mt-4" onClick={() => setLocation("/auth")}>
-                Sign up now! <ArrowRight className="ml-2 h-4 w-4" />
+                Sign up to get beta access <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
