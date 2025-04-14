@@ -115,6 +115,14 @@ const NewLandingPage = () => {
   const { setTheme } = useTheme();
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedGenres, setSelectedGenres] = useState<any[]>([]);
+  
+  // Initialize genres state if needed
+  useEffect(() => {
+    // Ensures selected taxonomies are properly initialized
+    if (!selectedGenres || !Array.isArray(selectedGenres)) {
+      setSelectedGenres([]);
+    }
+  }, [selectedGenres]);
 
   // Set theme
   useEffect(() => {

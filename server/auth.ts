@@ -231,7 +231,10 @@ export function setupAuth(app: Express) {
         !req.path.startsWith('/api/auth/') && 
         !req.path.startsWith('/api/beta/') &&
         !req.path.startsWith('/api/popular-books') && // Allow unauthenticated access to popular books
+        !req.path.startsWith('/api/landing/') && // Allow unauthenticated access to landing page
+        !req.path.startsWith('/api/signup-interest') && // Allow unauthenticated signup interest
         !req.path.match(/^\/api\/books(\/\d+)?(\/ratings|\/reading-status|\/taxonomies)?$/) && 
+        !req.path.match(/^\/api\/genres.*$/) && // Allow unauthenticated access to genres for the landing page
         req.method !== 'OPTIONS') {
       // Set content type explicitly to prevent HTML responses
       res.setHeader('Content-Type', 'application/json');
