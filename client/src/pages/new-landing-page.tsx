@@ -14,7 +14,6 @@ import {
   Filter,
 } from "lucide-react";
 import { GenreSelector } from "@/components/genre-selector";
-import logo from "@/public/images/logo.svg";
 import {
   LineChart,
   Line,
@@ -28,14 +27,26 @@ import {
   Area,
 } from "recharts";
 
-// Logo component
-const SirenedLogo = () => (
-  <div className="flex items-center">
+// Import logo files for different themes
+import logo from "@/public/images/logo.svg";
+import logoWhite from "@/public/images/logowhite.svg";
 
-      <img src={logo} height="64px" width={"144px"}/>
-    <span className="text-xl font-bold text-foreground">Sirened</span>
-  </div>
-);
+// Logo component with theme awareness
+const SirenedLogo = () => {
+  const { theme } = useTheme();
+
+  return (
+    <div className="flex items-center">
+      <img 
+        src={theme === "light" ? logo : logoWhite} 
+        height="64px" 
+        width={"144px"}
+        alt="Sirened Logo"
+      />
+      <span className="text-xl font-bold text-foreground">Sirened</span>
+    </div>
+  );
+};
 
 // Feature Box Component
 interface FeatureBoxProps {
