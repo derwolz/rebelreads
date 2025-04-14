@@ -240,6 +240,64 @@ const NewLandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/80">
+      {/* Author/Reader Selection Dialog */}
+      <Dialog open={isTypeDialogOpen} onOpenChange={setIsTypeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tell us about yourself</DialogTitle>
+            <DialogDescription>
+              Select which best describes you to help us personalize your experience
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <Button
+              variant={isAuthor ? "default" : "outline"}
+              className={`flex flex-col items-center justify-center h-32 ${isAuthor ? 'bg-primary text-primary-foreground' : ''}`}
+              onClick={() => {
+                setIsAuthor(true);
+                setIsPublisher(false);
+              }}
+            >
+              <PenTool className="h-8 w-8 mb-2" />
+              <span className="font-medium">I'm an Author</span>
+            </Button>
+            
+            <Button
+              variant={!isAuthor && !isPublisher ? "default" : "outline"}
+              className={`flex flex-col items-center justify-center h-32 ${!isAuthor && !isPublisher ? 'bg-primary text-primary-foreground' : ''}`}
+              onClick={() => {
+                setIsAuthor(false);
+                setIsPublisher(false);
+              }}
+            >
+              <BookOpen className="h-8 w-8 mb-2" />
+              <span className="font-medium">I'm a Reader</span>
+            </Button>
+            
+            <Button
+              variant={isPublisher ? "default" : "outline"}
+              className={`flex flex-col items-center justify-center h-32 md:col-span-2 ${isPublisher ? 'bg-primary text-primary-foreground' : ''}`}
+              onClick={() => {
+                setIsAuthor(false);
+                setIsPublisher(true);
+              }}
+            >
+              <BarChart2 className="h-8 w-8 mb-2" />
+              <span className="font-medium">I'm a Publisher</span>
+            </Button>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={submitEmailSignup} 
+              className="w-full"
+            >
+              Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/80 border-b border-muted">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
