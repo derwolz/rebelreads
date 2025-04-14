@@ -131,12 +131,13 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     <nav className="border-b">
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
-          <Link href="/">
-            <img 
-              src={theme === "light" ? icon : iconWhite} 
-              alt="Sirened Logo" 
-              className="h-8 w-8" 
-            />
+          <Link className="flex flex-row justify-center items-center" href="/">
+            <img
+              src={theme === "light" ? icon : iconWhite}
+              alt="Sirened Logo"
+              className="h-14 w-14"
+            />{" "}
+            <span className="text-xl">Sirened</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-2 relative">
