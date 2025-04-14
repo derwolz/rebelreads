@@ -5,6 +5,14 @@ import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   ChevronDown,
   ArrowRight,
   CheckCircle,
@@ -12,6 +20,8 @@ import {
   TrendingUp,
   Layers,
   Filter,
+  BookOpen,
+  PenTool,
 } from "lucide-react";
 import { GenreSelector } from "@/components/genre-selector";
 import {
@@ -138,29 +148,27 @@ const NewLandingPage = () => {
   const { setTheme } = useTheme();
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedGenres, setSelectedGenres] = useState<any[]>([]);
+  const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [isPublisher, setIsPublisher] = useState(false);
 
   // Set theme
   useEffect(() => {
     setTheme("dark");
   }, [setTheme]);
 
-  // Handle email sign up
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email to sign up for updates.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  // Submit the form after user selects their type
+  const submitEmailSignup = async () => {
     try {
       const response = await fetch("/api/signup-interest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, isAuthor: false }),
+        body: JSON.stringify({ 
+          email, 
+          isAuthorInterest: isAuthor,
+          isPublisher: isPublisher,
+          sessionId
+        }),
       });
 
       if (response.ok) {
@@ -169,6 +177,7 @@ const NewLandingPage = () => {
           description: "Thank you for signing up. We'll keep you updated!",
         });
         setEmail("");
+        setIsTypeDialogOpen(false);
       } else {
         throw new Error("Failed to sign up");
       }
@@ -179,6 +188,22 @@ const NewLandingPage = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Handle email sign up - open the dialog first
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email to sign up for updates.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Open dialog for user type selection
+    setIsTypeDialogOpen(true);
   };
 
   // Track session for analytics
