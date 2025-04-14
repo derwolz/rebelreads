@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" fill="none">
+  <!-- Background elements -->
+  <rect width="400" height="300" fill="#1a1a2e" opacity="0.1"/>
+  <rect x="50" y="70" width="300" height="160" rx="15" fill="#7b2cbf" opacity="0.1"/>
+  
+  <!-- Storefront design -->
+  <rect x="80" y="90" width="240" height="120" rx="8" fill="#9d4edd" opacity="0.25"/>
+  
+  <!-- Store roof -->
+  <path d="M60 90 L200 40 L340 90" fill="#c77dff" opacity="0.3"/>
+  
+  <!-- Door -->
+  <rect x="170" y="140" width="60" height="70" rx="4" fill="#e0aaff" opacity="0.6"/>
+  <circle cx="220" cy="175" r="4" fill="white" opacity="0.9"/>
+  
+  <!-- Windows -->
+  <rect x="100" y="110" width="50" height="40" rx="4" fill="#e0aaff" opacity="0.4"/>
+  <rect x="250" y="110" width="50" height="40" rx="4" fill="#e0aaff" opacity="0.4"/>
+  
+  <!-- Window details -->
+  <line x1="125" y1="110" x2="125" y2="150" stroke="white" stroke-width="1" opacity="0.5"/>
+  <line x1="100" y1="130" x2="150" y2="130" stroke="white" stroke-width="1" opacity="0.5"/>
+  
+  <line x1="275" y1="110" x2="275" y2="150" stroke="white" stroke-width="1" opacity="0.5"/>
+  <line x1="250" y1="130" x2="300" y2="130" stroke="white" stroke-width="1" opacity="0.5"/>
+  
+  <!-- Books displayed in windows -->
+  <rect x="110" y="115" width="10" height="15" fill="white" opacity="0.6"/>
+  <rect x="130" y="115" width="10" height="15" fill="white" opacity="0.6"/>
+  <rect x="110" y="135" width="10" height="10" fill="white" opacity="0.6"/>
+  <rect x="130" y="135" width="10" height="10" fill="white" opacity="0.6"/>
+  
+  <rect x="260" y="115" width="10" height="15" fill="white" opacity="0.6"/>
+  <rect x="280" y="115" width="10" height="15" fill="white" opacity="0.6"/>
+  <rect x="260" y="135" width="10" height="10" fill="white" opacity="0.6"/>
+  <rect x="280" y="135" width="10" height="10" fill="white" opacity="0.6"/>
+  
+  <!-- Store sign -->
+  <rect x="130" y="70" width="140" height="30" rx="4" fill="#5a189a" opacity="0.7"/>
+  <text x="200" y="92" font-family="Arial" font-size="16" text-anchor="middle" fill="white" opacity="0.9">AUTHOR STORE</text>
+  
+  <!-- Person (author) figure -->
+  <g transform="translate(320, 220)">
+    <circle cx="0" cy="0" r="15" fill="#9d4edd" opacity="0.8"/>
+    <rect x="-10" y="15" width="20" height="30" rx="6" fill="#9d4edd" opacity="0.8"/>
+  </g>
+  
+  <!-- Stars/sparkles -->
+  <circle cx="80" cy="60" r="2" fill="white" opacity="0.8"/>
+  <circle cx="320" cy="60" r="2" fill="white" opacity="0.8"/>
+  <circle cx="200" cy="25" r="3" fill="#e0aaff" opacity="0.8"/>
+  <circle cx="100" cy="220" r="2" fill="white" opacity="0.8"/>
+  <circle cx="300" cy="240" r="2" fill="white" opacity="0.8"/>
+  
+  <!-- Dollar sign symbols representing income -->
+  <text x="350" y="200" font-family="Arial" font-size="12" fill="#e0aaff" opacity="0.9">$</text>
+  <text x="340" y="190" font-family="Arial" font-size="14" fill="#e0aaff" opacity="0.9">$</text>
+  <text x="330" y="180" font-family="Arial" font-size="16" fill="#e0aaff" opacity="0.9">$</text>
+</svg>

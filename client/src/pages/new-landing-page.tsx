@@ -28,19 +28,18 @@ import {
 } from "recharts";
 
 // Import logo files for different themes
-import logo from "@/public/images/logo.svg";
-import logoWhite from "@/public/images/logowhite.svg";
-
+import icon from "@/public/images/icon.svg";
+import iconWhite from "@/public/images/iconwhite.svg";
 // Logo component with theme awareness
 const SirenedLogo = () => {
   const { theme } = useTheme();
 
   return (
     <div className="flex items-center">
-      <img 
-        src={theme === "light" ? logo : logoWhite} 
-        height="64px" 
-        width={"144px"}
+      <img
+        src={theme === "light" ? icon : iconWhite}
+        height="64px"
+        width={"64px"}
         alt="Sirened Logo"
       />
       <span className="text-xl font-bold text-foreground">Sirened</span>
@@ -123,13 +122,13 @@ const ValueProposition = ({
 
 // Sample data for analytics chart
 const analyticsData = [
-  { name: "Jan", impressions: 4000, referrals: 2400 },
-  { name: "Feb", impressions: 3000, referrals: 1398 },
-  { name: "Mar", impressions: 2000, referrals: 9800 },
-  { name: "Apr", impressions: 2780, referrals: 3908 },
-  { name: "May", impressions: 1890, referrals: 4800 },
-  { name: "Jun", impressions: 2390, referrals: 3800 },
-  { name: "Jul", impressions: 3490, referrals: 4300 },
+  { name: "Jan", impressions: 1200, referrals: 420 },
+  { name: "Feb", impressions: 1600, referrals: 398 },
+  { name: "Mar", impressions: 2100, referrals: 541 },
+  { name: "Apr", impressions: 2780, referrals: 708 },
+  { name: "May", impressions: 1890, referrals: 527 },
+  { name: "Jun", impressions: 2390, referrals: 812 },
+  { name: "Jul", impressions: 3490, referrals: 430 },
 ];
 
 const NewLandingPage = () => {
@@ -238,10 +237,11 @@ const NewLandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl mt-8 md:mt-24 font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
-             Find Gems<br></br> Get Discovered
+              Find Gems<br></br> Get Discovered
             </h1>
             <p className="text-xl md:text-2xl mb-16 md:mb-24 text-muted-foreground">
-              Bold, original, yours — A storytelling platform for authors and readers.
+              Bold, original, yours — A storytelling platform for authors and
+              readers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
@@ -255,7 +255,6 @@ const NewLandingPage = () => {
                 Learn more
               </Button>
             </div>
-            
           </div>
         </div>
 
@@ -288,7 +287,7 @@ const NewLandingPage = () => {
         </div>
       </section>
 
-      {/* Values Section */}
+      {/* Direct Connection Section */}
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
@@ -316,56 +315,34 @@ const NewLandingPage = () => {
                 </li>
               </ul>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20">
-              <div className="flex flex-col gap-4 h-full justify-center">
-                <div className="text-center">
-                  <div className="mb-4 inline-block p-4 rounded-full bg-primary/10">
-                    <svg
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-primary"
-                    >
-                      <path d="M18 6H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h13l4-3.5L18 6Z" />
-                      <path d="M12 13v8" />
-                      <path d="M12 3v3" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Direct Communication</h3>
-                  <p className="text-muted-foreground">No more barriers between you and your favorite authors</p>
-                </div>
-              </div>
+            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20 flex justify-center items-center">
+              <img 
+                src="/images/author-reader-connection.svg" 
+                alt="Author and reader connecting directly" 
+                className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
+              />
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20">
-              <div className="flex flex-col gap-4 h-full justify-center">
-                <div className="text-center">
-                  <div className="mb-4 inline-block p-4 rounded-full bg-primary/10">
-                    <svg
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-primary"
-                    >
-                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">Author-Owned Stores</h3>
-                  <p className="text-muted-foreground">Support creators directly without middlemen taking a cut</p>
-                </div>
-              </div>
+          <div className="my-24 relative overflow-hidden py-10 px-8 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-white/5 rounded-full blur-3xl"></div>
+            
+            <div className="text-center max-w-3xl mx-auto relative z-10">
+              <h3 className="text-2xl md:text-3xl font-bold mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-foreground">
+                "Storytelling is a conversation between author and reader. We're just removing the noise in between."
+              </h3>
+              <p className="text-lg text-primary/80 italic">— Sirened Founder</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center mt-20">
+            <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20 flex justify-center items-center">
+              <img 
+                src="/images/author-store.svg" 
+                alt="Author-owned bookstore" 
+                className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
+              />
             </div>
             <div className="order-1 md:order-2">
               <h3 className="text-2xl font-bold mb-4 text-primary">Own Your Author Store</h3>
@@ -386,6 +363,17 @@ const NewLandingPage = () => {
                   <span>Build meaningful relationships with your audience</span>
                 </li>
               </ul>
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/20">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                      <path d="M12 2v20"/>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                  </div>
+                  <p className="font-medium">Take control of your writing career and build sustainable income</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -557,12 +545,7 @@ const NewLandingPage = () => {
                 helperText="Select genres, themes, and tropes that interest you"
                 className="pb-6"
               />
-              {/* Floating Save Button */}
-              <div className="absolute bottom-4 right-4">
-                <Button className="shadow-lg bg-primary hover:bg-primary/90">
-                  Save to Homepage
-                </Button>
-              </div>
+ 
             </div>
           </div>
         </div>
@@ -625,7 +608,7 @@ const NewLandingPage = () => {
                     <div className="text-sm text-muted-foreground">
                       Total Referrals
                     </div>
-                    <div className="text-2xl font-bold">26,606</div>
+                    <div className="text-2xl font-bold">3836</div>
                   </div>
                 </div>
               </div>
@@ -685,31 +668,7 @@ const NewLandingPage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
-            What Our Community Says
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Testimonial
-              quote="Sirened gave me the tools I needed to reach readers directly. My sales have increased 30% since I joined."
-              author="Emma R."
-              role="Fantasy Author"
-            />
-            <Testimonial
-              quote="I've discovered so many amazing indie authors that I would have never found on traditional platforms."
-              author="Michael T."
-              role="Avid Reader"
-            />
-            <Testimonial
-              quote="The analytics alone are worth it. I finally understand what resonates with my audience."
-              author="Sarah J."
-              role="Science Fiction Author"
-            />
-          </div>
-        </div>
-      </section>
+     
 
       {/* Brand Positioning */}
       <section className="py-20 md:py-32 bg-black/20 backdrop-blur-sm">

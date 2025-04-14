@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300" fill="none">
+  <!-- Background elements -->
+  <rect width="400" height="300" fill="#1a1a2e" opacity="0.1"/>
+  <circle cx="200" cy="150" r="120" fill="#5a189a" opacity="0.1"/>
+  <circle cx="200" cy="150" r="80" fill="#7b2cbf" opacity="0.15"/>
+  
+  <!-- Two stylized figures representing author and reader -->
+  <g transform="translate(120, 100)">
+    <!-- Author figure -->
+    <circle cx="0" cy="0" r="25" fill="#9d4edd" opacity="0.8"/>
+    <rect x="-15" y="30" width="30" height="50" rx="10" fill="#9d4edd" opacity="0.8"/>
+    
+    <!-- Book/writing symbol -->
+    <rect x="-10" y="-5" width="20" height="15" rx="2" fill="white" opacity="0.9"/>
+    <line x1="-6" y1="0" x2="6" y2="0" stroke="white" stroke-width="1" opacity="0.9"/>
+    <line x1="-6" y1="3" x2="6" y2="3" stroke="white" stroke-width="1" opacity="0.9"/>
+    <line x1="-6" y1="6" x2="3" y2="6" stroke="white" stroke-width="1" opacity="0.9"/>
+  </g>
+  
+  <g transform="translate(280, 100)">
+    <!-- Reader figure -->
+    <circle cx="0" cy="0" r="25" fill="#c77dff" opacity="0.8"/>
+    <rect x="-15" y="30" width="30" height="50" rx="10" fill="#c77dff" opacity="0.8"/>
+    
+    <!-- Reading symbol -->
+    <rect x="-10" y="-10" width="20" height="25" rx="2" fill="white" opacity="0.9"/>
+    <line x1="-6" y1="-5" x2="6" y2="-5" stroke="#7b2cbf" stroke-width="1" opacity="0.9"/>
+    <line x1="-6" y1="-2" x2="6" y2="-2" stroke="#7b2cbf" stroke-width="1" opacity="0.9"/>
+    <line x1="-6" y1="1" x2="6" y2="1" stroke="#7b2cbf" stroke-width="1" opacity="0.9"/>
+    <line x1="-6" y1="4" x2="3" y2="4" stroke="#7b2cbf" stroke-width="1" opacity="0.9"/>
+  </g>
+  
+  <!-- Connection line between author and reader -->
+  <path d="M160 100 C180 70, 220 70, 240 100" stroke="#e0aaff" stroke-width="3" stroke-dasharray="5,5" opacity="0.8"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="200" cy="70" r="10" fill="#e0aaff" opacity="0.6"/>
+  <circle cx="180" cy="200" r="8" fill="#e0aaff" opacity="0.4"/>
+  <circle cx="220" cy="200" r="8" fill="#e0aaff" opacity="0.4"/>
+  
+  <!-- Small decorative stars/sparkles -->
+  <circle cx="140" cy="60" r="2" fill="white" opacity="0.8"/>
+  <circle cx="260" cy="60" r="2" fill="white" opacity="0.8"/>
+  <circle cx="140" cy="240" r="2" fill="white" opacity="0.8"/>
+  <circle cx="260" cy="240" r="2" fill="white" opacity="0.8"/>
+</svg>
