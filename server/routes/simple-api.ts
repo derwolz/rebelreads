@@ -25,8 +25,8 @@ router.post("/signup-interest", async (req, res) => {
       isAuthorInterest: isAuthorInterest === true
     };
     
-    // @ts-ignore - Add the is_author field for legacy compatibility
-    signupRecord.is_author = isAuthorInterest === true;
+    // We don't need to manually set is_author anymore
+    // It's handled by our storage.ts update
     
     const signupInterest = await dbStorage.createSignupInterest(signupRecord);
     
@@ -53,7 +53,7 @@ router.post("/signup-interest", async (req, res) => {
       message: "Email registered successfully",
       data: { 
         email: signupInterest.email,
-        timestamp: signupInterest.created_at
+        timestamp: signupInterest.createdAt
       } 
     });
   } catch (error) {
