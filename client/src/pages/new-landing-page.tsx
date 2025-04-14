@@ -330,25 +330,15 @@ const NewLandingPage = () => {
             </p>
             <div className="max-w-md mx-auto w-full mb-8">
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const email = (e.target as HTMLFormElement).email.value;
-                  if (email) {
-                    // You can add API call here to save the email
-                    toast({
-                      title: "Thank you for your interest!",
-                      description:
-                        "We'll notify you when beta access is available.",
-                    });
-                    (e.target as HTMLFormElement).reset();
-                  }
-                }}
+                onSubmit={handleSignup}
                 className="flex flex-row justify-center items-center"
               >
                 <div className="bg-[#FFFFFF]/10 p-1 rounded-l-lg border border-[#EFA738]/30">
                   <Input
                     name="email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="Enter your email"
                     className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
@@ -625,16 +615,16 @@ const NewLandingPage = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M17 6.1H3" />
-                  <path d="M21 12.1H3" />
-                  <path d="M15.1 18H3" />
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                  <rect width="4" height="12" x="2" y="9" />
+                  <circle cx="4" cy="4" r="2" />
                 </svg>
               }
             />
 
             <FeatureBox
-              title="Fair Marketplace"
-              description="A platform where quality matters more than marketing budgets."
+              title="Monetization Freedom"
+              description="Monetize your work your way without platform commissions or restrictions."
               icon={
                 <svg
                   width="40"
@@ -656,167 +646,202 @@ const NewLandingPage = () => {
         </div>
       </section>
 
-      {/* Taxonomy Selector Section */}
-      <section className="py-20 md:py-32 bg-gradient-to-br from-background to-black/20">
+      {/* Data-Driven Section */}
+      <section className="py-20 md:py-32">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Your tastes are unique,{" "}
-                <span className="text-primary">so tailor your experience</span>
-              </h2>
-              <p className="text-xl mb-8 text-muted-foreground">
-                Customize your searches based on content, not on clicks. Our
-                taxonomy system lets you find exactly what you're looking for.
+          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
+            Data-Driven Insights
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-16 items-center mb-16">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
+              <h3 className="text-2xl font-bold mb-4 text-primary">
+                Reader Analytics
+              </h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Understand how readers interact with your content and make informed decisions:
               </p>
+
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart
+                  data={analyticsData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
+                    </linearGradient>
+                    <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" stroke="#888888" />
+                  <YAxis stroke="#888888" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1a1a1a",
+                      borderColor: "#333",
+                      color: "#fff",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="impressions"
+                    stroke="#EFA738"
+                    fillOpacity={1}
+                    fill="url(#colorImpressions)"
+                    name="Content Views"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="referrals"
+                    stroke="#82ca9d"
+                    fillOpacity={1}
+                    fill="url(#colorReferrals)"
+                    name="Reader Referrals"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
 
-            <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20 relative">
-              <h3 className="text-xl font-bold mb-4">
-                Find Your Perfect Match
+            <div>
+              <h3 className="text-2xl font-bold mb-4 text-primary">
+                Audience Intelligence
               </h3>
-              {/* Use the actual GenreSelector component */}
-              <GenreSelector
-                mode="taxonomy"
-                selected={selectedGenres}
-                onSelectionChange={setSelectedGenres}
-                restrictLimits={false}
-                label=""
-                helperText="Select genres, themes, and tropes that interest you"
-                className="pb-6"
-              />
+              <p className="text-lg text-muted-foreground mb-6">
+                Make data-informed decisions with comprehensive analytics that are easy to understand.
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start">
+                  <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Engagement Insights</h4>
+                    <p className="text-muted-foreground">
+                      See which chapters keep readers engaged and where they drop off.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                    <Filter className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Demographic Filters</h4>
+                    <p className="text-muted-foreground">
+                      Understand your audience with detailed demographic and interest data.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                    <Layers className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Conversion Tracking</h4>
+                    <p className="text-muted-foreground">
+                      Follow the journey from discovery to purchase with detailed conversion analytics.
+                    </p>
+                  </div>
+                </li>
+              </ul>
+              <div className="mt-6">
+                <Button className="bg-primary/90 hover:bg-primary">
+                  <span>Learn More</span>
+                  <ArrowRight size={16} className="ml-1" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Analytics Chart Section */}
-      <section className="py-20 md:py-32 bg-black/10">
+      {/* Testimonials Section */}
+      <section className="py-20 md:py-32 bg-gradient-to-br from-black/20 to-transparent">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="order-2 md:order-1">
-              <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart
-                    data={analyticsData}
-                    margin={{
-                      top: 20,
-                      right: 20,
-                      left: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="rgba(255,255,255,0.1)"
-                    />
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-                    <YAxis stroke="rgba(255,255,255,0.5)" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "rgba(0,0,0,0.8)",
-                        borderColor: "rgba(160,108,213,0.5)",
-                        color: "white",
-                      }}
-                    />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="impressions"
-                      stackId="1"
-                      stroke="rgba(160,108,213,1)"
-                      fill="rgba(160,108,213,0.5)"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="referrals"
-                      stackId="1"
-                      stroke="rgba(100,61,167,1)"
-                      fill="rgba(100,61,167,0.5)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-                <div className="mt-4 grid grid-cols-2 gap-4">
-                  <div className="bg-black/20 p-3 rounded">
-                    <div className="text-sm text-muted-foreground">
-                      Total Impressions
-                    </div>
-                    <div className="text-2xl font-bold">19,550</div>
-                  </div>
-                  <div className="bg-black/20 p-3 rounded">
-                    <div className="text-sm text-muted-foreground">
-                      Total Referrals
-                    </div>
-                    <div className="text-2xl font-bold">3836</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
+            What Our Community Says
+          </h2>
 
-            <div className="order-1 md:order-2">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Level the playing field.
-              </h2>
-              <p className="text-xl mb-8 text-muted-foreground">
-                Use advanced analytics to rival industry giants. Track reader
-                engagement, monitor performance trends, and optimize your
-                marketing strategy.
-              </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Testimonial
+              quote="Sirened gave me direct access to readers who love my specific genre. I can actually see what they like about my books and respond to their feedback."
+              author="Jamie Chen"
+              role="Fantasy Author"
+            />
 
-              <div className="bg-black/20 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart2 className="text-primary" />
-                  <h3 className="text-xl font-semibold">Real-time Insights</h3>
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  Monitor reader behavior, track marketing campaign performance,
-                  and gain valuable insights about your audience. Make
-                  data-driven decisions to grow your readership.
-                </p>
-                <div className="flex items-center gap-2 text-primary">
-                  <TrendingUp size={16} />
-                  <span className="text-sm">
-                    +22.7% increase in referrals month-over-month
-                  </span>
-                </div>
-              </div>
-            </div>
+            <Testimonial
+              quote="As a reader, I've discovered amazing books that I never would have found through traditional channels. The transparency about why a book is recommended is refreshing."
+              author="Michael Rodriguez"
+              role="Avid Reader"
+            />
+
+            <Testimonial
+              quote="The analytics tools have completely transformed how I write and market my books. I understand my readers on a deeper level now."
+              author="Sarah Johnson"
+              role="Science Fiction Author"
+            />
           </div>
+        </div>
+      </section>
+
+      {/* Value Proposition Section */}
+      <section className="py-20 md:py-32">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
+            How Sirened Transforms Publishing
+          </h2>
+
+          <ValueProposition
+            title="Fair Compensation"
+            description="The current publishing model takes significant royalties from authors while providing limited value."
+            forAuthors="Keep 100% of your sales with no platform fees. Set your own prices and offer any format you want."
+            forReaders="Support authors directly, knowing that your purchase directly benefits their work rather than intermediaries."
+          />
+
+          <ValueProposition
+            title="Content Discovery"
+            description="Traditional discovery is based on marketing budgets rather than quality or reader preferences."
+            forAuthors="Get discovered based on the quality of your work, not your marketing budget. Reach the exact readers who will love your books."
+            forReaders="Discover books tailored to your unique taste, not what's being pushed by publishers or algorithms."
+          />
+
+          <ValueProposition
+            title="Community Connection"
+            description="The traditional publishing model creates distance between authors and readers."
+            forAuthors="Build direct relationships with your readers. Get immediate feedback and engage in meaningful discussions."
+            forReaders="Connect directly with authors you love. Share feedback and be part of the creative journey."
+          />
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 md:py-32 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-background/90 -z-10"></div>
+      <section className="py-20 md:py-32 bg-gradient-to-br from-primary/10 to-transparent">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Reclaim your literary future
+            <h2 className="text-3xl md:text-4xl font-bold mb-8">
+              Join the Storytelling Revolution
             </h2>
-            <p className="text-xl mb-8">
-              You'll have every tool to make your stories a success.
+            <p className="text-xl text-muted-foreground mb-12">
+              Whether you're an author looking to connect with readers or a
+              reader seeking bold new voices, Sirened is for you.
             </p>
+
             <div className="max-w-md mx-auto w-full mb-8">
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const email = (e.target as HTMLFormElement).email.value;
-                  if (email) {
-                    // You can add API call here to save the email
-                    toast({
-                      title: "Thank you for your interest!",
-                      description:
-                        "We'll notify you when beta access is available.",
-                    });
-                    (e.target as HTMLFormElement).reset();
-                  }
-                }}
+                onSubmit={handleSignup}
                 className="flex flex-row justify-center items-center"
               >
                 <div className="bg-[#FFFFFF]/10 p-1 rounded-l-lg border border-[#EFA738]/30">
                   <Input
                     name="email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="Enter your email"
                     className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
@@ -830,105 +855,193 @@ const NewLandingPage = () => {
                 </Button>
               </form>
             </div>
+
+            <div className="text-sm text-muted-foreground">
+              By signing up, you agree to our{" "}
+              <a href="#" className="text-primary underline">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-primary underline">
+                Privacy Policy
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black/40 py-12">
+      <footer className="py-16 bg-black/40 backdrop-blur-md">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <SirenedLogo />
-              <p className="mt-4 text-muted-foreground">
-                A platform for authors and readers alike, creating a fair
-                marketplace for literary works.
-              </p>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-12">
+            <SirenedLogo />
+            <div className="mt-6 md:mt-0 flex gap-4">
+              <Button variant="outline" size="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                </svg>
+              </Button>
+              <Button variant="outline" size="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                </svg>
+              </Button>
+              <Button variant="outline" size="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+                </svg>
+              </Button>
             </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
-              <h4 className="font-bold mb-4">For Authors</h4>
-              <ul className="space-y-2 text-muted-foreground">
+              <h3 className="font-bold mb-4">For Readers</h3>
+              <ul className="space-y-2">
                 <li>
-                  <a href="#" className="hover:text-primary">
-                    Analytics
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary">
-                    Marketing Tools
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary">
-                    Direct Sales
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary">
-                    Author Dashboard
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold mb-4">For Readers</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>
-                  <a href="#" className="hover:text-primary">
+                  <a href="#" className="text-muted-foreground hover:text-primary">
                     Discover Books
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary">
-                    Connect with Authors
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Reading Preferences
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary">
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Beta Access
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
                     Reading Lists
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-primary">
-                    Book Recommendations
                   </a>
                 </li>
               </ul>
             </div>
-
             <div>
-              <h4 className="font-bold mb-4">Company</h4>
-              <ul className="space-y-2 text-muted-foreground">
+              <h3 className="font-bold mb-4">For Authors</h3>
+              <ul className="space-y-2">
                 <li>
-                  <a href="#" className="hover:text-primary">
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Author Dashboard
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Analytics Tools
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Book Publishing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Marketing Resources
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4">For Publishers</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Publisher Portal
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Catalog Management
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Author Relationships
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Integration APIs
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-bold mb-4">Company</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-primary">
                     About Us
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary">
-                    Contact
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Blog
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary">
-                    Privacy Policy
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Careers
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-primary">
-                    Terms of Service
+                  <a href="#" className="text-muted-foreground hover:text-primary">
+                    Contact Us
                   </a>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-muted mt-12 pt-6 text-center text-muted-foreground">
-            <p>
-              &copy; {new Date().getFullYear()} Sirened. All rights reserved.
-            </p>
+          <div className="border-t border-white/10 pt-8 mt-8 text-center text-muted-foreground text-sm">
+            <p>&copy; {new Date().getFullYear()} Sirened Publishing. All rights reserved.</p>
+            <div className="mt-2 flex justify-center gap-4">
+              <a href="#" className="hover:text-primary">
+                Terms of Service
+              </a>
+              <a href="#" className="hover:text-primary">
+                Privacy Policy
+              </a>
+              <a href="#" className="hover:text-primary">
+                Cookie Policy
+              </a>
+            </div>
           </div>
         </div>
       </footer>
