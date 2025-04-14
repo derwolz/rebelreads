@@ -496,7 +496,7 @@ const NewLandingPage = () => {
               </p>
             </div>
 
-            <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
+            <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20 relative">
               <h3 className="text-xl font-bold mb-4">
                 Find Your Perfect Match
               </h3>
@@ -510,6 +510,12 @@ const NewLandingPage = () => {
                 helperText="Select genres, themes, and tropes that interest you"
                 className="pb-6"
               />
+              {/* Floating Save Button */}
+              <div className="absolute bottom-4 right-4">
+                <Button className="shadow-lg bg-primary hover:bg-primary/90">
+                  Save to Homepage
+                </Button>
+              </div>
             </div>
           </div>
         </div>
