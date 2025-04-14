@@ -1,5 +1,6 @@
 import { Router, json } from "express";
 import { dbStorage } from "../storage";
+import { db } from "../db";
 
 const router = Router();
 
@@ -16,21 +17,19 @@ router.post("/signup-interest", async (req, res) => {
       return res.status(400).json({ error: "Email and session ID are required" });
     }
 
-    // Create signup interest record with both is_author and is_author_interest
-    // The special case here is we need to handle both columns due to a legacy schema
-    const signupData = {
+    // Use the standard dbStorage method, but also set the is_author field
+    const signupRecord = {
       email,
-      isAuthorInterest: isAuthorInterest === true,
-      isPublisher: isPublisher === true,
       sessionId,
+      isPublisher: isPublisher === true,
+      isAuthorInterest: isAuthorInterest === true
     };
     
-    // Add the is_author field directly to the data
-    // @ts-ignore - Handle legacy column
-    signupData.is_author = isAuthorInterest === true;
+    // @ts-ignore - Add the is_author field for legacy compatibility
+    signupRecord.is_author = isAuthorInterest === true;
     
-    const signupInterest = await dbStorage.createSignupInterest(signupData);
-
+    const signupInterest = await dbStorage.createSignupInterest(signupRecord);
+    
     // Record this as an event in the landing session if it exists
     try {
       await dbStorage.recordLandingEvent({
@@ -54,7 +53,7 @@ router.post("/signup-interest", async (req, res) => {
       message: "Email registered successfully",
       data: { 
         email: signupInterest.email,
-        timestamp: signupInterest.createdAt 
+        timestamp: signupInterest.created_at
       } 
     });
   } catch (error) {
