@@ -304,8 +304,11 @@ const NewLandingPage = () => {
           <SirenedLogo />
           <div className="flex items-center gap-4">
             <Button 
-              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F]  font-bold" 
-              onClick={() => setLocation("/auth")}
+              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] font-bold" 
+              onClick={() => {
+                setEmail("");
+                setIsTypeDialogOpen(true);
+              }}
             >
               Get Beta Access
             </Button>
