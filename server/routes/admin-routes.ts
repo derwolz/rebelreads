@@ -14,7 +14,8 @@ import {
   genreTaxonomies,
   authors,
   sellers,
-  publisherSellers
+  publisherSellers,
+  signup_interests
 } from "@shared/schema";
 import { subDays, parse } from "date-fns";
 import multer from "multer";
@@ -560,6 +561,22 @@ router.get("/users/search", adminAuthMiddleware, async (req: Request, res: Respo
   } catch (error) {
     console.error("Error searching users:", error);
     res.status(500).json({ error: "Failed to search users" });
+  }
+});
+
+// Get all email signup interests for admin dashboard
+router.get("/signup-interests", adminAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    // Get all signup interests
+    const signupInterests = await db
+      .select()
+      .from(signup_interests)
+      .orderBy(desc(signup_interests.createdAt));
+    
+    res.json(signupInterests);
+  } catch (error) {
+    console.error("Error getting signup interests:", error);
+    res.status(500).json({ error: "Failed to retrieve signup interests" });
   }
 });
 

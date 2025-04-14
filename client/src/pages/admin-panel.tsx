@@ -2,13 +2,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare, UserCog } from "lucide-react";
-import { Redirect } from "wouter";
+import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare, UserCog, Mail } from "lucide-react";
+import { Link, Redirect } from "wouter";
 import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
 import { AdminBetaKeysManager } from "@/components/admin-beta-keys-manager";
 import { AdminGenresManager } from "@/components/admin-genres-manager";
 import { AdminFeedbackManager } from "@/components/admin-feedback-manager";
 import { AdminSellersManager } from "@/components/admin-sellers-manager";
+import { Button } from "@/components/ui/button";
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -118,8 +119,23 @@ export default function AdminPanel() {
             
             <TabsContent value="settings" className="py-4">
               <h3 className="text-lg font-semibold mb-4">Site Settings</h3>
-              <div className="text-center text-muted-foreground py-10">
-                Site settings functionality coming soon.
+              <div className="text-center py-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card className="p-4">
+                    <div className="flex flex-col items-center space-y-4">
+                      <Mail className="h-10 w-10 text-primary" />
+                      <h4 className="text-lg font-medium">Email Collection</h4>
+                      <p className="text-sm text-muted-foreground text-center">
+                        View and export emails collected from landing pages
+                      </p>
+                      <Link href="/admin/email-collection">
+                        <Button className="w-full">
+                          Manage Email Collection
+                        </Button>
+                      </Link>
+                    </div>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

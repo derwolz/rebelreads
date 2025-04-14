@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,6 +7,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { BetaProvider } from "@/hooks/use-beta";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { OnboardingProvider } from "@/hooks/use-onboarding";
+import EmailCollectionPage from "@/pages/admin/email-collection";
 import { MainNav } from "@/components/main-nav";
 import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
@@ -119,6 +121,7 @@ function Router() {
         <ProtectedRoute path="/admin/users" component={AdminPanel} />
         <ProtectedRoute path="/admin/settings" component={AdminPanel} />
         <ProtectedRoute path="/admin/reports" component={AdminPanel} />
+        <ProtectedRoute path="/admin/email-collection" component={EmailCollectionPage} />
         
         {/* Sales routes */}
         <ProtectedRoute path="/sales" component={SalesPanel} />
