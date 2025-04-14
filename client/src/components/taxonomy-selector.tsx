@@ -28,6 +28,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Search, X } from "lucide-react";
 import { GenreTaxonomy } from "@shared/schema";
 import { SortableGenre } from "@/components/sortable-genre";
@@ -368,37 +374,34 @@ export function TaxonomySelector({
                     Select up to 2 genres (required)
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((genre) => (
-                        <div
-                          key={genre.id}
-                          className="flex items-center justify-between"
-                        >
-                          <Label
-                            htmlFor={`genre-${genre.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`genre-${genre.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) =>
-                                  t.taxonomyId === genre.id &&
-                                  t.type === "genre",
-                              )}
-                              disabled={isMaxReached("genre")}
-                              onCheckedChange={() => addTaxonomy(genre)}
-                            />
-                            <span>{genre.name}</span>
-                          </Label>
-                          {genre.description && (
-                            <span className="text-xs text-muted-foreground">
-                              {genre.description}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      <TooltipProvider>
+                        {filteredTaxonomies().map((genre) => (
+                          <Tooltip key={genre.id}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="relative m-1 text-sm"
+                                disabled={isMaxReached("genre")}
+                                onClick={() => addTaxonomy(genre)}
+                              >
+                                {genre.name}
+                              </Button>
+                            </TooltipTrigger>
+                            {genre.description && (
+                              <TooltipContent 
+                                side="top" 
+                                className="max-w-xs z-50"
+                              >
+                                <p>{genre.description}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        ))}
+                      </TooltipProvider>
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center w-full py-4 text-muted-foreground">
                           No additional genres found
                         </div>
                       )}
@@ -411,37 +414,34 @@ export function TaxonomySelector({
                     Select up to 5 subgenres (optional)
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((subgenre) => (
-                        <div
-                          key={subgenre.id}
-                          className="flex items-center justify-between"
-                        >
-                          <Label
-                            htmlFor={`subgenre-${subgenre.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`subgenre-${subgenre.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) =>
-                                  t.taxonomyId === subgenre.id &&
-                                  t.type === "subgenre",
-                              )}
-                              disabled={isMaxReached("subgenre")}
-                              onCheckedChange={() => addTaxonomy(subgenre)}
-                            />
-                            <span>{subgenre.name}</span>
-                          </Label>
-                          {subgenre.description && (
-                            <span className="text-xs text-muted-foreground">
-                              {subgenre.description}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      <TooltipProvider>
+                        {filteredTaxonomies().map((subgenre) => (
+                          <Tooltip key={subgenre.id}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="relative m-1 text-sm"
+                                disabled={isMaxReached("subgenre")}
+                                onClick={() => addTaxonomy(subgenre)}
+                              >
+                                {subgenre.name}
+                              </Button>
+                            </TooltipTrigger>
+                            {subgenre.description && (
+                              <TooltipContent 
+                                side="top" 
+                                className="max-w-xs z-50"
+                              >
+                                <p>{subgenre.description}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        ))}
+                      </TooltipProvider>
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center w-full py-4 text-muted-foreground">
                           No additional subgenres found
                         </div>
                       )}
@@ -454,37 +454,34 @@ export function TaxonomySelector({
                     Select up to 6 themes (at least 1 required)
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((theme) => (
-                        <div
-                          key={theme.id}
-                          className="flex items-center justify-between"
-                        >
-                          <Label
-                            htmlFor={`theme-${theme.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`theme-${theme.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) =>
-                                  t.taxonomyId === theme.id &&
-                                  t.type === "theme",
-                              )}
-                              disabled={isMaxReached("theme")}
-                              onCheckedChange={() => addTaxonomy(theme)}
-                            />
-                            <span>{theme.name}</span>
-                          </Label>
-                          {theme.description && (
-                            <span className="text-xs text-muted-foreground">
-                              {theme.description}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      <TooltipProvider>
+                        {filteredTaxonomies().map((theme) => (
+                          <Tooltip key={theme.id}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="relative m-1 text-sm"
+                                disabled={isMaxReached("theme")}
+                                onClick={() => addTaxonomy(theme)}
+                              >
+                                {theme.name}
+                              </Button>
+                            </TooltipTrigger>
+                            {theme.description && (
+                              <TooltipContent 
+                                side="top" 
+                                className="max-w-xs z-50"
+                              >
+                                <p>{theme.description}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        ))}
+                      </TooltipProvider>
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center w-full py-4 text-muted-foreground">
                           No additional themes found
                         </div>
                       )}
@@ -497,37 +494,34 @@ export function TaxonomySelector({
                     Select up to 7 tropes (at least 1 required)
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
-                    <div className="space-y-2">
-                      {filteredTaxonomies().map((trope) => (
-                        <div
-                          key={trope.id}
-                          className="flex items-center justify-between"
-                        >
-                          <Label
-                            htmlFor={`trope-${trope.id}`}
-                            className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-muted rounded"
-                          >
-                            <Checkbox
-                              id={`trope-${trope.id}`}
-                              checked={selectedTaxonomies.some(
-                                (t) =>
-                                  t.taxonomyId === trope.id &&
-                                  t.type === "trope",
-                              )}
-                              disabled={isMaxReached("trope")}
-                              onCheckedChange={() => addTaxonomy(trope)}
-                            />
-                            <span>{trope.name}</span>
-                          </Label>
-                          {trope.description && (
-                            <span className="text-xs text-muted-foreground">
-                              {trope.description}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      <TooltipProvider>
+                        {filteredTaxonomies().map((trope) => (
+                          <Tooltip key={trope.id}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="relative m-1 text-sm"
+                                disabled={isMaxReached("trope")}
+                                onClick={() => addTaxonomy(trope)}
+                              >
+                                {trope.name}
+                              </Button>
+                            </TooltipTrigger>
+                            {trope.description && (
+                              <TooltipContent 
+                                side="top" 
+                                className="max-w-xs z-50"
+                              >
+                                <p>{trope.description}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        ))}
+                      </TooltipProvider>
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center w-full py-4 text-muted-foreground">
                           No additional tropes found
                         </div>
                       )}
