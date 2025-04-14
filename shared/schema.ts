@@ -793,6 +793,8 @@ export const signup_interests = pgTable("signup_interests", {
   email: text("email").notNull(),
   isPublisher: boolean("is_publisher").default(false),
   isAuthorInterest: boolean("is_author_interest").default(false),
+  // Legacy column that needs to be kept for backward compatibility
+  isAuthor: boolean("is_author").default(false),
   sessionId: text("session_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

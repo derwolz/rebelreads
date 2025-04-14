@@ -85,18 +85,11 @@ export class LandingPageStorage implements ILandingPageStorage {
   }
 
   async createSignupInterest(data: InsertSignupInterest): Promise<SignupInterest> {
-    // Use standard insertion with drizzle but manually add is_author with the same value
-    const insertData = {
-      email: data.email,
-      sessionId: data.sessionId,
-      isPublisher: data.isPublisher,
-      isAuthorInterest: data.isAuthorInterest,
-      // TypeScript doesn't know about is_author since it's not in our schema
-      is_author: data.isAuthorInterest 
-    };
-
-    // @ts-ignore - Handle is_author (legacy column)
-    const [interest] = await db.insert(signup_interests).values(insertData).returning();
+    // Now that we've properly defined isAuthor in the schema, we can use drizzle's standard insert
+    const [interest] = await db
+      .insert(signup_interests)
+      .values(data)
+      .returning();
     return interest;
   }
 

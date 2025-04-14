@@ -22,11 +22,10 @@ router.post("/signup-interest", async (req, res) => {
       email,
       sessionId,
       isPublisher: isPublisher === true,
-      isAuthorInterest: isAuthorInterest === true
+      isAuthorInterest: isAuthorInterest === true,
+      // Set is_author to the same value to ensure consistency
+      isAuthor: isAuthorInterest === true
     };
-    
-    // We don't need to manually set is_author anymore
-    // It's handled by our storage.ts update
     
     const signupInterest = await dbStorage.createSignupInterest(signupRecord);
     
