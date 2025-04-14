@@ -684,32 +684,22 @@ function TaxonomyGenreSelector({
                       : "Select as many genres as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
+                    <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((genre) => (
-                        <div key={genre.id} className="flex items-start space-x-2 p-2 hover:bg-muted rounded">
-                          <div className="w-1/3 flex items-start">
-                            <Label
-                              htmlFor={`genre-${genre.id}`}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <Checkbox
-                                id={`genre-${genre.id}`}
-                                checked={selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === genre.id && t.type === "genre"
-                                )}
-                                disabled={isMaxReached("genre")}
-                                onCheckedChange={() => addTaxonomy(genre)}
-                              />
-                              <span className="font-medium">{genre.name}</span>
-                            </Label>
-                          </div>
-                          {genre.description && (
-                            <div className="w-2/3 text-sm text-muted-foreground">{genre.description}</div>
-                          )}
-                        </div>
+                        <Button
+                          key={genre.id}
+                          variant="outline"
+                          size="sm"
+                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          onClick={() => addTaxonomy(genre)}
+                          disabled={isMaxReached("genre")}
+                          title={genre.description || genre.name}
+                        >
+                          {genre.name}
+                        </Button>
                       ))}
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center py-4 text-muted-foreground w-full">
                           No additional genres found
                         </div>
                       )}
@@ -724,32 +714,22 @@ function TaxonomyGenreSelector({
                       : "Select as many subgenres as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
+                    <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((subgenre) => (
-                        <div key={subgenre.id} className="flex items-start space-x-2 p-2 hover:bg-muted rounded">
-                          <div className="w-1/3 flex items-start">
-                            <Label
-                              htmlFor={`subgenre-${subgenre.id}`}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <Checkbox
-                                id={`subgenre-${subgenre.id}`}
-                                checked={selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === subgenre.id && t.type === "subgenre"
-                                )}
-                                disabled={isMaxReached("subgenre")}
-                                onCheckedChange={() => addTaxonomy(subgenre)}
-                              />
-                              <span className="font-medium">{subgenre.name}</span>
-                            </Label>
-                          </div>
-                          {subgenre.description && (
-                            <div className="w-2/3 text-sm text-muted-foreground">{subgenre.description}</div>
-                          )}
-                        </div>
+                        <Button
+                          key={subgenre.id}
+                          variant="outline"
+                          size="sm"
+                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          onClick={() => addTaxonomy(subgenre)}
+                          disabled={isMaxReached("subgenre")}
+                          title={subgenre.description || subgenre.name}
+                        >
+                          {subgenre.name}
+                        </Button>
                       ))}
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center py-4 text-muted-foreground w-full">
                           No additional subgenres found
                         </div>
                       )}
@@ -764,32 +744,22 @@ function TaxonomyGenreSelector({
                       : "Select as many themes as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
+                    <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((theme) => (
-                        <div key={theme.id} className="flex items-start space-x-2 p-2 hover:bg-muted rounded">
-                          <div className="w-1/3 flex items-start">
-                            <Label
-                              htmlFor={`theme-${theme.id}`}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <Checkbox
-                                id={`theme-${theme.id}`}
-                                checked={selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === theme.id && t.type === "theme"
-                                )}
-                                disabled={isMaxReached("theme")}
-                                onCheckedChange={() => addTaxonomy(theme)}
-                              />
-                              <span className="font-medium">{theme.name}</span>
-                            </Label>
-                          </div>
-                          {theme.description && (
-                            <div className="w-2/3 text-sm text-muted-foreground">{theme.description}</div>
-                          )}
-                        </div>
+                        <Button
+                          key={theme.id}
+                          variant="outline"
+                          size="sm"
+                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          onClick={() => addTaxonomy(theme)}
+                          disabled={isMaxReached("theme")}
+                          title={theme.description || theme.name}
+                        >
+                          {theme.name}
+                        </Button>
                       ))}
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center py-4 text-muted-foreground w-full">
                           No additional themes found
                         </div>
                       )}
@@ -804,32 +774,22 @@ function TaxonomyGenreSelector({
                       : "Select as many tropes as you want"}
                   </div>
                   <ScrollArea className="h-52 border rounded-md p-2">
-                    <div className="space-y-2">
+                    <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((trope) => (
-                        <div key={trope.id} className="flex items-start space-x-2 p-2 hover:bg-muted rounded">
-                          <div className="w-1/3 flex items-start">
-                            <Label
-                              htmlFor={`trope-${trope.id}`}
-                              className="flex items-center space-x-2 cursor-pointer"
-                            >
-                              <Checkbox
-                                id={`trope-${trope.id}`}
-                                checked={selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === trope.id && t.type === "trope"
-                                )}
-                                disabled={isMaxReached("trope")}
-                                onCheckedChange={() => addTaxonomy(trope)}
-                              />
-                              <span className="font-medium">{trope.name}</span>
-                            </Label>
-                          </div>
-                          {trope.description && (
-                            <div className="w-2/3 text-sm text-muted-foreground">{trope.description}</div>
-                          )}
-                        </div>
+                        <Button
+                          key={trope.id}
+                          variant="outline"
+                          size="sm"
+                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          onClick={() => addTaxonomy(trope)}
+                          disabled={isMaxReached("trope")}
+                          title={trope.description || trope.name}
+                        >
+                          {trope.name}
+                        </Button>
                       ))}
                       {filteredTaxonomies().length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">
+                        <div className="text-center py-4 text-muted-foreground w-full">
                           No additional tropes found
                         </div>
                       )}
