@@ -863,18 +863,20 @@ function TaxonomyGenreSelector({
                     items={selectedTaxonomies.map((item, index) => `${item.type}-${item.taxonomyId}-${index}`)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2">
-                      {selectedTaxonomies.map((taxonomy, index) => (
-                        <SortableGenreItem 
-                          key={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
-                          id={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
-                          taxonomy={taxonomy}
-                          index={index}
-                          calculateImportance={calculateImportance}
-                          onRemove={() => removeTaxonomy(index)}
-                        />
-                      ))}
-                    </div>
+                    <ScrollArea className="h-52 pr-4">
+                      <div className="space-y-2">
+                        {selectedTaxonomies.map((taxonomy, index) => (
+                          <SortableGenreItem 
+                            key={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
+                            id={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
+                            taxonomy={taxonomy}
+                            index={index}
+                            calculateImportance={calculateImportance}
+                            onRemove={() => removeTaxonomy(index)}
+                          />
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </SortableContext>
                 </DndContext>
               )}
