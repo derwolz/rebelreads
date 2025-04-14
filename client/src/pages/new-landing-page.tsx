@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, ArrowRight, CheckCircle } from "lucide-react";
+import { ChevronDown, ArrowRight, CheckCircle, BarChart2, TrendingUp, Layers, Filter } from "lucide-react";
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area 
+} from "recharts";
 
 // Logo component
 const SirenedLogo = () => (
@@ -82,17 +94,52 @@ const ValueProposition = ({ title, description, forAuthors, forReaders }: ValueP
 );
 
 // Main component
+// Sample data for taxonomy selector
+const taxonomyCategories = [
+  { id: 1, name: "Themes", items: ["Romance", "Dystopian", "Coming of Age", "Political", "Philosophical"] },
+  { id: 2, name: "Settings", items: ["Urban Fantasy", "High Fantasy", "Space Opera", "Historical", "Contemporary"] },
+  { id: 3, name: "Tones", items: ["Dark", "Humorous", "Whimsical", "Serious", "Hopeful"] },
+  { id: 4, name: "Formats", items: ["Novel", "Short Story", "Anthology", "Series", "Standalone"] }
+];
+
+// Sample data for analytics chart
+const analyticsData = [
+  { name: 'Jan', impressions: 4000, referrals: 2400 },
+  { name: 'Feb', impressions: 3000, referrals: 1398 },
+  { name: 'Mar', impressions: 2000, referrals: 9800 },
+  { name: 'Apr', impressions: 2780, referrals: 3908 },
+  { name: 'May', impressions: 1890, referrals: 4800 },
+  { name: 'Jun', impressions: 2390, referrals: 3800 },
+  { name: 'Jul', impressions: 3490, referrals: 4300 },
+];
+
 const NewLandingPage = () => {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { setTheme } = useTheme();
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [selectedTaxonomies, setSelectedTaxonomies] = useState<Record<string, string[]>>({});
 
   // Set theme
-  useState(() => {
+  useEffect(() => {
     setTheme("dark");
-  });
+  }, [setTheme]);
+  
+  // Handle taxonomy selection
+  const toggleTaxonomyItem = (category: string, item: string) => {
+    setSelectedTaxonomies(prev => {
+      const currentItems = prev[category] || [];
+      const newItems = currentItems.includes(item)
+        ? currentItems.filter(i => i !== item)
+        : [...currentItems, item];
+        
+      return {
+        ...prev,
+        [category]: newItems
+      };
+    });
+  };
 
   // Handle email sign up
   const handleSignup = async (e: React.FormEvent) => {
@@ -326,6 +373,151 @@ const NewLandingPage = () => {
               description="A platform where quality matters more than marketing budgets."
               icon={<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>}
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Taxonomy Selector Section */}
+      <section className="py-20 md:py-32 bg-gradient-to-br from-background to-black/20">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Your tastes are unique, <span className="text-primary">so tailor your experience</span>
+              </h2>
+              <p className="text-xl mb-8 text-muted-foreground">
+                Customize your searches based on content, not on clicks. Our taxonomy system lets you find exactly what you're looking for.
+              </p>
+              
+              <div className="bg-black/20 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <Filter className="text-primary" />
+                  <h3 className="text-xl font-semibold">Powerful Filtering</h3>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  Go beyond basic genres. Find stories based on themes, settings, character archetypes and more. Our taxonomy system helps you discover the books that match your exact interests.
+                </p>
+                <Button variant="outline" className="gap-2">
+                  <Layers size={16} /> Explore All Categories
+                </Button>
+              </div>
+            </div>
+            
+            <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
+              <h3 className="text-xl font-bold mb-4">Find Your Perfect Match</h3>
+              <div className="space-y-6">
+                {taxonomyCategories.map(category => (
+                  <div key={category.id} className="space-y-2">
+                    <h4 className="font-medium text-primary">{category.name}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {category.items.map(item => (
+                        <button
+                          key={item}
+                          className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                            selectedTaxonomies[category.name]?.includes(item)
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-background/60 hover:bg-background text-muted-foreground hover:text-foreground border border-primary/20'
+                          }`}
+                          onClick={() => toggleTaxonomyItem(category.name, item)}
+                        >
+                          {item}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 pt-4 border-t border-muted">
+                <div className="flex justify-between items-center">
+                  <span>Selected: {Object.values(selectedTaxonomies).flat().length} items</span>
+                  <Button size="sm" disabled={Object.values(selectedTaxonomies).flat().length === 0}>
+                    Apply Filters
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Analytics Chart Section */}
+      <section className="py-20 md:py-32 bg-black/10">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div className="order-2 md:order-1">
+              <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
+                <ResponsiveContainer width="100%" height={350}>
+                  <AreaChart
+                    data={analyticsData}
+                    margin={{
+                      top: 20,
+                      right: 20,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
+                    <YAxis stroke="rgba(255,255,255,0.5)" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(0,0,0,0.8)', 
+                        borderColor: 'rgba(160,108,213,0.5)',
+                        color: 'white' 
+                      }} 
+                    />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="impressions"
+                      stackId="1"
+                      stroke="rgba(160,108,213,1)"
+                      fill="rgba(160,108,213,0.5)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="referrals"
+                      stackId="1"
+                      stroke="rgba(100,61,167,1)"
+                      fill="rgba(100,61,167,0.5)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="bg-black/20 p-3 rounded">
+                    <div className="text-sm text-muted-foreground">Total Impressions</div>
+                    <div className="text-2xl font-bold">19,550</div>
+                  </div>
+                  <div className="bg-black/20 p-3 rounded">
+                    <div className="text-sm text-muted-foreground">Total Referrals</div>
+                    <div className="text-2xl font-bold">26,606</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="order-1 md:order-2">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Level the playing field.
+              </h2>
+              <p className="text-xl mb-8 text-muted-foreground">
+                Use advanced analytics to rival industry giants. Track reader engagement, monitor performance trends, and optimize your marketing strategy.
+              </p>
+              
+              <div className="bg-black/20 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart2 className="text-primary" />
+                  <h3 className="text-xl font-semibold">Real-time Insights</h3>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  Monitor reader behavior, track marketing campaign performance, and gain valuable insights about your audience. Make data-driven decisions to grow your readership.
+                </p>
+                <div className="flex items-center gap-2 text-primary">
+                  <TrendingUp size={16} />
+                  <span className="text-sm">+22.7% increase in referrals month-over-month</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -14,7 +14,6 @@ import { FloatingSignup } from "@/components/floating-signup";
 import FeedbackButton from "@/components/feedback-button";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import LandingPage from "@/pages/landing-page";
 import ScrollLandingPage from "@/pages/scroll-landing-page";
 import NewLandingPage from "@/pages/new-landing-page"; // Import new landing page
 import BookDetails from "@/pages/book-details";
@@ -80,7 +79,7 @@ function Router() {
 
       <Switch>
         {/* Always accessible routes */}
-        <Route path="/landing" component={ScrollLandingPage} />
+        <Route path="/landing" component={NewLandingPage} />
         <Route path="/scroll-landing" component={ScrollLandingPage} />
         <Route path="/new-landing" component={NewLandingPage} />
 
