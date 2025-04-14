@@ -391,9 +391,13 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
         <span className="font-medium">{taxonomy.name}</span>
       </div>
       <div className="flex items-center space-x-2">
-        <span className="text-xs text-muted-foreground">
-          Rank: {taxonomy.rank}, Importance: {calculateImportance(taxonomy.rank)}
-        </span>
+        <div 
+          className="w-16 h-4 rounded-full" 
+          style={{
+            background: `linear-gradient(to right, hsl(var(--primary) / 0.2), hsl(var(--primary) / ${0.2 + 0.8 * (1 - calculateImportance(taxonomy.rank))}))`,
+          }}
+          title={`Rank: ${taxonomy.rank}, Importance: ${calculateImportance(taxonomy.rank)}`}
+        />
         <Button 
           variant="ghost" 
           size="icon" 
