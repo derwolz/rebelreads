@@ -21,6 +21,7 @@ import popularBooksRoutes from "./routes/popular-books-routes";
 import feedbackRoutes from "./routes/feedback-routes";
 import salesRoutes from "./routes/sales-routes";
 import catalogueRoutes from "./routes/catalogue-routes";
+import simpleApiRoutes from "./routes/simple-api";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -29,6 +30,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
 
+  // Register this simple API route first to ensure it takes precedence for certain endpoints
+  app.use("/api", simpleApiRoutes);
+  
   // Register authenticated route modules
   app.use("/api/landing", landingRoutes);
   app.use("/api", accountRoutes);
