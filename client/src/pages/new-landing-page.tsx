@@ -237,11 +237,11 @@ const NewLandingPage = () => {
 
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
-              Brand Strategy Platform for Authors and Readers Alike
+            <h1 className="text-4xl md:text-6xl mt-8 md:mt-24 font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
+             Find Gems<br></br> Get Discovered
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-muted-foreground">
-              We're for both Authors & Readers
+            <p className="text-xl md:text-2xl mb-16 md:mb-24 text-muted-foreground">
+              Bold, original, yours — A storytelling platform for authors and readers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
@@ -255,19 +255,7 @@ const NewLandingPage = () => {
                 Learn more
               </Button>
             </div>
-            <form
-              onSubmit={handleSignup}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-            >
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-grow"
-              />
-              <Button type="submit">Get Started</Button>
-            </form>
+            
           </div>
         </div>
 
