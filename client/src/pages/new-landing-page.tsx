@@ -360,7 +360,7 @@ const NewLandingPage = () => {
       {/* Taxonomy Selector Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-background to-black/20">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="flex flex-col items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Your tastes are unique, <span className="text-primary">so tailor your experience</span>
@@ -369,18 +369,7 @@ const NewLandingPage = () => {
                 Customize your searches based on content, not on clicks. Our taxonomy system lets you find exactly what you're looking for.
               </p>
               
-              <div className="bg-black/20 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
-                <div className="flex items-center gap-2 mb-4">
-                  <Filter className="text-primary" />
-                  <h3 className="text-xl font-semibold">Powerful Filtering</h3>
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  Go beyond basic genres. Find stories based on themes, settings, character archetypes and more. Our taxonomy system helps you discover the books that match your exact interests.
-                </p>
-                <Button variant="outline" className="gap-2">
-                  <Layers size={16} /> Explore All Categories
-                </Button>
-              </div>
+           
             </div>
             
             <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
