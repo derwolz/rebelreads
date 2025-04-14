@@ -96,7 +96,7 @@ router.post("/session/:sessionId/end", async (req, res) => {
 
 router.post("/signup-interest", async (req, res) => {
   try {
-    const { email, isAuthor, sessionId } = req.body;
+    const { email, isAuthorInterest, isPublisher, sessionId } = req.body;
 
     // Basic validation
     if (!email || sessionId === undefined) {
@@ -106,7 +106,8 @@ router.post("/signup-interest", async (req, res) => {
     // Create signup interest record
     const signupInterest = await dbStorage.createSignupInterest({
       email,
-      isAuthor,
+      isAuthorInterest,
+      isPublisher,
       sessionId,
     });
 
@@ -114,7 +115,7 @@ router.post("/signup-interest", async (req, res) => {
     await dbStorage.recordLandingEvent({
       sessionId,
       eventType: "signup_complete",
-      eventData: { isAuthor },
+      eventData: { isAuthorInterest, isPublisher },
     });
 
     // Update session
