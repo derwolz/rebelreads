@@ -220,12 +220,10 @@ const NewLandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <SirenedLogo />
           <div className="flex items-center gap-4">
-            <Button 
-              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-white font-medium" 
-              onClick={() => setLocation("/auth")}
-            >
-              Get Beta Access
+            <Button variant="link" onClick={() => setLocation("/auth")}>
+              Log In
             </Button>
+            <Button onClick={() => setLocation("/auth")}>Sign Up</Button>
           </div>
         </div>
       </header>
