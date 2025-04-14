@@ -1,28 +1,46 @@
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
-import { BookCard } from "@/components/book-card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { BookGrid } from "@/components/book-grid";
+import { BookCarousel } from "@/components/book-carousel";
 import { WhatsHotSidebar } from "@/components/whats-hot-sidebar";
 import { HeroBannerAd, VerticalBannerAd, HorizontalBannerAd } from "@/components/banner-ads";
 import { DynamicHomeSections } from "@/components/dynamic-home-sections";
+
+// Define the homepage section types for manual layout
+interface HomepageSection {
+  id: string;
+  type: string;
+  displayMode: "carousel" | "grid";
+  title: string;
+  itemCount: number;
+  customViewId?: number;
+  visible: boolean;
+}
 
 export default function HomePage() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("title");
 
+  // Main book data query
   const { data: books, isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
+  });
+
+  // Get genre-specific book lists
+  const { data: fantasyBooks, isLoading: isLoadingFantasy } = useQuery<Book[]>({
+    queryKey: ["/api/genres/view/1"], // Fantasy genre view
+  });
+
+  const { data: isekaiBooks, isLoading: isLoadingIsekai } = useQuery<Book[]>({
+    queryKey: ["/api/genres/view/2"], // Isekai RPG genre view
+  });
+
+  const { data: scifiBooks, isLoading: isLoadingScifi } = useQuery<Book[]>({
+    queryKey: ["/api/genres/view/3"], // Sci-fi genre view
   });
 
   // Get personalized recommendations if user is logged in
@@ -30,6 +48,56 @@ export default function HomePage() {
     queryKey: ["/api/recommendations"],
     enabled: !!user,
   });
+
+  // Get books from authors the user follows
+  const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<Book[]>({
+    queryKey: ["/api/recommendations/followed-authors"],
+    enabled: !!user,
+  });
+
+  // Get books on user's wishlist
+  const { data: wishlistBooks, isLoading: isLoadingWishlist } = useQuery<Book[]>({
+    queryKey: ["/api/recommendations/wishlist"],
+    enabled: !!user,
+  });
+
+  // Create manual homepage sections for non-authenticated users
+  const [manualSections, setManualSections] = useState<HomepageSection[]>([]);
+
+  useEffect(() => {
+    if (!user) {
+      // Only set manual sections if there's no user (for guests)
+      setManualSections([
+        {
+          id: "fantasy",
+          type: "custom_genre_view",
+          displayMode: "carousel",
+          title: "Fantasy",
+          itemCount: 10,
+          customViewId: 1,
+          visible: true
+        },
+        {
+          id: "isekai",
+          type: "custom_genre_view",
+          displayMode: "carousel",
+          title: "Isekai RPG",
+          itemCount: 10,
+          customViewId: 2,
+          visible: true
+        },
+        {
+          id: "scifi",
+          type: "custom_genre_view",
+          displayMode: "grid",
+          title: "Science Fiction",
+          itemCount: 12,
+          customViewId: 3,
+          visible: true
+        }
+      ]);
+    }
+  }, [user]);
 
   // Filter new books (published in the last 7 days)
   const newBooks = books?.filter(book => {
@@ -39,162 +107,94 @@ export default function HomePage() {
     return new Date(book.publishedDate) > oneWeekAgo;
   });
 
-  const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<
-    Book[]
-  >({
-    queryKey: ["/api/recommendations/followed-authors"],
-    enabled: !!user,
-  });
-
-  const handleSearch = (query: string, type: string) => {
-    setSearchQuery(query);
-    if (type) setSearchType(type);
-  };
-
-  const filteredBooks = books
-    ?.filter((book) => {
-      const query = searchQuery.toLowerCase();
-
-      switch (searchType) {
-        case "title":
-          return book.title.toLowerCase().includes(query);
-        case "author":
-          return book.author.toLowerCase().includes(query);
-        case "genre":
-          return book.genres.some((genre) =>
-            genre.toLowerCase().includes(query),
-          );
-        default:
-          return true;
-      }
-    })
-    .slice(0, 10); // Limit to 10 books for carousel
-
-  // Get all books for grid display
-  const allBooks = books?.filter((book) => {
-    const query = searchQuery.toLowerCase();
-    if (!query) return true;
-
-    switch (searchType) {
-      case "title":
-        return book.title.toLowerCase().includes(query);
-      case "author":
-        return book.author.toLowerCase().includes(query);
-      case "genre":
-        return book.genres.some((genre) =>
-          genre.toLowerCase().includes(query),
-        );
-      default:
-        return true;
-    }
-  });
-
   // Get featured book for hero ad if available
   const featuredBook = books?.find(book => book.promoted === true) || 
                       (books && books.length > 0 ? books[0] : null);
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      {/* Hero Carousel for Promoted Books */}
-      <HeroCarousel />
+    <div className="bg-background min-h-screen">
+      <main className="container mx-auto pb-8">
+        {/* Hero Section - Full Width */}
+        <section className="w-full mb-8">
+          <HeroCarousel />
+        </section>
 
-
-      {/* New Books Section */}
-      {newBooks && newBooks.length > 0 && (
-        <BookGrid
-          title="New Arrivals"
-          books={newBooks}
-          isLoading={isLoading}
-        />
-      )}
-
-      {/* What's Hot Section - Horizontal for medium screens */}
-      <div className="hidden md:block lg:hidden mb-12">
-        <WhatsHotSidebar />
-      </div>
-
-      {/* Dynamic Home Sections based on user's layout preferences */}
-      {user && <DynamicHomeSections />}
-      
-      {/* Fallback content for non-authenticated users */}
-      {!user && (
+        {/* Main Content Area with Sidebar Layout */}
         <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1">
-            {/* Popular Books Carousel */}
-            <section className="mb-12">
-              <h2 className="text-3xl font-bold mb-6">Popular Books</h2>
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {isLoading
-                    ? Array.from({ length: 4 }).map((_, i) => (
-                        <CarouselItem key={i} className="md:basis-1/3 lg:basis-1/4">
-                          <div className="space-y-3">
-                            <div className="h-64 w-full bg-muted rounded-md"></div>
-                            <div className="h-4 w-3/4 bg-muted rounded"></div>
-                            <div className="h-4 w-1/2 bg-muted rounded"></div>
-                          </div>
-                        </CarouselItem>
-                      ))
-                    : filteredBooks?.map((book) => (
-                        <CarouselItem
-                          key={book.id}
-                          className="md:basis-1/3 lg:basis-1/4 pl-0 pr-1 pb-40"
-                        >
-                          <BookCard book={book} />
-                        </CarouselItem>
-                      ))}
-                </CarouselContent>
-                <CarouselPrevious className="hidden md:flex" />
-                <CarouselNext className="hidden md:flex" />
-              </Carousel>
-            </section>
+          {/* Main Content Area - Left Side on Desktop */}
+          <div className="flex-1 order-2 lg:order-1">
+            {/* New Arrivals Section */}
+            {newBooks && newBooks.length > 0 && (
+              <div className="mb-8">
+                <BookCarousel
+                  title="Recently Updated"
+                  books={newBooks}
+                  isLoading={isLoading}
+                />
+              </div>
+            )}
+
+            {/* First Horizontal Banner Ad */}
+            {books && books.length > 0 && (
+              <div className="mb-8">
+                <HorizontalBannerAd
+                  campaignId={1}
+                  bookId={books[0].id}
+                  imageSrc={books[0].images?.find(img => img.imageType === "background")?.imageUrl || "/images/placeholder-book.png"}
+                  title={books[0].title}
+                  description={books[0].description?.substring(0, 100) + '...'}
+                  source="home-top-content"
+                  position="after-new-arrivals"
+                />
+              </div>
+            )}
+
+            {/* Dynamic Home Sections for logged-in users */}
+            {user ? (
+              <DynamicHomeSections />
+            ) : (
+              <DynamicHomeSections sections={manualSections} />
+            )}
+
+            {/* Second Horizontal Banner Ad - After 2 sections */}
+            {books && books.length > 2 && (
+              <div className="my-8">
+                <HorizontalBannerAd
+                  campaignId={1}
+                  bookId={books[2].id}
+                  imageSrc={books[2].images?.find(img => img.imageType === "background")?.imageUrl || "/images/placeholder-book.png"}
+                  title={books[2].title}
+                  description={books[2].description?.substring(0, 100) + '...'}
+                  source="home-mid-content"
+                  position="between-sections"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* What's Hot Sidebar - Right Side on Desktop */}
+          <div className="lg:w-72 order-1 lg:order-2 mb-8 lg:mb-0">
+            {/* What's Hot Section - Mobile: Horizontal, Desktop: Vertical */}
+            <div className="sticky top-20">
+              <WhatsHotSidebar />
+              
+              {/* Vertical Banner Ad in Sidebar */}
+              {books && books.length > 1 && (
+                <div className="mt-8">
+                  <VerticalBannerAd
+                    campaignId={1}
+                    bookId={books[1].id}
+                    imageSrc={books[1].images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
+                    title={books[1].title}
+                    description={books[1].description?.substring(0, 80) + '...'}
+                    source="home-sidebar"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      )}
-
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1">
-
-          {/* Horizontal Banner Ad */}
-          {books && books.length > 2 && (
-            <div className="mb-12">
-              <HorizontalBannerAd
-                campaignId={1}
-                bookId={books[2].id}
-                imageSrc={books[2].images?.find(img => img.imageType === "background")?.imageUrl || "/images/placeholder-book.png"}
-                title={books[2].title}
-                description={books[2].description?.substring(0, 100) + '...'}
-                source="home-mid-content"
-                position="between-sections"
-              />
-            </div>
-          )}
-
-          {/* All Books Grid */}
-          <BookGrid
-            title="Explore More Books"
-            books={allBooks?.slice(0, 12)} // First 12 books
-            isLoading={isLoading}
-          />
-        </div>
-
-        {/* What's Hot Sidebar - Only visible on large screens */}
-        <div className="hidden lg:block space-y-8">
-          <WhatsHotSidebar />
-          
-          {/* Vertical Banner Ad in Sidebar */}
-          {books && books.length > 1 && (
-            <VerticalBannerAd
-              campaignId={1}
-              bookId={books[1].id}
-              imageSrc={books[1].images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
-              title={books[1].title}
-              description={books[1].description?.substring(0, 80) + '...'}
-              source="home-sidebar"
-            />
-          )}
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
