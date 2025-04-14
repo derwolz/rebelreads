@@ -375,32 +375,18 @@ export function TaxonomySelector({
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
                     <div className="flex flex-wrap gap-2">
-                      <TooltipProvider>
-                        {filteredTaxonomies().map((genre) => (
-                          <Tooltip key={genre.id}>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
-                                disabled={isMaxReached("genre")}
-                                onClick={() => addTaxonomy(genre)}
-                              >
-
-                                {genre.name}
-                              </Button>
-                            </TooltipTrigger>
-                            {genre.description && (
-                              <TooltipContent 
-                                side="top" 
-                                className="max-w-xs z-50"
-                              >
-                                <p>{genre.description}</p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        ))}
-                      </TooltipProvider>
+                      {filteredTaxonomies().map((genre) => (
+                        <Button
+                          key={genre.id}
+                          variant="secondary"
+                          size="sm"
+                          className="m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
+                          disabled={isMaxReached("genre")}
+                          onClick={() => addTaxonomy(genre)}
+                        >
+                          {genre.name}
+                        </Button>
+                      ))}
                       {filteredTaxonomies().length === 0 && (
                         <div className="text-center w-full py-4 text-muted-foreground">
                           No additional genres found
@@ -416,32 +402,18 @@ export function TaxonomySelector({
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
                     <div className="flex flex-wrap gap-2">
-                      <TooltipProvider>
-                        {filteredTaxonomies().map((subgenre) => (
-                          <Tooltip key={subgenre.id}>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
-                                disabled={isMaxReached("subgenre")}
-                                onClick={() => addTaxonomy(subgenre)}
-                              >
-
-                                {subgenre.name}
-                              </Button>
-                            </TooltipTrigger>
-                            {subgenre.description && (
-                              <TooltipContent 
-                                side="top" 
-                                className="max-w-xs z-50"
-                              >
-                                <p>{subgenre.description}</p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        ))}
-                      </TooltipProvider>
+                      {filteredTaxonomies().map((subgenre) => (
+                        <Button
+                          key={subgenre.id}
+                          variant="secondary"
+                          size="sm"
+                          className="m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
+                          disabled={isMaxReached("subgenre")}
+                          onClick={() => addTaxonomy(subgenre)}
+                        >
+                          {subgenre.name}
+                        </Button>
+                      ))}
                       {filteredTaxonomies().length === 0 && (
                         <div className="text-center w-full py-4 text-muted-foreground">
                           No additional subgenres found
@@ -457,32 +429,18 @@ export function TaxonomySelector({
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
                     <div className="flex flex-wrap gap-2">
-                      <TooltipProvider>
-                        {filteredTaxonomies().map((theme) => (
-                          <Tooltip key={theme.id}>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
-                                disabled={isMaxReached("theme")}
-                                onClick={() => addTaxonomy(theme)}
-                              >
-
-                                {theme.name}
-                              </Button>
-                            </TooltipTrigger>
-                            {theme.description && (
-                              <TooltipContent 
-                                side="top" 
-                                className="max-w-xs z-50"
-                              >
-                                <p>{theme.description}</p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        ))}
-                      </TooltipProvider>
+                      {filteredTaxonomies().map((theme) => (
+                        <Button
+                          key={theme.id}
+                          variant="secondary"
+                          size="sm"
+                          className="m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
+                          disabled={isMaxReached("theme")}
+                          onClick={() => addTaxonomy(theme)}
+                        >
+                          {theme.name}
+                        </Button>
+                      ))}
                       {filteredTaxonomies().length === 0 && (
                         <div className="text-center w-full py-4 text-muted-foreground">
                           No additional themes found
@@ -498,32 +456,18 @@ export function TaxonomySelector({
                   </div>
                   <ScrollArea className="h-96 border rounded-md p-2">
                     <div className="flex flex-wrap gap-2">
-                      <TooltipProvider>
-                        {filteredTaxonomies().map((trope) => (
-                          <Tooltip key={trope.id}>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
-                                disabled={isMaxReached("trope")}
-                                onClick={() => addTaxonomy(trope)}
-                              >
-
-                                {trope.name}
-                              </Button>
-                            </TooltipTrigger>
-                            {trope.description && (
-                              <TooltipContent 
-                                side="top" 
-                                className="max-w-xs z-50"
-                              >
-                                <p>{trope.description}</p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        ))}
-                      </TooltipProvider>
+                      {filteredTaxonomies().map((trope) => (
+                        <Button
+                          key={trope.id}
+                          variant="secondary"
+                          size="sm"
+                          className="m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
+                          disabled={isMaxReached("trope")}
+                          onClick={() => addTaxonomy(trope)}
+                        >
+                          {trope.name}
+                        </Button>
+                      ))}
                       {filteredTaxonomies().length === 0 && (
                         <div className="text-center w-full py-4 text-muted-foreground">
                           No additional tropes found
