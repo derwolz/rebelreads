@@ -112,10 +112,10 @@ export default function HomePage() {
                       (books && books.length > 0 ? books[0] : null);
 
   return (
-    <div className="bg-background min-h-screen">
-      <main className="container mx-auto pb-8">
+    <div className="bg-background min-h-screen  flex justify-center">
+      <main className="container max-w-[95vw] overflow-hidden mx-auto pb-8">
         {/* Hero Section - Full Width */}
-        <section className="w-full mb-8">
+        <section className="w-full  mb-8">
           <HeroCarousel />
         </section>
 
@@ -125,8 +125,8 @@ export default function HomePage() {
           <div className="flex-1 order-2 lg:order-1">
             {/* New Arrivals Section */}
             {newBooks && newBooks.length > 0 && (
-              <div className="mb-8">
-                <BookCarousel
+              <div className="max-w-[1024px] overflow-hidden mb-8">
+                <BookCarousel 
                   title="Recently Updated"
                   books={newBooks}
                   isLoading={isLoading}
@@ -134,20 +134,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* First Horizontal Banner Ad */}
-            {books && books.length > 0 && (
-              <div className="mb-8">
-                <HorizontalBannerAd
-                  campaignId={1}
-                  bookId={books[0].id}
-                  imageSrc={books[0].images?.find(img => img.imageType === "background")?.imageUrl || "/images/placeholder-book.png"}
-                  title={books[0].title}
-                  description={books[0].description?.substring(0, 100) + '...'}
-                  source="home-top-content"
-                  position="after-new-arrivals"
-                />
-              </div>
-            )}
 
             {/* Dynamic Home Sections for logged-in users */}
             {user ? (

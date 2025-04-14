@@ -60,8 +60,6 @@ export function BookCarousel({ title, books, isLoading }: BookCarouselProps) {
                   </CarouselItem>
                 ))}
           </CarouselContent>
-          <CarouselPrevious className="absolute flex left-0 z-10 w-8" />
-          <CarouselNext className="absolute flex right-0 z-10 w-8" />
         </Carousel>
       </div>
     </section>
