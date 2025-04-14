@@ -386,11 +386,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("genre")}
                                 onClick={() => addTaxonomy(genre)}
                               >
-                                {selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === genre.id && t.type === "genre"
-                                ) && (
-                                  <span className="mr-1 text-primary">✓</span>
-                                )}
+
                                 {genre.name}
                               </Button>
                             </TooltipTrigger>
@@ -431,11 +427,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("subgenre")}
                                 onClick={() => addTaxonomy(subgenre)}
                               >
-                                {selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === subgenre.id && t.type === "subgenre"
-                                ) && (
-                                  <span className="mr-1 text-primary">✓</span>
-                                )}
+
                                 {subgenre.name}
                               </Button>
                             </TooltipTrigger>
@@ -476,11 +468,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("theme")}
                                 onClick={() => addTaxonomy(theme)}
                               >
-                                {selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === theme.id && t.type === "theme"
-                                ) && (
-                                  <span className="mr-1 text-primary">✓</span>
-                                )}
+
                                 {theme.name}
                               </Button>
                             </TooltipTrigger>
@@ -521,11 +509,7 @@ export function TaxonomySelector({
                                 disabled={isMaxReached("trope")}
                                 onClick={() => addTaxonomy(trope)}
                               >
-                                {selectedTaxonomies.some(
-                                  (t) => t.taxonomyId === trope.id && t.type === "trope"
-                                ) && (
-                                  <span className="mr-1 text-primary">✓</span>
-                                )}
+
                                 {trope.name}
                               </Button>
                             </TooltipTrigger>
