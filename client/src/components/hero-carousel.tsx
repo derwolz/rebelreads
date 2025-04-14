@@ -15,7 +15,7 @@ import {
 
 function HeroSkeleton() {
   return (
-    <div className="w-full h-[400px] bg-muted/50 rounded-xl relative overflow-hidden flex flex-col justify-between">
+    <div className="w-full h-[33vh] bg-muted/50 relative overflow-hidden flex flex-col justify-between">
       <Skeleton className="absolute inset-0" />
       <div className="relative z-10 p-6 space-y-3 max-w-lg">
         <Skeleton className="h-10 w-3/4" />
@@ -81,20 +81,20 @@ export function HeroCarousel() {
             books.map((book) => (
               <CarouselItem key={book.id}>
                 <div className="relative overflow-hidden">
-                  {/* Background Image - 16:9 ratio for hero with dark overlay */}
+                  {/* Background Image - 33vh height and full-width */}
                   <div 
-                    className="w-full aspect-[16/9] bg-cover bg-center"
+                    className="w-full h-[33vh] bg-cover bg-center"
                     style={{
                       backgroundImage: `url(${book.images?.find(img => img.imageType === "background" || img.imageType === "hero")?.imageUrl || "/images/placeholder-book.png"})`,
                     }}
                   >
-                    {/* Dark semi-transparent overlay */}
-                    <div className="absolute inset-0 bg-black/50"></div>
+                    {/* Horizontal black to alpha gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent"></div>
                   </div>
                   
                   {/* Content positioned absolutely over the image */}
                   <div className="absolute inset-0 flex flex-col justify-between p-6 text-white">
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-1/2">
                       <h3 className="text-3xl font-bold">{book.title} X</h3>
                       <div className="flex space-x-2">
                         {/* Rating indicators - small squares */}
@@ -126,7 +126,7 @@ export function HeroCarousel() {
             ))
           ) : (
             <CarouselItem>
-              <div className="w-full aspect-[16/9] bg-muted rounded-xl flex items-center justify-center">
+              <div className="w-full h-[33vh] bg-muted flex items-center justify-center">
                 <p className="text-lg text-muted-foreground">No promoted books available</p>
               </div>
             </CarouselItem>
