@@ -243,17 +243,35 @@ const NewLandingPage = () => {
               Bold, original, yours — A storytelling platform for authors and
               readers.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Button
-                size="lg"
-                className="px-8"
-                onClick={() => setLocation("/auth")}
-              >
-                Sign up to get beta access
-              </Button>
-              <Button size="lg" variant="outline" className="px-8">
-                Learn more about beta
-              </Button>
+            <div className="max-w-md mx-auto w-full mb-8">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const email = (e.target as HTMLFormElement).email.value;
+                if (email) {
+                  // You can add API call here to save the email
+                  toast({
+                    title: "Thank you for your interest!",
+                    description: "We'll notify you when beta access is available.",
+                  });
+                  (e.target as HTMLFormElement).reset();
+                }
+              }} className="flex flex-col gap-3">
+                <div className="bg-[#FFD700]/10 p-1 rounded-lg border border-[#FFD700]/30">
+                  <Input 
+                    name="email"
+                    type="email" 
+                    required
+                    placeholder="Enter your email for beta access" 
+                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70" 
+                  />
+                </div>
+                <Button 
+                  type="submit"
+                  className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium py-6"
+                >
+                  Get Beta Access
+                </Button>
+              </form>
             </div>
           </div>
         </div>
@@ -657,13 +675,35 @@ const NewLandingPage = () => {
             <p className="text-xl mb-8">
               You'll have every tool to make your stories a success.
             </p>
-            <Button
-              size="lg"
-              className="px-8"
-              onClick={() => setLocation("/auth")}
-            >
-              Sign up to get beta access
-            </Button>
+            <div className="max-w-md mx-auto w-full">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const email = (e.target as HTMLFormElement).email.value;
+                if (email) {
+                  toast({
+                    title: "Thank you for your interest!",
+                    description: "We'll notify you when beta access is available.",
+                  });
+                  (e.target as HTMLFormElement).reset();
+                }
+              }} className="flex flex-col gap-3">
+                <div className="bg-[#FFD700]/10 p-1 rounded-lg border border-[#FFD700]/30">
+                  <Input 
+                    name="email"
+                    type="email" 
+                    required
+                    placeholder="Enter your email for beta access" 
+                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70" 
+                  />
+                </div>
+                <Button 
+                  type="submit"
+                  className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium py-6"
+                >
+                  Get Beta Access
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </section>
@@ -721,9 +761,35 @@ const NewLandingPage = () => {
                 Join Sirened's elite readership today and directly support the
                 authors who create the stories you love.
               </p>
-              <Button className="mt-4" onClick={() => setLocation("/auth")}>
-                Sign up to get beta access <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="mt-4">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const email = (e.target as HTMLFormElement).email.value;
+                  if (email) {
+                    toast({
+                      title: "Thank you for your interest!",
+                      description: "We'll notify you when beta access is available.",
+                    });
+                    (e.target as HTMLFormElement).reset();
+                  }
+                }} className="flex flex-col gap-3">
+                  <div className="bg-[#FFD700]/10 p-1 rounded-lg border border-[#FFD700]/30">
+                    <Input 
+                      name="email"
+                      type="email" 
+                      required
+                      placeholder="Enter your email for beta access" 
+                      className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70" 
+                    />
+                  </div>
+                  <Button 
+                    type="submit"
+                    className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium"
+                  >
+                    Get Beta Access <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
