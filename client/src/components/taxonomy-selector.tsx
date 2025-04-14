@@ -380,13 +380,17 @@ export function TaxonomySelector({
                           <Tooltip key={genre.id}>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
-                                className="relative m-1 text-sm"
+                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
                                 disabled={isMaxReached("genre")}
                                 onClick={() => addTaxonomy(genre)}
                               >
-                                <Badge variant="secondary" className="mr-1">genre</Badge>
+                                {selectedTaxonomies.some(
+                                  (t) => t.taxonomyId === genre.id && t.type === "genre"
+                                ) && (
+                                  <span className="mr-1 text-primary">✓</span>
+                                )}
                                 {genre.name}
                               </Button>
                             </TooltipTrigger>
@@ -421,13 +425,17 @@ export function TaxonomySelector({
                           <Tooltip key={subgenre.id}>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
-                                className="relative m-1 text-sm"
+                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
                                 disabled={isMaxReached("subgenre")}
                                 onClick={() => addTaxonomy(subgenre)}
                               >
-                                <Badge variant="secondary" className="mr-1">subgenre</Badge>
+                                {selectedTaxonomies.some(
+                                  (t) => t.taxonomyId === subgenre.id && t.type === "subgenre"
+                                ) && (
+                                  <span className="mr-1 text-primary">✓</span>
+                                )}
                                 {subgenre.name}
                               </Button>
                             </TooltipTrigger>
@@ -462,13 +470,17 @@ export function TaxonomySelector({
                           <Tooltip key={theme.id}>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
-                                className="relative m-1 text-sm"
+                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
                                 disabled={isMaxReached("theme")}
                                 onClick={() => addTaxonomy(theme)}
                               >
-                                <Badge variant="outline" className="mr-1">theme</Badge>
+                                {selectedTaxonomies.some(
+                                  (t) => t.taxonomyId === theme.id && t.type === "theme"
+                                ) && (
+                                  <span className="mr-1 text-primary">✓</span>
+                                )}
                                 {theme.name}
                               </Button>
                             </TooltipTrigger>
@@ -503,13 +515,17 @@ export function TaxonomySelector({
                           <Tooltip key={trope.id}>
                             <TooltipTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="secondary"
                                 size="sm"
-                                className="relative m-1 text-sm"
+                                className="relative m-1 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-full"
                                 disabled={isMaxReached("trope")}
                                 onClick={() => addTaxonomy(trope)}
                               >
-                                <Badge variant="destructive" className="mr-1">trope</Badge>
+                                {selectedTaxonomies.some(
+                                  (t) => t.taxonomyId === trope.id && t.type === "trope"
+                                ) && (
+                                  <span className="mr-1 text-primary">✓</span>
+                                )}
                                 {trope.name}
                               </Button>
                             </TooltipTrigger>
