@@ -623,10 +623,6 @@ function TaxonomyGenreSelector({
           {/* Taxonomy selection panel */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Add Taxonomies</CardTitle>
-              <CardDescription>
-                Select from available taxonomies
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="genre" value={tab} onValueChange={(v: string) => setTab(v as "genre" | "subgenre" | "theme" | "trope")}>
@@ -803,7 +799,6 @@ function TaxonomyGenreSelector({
           {/* Selected taxonomies and reordering */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle>Selected Taxonomies</CardTitle>
               <CardDescription>
                 Drag and drop to reorder by importance
               </CardDescription>

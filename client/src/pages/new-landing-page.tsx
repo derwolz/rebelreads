@@ -236,7 +236,7 @@ const NewLandingPage = () => {
 
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl mt-8 md:mt-24 font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-foreground">
+            <h1 className="text-4xl md:text-6xl mt-8 md:mt-24 font-bold mb-6 bg-clip-text  ">
               Find Gems<br></br> Get Discovered
             </h1>
             <p className="text-xl md:text-2xl mb-16 md:mb-24 text-muted-foreground">
@@ -244,30 +244,34 @@ const NewLandingPage = () => {
               readers.
             </p>
             <div className="max-w-md mx-auto w-full mb-8">
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const email = (e.target as HTMLFormElement).email.value;
-                if (email) {
-                  // You can add API call here to save the email
-                  toast({
-                    title: "Thank you for your interest!",
-                    description: "We'll notify you when beta access is available.",
-                  });
-                  (e.target as HTMLFormElement).reset();
-                }
-              }} className="flex flex-col gap-3">
-                <div className="bg-[#FFD700]/10 p-1 rounded-lg border border-[#FFD700]/30">
-                  <Input 
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const email = (e.target as HTMLFormElement).email.value;
+                  if (email) {
+                    // You can add API call here to save the email
+                    toast({
+                      title: "Thank you for your interest!",
+                      description:
+                        "We'll notify you when beta access is available.",
+                    });
+                    (e.target as HTMLFormElement).reset();
+                  }
+                }}
+                className="flex flex-row justify-center items-center"
+              >
+                <div className="bg-[#FFFFFF]/10 p-1 rounded-l-lg border border-[#EFA738]/30">
+                  <Input
                     name="email"
-                    type="email" 
+                    type="email"
                     required
-                    placeholder="Enter your email for beta access" 
-                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70" 
+                    placeholder="Enter your email"
+                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
                   />
                 </div>
-                <Button 
+                <Button
                   type="submit"
-                  className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium py-6"
+                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-r-lg rounded-l-none font-medium py-6"
                 >
                   Get Beta Access
                 </Button>
@@ -314,29 +318,41 @@ const NewLandingPage = () => {
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">Personal Stories for Unique Readers</h3>
+              <h3 className="text-2xl font-bold mb-4 text-primary">
+                Personal Stories for Unique Readers
+              </h3>
               <p className="text-lg text-muted-foreground mb-6">
-                Authors write personal stories for readers as unique as they are. On Sirened, we believe that every reader deserves content that speaks directly to them.
+                Authors write personal stories for readers as unique as they
+                are. On Sirened, we believe that every reader deserves content
+                that speaks directly to them.
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Personalized reading recommendations based on your preferences</span>
+                  <span>
+                    Personalized reading recommendations based on your
+                    preferences
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Connect with authors who share your values and interests</span>
+                  <span>
+                    Connect with authors who share your values and interests
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Discover hidden gems that traditional publishing might overlook</span>
+                  <span>
+                    Discover hidden gems that traditional publishing might
+                    overlook
+                  </span>
                 </li>
               </ul>
             </div>
             <div className="bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20 flex justify-center items-center">
-              <img 
-                src="/images/author-reader-connection.svg" 
-                alt="Author and reader connecting directly" 
+              <img
+                src="/images/author-reader-connection.svg"
+                alt="Author and reader connecting directly"
                 className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
               />
             </div>
@@ -345,27 +361,33 @@ const NewLandingPage = () => {
           <div className="my-24 relative overflow-hidden py-10 px-8 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-white/5 rounded-full blur-3xl"></div>
-            
+
             <div className="text-center max-w-3xl mx-auto relative z-10">
               <h3 className="text-2xl md:text-3xl font-bold mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-foreground">
-                "Storytelling is a conversation between author and reader. We're just removing the noise in between."
+                "Storytelling is a conversation between author and reader. We're
+                just removing the noise in between."
               </h3>
-              <p className="text-lg text-primary/80 italic">— Sirened Founder</p>
+              <p className="text-lg text-primary/80 italic">
+                — Sirened Founder
+              </p>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mt-20">
             <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20 flex justify-center items-center">
-              <img 
-                src="/images/author-store.svg" 
-                alt="Author-owned bookstore" 
+              <img
+                src="/images/author-store.svg"
+                alt="Author-owned bookstore"
                 className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="order-1 md:order-2">
-              <h3 className="text-2xl font-bold mb-4 text-primary">Own Your Author Store</h3>
+              <h3 className="text-2xl font-bold mb-4 text-primary">
+                Any Bookstore Anywhere
+              </h3>
               <p className="text-lg text-muted-foreground mb-6">
-                We connect readers directly to their favorite authors through personalized author stores. When you own your store, you control your destiny.
+                Connect your readers directly to your books however you want.
+                When you own your sales, you control your destiny.
               </p>
               <ul className="space-y-3">
                 <li className="flex items-start">
@@ -374,7 +396,9 @@ const NewLandingPage = () => {
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Complete creative control over your brand and marketing</span>
+                  <span>
+                    Complete creative control over your brand and marketing
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
@@ -384,12 +408,25 @@ const NewLandingPage = () => {
               <div className="mt-6 pt-6 border-t border-white/10">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-primary/20">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                      <path d="M12 2v20"/>
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-primary"
+                    >
+                      <path d="M12 2v20" />
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                     </svg>
                   </div>
-                  <p className="font-medium">Take control of your writing career and build sustainable income</p>
+                  <p className="font-medium">
+                    Take control of your writing career and build sustainable
+                    income
+                  </p>
                 </div>
               </div>
             </div>
@@ -563,7 +600,6 @@ const NewLandingPage = () => {
                 helperText="Select genres, themes, and tropes that interest you"
                 className="pb-6"
               />
- 
             </div>
           </div>
         </div>
@@ -675,121 +711,39 @@ const NewLandingPage = () => {
             <p className="text-xl mb-8">
               You'll have every tool to make your stories a success.
             </p>
-            <div className="max-w-md mx-auto w-full">
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                const email = (e.target as HTMLFormElement).email.value;
-                if (email) {
-                  toast({
-                    title: "Thank you for your interest!",
-                    description: "We'll notify you when beta access is available.",
-                  });
-                  (e.target as HTMLFormElement).reset();
-                }
-              }} className="flex flex-col gap-3">
-                <div className="bg-[#FFD700]/10 p-1 rounded-lg border border-[#FFD700]/30">
-                  <Input 
+            <div className="max-w-md mx-auto w-full mb-8">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const email = (e.target as HTMLFormElement).email.value;
+                  if (email) {
+                    // You can add API call here to save the email
+                    toast({
+                      title: "Thank you for your interest!",
+                      description:
+                        "We'll notify you when beta access is available.",
+                    });
+                    (e.target as HTMLFormElement).reset();
+                  }
+                }}
+                className="flex flex-row justify-center items-center"
+              >
+                <div className="bg-[#FFFFFF]/10 p-1 rounded-l-lg border border-[#EFA738]/30">
+                  <Input
                     name="email"
-                    type="email" 
+                    type="email"
                     required
-                    placeholder="Enter your email for beta access" 
-                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70" 
+                    placeholder="Enter your email"
+                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
                   />
                 </div>
-                <Button 
+                <Button
                   type="submit"
-                  className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium py-6"
+                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-r-lg rounded-l-none font-medium py-6"
                 >
                   Get Beta Access
                 </Button>
               </form>
-            </div>
-          </div>
-        </div>
-      </section>
-
-     
-
-      {/* Brand Positioning */}
-      <section className="py-20 md:py-32 bg-black/20 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
-            Our Brand Positioning
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-x-16 gap-y-12">
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Selling Proposition
-              </h3>
-              <p className="text-muted-foreground">
-                Sirened empowers authors by providing the tools they need to not
-                only manage and promote their books but also access detailed
-                analytics and directly connect with their readers. For readers,
-                Sirened is a platform that makes it easy to discover new books
-                and connect with authors they love.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Brand Promise
-              </h3>
-              <p className="text-muted-foreground">
-                To provide a holistic, author-friendly platform that fosters
-                meaningful connections with readers, allowing authors to succeed
-                in the digital age and readers to find and support new talent.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Brand Voice
-              </h3>
-              <p className="text-muted-foreground">
-                Warm, welcoming, supportive, and community-oriented. Sirened's
-                tone conveys empowerment for authors and readers alike, offering
-                a space where both can thrive together.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Support your Storytellers
-              </h3>
-              <p className="text-muted-foreground">
-                Join Sirened's elite readership today and directly support the
-                authors who create the stories you love.
-              </p>
-              <div className="mt-4">
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const email = (e.target as HTMLFormElement).email.value;
-                  if (email) {
-                    toast({
-                      title: "Thank you for your interest!",
-                      description: "We'll notify you when beta access is available.",
-                    });
-                    (e.target as HTMLFormElement).reset();
-                  }
-                }} className="flex flex-col gap-3">
-                  <div className="bg-[#FFD700]/10 p-1 rounded-lg border border-[#FFD700]/30">
-                    <Input 
-                      name="email"
-                      type="email" 
-                      required
-                      placeholder="Enter your email for beta access" 
-                      className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70" 
-                    />
-                  </div>
-                  <Button 
-                    type="submit"
-                    className="bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-medium"
-                  >
-                    Get Beta Access <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </form>
-              </div>
             </div>
           </div>
         </div>
