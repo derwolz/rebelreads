@@ -675,6 +675,61 @@ router.get("/books/followed-authors", async (req, res) => {
   }
 });
 
+// Get author details by ID
+router.get("/authors/:id", async (req, res) => {
+  try {
+    const authorId = parseInt(req.params.id);
+    if (isNaN(authorId)) {
+      return res.status(400).json({ error: "Invalid author ID" });
+    }
+
+    // Get author details from storage
+    const author = await dbStorage.getAuthor(authorId);
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+
+    // Get user info for this author
+    const user = await dbStorage.getUser(author.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get books by this author
+    const books = await dbStorage.getBooksByAuthor(authorId);
+
+    // Get follower count
+    const followerCount = await dbStorage.getAuthorFollowerCount(authorId);
+
+    // Get author genres
+    const genres = await dbStorage.getAuthorGenres(authorId);
+    
+    // Get aggregate ratings for the author
+    const ratings = await dbStorage.getAuthorAggregateRatings(authorId);
+
+    // Combine all data
+    const authorDetails = {
+      id: author.id,
+      username: user.username,
+      authorName: author.author_name,
+      authorBio: author.bio,
+      birthDate: author.birth_date,
+      deathDate: author.death_date,
+      website: author.website,
+      books,
+      followerCount,
+      genres,
+      aggregateRatings: ratings,
+      socialMediaLinks: author.social_media_links || []
+    };
+
+    res.json(authorDetails);
+  } catch (error) {
+    console.error("Error fetching author details:", error);
+    res.status(500).json({ error: "Failed to fetch author details" });
+  }
+});
+
 router.post("/authors/:id/follow", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
