@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
 import { Search, Settings, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import logo from "@/public/images/logo.svg";
+
 import {
   Command,
   CommandDialog,
@@ -33,24 +35,28 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
-  
+
   // Check if user is a seller
   const { data: sellerStatus } = useQuery({
-    queryKey: ['/api/account/publisher-seller-status'],
+    queryKey: ["/api/account/publisher-seller-status"],
     queryFn: async () => {
       if (!user) return { isPublisherSeller: false };
-      const res = await fetch('/api/account/publisher-seller-status');
+      const res = await fetch("/api/account/publisher-seller-status");
       if (!res.ok) return { isPublisherSeller: false };
       return res.json();
     },
     enabled: !!user,
   });
 
-  const { data: searchResults } = useQuery<{ books: Book[], metadata: { total: number, query: string } }>({
+  const { data: searchResults } = useQuery<{
+    books: Book[];
+    metadata: { total: number; query: string };
+  }>({
     queryKey: ["/api/search", debouncedSearch],
     queryFn: () =>
-      fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`)
-        .then((response) => response.json()),
+      fetch(`/api/search?q=${encodeURIComponent(debouncedSearch)}`).then(
+        (response) => response.json(),
+      ),
     enabled: debouncedSearch.length > 1,
   });
 
@@ -72,7 +78,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
-console.log(searchResults, "searchResults");
+  console.log(searchResults, "searchResults");
   const renderSearchResults = () => {
     if (!searchResults?.books) return null;
 
@@ -86,7 +92,10 @@ console.log(searchResults, "searchResults");
               onClick={() => setOpen(false)}
             >
               <img
-                src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
+                src={
+                  book.images?.find((img) => img.imageType === "mini")
+                    ?.imageUrl || "/images/placeholder-book.png"
+                }
                 alt={book.title}
                 className="w-8 h-12 object-cover rounded"
               />
@@ -118,7 +127,7 @@ console.log(searchResults, "searchResults");
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div className="flex items-center gap-8">
           <Link href="/">
-            <h1 className="text-2xl font-bold text-primary">Sirened</h1>
+            <img src={logo} alt="Sirened Logo" className="h-8 w-8" />
           </Link>
 
           <div className="hidden md:flex items-center gap-2 relative">
@@ -169,18 +178,19 @@ console.log(searchResults, "searchResults");
                   </span>
                 </Link>
               </div>
-              <Button variant="ghost" onClick={() => {
-                logoutMutation.mutate(undefined, {
-                  onSuccess: () => navigate("/")
-                });
-              }}>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  logoutMutation.mutate(undefined, {
+                    onSuccess: () => navigate("/"),
+                  });
+                }}
+              >
                 Logout
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsOpen(true)}>
-              Login
-            </Button>
+            <Button onClick={() => setIsOpen(true)}>Login</Button>
           )}
         </div>
 
@@ -256,7 +266,7 @@ console.log(searchResults, "searchResults");
                         className="w-full justify-start"
                         onClick={() => {
                           logoutMutation.mutate(undefined, {
-                            onSuccess: () => navigate("/")
+                            onSuccess: () => navigate("/"),
                           });
                         }}
                       >
@@ -265,10 +275,7 @@ console.log(searchResults, "searchResults");
                     </div>
                   </div>
                 ) : (
-                  <Button
-                    className="w-full"
-                    onClick={() => setIsOpen(true)}
-                  >
+                  <Button className="w-full" onClick={() => setIsOpen(true)}>
                     Login
                   </Button>
                 )}

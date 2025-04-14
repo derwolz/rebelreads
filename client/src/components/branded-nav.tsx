@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useState } from "react";
-
+import logo from "@/assets/logo.png"
 export function BrandedNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

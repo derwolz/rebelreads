@@ -683,7 +683,7 @@ function TaxonomyGenreSelector({
                       ? "Select up to 2 genres" 
                       : "Select as many genres as you want"}
                   </div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
+                  <ScrollArea className="h-64 border rounded-md p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((genre) => (
                         <Button
@@ -713,7 +713,7 @@ function TaxonomyGenreSelector({
                       ? "Select up to 5 subgenres (optional)" 
                       : "Select as many subgenres as you want"}
                   </div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
+                  <ScrollArea className="h-64 border rounded-md p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((subgenre) => (
                         <Button
@@ -743,7 +743,7 @@ function TaxonomyGenreSelector({
                       ? "Select up to 6 themes" 
                       : "Select as many themes as you want"}
                   </div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
+                  <ScrollArea className="h-64 border rounded-md p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((theme) => (
                         <Button
@@ -773,7 +773,7 @@ function TaxonomyGenreSelector({
                       ? "Select up to 7 tropes" 
                       : "Select as many tropes as you want"}
                   </div>
-                  <ScrollArea className="h-52 border rounded-md p-2">
+                  <ScrollArea className="h-64 border rounded-md p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((trope) => (
                         <Button
@@ -823,7 +823,7 @@ function TaxonomyGenreSelector({
                     items={selectedTaxonomies.map((item, index) => `${item.type}-${item.taxonomyId}-${index}`)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <ScrollArea className="h-52 pr-4">
+                    <ScrollArea className="h-96 pr-4">
                       <div className="space-y-2">
                         {selectedTaxonomies.map((taxonomy, index) => (
                           <SortableGenreItem 
