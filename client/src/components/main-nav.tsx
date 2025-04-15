@@ -176,6 +176,11 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                   <Button variant="outline">Author Dashboard</Button>
                 </Link>
               )}
+              {publisherStatus?.isPublisher && (
+                <Link href="/publisher">
+                  <Button variant="outline">Publisher Dashboard</Button>
+                </Link>
+              )}
               {sellerStatus?.isPublisherSeller && (
                 <Link href="/sales">
                   <Button variant="outline">Sales Panel</Button>
@@ -261,6 +266,16 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                             className="w-full justify-start"
                           >
                             Author Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      {publisherStatus?.isPublisher && (
+                        <Link href="/publisher">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                          >
+                            Publisher Dashboard
                           </Button>
                         </Link>
                       )}
