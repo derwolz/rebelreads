@@ -305,8 +305,38 @@ export class BookStorage implements IBookStorage {
   }
 
   async getBooksByAuthor(authorId: number): Promise<Book[]> {
-    // Get all books by this author
-    const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
+    // Get all books by this author with author information
+    const authorBooks = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
+      })
+      .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
+      .where(eq(books.authorId, authorId));
     
     // Get all book IDs to fetch images
     const bookIds = authorBooks.map(book => book.id);
@@ -485,11 +515,64 @@ export class BookStorage implements IBookStorage {
 
       // If no default view is found, return some popular books
       if (!userViews || userViews.length === 0) {
-        return db
-          .select()
+        const popularBooks = await db
+          .select({
+            id: books.id,
+            title: books.title,
+            authorId: books.authorId,
+            description: books.description,
+            promoted: books.promoted,
+            pageCount: books.pageCount,
+            formats: books.formats,
+            publishedDate: books.publishedDate,
+            awards: books.awards,
+            originalTitle: books.originalTitle,
+            series: books.series,
+            setting: books.setting,
+            characters: books.characters,
+            isbn: books.isbn,
+            asin: books.asin,
+            language: books.language,
+            referralLinks: books.referralLinks,
+            impressionCount: books.impressionCount,
+            clickThroughCount: books.clickThroughCount,
+            lastImpressionAt: books.lastImpressionAt,
+            lastClickThroughAt: books.lastClickThroughAt,
+            internal_details: books.internal_details,
+            // Join author information
+            authorName: authors.author_name,
+            authorImageUrl: authors.author_image_url
+          })
           .from(books)
+          .leftJoin(authors, eq(books.authorId, authors.id))
           .orderBy(desc(books.impressionCount))
           .limit(7);
+          
+        // Get all book IDs to fetch images
+        const bookIds = popularBooks.map(book => book.id);
+        
+        if (bookIds.length === 0) return [];
+        
+        // Fetch all images for these books
+        const allImages = await db.select()
+          .from(bookImages)
+          .where(inArray(bookImages.bookId, bookIds));
+        
+        // Group images by book ID
+        const imagesByBookId = new Map<number, BookImage[]>();
+        
+        allImages.forEach(image => {
+          if (!imagesByBookId.has(image.bookId)) {
+            imagesByBookId.set(image.bookId, []);
+          }
+          imagesByBookId.get(image.bookId)!.push(image);
+        });
+        
+        // Add images to books
+        return popularBooks.map(book => ({
+          ...book,
+          images: imagesByBookId.get(book.id) || []
+        })) as Book[];
       }
 
       const defaultView = userViews[0];
@@ -506,11 +589,64 @@ export class BookStorage implements IBookStorage {
 
       // If no genres in view, return popular books
       if (!userGenres || userGenres.length === 0) {
-        return db
-          .select()
+        const popularBooks = await db
+          .select({
+            id: books.id,
+            title: books.title,
+            authorId: books.authorId,
+            description: books.description,
+            promoted: books.promoted,
+            pageCount: books.pageCount,
+            formats: books.formats,
+            publishedDate: books.publishedDate,
+            awards: books.awards,
+            originalTitle: books.originalTitle,
+            series: books.series,
+            setting: books.setting,
+            characters: books.characters,
+            isbn: books.isbn,
+            asin: books.asin,
+            language: books.language,
+            referralLinks: books.referralLinks,
+            impressionCount: books.impressionCount,
+            clickThroughCount: books.clickThroughCount,
+            lastImpressionAt: books.lastImpressionAt,
+            lastClickThroughAt: books.lastClickThroughAt,
+            internal_details: books.internal_details,
+            // Join author information
+            authorName: authors.author_name,
+            authorImageUrl: authors.author_image_url
+          })
           .from(books)
+          .leftJoin(authors, eq(books.authorId, authors.id))
           .orderBy(desc(books.impressionCount))
           .limit(7);
+          
+        // Get all book IDs to fetch images
+        const bookIds = popularBooks.map(book => book.id);
+        
+        if (bookIds.length === 0) return [];
+        
+        // Fetch all images for these books
+        const allImages = await db.select()
+          .from(bookImages)
+          .where(inArray(bookImages.bookId, bookIds));
+        
+        // Group images by book ID
+        const imagesByBookId = new Map<number, BookImage[]>();
+        
+        allImages.forEach(image => {
+          if (!imagesByBookId.has(image.bookId)) {
+            imagesByBookId.set(image.bookId, []);
+          }
+          imagesByBookId.get(image.bookId)!.push(image);
+        });
+        
+        // Add images to books
+        return popularBooks.map(book => ({
+          ...book,
+          images: imagesByBookId.get(book.id) || []
+        })) as Book[];
       }
 
       // Get books the user has already rated or completed
@@ -588,11 +724,15 @@ export class BookStorage implements IBookStorage {
         )
         SELECT 
           b.*,
+          a.author_name,
+          a.author_image_url,
           bs.score
         FROM 
           book_scores bs
         JOIN 
           books b ON bs.id = b.id
+        LEFT JOIN
+          authors a ON b.author_id = a.id
         ORDER BY 
           RANDOM()
         LIMIT 7
@@ -622,12 +762,10 @@ export class BookStorage implements IBookStorage {
       return bookScores.rows.map(row => ({
         id: row.id,
         title: row.title,
-        author: row.author,
         description: row.description,
         authorId: row.author_id,
         publishedDate: row.published_date,
         promoted: row.promoted,
-        authorImageUrl: row.author_image_url,
         pageCount: row.page_count,
         formats: row.formats || [],
         awards: row.awards || [],
@@ -638,7 +776,15 @@ export class BookStorage implements IBookStorage {
         isbn: row.isbn,
         asin: row.asin,
         language: row.language,
+        referralLinks: row.referral_links || [],
+        impressionCount: row.impression_count || 0,
+        clickThroughCount: row.click_through_count || 0,
+        lastImpressionAt: row.last_impression_at,
+        lastClickThroughAt: row.last_click_through_at,
         internal_details: row.internal_details,
+        // Add author information from the join
+        authorName: row.author_name || '',
+        authorImageUrl: row.author_image_url,
         // Add images array
         images: imagesByBookId.get(row.id) || []
       }));
@@ -646,8 +792,35 @@ export class BookStorage implements IBookStorage {
       console.error("Error getting recommendations:", error);
       // Fall back to popular books if there's an error
       const popularBooks = await db
-        .select()
+        .select({
+          id: books.id,
+          title: books.title,
+          authorId: books.authorId,
+          description: books.description,
+          promoted: books.promoted,
+          pageCount: books.pageCount,
+          formats: books.formats,
+          publishedDate: books.publishedDate,
+          awards: books.awards,
+          originalTitle: books.originalTitle,
+          series: books.series,
+          setting: books.setting,
+          characters: books.characters,
+          isbn: books.isbn,
+          asin: books.asin,
+          language: books.language,
+          referralLinks: books.referralLinks,
+          impressionCount: books.impressionCount,
+          clickThroughCount: books.clickThroughCount,
+          lastImpressionAt: books.lastImpressionAt,
+          lastClickThroughAt: books.lastClickThroughAt,
+          internal_details: books.internal_details,
+          // Join author information
+          authorName: authors.author_name,
+          authorImageUrl: authors.author_image_url
+        })
         .from(books)
+        .leftJoin(authors, eq(books.authorId, authors.id))
         .orderBy(desc(books.impressionCount))
         .limit(7);
       
