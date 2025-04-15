@@ -34,7 +34,6 @@ export const dbStorage = {
   createUser: accountStorage.createUser.bind(accountStorage),
   updateUser: accountStorage.updateUser.bind(accountStorage),
   toggleAuthorStatus: accountStorage.toggleAuthorStatus.bind(accountStorage),
-  updateUserBetaAccess: accountStorage.updateUserBetaAccess.bind(accountStorage),
   getRatings: accountStorage.getRatings.bind(accountStorage),
   createRating: accountStorage.createRating.bind(accountStorage),
   getUserRatings: accountStorage.getUserRatings.bind(accountStorage),

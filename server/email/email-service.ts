@@ -2,8 +2,7 @@ import sgMail from '@sendgrid/mail';
 import { 
   welcomeEmailTemplate, 
   signupInterestEmailTemplate, 
-  betaKeyRequiredEmailTemplate,
-  waitlistWelcomeEmailTemplate
+  betaKeyRequiredEmailTemplate 
 } from './templates';
 
 /**
@@ -97,14 +96,6 @@ export class EmailService {
    */
   public async sendBetaKeyRequiredEmail(email: string): Promise<boolean> {
     const template = betaKeyRequiredEmailTemplate(email);
-    return this.sendEmail(email, template.subject, template.html, template.text);
-  }
-
-  /**
-   * Sends a waitlist welcome email to users who register without a beta key
-   */
-  public async sendWaitlistWelcomeEmail(email: string, username: string): Promise<boolean> {
-    const template = waitlistWelcomeEmailTemplate(username);
     return this.sendEmail(email, template.subject, template.html, template.text);
   }
 }

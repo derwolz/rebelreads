@@ -104,6 +104,21 @@ export function setupAuth(app: Express) {
       // Check if beta is active
       const isBetaActive = await dbStorage.isBetaActive();
       
+      // If beta is active, validate the beta key
+      if (isBetaActive) {
+        const { betaKey } = req.body;
+        
+        if (!betaKey) {
+          return res.status(400).json({ error: "Beta key is required during beta testing phase" });
+        }
+        
+        const isValidKey = await dbStorage.validateBetaKey(betaKey);
+        
+        if (!isValidKey) {
+          return res.status(400).json({ error: "Invalid beta key" });
+        }
+      }
+      
       // Check for existing email
       const existingEmail = await dbStorage.getUserByEmail(req.body.email);
       if (existingEmail) {
@@ -116,52 +131,30 @@ export function setupAuth(app: Express) {
         return res.status(400).send("Username already exists");
       }
 
-      let hasBetaAccess = !isBetaActive; // automatically true if beta is not active
-      
-      // If beta is active, check if they provided a valid beta key
-      if (isBetaActive) {
-        const { betaKey } = req.body;
-        
-        if (betaKey) {
-          const isValidKey = await dbStorage.validateBetaKey(betaKey);
-          if (isValidKey) {
-            hasBetaAccess = true;
-          }
-        }
-      }
-      
-      // Create the user account
       const user = await dbStorage.createUser({
         ...req.body,
         password: await hashPassword(req.body.password),
-        hasBetaAccess: hasBetaAccess,
       });
       
-      // If beta is active and registration was successful with a valid beta key, record the usage
-      if (isBetaActive && hasBetaAccess && req.body.betaKey) {
+      // If beta is active and registration was successful, record the beta key usage
+      if (isBetaActive && req.body.betaKey) {
         const betaKeyObj = await dbStorage.getBetaKeyByKey(req.body.betaKey);
         if (betaKeyObj) {
           await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
         }
       }
       
-      // Send appropriate email based on beta access
+      // Send welcome email
       try {
         // Import the email service dynamically to avoid circular dependencies
         const { emailService } = await import("./email");
         
-        if (hasBetaAccess) {
-          // Send welcome email for users with beta access
-          await emailService.sendWelcomeEmail(user.email, user.username);
-          console.log(`Welcome email sent to ${user.email}`);
-        } else {
-          // Send waitlist welcome email for users without beta access
-          await emailService.sendWaitlistWelcomeEmail(user.email, user.username);
-          console.log(`Waitlist welcome email sent to ${user.email}`);
-        }
+        // Send welcome email
+        await emailService.sendWelcomeEmail(user.email, user.username);
+        console.log(`Welcome email sent to ${user.email}`);
       } catch (emailError) {
         // Log but don't fail if email sending fails
-        console.warn("Could not send email:", emailError);
+        console.warn("Could not send welcome email:", emailError);
       }
 
       req.login(user, (err) => {
@@ -189,11 +182,13 @@ export function setupAuth(app: Express) {
         // Check if beta is active
         const isBetaActive = await dbStorage.isBetaActive();
         
-        // If beta is active and the user is not authenticated, we need to check beta access
+        // If beta is active and the user is not authenticated, we need to check beta key requirements
         if (isBetaActive && !req.isAuthenticated()) {
-          // First check if the user already has beta access in their account
-          if (!user.hasBetaAccess) {
-            // Check if they're providing a beta key with this login attempt
+          // Check if the user has used a beta key before
+          const hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(user.id);
+
+          // If they haven't used a beta key before, they need to provide one
+          if (!hasUsedBetaKey) {
             const { betaKey } = req.body;
             
             if (!betaKey) {
@@ -213,7 +208,6 @@ export function setupAuth(app: Express) {
               return res.status(400).json({ error: "Beta key is required during beta testing phase" });
             }
             
-            // Validate the beta key they provided
             const isValidKey = await dbStorage.validateBetaKey(betaKey);
             
             if (!isValidKey) {
@@ -224,12 +218,9 @@ export function setupAuth(app: Express) {
             const betaKeyObj = await dbStorage.getBetaKeyByKey(betaKey);
             if (betaKeyObj) {
               await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
-              
-              // Update the user's hasBetaAccess status
-              await dbStorage.updateUserBetaAccess(user.id, true);
-              user.hasBetaAccess = true;
             }
           }
+          // If they have used a beta key before, no need to validate again
         }
         
         // Login the user
