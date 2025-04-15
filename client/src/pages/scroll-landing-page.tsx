@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
@@ -7,6 +7,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { CountUp } from "@/components/count-up";
 
 interface ScrollSection {
   id: string;
