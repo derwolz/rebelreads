@@ -252,7 +252,7 @@ router.get("/book-genres", async (req: Request, res: Response) => {
     let result: any = {};
     
     if (isPublisher) {
-      // For publishers: Get all authors managed by the publisher
+      // For publishers: Get only the authors they publish
       // First, get the publisher's ID
       const publisher = await db.select().from(publishers).where(eq(publishers.userId, userId)).limit(1);
       
@@ -262,8 +262,11 @@ router.get("/book-genres", async (req: Request, res: Response) => {
       
       const publisherId = publisher[0].id;
       
-      // Get all authors managed by this publisher
-      const publisherAuthorsRel = await db.select().from(publishersAuthors).where(eq(publishersAuthors.publisherId, publisherId));
+      // Get all authors managed by this publisher using the publishers_authors table
+      const publisherAuthorsRel = await db.select().from(publishersAuthors)
+        .where(eq(publishersAuthors.publisherId, publisherId));
+      
+      console.log(`Publisher ${publisherId} has ${publisherAuthorsRel.length} authors`);
       
       // For each author, get their books and taxonomies
       const authorData = await Promise.all(
@@ -276,9 +279,11 @@ router.get("/book-genres", async (req: Request, res: Response) => {
           }
           
           const authorId = author[0].id;
+          console.log(`Processing author ${authorId} for publisher ${publisherId}`);
           
           // Get all books by this author
           const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
+          console.log(`Author ${authorId} has ${authorBooks.length} books`);
           
           // For each book, get the taxonomies
           const bookData = await Promise.all(
