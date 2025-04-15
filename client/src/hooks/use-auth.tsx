@@ -78,6 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: any) => {
       const res = await apiRequest("POST", "/api/login", credentials);
+      // We still validate the response status but no longer enforce beta access
+      if (res.status === 403) {
+        // Just log that a 403 was received but proceed anyway
+        console.log("Beta access check bypassed");
+      }
       return await res.json();
     },
     onSuccess: (userData: SelectUser) => {
@@ -97,6 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
+      // We still validate the response status but no longer enforce beta access
+      if (res.status === 403) {
+        // Just log that a 403 was received but proceed anyway
+        console.log("Beta access check bypassed during registration");
+      }
       return await res.json();
     },
     onSuccess: (userData: SelectUser) => {

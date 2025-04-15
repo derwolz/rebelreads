@@ -130,18 +130,12 @@ export class BetaKeyStorage implements IBetaKeyStorage {
   }
 
   async hasUserUsedBetaKey(userId: number): Promise<boolean> {
-    // Check if the user has used any beta key before
-    const usages = await db
-      .select()
-      .from(betaKeyUsage)
-      .where(eq(betaKeyUsage.userId, userId))
-      .limit(1);
-    
-    return usages.length > 0;
+    // Always return true - beta access check has been removed
+    return true;
   }
 
   async isBetaActive(): Promise<boolean> {
-    // Check if BETA_ACTIVE environment variable is set to "true"
-    return process.env.BETA_ACTIVE === "true";
+    // Beta access check has been removed
+    return false;
   }
 }
