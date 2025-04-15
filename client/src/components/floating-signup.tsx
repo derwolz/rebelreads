@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Music2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,22 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AnimatedElement } from "@/components/scroll-animations";
 
 export function FloatingSignup() {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [isShown, setIsShown] = useState(false);
   const { toast } = useToast();
-  
-  // Delay showing the floating button until after user has scrolled a bit
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsShown(true);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,57 +62,38 @@ export function FloatingSignup() {
 
   return (
     <>
-      {isShown && (
-        <AnimatedElement
-          animation="fade-in"
-          delay={0.3}
-          duration={1.0}
-          className="fixed bottom-8 right-8 z-50"
-        >
-          <div className="relative transition-transform hover:scale-105 duration-300">
-            {/* Pulsing circles */}
-            <div className="absolute inset-0 animate-ping-slow rounded-full bg-[#FFD700]/30" />
-            <div className="absolute inset-0 animate-ping-slower rounded-full bg-[#FFD700]/20" />
+      <div className="fixed bottom-8 right-8 z-50">
+        <div className="relative">
+          {/* Pulsing circles */}
+          <div className="absolute inset-0 animate-ping-slow rounded-full bg-[#FFD700]/30" />
+          <div className="absolute inset-0 animate-ping-slower rounded-full bg-[#FFD700]/20" />
 
-            {/* Main button */}
-            <Button
-              onClick={() => setIsOpen(true)}
-              size="lg"
-              className="h-16 w-16 rounded-full bg-[#FFD700] hover:bg-[#FFD700]/90 shadow-lg relative"
-            >
-              <Music2Icon className="h-8 w-8 text-background" />
-            </Button>
-          </div>
-        </AnimatedElement>
-      )}
+          {/* Main button */}
+          <Button
+            onClick={() => setIsOpen(true)}
+            size="lg"
+            className="h-16 w-16 rounded-full bg-[#FFD700] hover:bg-[#FFD700]/90 shadow-lg relative"
+          >
+            <Music2Icon className="h-8 w-8 text-background" />
+          </Button>
+        </div>
+      </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="overflow-hidden">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-xl mb-2">
-              <AnimatedElement animation="slide-down" delay={0.1} duration={0.5}>
-                Join Our Community
-              </AnimatedElement>
-            </DialogTitle>
+            <DialogTitle>Join Our Community</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSignup} className="space-y-4">
-            <AnimatedElement animation="slide-up" delay={0.2} duration={0.5}>
-              <Input
-                type="email"
-                placeholder="Enter your email for updates"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="transition-all duration-300 focus:scale-105"
-              />
-            </AnimatedElement>
-            <AnimatedElement animation="fade-in" delay={0.4} duration={0.5}>
-              <Button 
-                type="submit" 
-                className="w-full transition-transform duration-300 hover:scale-105"
-              >
-                Sign Up
-              </Button>
-            </AnimatedElement>
+            <Input
+              type="email"
+              placeholder="Enter your email for updates"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Button type="submit" className="w-full">
+              Sign Up
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
