@@ -9,7 +9,8 @@ import {
   ratings,
   reading_status,
   bookImages,
-  BookImage
+  BookImage,
+  authors
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike, sql, desc, not, inArray } from "drizzle-orm";
@@ -40,8 +41,37 @@ export interface IBookStorage {
 export class BookStorage implements IBookStorage {
   async getBooks(): Promise<Book[]> {
     try {
-      // Get all books
-      const allBooks = await db.select().from(books);
+      // Get all books with author information
+      const allBooks = await db
+        .select({
+          id: books.id,
+          title: books.title,
+          authorId: books.authorId,
+          description: books.description,
+          promoted: books.promoted,
+          pageCount: books.pageCount,
+          formats: books.formats,
+          publishedDate: books.publishedDate,
+          awards: books.awards,
+          originalTitle: books.originalTitle,
+          series: books.series,
+          setting: books.setting,
+          characters: books.characters,
+          isbn: books.isbn,
+          asin: books.asin,
+          language: books.language,
+          referralLinks: books.referralLinks,
+          impressionCount: books.impressionCount,
+          clickThroughCount: books.clickThroughCount,
+          lastImpressionAt: books.lastImpressionAt,
+          lastClickThroughAt: books.lastClickThroughAt,
+          internal_details: books.internal_details,
+          // Join author information
+          authorName: authors.author_name,
+          authorImageUrl: authors.author_image_url
+        })
+        .from(books)
+        .leftJoin(authors, eq(books.authorId, authors.id));
       
       if (allBooks.length === 0) return [];
       
@@ -101,10 +131,24 @@ export class BookStorage implements IBookStorage {
       return [];
     }
 
+    // Get author information first to include in search vector
+    const booksWithAuthors = await db
+      .select({
+        bookId: books.id,
+        authorName: authors.author_name
+      })
+      .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id));
+
+    // Create map of book ID to author name for easy lookup
+    const authorNameByBookId = new Map<number, string>();
+    booksWithAuthors.forEach(item => {
+      authorNameByBookId.set(item.bookId, item.authorName || '');
+    });
+
     // Create the search vector SQL once to avoid repetition
     const searchVector = sql`
       setweight(to_tsvector('english', coalesce(${books.title}, '')), 'A') ||
-      setweight(to_tsvector('english', coalesce(${books.author}, '')), 'A') ||
       setweight(to_tsvector('english', coalesce(${books.description}, '')), 'B') ||
       setweight(to_tsvector('english', coalesce(${books.internal_details}, '')), 'B')
     `;
@@ -115,13 +159,11 @@ export class BookStorage implements IBookStorage {
       .select({
         id: books.id,
         title: books.title,
-        author: books.author,
         description: books.description,
         internal_details: books.internal_details,
         publishedDate: books.publishedDate,
         promoted: books.promoted,
         authorId: books.authorId,
-        authorImageUrl: books.authorImageUrl,
         pageCount: books.pageCount,
         formats: books.formats,
         awards: books.awards,
@@ -132,6 +174,11 @@ export class BookStorage implements IBookStorage {
         isbn: books.isbn,
         asin: books.asin,
         language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
         search_rank: sql<number>`ts_rank(${searchVector}, ${searchQuery})`.as('search_rank')
       })
       .from(books)
@@ -139,7 +186,7 @@ export class BookStorage implements IBookStorage {
       .orderBy(sql`ts_rank(${searchVector}, ${searchQuery}) DESC`)
       .limit(20);
       
-    // Extract all book IDs for fetching images
+    // Extract all book IDs for fetching images and author info
     const bookIds = results.map(book => book.id);
     
     if (bookIds.length === 0) return [];
@@ -148,6 +195,26 @@ export class BookStorage implements IBookStorage {
     const allImages = await db.select()
       .from(bookImages)
       .where(inArray(bookImages.bookId, bookIds));
+    
+    // Fetch author information for these books
+    const authorInfo = await db
+      .select({
+        bookId: books.id,
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
+      })
+      .from(books)
+      .innerJoin(authors, eq(books.authorId, authors.id))
+      .where(inArray(books.id, bookIds));
+    
+    // Create author info map
+    const authorInfoByBookId = new Map<number, { authorName: string, authorImageUrl: string | null }>();
+    authorInfo.forEach(info => {
+      authorInfoByBookId.set(info.bookId, {
+        authorName: info.authorName,
+        authorImageUrl: info.authorImageUrl
+      });
+    });
     
     // Group images by book ID for efficient lookup
     const imagesByBookId = new Map<number, BookImage[]>();
@@ -159,18 +226,55 @@ export class BookStorage implements IBookStorage {
       imagesByBookId.get(image.bookId)!.push(image);
     });
     
-    // Add images to the search results
-    return results.map(({ search_rank, ...book }) => ({
-      ...book,
-      images: imagesByBookId.get(book.id) || []
-    })) as Book[];
+    // Add images and author info to the search results
+    return results.map(({ search_rank, ...book }) => {
+      const bookId = book.id;
+      const authorInfo = authorInfoByBookId.get(bookId) || { authorName: '', authorImageUrl: null };
+      
+      return {
+        ...book,
+        images: imagesByBookId.get(bookId) || [],
+        authorName: authorInfo.authorName,
+        authorImageUrl: authorInfo.authorImageUrl
+      };
+    }) as Book[];
   }
 
   async getBook(id: number): Promise<Book | undefined> {
     console.log(`getBook called with ID: ${id}`);
     
-    // Get the book data
-    const [book] = await db.select().from(books).where(eq(books.id, id));
+    // Get the book data with author information
+    const [book] = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
+      })
+      .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
+      .where(eq(books.id, id));
     
     if (!book) {
       console.log(`Book with ID ${id} not found`);
@@ -180,7 +284,10 @@ export class BookStorage implements IBookStorage {
     console.log(`Book data found:`, JSON.stringify(book, null, 2));
     
     // Get the book images
-    const images = await db.select().from(bookImages).where(eq(bookImages.bookId, id));
+    const images = await db
+      .select()
+      .from(bookImages)
+      .where(eq(bookImages.bookId, id));
     
     console.log(`getBook(${id}): Found ${images.length} images:`, 
       images.map(img => `${img.imageType}: ${img.imageUrl}`));

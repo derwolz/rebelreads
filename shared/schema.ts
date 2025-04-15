@@ -125,11 +125,10 @@ export const followers = pgTable("followers", {
 export const books = pgTable("books", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  author: text("author").notNull(),
-  authorId: integer("author_id").notNull(), // Reference to users table
+  authorId: integer("author_id").notNull().references(() => authors.id), // Reference to authors table
   description: text("description").notNull(),
   // coverUrl column removed - using book_images table instead
-  authorImageUrl: text("author_image_url"),
+  // author name and authorImageUrl removed - these come from the authors table now
   promoted: boolean("promoted").default(false),
   // genres column removed - using book_genre_taxonomies relationship table instead
   pageCount: integer("page_count"),
@@ -617,6 +616,9 @@ export const insertAuthorSchema = createInsertSchema(authors)
   });
 export type Book = typeof books.$inferSelect & {
   images?: BookImage[];
+  // Optional author information that can be joined from the authors table
+  authorName?: string;
+  authorImageUrl?: string | null;
 };
 export type Rating = typeof ratings.$inferSelect;
 export type ReadingStatus = typeof reading_status.$inferSelect;
