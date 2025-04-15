@@ -21,72 +21,62 @@ console.log("Catalogue routes registered");
 
 /**
  * GET /api/catalogue/publisher
- * Get the authenticated user's publishing company along with its authors and books
+ * Get all publishers along with their authors and books
  * Authenticated route
  */
 router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    // Get all publishers
+    const publishersList = await dbStorage.getPublishers();
     
-    // Check if user is a publisher
-    const isPublisher = await dbStorage.isUserPublisher(userId);
-    
-    if (!isPublisher) {
-      return res.status(403).json({ error: "Access denied. Only publishers can access this endpoint" });
-    }
-    
-    // Get only the publisher associated with the authenticated user
-    const publisher = await db.select().from(publishers).where(eq(publishers.userId, userId)).limit(1);
-    
-    if (publisher.length === 0) {
-      return res.status(404).json({ error: "Publisher not found" });
-    }
-    
-    const publisherId = publisher[0];
-    
-    // Get authors for this publisher
-    const publisherAuthors = await dbStorage.getPublisherAuthors(publisherId.id);
-    
-    // For each author, get their books
-    const authorsWithBooks = await Promise.all(
-      publisherAuthors.map(async (user) => {
-        // Get author profile
-        const authorProfile = await dbStorage.getAuthorByUserId(user.id);
+    // Process each publisher to get their authors and books
+    const publishersWithAuthors = await Promise.all(
+      publishersList.map(async (publisher) => {
+        // Get authors for this publisher
+        const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
         
-        if (!authorProfile) {
-          return null;
-        }
+        // For each author, get their books
+        const authorsWithBooks = await Promise.all(
+          publisherAuthors.map(async (user) => {
+            // Get author profile
+            const authorProfile = await dbStorage.getAuthorByUserId(user.id);
+            
+            if (!authorProfile) {
+              return null;
+            }
+            
+            // Get books by this author
+            const authorBooks = await dbStorage.getBooksByAuthor(authorProfile.id);
+            
+            return {
+              author: {
+                ...authorProfile,
+                user: {
+                  id: user.id,
+                  username: user.username,
+                  email: user.email,
+                  displayName: user.displayName
+                }
+              },
+              books: authorBooks
+            };
+          })
+        );
         
-        // Get books by this author
-        const authorBooks = await dbStorage.getBooksByAuthor(authorProfile.id);
+        // Filter out null values
+        const catalogue = authorsWithBooks.filter(item => item !== null);
         
         return {
-          author: {
-            ...authorProfile,
-            user: {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              displayName: user.displayName
-            }
-          },
-          books: authorBooks
+          publisher,
+          catalogue
         };
       })
     );
     
-    // Filter out null values
-    const catalogue = authorsWithBooks.filter(item => item !== null);
-    
-    const result = [{
-      publisher: publisherId,
-      catalogue
-    }];
-    
-    res.json(result);
+    res.json(publishersWithAuthors);
   } catch (error) {
-    console.error("Error getting publisher's catalogue:", error);
-    res.status(500).json({ error: "Failed to retrieve publisher catalogue" });
+    console.error("Error getting all publishers' catalogues:", error);
+    res.status(500).json({ error: "Failed to retrieve publishers catalogues" });
   }
 });
 

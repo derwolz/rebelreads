@@ -8,12 +8,9 @@ import {
   viewGenres, 
   bookGenreTaxonomies, 
   books,
-  bookImages,
-  publishers,
-  publishersAuthors,
-  authors
+  bookImages
 } from "@shared/schema";
-import { eq, and, isNull, sql, inArray, or, not } from "drizzle-orm";
+import { eq, and, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -182,7 +179,6 @@ router.post("/import", adminAuthMiddleware, async (req: Request, res: Response) 
 /**
  * Get books for a specific genre view
  * This route is used by the dynamic home sections to display books by genre view
- * If the user is a publisher, it filters to only show books from authors under their publishing company
  */
 router.get("/view/:id", async (req: Request, res: Response) => {
   try {
@@ -221,61 +217,9 @@ router.get("/view/:id", async (req: Request, res: Response) => {
     }
     
     // Use a simple array with filter to get unique book IDs
-    let bookIds = bookGenresResult.map(bg => bg.bookId)
+    const bookIds = bookGenresResult.map(bg => bg.bookId)
       .filter((id, index, self) => self.indexOf(id) === index);
     console.log(`Found book IDs: ${bookIds.join(', ')}`);
-    
-    // Filter books if user is a publisher
-    if (req.isAuthenticated()) {
-      // Check if user is a publisher
-      const isPublisher = await dbStorage.isUserPublisher(req.user!.id);
-      
-      if (isPublisher) {
-        // Get the publisher ID
-        const publisher = await db.select()
-          .from(publishers)
-          .where(eq(publishers.userId, req.user!.id))
-          .limit(1);
-        
-        if (publisher.length > 0) {
-          const publisherId = publisher[0].id;
-          
-          // Get all authors under this publisher
-          const publisherAuthorsRel = await db.select()
-            .from(publishersAuthors)
-            .where(and(
-              eq(publishersAuthors.publisherId, publisherId),
-              isNull(publishersAuthors.contractEnd)
-            ));
-          
-          if (publisherAuthorsRel.length > 0) {
-            const publisherAuthorIds = publisherAuthorsRel.map(pa => pa.authorId);
-            
-            // Get all books associated with these authors that are also in our genre
-            const publisherBooks = await db.select()
-              .from(books)
-              .where(and(
-                inArray(books.id, bookIds),
-                inArray(books.authorId, publisherAuthorIds)
-              ));
-            
-            // Update bookIds to only include books from the publisher's authors
-            const publisherBookIds = publisherBooks.map(book => book.id);
-            bookIds = publisherBookIds;
-            
-            console.log(`Filtered to ${bookIds.length} books from publisher ${publisherId}'s authors`);
-          } else {
-            console.log(`Publisher ${publisherId} has no authors, returning empty results`);
-            return res.json([]);
-          }
-        }
-      }
-    }
-    
-    // If no books left after filtering, return empty array
-    if (bookIds.length === 0) {
-      return res.json([]);
-    }
     
     // 3. Get the complete book data
     const booksResult = await db
