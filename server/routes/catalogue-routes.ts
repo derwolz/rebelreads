@@ -132,121 +132,60 @@ router.get("/author", requireAuth, async (req: Request, res: Response) => {
  * Format: { authorId: { bookId: [taxonomy objects with details] } }
  * Protected route: Requires publisher authentication only
  */
-router.get("/genres/publisher", async (req: Request, res: Response) => {
+router.get("/genres/publisher", requirePublisher, async (req: Request, res: Response) => {
   try {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-
     const userId = req.user!.id;
     
-    // Check if user is a publisher
-    const isPublisher = await dbStorage.isUserPublisher(userId);
+    // Get the publisher from the user ID
+    const publisher = await dbStorage.getPublisherByUserId(userId);
     
-    if (!isPublisher) {
-      return res.status(403).json({ error: "Access denied. Only publishers can access this endpoint" });
-    }
-    
-    // For publishers: Get only the authors they publish
-    // First, get the publisher's ID
-    const publisher = await db.select().from(publishers).where(eq(publishers.userId, userId)).limit(1);
-    
-    if (publisher.length === 0) {
+    if (!publisher) {
       return res.status(404).json({ error: "Publisher not found" });
     }
     
-    const publisherId = publisher[0].id;
+    // Get all authors managed by this publisher 
+    const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
     
-    // Get all authors managed by this publisher using the publishers_authors table
-    const publisherAuthorsRel = await dbStorage.getPublisherAuthors(publisherId);
-    
-    console.log(`Publisher ${publisherId} has ${publisherAuthorsRel.length} authors`);
+    console.log(`Publisher ${publisher.id} has ${publisherAuthors.length} authors`);
     
     // Initialize the result object
-    let result: any = {};
+    const result: Record<number, Record<number, any[]>> = {};
     
     // For each author, get their books and taxonomies
-    const authorData = await Promise.all(
-      publisherAuthorsRel.map(async (pa) => {
-        // Get the author
-        const author = await db.select().from(authors).where(eq(authors.id, pa.authorId)).limit(1);
-        
-        if (author.length === 0) {
-          return null; // Skip if author not found
+    await Promise.all(
+      publisherAuthors.map(async (author) => {
+        // Ensure we have the author ID
+        if (!author || !author.id) {
+          console.error("Author missing ID:", author);
+          return;
         }
         
-        const authorId = author[0].id;
-        console.log(`Processing author ${authorId} for publisher ${publisherId}`);
+        const authorId = author.id;
         
         // Get all books by this author
-        const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
+        const authorBooks = await dbStorage.getBooksByAuthor(authorId);
         console.log(`Author ${authorId} has ${authorBooks.length} books`);
         
+        // We'll store all book taxonomies for this author here
+        const authorBooksWithTaxonomies: Record<number, any[]> = {};
+        
         // For each book, get the taxonomies
-        const bookData = await Promise.all(
+        await Promise.all(
           authorBooks.map(async (book) => {
             const bookId = book.id;
             
-            // Get taxonomies for this book with their details
-            const bookGenreTaxs = await db.select({
-              id: bookGenreTaxonomies.id,
-              bookId: bookGenreTaxonomies.bookId,
-              taxonomyId: bookGenreTaxonomies.taxonomyId,
-              rank: bookGenreTaxonomies.rank,
-              importance: bookGenreTaxonomies.importance
-            }).from(bookGenreTaxonomies)
-              .where(eq(bookGenreTaxonomies.bookId, bookId))
-              .orderBy(bookGenreTaxonomies.rank);
+            // Use the helper function to get book taxonomies
+            const taxonomies = await dbStorage.getBookTaxonomies(bookId);
             
-            // Get the full taxonomy info for each ID
-            const fullTaxonomies = await Promise.all(
-              bookGenreTaxs.map(async (bgt) => {
-                const taxInfo = await db.select().from(genreTaxonomies)
-                  .where(eq(genreTaxonomies.id, bgt.taxonomyId))
-                  .limit(1);
-                
-                if (taxInfo.length === 0) {
-                  return {
-                    ...bgt,
-                    name: 'Unknown Taxonomy',
-                    description: null,
-                    type: 'unknown'
-                  };
-                }
-                
-                return {
-                  ...bgt,
-                  name: taxInfo[0].name,
-                  description: taxInfo[0].description,
-                  type: taxInfo[0].type
-                };
-              })
-            );
-            
-            return {
-              [bookId]: fullTaxonomies
-            };
+            // Add to the author's books collection
+            authorBooksWithTaxonomies[bookId] = taxonomies;
           })
         );
         
-        // Combine all book data for this author
-        const authorBooks_Taxonomies: Record<number, any[]> = {};
-        bookData.forEach(book => {
-          Object.assign(authorBooks_Taxonomies, book);
-        });
-        
-        return {
-          [authorId]: authorBooks_Taxonomies
-        };
+        // Add this author's data to the result
+        result[authorId] = authorBooksWithTaxonomies;
       })
     );
-    
-    // Combine all author data
-    authorData.forEach(author => {
-      if (author) { // Skip null values
-        Object.assign(result, author);
-      }
-    });
     
     res.json(result);
   } catch (error) {
@@ -261,32 +200,21 @@ router.get("/genres/publisher", async (req: Request, res: Response) => {
  * Format: { bookId: [taxonomy objects with full details] }
  * Protected route: Requires author authentication only
  */
-router.get("/genres/author", async (req: Request, res: Response) => {
+router.get("/genres/author", requireAuthor, async (req: Request, res: Response) => {
   try {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-
     const userId = req.user!.id;
     
-    // Check if user is an author
-    const isAuthor = await dbStorage.isUserAuthor(userId);
+    // Get the author using the helper function
+    const author = await dbStorage.getAuthorByUserId(userId);
     
-    if (!isAuthor) {
-      return res.status(403).json({ error: "Access denied. Only authors can access this endpoint" });
-    }
-    
-    // Get the author's ID
-    const author = await db.select().from(authors).where(eq(authors.userId, userId)).limit(1);
-    
-    if (author.length === 0) {
+    if (!author) {
       return res.status(404).json({ error: "Author not found" });
     }
     
-    const authorId = author[0].id;
+    const authorId = author.id;
     
     // Get all books by this author
-    const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
+    const authorBooks = await dbStorage.getBooksByAuthor(authorId);
     console.log(`Author ${authorId} has ${authorBooks.length} books`);
     
     // For each book, get the taxonomies with full details
@@ -296,43 +224,11 @@ router.get("/genres/author", async (req: Request, res: Response) => {
       authorBooks.map(async (book) => {
         const bookId = book.id;
         
-        // Get taxonomies for this book with their metadata
-        const bookGenreTaxs = await db.select({
-          id: bookGenreTaxonomies.id,
-          bookId: bookGenreTaxonomies.bookId,
-          taxonomyId: bookGenreTaxonomies.taxonomyId,
-          rank: bookGenreTaxonomies.rank,
-          importance: bookGenreTaxonomies.importance
-        }).from(bookGenreTaxonomies)
-          .where(eq(bookGenreTaxonomies.bookId, bookId))
-          .orderBy(bookGenreTaxonomies.rank);
+        // Use the helper function to get book taxonomies
+        const taxonomies = await dbStorage.getBookTaxonomies(bookId);
         
-        // Get the full taxonomy info for each ID
-        const fullTaxonomies = await Promise.all(
-          bookGenreTaxs.map(async (bgt) => {
-            const taxInfo = await db.select().from(genreTaxonomies)
-              .where(eq(genreTaxonomies.id, bgt.taxonomyId))
-              .limit(1);
-            
-            if (taxInfo.length === 0) {
-              return {
-                ...bgt,
-                name: 'Unknown Taxonomy',
-                description: null,
-                type: 'unknown'
-              };
-            }
-            
-            return {
-              ...bgt,
-              name: taxInfo[0].name,
-              description: taxInfo[0].description,
-              type: taxInfo[0].type
-            };
-          })
-        );
-        
-        bookData[bookId] = fullTaxonomies;
+        // Add to the book data
+        bookData[bookId] = taxonomies;
       })
     );
     
