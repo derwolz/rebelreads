@@ -418,6 +418,17 @@ export class BookStorage implements IBookStorage {
   }
 
   async deleteBook(id: number, authorId: number): Promise<void> {
+    // First, delete any related book images to avoid foreign key constraint violations
+    await db
+      .delete(bookImages)
+      .where(eq(bookImages.bookId, id));
+      
+    // Next, delete any book genre taxonomies
+    await db
+      .delete(bookGenreTaxonomies)
+      .where(eq(bookGenreTaxonomies.bookId, id));
+      
+    // Now it's safe to delete the book itself
     await db
       .delete(books)
       .where(and(eq(books.id, id), eq(books.authorId, authorId)));
