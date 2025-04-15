@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CountUp } from "@/components/count-up";
+import { AnimateOnScroll, AnimatedChart } from "@/components/scroll-animations";
 import {
   Dialog,
   DialogContent,
@@ -335,37 +336,45 @@ const NewLandingPage = () => {
 
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl mt-8 md:mt-24 font-bold mb-6 bg-clip-text  ">
-              Find Gems<br></br> Get Discovered
-            </h1>
-            <p className="text-xl md:text-2xl mb-16 md:mb-24 text-muted-foreground">
-              Bold, original, yours — A storytelling platform for authors and
-              readers.
-            </p>
-            <div className="max-w-md mx-auto w-full mb-8">
-              <form
-                onSubmit={handleSignup}
-                className="flex flex-row justify-center items-center"
-              >
-                <div className="bg-[#FFFFFF]/10 p-1 rounded-none border border-[#EFA738]/30">
-                  <Input
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="Enter your email"
-                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-none font-medium py-6"
+            <AnimateOnScroll type="fade-in">
+              <h1 className="text-4xl md:text-6xl mt-8 md:mt-24 font-bold mb-6 bg-clip-text">
+                Find Gems<br></br> Get Discovered
+              </h1>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="short">
+              <p className="text-xl md:text-2xl mb-16 md:mb-24 text-muted-foreground">
+                Bold, original, yours — A storytelling platform for authors and
+                readers.
+              </p>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="medium">
+              <div className="max-w-md mx-auto w-full mb-8">
+                <form
+                  onSubmit={handleSignup}
+                  className="flex flex-row justify-center items-center"
                 >
-                  Get Beta Access
-                </Button>
-              </form>
-            </div>
+                  <div className="bg-[#FFFFFF]/10 p-1 rounded-none border border-[#EFA738]/30">
+                    <Input
+                      name="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="Enter your email"
+                      className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-none font-medium py-6"
+                  >
+                    Get Beta Access
+                  </Button>
+                </form>
+              </div>
+            </AnimateOnScroll>
           </div>
         </div>
 
@@ -378,24 +387,32 @@ const NewLandingPage = () => {
       <section className="py-10 bg-black/40 backdrop-blur-md">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">
-                <CountUp end={100} duration={1000} suffix="%" />
+            <AnimateOnScroll type="slide-up" delay="none">
+              <div>
+                <div className="text-4xl font-bold text-primary mb-2">
+                  <CountUp end={100} duration={1000} suffix="%" />
+                </div>
+                <div className="text-muted-foreground">
+                  Author profit retention
+                </div>
               </div>
-              <div className="text-muted-foreground">
-                Author profit retention
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="short">
+              <div>
+                <div className="text-4xl font-bold text-primary mb-2">0%</div>
+                <div className="text-muted-foreground">
+                  Hidden fees or commissions
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">0%</div>
-              <div className="text-muted-foreground">
-                Hidden fees or commissions
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="medium">
+              <div>
+                <div className="text-4xl font-bold text-primary mb-2">24/7</div>
+                <div className="text-muted-foreground">Access to analytics</div>
               </div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">24/7</div>
-              <div className="text-muted-foreground">Access to analytics</div>
-            </div>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
@@ -403,50 +420,57 @@ const NewLandingPage = () => {
       {/* Direct Connection Section */}
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
-            Direct Author-to-Reader Connection
-          </h2>
+          <AnimateOnScroll type="fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center">
+              Direct Author-to-Reader Connection
+            </h2>
+          </AnimateOnScroll>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Personal Stories for Unique Readers
-              </h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                Authors write personal stories for readers as unique as they
-                are. On Sirened, we believe that every reader deserves content
-                that speaks directly to them.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>
-                    Personalized reading recommendations based on your
-                    preferences
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>
-                    Connect with authors who share your values and interests
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>
-                    Discover hidden gems that traditional publishing might
-                    overlook
-                  </span>
-                </li>
-              </ul>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
-              <img
-                src="/images/author-reader-connection.svg"
-                alt="Author and reader connecting directly"
-                className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
-              />
-            </div>
+            <AnimateOnScroll type="slide-left">
+              <div>
+                <h3 className="text-2xl font-bold mb-4 text-primary">
+                  Personal Stories for Unique Readers
+                </h3>
+                <p className="text-lg text-muted-foreground mb-6">
+                  Authors write personal stories for readers as unique as they
+                  are. On Sirened, we believe that every reader deserves content
+                  that speaks directly to them.
+                </p>
+                <ul className="space-y-3">
+                  <li className="flex items-start">
+                    <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                    <span>
+                      Personalized reading recommendations based on your
+                      preferences
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                    <span>
+                      Connect with authors who share your values and interests
+                    </span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
+                    <span>
+                      Discover hidden gems that traditional publishing might
+                      overlook
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-right">
+              <div className="bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
+                <img
+                  src="/images/author-reader-connection.svg"
+                  alt="Author and reader connecting directly"
+                  className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            </AnimateOnScroll>
           </div>
 
           <div className="my-24 relative overflow-hidden py-10 px-8 rounded-none bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
@@ -670,112 +694,124 @@ const NewLandingPage = () => {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-16 items-center mb-16">
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
-              <h3 className="text-2xl font-bold mb-4 text-primary">
-                Reader Analytics
-              </h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                Understand how readers interact with your content and make informed decisions:
-              </p>
-
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart
-                  data={analyticsData}
-                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
-                    </linearGradient>
-                    <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" stroke="#888888" />
-                  <YAxis stroke="#888888" />
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1a1a1a",
-                      borderColor: "#333",
-                      color: "#fff",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="impressions"
-                    stroke="#A06CD5"
-                    fillOpacity={1}
-                    fill="url(#colorImpressions)"
-                    name="Content Views"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="referrals"
-                    stroke="#EFA738"
-                    fillOpacity={1}
-                    fill="url(#colorReferrals)"
-                    name="Reader Referrals"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6">
-            
-              
-              <div>
+            <AnimateOnScroll type="slide-left">
+              <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
                 <h3 className="text-2xl font-bold mb-4 text-primary">
-                  Audience Intelligence
+                  Reader Analytics
                 </h3>
                 <p className="text-lg text-muted-foreground mb-6">
-                  Make data-informed decisions with comprehensive analytics that are easy to understand.
+                  Understand how readers interact with your content and make informed decisions:
                 </p>
-                <ul className="space-y-4">
-                  <li className="flex items-start">
-                    <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
-                      <TrendingUp className="h-5 w-5 text-primary" />
+
+                <AnimatedChart>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart
+                      data={analyticsData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" stroke="#888888" />
+                      <YAxis stroke="#888888" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1a1a1a",
+                          borderColor: "#333",
+                          color: "#fff",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="impressions"
+                        stroke="#A06CD5"
+                        fillOpacity={1}
+                        fill="url(#colorImpressions)"
+                        name="Content Views"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="referrals"
+                        stroke="#EFA738"
+                        fillOpacity={1}
+                        fill="url(#colorReferrals)"
+                        name="Reader Referrals"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </AnimatedChart>
+              </div>
+            </AnimateOnScroll>
+
+            <AnimateOnScroll type="slide-right">
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <h3 className="text-2xl font-bold mb-4 text-primary">
+                    Audience Intelligence
+                  </h3>
+                  <p className="text-lg text-muted-foreground mb-6">
+                    Make data-informed decisions with comprehensive analytics that are easy to understand.
+                  </p>
+                  <ul className="space-y-4">
+                    <AnimateOnScroll type="slide-right" delay="short">
+                      <li className="flex items-start">
+                        <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-1">Engagement Insights</h4>
+                          <p className="text-muted-foreground">
+                            See which chapters keep readers engaged and where they drop off.
+                          </p>
+                        </div>
+                      </li>
+                    </AnimateOnScroll>
+                    <AnimateOnScroll type="slide-right" delay="medium">
+                      <li className="flex items-start">
+                        <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
+                          <Filter className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-1">Demographic Filters</h4>
+                          <p className="text-muted-foreground">
+                            Understand your audience with detailed demographic and interest data.
+                          </p>
+                        </div>
+                      </li>
+                    </AnimateOnScroll>
+                    <AnimateOnScroll type="slide-right" delay="long">
+                      <li className="flex items-start">
+                        <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
+                          <Layers className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-1">Conversion Tracking</h4>
+                          <p className="text-muted-foreground">
+                            Follow the journey from discovery to purchase with detailed conversion analytics.
+                          </p>
+                        </div>
+                      </li>
+                    </AnimateOnScroll>
+                  </ul>
+                  <AnimateOnScroll type="fade-in" delay="long">
+                    <div className="mt-6">
+                      <Button className="bg-primary/90 hover:bg-primary">
+                        <span>Learn More</span>
+                        <ArrowRight size={16} className="ml-1" />
+                      </Button>
                     </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Engagement Insights</h4>
-                      <p className="text-muted-foreground">
-                        See which chapters keep readers engaged and where they drop off.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
-                      <Filter className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Demographic Filters</h4>
-                      <p className="text-muted-foreground">
-                        Understand your audience with detailed demographic and interest data.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
-                      <Layers className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Conversion Tracking</h4>
-                      <p className="text-muted-foreground">
-                        Follow the journey from discovery to purchase with detailed conversion analytics.
-                      </p>
-                    </div>
-                  </li>
-                </ul>
-                <div className="mt-6">
-                  <Button className="bg-primary/90 hover:bg-primary">
-                    <span>Learn More</span>
-                    <ArrowRight size={16} className="ml-1" />
-                  </Button>
+                  </AnimateOnScroll>
                 </div>
               </div>
-            </div>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
