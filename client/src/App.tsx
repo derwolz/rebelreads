@@ -29,6 +29,7 @@ import ProActionPage from "@/pages/pro-action-page";
 import ProAuthorProfilePage from "@/pages/pro-author-profile-page";
 import FollowerTest from "@/pages/follower-test";
 import PublisherPage from "@/pages/publisher-page";
+import PublisherDashboard from "@/pages/publisher-dashboard";
 import { HomepageSettingsPage } from "@/pages/homepage-settings-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
@@ -125,6 +126,9 @@ function Router() {
         
         {/* Sales routes */}
         <ProtectedRoute path="/sales" component={SalesPanel} />
+        
+        {/* Publisher routes */}
+        <ProtectedRoute path="/publisher" component={PublisherDashboard} />
 
         <Route component={NotFound} />
       </Switch>

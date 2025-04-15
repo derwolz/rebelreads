@@ -53,6 +53,18 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     enabled: !!user,
   });
 
+  // Check if user is a publisher
+  const { data: publisherStatus } = useQuery({
+    queryKey: ["/api/account/publisher-status"],
+    queryFn: async () => {
+      if (!user) return { isPublisher: false };
+      const res = await fetch("/api/account/publisher-status");
+      if (!res.ok) return { isPublisher: false };
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
   const { data: searchResults } = useQuery<{
     books: Book[];
     metadata: { total: number; query: string };

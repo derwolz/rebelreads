@@ -21,6 +21,9 @@ import popularBooksRoutes from "./routes/popular-books-routes";
 import feedbackRoutes from "./routes/feedback-routes";
 import salesRoutes from "./routes/sales-routes";
 import catalogueRoutes from "./routes/catalogue-routes";
+import publisherRoutes from "./routes/publisher-routes";
+import catalogueAuthorsRoutes from "./routes/catalogue-routes-authors";
+import cataloguePublisherRoutes from "./routes/catalogue-routes-publisher";
 import simpleApiRoutes from "./routes/simple-api";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -93,6 +96,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register authenticated catalogue routes
   app.use("/api/catalogue", catalogueRoutes);
+  app.use("/api/catalogue/authors", catalogueAuthorsRoutes);
+  app.use("/api/catalogue/publisher", cataloguePublisherRoutes);
+  
+  // Register publisher routes
+  app.use("/api/publishers", publisherRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
