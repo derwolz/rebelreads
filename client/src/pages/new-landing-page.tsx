@@ -65,27 +65,13 @@ interface FeatureBoxProps {
 }
 
 const FeatureBox = ({ title, description, icon }: FeatureBoxProps) => (
-  <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-primary/20 hover:border-primary/40 transition-all duration-300 h-full">
+  <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20 hover:border-primary/40 transition-all duration-300 h-full">
     <div className="text-primary mb-4">{icon}</div>
     <h3 className="text-xl font-bold mb-2">{title}</h3>
     <p className="text-muted-foreground">{description}</p>
   </div>
 );
 
-// Testimonial Component
-interface TestimonialProps {
-  quote: string;
-  author: string;
-  role: string;
-}
-
-const Testimonial = ({ quote, author, role }: TestimonialProps) => (
-  <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
-    <p className="italic mb-4 text-muted-foreground">{quote}</p>
-    <div className="font-medium">{author}</div>
-    <div className="text-sm text-muted-foreground">{role}</div>
-  </div>
-);
 
 // Value Proposition Component
 interface ValuePropProps {
@@ -105,7 +91,7 @@ const ValueProposition = ({
     <h3 className="text-2xl font-bold mb-4 text-primary">{title}</h3>
     <p className="text-muted-foreground mb-6">{description}</p>
     <div className="grid md:grid-cols-2 gap-6">
-      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
+      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
         <h4 className="text-lg font-semibold mb-2 flex items-center">
           <span className="mr-2 text-primary">
             <CheckCircle size={18} />
@@ -114,7 +100,7 @@ const ValueProposition = ({
         </h4>
         <p className="text-muted-foreground">{forAuthors}</p>
       </div>
-      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
+      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
         <h4 className="text-lg font-semibold mb-2 flex items-center">
           <span className="mr-2 text-primary">
             <CheckCircle size={18} />
@@ -319,8 +305,8 @@ const NewLandingPage = () => {
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 -z-10"></div>
-        <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-full bg-primary/10 blur-3xl -z-10"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-primary/5 blur-3xl -z-10"></div>
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-none bg-primary/10 blur-3xl -z-10"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-none bg-primary/5 blur-3xl -z-10"></div>
 
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
@@ -336,7 +322,7 @@ const NewLandingPage = () => {
                 onSubmit={handleSignup}
                 className="flex flex-row justify-center items-center"
               >
-                <div className="bg-[#FFFFFF]/10 p-1 rounded-l-lg border border-[#EFA738]/30">
+                <div className="bg-[#FFFFFF]/10 p-1 rounded-none border border-[#EFA738]/30">
                   <Input
                     name="email"
                     type="email"
@@ -349,7 +335,7 @@ const NewLandingPage = () => {
                 </div>
                 <Button
                   type="submit"
-                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-r-lg rounded-l-none font-medium py-6"
+                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-none font-medium py-6"
                 >
                   Get Beta Access
                 </Button>
@@ -427,7 +413,7 @@ const NewLandingPage = () => {
                 </li>
               </ul>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20 flex justify-center items-center">
+            <div className="bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
               <img
                 src="/images/author-reader-connection.svg"
                 alt="Author and reader connecting directly"
@@ -436,9 +422,9 @@ const NewLandingPage = () => {
             </div>
           </div>
 
-          <div className="my-24 relative overflow-hidden py-10 px-8 rounded-xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-white/5 rounded-full blur-3xl"></div>
+          <div className="my-24 relative overflow-hidden py-10 px-8 rounded-none bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-none blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-white/5 rounded-none blur-3xl"></div>
 
             <div className="text-center max-w-3xl mx-auto relative z-10">
               <h3 className="text-2xl md:text-3xl font-bold mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-foreground">
@@ -452,7 +438,7 @@ const NewLandingPage = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mt-20">
-            <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-lg border border-primary/20 flex justify-center items-center">
+            <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
               <img
                 src="/images/author-store.svg"
                 alt="Author-owned bookstore"
@@ -485,7 +471,7 @@ const NewLandingPage = () => {
               </ul>
               <div className="mt-6 pt-6 border-t border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-primary/20">
+                  <div className="p-2 rounded-none bg-primary/20">
                     <svg
                       width="24"
                       height="24"
@@ -657,7 +643,7 @@ const NewLandingPage = () => {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-16 items-center mb-16">
-            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-lg border border-primary/20">
+            <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
               <h3 className="text-2xl font-bold mb-4 text-primary">
                 Reader Analytics
               </h3>
@@ -672,12 +658,12 @@ const NewLandingPage = () => {
                 >
                   <defs>
                     <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
+                      <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
                     </linearGradient>
                     <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
+                      <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="name" stroke="#888888" />
@@ -693,7 +679,7 @@ const NewLandingPage = () => {
                   <Area
                     type="monotone"
                     dataKey="impressions"
-                    stroke="#EFA738"
+                    stroke="#A06CD5"
                     fillOpacity={1}
                     fill="url(#colorImpressions)"
                     name="Content Views"
@@ -701,7 +687,7 @@ const NewLandingPage = () => {
                   <Area
                     type="monotone"
                     dataKey="referrals"
-                    stroke="#82ca9d"
+                    stroke="#EFA738"
                     fillOpacity={1}
                     fill="url(#colorReferrals)"
                     name="Reader Referrals"
@@ -711,21 +697,7 @@ const NewLandingPage = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-              <div className="bg-black/30 backdrop-blur-md p-6 rounded-lg border border-primary/20">
-                <h3 className="text-xl font-bold mb-4">
-                  Find Your Perfect Match
-                </h3>
-                {/* Use the actual GenreSelector component */}
-                <GenreSelector
-                  mode="taxonomy"
-                  selected={selectedGenres}
-                  onSelectionChange={setSelectedGenres}
-                  restrictLimits={false}
-                  label=""
-                  helperText="Select genres, themes, and tropes that interest you"
-                  className="pb-6"
-                />
-              </div>
+            
               
               <div>
                 <h3 className="text-2xl font-bold mb-4 text-primary">
@@ -736,7 +708,7 @@ const NewLandingPage = () => {
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-start">
-                    <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                    <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
                       <TrendingUp className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -747,7 +719,7 @@ const NewLandingPage = () => {
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                    <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
                       <Filter className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -758,7 +730,7 @@ const NewLandingPage = () => {
                     </div>
                   </li>
                   <li className="flex items-start">
-                    <div className="bg-primary/20 p-2 rounded-full mr-3 flex-shrink-0">
+                    <div className="bg-primary/20 p-2 rounded-none mr-3 flex-shrink-0">
                       <Layers className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -782,31 +754,32 @@ const NewLandingPage = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 md:py-32 bg-gradient-to-br from-black/20 to-transparent">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
-            What Our Community Says
-          </h2>
+      <section className="py-20 md:py-32 bg-gradient-to-br from-black/20 to-transparent flex justify-center center-items">
+        <div className=" w-64 md:w-[85vw] backdrop-blur-md p-6  ">
+          <h3 className=" text-center  font-bold mb-12">
+            Find Your Perfect Match
+          </h3>
+          {/* Use the actual GenreSelector component */}
+          <div className="p-6 bg-black/20 border rounded-none border-white/20">
+            <div className="text-lg font-medium mb-1">
+            You are multi-faceted, so why limit yourself to one profile?
+            </div>
+          <GenreSelector
+            mode="taxonomy"
+            selected={selectedGenres}
+            onSelectionChange={setSelectedGenres}
+            restrictLimits={false}
+            label=""
+            helperText="Select genres, themes, and tropes that interest you"
+            className="pb-6"
+          />
+            <Button className="bg-primary/90 float-right hover:bg-primary">
+              <span>Start a new profile</span>
+              <ArrowRight size={16} className="ml-1" />
+            </Button>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Testimonial
-              quote="Sirened gave me direct access to readers who love my specific genre. I can actually see what they like about my books and respond to their feedback."
-              author="Jamie Chen"
-              role="Fantasy Author"
-            />
-
-            <Testimonial
-              quote="As a reader, I've discovered amazing books that I never would have found through traditional channels. The transparency about why a book is recommended is refreshing."
-              author="Michael Rodriguez"
-              role="Avid Reader"
-            />
-
-            <Testimonial
-              quote="The analytics tools have completely transformed how I write and market my books. I understand my readers on a deeper level now."
-              author="Sarah Johnson"
-              role="Science Fiction Author"
-            />
-          </div>
+            
+            </div>
         </div>
       </section>
 
@@ -857,7 +830,7 @@ const NewLandingPage = () => {
                 onSubmit={handleSignup}
                 className="flex flex-row justify-center items-center"
               >
-                <div className="bg-[#FFFFFF]/10 p-1 rounded-l-lg border border-[#EFA738]/30">
+                <div className="bg-[#FFFFFF]/10 p-1 rounded-none border border-[#EFA738]/30">
                   <Input
                     name="email"
                     type="email"
@@ -870,7 +843,7 @@ const NewLandingPage = () => {
                 </div>
                 <Button
                   type="submit"
-                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-r-lg rounded-l-none font-medium py-6"
+                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-none font-medium py-6"
                 >
                   Get Beta Access
                 </Button>
