@@ -84,42 +84,79 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
 
 /**
  * GET /api/catalogue/author
- * Get all authors along with their books
- * Authenticated route
+ * Get information for the currently logged in author, including profile, books and book images
+ * Authenticated route with author check
  */
-router.get("/author", requireAuth, async (req: Request, res: Response) => {
+router.get("/author", requireAuthor, async (req: Request, res: Response) => {
   try {
-    // Get all authors from the database
-    const authorsList = await db.select().from(authors);
+    // Get the current user's author profile
+    const author = await dbStorage.getAuthorByUserId(req.user!.id);
     
-    // For each author, get their books and user information
-    const authorsWithBooks = await Promise.all(
-      authorsList.map(async (author) => {
-        // Get all books by this author
-        const authorBooks = await dbStorage.getBooksByAuthor(author.id);
-        
-        // Get user profile for this author
-        const user = await db.select().from(users).where(eq(users.id, author.userId)).limit(1);
-        
-        return {
-          author: {
-            ...author,
-            user: user.length > 0 ? {
-              id: user[0].id,
-              username: user[0].username,
-              email: user[0].email,
-              displayName: user[0].displayName
-            } : null
-          },
-          books: authorBooks
-        };
-      })
-    );
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
     
-    res.json(authorsWithBooks);
+    // Get user profile data
+    const userData = await db.select().from(users).where(eq(users.id, author.userId)).limit(1);
+    
+    if (userData.length === 0) {
+      return res.status(404).json({ error: "User profile not found" });
+    }
+    
+    const user = userData[0];
+    
+    // Get all books by this author
+    const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+    
+    // Get images for all books
+    const bookIds = authorBooks.map(book => book.id);
+    
+    // Only fetch images if there are books
+    let allImages: any[] = [];
+    if (bookIds.length > 0) {
+      allImages = await db.select().from(bookImages).where(inArray(bookImages.bookId, bookIds));
+    }
+    
+    // Group images by book ID
+    const imagesByBookId = new Map<number, any[]>();
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push({
+        id: image.id,
+        imageUrl: image.imageUrl,
+        imageType: image.imageType,
+        width: image.width,
+        height: image.height,
+        sizeKb: image.sizeKb
+      });
+    });
+    
+    // Add images to each book
+    const booksWithImages = authorBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    }));
+    
+    // Build the response data
+    const authorData = {
+      author: {
+        ...author,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          displayName: user.displayName
+        }
+      },
+      books: booksWithImages
+    };
+    
+    res.json([authorData]); // Return as array for backwards compatibility
   } catch (error) {
-    console.error("Error getting all authors' catalogues:", error);
-    res.status(500).json({ error: "Failed to retrieve authors catalogues" });
+    console.error("Error getting author catalogue:", error);
+    res.status(500).json({ error: "Failed to retrieve author catalogue" });
   }
 });
 
