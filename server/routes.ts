@@ -25,6 +25,7 @@ import publisherRoutes from "./routes/publisher-routes";
 import catalogueAuthorsRoutes from "./routes/catalogue-routes-authors";
 import cataloguePublisherRoutes from "./routes/catalogue-routes-publisher";
 import simpleApiRoutes from "./routes/simple-api";
+import debugRoutes from "./routes/debug-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -101,6 +102,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);
+  
+  // Special debug routes that bypass security checks for diagnostic purposes
+  app.use("/api/system-debug", debugRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

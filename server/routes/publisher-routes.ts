@@ -4,7 +4,7 @@ import { dbStorage } from "../storage";
 import { requirePublisher } from "../middleware/author-auth";
 import { requireAuth } from "../middleware/auth";
 import { db } from "../db";
-import { authors, books, publishers, publishersAuthors } from "@shared/schema";
+import { authors, books, publishers, publishersAuthors, users } from "@shared/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
 const router = Router();
@@ -15,6 +15,7 @@ const router = Router();
  * Not protected - for diagnostic purposes only
  */
 router.get("/debug/check-publisher-status/:userId", async (req: Request, res: Response) => {
+  console.log("Debug endpoint called for user ID:", req.params.userId);
   try {
     const userId = parseInt(req.params.userId);
     if (isNaN(userId)) {
@@ -26,13 +27,17 @@ router.get("/debug/check-publisher-status/:userId", async (req: Request, res: Re
     const publisherDetails = isPublisher ? await dbStorage.getPublisherByUserId(userId) : null;
     
     // Get user details from database
-    const [user] = await db.select().from(authors).where(eq(authors.userId, userId));
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
     
     return res.json({
       userId,
       isPublisher,
       publisherDetails,
-      userInfo: user ? { authorId: user.id, authorName: user.authorName } : null
+      userInfo: user ? { 
+        id: user.id, 
+        email: user.email,
+        username: user.username
+      } : null
     });
   } catch (error) {
     console.error("Error checking publisher status:", error);
