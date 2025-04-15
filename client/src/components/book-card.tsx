@@ -64,7 +64,7 @@ export function BookCard({ book }: { book: Book }) {
 
   // Fetch user's rating preferences
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
-    queryKey: ["/api/rating-preferences"],
+    queryKey: ["/api/account/rating-preferences"],
   });
 
   // Set up intersection observer to track when the card becomes visible
