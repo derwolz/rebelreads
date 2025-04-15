@@ -2,8 +2,8 @@ import { Router, Request, Response, NextFunction } from "express";
 import { dbStorage } from "../storage";
 import { log } from "../vite";
 import { db } from "../db";
-import { authors, books, bookImages, publishersAuthors, publishers, users, bookGenreTaxonomies } from "@shared/schema";
-import { eq, and, inArray, isNull } from "drizzle-orm";
+import { authors, books, bookImages, publishersAuthors, publishers, users, bookGenreTaxonomies, genreTaxonomies } from "@shared/schema";
+import { eq, and, inArray, isNull, desc } from "drizzle-orm";
 import { requireAuthor, requirePublisher } from "../middleware/author-auth";
 
 const router = Router();
@@ -129,7 +129,7 @@ router.get("/author", requireAuth, async (req: Request, res: Response) => {
 /**
  * GET /api/catalogue/genres/publisher
  * Get a list of author IDs, connected to book IDs, then each book ID has the taxonomies from book_genre_taxonomies
- * Format: { authorId: { bookId: [taxonomyIds] } }
+ * Format: { authorId: { bookId: [taxonomy objects with details] } }
  * Protected route: Requires publisher authentication only
  */
 router.get("/genres/publisher", async (req: Request, res: Response) => {
@@ -188,21 +188,50 @@ router.get("/genres/publisher", async (req: Request, res: Response) => {
           authorBooks.map(async (book) => {
             const bookId = book.id;
             
-            // Get taxonomies for this book
-            const taxonomies = await db.select({
-              taxonomyId: bookGenreTaxonomies.taxonomyId
-            }).from(bookGenreTaxonomies).where(eq(bookGenreTaxonomies.bookId, bookId));
+            // Get taxonomies for this book with their details
+            const bookGenreTaxs = await db.select({
+              id: bookGenreTaxonomies.id,
+              bookId: bookGenreTaxonomies.bookId,
+              taxonomyId: bookGenreTaxonomies.taxonomyId,
+              rank: bookGenreTaxonomies.rank,
+              importance: bookGenreTaxonomies.importance
+            }).from(bookGenreTaxonomies)
+              .where(eq(bookGenreTaxonomies.bookId, bookId))
+              .orderBy(bookGenreTaxonomies.rank);
             
-            const taxonomyIds = taxonomies.map(t => t.taxonomyId);
+            // Get the full taxonomy info for each ID
+            const fullTaxonomies = await Promise.all(
+              bookGenreTaxs.map(async (bgt) => {
+                const taxInfo = await db.select().from(genreTaxonomies)
+                  .where(eq(genreTaxonomies.id, bgt.taxonomyId))
+                  .limit(1);
+                
+                if (taxInfo.length === 0) {
+                  return {
+                    ...bgt,
+                    name: 'Unknown Taxonomy',
+                    description: null,
+                    type: 'unknown'
+                  };
+                }
+                
+                return {
+                  ...bgt,
+                  name: taxInfo[0].name,
+                  description: taxInfo[0].description,
+                  type: taxInfo[0].type
+                };
+              })
+            );
             
             return {
-              [bookId]: taxonomyIds
+              [bookId]: fullTaxonomies
             };
           })
         );
         
         // Combine all book data for this author
-        const authorBooks_Taxonomies: Record<number, number[]> = {};
+        const authorBooks_Taxonomies: Record<number, any[]> = {};
         bookData.forEach(book => {
           Object.assign(authorBooks_Taxonomies, book);
         });
@@ -229,8 +258,8 @@ router.get("/genres/publisher", async (req: Request, res: Response) => {
 
 /**
  * GET /api/catalogue/genres/author
- * Get a list of book IDs connected to taxonomy IDs for the authenticated author
- * Format: { bookId: [taxonomyIds] }
+ * Get a list of book IDs connected to taxonomy objects for the authenticated author
+ * Format: { bookId: [taxonomy objects with full details] }
  * Protected route: Requires author authentication only
  */
 router.get("/genres/author", async (req: Request, res: Response) => {
@@ -261,21 +290,50 @@ router.get("/genres/author", async (req: Request, res: Response) => {
     const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
     console.log(`Author ${authorId} has ${authorBooks.length} books`);
     
-    // For each book, get the taxonomies
-    const bookData: Record<number, number[]> = {};
+    // For each book, get the taxonomies with full details
+    const bookData: Record<number, any[]> = {};
     
     await Promise.all(
       authorBooks.map(async (book) => {
         const bookId = book.id;
         
-        // Get taxonomies for this book
-        const taxonomies = await db.select({
-          taxonomyId: bookGenreTaxonomies.taxonomyId
-        }).from(bookGenreTaxonomies).where(eq(bookGenreTaxonomies.bookId, bookId));
+        // Get taxonomies for this book with their metadata
+        const bookGenreTaxs = await db.select({
+          id: bookGenreTaxonomies.id,
+          bookId: bookGenreTaxonomies.bookId,
+          taxonomyId: bookGenreTaxonomies.taxonomyId,
+          rank: bookGenreTaxonomies.rank,
+          importance: bookGenreTaxonomies.importance
+        }).from(bookGenreTaxonomies)
+          .where(eq(bookGenreTaxonomies.bookId, bookId))
+          .orderBy(bookGenreTaxonomies.rank);
         
-        const taxonomyIds = taxonomies.map(t => t.taxonomyId);
+        // Get the full taxonomy info for each ID
+        const fullTaxonomies = await Promise.all(
+          bookGenreTaxs.map(async (bgt) => {
+            const taxInfo = await db.select().from(genreTaxonomies)
+              .where(eq(genreTaxonomies.id, bgt.taxonomyId))
+              .limit(1);
+            
+            if (taxInfo.length === 0) {
+              return {
+                ...bgt,
+                name: 'Unknown Taxonomy',
+                description: null,
+                type: 'unknown'
+              };
+            }
+            
+            return {
+              ...bgt,
+              name: taxInfo[0].name,
+              description: taxInfo[0].description,
+              type: taxInfo[0].type
+            };
+          })
+        );
         
-        bookData[bookId] = taxonomyIds;
+        bookData[bookId] = fullTaxonomies;
       })
     );
     
