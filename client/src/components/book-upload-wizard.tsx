@@ -23,6 +23,7 @@ interface BookImageFile {
   file: File | null;
   width: number;
   height: number;
+  previewUrl?: string; // URL for existing images when editing
 }
 import {
   Dialog,
@@ -228,6 +229,24 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
     };
     
     if (book) {
+      // Create book images structure with existing images if available
+      const bookImages = createEmptyBookImages();
+      
+      // If the book has images, populate the URLs
+      if (book.images && book.images.length > 0) {
+        console.log("Book has images:", book.images.map(img => `${img.imageType}: ${img.imageUrl}`));
+        
+        // Initialize existing image URLs
+        book.images.forEach(image => {
+          const imageType = image.imageType as typeof IMAGE_TYPES[number];
+          if (bookImages[imageType]) {
+            // Store the image URL in the existing structure
+            bookImages[imageType].previewUrl = image.imageUrl;
+            console.log(`Set preview URL for ${imageType}: ${image.imageUrl}`);
+          }
+        });
+      }
+      
       return {
         title: book.title,
         description: book.description,
@@ -246,7 +265,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "", // Initialize from book data
-        bookImages: createEmptyBookImages(),
+        bookImages: bookImages,
       };
     }
     
@@ -523,13 +542,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 0:
         return formData.title && formData.description;
       case 1:
-        // Validate that all required images are provided
+        // Validate that all required images are provided (either file or previewUrl)
         console.log("Checking required images:", formData.bookImages);
         const imageStatuses = Object.entries(formData.bookImages).map(([type, img]) => 
-          `${type}: ${img.file ? 'Yes' : 'No'}`
+          `${type}: ${img.file ? 'Yes (File)' : (img.previewUrl ? 'Yes (Existing)' : 'No')}`
         );
         console.log("Image statuses:", imageStatuses);
-        const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null);
+        const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null || img.previewUrl !== undefined);
         console.log("All required images provided:", requiredImages);
         return requiredImages;
       case 2:
@@ -629,6 +648,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                     value={imageData.file}
                     width={imageData.width}
                     height={imageData.height}
+                    previewUrl={imageData.previewUrl}
                     onChange={(file) => handleImageChange(imageType, file)}
                     required={true}
                   />
