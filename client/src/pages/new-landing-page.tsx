@@ -483,7 +483,7 @@ const NewLandingPage = () => {
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Authors keep 100% of their sales revenue</span>
+                  <span>Authors keep <CountUp end={100} duration={1000} suffix="%" /> of their sales revenue</span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
@@ -820,7 +820,7 @@ const NewLandingPage = () => {
           <ValueProposition
             title="Fair Compensation"
             description="The current publishing model takes significant royalties from authors while providing limited value."
-            forAuthors="Keep 100% of your sales with no platform fees. Set your own prices and offer any format you want."
+            forAuthors={`Keep <CountUp end={100} duration={1000} suffix="%" /> of your sales with no platform fees. Set your own prices and offer any format you want.`}
             forReaders="Support authors directly, knowing that your purchase directly benefits their work rather than intermediaries."
           />
 
