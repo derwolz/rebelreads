@@ -1459,6 +1459,8 @@ async function removeHasBetaAccessFromUsers() {
 
 export async function runMigrations() {
   console.log("Running database migrations...");
+  // Remove has_beta_access column from users table
+  await removeHasBetaAccessFromUsers();
   await removeGenresColumnFromBooks();
   await removeAuthorColumnsFromBooks();
   await addFeaturedColumnToRatings();
