@@ -288,7 +288,7 @@ export default function PublisherDashboard() {
   // Update publisher profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: z.infer<typeof updatePublisherSchema>) => {
-      const response = await fetch(`/api/publishers/${publisherProfile?.id}`, {
+      const response = await fetch(`/api/publishers/${profile.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -327,7 +327,7 @@ export default function PublisherDashboard() {
   const removeAuthorMutation = useMutation({
     mutationFn: async (authorId: number) => {
       const response = await fetch(
-        `/api/publishers/${publisherProfile?.id}/authors/${authorId}`,
+        `/api/publishers/${profile.id}/authors/${authorId}`,
         {
           method: "DELETE",
         },
