@@ -122,6 +122,106 @@ router.get("/author", requireAuth, async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/catalogue/debug-book-genres
+ * Debug version of the book-genres endpoint that doesn't require authentication
+ * This is only for testing and should be removed in production
+ */
+router.get("/debug-book-genres", async (req: Request, res: Response) => {
+  try {
+    // Example author and publisher user IDs for testing
+    // We'll simulate both cases
+    let result = {};
+    
+    // Let's test publisher first
+    const publisherId = 1; // Assuming ID 1 exists
+    
+    // Get all authors managed by this publisher
+    const publisherAuthorsRel = await db.select().from(publishersAuthors).where(eq(publishersAuthors.publisherId, publisherId));
+    
+    // For each author, get their books and taxonomies
+    const authorData = await Promise.all(
+      publisherAuthorsRel.map(async (pa) => {
+        // Get the author
+        const author = await db.select().from(authors).where(eq(authors.id, pa.authorId)).limit(1);
+        
+        if (author.length === 0) {
+          return null; // Skip if author not found
+        }
+        
+        const authorId = author[0].id;
+        
+        // Get all books by this author
+        const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
+        
+        // For each book, get the taxonomies
+        const bookData = await Promise.all(
+          authorBooks.map(async (book) => {
+            const bookId = book.id;
+            
+            // Get taxonomies for this book
+            const taxonomies = await db.select({
+              taxonomyId: bookGenreTaxonomies.taxonomyId
+            }).from(bookGenreTaxonomies).where(eq(bookGenreTaxonomies.bookId, bookId));
+            
+            const taxonomyIds = taxonomies.map(t => t.taxonomyId);
+            
+            return {
+              [bookId]: taxonomyIds
+            };
+          })
+        );
+        
+        // Combine all book data for this author
+        const authorBooks_Taxonomies = {};
+        bookData.forEach(book => {
+          Object.assign(authorBooks_Taxonomies, book);
+        });
+        
+        return {
+          [authorId]: authorBooks_Taxonomies
+        };
+      })
+    );
+    
+    // Combine all author data
+    authorData.forEach(author => {
+      if (author) { // Skip null values
+        Object.assign(result, author);
+      }
+    });
+
+    // Now let's also get some author data for comparison
+    const allBooks = await db.select().from(books);
+    
+    // Get a sample of books for a test case
+    const sampleBookData: Record<number, number[]> = {};
+    
+    // Take the first 3 books for our sample
+    for (let i = 0; i < Math.min(3, allBooks.length); i++) {
+      const book = allBooks[i];
+      const bookId = book.id;
+      
+      // Get taxonomies for this book
+      const taxonomies = await db.select({
+        taxonomyId: bookGenreTaxonomies.taxonomyId
+      }).from(bookGenreTaxonomies).where(eq(bookGenreTaxonomies.bookId, bookId));
+      
+      const taxonomyIds = taxonomies.map(t => t.taxonomyId);
+      
+      sampleBookData[bookId] = taxonomyIds;
+    }
+    
+    res.json({
+      publisherView: result,
+      authorView: sampleBookData
+    });
+  } catch (error) {
+    console.error("Error debugging book genres:", error);
+    res.status(500).json({ error: "Failed to retrieve debug book genres" });
+  }
+});
+
+/**
  * GET /api/catalogue/book-genres
  * Get a list of author IDs, connected to book IDs, then each book ID has the taxonomies from book_genre_taxonomies
  * For publishers, provide all author IDs -> book IDs -> taxonomy IDs
@@ -146,7 +246,10 @@ router.get("/book-genres", async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Publisher or author access required" });
     }
     
-    let result = {};
+    // The result type depends on whether the user is a publisher or an author
+    // For publishers: { authorId: { bookId: [taxonomyIds] } }
+    // For authors: { bookId: [taxonomyIds] }
+    let result: any = {};
     
     if (isPublisher) {
       // For publishers: Get all authors managed by the publisher
@@ -196,7 +299,7 @@ router.get("/book-genres", async (req: Request, res: Response) => {
           );
           
           // Combine all book data for this author
-          const authorBooks_Taxonomies = {};
+          const authorBooks_Taxonomies: Record<number, number[]> = {};
           bookData.forEach(book => {
             Object.assign(authorBooks_Taxonomies, book);
           });
@@ -228,7 +331,7 @@ router.get("/book-genres", async (req: Request, res: Response) => {
       const authorBooks = await db.select().from(books).where(eq(books.authorId, authorId));
       
       // For each book, get the taxonomies
-      const bookData = {};
+      const bookData: Record<number, number[]> = {};
       
       await Promise.all(
         authorBooks.map(async (book) => {
