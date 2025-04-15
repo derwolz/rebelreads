@@ -98,15 +98,19 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
+    // Convert username to lowercase for case-insensitive comparison
+    const lowercaseUsername = username.toLowerCase();
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.username, username));
+      .where(eq(users.username, lowercaseUsername));
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    // Convert email to lowercase for case-insensitive comparison
+    const lowercaseEmail = email.toLowerCase();
+    const [user] = await db.select().from(users).where(eq(users.email, lowercaseEmail));
     return user;
   }
 
@@ -124,14 +128,28 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    // Ensure email and username are stored in lowercase
+    const normalizedUser = {
+      ...insertUser,
+      email: insertUser.email?.toLowerCase(),
+      username: insertUser.username?.toLowerCase()
+    };
+    
+    const [user] = await db.insert(users).values(normalizedUser).returning();
     return user;
   }
 
   async updateUser(id: number, data: Partial<UpdateProfile>): Promise<User> {
+    // Ensure email and username are stored in lowercase if they're being updated
+    const normalizedData = {
+      ...data,
+      email: data.email ? data.email.toLowerCase() : undefined,
+      username: data.username ? data.username.toLowerCase() : undefined
+    };
+    
     const [user] = await db
       .update(users)
-      .set(data)
+      .set(normalizedData)
       .where(eq(users.id, id))
       .returning();
     return user;

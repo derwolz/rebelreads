@@ -85,10 +85,16 @@ export class LandingPageStorage implements ILandingPageStorage {
   }
 
   async createSignupInterest(data: InsertSignupInterest): Promise<SignupInterest> {
+    // Ensure email is stored in lowercase
+    const normalizedData = {
+      ...data,
+      email: data.email.toLowerCase()
+    };
+    
     // Now that we've properly defined isAuthor in the schema, we can use drizzle's standard insert
     const [interest] = await db
       .insert(signup_interests)
-      .values(data)
+      .values(normalizedData)
       .returning();
     return interest;
   }
@@ -98,9 +104,15 @@ export class LandingPageStorage implements ILandingPageStorage {
   }
 
   async createPartnershipInquiry(data: InsertPartnershipInquiry): Promise<PartnershipInquiry> {
+    // Ensure email is stored in lowercase
+    const normalizedData = {
+      ...data,
+      email: data.email.toLowerCase()
+    };
+    
     const [inquiry] = await db
       .insert(partnership_inquiries)
-      .values(data)
+      .values(normalizedData)
       .returning();
     return inquiry;
   }
