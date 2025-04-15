@@ -78,11 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: any) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      if (res.status === 403) {
-        // 403 indicates no beta access
-        const data = await res.json();
-        throw new Error(data.message || "You don't have beta access yet.");
-      }
       return await res.json();
     },
     onSuccess: (userData: SelectUser) => {
@@ -91,43 +86,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
     },
     onError: async (error: Error) => {
-      if (error.message.includes("beta access")) {
-        // First log the user out to ensure they can't access the site
-        try {
-          // Perform logout
-          await apiRequest("POST", "/api/logout");
-          // Clear user data from cache
-          queryClient.setQueryData(["/api/user"], null);
-          queryClient.setQueryData(["/api/author-status"], null);
-        } catch (logoutError) {
-          console.error("Error during logout:", logoutError);
-        }
-        
-        toast({
-          title: "Beta Access Required",
-          description: "Thank you for your interest! We'll notify you when beta access is available.",
-        });
-        
-        // Then redirect to landing page
-        window.location.href = "/landing?nobeta=true";
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Invalid email/username or password",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Login failed",
+        description: "Invalid email/username or password",
+        variant: "destructive",
+      });
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
-      if (res.status === 403) {
-        // 403 indicates no beta access
-        const data = await res.json();
-        throw new Error(data.message || "You don't have beta access yet.");
-      }
       return await res.json();
     },
     onSuccess: (userData: SelectUser) => {
@@ -135,32 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], userData);
     },
     onError: async (error: Error) => {
-      if (error.message.includes("beta access")) {
-        // First log the user out to ensure they can't access the site
-        try {
-          // Perform logout
-          await apiRequest("POST", "/api/logout");
-          // Clear user data from cache
-          queryClient.setQueryData(["/api/user"], null);
-          queryClient.setQueryData(["/api/author-status"], null);
-        } catch (logoutError) {
-          console.error("Error during logout:", logoutError);
-        }
-        
-        toast({
-          title: "Account Created!",
-          description: "Thank you for your interest! We'll notify you when beta access is available.",
-        });
-        
-        // Redirect to landing page
-        window.location.href = "/landing?nobeta=true";
-      } else {
-        toast({
-          title: "Registration failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

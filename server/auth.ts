@@ -282,7 +282,6 @@ export function setupAuth(app: Express) {
     if (req.path.startsWith('/api/') && 
         !req.isAuthenticated() && 
         !req.path.startsWith('/api/auth/') && 
-        !req.path.startsWith('/api/beta/') &&
         !req.path.startsWith('/api/popular-books') && // Allow unauthenticated access to popular books
         !req.path.startsWith('/api/landing/') && // Allow unauthenticated access to landing page
         !req.path.startsWith('/api/signup-interest') && // Allow unauthenticated signup interest
