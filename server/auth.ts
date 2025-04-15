@@ -70,8 +70,11 @@ export function setupAuth(app: Express) {
     new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/auth/google/callback`,
+      callbackURL: `/api/auth/google/callback`,
       scope: ["profile", "email"],
+      // Add these properties to make Google OAuth more permissive for development
+      userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
+      proxy: true,
     }, async (accessToken, refreshToken, profile, done) => {
       try {
         // Check if user exists with this Google ID
