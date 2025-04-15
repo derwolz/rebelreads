@@ -251,6 +251,27 @@
   }
 }
 
+@keyframes growChart {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 @keyframes slideToBottomLeft {
   0% {
     transform: translate(0, 0);
@@ -299,6 +320,27 @@
 
 .animate-fade-scale {
   animation: fadeScale 0.7s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.7s ease forwards;
+}
+
+.animate-grow-chart {
+  animation: growChart 1s ease-out forwards;
+}
+
+/* Animation delay utility classes */
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
+
+.animation-delay-700 {
+  animation-delay: 700ms;
 }
 
 .animate-to-bottom-left {
