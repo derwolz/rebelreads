@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useTheme } from "@/hooks/use-theme";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -130,13 +131,36 @@ const analyticsData = [
 const NewLandingPage = () => {
   const [email, setEmail] = useState("");
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { setTheme } = useTheme();
+  const { user, logoutMutation } = useAuth();
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedGenres, setSelectedGenres] = useState<any[]>([]);
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isPublisher, setIsPublisher] = useState(false);
+
+  // Check for nobeta query parameter and log out the user if present
+  useEffect(() => {
+    // Check if the URL has nobeta=true parameter and user is logged in
+    const searchParams = new URLSearchParams(window.location.search);
+    const noBeta = searchParams.get('nobeta');
+    
+    if (noBeta === 'true' && user) {
+      // User doesn't have beta access but is logged in - log them out
+      logoutMutation.mutate();
+      
+      toast({
+        title: "Thank you for your interest!",
+        description: "We'll notify you when beta access is available for your account.",
+      });
+      
+      // Remove the nobeta parameter from the URL to prevent repeated logouts
+      searchParams.delete('nobeta');
+      const newUrl = window.location.pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [user, logoutMutation, toast]);
 
   // Set theme
   useEffect(() => {
