@@ -1371,8 +1371,47 @@ async function createPublisherSellersTable() {
   }
 }
 
+async function removeAuthorColumnsFromBooks() {
+  console.log("Starting removal of author and authorImageUrl columns from books table...");
+  
+  try {
+    // Check if author column exists
+    const authorColumnCheck = await db.execute(sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'books' AND column_name = 'author';
+    `);
+    
+    if (authorColumnCheck.rowCount > 0) {
+      console.log("Removing author column from books table");
+      await db.execute(sql`ALTER TABLE books DROP COLUMN IF EXISTS author;`);
+    } else {
+      console.log("Column 'author' doesn't exist or has already been removed");
+    }
+    
+    // Check if authorImageUrl column exists
+    const authorImageColumnCheck = await db.execute(sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'books' AND column_name = 'author_image_url';
+    `);
+    
+    if (authorImageColumnCheck.rowCount > 0) {
+      console.log("Removing authorImageUrl column from books table");
+      await db.execute(sql`ALTER TABLE books DROP COLUMN IF EXISTS author_image_url;`);
+    } else {
+      console.log("Column 'author_image_url' doesn't exist or has already been removed");
+    }
+    
+    console.log("Author columns have been removed from books table");
+  } catch (error) {
+    console.error("Error removing author columns from books table:", error);
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
+  await removeAuthorColumnsFromBooks();
   await addFeaturedColumnToRatings();
   await addReportStatusColumnToRatings();
   await createAdImpressionsTable();
