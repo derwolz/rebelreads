@@ -91,13 +91,12 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
   );
 };
 
-// Chart animation component with slide in animation
-// The actual data line animation is handled by useState and useEffect in the page component
+// Chart animation component - only handles the slide-in animation
+// The actual data line animation is handled by Recharts' built-in animation
 export const AnimatedChart: React.FC<{
   children: ReactNode;
   className?: string;
-  onVisible?: () => void; // Callback for when the chart becomes visible
-}> = ({ children, className = '', onVisible }) => {
+}> = ({ children, className = '' }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -115,17 +114,10 @@ export const AnimatedChart: React.FC<{
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // First, slide in the entire chart container
+          // Slide in the entire chart container
           chart.style.transition = 'transform 0.8s ease-out, opacity 0.8s ease-out';
           chart.style.transform = 'translateX(0)';
           chart.style.opacity = '1';
-          
-          // Call the onVisible callback after a slight delay to start data animation
-          if (onVisible) {
-            setTimeout(() => {
-              onVisible();
-            }, 800); // Wait for the slide-in animation to complete
-          }
           
           // Remove element from observation once animation is applied
           observer.unobserve(chart);
@@ -148,7 +140,7 @@ export const AnimatedChart: React.FC<{
         observer.unobserve(chart);
       }
     };
-  }, [onVisible]);
+  }, []);
   
   return (
     <div 

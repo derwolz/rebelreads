@@ -784,38 +784,7 @@ const NewLandingPage = () => {
                 </p>
                 
                 <div id="analytics-chart-section">
-                  <AnimatedChart onVisible={() => {
-                    if (!chartAnimationStarted.current) {
-                      chartAnimationStarted.current = true;
-                      
-                      // Animate from zero to final values
-                      let step = 0;
-                      const totalSteps = 60; // Animation frames for smooth animation
-                      const animationDuration = 1500; // 1.5 seconds total
-                      const interval = animationDuration / totalSteps;
-                      
-                      const animateStep = () => {
-                        step++;
-                        const progress = step / totalSteps;
-                        
-                        // Create new data with interpolated values
-                        const newData = analyticsDataFinal.map(item => ({
-                          name: item.name,
-                          impressions: Math.round(item.impressions * progress),
-                          referrals: Math.round(item.referrals * progress)
-                        }));
-                        
-                        setAnalyticsData(newData);
-                        
-                        if (step < totalSteps) {
-                          setTimeout(animateStep, interval);
-                        }
-                      };
-                      
-                      // Start the animation
-                      animateStep();
-                    }
-                  }}>
+                  <AnimatedChart>
                     <ResponsiveContainer width="100%" height={300}>
                       <AreaChart
                         data={analyticsData}
@@ -848,6 +817,10 @@ const NewLandingPage = () => {
                           fillOpacity={1}
                           fill="url(#colorImpressions)"
                           name="Content Views"
+                          isAnimationActive={true}
+                          animationBegin={300}
+                          animationDuration={1500}
+                          animationEasing="ease-out"
                         />
                         <Area
                           type="monotone"
@@ -856,6 +829,10 @@ const NewLandingPage = () => {
                           fillOpacity={1}
                           fill="url(#colorReferrals)"
                           name="Reader Referrals"
+                          isAnimationActive={true}
+                          animationBegin={600}
+                          animationDuration={1500}
+                          animationEasing="ease-out"
                         />
                       </AreaChart>
                     </ResponsiveContainer>
