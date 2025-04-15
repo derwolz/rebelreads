@@ -107,6 +107,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);
 
+  // Catch-all middleware for API routes to ensure proper error handling
+  // This will prevent HTML from being sent in API responses
+  app.use("/api", (req, res, next) => {
+    // This middleware will catch any unhandled API routes or errors
+    // It ensures that API responses are always JSON
+    if (!res.headersSent) {
+      console.warn(`Unhandled API request: ${req.method} ${req.path}`);
+      return res.status(404).json({ 
+        error: "API endpoint not found", 
+        path: req.path
+      });
+    }
+    next();
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
