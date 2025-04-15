@@ -47,6 +47,19 @@ router.post("/signup-interest", async (req, res) => {
       // Log but don't fail if event recording fails (session might not exist)
       console.warn("Could not record signup event:", eventError);
     }
+    
+    // Send confirmation email
+    try {
+      // Import the email service
+      const { emailService } = await import("../email");
+      
+      // Send signup interest confirmation email
+      await emailService.sendSignupInterestEmail(email);
+      console.log(`Signup interest confirmation email sent to ${email}`);
+    } catch (emailError) {
+      // Log but don't fail if email sending fails
+      console.warn("Could not send signup interest confirmation email:", emailError);
+    }
 
     // Always return JSON
     res.json({ 

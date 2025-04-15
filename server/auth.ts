@@ -9,7 +9,10 @@ import { User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser {
+      isAuthor?: boolean;
+      isPro?: boolean;
+    }
   }
 }
 
@@ -140,6 +143,19 @@ export function setupAuth(app: Express) {
           await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
         }
       }
+      
+      // Send welcome email
+      try {
+        // Import the email service dynamically to avoid circular dependencies
+        const { emailService } = await import("./email");
+        
+        // Send welcome email
+        await emailService.sendWelcomeEmail(user.email, user.username);
+        console.log(`Welcome email sent to ${user.email}`);
+      } catch (emailError) {
+        // Log but don't fail if email sending fails
+        console.warn("Could not send welcome email:", emailError);
+      }
 
       req.login(user, (err) => {
         if (err) return next(err);
@@ -176,6 +192,19 @@ export function setupAuth(app: Express) {
             const { betaKey } = req.body;
             
             if (!betaKey) {
+              // Send beta key required email
+              try {
+                // Import the email service dynamically to avoid circular dependencies
+                const { emailService } = await import("./email");
+                
+                // Send beta key required email
+                await emailService.sendBetaKeyRequiredEmail(user.email);
+                console.log(`Beta key required email sent to ${user.email}`);
+              } catch (emailError) {
+                // Log but don't fail if email sending fails
+                console.warn("Could not send beta key required email:", emailError);
+              }
+              
               return res.status(400).json({ error: "Beta key is required during beta testing phase" });
             }
             
