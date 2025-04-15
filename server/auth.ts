@@ -229,16 +229,14 @@ export function setupAuth(app: Express) {
                 await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
               }
             } else {
-              // User doesn't have beta access - login but flag as no-beta access
-              // Login the user but send special response to trigger redirect
+              // User doesn't have beta access - still login but use 403 Forbidden status
+              // to indicate they don't have beta access yet
               req.login(user, (err) => {
                 if (err) {
                   return next(err);
                 }
-                return res.status(200).json({
-                  ...user,
-                  noBetaAccess: true,
-                  message: "Thank you for your interest in Sirened! Your account has been created. We'll notify you when beta access is available for your account."
+                return res.status(403).json({
+                  message: "Thank you for your interest in Sirened! We'll notify you when beta access is available for your account."
                 });
               });
               return; // Return early to prevent the regular login flow
