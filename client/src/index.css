@@ -209,6 +209,11 @@
     opacity: 0;
   }
 
+  99% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -219,6 +224,11 @@
   0% {
     transform: translateX(-50px);
     opacity: 0;
+  }
+
+  99% {
+    transform: translateX(0);
+    opacity: 1;
   }
 
   100% {
@@ -233,6 +243,11 @@
     opacity: 0;
   }
 
+  99% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
   100% {
     transform: translateX(0);
     opacity: 1;
@@ -243,6 +258,11 @@
   0% {
     transform: scale(0.9);
     opacity: 0;
+  }
+
+  99% {
+    transform: scale(1);
+    opacity: 1;
   }
 
   100% {
@@ -257,6 +277,11 @@
     opacity: 0;
   }
 
+  99% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -266,6 +291,9 @@
 @keyframes fadeIn {
   0% {
     opacity: 0;
+  }
+  99% {
+    opacity: 1;
   }
   100% {
     opacity: 1;
@@ -307,27 +335,33 @@
 }
 
 .animate-slide-bottom {
-  animation: slideInFromBottom 0.7s ease forwards;
+  animation: slideInFromBottom 0.8s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-slide-left {
-  animation: slideInFromLeft 0.7s ease forwards;
+  animation: slideInFromLeft 0.8s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-slide-right {
-  animation: slideInFromRight 0.7s ease forwards;
+  animation: slideInFromRight 0.8s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-fade-scale {
-  animation: fadeScale 0.7s ease forwards;
+  animation: fadeScale 0.8s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.7s ease forwards;
+  animation: fadeIn 0.8s ease-out forwards;
+  will-change: opacity;
 }
 
 .animate-grow-chart {
-  animation: growChart 1s ease-out forwards;
+  animation: growChart 1.2s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 /* Animation delay utility classes */

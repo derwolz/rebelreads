@@ -16,7 +16,7 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
   type = 'fade-in',
   delay = 'none',
   className = '',
-  threshold = 0.1,
+  threshold = 0.2, // Increased threshold for better visibility before animation
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   
@@ -29,16 +29,23 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
     
     // Set initial opacity to 0 for smoother start
     element.style.opacity = '0';
+    element.style.willChange = 'opacity, transform';
     
     const observer = new IntersectionObserver(
       ([entry]) => {
         // When element is visible
         if (entry.isIntersecting) {
-          // Add animation class and set opacity to 1
-          element.style.opacity = '1';
-          
-          if (type !== 'none') {
-            element.classList.add(`animate-${type}`);
+          // Add animation class based on type
+          if (type === 'fade-in') {
+            element.classList.add('animate-fade-in');
+          } else if (type === 'slide-up') {
+            element.classList.add('animate-slide-bottom');
+          } else if (type === 'slide-left') {
+            element.classList.add('animate-slide-left');
+          } else if (type === 'slide-right') {
+            element.classList.add('animate-slide-right');
+          } else if (type === 'grow') {
+            element.classList.add('animate-fade-scale');
           }
 
           // Remove element from observation once animation is applied
@@ -48,11 +55,14 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
       {
         root: null,
         rootMargin: '0px',
-        threshold, // Trigger when 10% of the element is visible by default
+        threshold,
       }
     );
     
-    observer.observe(element);
+    // Small delay before observing to prevent flickering during page load
+    setTimeout(() => {
+      observer.observe(element);
+    }, 100);
     
     return () => {
       if (element) {
@@ -73,7 +83,8 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
   return (
     <div 
       ref={elementRef} 
-      className={`transition-opacity duration-1000 ${delayClass} ${className}`}
+      className={`${delayClass} ${className}`}
+      style={{ opacity: 0 }}
     >
       {children}
     </div>
@@ -94,16 +105,16 @@ export const AnimatedChart: React.FC<{
     const chart = chartRef.current;
     if (!chart) return;
     
-    // Set initial transform scale to 0.7 for growth animation
+    // Set initial styles for growth animation
     chart.style.transform = 'scale(0.7)';
     chart.style.opacity = '0';
+    chart.style.willChange = 'transform, opacity';
     
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Animate to full size
-          chart.style.transform = 'scale(1)';
-          chart.style.opacity = '1';
+          // Use the predefined animation class
+          chart.classList.add('animate-grow-chart');
           
           // Remove element from observation once animation is applied
           observer.unobserve(chart);
@@ -112,11 +123,14 @@ export const AnimatedChart: React.FC<{
       {
         root: null,
         rootMargin: '0px',
-        threshold: 0.1,
+        threshold: 0.3, // Higher threshold for chart to ensure it's more visible
       }
     );
     
-    observer.observe(chart);
+    // Small delay before observing to prevent flickering during page load
+    setTimeout(() => {
+      observer.observe(chart);
+    }, 100);
     
     return () => {
       if (chart) {
@@ -128,7 +142,8 @@ export const AnimatedChart: React.FC<{
   return (
     <div 
       ref={chartRef} 
-      className={`transition-all duration-1000 ease-in-out ${className}`}
+      className={className}
+      style={{ opacity: 0, transform: 'scale(0.7)' }}
     >
       {children}
     </div>
