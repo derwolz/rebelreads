@@ -8,7 +8,8 @@ import {
   viewGenres, 
   bookGenreTaxonomies, 
   books,
-  bookImages
+  bookImages,
+  authors
 } from "@shared/schema";
 import { eq, and, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -221,10 +222,37 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       .filter((id, index, self) => self.indexOf(id) === index);
     console.log(`Found book IDs: ${bookIds.join(', ')}`);
     
-    // 3. Get the complete book data
+    // 3. Get the complete book data with author information
     const booksResult = await db
-      .select()
+      .select({
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
+      })
       .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
       .where(inArray(books.id, bookIds))
       .limit(count);
     
