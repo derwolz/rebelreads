@@ -37,20 +37,22 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
         
         // For each author, get their books
         const authorsWithBooks = await Promise.all(
-          publisherAuthors.map(async (user) => {
-            // Get author profile
-            const authorProfile = await dbStorage.getAuthorByUserId(user.id);
+          publisherAuthors.map(async (author) => {
+            // Get user data for this author
+            const userData = await db.select().from(users).where(eq(users.id, author.userId)).limit(1);
             
-            if (!authorProfile) {
+            if (userData.length === 0) {
               return null;
             }
             
+            const user = userData[0];
+            
             // Get books by this author
-            const authorBooks = await dbStorage.getBooksByAuthor(authorProfile.id);
+            const authorBooks = await dbStorage.getBooksByAuthor(author.id);
             
             return {
               author: {
-                ...authorProfile,
+                ...author,
                 user: {
                   id: user.id,
                   username: user.username,

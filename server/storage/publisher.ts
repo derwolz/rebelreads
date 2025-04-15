@@ -21,7 +21,7 @@ export interface IPublisherStorage {
   getPublisher(id: number): Promise<Publisher | undefined>;
   getPublisherByUserId(userId: number): Promise<Publisher | undefined>;
   createPublisher(publisher: InsertPublisher): Promise<Publisher>;
-  getPublisherAuthors(publisherId: number): Promise<User[]>;
+  getPublisherAuthors(publisherId: number): Promise<Author[]>;
   addAuthorToPublisher(publisherId: number, authorId: number, contractStart: Date): Promise<PublisherAuthor>;
   removeAuthorFromPublisher(publisherId: number, authorId: number): Promise<void>;
   getAuthorPublisher(authorId: number): Promise<Publisher | undefined>;
