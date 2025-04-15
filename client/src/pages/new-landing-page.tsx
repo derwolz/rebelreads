@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CountUp } from "@/components/count-up";
 import {
   Dialog,
   DialogContent,
@@ -378,7 +379,9 @@ const NewLandingPage = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-4xl font-bold text-primary mb-2">100%</div>
+              <div className="text-4xl font-bold text-primary mb-2">
+                <CountUp end={100} duration={1000} suffix="%" />
+              </div>
               <div className="text-muted-foreground">
                 Author profit retention
               </div>

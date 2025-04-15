@@ -15,8 +15,7 @@ import { RatingCriteriaWizard } from "@/components/rating-criteria-wizard";
 import { FloatingSignup } from "@/components/floating-signup";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import ScrollLandingPage from "@/pages/scroll-landing-page";
-import NewLandingPage from "@/pages/new-landing-page"; // Import new landing page
+import NewLandingPage from "@/pages/new-landing-page";
 import BookDetails from "@/pages/book-details";
 import SettingsPage from "@/pages/settings-page";
 import AuthorPage from "@/pages/author-page";
@@ -50,7 +49,7 @@ function Router() {
   const { isBetaActive, isLoading: isBetaLoading } = useBeta();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/new-landing"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing"];
   const isApiPath = location.startsWith("/api");
   const isAuthWallPath = location === "/auth";
   const [path, hash] = location.split("#");
@@ -73,7 +72,7 @@ function Router() {
   }
 
   // Component selection based on landing page setting
-  const HomeComponent = showLandingPage ? ScrollLandingPage : HomePage;
+  const HomeComponent = showLandingPage ? NewLandingPage : HomePage;
 
   return (
     <>
@@ -82,7 +81,6 @@ function Router() {
       <Switch>
         {/* Always accessible routes */}
         <Route path="/landing" component={NewLandingPage} />
-        <Route path="/scroll-landing" component={ScrollLandingPage} />
         <Route path="/new-landing" component={NewLandingPage} />
 
         <Route path="/how-it-works" component={HowItWorks} />
