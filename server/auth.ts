@@ -172,6 +172,28 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      // Check if beta is active
+      const isBetaActive = await dbStorage.isBetaActive();
+      
+      // Get the beta key if provided
+      const { betaKey } = req.body;
+      
+      // Variables to track beta access status
+      let userHasBetaAccess = false;
+      let validBetaKeyProvided = false;
+      
+      // If beta is active and a key is provided, validate it
+      if (isBetaActive && betaKey) {
+        const isValidKey = await dbStorage.validateBetaKey(betaKey);
+        if (isValidKey) {
+          validBetaKeyProvided = true;
+          userHasBetaAccess = true;
+        } else {
+          // Only return an error if they provided an invalid key
+          return res.status(400).json({ error: "Invalid beta key" });
+        }
+      }
+      
       // Check for existing email
       const existingEmail = await dbStorage.getUserByEmail(req.body.email);
       if (existingEmail) {
@@ -190,6 +212,14 @@ export function setupAuth(app: Express) {
         password: await hashPassword(req.body.password),
       });
       
+      // If beta is active and registration was successful and user provided a valid beta key, record it
+      if (isBetaActive && validBetaKeyProvided) {
+        const betaKeyObj = await dbStorage.getBetaKeyByKey(betaKey);
+        if (betaKeyObj) {
+          await dbStorage.recordBetaKeyUsage(betaKeyObj.id, user.id);
+        }
+      }
+      
       // Send welcome email
       try {
         // Import the email service dynamically to avoid circular dependencies
@@ -202,11 +232,29 @@ export function setupAuth(app: Express) {
         // Log but don't fail if email sending fails
         console.warn("Could not send welcome email:", emailError);
       }
+
+      // Check if the user has used a beta key previously (different than the one just provided)
+      if (!userHasBetaAccess) {
+        const hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(user.id);
+        if (hasUsedBetaKey) {
+          userHasBetaAccess = true;
+        }
+      }
       
-      // Login the user
+      // Login the user with the appropriate access level
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(user);
+        
+        if (isBetaActive && !userHasBetaAccess) {
+          // User registered without beta access during beta phase - use 403 status code
+          // This still creates the account but signals to the frontend that beta access is required
+          return res.status(403).json({
+            message: "Thank you for your interest in Sirened! Your account has been created. We'll notify you when beta access is available for your account."
+          });
+        } else {
+          // Normal registration with beta access or beta is not active
+          res.status(201).json(user);
+        }
       });
     } catch (error) {
       console.error("Registration error:", error);

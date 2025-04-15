@@ -973,7 +973,35 @@ export type InsertAuthorPageView = typeof authorPageViews.$inferInsert;
 export type AuthorFormAnalytics = typeof authorFormAnalytics.$inferSelect;
 export type InsertAuthorFormAnalytics = typeof authorFormAnalytics.$inferInsert;
 
-// Beta key system has been removed
+// Beta key system
+export const betaKeys = pgTable("beta_keys", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  usageLimit: integer("usage_limit"),
+  usageCount: integer("usage_count").notNull().default(0),
+  createdBy: integer("created_by"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const betaKeyUsage = pgTable("beta_key_usage", {
+  id: serial("id").primaryKey(),
+  betaKeyId: integer("beta_key_id").notNull(),
+  userId: integer("user_id").notNull(),
+  usedAt: timestamp("used_at").notNull().defaultNow(),
+});
+
+export const insertBetaKeySchema = createInsertSchema(betaKeys).omit({
+  id: true,
+  createdAt: true,
+  usageCount: true,
+});
+
+export type BetaKey = typeof betaKeys.$inferSelect;
+export type InsertBetaKey = typeof betaKeys.$inferInsert;
+export type BetaKeyUsage = typeof betaKeyUsage.$inferSelect;
 
 // Genre taxonomy tables
 export const genreTaxonomies = pgTable("genre_taxonomies", {
