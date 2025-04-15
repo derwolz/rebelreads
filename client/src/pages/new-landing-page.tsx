@@ -120,7 +120,8 @@ const ValueProposition = ({
 // No need for sample taxonomy data as we're using the GenreSelector component
 
 // Sample data for analytics chart
-const analyticsData = [
+// Analytics chart data with final values
+const analyticsDataFinal = [
   { name: "Jan", impressions: 1200, referrals: 420 },
   { name: "Feb", impressions: 1600, referrals: 398 },
   { name: "Mar", impressions: 2100, referrals: 541 },
