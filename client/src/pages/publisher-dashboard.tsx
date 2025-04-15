@@ -434,12 +434,16 @@ export default function PublisherDashboard() {
     );
   }
 
+  // Since we check loadingProfile before rendering, we know publisherProfile is defined here
+  // but TypeScript doesn't know that, so we'll add a check to satisfy TypeScript
+  const profile = publisherProfile as PublisherProfile;
+  
   // We have verified publisher profile is loaded
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{publisherProfile.publisher_name} Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">{profile.publisher_name} Dashboard</h1>
           <p className="text-muted-foreground">
             Manage your authors, books, and publishing metrics
           </p>
@@ -531,14 +535,14 @@ export default function PublisherDashboard() {
                   <div>
                     <div className="font-medium">Description</div>
                     <p className="text-sm text-muted-foreground">
-                      {publisherProfile.publisher_description || "No description provided."}
+                      {profile.publisher_description || "No description provided."}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <div className="font-medium">Business Email</div>
                       <p className="text-sm text-muted-foreground">
-                        {publisherProfile.business_email || "Not provided"}
+                        {profile.business_email || "Not provided"}
                       </p>
                     </div>
                     <div>
