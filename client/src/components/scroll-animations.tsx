@@ -91,7 +91,7 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
   );
 };
 
-// Chart animation component with slide in and count up effect
+// Chart animation component specifically for growing charts
 export const AnimatedChart: React.FC<{
   children: ReactNode;
   className?: string;
@@ -105,60 +105,16 @@ export const AnimatedChart: React.FC<{
     const chart = chartRef.current;
     if (!chart) return;
     
-    // Set initial styles for slide animation
-    chart.style.transform = 'translateX(-50px)';
+    // Set initial styles for growth animation
+    chart.style.transform = 'scale(0.7)';
     chart.style.opacity = '0';
     chart.style.willChange = 'transform, opacity';
     
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Apply slide-in animation to the chart
-          chart.classList.add('animate-slide-chart');
-          
-          // Find all the text elements in the chart and add the count-up animation
-          // This targets the text elements inside the chart (like axis labels and values)
-          setTimeout(() => {
-            const textElements = chart.querySelectorAll('text');
-            textElements.forEach((el, index) => {
-              // Skip axis labels (usually these are the first elements)
-              if (index > 10) { // Skip some initial elements that might be axis labels
-                // Store original text
-                const originalText = el.textContent;
-                if (originalText && !isNaN(parseFloat(originalText))) {
-                  const value = parseFloat(originalText);
-                  
-                  // Start with 0
-                  el.textContent = '0';
-                  
-                  // Add animation class
-                  el.classList.add('animate-count-up');
-                  
-                  // Animate the number counting up
-                  let start = 0 as number;
-                  const duration = 1500; // 1.5 seconds
-                  const step = (timestamp: number) => {
-                    if (!start) start = timestamp;
-                    const progress = Math.min((timestamp - start) / duration, 1);
-                    const currentValue = Math.floor(progress * value);
-                    el.textContent = currentValue.toString();
-                    
-                    if (progress < 1) {
-                      window.requestAnimationFrame(step);
-                    } else {
-                      // Ensure final value is exactly as expected
-                      el.textContent = originalText;
-                    }
-                  };
-                  
-                  // Delay the start of counting animation
-                  setTimeout(() => {
-                    window.requestAnimationFrame(step);
-                  }, 500); // Start after slide-in is mostly complete
-                }
-              }
-            });
-          }, 1000); // Wait for slide-in animation to finish
+          // Use the predefined animation class
+          chart.classList.add('animate-grow-chart');
           
           // Remove element from observation once animation is applied
           observer.unobserve(chart);
@@ -187,7 +143,7 @@ export const AnimatedChart: React.FC<{
     <div 
       ref={chartRef} 
       className={className}
-      style={{ opacity: 0, transform: 'translateX(-50px)' }}
+      style={{ opacity: 0, transform: 'scale(0.7)' }}
     >
       {children}
     </div>
