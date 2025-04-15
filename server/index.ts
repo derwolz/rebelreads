@@ -73,35 +73,10 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Add a more specific error handler for API routes
-  app.use('/api/*', (req: Request, res: Response, next: NextFunction) => {
-    // If we get this far with an API request, the route doesn't exist
-    // or wasn't properly handled by any middleware
-    if (!res.headersSent) {
-      console.warn(`API route not found: ${req.method} ${req.path}`);
-      return res.status(404).json({ 
-        error: "API endpoint not found", 
-        path: req.path
-      });
-    }
-    next();
-  });
-
-  // General error handler for all routes
-  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-    
-    // If it's an API route, always return JSON
-    if (req.path.startsWith('/api/')) {
-      console.error(`API error at ${req.path}:`, err);
-      return res.status(status).json({ 
-        error: message,
-        path: req.path
-      });
-    }
-    
-    // For non-API routes, proceed with normal error handling
+
     res.status(status).json({ message });
     throw err;
   });

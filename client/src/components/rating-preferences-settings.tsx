@@ -167,7 +167,7 @@ export function RatingPreferencesSettings({
     createdAt: string;
     updatedAt: string;
   }>({
-    queryKey: ['/api/account/rating-preferences'],
+    queryKey: ['/api/rating-preferences'],
     staleTime: 60000,
     enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });

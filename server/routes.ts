@@ -52,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register authenticated route modules
   app.use("/api/landing", landingRoutes);
-  app.use("/api/account", accountRoutes);
+  app.use("/api", accountRoutes);
   app.use("/api/pro", proRoutes);
   app.use("/api", homeRoutes);
   app.use("/api/search", searchRoutes);
@@ -106,8 +106,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);
-
-  // No catch-all middleware here as it's interfering with regular routes
 
   const httpServer = createServer(app);
   return httpServer;
