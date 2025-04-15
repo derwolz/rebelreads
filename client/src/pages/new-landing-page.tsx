@@ -552,136 +552,150 @@ const NewLandingPage = () => {
       {/* Features Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-black/20 to-transparent">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Transparent Tools. Real Results.
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Empowering Creative Freedom and Discovery
-            </p>
-          </div>
+          <AnimateOnScroll type="fade-in">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Transparent Tools. Real Results.
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Empowering Creative Freedom and Discovery
+              </p>
+            </div>
+          </AnimateOnScroll>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureBox
-              title="Author Tools"
-              description="Everything you need to grow a loyal audience and promote your books directly."
-              icon={
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                  <path d="m15 5 4 4" />
-                </svg>
-              }
-            />
+            <AnimateOnScroll type="slide-up" delay="none">
+              <FeatureBox
+                title="Author Tools"
+                description="Everything you need to grow a loyal audience and promote your books directly."
+                icon={
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    <path d="m15 5 4 4" />
+                  </svg>
+                }
+              />
+            </AnimateOnScroll>
 
-            <FeatureBox
-              title="Reader Discovery"
-              description="Discover bold, original voices—just pure storytelling on your preference."
-              icon={
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m21 21-6.05-6.05a8.5 8.5 0 1 0-5.9 2.47 8.5 8.5 0 0 0 5.24-1.79l6.35 6.37z" />
-                </svg>
-              }
-            />
+            <AnimateOnScroll type="slide-up" delay="short">
+              <FeatureBox
+                title="Reader Discovery"
+                description="Discover bold, original voices—just pure storytelling on your preference."
+                icon={
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m21 21-6.05-6.05a8.5 8.5 0 1 0-5.9 2.47 8.5 8.5 0 0 0 5.24-1.79l6.35 6.37z" />
+                  </svg>
+                }
+              />
+            </AnimateOnScroll>
 
-            <FeatureBox
-              title="Real-time Analytics"
-              description="Get real-time data on reader behavior, ad performance, and content engagement."
-              icon={
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 3v18h18" />
-                  <path d="m19 9-5 5-4-4-3 3" />
-                </svg>
-              }
-            />
+            <AnimateOnScroll type="slide-up" delay="medium">
+              <FeatureBox
+                title="Real-time Analytics"
+                description="Get real-time data on reader behavior, ad performance, and content engagement."
+                icon={
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 3v18h18" />
+                    <path d="m19 9-5 5-4-4-3 3" />
+                  </svg>
+                }
+              />
+            </AnimateOnScroll>
 
-            <FeatureBox
-              title="Clear Value"
-              description="Know why a book is recommended, where it came from, and how to connect with the author."
-              icon={
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m9 12 2 2 4-4" />
-                  <circle cx="12" cy="12" r="10" />
-                </svg>
-              }
-            />
+            <AnimateOnScroll type="slide-up" delay="none">
+              <FeatureBox
+                title="Clear Value"
+                description="Know why a book is recommended, where it came from, and how to connect with the author."
+                icon={
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m9 12 2 2 4-4" />
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                }
+              />
+            </AnimateOnScroll>
 
-            <FeatureBox
-              title="Direct Connection"
-              description="Connect directly with your readers or favorite authors without middlemen."
-              icon={
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                  <rect width="4" height="12" x="2" y="9" />
-                  <circle cx="4" cy="4" r="2" />
-                </svg>
-              }
-            />
+            <AnimateOnScroll type="slide-up" delay="short">
+              <FeatureBox
+                title="Direct Connection"
+                description="Connect directly with your readers or favorite authors without middlemen."
+                icon={
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                    <rect width="4" height="12" x="2" y="9" />
+                    <circle cx="4" cy="4" r="2" />
+                  </svg>
+                }
+              />
+            </AnimateOnScroll>
 
-            <FeatureBox
-              title="Monetization Freedom"
-              description="Monetize your work your way without platform commissions or restrictions."
-              icon={
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
-                  <path d="M12 18V6" />
-                </svg>
-              }
-            />
+            <AnimateOnScroll type="slide-up" delay="medium">
+              <FeatureBox
+                title="Monetization Freedom"
+                description="Monetize your work your way without platform commissions or restrictions."
+                icon={
+                  <svg
+                    width="40"
+                    height="40"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+                    <path d="M12 18V6" />
+                  </svg>
+                }
+              />
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
@@ -818,61 +832,73 @@ const NewLandingPage = () => {
 
       {/* Testimonials Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-black/20 to-transparent flex justify-center center-items">
-        <div className=" w-64 md:w-[85vw] backdrop-blur-md p-6  ">
-          <h3 className=" text-center  font-bold mb-12">
-            Find Your Perfect Match
-          </h3>
-          {/* Use the actual GenreSelector component */}
-          <div className="p-6 bg-black/20 border rounded-none border-white/20">
-            <div className="text-lg font-medium mb-1">
-            You are multi-faceted, so why limit yourself to one profile?
-            </div>
-          <GenreSelector
-            mode="taxonomy"
-            selected={selectedGenres}
-            onSelectionChange={setSelectedGenres}
-            restrictLimits={false}
-            label=""
-            helperText="Select genres, themes, and tropes that interest you"
-            className="pb-6"
-          />
-            <Button className="bg-primary/90 float-right hover:bg-primary">
-              <span>Start a new profile</span>
-              <ArrowRight size={16} className="ml-1" />
-            </Button>
-
-            
-            </div>
-        </div>
+        <AnimateOnScroll type="fade-in">
+          <div className="w-64 md:w-[85vw] backdrop-blur-md p-6">
+            <h3 className="text-center font-bold mb-12">
+              Find Your Perfect Match
+            </h3>
+            {/* Use the actual GenreSelector component */}
+            <AnimateOnScroll type="slide-up">
+              <div className="p-6 bg-black/20 border rounded-none border-white/20">
+                <div className="text-lg font-medium mb-1">
+                  You are multi-faceted, so why limit yourself to one profile?
+                </div>
+                <GenreSelector
+                  mode="taxonomy"
+                  selected={selectedGenres}
+                  onSelectionChange={setSelectedGenres}
+                  restrictLimits={false}
+                  label=""
+                  helperText="Select genres, themes, and tropes that interest you"
+                  className="pb-6"
+                />
+                <AnimateOnScroll type="fade-in" delay="medium">
+                  <Button className="bg-primary/90 float-right hover:bg-primary">
+                    <span>Start a new profile</span>
+                    <ArrowRight size={16} className="ml-1" />
+                  </Button>
+                </AnimateOnScroll>
+              </div>
+            </AnimateOnScroll>
+          </div>
+        </AnimateOnScroll>
       </section>
 
       {/* Value Proposition Section */}
       <section className="py-20 md:py-32">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
-            How Sirened Transforms Publishing
-          </h2>
+          <AnimateOnScroll type="fade-in">
+            <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
+              How Sirened Transforms Publishing
+            </h2>
+          </AnimateOnScroll>
 
-          <ValueProposition
-            title="Fair Compensation"
-            description="The current publishing model takes significant royalties from authors while providing limited value."
-            forAuthors={`Keep <CountUp end={100} duration={1000} suffix="%" /> of your sales with no platform fees. Set your own prices and offer any format you want.`}
-            forReaders="Support authors directly, knowing that your purchase directly benefits their work rather than intermediaries."
-          />
+          <AnimateOnScroll type="slide-up" delay="none">
+            <ValueProposition
+              title="Fair Compensation"
+              description="The current publishing model takes significant royalties from authors while providing limited value."
+              forAuthors={`Keep <CountUp end={100} duration={1000} suffix="%" /> of your sales with no platform fees. Set your own prices and offer any format you want.`}
+              forReaders="Support authors directly, knowing that your purchase directly benefits their work rather than intermediaries."
+            />
+          </AnimateOnScroll>
 
-          <ValueProposition
-            title="Content Discovery"
-            description="Traditional discovery is based on marketing budgets rather than quality or reader preferences."
-            forAuthors="Get discovered based on the quality of your work, not your marketing budget. Reach the exact readers who will love your books."
-            forReaders="Discover books tailored to your unique taste, not what's being pushed by publishers or algorithms."
-          />
+          <AnimateOnScroll type="slide-up" delay="short">
+            <ValueProposition
+              title="Content Discovery"
+              description="Traditional discovery is based on marketing budgets rather than quality or reader preferences."
+              forAuthors="Get discovered based on the quality of your work, not your marketing budget. Reach the exact readers who will love your books."
+              forReaders="Discover books tailored to your unique taste, not what's being pushed by publishers or algorithms."
+            />
+          </AnimateOnScroll>
 
-          <ValueProposition
-            title="Community Connection"
-            description="The traditional publishing model creates distance between authors and readers."
-            forAuthors="Build direct relationships with your readers. Get immediate feedback and engage in meaningful discussions."
-            forReaders="Connect directly with authors you love. Share feedback and be part of the creative journey."
-          />
+          <AnimateOnScroll type="slide-up" delay="medium">
+            <ValueProposition
+              title="Community Connection"
+              description="The traditional publishing model creates distance between authors and readers."
+              forAuthors="Build direct relationships with your readers. Get immediate feedback and engage in meaningful discussions."
+              forReaders="Connect directly with authors you love. Share feedback and be part of the creative journey."
+            />
+          </AnimateOnScroll>
         </div>
       </section>
 
@@ -880,49 +906,55 @@ const NewLandingPage = () => {
       <section className="py-20 md:py-32 bg-gradient-to-br from-primary/10 to-transparent">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8">
-              Join the Storytelling Revolution
-            </h2>
-            <p className="text-xl text-muted-foreground mb-12">
-              Whether you're an author looking to connect with readers or a
-              reader seeking bold new voices, Sirened is for you.
-            </p>
+            <AnimateOnScroll type="fade-in">
+              <h2 className="text-3xl md:text-4xl font-bold mb-8">
+                Join the Storytelling Revolution
+              </h2>
+              <p className="text-xl text-muted-foreground mb-12">
+                Whether you're an author looking to connect with readers or a
+                reader seeking bold new voices, Sirened is for you.
+              </p>
+            </AnimateOnScroll>
 
-            <div className="max-w-md mx-auto w-full mb-8">
-              <form
-                onSubmit={handleSignup}
-                className="flex flex-row justify-center items-center"
-              >
-                <div className="bg-[#FFFFFF]/10 p-1 rounded-none border border-[#EFA738]/30">
-                  <Input
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="Enter your email"
-                    className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-none font-medium py-6"
+            <AnimateOnScroll type="slide-up" delay="short">
+              <div className="max-w-md mx-auto w-full mb-8">
+                <form
+                  onSubmit={handleSignup}
+                  className="flex flex-row justify-center items-center"
                 >
-                  Get Beta Access
-                </Button>
-              </form>
-            </div>
+                  <div className="bg-[#FFFFFF]/10 p-1 rounded-none border border-[#EFA738]/30">
+                    <Input
+                      name="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="Enter your email"
+                      className="border-0 bg-transparent focus-visible:ring-[#FFD700] text-white placeholder:text-white/70"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="bg-[#EFA738] hover:bg-[#FFD700]/90 text-black rounded-none font-medium py-6"
+                  >
+                    Get Beta Access
+                  </Button>
+                </form>
+              </div>
+            </AnimateOnScroll>
 
-            <div className="text-sm text-muted-foreground">
-              By signing up, you agree to our{" "}
-              <a href="#" className="text-primary underline">
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="#" className="text-primary underline">
-                Privacy Policy
-              </a>
-            </div>
+            <AnimateOnScroll type="fade-in" delay="medium">
+              <div className="text-sm text-muted-foreground">
+                By signing up, you agree to our{" "}
+                <a href="#" className="text-primary underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-primary underline">
+                  Privacy Policy
+                </a>
+              </div>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
@@ -930,176 +962,191 @@ const NewLandingPage = () => {
       {/* Footer */}
       <footer className="py-16 bg-black/40 backdrop-blur-md">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-12">
-            <SirenedLogo />
-            <div className="mt-6 md:mt-0 flex gap-4">
-              <Button variant="outline" size="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                </svg>
-              </Button>
-              <Button variant="outline" size="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                </svg>
-              </Button>
-              <Button variant="outline" size="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-                </svg>
-              </Button>
+          <AnimateOnScroll type="fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-12">
+              <SirenedLogo />
+              <div className="mt-6 md:mt-0 flex gap-4">
+                <Button variant="outline" size="icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                  </svg>
+                </Button>
+                <Button variant="outline" size="icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                </Button>
+                <Button variant="outline" size="icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+                  </svg>
+                </Button>
+              </div>
             </div>
-          </div>
+          </AnimateOnScroll>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <h3 className="font-bold mb-4">For Readers</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Discover Books
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Reading Preferences
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Beta Access
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Reading Lists
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4">For Authors</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Author Dashboard
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Analytics Tools
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Book Publishing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Marketing Resources
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4">For Publishers</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Publisher Portal
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Catalog Management
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Author Relationships
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Integration APIs
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-muted-foreground hover:text-primary">
-                    Contact Us
-                  </a>
-                </li>
-              </ul>
-            </div>
+            <AnimateOnScroll type="slide-up" delay="none">
+              <div>
+                <h3 className="font-bold mb-4">For Readers</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Discover Books
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Reading Preferences
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Beta Access
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Reading Lists
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="short">
+              <div>
+                <h3 className="font-bold mb-4">For Authors</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Author Dashboard
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Analytics Tools
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Book Publishing
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Marketing Resources
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="medium">
+              <div>
+                <h3 className="font-bold mb-4">For Publishers</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Publisher Portal
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Catalog Management
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Author Relationships
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Integration APIs
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll type="slide-up" delay="long">
+              <div>
+                <h3 className="font-bold mb-4">Company</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      About Us
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Blog
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Careers
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="text-muted-foreground hover:text-primary">
+                      Contact Us
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
           </div>
 
-          <div className="border-t border-white/10 pt-8 mt-8 text-center text-muted-foreground text-sm">
-            <p>&copy; {new Date().getFullYear()} Sirened Publishing. All rights reserved.</p>
-            <div className="mt-2 flex justify-center gap-4">
-              <a href="#" className="hover:text-primary">
-                Terms of Service
-              </a>
-              <a href="#" className="hover:text-primary">
-                Privacy Policy
-              </a>
-              <a href="#" className="hover:text-primary">
-                Cookie Policy
-              </a>
+          <AnimateOnScroll type="fade-in" delay="long">
+            <div className="border-t border-white/10 pt-8 mt-8 text-center text-muted-foreground text-sm">
+              <p>&copy; {new Date().getFullYear()} Sirened Publishing. All rights reserved.</p>
+              <div className="mt-2 flex justify-center gap-4">
+                <a href="#" className="hover:text-primary">
+                  Terms of Service
+                </a>
+                <a href="#" className="hover:text-primary">
+                  Privacy Policy
+                </a>
+                <a href="#" className="hover:text-primary">
+                  Cookie Policy
+                </a>
+              </div>
             </div>
-          </div>
+          </AnimateOnScroll>
         </div>
       </footer>
     </div>
