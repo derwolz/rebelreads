@@ -296,14 +296,19 @@ export function ScrollLandingPage(): React.JSX.Element {
         <div className="fixed top-0 left-0 w-full h-screen overflow-hidden">
           {/* Remove background color since we're using wave background */}
 
-          {/* Scroll indicator for first section */}
+          {/* Scroll indicator for first section with enhanced animation */}
           {currentSectionIndex === 0 && progressInSection < 0.5 && (
-            <div
-              className="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce z-10"
-              style={{ opacity: 1 - progressInSection * 2 }}
+            <AnimatedElement
+              animation="fade-in"
+              delay={0.3}
+              duration={0.8}
+              className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-10"
+              once={false}
             >
-              <ChevronDown className="w-8 h-8 text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]" />
-            </div>
+              <div style={{ opacity: 1 - progressInSection * 2 }}>
+                <ChevronDown className="w-8 h-8 text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)] animate-bounce" />
+              </div>
+            </AnimatedElement>
           )}
 
           {/* Heading stack container */}
@@ -361,18 +366,30 @@ export function ScrollLandingPage(): React.JSX.Element {
                 })}
 
               {/* Current section heading - at the bottom */}
-              <div className="relative transition-all duration-300">
-                <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]">
-                  {sections[currentSectionIndex]?.heading}
-                </h2>
-              </div>
+              <AnimatedElement 
+                animation="slide-up" 
+                delay={0.1} 
+                duration={0.6}
+                once={false}
+                className="relative"
+              >
+                <div className="relative transition-all duration-300">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]">
+                    {sections[currentSectionIndex]?.heading}
+                  </h2>
+                </div>
+              </AnimatedElement>
             </div>
           </div>
 
           {/* Descriptive text - appear for section 2+ */}
           {currentSectionIndex >= 2 && (
-            <div
-              className={`absolute bottom-32 max-w-md z-10 transition-all duration-500 ${
+            <AnimatedElement
+              animation="slide-left"
+              delay={0.2}
+              duration={0.7}
+              once={false}
+              className={`absolute bottom-32 max-w-md z-10 ${
                 currentSectionIndex >= sections.length - 2
                   ? "left-1/2 -translate-x-1/2 text-center" // Center text for last two panels
                   : "right-20 text-right" // Keep right alignment for other panels
@@ -385,29 +402,43 @@ export function ScrollLandingPage(): React.JSX.Element {
                     : "none",
               }}
             >
-              <p className="text-lg md:text-xl text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] bg-black/20 backdrop-blur-sm p-4 rounded-lg">
+              <p className="text-lg md:text-xl text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] bg-black/20 backdrop-blur-sm p-4 rounded-lg transition-all duration-300 hover:bg-black/30">
                 {sections[currentSectionIndex]?.subtext}
               </p>
-            </div>
+            </AnimatedElement>
           )}
 
           {/* Content for sections - conditional rendering based on section index */}
           {currentSectionIndex >= 2 && (
             <>
-              {/* Show dashboard for section 4 */}
+              {/* Show dashboard for section 4 with animation */}
               {currentSectionIndex === 3 ? (
-                <div
+                <AnimatedElement
+                  animation="zoom-in"
+                  delay={0.3}
+                  duration={0.8}
+                  once={false}
                   className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3/4 max-w-4xl z-5"
                   style={{
                     opacity: elementsOpacity,
-                    transform: `translate(-50%, -50%) scale(${0.9 + progressInSection * 0.1})`,
                   }}
                 >
-                  <BookMetricsDashboard />
-                </div>
+                  <div 
+                    className="transition-transform duration-700"
+                    style={{
+                      transform: `scale(${0.9 + progressInSection * 0.1})`,
+                    }}
+                  >
+                    <BookMetricsDashboard />
+                  </div>
+                </AnimatedElement>
               ) : (
-                /* Show regular image for other sections */
-                <div
+                /* Show regular image for other sections with animation */
+                <AnimatedElement
+                  animation="slide-right"
+                  delay={0.3}
+                  duration={0.8}
+                  once={false}
                   className={`absolute top-1/4 transform -translate-y-1/2 w-1/3 max-w-md z-5 ${
                     currentSectionIndex >= sections.length - 2 
                       ? "left-1/2 -translate-x-1/2" // Center the image in the last two panels
@@ -415,15 +446,21 @@ export function ScrollLandingPage(): React.JSX.Element {
                   }`}
                   style={{
                     opacity: elementsOpacity,
-                    transform: `translateY(-50%) scale(${0.9 + progressInSection * 0.1})`,
                   }}
                 >
-                  <img
-                    src={sections[currentSectionIndex]?.imageSrc}
-                    alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
-                    className="w-full h-auto"
-                  />
-                </div>
+                  <div 
+                    className="transition-transform duration-500 hover:scale-105"
+                    style={{
+                      transform: `scale(${0.9 + progressInSection * 0.1})`,
+                    }}
+                  >
+                    <img
+                      src={sections[currentSectionIndex]?.imageSrc}
+                      alt={`Illustration for ${sections[currentSectionIndex]?.heading}`}
+                      className="w-full h-auto filter drop-shadow-lg"
+                    />
+                  </div>
+                </AnimatedElement>
               )}
             </>
           )}

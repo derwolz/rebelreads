@@ -19,6 +19,7 @@ interface AnimatedElementProps {
   threshold?: number;
   className?: string;
   once?: boolean;
+  style?: React.CSSProperties;
 }
 
 export const AnimatedElement: React.FC<AnimatedElementProps> = ({
@@ -28,7 +29,8 @@ export const AnimatedElement: React.FC<AnimatedElementProps> = ({
   duration = 0.7,
   threshold = 0.1,
   className = "",
-  once = true
+  once = true,
+  style: customStyle = {}
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -79,20 +81,21 @@ export const AnimatedElement: React.FC<AnimatedElementProps> = ({
   };
 
   // Animation styles
-  const style = {
+  const animationStyle = {
     opacity: isVisible ? 1 : 0,
     transform: isVisible ? "none" : undefined,
     transitionDelay: `${delay}s`,
     transitionDuration: `${duration}s`,
     transitionProperty: "opacity, transform",
-    transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)"
+    transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+    ...customStyle // Merge with any custom styles
   };
 
   return (
     <div 
       ref={ref} 
       className={`${animationClasses[animation]} ${className} ${isVisible && animation === "bounce" ? "animate-bounce" : ""} ${isVisible && animation === "pulse" ? "animate-pulse" : ""}`}
-      style={style}
+      style={animationStyle}
     >
       {children}
     </div>
@@ -190,7 +193,7 @@ export const Parallax: React.FC<ParallaxProps> = ({
 };
 
 // Animation for tracking elements into view
-export function useInView(options = {}) {
+export const useInView = (options = {}) => {
   const [ref, setRef] = useState<HTMLElement | null>(null);
   const [isInView, setIsInView] = useState(false);
 
