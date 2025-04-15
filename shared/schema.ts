@@ -98,6 +98,7 @@ export const users = pgTable("users", {
   is_pro: boolean("is_pro").notNull().default(false), // Pro user status
   pro_expires_at: timestamp("pro_expires_at"), // When pro subscription expires
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
+  hasBetaAccess: boolean("has_beta_access").notNull().default(false), // Whether user has beta access
 });
 
 // Authors table with author-specific information

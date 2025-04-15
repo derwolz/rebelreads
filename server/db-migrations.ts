@@ -1432,6 +1432,34 @@ async function removeAuthorColumnsFromBooks() {
   }
 }
 
+/**
+ * Add has_beta_access column to users table for beta waitlist functionality
+ */
+async function addHasBetaAccessToUsers() {
+  try {
+    // Check if column exists first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'has_beta_access'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Adding 'has_beta_access' column to users table...");
+      await db.execute(sql`
+        ALTER TABLE users 
+        ADD COLUMN has_beta_access boolean NOT NULL DEFAULT false
+      `);
+      console.log("Column 'has_beta_access' added successfully");
+    } else {
+      console.log("Column 'has_beta_access' already exists");
+    }
+  } catch (error) {
+    console.error("Error adding 'has_beta_access' column:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await removeGenresColumnFromBooks();
@@ -1482,6 +1510,8 @@ export async function runMigrations() {
   // Create publisher_sellers table for authenticating salesmen
   await createPublisherSellersTable();
   await createSellersTableAndUpdatePublisherSellers();
+  // Add has_beta_access column to users table
+  await addHasBetaAccessToUsers();
   console.log("Migrations completed");
 }
 

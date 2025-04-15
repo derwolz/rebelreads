@@ -2,14 +2,16 @@ import { EmailService } from './email-service';
 import { 
   welcomeEmailTemplate, 
   signupInterestEmailTemplate, 
-  betaKeyRequiredEmailTemplate 
+  betaKeyRequiredEmailTemplate,
+  waitlistWelcomeEmailTemplate
 } from './templates';
 
 export { 
   EmailService,
   welcomeEmailTemplate,
   signupInterestEmailTemplate,
-  betaKeyRequiredEmailTemplate
+  betaKeyRequiredEmailTemplate,
+  waitlistWelcomeEmailTemplate
 };
 
 // Export a singleton instance for convenience

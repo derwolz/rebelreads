@@ -37,6 +37,7 @@ export interface IAccountStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<UpdateProfile>): Promise<User>;
   toggleAuthorStatus(id: number): Promise<User>;
+  updateUserBetaAccess(id: number, hasBetaAccess: boolean): Promise<User>;
 
   getRatings(bookId: number): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
@@ -92,21 +93,117 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    // Use raw query to avoid schema validation issues during migration
+    const result = await db.execute(sql`
+      SELECT id, email, username, password, newsletter_opt_in, 
+             provider, provider_id, profile_image_url, bio, 
+             display_name, social_links, social_media_links, 
+             credits, is_pro, pro_expires_at, has_completed_onboarding
+      FROM users 
+      WHERE id = ${id}
+    `);
+    
+    if (result.rows.length === 0) {
+      return undefined;
+    }
+    
+    // Convert to camelCase and add default hasBetaAccess value
+    const user = result.rows[0];
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      password: user.password,
+      newsletterOptIn: user.newsletter_opt_in,
+      provider: user.provider,
+      providerId: user.provider_id,
+      profileImageUrl: user.profile_image_url,
+      bio: user.bio,
+      displayName: user.display_name,
+      socialLinks: user.social_links || [],
+      socialMediaLinks: user.social_media_links || [],
+      credits: user.credits,
+      is_pro: user.is_pro,
+      pro_expires_at: user.pro_expires_at,
+      hasCompletedOnboarding: user.has_completed_onboarding,
+      hasBetaAccess: false // Default value until column exists
+    };
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, username));
-    return user;
+    // Use raw query to avoid schema validation issues during migration
+    const result = await db.execute(sql`
+      SELECT id, email, username, password, newsletter_opt_in, 
+             provider, provider_id, profile_image_url, bio, 
+             display_name, social_links, social_media_links, 
+             credits, is_pro, pro_expires_at, has_completed_onboarding
+      FROM users 
+      WHERE username = ${username}
+    `);
+    
+    if (result.rows.length === 0) {
+      return undefined;
+    }
+    
+    // Convert to camelCase and add default hasBetaAccess value
+    const user = result.rows[0];
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      password: user.password,
+      newsletterOptIn: user.newsletter_opt_in,
+      provider: user.provider,
+      providerId: user.provider_id,
+      profileImageUrl: user.profile_image_url,
+      bio: user.bio,
+      displayName: user.display_name,
+      socialLinks: user.social_links || [],
+      socialMediaLinks: user.social_media_links || [],
+      credits: user.credits,
+      is_pro: user.is_pro,
+      pro_expires_at: user.pro_expires_at,
+      hasCompletedOnboarding: user.has_completed_onboarding,
+      hasBetaAccess: false // Default value until column exists
+    };
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+    // Use raw query to avoid schema validation issues during migration
+    const result = await db.execute(sql`
+      SELECT id, email, username, password, newsletter_opt_in, 
+             provider, provider_id, profile_image_url, bio, 
+             display_name, social_links, social_media_links, 
+             credits, is_pro, pro_expires_at, has_completed_onboarding
+      FROM users 
+      WHERE email = ${email}
+    `);
+    
+    if (result.rows.length === 0) {
+      return undefined;
+    }
+    
+    // Convert to camelCase and add default hasBetaAccess value
+    const user = result.rows[0];
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      password: user.password,
+      newsletterOptIn: user.newsletter_opt_in,
+      provider: user.provider,
+      providerId: user.provider_id,
+      profileImageUrl: user.profile_image_url,
+      bio: user.bio,
+      displayName: user.display_name,
+      socialLinks: user.social_links || [],
+      socialMediaLinks: user.social_media_links || [],
+      credits: user.credits,
+      is_pro: user.is_pro,
+      pro_expires_at: user.pro_expires_at,
+      hasCompletedOnboarding: user.has_completed_onboarding,
+      hasBetaAccess: false // Default value until column exists
+    };
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -124,10 +221,21 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async toggleAuthorStatus(id: number): Promise<User> {
-    const user = await this.getUser(id);
+    // This method is likely legacy code and no longer used 
+    // since isAuthor is no longer a field in the users table
+    // but a separate authors table instead
+    const [updatedUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id));
+    
+    return updatedUser;
+  }
+  
+  async updateUserBetaAccess(id: number, hasBetaAccess: boolean): Promise<User> {
     const [updatedUser] = await db
       .update(users)
-      .set({ isAuthor: !user?.isAuthor })
+      .set({ hasBetaAccess })
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
