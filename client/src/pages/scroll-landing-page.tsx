@@ -5,6 +5,7 @@ import { FloatingSignup } from "@/components/floating-signup";
 import { BookMetricsDashboard } from "@/components/book-metrics-dashboard";
 import { useTheme } from "@/hooks/use-theme";
 import { useLocation } from "wouter";
+import { AnimatedElement, StaggeredAnimation, Parallax, useInView } from "@/components/scroll-animations";
 
 interface ScrollSection {
   id: string;
