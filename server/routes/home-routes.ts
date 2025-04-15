@@ -208,7 +208,15 @@ router.post("/books/:id/ratings", async (req, res) => {
 
 router.get("/my-books", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
-  const books = await dbStorage.getBooksByAuthor(req.user!.id);
+  
+  // Get the author ID from the user ID
+  const author = await dbStorage.getAuthorByUserId(req.user!.id);
+  
+  if (!author) {
+    return res.status(403).json({ error: "User is not an author or author record not found" });
+  }
+  
+  const books = await dbStorage.getBooksByAuthor(author.id);
   res.json(books);
 });
 
@@ -237,15 +245,20 @@ router.post("/books", multipleImageUpload, async (req, res) => {
     // Extract and handle taxonomy data separately
     const genreTaxonomies = req.body.genreTaxonomies ? JSON.parse(req.body.genreTaxonomies) : [];
 
+    // Get the author ID from the user ID (not using user.id directly since we need author.id)
+    const author = await dbStorage.getAuthorByUserId(req.user!.id);
+    
+    if (!author) {
+      return res.status(403).json({ error: "User is not an author or author record not found" });
+    }
+    
     // Create the book first (without taxonomies and without cover URL)
     const book = await dbStorage.createBook({
       title: req.body.title,
       description: req.body.description,
-      authorId: req.user!.id,
-      author: req.user!.authorName || req.user!.username,
+      authorId: author.id, // Use the author ID instead of the user ID
       formats: formats,
       promoted: false,
-      authorImageUrl: null,
       pageCount: req.body.pageCount ? parseInt(req.body.pageCount) : null,
       publishedDate,
       awards,
@@ -336,9 +349,16 @@ router.post("/books", multipleImageUpload, async (req, res) => {
 
 router.patch("/books/:id", multipleImageUpload, async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
-
+  
+  // Get the author ID from the user ID
+  const author = await dbStorage.getAuthorByUserId(req.user!.id);
+  
+  if (!author) {
+    return res.status(403).json({ error: "User is not an author or author record not found" });
+  }
+  
   const book = await dbStorage.getBook(parseInt(req.params.id));
-  if (!book || book.authorId !== req.user!.id) {
+  if (!book || book.authorId !== author.id) {
     return res.sendStatus(403);
   }
 
@@ -544,13 +564,20 @@ router.delete("/books/:id", async (req, res) => {
       return res.status(404).json({ error: "Book not found" });
     }
 
-    // Verify that the authenticated user owns this book
-    if (book.authorId !== req.user!.id) {
+    // Get the author ID from the user ID
+    const author = await dbStorage.getAuthorByUserId(req.user!.id);
+    
+    if (!author) {
+      return res.status(403).json({ error: "User is not an author or author record not found" });
+    }
+    
+    // Verify that the authenticated user (as an author) owns this book
+    if (book.authorId !== author.id) {
       return res.status(403).json({ error: "You don't have permission to delete this book" });
     }
 
     // Delete the book
-    await dbStorage.deleteBook(bookId, req.user!.id);
+    await dbStorage.deleteBook(bookId, author.id);
     
     console.log(`Book ID ${bookId} deleted by user ID ${req.user!.id}`);
     res.sendStatus(200);
@@ -734,8 +761,9 @@ router.post("/authors/:id/follow", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
   const authorId = parseInt(req.params.id);
-  const author = await dbStorage.getUser(authorId);
-  if (!author?.isAuthor) return res.sendStatus(404);
+  // Check if the author exists directly in the authors table
+  const author = await dbStorage.getAuthor(authorId);
+  if (!author) return res.sendStatus(404);
 
   await dbStorage.followAuthor(req.user!.id, authorId);
   res.sendStatus(200);
