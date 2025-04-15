@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, ReactNode } from "react";
 import { ChevronDown, User, Book } from "lucide-react";
 import { BrandedNav } from "@/components/branded-nav";
 import { FloatingSignup } from "@/components/floating-signup";
@@ -286,6 +286,27 @@ export function ScrollLandingPage(): React.JSX.Element {
       : currentSectionIndex > 2
         ? 1
         : 0;
+        
+  // Function to render text with percentage animations
+  const renderTextWithPercentage = (text: string): ReactNode => {
+    // Specifically look for "100%" in the text for profit retention animation
+    if (text.includes("100% of your profits")) {
+      const parts = text.split("100% of your profits");
+      
+      return (
+        <>
+          {parts[0]}
+          <span className="font-semibold text-primary-foreground">
+            <CountUp end={100} duration={1000} suffix="%" /> of your profits
+          </span>
+          {parts[1]}
+        </>
+      );
+    }
+    
+    // Return original text if no percentage pattern is found
+    return text;
+  };
 
   return (
     <div className="overflow-hidden" ref={containerRef}>
@@ -412,7 +433,7 @@ export function ScrollLandingPage(): React.JSX.Element {
               }}
             >
               <p className="text-lg md:text-xl text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,1)] bg-black/20 backdrop-blur-sm p-4 rounded-lg">
-                {sections[currentSectionIndex]?.subtext}
+                {renderTextWithPercentage(sections[currentSectionIndex]?.subtext || "")}
               </p>
             </div>
           )}
