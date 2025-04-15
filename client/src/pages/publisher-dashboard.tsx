@@ -247,7 +247,7 @@ export default function PublisherDashboard() {
   const addAuthorMutation = useMutation({
     mutationFn: async (data: z.infer<typeof addAuthorSchema>) => {
       const response = await fetch(
-        `/api/publishers/${publisherProfile?.id}/authors`,
+        `/api/publishers/${profile.id}/authors`,
         {
           method: "POST",
           headers: {
@@ -617,26 +617,26 @@ export default function PublisherDashboard() {
                     <div>
                       <div className="font-medium">Business Phone</div>
                       <p className="text-sm text-muted-foreground">
-                        {publisherProfile.business_phone || "Not provided"}
+                        {profile.business_phone || "Not provided"}
                       </p>
                     </div>
                     <div>
                       <div className="font-medium">Business Address</div>
                       <p className="text-sm text-muted-foreground">
-                        {publisherProfile.business_address || "Not provided"}
+                        {profile.business_address || "Not provided"}
                       </p>
                     </div>
                     <div>
                       <div className="font-medium">Website</div>
                       <p className="text-sm text-muted-foreground">
-                        {publisherProfile.website ? (
+                        {profile.website ? (
                           <a
-                            href={publisherProfile.website}
+                            href={profile.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
                           >
-                            {publisherProfile.website}
+                            {profile.website}
                           </a>
                         ) : (
                           "Not provided"
