@@ -271,19 +271,28 @@
   }
 }
 
-@keyframes growChart {
+@keyframes slideInChart {
   0% {
-    transform: scale(0.7);
+    transform: translateX(-50px);
     opacity: 0;
   }
 
-  99% {
-    transform: scale(1);
+  100% {
+    transform: translateX(0);
     opacity: 1;
   }
+}
 
+@keyframes countUp {
+  0% {
+    opacity: 0;
+  }
+  
+  20% {
+    opacity: 1;
+  }
+  
   100% {
-    transform: scale(1);
     opacity: 1;
   }
 }
@@ -359,9 +368,14 @@
   will-change: opacity;
 }
 
-.animate-grow-chart {
-  animation: growChart 1.2s ease-out forwards;
+.animate-slide-chart {
+  animation: slideInChart 1.2s ease-out forwards;
   will-change: transform, opacity;
+}
+
+.animate-count-up {
+  animation: countUp 1.5s ease-out forwards;
+  will-change: opacity;
 }
 
 /* Animation delay utility classes */
