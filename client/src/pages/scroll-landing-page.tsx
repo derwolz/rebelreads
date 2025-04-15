@@ -358,9 +358,16 @@ export function ScrollLandingPage(): React.JSX.Element {
                             : "auto",
                       }}
                     >
-                      <h3 className="text-2xl md:text-3xl font-medium text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] shadow-black">
-                        {section.heading}
-                      </h3>
+                      <AnimatedElement 
+                        animation="fade-in" 
+                        delay={0.15 * (currentSectionIndex - index)} 
+                        duration={0.5}
+                        once={false}
+                      >
+                        <h3 className="text-2xl md:text-3xl font-medium text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] shadow-black">
+                          {section.heading}
+                        </h3>
+                      </AnimatedElement>
                     </div>
                   );
                 })}
