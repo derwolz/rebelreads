@@ -135,7 +135,7 @@ export const AnimatedChart: React.FC<{
                   el.classList.add('animate-count-up');
                   
                   // Animate the number counting up
-                  let start = 0;
+                  let start = 0 as number;
                   const duration = 1500; // 1.5 seconds
                   const step = (timestamp: number) => {
                     if (!start) start = timestamp;
