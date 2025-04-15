@@ -90,13 +90,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // After login, force a refetch of author status
       queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
     },
-    onError: (error: Error) => {
+    onError: async (error: Error) => {
       if (error.message.includes("beta access")) {
+        // First log the user out to ensure they can't access the site
+        try {
+          // Perform logout
+          await apiRequest("POST", "/api/logout");
+          // Clear user data from cache
+          queryClient.setQueryData(["/api/user"], null);
+          queryClient.setQueryData(["/api/author-status"], null);
+        } catch (logoutError) {
+          console.error("Error during logout:", logoutError);
+        }
+        
         toast({
           title: "Beta Access Required",
           description: "Thank you for your interest! We'll notify you when beta access is available.",
         });
-        // Redirect to landing page
+        
+        // Then redirect to landing page
         window.location.href = "/landing?nobeta=true";
       } else {
         toast({
@@ -122,12 +134,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Normal registration flow
       queryClient.setQueryData(["/api/user"], userData);
     },
-    onError: (error: Error) => {
+    onError: async (error: Error) => {
       if (error.message.includes("beta access")) {
+        // First log the user out to ensure they can't access the site
+        try {
+          // Perform logout
+          await apiRequest("POST", "/api/logout");
+          // Clear user data from cache
+          queryClient.setQueryData(["/api/user"], null);
+          queryClient.setQueryData(["/api/author-status"], null);
+        } catch (logoutError) {
+          console.error("Error during logout:", logoutError);
+        }
+        
         toast({
           title: "Account Created!",
           description: "Thank you for your interest! We'll notify you when beta access is available.",
         });
+        
         // Redirect to landing page
         window.location.href = "/landing?nobeta=true";
       } else {
