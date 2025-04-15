@@ -15,12 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -53,20 +48,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  BarChart, 
-  LineChart, 
-  BookOpen, 
-  Users, 
-  TrendingUp, 
-  Calendar, 
-  DollarSign, 
-  PlusCircle, 
-  Settings, 
-  UserPlus, 
-  X, 
+import {
+  BarChart,
+  LineChart,
+  BookOpen,
+  Users,
+  TrendingUp,
+  Calendar,
+  DollarSign,
+  PlusCircle,
+  Settings,
+  UserPlus,
+  X,
   Check,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 
 interface Publisher {
@@ -117,7 +112,7 @@ interface AuthorWithBooks {
     totalImpressions: number;
     totalClickThroughs: number;
     conversionRate: number;
-  }
+  };
 }
 
 // Schema for adding a new author to the publisher
@@ -137,7 +132,7 @@ const updatePublisherSchema = z.object({
   business_email: z.string().email("Invalid email format").optional(),
   business_phone: z.string().optional(),
   business_address: z.string().optional(),
-  website: z.string().url("Invalid URL format").optional().or(z.literal('')),
+  website: z.string().url("Invalid URL format").optional().or(z.literal("")),
 });
 
 export default function PublisherDashboard() {
@@ -145,7 +140,7 @@ export default function PublisherDashboard() {
   const [showAddAuthorDialog, setShowAddAuthorDialog] = useState(false);
   const [showEditProfileDialog, setShowEditProfileDialog] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
-  
+
   // Define publisher status data interface
   interface PublisherStatusData {
     isPublisher: boolean;
@@ -178,33 +173,46 @@ export default function PublisherDashboard() {
   }
 
   // Fetch publisher profile
-  const { data: publisherData, isLoading: loadingPublisher } = useQuery<PublisherStatusData>({
-    queryKey: ["/api/account/publisher-status"],
-  });
+  const { data: publisherData, isLoading: loadingPublisher } =
+    useQuery<PublisherStatusData>({
+      queryKey: ["/api/publisher-status"],
+      queryFn: () =>
+        fetch("/api/publisher-status").then((res) => res.json()),
+    });
 
   // Only fetch publisher profile if user is a publisher
-  const { data: publisherProfile, isLoading: loadingProfile } = useQuery<PublisherProfile>({
-    queryKey: ["/api/account/publisher-profile"],
-    enabled: !!publisherData?.isPublisher,
-  });
+  const { data: publisherProfile, isLoading: loadingProfile } =
+    useQuery<PublisherProfile>({
+      queryKey: ["/api/publisher-profile"],
+      enabled: !!publisherData?.isPublisher,
+      queryFn: () =>
+        fetch("/api/publisher-profile").then((res) => res.json()),
+    });
 
   // Fetch publisher authors with their books
-  const { data: authorsWithBooks, isLoading: loadingAuthors } = useQuery<AuthorWithBooks[]>({
+  const { data: authorsWithBooks, isLoading: loadingAuthors } = useQuery<
+    AuthorWithBooks[]
+  >({
     queryKey: ["/api/catalogue/publisher/authors"],
     enabled: !!publisherProfile,
+    queryFn: () =>
+      fetch("/api/catalogue/publisher/authors").then((res) => res.json()),
   });
 
   // Fetch all authors for adding to publisher
-  const { data: availableAuthors, isLoading: loadingAvailableAuthors } = useQuery<Author[]>({
-    queryKey: ["/api/catalogue/authors/available"],
-    enabled: showAddAuthorDialog,
-  });
+  const { data: availableAuthors, isLoading: loadingAvailableAuthors } =
+    useQuery<Author[]>({
+      queryKey: ["/api/catalogue/authors/available"],
+      enabled: showAddAuthorDialog,
+      queryFn: () =>
+        fetch("/api/catalogue/authors/available").then((res) => res.json()),
+    });
 
   // Form for adding an author
   const addAuthorForm = useForm<z.infer<typeof addAuthorSchema>>({
     resolver: zodResolver(addAuthorSchema),
     defaultValues: {
-      contract_start: new Date().toISOString().split('T')[0],
+      contract_start: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -238,13 +246,16 @@ export default function PublisherDashboard() {
   // Add author mutation
   const addAuthorMutation = useMutation({
     mutationFn: async (data: z.infer<typeof addAuthorSchema>) => {
-      const response = await fetch(`/api/publishers/${publisherProfile?.id}/authors`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/publishers/${publisherProfile?.id}/authors`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
         },
-        body: JSON.stringify(data),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -256,7 +267,9 @@ export default function PublisherDashboard() {
     onSuccess: () => {
       setShowAddAuthorDialog(false);
       addAuthorForm.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/catalogue/publisher/authors"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/catalogue/publisher/authors"],
+      });
       toast({
         title: "Author added",
         description: "The author has been added to your publisher profile",
@@ -265,7 +278,8 @@ export default function PublisherDashboard() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add author",
+        description:
+          error instanceof Error ? error.message : "Failed to add author",
         variant: "destructive",
       });
     },
@@ -291,7 +305,9 @@ export default function PublisherDashboard() {
     },
     onSuccess: () => {
       setShowEditProfileDialog(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/account/publisher-profile"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/publisher-profile"],
+      });
       toast({
         title: "Profile updated",
         description: "Your publisher profile has been updated",
@@ -300,7 +316,8 @@ export default function PublisherDashboard() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update profile",
+        description:
+          error instanceof Error ? error.message : "Failed to update profile",
         variant: "destructive",
       });
     },
@@ -309,9 +326,12 @@ export default function PublisherDashboard() {
   // Remove author mutation
   const removeAuthorMutation = useMutation({
     mutationFn: async (authorId: number) => {
-      const response = await fetch(`/api/publishers/${publisherProfile?.id}/authors/${authorId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/publishers/${publisherProfile?.id}/authors/${authorId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -321,7 +341,9 @@ export default function PublisherDashboard() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/catalogue/publisher/authors"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/catalogue/publisher/authors"],
+      });
       toast({
         title: "Author removed",
         description: "The author has been removed from your publisher profile",
@@ -330,7 +352,8 @@ export default function PublisherDashboard() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to remove author",
+        description:
+          error instanceof Error ? error.message : "Failed to remove author",
         variant: "destructive",
       });
     },
@@ -340,7 +363,9 @@ export default function PublisherDashboard() {
     addAuthorMutation.mutate(data);
   };
 
-  const onSubmitUpdateProfile = (data: z.infer<typeof updatePublisherSchema>) => {
+  const onSubmitUpdateProfile = (
+    data: z.infer<typeof updatePublisherSchema>,
+  ) => {
     updateProfileMutation.mutate(data);
   };
 
@@ -352,33 +377,55 @@ export default function PublisherDashboard() {
 
   // Calculate metrics for publisher dashboard
   const getTotalAuthors = (): number => authorsWithBooks?.length || 0;
-  
-  const getTotalBooks = (): number => 
-    authorsWithBooks?.reduce((total: number, { books }: AuthorWithBooks) => 
-      total + books.length, 0) || 0;
-  
-  const getTotalImpressions = (): number => 
-    authorsWithBooks?.reduce((total: number, { books }: AuthorWithBooks) => 
-      total + books.reduce((sum: number, book: Book) => 
-        sum + (book.impressionCount || 0), 0), 0) || 0;
-  
-  const getTotalClickThroughs = (): number => 
-    authorsWithBooks?.reduce((total: number, { books }: AuthorWithBooks) => 
-      total + books.reduce((sum: number, book: Book) => 
-        sum + (book.clickThroughCount || 0), 0), 0) || 0;
-  
+
+  const getTotalBooks = (): number =>
+    authorsWithBooks?.reduce(
+      (total: number, { books }: AuthorWithBooks) => total + books.length,
+      0,
+    ) || 0;
+
+  const getTotalImpressions = (): number =>
+    authorsWithBooks?.reduce(
+      (total: number, { books }: AuthorWithBooks) =>
+        total +
+        books.reduce(
+          (sum: number, book: Book) => sum + (book.impressionCount || 0),
+          0,
+        ),
+      0,
+    ) || 0;
+
+  const getTotalClickThroughs = (): number =>
+    authorsWithBooks?.reduce(
+      (total: number, { books }: AuthorWithBooks) =>
+        total +
+        books.reduce(
+          (sum: number, book: Book) => sum + (book.clickThroughCount || 0),
+          0,
+        ),
+      0,
+    ) || 0;
+
   const getConversionRate = (): string => {
     const impressions = getTotalImpressions();
     const clicks = getTotalClickThroughs();
-    return impressions ? (clicks / impressions * 100).toFixed(2) : "0.00";
+    return impressions ? ((clicks / impressions) * 100).toFixed(2) : "0.00";
   };
 
   // Calculate metrics for each author
   const getAuthorMetrics = (books: Book[]) => {
-    const totalImpressions = books.reduce((sum, book) => sum + (book.impressionCount || 0), 0);
-    const totalClickThroughs = books.reduce((sum, book) => sum + (book.clickThroughCount || 0), 0);
-    const conversionRate = totalImpressions ? (totalClickThroughs / totalImpressions * 100) : 0;
-    
+    const totalImpressions = books.reduce(
+      (sum, book) => sum + (book.impressionCount || 0),
+      0,
+    );
+    const totalClickThroughs = books.reduce(
+      (sum, book) => sum + (book.clickThroughCount || 0),
+      0,
+    );
+    const conversionRate = totalImpressions
+      ? (totalClickThroughs / totalImpressions) * 100
+      : 0;
+
     return {
       totalImpressions,
       totalClickThroughs,
@@ -412,11 +459,15 @@ export default function PublisherDashboard() {
               <p>You don't have publisher privileges.</p>
             </div>
             <p>
-              If you believe this is an error, please contact support or check your account settings.
+              If you believe this is an error, please contact support or check
+              your account settings.
             </p>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" onClick={() => window.location.href = "/settings"}>
+            <Button
+              variant="outline"
+              onClick={() => (window.location.href = "/settings")}
+            >
               Go to Settings
             </Button>
           </CardFooter>
@@ -437,19 +488,24 @@ export default function PublisherDashboard() {
   // Since we check loadingProfile before rendering, we know publisherProfile is defined here
   // but TypeScript doesn't know that, so we'll add a check to satisfy TypeScript
   const profile = publisherProfile as PublisherProfile;
-  
+
   // We have verified publisher profile is loaded
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{profile.publisher_name} Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            {profile.publisher_name} Dashboard
+          </h1>
           <p className="text-muted-foreground">
             Manage your authors, books, and publishing metrics
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowEditProfileDialog(true)}>
+          <Button
+            variant="outline"
+            onClick={() => setShowEditProfileDialog(true)}
+          >
             <Settings className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
@@ -473,7 +529,9 @@ export default function PublisherDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Authors</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Authors
+                </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -483,10 +541,12 @@ export default function PublisherDashboard() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Books</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Books
+                </CardTitle>
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -496,23 +556,29 @@ export default function PublisherDashboard() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Impressions</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Impressions
+                </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{getTotalImpressions().toLocaleString()}</div>
+                <div className="text-2xl font-bold">
+                  {getTotalImpressions().toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Book views across all platforms
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Conversion Rate
+                </CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -528,14 +594,17 @@ export default function PublisherDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Publisher Information</CardTitle>
-                <CardDescription>Details about your publishing house</CardDescription>
+                <CardDescription>
+                  Details about your publishing house
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="font-medium">Description</div>
                     <p className="text-sm text-muted-foreground">
-                      {profile.publisher_description || "No description provided."}
+                      {profile.publisher_description ||
+                        "No description provided."}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -561,15 +630,17 @@ export default function PublisherDashboard() {
                       <div className="font-medium">Website</div>
                       <p className="text-sm text-muted-foreground">
                         {publisherProfile.website ? (
-                          <a 
-                            href={publisherProfile.website} 
-                            target="_blank" 
+                          <a
+                            href={publisherProfile.website}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
                           >
                             {publisherProfile.website}
                           </a>
-                        ) : "Not provided"}
+                        ) : (
+                          "Not provided"
+                        )}
                       </p>
                     </div>
                   </div>
@@ -587,7 +658,9 @@ export default function PublisherDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Recent Author Activity</CardTitle>
-                  <CardDescription>Performance of your top authors</CardDescription>
+                  <CardDescription>
+                    Performance of your top authors
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -605,11 +678,19 @@ export default function PublisherDashboard() {
                         const metrics = getAuthorMetrics(books);
                         return (
                           <TableRow key={author.id}>
-                            <TableCell className="font-medium">{author.author_name}</TableCell>
+                            <TableCell className="font-medium">
+                              {author.author_name}
+                            </TableCell>
                             <TableCell>{books.length}</TableCell>
-                            <TableCell>{metrics.totalImpressions.toLocaleString()}</TableCell>
-                            <TableCell>{metrics.totalClickThroughs.toLocaleString()}</TableCell>
-                            <TableCell>{metrics.conversionRate.toFixed(2)}%</TableCell>
+                            <TableCell>
+                              {metrics.totalImpressions.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {metrics.totalClickThroughs.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {metrics.conversionRate.toFixed(2)}%
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -617,7 +698,11 @@ export default function PublisherDashboard() {
                   </Table>
                 </CardContent>
                 <CardFooter className="flex justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab("authors")}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveTab("authors")}
+                  >
                     View All Authors
                   </Button>
                 </CardFooter>
@@ -627,14 +712,19 @@ export default function PublisherDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>No Authors Yet</CardTitle>
-                <CardDescription>Add authors to your publisher profile to get started</CardDescription>
+                <CardDescription>
+                  Add authors to your publisher profile to get started
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Start Building Your Team</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    Start Building Your Team
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Add authors to your publisher profile to start managing their books and tracking analytics.
+                    Add authors to your publisher profile to start managing
+                    their books and tracking analytics.
                   </p>
                   <Button onClick={() => setShowAddAuthorDialog(true)}>
                     <UserPlus className="mr-2 h-4 w-4" />
@@ -671,8 +761,8 @@ export default function PublisherDashboard() {
                         <div className="flex gap-4 items-center">
                           {author.author_image_url ? (
                             <div className="w-12 h-12 rounded-full overflow-hidden">
-                              <img 
-                                src={author.author_image_url} 
+                              <img
+                                src={author.author_image_url}
                                 alt={author.author_name}
                                 className="w-full h-full object-cover"
                               />
@@ -685,12 +775,13 @@ export default function PublisherDashboard() {
                           <div>
                             <CardTitle>{author.author_name}</CardTitle>
                             <CardDescription>
-                              {books.length} {books.length === 1 ? 'book' : 'books'} published
+                              {books.length}{" "}
+                              {books.length === 1 ? "book" : "books"} published
                             </CardDescription>
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveAuthor(author.id)}
                         >
@@ -701,32 +792,54 @@ export default function PublisherDashboard() {
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="flex flex-col">
-                          <span className="text-sm text-muted-foreground">Impressions</span>
-                          <span className="text-lg font-bold">{metrics.totalImpressions.toLocaleString()}</span>
+                          <span className="text-sm text-muted-foreground">
+                            Impressions
+                          </span>
+                          <span className="text-lg font-bold">
+                            {metrics.totalImpressions.toLocaleString()}
+                          </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm text-muted-foreground">Clicks</span>
-                          <span className="text-lg font-bold">{metrics.totalClickThroughs.toLocaleString()}</span>
+                          <span className="text-sm text-muted-foreground">
+                            Clicks
+                          </span>
+                          <span className="text-lg font-bold">
+                            {metrics.totalClickThroughs.toLocaleString()}
+                          </span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm text-muted-foreground">Conversion Rate</span>
-                          <span className="text-lg font-bold">{metrics.conversionRate.toFixed(2)}%</span>
+                          <span className="text-sm text-muted-foreground">
+                            Conversion Rate
+                          </span>
+                          <span className="text-lg font-bold">
+                            {metrics.conversionRate.toFixed(2)}%
+                          </span>
                         </div>
                       </div>
-                      
+
                       {books.length > 0 ? (
                         <div>
                           <h4 className="font-medium mb-2">Books:</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {books.map(book => (
-                              <div key={book.id} className="p-2 border rounded-md">
+                            {books.map((book) => (
+                              <div
+                                key={book.id}
+                                className="p-2 border rounded-md"
+                              >
                                 <div className="font-medium">{book.title}</div>
                                 <div className="text-xs text-muted-foreground">
-                                  Published: {new Date(book.publishedDate).toLocaleDateString()}
+                                  Published:{" "}
+                                  {new Date(
+                                    book.publishedDate,
+                                  ).toLocaleDateString()}
                                 </div>
                                 <div className="text-xs">
-                                  {book.formats.map(format => (
-                                    <Badge key={format} variant="outline" className="mr-1 mt-1">
+                                  {book.formats.map((format) => (
+                                    <Badge
+                                      key={format}
+                                      variant="outline"
+                                      className="mr-1 mt-1"
+                                    >
                                       {format}
                                     </Badge>
                                   ))}
@@ -737,7 +850,9 @@ export default function PublisherDashboard() {
                         </div>
                       ) : (
                         <div className="text-center p-4 bg-muted rounded-md">
-                          <p className="text-sm text-muted-foreground">No books published yet</p>
+                          <p className="text-sm text-muted-foreground">
+                            No books published yet
+                          </p>
                         </div>
                       )}
                     </CardContent>
@@ -765,7 +880,7 @@ export default function PublisherDashboard() {
         {/* Books Tab */}
         <TabsContent value="books">
           <h2 className="text-2xl font-bold mb-4">Published Books</h2>
-          
+
           {loadingAuthors ? (
             <div className="flex justify-center p-8">
               <p>Loading books...</p>
@@ -773,13 +888,19 @@ export default function PublisherDashboard() {
           ) : authorsWithBooks?.length ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {authorsWithBooks.flatMap(({ author, books }) => 
-                  books.map(book => (
+                {authorsWithBooks.flatMap(({ author, books }) =>
+                  books.map((book) => (
                     <Card key={book.id}>
                       <div className="relative">
-                        {book.images?.find(img => img.imageType === 'book-card') ? (
-                          <img 
-                            src={book.images.find(img => img.imageType === 'book-card')?.imageUrl} 
+                        {book.images?.find(
+                          (img) => img.imageType === "book-card",
+                        ) ? (
+                          <img
+                            src={
+                              book.images.find(
+                                (img) => img.imageType === "book-card",
+                              )?.imageUrl
+                            }
                             alt={book.title}
                             className="w-full h-48 object-cover"
                           />
@@ -790,8 +911,12 @@ export default function PublisherDashboard() {
                         )}
                       </div>
                       <CardHeader>
-                        <CardTitle className="line-clamp-1">{book.title}</CardTitle>
-                        <CardDescription>By {author.author_name}</CardDescription>
+                        <CardTitle className="line-clamp-1">
+                          {book.title}
+                        </CardTitle>
+                        <CardDescription>
+                          By {author.author_name}
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
@@ -799,37 +924,49 @@ export default function PublisherDashboard() {
                         </p>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
-                            <span className="text-muted-foreground">Published: </span>
+                            <span className="text-muted-foreground">
+                              Published:{" "}
+                            </span>
                             {new Date(book.publishedDate).toLocaleDateString()}
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Pages: </span>
+                            <span className="text-muted-foreground">
+                              Pages:{" "}
+                            </span>
                             {book.pageCount}
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Impressions: </span>
+                            <span className="text-muted-foreground">
+                              Impressions:{" "}
+                            </span>
                             {book.impressionCount.toLocaleString()}
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Clicks: </span>
+                            <span className="text-muted-foreground">
+                              Clicks:{" "}
+                            </span>
                             {book.clickThroughCount.toLocaleString()}
                           </div>
                         </div>
                       </CardContent>
                       <CardFooter>
                         <div className="flex gap-1 flex-wrap">
-                          {book.formats.map(format => (
-                            <Badge key={format} variant="outline" className="mr-1">
+                          {book.formats.map((format) => (
+                            <Badge
+                              key={format}
+                              variant="outline"
+                              className="mr-1"
+                            >
                               {format}
                             </Badge>
                           ))}
                         </div>
                       </CardFooter>
                     </Card>
-                  ))
+                  )),
                 )}
               </div>
-              
+
               {!authorsWithBooks.flatMap(({ books }) => books).length && (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center p-8 text-center">
@@ -862,7 +999,7 @@ export default function PublisherDashboard() {
         {/* Analytics Tab */}
         <TabsContent value="analytics">
           <h2 className="text-2xl font-bold mb-4">Publishing Analytics</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <Card>
               <CardHeader>
@@ -881,12 +1018,14 @@ export default function PublisherDashboard() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">No data available</p>
+                    <p className="text-sm text-muted-foreground">
+                      No data available
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Conversion Trends</CardTitle>
@@ -904,17 +1043,21 @@ export default function PublisherDashboard() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">No data available</p>
+                    <p className="text-sm text-muted-foreground">
+                      No data available
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Performance by Author</CardTitle>
-              <CardDescription>Detailed metrics for each author</CardDescription>
+              <CardDescription>
+                Detailed metrics for each author
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {loadingAuthors ? (
@@ -936,17 +1079,25 @@ export default function PublisherDashboard() {
                   <TableBody>
                     {authorsWithBooks.map(({ author, books }) => {
                       const metrics = getAuthorMetrics(books);
-                      const avgImpressions = books.length 
-                        ? (metrics.totalImpressions / books.length).toFixed(0) 
+                      const avgImpressions = books.length
+                        ? (metrics.totalImpressions / books.length).toFixed(0)
                         : "0";
-                        
+
                       return (
                         <TableRow key={author.id}>
-                          <TableCell className="font-medium">{author.author_name}</TableCell>
+                          <TableCell className="font-medium">
+                            {author.author_name}
+                          </TableCell>
                           <TableCell>{books.length}</TableCell>
-                          <TableCell>{metrics.totalImpressions.toLocaleString()}</TableCell>
-                          <TableCell>{metrics.totalClickThroughs.toLocaleString()}</TableCell>
-                          <TableCell>{metrics.conversionRate.toFixed(2)}%</TableCell>
+                          <TableCell>
+                            {metrics.totalImpressions.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            {metrics.totalClickThroughs.toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            {metrics.conversionRate.toFixed(2)}%
+                          </TableCell>
                           <TableCell>{avgImpressions}</TableCell>
                         </TableRow>
                       );
@@ -955,7 +1106,9 @@ export default function PublisherDashboard() {
                 </Table>
               ) : (
                 <div className="text-center p-4">
-                  <p className="text-sm text-muted-foreground">No authors added yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    No authors added yet
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -972,9 +1125,12 @@ export default function PublisherDashboard() {
               Add an existing author to your publisher profile.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...addAuthorForm}>
-            <form onSubmit={addAuthorForm.handleSubmit(onSubmitAddAuthor)} className="space-y-4">
+            <form
+              onSubmit={addAuthorForm.handleSubmit(onSubmitAddAuthor)}
+              className="space-y-4"
+            >
               <FormField
                 control={addAuthorForm.control}
                 name="author_id"
@@ -986,10 +1142,12 @@ export default function PublisherDashboard() {
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={loadingAvailableAuthors}
                         value={field.value}
-                        onChange={e => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       >
                         <option value="">Select an author</option>
-                        {availableAuthors?.map(author => (
+                        {availableAuthors?.map((author) => (
                           <option key={author.id} value={author.id}>
                             {author.author_name}
                           </option>
@@ -1000,7 +1158,7 @@ export default function PublisherDashboard() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={addAuthorForm.control}
                 name="contract_start"
@@ -1008,28 +1166,22 @@ export default function PublisherDashboard() {
                   <FormItem>
                     <FormLabel>Contract Start Date</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                      />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setShowAddAuthorDialog(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={addAuthorMutation.isPending}
-                >
+                <Button type="submit" disabled={addAuthorMutation.isPending}>
                   {addAuthorMutation.isPending ? "Adding..." : "Add Author"}
                 </Button>
               </DialogFooter>
@@ -1039,7 +1191,10 @@ export default function PublisherDashboard() {
       </Dialog>
 
       {/* Edit Profile Dialog */}
-      <Dialog open={showEditProfileDialog} onOpenChange={setShowEditProfileDialog}>
+      <Dialog
+        open={showEditProfileDialog}
+        onOpenChange={setShowEditProfileDialog}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Publisher Profile</DialogTitle>
@@ -1047,9 +1202,12 @@ export default function PublisherDashboard() {
               Update your publisher information.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...updateProfileForm}>
-            <form onSubmit={updateProfileForm.handleSubmit(onSubmitUpdateProfile)} className="space-y-4">
+            <form
+              onSubmit={updateProfileForm.handleSubmit(onSubmitUpdateProfile)}
+              className="space-y-4"
+            >
               <FormField
                 control={updateProfileForm.control}
                 name="publisher_name"
@@ -1063,7 +1221,7 @@ export default function PublisherDashboard() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={updateProfileForm.control}
                 name="publisher_description"
@@ -1071,8 +1229,8 @@ export default function PublisherDashboard() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        {...field} 
+                      <Textarea
+                        {...field}
                         value={field.value || ""}
                         placeholder="Describe your publishing house"
                       />
@@ -1081,7 +1239,7 @@ export default function PublisherDashboard() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={updateProfileForm.control}
@@ -1090,18 +1248,18 @@ export default function PublisherDashboard() {
                     <FormItem>
                       <FormLabel>Business Email</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
+                        <Input
+                          {...field}
                           value={field.value || ""}
-                          type="email" 
-                          placeholder="contact@publisher.com" 
+                          type="email"
+                          placeholder="contact@publisher.com"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={updateProfileForm.control}
                   name="business_phone"
@@ -1109,17 +1267,17 @@ export default function PublisherDashboard() {
                     <FormItem>
                       <FormLabel>Business Phone</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
+                        <Input
+                          {...field}
                           value={field.value || ""}
-                          placeholder="(123) 456-7890" 
+                          placeholder="(123) 456-7890"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={updateProfileForm.control}
                   name="business_address"
@@ -1127,17 +1285,17 @@ export default function PublisherDashboard() {
                     <FormItem>
                       <FormLabel>Business Address</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
+                        <Input
+                          {...field}
                           value={field.value || ""}
-                          placeholder="123 Publishing St, City" 
+                          placeholder="123 Publishing St, City"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={updateProfileForm.control}
                   name="website"
@@ -1145,10 +1303,10 @@ export default function PublisherDashboard() {
                     <FormItem>
                       <FormLabel>Website</FormLabel>
                       <FormControl>
-                        <Input 
-                          {...field} 
+                        <Input
+                          {...field}
                           value={field.value || ""}
-                          placeholder="https://publisher.com" 
+                          placeholder="https://publisher.com"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1156,20 +1314,22 @@ export default function PublisherDashboard() {
                   )}
                 />
               </div>
-              
+
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setShowEditProfileDialog(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={updateProfileMutation.isPending}
                 >
-                  {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                  {updateProfileMutation.isPending
+                    ? "Saving..."
+                    : "Save Changes"}
                 </Button>
               </DialogFooter>
             </form>
