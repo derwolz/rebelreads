@@ -91,11 +91,13 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
   );
 };
 
-// Chart animation component with slide in and count up effect
+// Chart animation component with slide in animation
+// The actual data line animation is handled by useState and useEffect in the page component
 export const AnimatedChart: React.FC<{
   children: ReactNode;
   className?: string;
-}> = ({ children, className = '' }) => {
+  onVisible?: () => void; // Callback for when the chart becomes visible
+}> = ({ children, className = '', onVisible }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -106,59 +108,24 @@ export const AnimatedChart: React.FC<{
     if (!chart) return;
     
     // Set initial styles for slide animation
-    chart.style.transform = 'translateX(-50px)';
+    chart.style.transform = 'translateX(-20px)';
     chart.style.opacity = '0';
     chart.style.willChange = 'transform, opacity';
     
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Apply slide-in animation to the chart
-          chart.classList.add('animate-slide-chart');
+          // First, slide in the entire chart container
+          chart.style.transition = 'transform 0.8s ease-out, opacity 0.8s ease-out';
+          chart.style.transform = 'translateX(0)';
+          chart.style.opacity = '1';
           
-          // Find all the text elements in the chart and add the count-up animation
-          // This targets the text elements inside the chart (like axis labels and values)
-          setTimeout(() => {
-            const textElements = chart.querySelectorAll('text');
-            textElements.forEach((el, index) => {
-              // Skip axis labels (usually these are the first elements)
-              if (index > 10) { // Skip some initial elements that might be axis labels
-                // Store original text
-                const originalText = el.textContent;
-                if (originalText && !isNaN(parseFloat(originalText))) {
-                  const value = parseFloat(originalText);
-                  
-                  // Start with 0
-                  el.textContent = '0';
-                  
-                  // Add animation class
-                  el.classList.add('animate-count-up');
-                  
-                  // Animate the number counting up
-                  let start = 0 as number;
-                  const duration = 1500; // 1.5 seconds
-                  const step = (timestamp: number) => {
-                    if (!start) start = timestamp;
-                    const progress = Math.min((timestamp - start) / duration, 1);
-                    const currentValue = Math.floor(progress * value);
-                    el.textContent = currentValue.toString();
-                    
-                    if (progress < 1) {
-                      window.requestAnimationFrame(step);
-                    } else {
-                      // Ensure final value is exactly as expected
-                      el.textContent = originalText;
-                    }
-                  };
-                  
-                  // Delay the start of counting animation
-                  setTimeout(() => {
-                    window.requestAnimationFrame(step);
-                  }, 500); // Start after slide-in is mostly complete
-                }
-              }
-            });
-          }, 1000); // Wait for slide-in animation to finish
+          // Call the onVisible callback after a slight delay to start data animation
+          if (onVisible) {
+            setTimeout(() => {
+              onVisible();
+            }, 800); // Wait for the slide-in animation to complete
+          }
           
           // Remove element from observation once animation is applied
           observer.unobserve(chart);
@@ -181,13 +148,13 @@ export const AnimatedChart: React.FC<{
         observer.unobserve(chart);
       }
     };
-  }, []);
+  }, [onVisible]);
   
   return (
     <div 
       ref={chartRef} 
       className={className}
-      style={{ opacity: 0, transform: 'translateX(-50px)' }}
+      style={{ opacity: 0, transform: 'translateX(-20px)' }}
     >
       {children}
     </div>
