@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -62,6 +63,73 @@ export function setupAuth(app: Express) {
         return done(null, user);
       }
     }),
+  );
+
+  // Configure Google OAuth strategy
+  passport.use(
+    new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      callbackURL: "/api/auth/google/callback",
+      scope: ["profile", "email"],
+    }, async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Check if user exists with this Google ID
+        const providerId = profile.id;
+        let user = await dbStorage.getUserByProviderId("google", providerId);
+        
+        if (user) {
+          // User exists, return the user
+          return done(null, user);
+        }
+
+        // User doesn't exist, check if their email is already registered
+        const email = profile.emails?.[0]?.value;
+        if (!email) {
+          return done(new Error("No email found in Google profile"));
+        }
+
+        // Check if user exists with this email
+        user = await dbStorage.getUserByEmail(email);
+        
+        if (user) {
+          // Email exists but not linked to Google, update user with Google provider details
+          user = await dbStorage.updateUser(user.id, {
+            provider: "google",
+            providerId: providerId,
+            // Update profile image if available
+            profileImageUrl: profile.photos?.[0]?.value || user.profileImageUrl,
+          });
+          return done(null, user);
+        }
+
+        // Create a new user with Google profile information
+        // Generate a username based on the profile name
+        let username = profile.displayName.toLowerCase().replace(/\s+/g, '');
+        
+        // Check if username exists
+        const usernameExists = await dbStorage.getUserByUsername(username);
+        if (usernameExists) {
+          // Append a random number to make the username unique
+          username = `${username}${Math.floor(Math.random() * 10000)}`;
+        }
+
+        // Create the user
+        const newUser = await dbStorage.createUser({
+          email,
+          username,
+          password: null, // No password for OAuth users
+          newsletterOptIn: false,
+          provider: "google",
+          providerId,
+          profileImageUrl: profile.photos?.[0]?.value || null,
+        });
+
+        return done(null, newUser);
+      } catch (err) {
+        return done(err as Error);
+      }
+    })
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -265,6 +333,40 @@ export function setupAuth(app: Express) {
       res.sendStatus(200);
     });
   });
+
+  // Google OAuth routes
+  app.get("/api/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+  app.get(
+    "/api/auth/google/callback",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    async (req, res) => {
+      try {
+        // Check if beta is active
+        const isBetaActive = await dbStorage.isBetaActive();
+        
+        if (isBetaActive && req.user) {
+          // Check if the user has used a beta key before
+          const hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(req.user.id);
+          
+          if (!hasUsedBetaKey) {
+            // User doesn't have beta access - still login but redirect to a special page
+            return res.redirect("/landing?nobeta=true");
+          }
+        }
+        
+        // Successful authentication, redirect based on user type
+        if (req.user?.isAuthor) {
+          res.redirect("/pro");
+        } else {
+          res.redirect("/");
+        }
+      } catch (error) {
+        console.error("Google OAuth callback error:", error);
+        res.redirect("/login?error=oauth");
+      }
+    }
+  );
 
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
