@@ -228,7 +228,7 @@ export function BookCard({ book }: { book: Book }) {
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {book.authorName || `Author ID: ${book.authorId}`}
+                  {book.authorName}
                 </Link>
 
                 <div className="flex flex-wrap gap-1 mt-2 mb-2">

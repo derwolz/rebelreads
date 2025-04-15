@@ -195,7 +195,7 @@ export function BookGridCard({ book }: { book: Book }) {
                     className="text-xs text-muted-foreground hover:text-primary transition-colors line-clamp-1"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {book.authorName || `Author ID: ${book.authorId}`}
+                    {book.authorName}
                   </Link>
 
                   <div className="mt-2">
