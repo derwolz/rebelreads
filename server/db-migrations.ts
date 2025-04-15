@@ -1371,6 +1371,29 @@ async function createPublisherSellersTable() {
   }
 }
 
+async function removeGenresColumnFromBooks() {
+  console.log("Starting removal of genres column from books table...");
+  
+  try {
+    // Check if genres column exists
+    const genresColumnCheck = await db.execute(sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'books' AND column_name = 'genres';
+    `);
+    
+    if (genresColumnCheck.rowCount > 0) {
+      console.log("Removing genres column from books table");
+      await db.execute(sql`ALTER TABLE books DROP COLUMN IF EXISTS genres;`);
+      console.log("Genres column has been removed from books table");
+    } else {
+      console.log("Column 'genres' doesn't exist or has already been removed");
+    }
+  } catch (error) {
+    console.error("Error removing genres column from books table:", error);
+  }
+}
+
 async function removeAuthorColumnsFromBooks() {
   console.log("Starting removal of author and authorImageUrl columns from books table...");
   
@@ -1411,6 +1434,7 @@ async function removeAuthorColumnsFromBooks() {
 
 export async function runMigrations() {
   console.log("Running database migrations...");
+  await removeGenresColumnFromBooks();
   await removeAuthorColumnsFromBooks();
   await addFeaturedColumnToRatings();
   await addReportStatusColumnToRatings();
