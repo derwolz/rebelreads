@@ -35,6 +35,15 @@ app.use((req, res, next) => {
   if (path.startsWith('/api/')) {
     res.setHeader('Content-Type', 'application/json');
     
+    // Ensure content type header is set for JSON responses
+    const originalSend = res.send;
+    res.send = function(body) {
+      if (!res.headersSent && typeof body === 'object') {
+        this.setHeader('Content-Type', 'application/json');
+      }
+      return originalSend.call(this, body);
+    };
+    
     // Check if the client is requesting JSON
     const acceptHeader = req.headers.accept || '';
     if (!acceptHeader.includes('application/json')) {
