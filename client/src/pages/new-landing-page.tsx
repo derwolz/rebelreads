@@ -141,16 +141,6 @@ const NewLandingPage = () => {
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isPublisher, setIsPublisher] = useState(false);
-  
-  // Analytics data state with animation
-  const [analyticsData, setAnalyticsData] = useState(() => 
-    analyticsDataFinal.map(item => ({ 
-      name: item.name, 
-      impressions: 0, 
-      referrals: 0 
-    }))
-  );
-  const chartAnimationStarted = useRef(false);
 
   // Check for nobeta query parameter and log out the user if present
   useEffect(() => {
@@ -178,61 +168,6 @@ const NewLandingPage = () => {
   useEffect(() => {
     setTheme("dark");
   }, [setTheme]);
-  
-  // Add chart data animation effect
-  useEffect(() => {
-    const chartAnimationCallback = (entries: IntersectionObserverEntry[]) => {
-      const [entry] = entries;
-      if (entry.isIntersecting && !chartAnimationStarted.current) {
-        chartAnimationStarted.current = true;
-        
-        // Animate from zero to final values
-        let step = 0;
-        const totalSteps = 60; // Animation frames for smooth animation
-        const animationDuration = 1500; // 1.5 seconds total
-        const interval = animationDuration / totalSteps;
-        
-        const animateStep = () => {
-          step++;
-          const progress = step / totalSteps;
-          
-          // Create new data with interpolated values
-          const newData = analyticsDataFinal.map(item => ({
-            name: item.name,
-            impressions: Math.round(item.impressions * progress),
-            referrals: Math.round(item.referrals * progress)
-          }));
-          
-          setAnalyticsData(newData);
-          
-          if (step < totalSteps) {
-            setTimeout(animateStep, interval);
-          }
-        };
-        
-        // Start the animation with a slight delay
-        setTimeout(animateStep, 800); // Wait for slide in animation to complete
-      }
-    };
-    
-    // Set up intersection observer for the chart section
-    const observer = new IntersectionObserver(chartAnimationCallback, {
-      threshold: 0.5,
-      rootMargin: '0px'
-    });
-    
-    // Find chart container element to observe
-    const chartSectionEl = document.getElementById('analytics-chart-section');
-    if (chartSectionEl) {
-      observer.observe(chartSectionEl);
-    }
-    
-    return () => {
-      if (chartSectionEl) {
-        observer.unobserve(chartSectionEl);
-      }
-    };
-  }, []);
 
   // Submit the form after user selects their type
   const submitEmailSignup = async () => {
@@ -781,62 +716,52 @@ const NewLandingPage = () => {
                 <p className="text-lg text-muted-foreground mb-6">
                   Understand how readers interact with your content and make informed decisions:
                 </p>
-                
-                <div id="analytics-chart-section">
-                  <AnimatedChart>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart
-                        data={analyticsData}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
-                          </linearGradient>
-                          <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="name" stroke="#888888" />
-                        <YAxis stroke="#888888" />
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "#1a1a1a",
-                            borderColor: "#333",
-                            color: "#fff",
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="impressions"
-                          stroke="#A06CD5"
-                          fillOpacity={1}
-                          fill="url(#colorImpressions)"
-                          name="Content Views"
-                          isAnimationActive={true}
-                          animationBegin={300}
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="referrals"
-                          stroke="#EFA738"
-                          fillOpacity={1}
-                          fill="url(#colorReferrals)"
-                          name="Reader Referrals"
-                          isAnimationActive={true}
-                          animationBegin={600}
-                          animationDuration={1500}
-                          animationEasing="ease-out"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </AnimatedChart>
-                </div>
+
+                <AnimatedChart>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart
+                      data={analyticsData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" stroke="#888888" />
+                      <YAxis stroke="#888888" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1a1a1a",
+                          borderColor: "#333",
+                          color: "#fff",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="impressions"
+                        stroke="#A06CD5"
+                        fillOpacity={1}
+                        fill="url(#colorImpressions)"
+                        name="Content Views"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="referrals"
+                        stroke="#EFA738"
+                        fillOpacity={1}
+                        fill="url(#colorReferrals)"
+                        name="Reader Referrals"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </AnimatedChart>
               </div>
             </AnimateOnScroll>
 

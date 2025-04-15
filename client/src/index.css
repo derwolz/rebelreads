@@ -273,24 +273,12 @@
 
 @keyframes slideInChart {
   0% {
-    transform: translateX(-20px);
+    transform: translateX(-50px);
     opacity: 0;
   }
 
   100% {
     transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes growDataLine {
-  0% {
-    transform: scaleY(0);
-    opacity: 0.5;
-  }
-
-  100% {
-    transform: scaleY(1);
     opacity: 1;
   }
 }
@@ -383,12 +371,6 @@
 .animate-slide-chart {
   animation: slideInChart 1.2s ease-out forwards;
   will-change: transform, opacity;
-}
-
-.animate-grow-data {
-  animation: growDataLine 1.5s ease-out forwards;
-  will-change: transform, opacity;
-  transform-origin: bottom;
 }
 
 .animate-count-up {
