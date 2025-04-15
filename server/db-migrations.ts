@@ -1432,6 +1432,31 @@ async function removeAuthorColumnsFromBooks() {
   }
 }
 
+async function removeHasBetaAccessFromUsers() {
+  try {
+    // Check if has_beta_access column exists
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'has_beta_access'
+    `);
+    
+    if (checkResult.rows.length > 0) {
+      console.log("Removing 'has_beta_access' column from users table...");
+      await db.execute(sql`
+        ALTER TABLE users 
+        DROP COLUMN has_beta_access
+      `);
+      console.log("Column 'has_beta_access' removed successfully");
+    } else {
+      console.log("Column 'has_beta_access' doesn't exist or has already been removed");
+    }
+  } catch (error) {
+    console.error("Error removing has_beta_access column:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   await removeGenresColumnFromBooks();
