@@ -5,10 +5,12 @@ import {
   PublisherSeller,
   InsertPublisherSeller,
   User,
+  Author,
   publishers,
   publishersAuthors,
   publisherSellers,
   users,
+  authors,
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, isNull } from "drizzle-orm";
@@ -80,10 +82,10 @@ export class PublisherStorage implements IPublisherStorage {
     return updatedPublisher;
   }
 
-  async getPublisherAuthors(publisherId: number): Promise<User[]> {
+  async getPublisherAuthors(publisherId: number): Promise<Author[]> {
     const result = await db
       .select({
-        user: users,
+        author: authors,
       })
       .from(publishersAuthors)
       .where(
@@ -92,9 +94,9 @@ export class PublisherStorage implements IPublisherStorage {
           isNull(publishersAuthors.contractEnd)
         )
       )
-      .innerJoin(users, eq(users.id, publishersAuthors.authorId));
+      .innerJoin(authors, eq(authors.id, publishersAuthors.authorId));
 
-    return result.map((r: { user: User }) => r.user);
+    return result.map((r: { author: Author }) => r.author);
   }
 
   async addAuthorToPublisher(
