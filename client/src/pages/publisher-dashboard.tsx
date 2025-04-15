@@ -147,8 +147,14 @@ export default function PublisherDashboard() {
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
   
   // Fetch publisher profile
+  const { data: publisherData, isLoading: loadingPublisher } = useQuery({
+    queryKey: ["/api/account/publisher-status"],
+  });
+
+  // Only fetch publisher profile if user is a publisher
   const { data: publisherProfile, isLoading: loadingProfile } = useQuery({
     queryKey: ["/api/account/publisher-profile"],
+    enabled: !!publisherData?.isPublisher,
   });
 
   // Fetch publisher authors with their books
@@ -342,15 +348,17 @@ export default function PublisherDashboard() {
     };
   };
 
-  if (loadingProfile) {
+  // Check if we're still loading basic info
+  if (loadingPublisher) {
     return (
       <div className="container mx-auto p-4 flex justify-center items-center min-h-[50vh]">
-        <div>Loading publisher profile...</div>
+        <div>Loading publisher information...</div>
       </div>
     );
   }
 
-  if (!publisherProfile) {
+  // Check if user is a publisher
+  if (!publisherData?.isPublisher) {
     return (
       <div className="container mx-auto p-4">
         <Card>
@@ -361,6 +369,10 @@ export default function PublisherDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="flex gap-2 items-center text-amber-500 mb-4">
+              <AlertTriangle size={20} />
+              <p>You don't have publisher privileges.</p>
+            </div>
             <p>
               If you believe this is an error, please contact support or check your account settings.
             </p>
@@ -375,6 +387,16 @@ export default function PublisherDashboard() {
     );
   }
 
+  // Check if we're still loading publisher profile
+  if (loadingProfile) {
+    return (
+      <div className="container mx-auto p-4 flex justify-center items-center min-h-[50vh]">
+        <div>Loading publisher profile...</div>
+      </div>
+    );
+  }
+
+  // We have verified publisher profile is loaded
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-8">
@@ -501,138 +523,82 @@ export default function PublisherDashboard() {
                             href={publisherProfile.website} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-primary hover:underline"
+                            className="text-blue-500 hover:underline"
                           >
                             {publisherProfile.website}
                           </a>
-                        ) : (
-                          "Not provided"
-                        )}
+                        ) : "Not provided"}
                       </p>
                     </div>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button variant="outline" onClick={() => setShowEditProfileDialog(true)}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Button>
-              </CardFooter>
             </Card>
           </div>
 
           {loadingAuthors ? (
-            <div className="py-6 text-center">Loading authors data...</div>
+            <div className="flex justify-center p-4">
+              <p>Loading author data...</p>
+            </div>
+          ) : authorsWithBooks?.length ? (
+            <div className="grid grid-cols-1 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Author Activity</CardTitle>
+                  <CardDescription>Performance of your top authors</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Author</TableHead>
+                        <TableHead>Books</TableHead>
+                        <TableHead>Impressions</TableHead>
+                        <TableHead>Clicks</TableHead>
+                        <TableHead>Conversion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {authorsWithBooks.slice(0, 5).map(({ author, books }) => {
+                        const metrics = getAuthorMetrics(books);
+                        return (
+                          <TableRow key={author.id}>
+                            <TableCell className="font-medium">{author.author_name}</TableCell>
+                            <TableCell>{books.length}</TableCell>
+                            <TableCell>{metrics.totalImpressions.toLocaleString()}</TableCell>
+                            <TableCell>{metrics.totalClickThroughs.toLocaleString()}</TableCell>
+                            <TableCell>{metrics.conversionRate.toFixed(2)}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setActiveTab("authors")}>
+                    View All Authors
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Recent Performance</CardTitle>
-                <CardDescription>Top performing authors and books</CardDescription>
+                <CardTitle>No Authors Yet</CardTitle>
+                <CardDescription>Add authors to your publisher profile to get started</CardDescription>
               </CardHeader>
               <CardContent>
-                {authorsWithBooks && authorsWithBooks.length > 0 ? (
-                  <div className="space-y-8">
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">Top Authors by Impressions</h3>
-                      <div className="space-y-4">
-                        {authorsWithBooks
-                          .map(({ author, books }) => ({
-                            author,
-                            metrics: getAuthorMetrics(books)
-                          }))
-                          .sort((a, b) => b.metrics.totalImpressions - a.metrics.totalImpressions)
-                          .slice(0, 3)
-                          .map(({ author, metrics }) => (
-                            <div key={author.id} className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                {author.author_image_url ? (
-                                  <img 
-                                    src={author.author_image_url} 
-                                    alt={author.author_name} 
-                                    className="h-10 w-10 rounded-full mr-3"
-                                  />
-                                ) : (
-                                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                                    <Users className="h-5 w-5 text-primary" />
-                                  </div>
-                                )}
-                                <div>
-                                  <div className="font-medium">{author.author_name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {metrics.totalImpressions.toLocaleString()} impressions
-                                  </div>
-                                </div>
-                              </div>
-                              <Badge variant="secondary">
-                                {metrics.conversionRate.toFixed(2)}% conversion rate
-                              </Badge>
-                            </div>
-                          ))
-                        }
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">Top Books by Click-Through Rate</h3>
-                      <div className="space-y-4">
-                        {authorsWithBooks
-                          .flatMap(({ books, author }) => 
-                            books.map(book => ({ ...book, authorName: author.author_name }))
-                          )
-                          .filter(book => book.impressionCount > 0)
-                          .sort((a, b) => 
-                            (b.clickThroughCount / b.impressionCount) - 
-                            (a.clickThroughCount / a.impressionCount)
-                          )
-                          .slice(0, 3)
-                          .map(book => (
-                            <div key={book.id} className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                {book.images?.find(img => img.imageType === "mini")?.imageUrl ? (
-                                  <img 
-                                    src={book.images.find(img => img.imageType === "mini")?.imageUrl} 
-                                    alt={book.title} 
-                                    className="h-12 w-10 object-cover rounded mr-3"
-                                  />
-                                ) : (
-                                  <div className="h-12 w-10 rounded bg-primary/10 flex items-center justify-center mr-3">
-                                    <BookOpen className="h-5 w-5 text-primary" />
-                                  </div>
-                                )}
-                                <div>
-                                  <div className="font-medium">{book.title}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    by {book.authorName || "Unknown author"}
-                                  </div>
-                                </div>
-                              </div>
-                              <Badge variant="secondary">
-                                {book.impressionCount > 0 
-                                  ? ((book.clickThroughCount / book.impressionCount) * 100).toFixed(2) 
-                                  : "0.00"}% CTR
-                              </Badge>
-                            </div>
-                          ))
-                        }
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-6 text-center">
-                    <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No data available</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Add authors to your publisher profile to see performance metrics.
-                    </p>
-                    <Button onClick={() => setShowAddAuthorDialog(true)}>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Add Author
-                    </Button>
-                  </div>
-                )}
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Start Building Your Team</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Add authors to your publisher profile to start managing their books and tracking analytics.
+                  </p>
+                  <Button onClick={() => setShowAddAuthorDialog(true)}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add Your First Author
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -640,306 +606,318 @@ export default function PublisherDashboard() {
 
         {/* Authors Tab */}
         <TabsContent value="authors">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Manage Authors</CardTitle>
-                  <CardDescription>
-                    Add, remove, and manage authors published by your company
-                  </CardDescription>
-                </div>
-                <Button onClick={() => setShowAddAuthorDialog(true)}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add Author
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loadingAuthors ? (
-                <div className="py-6 text-center">Loading authors data...</div>
-              ) : authorsWithBooks && authorsWithBooks.length > 0 ? (
-                <div className="space-y-6">
-                  {authorsWithBooks.map(({ author, books }) => {
-                    const metrics = getAuthorMetrics(books);
-                    return (
-                      <Card key={author.id}>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center">
-                              {author.author_image_url ? (
-                                <img 
-                                  src={author.author_image_url} 
-                                  alt={author.author_name} 
-                                  className="h-12 w-12 rounded-full mr-4"
-                                />
-                              ) : (
-                                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mr-4">
-                                  <Users className="h-6 w-6 text-primary" />
-                                </div>
-                              )}
-                              <div>
-                                <CardTitle>{author.author_name}</CardTitle>
-                                <CardDescription>
-                                  {books.length} book{books.length !== 1 ? 's' : ''}
-                                </CardDescription>
-                              </div>
-                            </div>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleRemoveAuthor(author.id)}
-                            >
-                              <X className="h-4 w-4 mr-1" /> Remove
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                              <div className="text-sm font-medium text-muted-foreground">
-                                Total Impressions
-                              </div>
-                              <div className="text-xl font-bold">
-                                {metrics.totalImpressions.toLocaleString()}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-muted-foreground">
-                                Click-throughs
-                              </div>
-                              <div className="text-xl font-bold">
-                                {metrics.totalClickThroughs.toLocaleString()}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-muted-foreground">
-                                Conversion Rate
-                              </div>
-                              <div className="text-xl font-bold">
-                                {metrics.conversionRate.toFixed(2)}%
-                              </div>
-                            </div>
-                          </div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Managed Authors</h2>
+            <Button onClick={() => setShowAddAuthorDialog(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Author
+            </Button>
+          </div>
 
-                          {books.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-medium mb-2">Books</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {books.map(book => (
-                                  <div 
-                                    key={book.id} 
-                                    className="border rounded p-3 flex items-center"
-                                  >
-                                    {book.images?.find(img => img.imageType === "mini")?.imageUrl ? (
-                                      <img 
-                                        src={book.images.find(img => img.imageType === "mini")?.imageUrl} 
-                                        alt={book.title} 
-                                        className="h-12 w-10 object-cover rounded mr-3"
-                                      />
-                                    ) : (
-                                      <div className="h-12 w-10 rounded bg-primary/10 flex items-center justify-center mr-3">
-                                        <BookOpen className="h-5 w-5 text-primary" />
-                                      </div>
-                                    )}
-                                    <div className="overflow-hidden">
-                                      <div className="font-medium truncate" title={book.title}>
-                                        {book.title}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {book.impressionCount.toLocaleString()} views
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+          {loadingAuthors ? (
+            <div className="flex justify-center p-8">
+              <p>Loading authors...</p>
+            </div>
+          ) : authorsWithBooks?.length ? (
+            <div className="grid grid-cols-1 gap-4">
+              {authorsWithBooks.map(({ author, books }) => {
+                const metrics = getAuthorMetrics(books);
+                return (
+                  <Card key={author.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="flex gap-4 items-center">
+                          {author.author_image_url ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden">
+                              <img 
+                                src={author.author_image_url} 
+                                alt={author.author_name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                              <Users className="h-6 w-6 text-muted-foreground" />
                             </div>
                           )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No authors found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    You haven't added any authors to your publisher profile yet.
-                  </p>
-                  <Button onClick={() => setShowAddAuthorDialog(true)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Add Author
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                          <div>
+                            <CardTitle>{author.author_name}</CardTitle>
+                            <CardDescription>
+                              {books.length} {books.length === 1 ? 'book' : 'books'} published
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleRemoveAuthor(author.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-muted-foreground">Impressions</span>
+                          <span className="text-lg font-bold">{metrics.totalImpressions.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-muted-foreground">Clicks</span>
+                          <span className="text-lg font-bold">{metrics.totalClickThroughs.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-muted-foreground">Conversion Rate</span>
+                          <span className="text-lg font-bold">{metrics.conversionRate.toFixed(2)}%</span>
+                        </div>
+                      </div>
+                      
+                      {books.length > 0 ? (
+                        <div>
+                          <h4 className="font-medium mb-2">Books:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {books.map(book => (
+                              <div key={book.id} className="p-2 border rounded-md">
+                                <div className="font-medium">{book.title}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Published: {new Date(book.publishedDate).toLocaleDateString()}
+                                </div>
+                                <div className="text-xs">
+                                  {book.formats.map(format => (
+                                    <Badge key={format} variant="outline" className="mr-1 mt-1">
+                                      {format}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-4 bg-muted rounded-md">
+                          <p className="text-sm text-muted-foreground">No books published yet</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Authors Found</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You haven't added any authors to your publisher profile yet.
+                </p>
+                <Button onClick={() => setShowAddAuthorDialog(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Your First Author
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Books Tab */}
         <TabsContent value="books">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Books</CardTitle>
-              <CardDescription>
-                Books published by your authors
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingAuthors ? (
-                <div className="py-6 text-center">Loading book data...</div>
-              ) : (
-                <Table>
-                  <TableCaption>
-                    All books from your publisher's authors
-                  </TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Book</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead>Published</TableHead>
-                      <TableHead className="text-right">Impressions</TableHead>
-                      <TableHead className="text-right">Click-throughs</TableHead>
-                      <TableHead className="text-right">CTR</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {authorsWithBooks?.flatMap(({ books, author }) => 
-                      books.map(book => ({ ...book, authorName: author.author_name }))
-                    ).sort((a, b) => b.impressionCount - a.impressionCount)
-                    .map(book => (
-                      <TableRow key={book.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center">
-                            {book.images?.find(img => img.imageType === "mini")?.imageUrl ? (
-                              <img 
-                                src={book.images.find(img => img.imageType === "mini")?.imageUrl} 
-                                alt={book.title} 
-                                className="h-10 w-8 object-cover rounded mr-3"
-                              />
-                            ) : (
-                              <div className="h-10 w-8 rounded bg-primary/10 flex items-center justify-center mr-3">
-                                <BookOpen className="h-4 w-4 text-primary" />
-                              </div>
-                            )}
-                            <span className="truncate max-w-[200px]" title={book.title}>
-                              {book.title}
-                            </span>
+          <h2 className="text-2xl font-bold mb-4">Published Books</h2>
+          
+          {loadingAuthors ? (
+            <div className="flex justify-center p-8">
+              <p>Loading books...</p>
+            </div>
+          ) : authorsWithBooks?.length ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {authorsWithBooks.flatMap(({ author, books }) => 
+                  books.map(book => (
+                    <Card key={book.id}>
+                      <div className="relative">
+                        {book.images?.find(img => img.imageType === 'book-card') ? (
+                          <img 
+                            src={book.images.find(img => img.imageType === 'book-card')?.imageUrl} 
+                            alt={book.title}
+                            className="w-full h-48 object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-48 bg-muted flex items-center justify-center">
+                            <BookOpen className="h-12 w-12 text-muted-foreground" />
                           </div>
-                        </TableCell>
-                        <TableCell>{book.authorName}</TableCell>
-                        <TableCell>{new Date(book.publishedDate).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">{book.impressionCount.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">{book.clickThroughCount.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">
-                          {book.impressionCount > 0 
-                            ? ((book.clickThroughCount / book.impressionCount) * 100).toFixed(2) 
-                            : "0.00"}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        )}
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="line-clamp-1">{book.title}</CardTitle>
+                        <CardDescription>By {author.author_name}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                          {book.description}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Published: </span>
+                            {new Date(book.publishedDate).toLocaleDateString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Pages: </span>
+                            {book.pageCount}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Impressions: </span>
+                            {book.impressionCount.toLocaleString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Clicks: </span>
+                            {book.clickThroughCount.toLocaleString()}
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <div className="flex gap-1 flex-wrap">
+                          {book.formats.map(format => (
+                            <Badge key={format} variant="outline" className="mr-1">
+                              {format}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  ))
+                )}
+              </div>
+              
+              {!authorsWithBooks.flatMap(({ books }) => books).length && (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Books Found</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      None of your authors have published any books yet.
+                    </p>
+                  </CardContent>
+                </Card>
               )}
-            </CardContent>
-          </Card>
+            </>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Books Found</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Add authors to your publisher profile to manage their books.
+                </p>
+                <Button onClick={() => setShowAddAuthorDialog(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add an Author
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Analytics Tab */}
         <TabsContent value="analytics">
-          <div className="grid grid-cols-1 gap-4">
+          <h2 className="text-2xl font-bold mb-4">Publishing Analytics</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <Card>
               <CardHeader>
-                <CardTitle>Publishing Analytics</CardTitle>
-                <CardDescription>
-                  Performance metrics for your publishing company
-                </CardDescription>
+                <CardTitle>Impression Overview</CardTitle>
+                <CardDescription>Total impressions by author</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-8">
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Performance Overview</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Total Impressions</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">
-                            {getTotalImpressions().toLocaleString()}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Across all books and authors
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Total Click-throughs</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">
-                            {getTotalClickThroughs().toLocaleString()}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Across all books and authors
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Average Conversion Rate</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">
-                            {getConversionRate()}%
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Click-through rate on impressions
-                          </p>
-                        </CardContent>
-                      </Card>
+              <CardContent className="h-80 flex items-center justify-center">
+                {loadingAuthors ? (
+                  <p>Loading analytics data...</p>
+                ) : authorsWithBooks?.length ? (
+                  <div className="w-full h-full">
+                    {/* Placeholder for chart - would use Recharts in real implementation */}
+                    <div className="bg-muted rounded-md h-full w-full flex items-center justify-center">
+                      <BarChart className="h-16 w-16 text-muted-foreground" />
                     </div>
                   </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Author Rankings</h3>
-                    <Table>
-                      <TableCaption>
-                        Authors ranked by engagement metrics
-                      </TableCaption>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Rank</TableHead>
-                          <TableHead>Author</TableHead>
-                          <TableHead>Books</TableHead>
-                          <TableHead className="text-right">Impressions</TableHead>
-                          <TableHead className="text-right">Click-throughs</TableHead>
-                          <TableHead className="text-right">Conversion</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {authorsWithBooks?.map(({ author, books }, index) => {
-                          const metrics = getAuthorMetrics(books);
-                          return (
-                            <TableRow key={author.id}>
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell className="font-medium">{author.author_name}</TableCell>
-                              <TableCell>{books.length}</TableCell>
-                              <TableCell className="text-right">{metrics.totalImpressions.toLocaleString()}</TableCell>
-                              <TableCell className="text-right">{metrics.totalClickThroughs.toLocaleString()}</TableCell>
-                              <TableCell className="text-right">{metrics.conversionRate.toFixed(2)}%</TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">No data available</p>
                   </div>
-                </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Conversion Trends</CardTitle>
+                <CardDescription>Click-through rate over time</CardDescription>
+              </CardHeader>
+              <CardContent className="h-80 flex items-center justify-center">
+                {loadingAuthors ? (
+                  <p>Loading analytics data...</p>
+                ) : authorsWithBooks?.length ? (
+                  <div className="w-full h-full">
+                    {/* Placeholder for chart - would use Recharts in real implementation */}
+                    <div className="bg-muted rounded-md h-full w-full flex items-center justify-center">
+                      <LineChart className="h-16 w-16 text-muted-foreground" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">No data available</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance by Author</CardTitle>
+              <CardDescription>Detailed metrics for each author</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingAuthors ? (
+                <div className="flex justify-center p-4">
+                  <p>Loading performance data...</p>
+                </div>
+              ) : authorsWithBooks?.length ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Author</TableHead>
+                      <TableHead>Books</TableHead>
+                      <TableHead>Total Impressions</TableHead>
+                      <TableHead>Total Clicks</TableHead>
+                      <TableHead>Conversion Rate</TableHead>
+                      <TableHead>Avg. Impressions per Book</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {authorsWithBooks.map(({ author, books }) => {
+                      const metrics = getAuthorMetrics(books);
+                      const avgImpressions = books.length 
+                        ? (metrics.totalImpressions / books.length).toFixed(0) 
+                        : "0";
+                        
+                      return (
+                        <TableRow key={author.id}>
+                          <TableCell className="font-medium">{author.author_name}</TableCell>
+                          <TableCell>{books.length}</TableCell>
+                          <TableCell>{metrics.totalImpressions.toLocaleString()}</TableCell>
+                          <TableCell>{metrics.totalClickThroughs.toLocaleString()}</TableCell>
+                          <TableCell>{metrics.conversionRate.toFixed(2)}%</TableCell>
+                          <TableCell>{avgImpressions}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center p-4">
+                  <p className="text-sm text-muted-foreground">No authors added yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -949,10 +927,10 @@ export default function PublisherDashboard() {
           <DialogHeader>
             <DialogTitle>Add Author to Publisher</DialogTitle>
             <DialogDescription>
-              Add an author to your publisher's roster
+              Add an existing author to your publisher profile.
             </DialogDescription>
           </DialogHeader>
-
+          
           <Form {...addAuthorForm}>
             <form onSubmit={addAuthorForm.handleSubmit(onSubmitAddAuthor)} className="space-y-4">
               <FormField
@@ -963,13 +941,13 @@ export default function PublisherDashboard() {
                     <FormLabel>Author</FormLabel>
                     <FormControl>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                        value={field.value || ""}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={loadingAvailableAuthors}
+                        value={field.value}
+                        onChange={e => field.onChange(parseInt(e.target.value))}
                       >
-                        <option value="" disabled>Select an author</option>
-                        {availableAuthors?.map((author: Author) => (
+                        <option value="">Select an author</option>
+                        {availableAuthors?.map(author => (
                           <option key={author.id} value={author.id}>
                             {author.author_name}
                           </option>
@@ -980,7 +958,7 @@ export default function PublisherDashboard() {
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={addAuthorForm.control}
                 name="contract_start"
@@ -988,18 +966,28 @@ export default function PublisherDashboard() {
                   <FormItem>
                     <FormLabel>Contract Start Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input
+                        type="date"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
+              
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowAddAuthorDialog(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowAddAuthorDialog(false)}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={addAuthorMutation.isPending}>
+                <Button 
+                  type="submit" 
+                  disabled={addAuthorMutation.isPending}
+                >
                   {addAuthorMutation.isPending ? "Adding..." : "Add Author"}
                 </Button>
               </DialogFooter>
@@ -1010,14 +998,14 @@ export default function PublisherDashboard() {
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditProfileDialog} onOpenChange={setShowEditProfileDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Publisher Profile</DialogTitle>
             <DialogDescription>
-              Update your publisher details
+              Update your publisher information.
             </DialogDescription>
           </DialogHeader>
-
+          
           <Form {...updateProfileForm}>
             <form onSubmit={updateProfileForm.handleSubmit(onSubmitUpdateProfile)} className="space-y-4">
               <FormField
@@ -1033,7 +1021,7 @@ export default function PublisherDashboard() {
                   </FormItem>
                 )}
               />
-
+              
               <FormField
                 control={updateProfileForm.control}
                 name="publisher_description"
@@ -1041,74 +1029,104 @@ export default function PublisherDashboard() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea {...field} />
+                      <Textarea 
+                        {...field} 
+                        value={field.value || ""}
+                        placeholder="Describe your publishing house"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={updateProfileForm.control}
-                name="business_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Business Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={updateProfileForm.control}
-                name="business_phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Business Phone</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={updateProfileForm.control}
-                name="business_address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Business Address</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={updateProfileForm.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website URL</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={updateProfileForm.control}
+                  name="business_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          value={field.value || ""}
+                          type="email" 
+                          placeholder="contact@publisher.com" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={updateProfileForm.control}
+                  name="business_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Phone</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          value={field.value || ""}
+                          placeholder="(123) 456-7890" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={updateProfileForm.control}
+                  name="business_address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Business Address</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          value={field.value || ""}
+                          placeholder="123 Publishing St, City" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={updateProfileForm.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Website</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          value={field.value || ""}
+                          placeholder="https://publisher.com" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowEditProfileDialog(false)}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowEditProfileDialog(false)}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={updateProfileMutation.isPending}>
+                <Button 
+                  type="submit" 
+                  disabled={updateProfileMutation.isPending}
+                >
                   {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </DialogFooter>
