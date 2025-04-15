@@ -3,9 +3,27 @@ import { dbStorage } from "../storage";
 import { log } from "../vite";
 import { db } from "../db";
 import { eq, and, inArray, not, isNull, sql, desc } from "drizzle-orm";
-import { books, followers, ratings, reading_status } from "@shared/schema";
+import { books, followers, ratings, reading_status, authors, bookImages } from "@shared/schema";
 
 const router = Router();
+
+/**
+ * Get personalized book recommendations for the user
+ */
+router.get("/", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  try {
+    const userId = req.user!.id;
+    const recommendations = await dbStorage.getRecommendations(userId);
+    res.json(recommendations);
+  } catch (error) {
+    console.error("Error getting recommendations:", error);
+    res.status(500).json({ error: "Failed to get recommendations" });
+  }
+});
 
 /**
  * Get random books from authors the user follows
@@ -64,12 +82,68 @@ router.get("/followed-authors", async (req: Request, res: Response) => {
     
     // Execute query with all conditions
     const allBooks = await db
-      .select()
+      .select({
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
+      })
       .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
       .where(whereClause);
     
+    // Get all book IDs to fetch images
+    const bookIds = allBooks.map(book => book.id);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Fetch all images for these books
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID
+    const imagesByBookId = new Map<number, { imageUrl: string, imageType: string }[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push({
+        imageUrl: image.imageUrl,
+        imageType: image.imageType
+      });
+    });
+    
+    // Add images to books
+    const booksWithImages = allBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    }));
+    
     // Shuffle array and take the requested count
-    const shuffled = allBooks.sort(() => 0.5 - Math.random());
+    const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
     const selectedBooks = shuffled.slice(0, count);
     
     res.json(selectedBooks);
