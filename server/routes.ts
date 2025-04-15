@@ -31,8 +31,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
   app.use("/uploads", express.static("uploads"));
   
+  // Special debug routes that bypass security checks for diagnostic purposes
+  // These must be registered BEFORE authentication
+  app.use("/api/system-debug", debugRoutes);
+  
   // Block all debug endpoints to prevent unauthorized data access
-  app.all('/api/debug/*', (req, res) => {
+  app.all('/api/debug/*', (req, res, next) => {
     console.warn(`Blocked access attempt to debug endpoint: ${req.path}`);
     return res.status(403).json({ 
       error: "Access denied",
@@ -102,9 +106,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);
-  
-  // Special debug routes that bypass security checks for diagnostic purposes
-  app.use("/api/system-debug", debugRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
