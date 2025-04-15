@@ -7,7 +7,7 @@
  */
 export const welcomeEmailTemplate = (username: string) => {
   return {
-    subject: "Welcome to BookVault Beta",
+    subject: "Welcome to Sirened Beta",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
         <h2 style="color: #EFA738;">Welcome to BookVault Beta!</h2>
