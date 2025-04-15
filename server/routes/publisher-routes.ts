@@ -14,7 +14,7 @@ const router = Router();
  * Debug endpoint to check publisher status for a user
  * Not protected - for diagnostic purposes only
  */
-router.get("/debug/check-publisher-status/:userId", async (req: Request, res: Response) => {
+router.get("/debug/check-publisher-status/:userId", requireAuth, async (req: Request, res: Response) => {
   console.log("Debug endpoint called for user ID:", req.params.userId);
   try {
     const userId = parseInt(req.params.userId);
@@ -22,14 +22,19 @@ router.get("/debug/check-publisher-status/:userId", async (req: Request, res: Re
       return res.status(400).json({ error: "Invalid user ID" });
     }
     
+    console.log("Authenticated user making request:", req.user?.id);
+    
     // Direct database check
     const isPublisher = await dbStorage.isUserPublisher(userId);
+    console.log("isPublisher check result:", isPublisher);
+    
     const publisherDetails = isPublisher ? await dbStorage.getPublisherByUserId(userId) : null;
+    console.log("publisherDetails:", publisherDetails);
     
     // Get user details from database
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     
-    return res.json({
+    const result = {
       userId,
       isPublisher,
       publisherDetails,
@@ -38,7 +43,10 @@ router.get("/debug/check-publisher-status/:userId", async (req: Request, res: Re
         email: user.email,
         username: user.username
       } : null
-    });
+    };
+    
+    console.log("Returning debug result:", JSON.stringify(result, null, 2));
+    return res.json(result);
   } catch (error) {
     console.error("Error checking publisher status:", error);
     return res.status(500).json({ error: "Error checking publisher status" });

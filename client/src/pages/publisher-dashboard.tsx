@@ -146,25 +146,56 @@ export default function PublisherDashboard() {
   const [showEditProfileDialog, setShowEditProfileDialog] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
   
+  // Define publisher status data interface
+  interface PublisherStatusData {
+    isPublisher: boolean;
+    publisherDetails: {
+      id: number;
+      userId: number;
+      publisher_name: string;
+      publisher_description?: string;
+      business_email?: string;
+      business_phone?: string;
+      business_address?: string;
+      website?: string;
+      logo_url?: string;
+      createdAt: string;
+    } | null;
+  }
+
+  // Define publisher profile interface
+  interface PublisherProfile {
+    id: number;
+    userId: number;
+    publisher_name: string;
+    publisher_description?: string;
+    business_email?: string;
+    business_phone?: string;
+    business_address?: string;
+    website?: string;
+    logo_url?: string;
+    createdAt: string;
+  }
+
   // Fetch publisher profile
-  const { data: publisherData, isLoading: loadingPublisher } = useQuery({
+  const { data: publisherData, isLoading: loadingPublisher } = useQuery<PublisherStatusData>({
     queryKey: ["/api/account/publisher-status"],
   });
 
   // Only fetch publisher profile if user is a publisher
-  const { data: publisherProfile, isLoading: loadingProfile } = useQuery({
+  const { data: publisherProfile, isLoading: loadingProfile } = useQuery<PublisherProfile>({
     queryKey: ["/api/account/publisher-profile"],
     enabled: !!publisherData?.isPublisher,
   });
 
   // Fetch publisher authors with their books
-  const { data: authorsWithBooks, isLoading: loadingAuthors } = useQuery({
+  const { data: authorsWithBooks, isLoading: loadingAuthors } = useQuery<AuthorWithBooks[]>({
     queryKey: ["/api/catalogue/publisher/authors"],
     enabled: !!publisherProfile,
   });
 
   // Fetch all authors for adding to publisher
-  const { data: availableAuthors, isLoading: loadingAvailableAuthors } = useQuery({
+  const { data: availableAuthors, isLoading: loadingAvailableAuthors } = useQuery<Author[]>({
     queryKey: ["/api/catalogue/authors/available"],
     enabled: showAddAuthorDialog,
   });
@@ -320,16 +351,23 @@ export default function PublisherDashboard() {
   };
 
   // Calculate metrics for publisher dashboard
-  const getTotalAuthors = () => authorsWithBooks?.length || 0;
-  const getTotalBooks = () => 
-    authorsWithBooks?.reduce((total, { books }) => total + books.length, 0) || 0;
-  const getTotalImpressions = () => 
-    authorsWithBooks?.reduce((total, { books }) => 
-      total + books.reduce((sum, book) => sum + (book.impressionCount || 0), 0), 0) || 0;
-  const getTotalClickThroughs = () => 
-    authorsWithBooks?.reduce((total, { books }) => 
-      total + books.reduce((sum, book) => sum + (book.clickThroughCount || 0), 0), 0) || 0;
-  const getConversionRate = () => {
+  const getTotalAuthors = (): number => authorsWithBooks?.length || 0;
+  
+  const getTotalBooks = (): number => 
+    authorsWithBooks?.reduce((total: number, { books }: AuthorWithBooks) => 
+      total + books.length, 0) || 0;
+  
+  const getTotalImpressions = (): number => 
+    authorsWithBooks?.reduce((total: number, { books }: AuthorWithBooks) => 
+      total + books.reduce((sum: number, book: Book) => 
+        sum + (book.impressionCount || 0), 0), 0) || 0;
+  
+  const getTotalClickThroughs = (): number => 
+    authorsWithBooks?.reduce((total: number, { books }: AuthorWithBooks) => 
+      total + books.reduce((sum: number, book: Book) => 
+        sum + (book.clickThroughCount || 0), 0), 0) || 0;
+  
+  const getConversionRate = (): string => {
     const impressions = getTotalImpressions();
     const clicks = getTotalClickThroughs();
     return impressions ? (clicks / impressions * 100).toFixed(2) : "0.00";
