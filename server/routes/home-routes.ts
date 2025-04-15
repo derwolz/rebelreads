@@ -773,8 +773,9 @@ router.post("/authors/:id/unfollow", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
   const authorId = parseInt(req.params.id);
-  const author = await dbStorage.getUser(authorId);
-  if (!author?.isAuthor) return res.sendStatus(404);
+  // Check if the author exists directly in the authors table
+  const author = await dbStorage.getAuthor(authorId);
+  if (!author) return res.sendStatus(404);
 
   await dbStorage.unfollowAuthor(req.user!.id, authorId);
   res.sendStatus(200);
