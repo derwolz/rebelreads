@@ -545,6 +545,9 @@ router.get("/author-status", async (req: Request, res: Response) => {
 
 // Check if the user is a publisher
 router.get("/publisher-status", async (req: Request, res: Response) => {
+  // Explicitly set content type for this route
+  res.setHeader('Content-Type', 'application/json');
+  
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -561,10 +564,11 @@ router.get("/publisher-status", async (req: Request, res: Response) => {
     
     console.log(`Publisher status check for user ${req.user.id}:`, { isPublisher, publisherDetails });
     
-    res.json({ isPublisher, publisherDetails });
+    // Ensure we're sending JSON response
+    return res.json({ isPublisher, publisherDetails });
   } catch (error) {
     console.error("Error checking publisher status:", error);
-    res.status(500).json({ error: "Failed to check publisher status" });
+    return res.status(500).json({ error: "Failed to check publisher status" });
   }
 });
 
@@ -605,6 +609,9 @@ router.post("/become-author", async (req: Request, res: Response) => {
 
 // Check if the user is a publisher seller
 router.get("/publisher-seller-status", async (req: Request, res: Response) => {
+  // Explicitly set content type for this route
+  res.setHeader('Content-Type', 'application/json');
+  
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -619,10 +626,10 @@ router.get("/publisher-seller-status", async (req: Request, res: Response) => {
       sellerDetails = await dbStorage.getPublisherSellerByUserId(req.user.id);
     }
     
-    res.json({ isPublisherSeller, sellerDetails });
+    return res.json({ isPublisherSeller, sellerDetails });
   } catch (error) {
     console.error("Error checking publisher seller status:", error);
-    res.status(500).json({ error: "Failed to check publisher seller status" });
+    return res.status(500).json({ error: "Failed to check publisher seller status" });
   }
 });
 
@@ -836,6 +843,9 @@ router.get("/author-profile", async (req: Request, res: Response) => {
 
 // Get publisher profile
 router.get("/publisher-profile", async (req: Request, res: Response) => {
+  // Explicitly set content type for this route
+  res.setHeader('Content-Type', 'application/json');
+  
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
@@ -848,10 +858,10 @@ router.get("/publisher-profile", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Publisher profile not found" });
     }
     
-    res.json(publisher);
+    return res.json(publisher);
   } catch (error) {
     console.error("Error getting publisher profile:", error);
-    res.status(500).json({ error: "Failed to get publisher profile" });
+    return res.status(500).json({ error: "Failed to get publisher profile" });
   }
 });
 
