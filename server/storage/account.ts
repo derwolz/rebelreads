@@ -34,6 +34,7 @@ export interface IAccountStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByProviderId(provider: string, providerId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<UpdateProfile>): Promise<User>;
   toggleAuthorStatus(id: number): Promise<User>;
@@ -106,6 +107,19 @@ export class AccountStorage implements IAccountStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByProviderId(provider: string, providerId: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          eq(users.provider, provider),
+          eq(users.providerId, providerId)
+        )
+      );
     return user;
   }
 

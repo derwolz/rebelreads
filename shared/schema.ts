@@ -422,6 +422,8 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   profileImageUrl: true,
   socialMediaLinks: true,
   socialLinks: true,
+  provider: true,
+  providerId: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email format"),
