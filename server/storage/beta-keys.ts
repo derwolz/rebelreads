@@ -129,13 +129,10 @@ export class BetaKeyStorage implements IBetaKeyStorage {
       .orderBy(betaKeyUsage.usedAt);
   }
 
-  async hasUserUsedBetaKey(userId: number): Promise<boolean> {
-    // Always return true - beta access check has been removed
-    return true;
-  }
-
+  // hasUserUsedBetaKey has been removed to bypass beta access checks
+  
   async isBetaActive(): Promise<boolean> {
-    // Beta access check has been removed
-    return false;
+    // Check if BETA_ACTIVE environment variable is set to "true"
+    return process.env.BETA_ACTIVE === "true";
   }
 }
