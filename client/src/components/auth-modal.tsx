@@ -56,8 +56,10 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
 
   const handleSSOLogin = (provider: string) => {
     if (provider === 'google') {
+      // Get the full URL for redirection in production environment
+      const baseUrl = window.location.origin;
       // Redirect to Google OAuth endpoint
-      window.location.href = '/api/auth/google';
+      window.location.href = `${baseUrl}/api/auth/google`;
     } else {
       // For other providers that aren't implemented yet
       console.log(`Login with ${provider} - Not yet implemented`);
