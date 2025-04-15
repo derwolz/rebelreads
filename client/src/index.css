@@ -271,23 +271,6 @@
   }
 }
 
-@keyframes slideInChart {
-  0% {
-    transform: translateX(-50px);
-    opacity: 0;
-  }
-
-  99% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
 @keyframes growChart {
   0% {
     transform: scale(0.7);
@@ -378,11 +361,6 @@
 
 .animate-grow-chart {
   animation: growChart 1.2s ease-out forwards;
-  will-change: transform, opacity;
-}
-
-.animate-slide-chart {
-  animation: slideInChart 1s ease-out forwards;
   will-change: transform, opacity;
 }
 

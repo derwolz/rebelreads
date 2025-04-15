@@ -91,7 +91,7 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
   );
 };
 
-// Chart animation component with slide-in and value count-up animations
+// Chart animation component specifically for growing charts
 export const AnimatedChart: React.FC<{
   children: ReactNode;
   className?: string;
@@ -105,16 +105,16 @@ export const AnimatedChart: React.FC<{
     const chart = chartRef.current;
     if (!chart) return;
     
-    // Set initial styles for slide-in animation
-    chart.style.transform = 'translateX(-50px)';
+    // Set initial styles for growth animation
+    chart.style.transform = 'scale(0.7)';
     chart.style.opacity = '0';
     chart.style.willChange = 'transform, opacity';
     
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Use the predefined animation class for sliding in
-          chart.classList.add('animate-slide-chart');
+          // Use the predefined animation class
+          chart.classList.add('animate-grow-chart');
           
           // Remove element from observation once animation is applied
           observer.unobserve(chart);
@@ -143,7 +143,7 @@ export const AnimatedChart: React.FC<{
     <div 
       ref={chartRef} 
       className={className}
-      style={{ opacity: 0, transform: 'translateX(-50px)' }}
+      style={{ opacity: 0, transform: 'scale(0.7)' }}
     >
       {children}
     </div>

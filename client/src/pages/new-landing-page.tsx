@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CountUp } from "@/components/count-up";
 import { AnimateOnScroll, AnimatedChart } from "@/components/scroll-animations";
-import { AnimatedAreaChart } from "@/components/animated-area-chart";
 import {
   Dialog,
   DialogContent,
@@ -719,11 +718,49 @@ const NewLandingPage = () => {
                 </p>
 
                 <AnimatedChart>
-                  <AnimatedAreaChart 
-                    data={analyticsData}
-                    height={300}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  />
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart
+                      data={analyticsData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" stroke="#888888" />
+                      <YAxis stroke="#888888" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1a1a1a",
+                          borderColor: "#333",
+                          color: "#fff",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="impressions"
+                        stroke="#A06CD5"
+                        fillOpacity={1}
+                        fill="url(#colorImpressions)"
+                        name="Content Views"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="referrals"
+                        stroke="#EFA738"
+                        fillOpacity={1}
+                        fill="url(#colorReferrals)"
+                        name="Reader Referrals"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </AnimatedChart>
               </div>
             </AnimateOnScroll>
