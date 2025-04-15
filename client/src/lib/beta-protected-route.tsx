@@ -36,15 +36,17 @@ export function BetaProtectedRoute({
     );
   }
 
-  // Beta access check has been removed - all routes are allowed
-  // Keep this commented out for future reference:
-  // if (isBetaActive && !isAllowedPath && !isApiPath && !user) {
-  //   return (
-  //     <Route path={path}>
-  //       {() => <Redirect to="/landing" />}
-  //     </Route>
-  //   );
-  // }
+  // If beta mode is active, only allow:
+  // 1. Allowed paths (landing, etc.)
+  // 2. API paths
+  // 3. Authenticated users
+  if (isBetaActive && !isAllowedPath && !isApiPath && !user) {
+    return (
+      <Route path={path}>
+        {() => <Redirect to="/landing" />}
+      </Route>
+    );
+  }
 
   // Otherwise, render the component
   return <Route path={path} component={Component} />;
