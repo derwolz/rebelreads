@@ -408,10 +408,24 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   newsletterOptIn: true,
+  provider: true,
+  providerId: true,
 }).extend({
   email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters").nullable(),
+  provider: z.string().nullable().optional(),
+  providerId: z.string().nullable().optional(),
   betaKey: z.string().optional(),
+}).refine((data) => {
+  // If using OAuth (provider exists), password can be null
+  // Otherwise, password is required
+  if (data.provider) {
+    return true;
+  }
+  return !!data.password;
+}, {
+  message: "Password is required for email/password authentication",
+  path: ["password"]
 });
 
 export const updateProfileSchema = createInsertSchema(users).pick({

@@ -55,8 +55,13 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
   });
 
   const handleSSOLogin = (provider: string) => {
-    // Will implement SSO logic later
-    console.log(`Login with ${provider}`);
+    if (provider === 'google') {
+      // Redirect to Google OAuth endpoint
+      window.location.href = '/api/auth/google';
+    } else {
+      // For other providers that aren't implemented yet
+      console.log(`Login with ${provider} - Not yet implemented`);
+    }
   };
 
   const handleSuccess = (user: any, isRegistration: boolean) => {

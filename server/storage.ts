@@ -31,6 +31,7 @@ export const dbStorage = {
   getUser: accountStorage.getUser.bind(accountStorage),
   getUserByEmail: accountStorage.getUserByEmail.bind(accountStorage),
   getUserByUsername: accountStorage.getUserByUsername.bind(accountStorage),
+  getUserByProviderId: accountStorage.getUserByProviderId.bind(accountStorage),
   createUser: accountStorage.createUser.bind(accountStorage),
   updateUser: accountStorage.updateUser.bind(accountStorage),
   toggleAuthorStatus: accountStorage.toggleAuthorStatus.bind(accountStorage),

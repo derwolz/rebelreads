@@ -118,11 +118,11 @@ export function setupAuth(app: Express) {
         const newUser = await dbStorage.createUser({
           email,
           username,
-          password: null, // No password for OAuth users
+          password: null as unknown as string, // No password for OAuth users
           newsletterOptIn: false,
           provider: "google",
           providerId,
-          profileImageUrl: profile.photos?.[0]?.value || null,
+          // Set profile image separately after user creation if needed
         });
 
         return done(null, newUser);
