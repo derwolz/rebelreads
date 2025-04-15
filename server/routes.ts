@@ -27,6 +27,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
   app.use("/uploads", express.static("uploads"));
   
+  // Block all debug endpoints to prevent unauthorized data access
+  app.all('/api/debug/*', (req, res) => {
+    console.warn(`Blocked access attempt to debug endpoint: ${req.path}`);
+    return res.status(403).json({ 
+      error: "Access denied",
+      message: "Debug endpoints have been disabled for security reasons" 
+    });
+  });
+  
   // Setup authentication
   setupAuth(app);
 
