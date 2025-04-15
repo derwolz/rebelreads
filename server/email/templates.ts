@@ -9,46 +9,50 @@ export const welcomeEmailTemplate = (username: string) => {
   return {
     subject: "Welcome to Sirened Beta",
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-        <h2 style="color: #EFA738;">Welcome to BookVault Beta!</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #102B3F; background-color: #F6F0FB; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #A06CD5; font-size: 24px; margin-bottom: 0;">Welcome to Sirened Beta!</h2>
+        </div>
         <p>Hello ${username},</p>
-        <p>Thank you for joining BookVault. We're excited to have you as part of our beta testing community!</p>
-        <p>As a beta user, you'll have early access to all our features as we continue to develop and refine the platform.</p>
-        <p>Here's what you can do now:</p>
-        <ul>
-          <li>Browse books from different genres</li>
-          <li>Rate and review books you've read</li>
-          <li>Follow your favorite authors</li>
-          <li>Create wishlists and track your reading progress</li>
-        </ul>
-        <p>We value your feedback as we work to improve BookVault. If you encounter any issues or have suggestions, please don't hesitate to reach out to our support team.</p>
+        <p>Thank you for joining Sirened – where independent authors and readers connect directly. We're excited to have you as part of our beta testing community!</p>
+        <p>As a beta user, you'll have early access to our revolutionary platform as we continue to develop and refine the experience.</p>
+        <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0;">
+          <p style="font-weight: bold; margin-top: 0;">Here's what you can do now:</p>
+          <ul style="padding-left: 20px; margin-bottom: 0;">
+            <li>Discover unique stories from independent authors</li>
+            <li>Support authors directly with your purchases</li>
+            <li>Follow your favorite storytellers</li>
+            <li>Create wishlists and track your reading journey</li>
+          </ul>
+        </div>
+        <p>We value your feedback as we work to transform indie publishing. If you encounter any issues or have suggestions, please don't hesitate to reach out to our support team.</p>
         <p>Happy reading!</p>
-        <p>The BookVault Team</p>
-        <div style="margin-top: 30px; font-size: 12px; color: #888;">
+        <p>The Sirened Team</p>
+        <div style="margin-top: 30px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 15px;">
           <p>If you did not sign up for this service, please ignore this email.</p>
         </div>
       </div>
     `,
     text: `
-      Welcome to BookVault Beta!
+      Welcome to Sirened Beta!
       
       Hello ${username},
       
-      Thank you for joining BookVault. We're excited to have you as part of our beta testing community!
+      Thank you for joining Sirened – where independent authors and readers connect directly. We're excited to have you as part of our beta testing community!
       
-      As a beta user, you'll have early access to all our features as we continue to develop and refine the platform.
+      As a beta user, you'll have early access to our revolutionary platform as we continue to develop and refine the experience.
       
       Here's what you can do now:
-      - Browse books from different genres
-      - Rate and review books you've read
-      - Follow your favorite authors
-      - Create wishlists and track your reading progress
+      - Discover unique stories from independent authors
+      - Support authors directly with your purchases
+      - Follow your favorite storytellers
+      - Create wishlists and track your reading journey
       
-      We value your feedback as we work to improve BookVault. If you encounter any issues or have suggestions, please don't hesitate to reach out to our support team.
+      We value your feedback as we work to transform indie publishing. If you encounter any issues or have suggestions, please don't hesitate to reach out to our support team.
       
       Happy reading!
       
-      The BookVault Team
+      The Sirened Team
       
       If you did not sign up for this service, please ignore this email.
     `
@@ -60,19 +64,29 @@ export const welcomeEmailTemplate = (username: string) => {
  */
 export const signupInterestEmailTemplate = (email: string) => {
   return {
-    subject: "Thanks for your interest in BookVault!",
+    subject: "Thanks for your interest in Sirened!",
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-        <h2 style="color: #EFA738;">Thank You for Your Interest!</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #102B3F; background-color: #F6F0FB; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #A06CD5; font-size: 24px; margin-bottom: 0;">Thank You for Your Interest!</h2>
+        </div>
         <p>Hello there,</p>
-        <p>Thank you for your interest in BookVault – the digital platform for discovering and sharing books.</p>
-        <p>We're currently in our beta testing phase, and we've added you to our waitlist. When spots become available, we'll send you a beta key so you can join our community of readers and authors.</p>
+        <p>Thank you for your interest in Sirened – the digital platform revolutionizing how independent authors connect directly with readers.</p>
+        <div style="background-color: white; padding: 15px; border-radius: 8px; border-left: 4px solid #EFA738; margin: 20px 0;">
+          <p style="margin: 0;">We're currently in our beta testing phase, and we've added you to our waitlist. When spots become available, we'll send you a beta key so you can join our community of readers and independent authors.</p>
+        </div>
+        <p>At Sirened, we're creating a vibrant ecosystem where:</p>
+        <ul style="padding-left: 20px; color: #102B3F;">
+          <li>Authors keep 100% of their sales with no platform fees</li>
+          <li>Readers discover books based on quality, not marketing budgets</li>
+          <li>Direct author support creates meaningful connections</li>
+        </ul>
         <p>In the meantime, keep an eye on your inbox for updates on our progress and upcoming features.</p>
-        <p>We can't wait to welcome you to BookVault!</p>
+        <p>We can't wait to welcome you to Sirened!</p>
         <p>Best regards,</p>
-        <p>The BookVault Team</p>
-        <div style="margin-top: 30px; font-size: 12px; color: #888;">
-          <p>You received this email because ${email} was used to sign up for BookVault updates. If you did not request this, please ignore this email.</p>
+        <p>The Sirened Team</p>
+        <div style="margin-top: 30px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 15px;">
+          <p>You received this email because ${email} was used to sign up for Sirened updates. If you did not request this, please ignore this email.</p>
         </div>
       </div>
     `,
@@ -81,19 +95,24 @@ export const signupInterestEmailTemplate = (email: string) => {
       
       Hello there,
       
-      Thank you for your interest in BookVault – the digital platform for discovering and sharing books.
+      Thank you for your interest in Sirened – the digital platform revolutionizing how independent authors connect directly with readers.
       
-      We're currently in our beta testing phase, and we've added you to our waitlist. When spots become available, we'll send you a beta key so you can join our community of readers and authors.
+      We're currently in our beta testing phase, and we've added you to our waitlist. When spots become available, we'll send you a beta key so you can join our community of readers and independent authors.
+      
+      At Sirened, we're creating a vibrant ecosystem where:
+      - Authors keep 100% of their sales with no platform fees
+      - Readers discover books based on quality, not marketing budgets
+      - Direct author support creates meaningful connections
       
       In the meantime, keep an eye on your inbox for updates on our progress and upcoming features.
       
-      We can't wait to welcome you to BookVault!
+      We can't wait to welcome you to Sirened!
       
       Best regards,
       
-      The BookVault Team
+      The Sirened Team
       
-      You received this email because ${email} was used to sign up for BookVault updates. If you did not request this, please ignore this email.
+      You received this email because ${email} was used to sign up for Sirened updates. If you did not request this, please ignore this email.
     `
   };
 };
@@ -103,43 +122,58 @@ export const signupInterestEmailTemplate = (email: string) => {
  */
 export const betaKeyRequiredEmailTemplate = (email: string) => {
   return {
-    subject: "BookVault Beta Access Required",
+    subject: "Sirened Beta Access Required",
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-        <h2 style="color: #EFA738;">BookVault Beta Access</h2>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #102B3F; background-color: #F6F0FB; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #A06CD5; font-size: 24px; margin-bottom: 0;">Sirened Beta Access</h2>
+        </div>
         <p>Hello there,</p>
-        <p>We noticed you recently tried to access BookVault, but you don't have beta access yet.</p>
-        <p>BookVault is currently in a limited beta testing phase, and access is by invitation only. To join the platform, you'll need a valid beta key.</p>
+        <p>We noticed you recently tried to access Sirened, but you don't have beta access yet.</p>
+        <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0;">
+          <p style="margin: 0; font-weight: bold;">Sirened is currently in a limited beta testing phase, and access is by invitation only. To join our revolutionary indie publishing platform, you'll need a valid beta key.</p>
+        </div>
         <p>If you've already signed up for our waitlist, rest assured that we'll send you a beta key as soon as spots become available.</p>
-        <p>If you haven't signed up for the waitlist yet, you can do so on our website.</p>
-        <p>Thank you for your interest in BookVault!</p>
+        <p>If you haven't signed up for the waitlist yet, you can do so on our website at <a href="https://sirened.com" style="color: #EFA738; text-decoration: none; font-weight: bold;">sirened.com</a>.</p>
+        <p>We're creating a platform where:</p>
+        <ul style="padding-left: 20px; color: #102B3F;">
+          <li>Independent authors thrive</li>
+          <li>Quality stories get the attention they deserve</li>
+          <li>Readers connect directly with creators</li>
+        </ul>
+        <p>Thank you for your interest in Sirened!</p>
         <p>Best regards,</p>
-        <p>The BookVault Team</p>
-        <div style="margin-top: 30px; font-size: 12px; color: #888;">
-          <p>You received this email because ${email} was used to attempt access to BookVault. If you did not try to access our platform, please ignore this email.</p>
+        <p>The Sirened Team</p>
+        <div style="margin-top: 30px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 15px;">
+          <p>You received this email because ${email} was used to attempt access to Sirened. If you did not try to access our platform, please ignore this email.</p>
         </div>
       </div>
     `,
     text: `
-      BookVault Beta Access
+      Sirened Beta Access
       
       Hello there,
       
-      We noticed you recently tried to access BookVault, but you don't have beta access yet.
+      We noticed you recently tried to access Sirened, but you don't have beta access yet.
       
-      BookVault is currently in a limited beta testing phase, and access is by invitation only. To join the platform, you'll need a valid beta key.
+      Sirened is currently in a limited beta testing phase, and access is by invitation only. To join our revolutionary indie publishing platform, you'll need a valid beta key.
       
       If you've already signed up for our waitlist, rest assured that we'll send you a beta key as soon as spots become available.
       
-      If you haven't signed up for the waitlist yet, you can do so on our website.
+      If you haven't signed up for the waitlist yet, you can do so on our website at sirened.com.
       
-      Thank you for your interest in BookVault!
+      We're creating a platform where:
+      - Independent authors thrive
+      - Quality stories get the attention they deserve
+      - Readers connect directly with creators
+      
+      Thank you for your interest in Sirened!
       
       Best regards,
       
-      The BookVault Team
+      The Sirened Team
       
-      You received this email because ${email} was used to attempt access to BookVault. If you did not try to access our platform, please ignore this email.
+      You received this email because ${email} was used to attempt access to Sirened. If you did not try to access our platform, please ignore this email.
     `
   };
 };
