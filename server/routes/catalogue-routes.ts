@@ -158,8 +158,7 @@ router.get("/genres/publisher", async (req: Request, res: Response) => {
     const publisherId = publisher[0].id;
     
     // Get all authors managed by this publisher using the publishers_authors table
-    const publisherAuthorsRel = await db.select().from(publishersAuthors)
-      .where(eq(publishersAuthors.publisherId, publisherId));
+    const publisherAuthorsRel = await dbStorage.getPublisherAuthors(publisherId);
     
     console.log(`Publisher ${publisherId} has ${publisherAuthorsRel.length} authors`);
     
