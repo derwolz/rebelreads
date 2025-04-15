@@ -167,9 +167,34 @@ router.get("/wishlist", async (req: Request, res: Response) => {
     // Get all wishlisted books that are not completed
     const wishlistedBooks = await db
       .select({
-        book: books
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
       })
       .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
       .innerJoin(
         reading_status,
         and(
@@ -184,8 +209,35 @@ router.get("/wishlist", async (req: Request, res: Response) => {
       return res.json([]);
     }
     
+    // Get all book IDs to fetch images
+    const bookIds = wishlistedBooks.map(book => book.id);
+    
+    // Fetch all images for these books
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID
+    const imagesByBookId = new Map<number, { imageUrl: string, imageType: string }[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push({
+        imageUrl: image.imageUrl,
+        imageType: image.imageType
+      });
+    });
+    
+    // Add images to books
+    const booksWithImages = wishlistedBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    }));
+    
     // Shuffle array and take the requested count
-    const shuffled = wishlistedBooks.map(item => item.book).sort(() => 0.5 - Math.random());
+    const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
     const selectedBooks = shuffled.slice(0, count);
     
     res.json(selectedBooks);
@@ -208,11 +260,37 @@ router.get("/reviewed", async (req: Request, res: Response) => {
     // Get books the user has rated
     const ratedBooks = await db
       .select({
-        book: books,
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url,
+        // Rating info
         ratingId: ratings.id,
         ratingCreatedAt: ratings.createdAt
       })
       .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
       .innerJoin(
         ratings,
         and(
@@ -226,8 +304,35 @@ router.get("/reviewed", async (req: Request, res: Response) => {
       return res.json([]);
     }
     
+    // Get all book IDs to fetch images
+    const bookIds = ratedBooks.map(book => book.id);
+    
+    // Fetch all images for these books
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID
+    const imagesByBookId = new Map<number, { imageUrl: string, imageType: string }[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push({
+        imageUrl: image.imageUrl,
+        imageType: image.imageType
+      });
+    });
+    
+    // Add images to books
+    const booksWithImages = ratedBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    }));
+    
     // Shuffle array and take the requested count
-    const shuffled = ratedBooks.map(item => item.book).sort(() => 0.5 - Math.random());
+    const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
     const selectedBooks = shuffled.slice(0, count);
     
     res.json(selectedBooks);
@@ -250,10 +355,36 @@ router.get("/completed", async (req: Request, res: Response) => {
     // Get books the user has marked as completed
     const completedBooks = await db
       .select({
-        book: books,
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url,
+        // Completed info
         completedAt: reading_status.completedAt
       })
       .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
       .innerJoin(
         reading_status,
         and(
@@ -268,8 +399,35 @@ router.get("/completed", async (req: Request, res: Response) => {
       return res.json([]);
     }
     
+    // Get all book IDs to fetch images
+    const bookIds = completedBooks.map(book => book.id);
+    
+    // Fetch all images for these books
+    const allImages = await db.select()
+      .from(bookImages)
+      .where(inArray(bookImages.bookId, bookIds));
+    
+    // Group images by book ID
+    const imagesByBookId = new Map<number, { imageUrl: string, imageType: string }[]>();
+    
+    allImages.forEach(image => {
+      if (!imagesByBookId.has(image.bookId)) {
+        imagesByBookId.set(image.bookId, []);
+      }
+      imagesByBookId.get(image.bookId)!.push({
+        imageUrl: image.imageUrl,
+        imageType: image.imageType
+      });
+    });
+    
+    // Add images to books
+    const booksWithImages = completedBooks.map(book => ({
+      ...book,
+      images: imagesByBookId.get(book.id) || []
+    }));
+    
     // Shuffle array and take the requested count
-    const shuffled = completedBooks.map(item => item.book).sort(() => 0.5 - Math.random());
+    const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
     const selectedBooks = shuffled.slice(0, count);
     
     res.json(selectedBooks);
