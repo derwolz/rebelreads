@@ -286,38 +286,6 @@ router.get("/genres/author", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/catalogue/book-genres
- * Legacy endpoint - redirects to appropriate endpoint based on user role
- * @deprecated Use specific endpoints: /genres/publisher or /genres/author
- */
-router.get("/book-genres", async (req: Request, res: Response) => {
-  try {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
 
-    const userId = req.user!.id;
-    
-    // Check user role and redirect to appropriate endpoint
-    const isPublisher = await dbStorage.isUserPublisher(userId);
-    const isAuthor = await dbStorage.isUserAuthor(userId);
-    
-    if (isPublisher) {
-      console.log("Publisher detected, redirecting to publisher genres endpoint");
-      res.redirect(303, "/api/catalogue/genres/publisher");
-      return;
-    } else if (isAuthor) {
-      console.log("Author detected, redirecting to author genres endpoint");
-      res.redirect(303, "/api/catalogue/genres/author");
-      return;
-    } else {
-      return res.status(403).json({ error: "Publisher or author access required" });
-    }
-  } catch (error) {
-    console.error("Error in legacy book genres endpoint:", error);
-    res.status(500).json({ error: "Failed to process genres request" });
-  }
-});
 
 export default router;
