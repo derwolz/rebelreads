@@ -59,7 +59,7 @@ export function RecommendationsSidebar() {
                     </Link>
                   </h4>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    <span className="truncate">{book.author}</span>
+                    <span className="truncate">{book.authorName}</span>
                   </div>
                   <StarRating
                     rating={4}
