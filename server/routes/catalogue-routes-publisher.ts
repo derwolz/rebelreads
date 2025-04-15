@@ -21,14 +21,29 @@ router.get("/authors", requirePublisher, async (req: Request, res: Response) => 
     // Get all authors for this publisher
     const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
     
-    // For each author, get their books
+    // For each author, get their books with genre taxonomies
     const authorsWithBooks = await Promise.all(
       publisherAuthors.map(async (author) => {
+        // Get all books by this author
         const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+        
+        // For each book, get the genre taxonomies
+        const booksWithTaxonomies = await Promise.all(
+          authorBooks.map(async (book) => {
+            // Get taxonomies for this book
+            const taxonomies = await dbStorage.getBookTaxonomies(book.id);
+            
+            // Return the book with taxonomies
+            return {
+              ...book,
+              genreTaxonomies: taxonomies
+            };
+          })
+        );
         
         return {
           author,
-          books: authorBooks,
+          books: booksWithTaxonomies,
         };
       })
     );

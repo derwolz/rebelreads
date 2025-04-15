@@ -21,7 +21,7 @@ console.log("Catalogue routes registered");
 
 /**
  * GET /api/catalogue/publisher
- * Get all publishers along with their authors and books
+ * Get all publishers along with their authors and books with genre taxonomies
  * Authenticated route
  */
 router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
@@ -35,7 +35,7 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
         // Get authors for this publisher
         const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
         
-        // For each author, get their books
+        // For each author, get their books with genre taxonomies
         const authorsWithBooks = await Promise.all(
           publisherAuthors.map(async (author) => {
             // Get user data for this author
@@ -50,6 +50,20 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
             // Get books by this author
             const authorBooks = await dbStorage.getBooksByAuthor(author.id);
             
+            // Add genre taxonomies to each book
+            const booksWithTaxonomies = await Promise.all(
+              authorBooks.map(async (book) => {
+                // Get taxonomies for this book
+                const taxonomies = await dbStorage.getBookTaxonomies(book.id);
+                
+                // Return the book with taxonomies
+                return {
+                  ...book,
+                  genreTaxonomies: taxonomies
+                };
+              })
+            );
+            
             return {
               author: {
                 ...author,
@@ -60,7 +74,7 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
                   displayName: user.displayName
                 }
               },
-              books: authorBooks
+              books: booksWithTaxonomies
             };
           })
         );
@@ -84,7 +98,7 @@ router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
 
 /**
  * GET /api/catalogue/author
- * Get information for the currently logged in author, including profile, books and book images
+ * Get information for the currently logged in author, including profile, books, book images, and genre taxonomies
  * Authenticated route with author check
  */
 router.get("/author", requireAuthor, async (req: Request, res: Response) => {
@@ -133,11 +147,19 @@ router.get("/author", requireAuthor, async (req: Request, res: Response) => {
       });
     });
     
-    // Add images to each book
-    const booksWithImages = authorBooks.map(book => ({
-      ...book,
-      images: imagesByBookId.get(book.id) || []
-    }));
+    // Add images and taxonomies to each book
+    const booksWithImagesAndTaxonomies = await Promise.all(
+      authorBooks.map(async (book) => {
+        // Get taxonomies for this book
+        const taxonomies = await dbStorage.getBookTaxonomies(book.id);
+        
+        return {
+          ...book,
+          images: imagesByBookId.get(book.id) || [],
+          genreTaxonomies: taxonomies
+        };
+      })
+    );
     
     // Build the response data
     const authorData = {
@@ -150,7 +172,7 @@ router.get("/author", requireAuthor, async (req: Request, res: Response) => {
           displayName: user.displayName
         }
       },
-      books: booksWithImages
+      books: booksWithImagesAndTaxonomies
     };
     
     res.json([authorData]); // Return as array for backwards compatibility
