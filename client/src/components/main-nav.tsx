@@ -58,9 +58,15 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     queryKey: ["/api/account/publisher-status"],
     queryFn: async () => {
       if (!user) return { isPublisher: false };
+      console.log("Checking publisher status for user:", user.id);
       const res = await fetch("/api/account/publisher-status");
-      if (!res.ok) return { isPublisher: false };
-      return res.json();
+      if (!res.ok) {
+        console.error("Error fetching publisher status:", res.status, res.statusText);
+        return { isPublisher: false };
+      }
+      const data = await res.json();
+      console.log("Publisher status response:", data);
+      return data;
     },
     enabled: !!user,
   });

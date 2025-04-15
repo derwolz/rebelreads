@@ -10,6 +10,37 @@ import { eq, and, isNull } from "drizzle-orm";
 const router = Router();
 
 /**
+ * GET /api/publishers/debug/check-publisher-status/:userId
+ * Debug endpoint to check publisher status for a user
+ * Not protected - for diagnostic purposes only
+ */
+router.get("/debug/check-publisher-status/:userId", async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+    
+    // Direct database check
+    const isPublisher = await dbStorage.isUserPublisher(userId);
+    const publisherDetails = isPublisher ? await dbStorage.getPublisherByUserId(userId) : null;
+    
+    // Get user details from database
+    const [user] = await db.select().from(authors).where(eq(authors.userId, userId));
+    
+    return res.json({
+      userId,
+      isPublisher,
+      publisherDetails,
+      userInfo: user ? { authorId: user.id, authorName: user.authorName } : null
+    });
+  } catch (error) {
+    console.error("Error checking publisher status:", error);
+    return res.status(500).json({ error: "Error checking publisher status" });
+  }
+});
+
+/**
  * GET /api/publishers/current
  * Get the current publisher profile
  * Protected route: Requires publisher authentication

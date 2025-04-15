@@ -559,6 +559,8 @@ router.get("/publisher-status", async (req: Request, res: Response) => {
       publisherDetails = await dbStorage.getPublisherByUserId(req.user.id);
     }
     
+    console.log(`Publisher status check for user ${req.user.id}:`, { isPublisher, publisherDetails });
+    
     res.json({ isPublisher, publisherDetails });
   } catch (error) {
     console.error("Error checking publisher status:", error);
