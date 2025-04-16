@@ -106,6 +106,7 @@ function Router() {
         <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
         <ProtectedRoute path="/settings/rating-preferences" component={SettingsPage} />
         <ProtectedRoute path="/settings/genre-preferences" component={SettingsPage} />
+        <ProtectedRoute path="/settings/filters" component={SettingsPage} />
         <ProtectedRoute path="/settings/homepage" component={() => <HomepageSettingsPage />} />
         <ProtectedRoute path="/settings/author" component={SettingsPage} />
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
