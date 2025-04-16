@@ -35,11 +35,20 @@ interface SearchResult {
 export function ContentFiltersSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchType, setSearchType] = useState<string>("author");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState("author");
+  
+  // When tab changes, clear search results and query
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchResults([]);
+    setSearchQuery("");
+  };
+  
+  // Use the activeTab as the searchType
+  const searchType = activeTab;
 
   // Function to get the icon based on block type
   const getBlockIcon = (blockType: string) => {
@@ -176,89 +185,90 @@ export function ContentFiltersSettings() {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Search section */}
-          <div className="space-y-2">
-            <h3 className="font-medium">Search for content to block</h3>
-            <div className="flex items-center space-x-2">
-              <Select defaultValue={searchType} onValueChange={setSearchType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Block type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BLOCK_TYPE_OPTIONS.map(type => (
-                    <SelectItem key={type} value={type}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex-1 relative">
-                <Input
-                  placeholder={`Search for a ${searchType}...`}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch();
-                    }
-                  }}
-                />
-                <Button 
-                  variant="ghost" 
-                  className="absolute right-0 top-0 h-full px-3" 
-                  onClick={handleSearch} 
-                  disabled={isSearching || !searchQuery.trim()}
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Search results */}
-          {isSearching ? (
-            <div className="grid gap-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ) : searchResults.length > 0 ? (
-            <div className="border rounded-md">
-              <div className="p-3 border-b bg-muted/50">
-                <h4 className="font-medium">Search Results</h4>
-              </div>
-              <div className="p-3 space-y-2">
-                {searchResults.map((result) => (
-                  <div key={result.id} className="flex justify-between items-center p-2 hover:bg-muted/40 rounded">
-                    <div className="flex items-center">
-                      {getBlockIcon(searchType)}
-                      <span>{result.name}</span>
-                      {result.type && (
-                        <Badge variant="outline" className="ml-2">{result.type}</Badge>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAddBlock(result)}
-                      disabled={addBlockMutation.isPending}
-                    >
-                      Block
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
           {/* Blocked content tabs */}
-          <Tabs defaultValue="author" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4">
-              <TabsTrigger value="author">Authors</TabsTrigger>
-              <TabsTrigger value="publisher">Publishers</TabsTrigger>
-              <TabsTrigger value="book">Books</TabsTrigger>
-              <TabsTrigger value="taxonomy">Taxonomies</TabsTrigger>
+          <Tabs defaultValue="author" value={activeTab} onValueChange={handleTabChange}>
+            <div className="mb-2 font-medium">Select the type of content to manage:</div>
+            <TabsList className="w-full grid grid-cols-4 mb-6">
+              <TabsTrigger value="author" className="flex gap-1 items-center">
+                <User className="h-4 w-4" />
+                <span>Authors</span>
+              </TabsTrigger>
+              <TabsTrigger value="publisher" className="flex gap-1 items-center">
+                <Building className="h-4 w-4" />
+                <span>Publishers</span>
+              </TabsTrigger>
+              <TabsTrigger value="book" className="flex gap-1 items-center">
+                <BookIcon className="h-4 w-4" />
+                <span>Books</span>
+              </TabsTrigger>
+              <TabsTrigger value="taxonomy" className="flex gap-1 items-center">
+                <Tag className="h-4 w-4" />
+                <span>Taxonomies</span>
+              </TabsTrigger>
             </TabsList>
+          
+            {/* Search section */}
+            <div className="space-y-2 mb-6">
+              <h3 className="font-medium">Search for {searchType}s to block</h3>
+              <div className="flex items-center space-x-2 w-full">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder={`Search for a ${searchType}...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                  />
+                  <Button 
+                    variant="ghost" 
+                    className="absolute right-0 top-0 h-full px-3" 
+                    onClick={handleSearch} 
+                    disabled={isSearching || !searchQuery.trim()}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Search results */}
+            {isSearching ? (
+              <div className="grid gap-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : searchResults.length > 0 ? (
+              <div className="border rounded-md">
+                <div className="p-3 border-b bg-muted/50">
+                  <h4 className="font-medium">Search Results</h4>
+                </div>
+                <div className="p-3 space-y-2">
+                  {searchResults.map((result) => (
+                    <div key={result.id} className="flex justify-between items-center p-2 hover:bg-muted/40 rounded">
+                      <div className="flex items-center">
+                        {getBlockIcon(searchType)}
+                        <span>{result.name}</span>
+                        {result.type && (
+                          <Badge variant="outline" className="ml-2">{result.type}</Badge>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleAddBlock(result)}
+                        disabled={addBlockMutation.isPending}
+                      >
+                        Block
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <TabsContent value="author" className="space-y-4 pt-4">
               <h3 className="font-medium text-sm text-muted-foreground">Blocked Authors</h3>
               {isLoading ? (
