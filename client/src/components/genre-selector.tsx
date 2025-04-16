@@ -508,10 +508,31 @@ function TaxonomyGenreSelector({
   };
 
   // Check if a taxonomy type has reached its maximum allowed count
+  // Maximum total taxonomies allowed
+  const MAX_TOTAL_TAXONOMIES = 20;
+  
+  // Calculate remaining taxonomy slots
+  const getRemainingSlots = () => {
+    return MAX_TOTAL_TAXONOMIES - selectedTaxonomies.length;
+  };
+  
   const isMaxReached = (type: "genre" | "subgenre" | "theme" | "trope") => {
-    // If limits are not restricted, always return false (no limit)
-    if (!restrictLimits) return false;
+    // Always check if we've hit the total maximum first
+    if (selectedTaxonomies.length >= MAX_TOTAL_TAXONOMIES) return true;
     
+    // If limits are not restricted, check only specific types
+    if (!restrictLimits) {
+      // Only restrict genres and subgenres
+      if (type === "genre") {
+        return getSelectedByType(type).length >= 2;
+      } else if (type === "subgenre") {
+        return getSelectedByType(type).length >= 5;
+      }
+      // Themes and tropes are unrestricted
+      return false;
+    }
+    
+    // If limits are restricted, apply limits to all types
     const count = getSelectedByType(type).length;
     switch (type) {
       case "genre": return count >= 2;
@@ -627,41 +648,52 @@ function TaxonomyGenreSelector({
             <CardContent>
               <Tabs defaultValue="genre" value={tab} onValueChange={(v: string) => setTab(v as "genre" | "subgenre" | "theme" | "trope")}>
                 <TabsList className="grid grid-cols-4 mb-4">
-                  <TabsTrigger value="genre" className={isMissingRequired("genre") ? "border-destructive" : ""}>
-                    Genres {
-                      restrictLimits
-                        ? isMaxReached("genre") ? "(2/2)" : `(${getSelectedByType("genre").length}/2)`
-                        : `(${getSelectedByType("genre").length})`
-                    }
+                  <TabsTrigger 
+                    value="genre" 
+                    className={`${isMaxReached("genre") ? "text-red-500" : ""} ${isMissingRequired("genre") ? "border-destructive" : ""}`}
+                  >
+                    Genres
                   </TabsTrigger>
-                  <TabsTrigger value="subgenre">
-                    Subgenres {
-                      restrictLimits
-                        ? isMaxReached("subgenre") ? "(5/5)" : `(${getSelectedByType("subgenre").length}/5)`
-                        : `(${getSelectedByType("subgenre").length})`
-                    }
+                  <TabsTrigger 
+                    value="subgenre"
+                    className={isMaxReached("subgenre") ? "text-red-500" : ""}
+                  >
+                    Subgenres
                   </TabsTrigger>
-                  <TabsTrigger value="theme" className={isMissingRequired("theme") ? "border-destructive" : ""}>
-                    Themes {
-                      restrictLimits
-                        ? isMaxReached("theme") ? "(6/6)" : `(${getSelectedByType("theme").length}/6)`
-                        : `(${getSelectedByType("theme").length})`
-                    }
+                  <TabsTrigger 
+                    value="theme" 
+                    className={`${isMaxReached("theme") ? "text-red-500" : ""} ${isMissingRequired("theme") ? "border-destructive" : ""}`}
+                  >
+                    Themes
                   </TabsTrigger>
-                  <TabsTrigger value="trope" className={isMissingRequired("trope") ? "border-destructive" : ""}>
-                    Tropes {
-                      restrictLimits
-                        ? isMaxReached("trope") ? "(7/7)" : `(${getSelectedByType("trope").length}/7)`
-                        : `(${getSelectedByType("trope").length})`
-                    }
+                  <TabsTrigger 
+                    value="trope" 
+                    className={`${isMaxReached("trope") ? "text-red-500" : ""} ${isMissingRequired("trope") ? "border-destructive" : ""}`}
+                  >
+                    Tropes
                   </TabsTrigger>
                 </TabsList>
                 
-                {restrictLimits && (
-                  <div className={`text-sm font-medium mb-4 ${selectedTaxonomies.length < 5 ? "text-destructive" : "text-green-600"}`}>
-                    Total taxonomies selected: {selectedTaxonomies.length}/5 {selectedTaxonomies.length < 5 ? "(need to select at least 5 total)" : "✓"}
+                {/* Total slots remaining indicator */}
+                <div className="flex justify-end mb-2">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700">
+                    <span className="text-xl font-bold">{getRemainingSlots()}</span>
                   </div>
-                )}
+                </div>
+                
+                {/* Show total taxonomies counter when restricted or not */}
+                <div className={`text-sm font-medium mb-4 ${
+                  selectedTaxonomies.length >= MAX_TOTAL_TAXONOMIES 
+                    ? "text-red-500" 
+                    : selectedTaxonomies.length < 5 && restrictLimits 
+                      ? "text-amber-500" 
+                      : "text-green-600"
+                }`}>
+                  {restrictLimits && selectedTaxonomies.length < 5 
+                    ? `Total taxonomies selected: ${selectedTaxonomies.length}/5 (need to select at least 5 total)` 
+                    : `Total taxonomies: ${selectedTaxonomies.length}/${MAX_TOTAL_TAXONOMIES}`
+                  }
+                </div>
                 
                 <div className="relative mb-4">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
