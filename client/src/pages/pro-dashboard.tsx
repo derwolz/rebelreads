@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
+import { useLocation } from "wouter";
 import { ReviewManagement } from "@/components/review-management";
 import { ProBookManagement } from "@/components/pro-book-management";
 import { ProAnalyticsWrapper } from "@/components/pro-analytics-wrapper";
+import { ProLayout } from "@/components/pro-layout";
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
   BarChart,
@@ -27,10 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useLocation } from "wouter";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BarChart3, AreaChart, Star, Menu } from "lucide-react";
+import { BarChart3, AreaChart, Star } from "lucide-react";
 import type { Book } from "@shared/schema";
 
 interface MetricsResponse {
@@ -245,7 +244,7 @@ export default function ProDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
+                      <RechartsTooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
                       <Legend />
                       {selectedBookIds.map((bookId) =>
                         selectedMetrics.map((metric) => (
@@ -278,7 +277,7 @@ export default function ProDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
+                      <RechartsTooltip formatter={(value: any) => (isNaN(Number(value)) ? '0' : value)} />
                       <Legend />
                       <Bar
                         dataKey="followers"
@@ -352,40 +351,9 @@ export default function ProDashboard() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      {/* Mobile Sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[240px] p-0">
-          <div className="h-full pt-8">
-            <ProDashboardSidebar />
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <div className="flex gap-8">
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block w-60">
-          <ProDashboardSidebar />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          {/* Mobile menu button - only visible on mobile */}
-          <div className="md:hidden mb-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-2"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu className="h-4 w-4" />
-              <span>Menu</span>
-            </Button>
-          </div>
-          
-          {renderContent()}
-        </div>
-      </div>
-    </main>
+    <ProLayout>
+      {renderContent()}
+    </ProLayout>
   );
 }
 
