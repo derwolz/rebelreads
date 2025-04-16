@@ -166,7 +166,7 @@ export function BookUploadDialog({ book }: { book?: Book }) {
           <Button className="w-full">Add Book</Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[85vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-3 sm:p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
         </DialogHeader>
@@ -1009,7 +1009,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
             <p className="text-sm text-muted-foreground">
               Review your book information before submitting
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
               <Card className="p-3 sm:p-4">
                 <h3 className="font-medium mb-2 text-sm sm:text-base">Basic Information</h3>
                 <dl className="space-y-1">
@@ -1178,7 +1178,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   };
 
   return (
-    <div className="space-y-8 w-full mx-auto">
+    <div className="space-y-8">
       <div className="flex justify-between mb-6">
         <div className="flex items-center overflow-x-auto pb-2 hide-scrollbar">
           <div className="flex items-center gap-1 sm:gap-2">
