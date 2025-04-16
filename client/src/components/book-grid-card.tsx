@@ -190,6 +190,8 @@ export function BookGridCard({ book }: { book: Book }) {
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
               `}
               onClick={handleCardClick}
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
             >
               {/* New Book Banner */}
               {isNewBook(book) && (
