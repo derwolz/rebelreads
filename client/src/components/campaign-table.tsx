@@ -8,11 +8,45 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDistance } from "date-fns";
-import { Book, Campaign } from "@shared/schema";
+import { Book } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
+
+// Define types for campaign metrics
+interface CampaignMetrics {
+  impressions?: number;
+  clicks?: number;
+  responses?: number;
+  reviews?: number;
+}
+
+// Extend the Campaign type to include books for display
+interface CampaignWithBooks {
+  id: number;
+  name: string;
+  type: string;
+  status: string;
+  startDate: Date;
+  endDate: Date;
+  spent: string;
+  budget: string;
+  keywords: string[] | null;
+  adType: string | null;
+  authorId: number;
+  metrics: CampaignMetrics;
+  createdAt: Date;
+  biddingStrategy?: string;
+  dailyBudget?: string;
+  maxBidAmount?: string;
+  targetCPC?: string;
+  targetPosition?: number;
+  books?: {
+    id: number;
+    title: string;
+  }[];
+}
 
 const campaignTypeLabels = {
   ad: "Advertisement",
@@ -21,7 +55,7 @@ const campaignTypeLabels = {
 };
 
 export function CampaignTable() {
-  const { data: campaigns, isLoading } = useQuery<Campaign[]>({
+  const { data: campaigns, isLoading } = useQuery<CampaignWithBooks[]>({
     queryKey: ["/api/pro/campaigns"],
   });
   
@@ -97,7 +131,7 @@ export function CampaignTable() {
                 <div>
                   <div className="text-sm font-medium">Books</div>
                   <div className="space-y-1 mt-1">
-                    {campaign.books?.map((book) => (
+                    {campaign.books?.map((book: { id: number; title: string }) => (
                       <div key={book.id} className="text-sm">
                         {book.title}
                       </div>
@@ -211,7 +245,7 @@ export function CampaignTable() {
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  {campaign.books?.map((book) => (
+                  {campaign.books?.map((book: { id: number; title: string }) => (
                     <div key={book.id} className="text-sm">
                       {book.title}
                     </div>

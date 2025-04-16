@@ -123,7 +123,7 @@ export function ReviewManagement() {
   const { toast } = useToast();
   
   // Check if user is Pro
-  const isPro = user?.isPro;
+  const isPro = user?.is_pro;
   
   const { data, isLoading } = useQuery({
     queryKey: ["/api/pro/demo-reviews", page],

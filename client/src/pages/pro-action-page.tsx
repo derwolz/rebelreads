@@ -27,7 +27,7 @@ export default function ProActionPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  const isPro = user?.isPro;
+  const isPro = user?.is_pro;
 
   const { data: books } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
