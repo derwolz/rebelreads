@@ -10,6 +10,7 @@ import { BetaKeyStorage } from "./storage/beta-keys";
 import { HomepageLayoutStorage } from "./storage/homepage-layout";
 import { FeedbackStorage } from "./storage/feedback";
 import { SellerStorage } from "./storage/seller";
+import { FilterStorage } from "./storage/filters";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -24,6 +25,7 @@ const betaKeyStorage = new BetaKeyStorage();
 const homepageLayoutStorage = new HomepageLayoutStorage();
 const feedbackStorage = new FeedbackStorage();
 const sellerStorage = new SellerStorage();
+const filterStorage = new FilterStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -233,6 +235,18 @@ export const dbStorage = {
   getSellerVerificationCodes: sellerStorage.getSellerVerificationCodes.bind(sellerStorage),
   searchUsers: sellerStorage.searchUsers.bind(sellerStorage),
   getVerifiedPublishers: sellerStorage.getVerifiedPublishers.bind(sellerStorage),
+  
+  // Content filters and blocks
+  getUserBlocks: filterStorage.getUserBlocks.bind(filterStorage),
+  getBlocksByType: filterStorage.getBlocksByType.bind(filterStorage),
+  addBlock: filterStorage.addBlock.bind(filterStorage),
+  removeBlock: filterStorage.removeBlock.bind(filterStorage),
+  removeBlockByTypeAndId: filterStorage.removeBlockByTypeAndId.bind(filterStorage),
+  isBlocked: filterStorage.isBlocked.bind(filterStorage),
+  searchAuthors: filterStorage.searchAuthors.bind(filterStorage),
+  searchPublishers: filterStorage.searchPublishers.bind(filterStorage),
+  searchBooks: filterStorage.searchBooks.bind(filterStorage),
+  searchTaxonomies: filterStorage.searchTaxonomies.bind(filterStorage),
 };
 
 // Export interfaces from their respective modules
@@ -248,6 +262,7 @@ export type { IBetaKeyStorage } from "./storage/beta-keys";
 export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 export type { IFeedbackStorage } from "./storage/feedback";
 export type { ISellerStorage } from "./storage/seller";
+export type { IFilterStorage } from "./storage/filters";
 
 // Re-export storage classes
 export {
@@ -263,4 +278,5 @@ export {
   HomepageLayoutStorage,
   FeedbackStorage,
   SellerStorage,
+  FilterStorage,
 };

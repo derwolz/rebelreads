@@ -1123,6 +1123,27 @@ export interface HomepageSection {
 export type HomepageLayout = typeof homepageLayouts.$inferSelect;
 export type InsertHomepageLayout = typeof homepageLayouts.$inferInsert;
 
+// Block type constants
+export const BLOCK_TYPE_OPTIONS = ["author", "publisher", "book", "taxonomy"] as const;
+
+// User blocks table for filtering content
+export const userBlocks = pgTable("user_blocks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  blockType: text("block_type").notNull(), // One of BLOCK_TYPE_OPTIONS
+  blockId: integer("block_id").notNull(), // ID of author, publisher, book, or taxonomy 
+  blockName: text("block_name").notNull(), // Name for display purposes
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertUserBlockSchema = createInsertSchema(userBlocks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type UserBlock = typeof userBlocks.$inferSelect;
+export type InsertUserBlock = z.infer<typeof insertUserBlockSchema>;
+
 // Table for popular books recommendation with sigmoid decay
 export const popularBooks = pgTable("popular_books", {
   id: serial("id").primaryKey(),
