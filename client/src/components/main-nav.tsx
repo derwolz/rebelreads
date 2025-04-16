@@ -177,11 +177,9 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
-              {isAuthor && (
-                <Link href="/pro">
-                  <Button variant="outline">Author Dashboard</Button>
-                </Link>
-              )}
+              <Link href="/pro">
+                <Button variant="outline">Author Dashboard</Button>
+              </Link>
               {publisherStatus?.isPublisher && (
                 <Link href="/publisher">
                   <Button variant="outline">Publisher Dashboard</Button>
@@ -265,16 +263,14 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                       </Link>
                     </div>
                     <div className="grid gap-2">
-                      {isAuthor && (
-                        <Link href="/pro">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                          >
-                            Author Dashboard
-                          </Button>
-                        </Link>
-                      )}
+                      <Link href="/pro">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                        >
+                          Author Dashboard
+                        </Button>
+                      </Link>
                       {publisherStatus?.isPublisher && (
                         <Link href="/publisher">
                           <Button
