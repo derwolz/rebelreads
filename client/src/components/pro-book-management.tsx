@@ -38,15 +38,15 @@ export function ProBookManagement() {
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
 
-  const { data: userBooks } = useQuery<Book[]>({
+  const { data: authorBooks } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
     enabled: isAuthor,
   });
 
-  // Fetch all ratings for user's books
+  // Fetch all ratings for author's books
   const { data: allRatings } = useQuery<Rating[]>({
     queryKey: ["/api/my-books/ratings"],
-    enabled: !!userBooks?.length,
+    enabled: !!authorBooks?.length,
   });
 
   const deleteBookMutation = useMutation({
@@ -99,7 +99,7 @@ export function ProBookManagement() {
           <BookCsvUploadWizard />
         </div>
         <div className="mt-8 grid gap-6">
-          {userBooks?.map((book) => {
+          {authorBooks?.map((book) => {
             const ratings = bookRatings.get(book.id) || [];
 
             const averageRatings = ratings.length ? {
