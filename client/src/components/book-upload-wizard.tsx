@@ -651,7 +651,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
               Upload different images for your book to be displayed in various contexts. All images are required.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
               {IMAGE_TYPES.map((imageType) => {
                 const imageData = formData.bookImages[imageType];
                 return (
@@ -733,14 +733,14 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Available Formats</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
               {FORMAT_OPTIONS.map((format) => (
                 <Button
                   key={format}
                   variant={
                     formData.formats.includes(format) ? "default" : "outline"
                   }
-                  className="h-24 text-lg"
+                  className="h-16 sm:h-24 text-sm sm:text-lg py-2"
                   onClick={() => handleFormatToggle(format)}
                 >
                   {format.charAt(0).toUpperCase() + format.slice(1)}
@@ -1009,9 +1009,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
             <p className="text-sm text-muted-foreground">
               Review your book information before submitting
             </p>
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card className="p-4">
-                <h3 className="font-medium mb-2">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+              <Card className="p-3 sm:p-4">
+                <h3 className="font-medium mb-2 text-sm sm:text-base">Basic Information</h3>
                 <dl className="space-y-1">
                   <dt className="text-sm font-medium">Title</dt>
                   <dd className="text-sm text-muted-foreground">
@@ -1027,8 +1027,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   </dd>
                 </dl>
               </Card>
-              <Card className="p-4">
-                <h3 className="font-medium mb-2">Details</h3>
+              <Card className="p-3 sm:p-4">
+                <h3 className="font-medium mb-2 text-sm sm:text-base">Details</h3>
                 <dl className="space-y-1">
                   {formData.series && (
                     <>
@@ -1061,8 +1061,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 </dl>
               </Card>
               {formData.hasAwards && formData.awards.length > 0 && (
-                <Card className="p-4">
-                  <h3 className="font-medium mb-2">Awards</h3>
+                <Card className="p-3 sm:p-4">
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">Awards</h3>
                   <div className="flex flex-wrap gap-1">
                     {formData.awards.map((award, i) => (
                       <Badge key={i} variant="secondary">
@@ -1072,8 +1072,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   </div>
                 </Card>
               )}
-              <Card className="p-4">
-                <h3 className="font-medium mb-2">Formats & Publication</h3>
+              <Card className="p-3 sm:p-4">
+                <h3 className="font-medium mb-2 text-sm sm:text-base">Formats & Publication</h3>
                 <dl className="space-y-1">
                   <dt className="text-sm font-medium">Available Formats</dt>
                   <dd className="flex flex-wrap gap-1">
@@ -1113,8 +1113,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   )}
                 </dl>
               </Card>
-              <Card className="p-4">
-                <h3 className="font-medium mb-2">Taxonomies</h3>
+              <Card className="p-3 sm:p-4">
+                <h3 className="font-medium mb-2 text-sm sm:text-base">Taxonomies</h3>
                 {formData.genreTaxonomies && formData.genreTaxonomies.length > 0 ? (
                   <div className="space-y-3">
                     {/* Display taxonomies by type */}

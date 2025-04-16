@@ -166,8 +166,8 @@ export function DragDropImage({
   };
 
   return (
-    <div className={cn("space-y-2 border rounded-md p-4", error && "border-destructive")}>
-      <div className="text-sm font-medium mb-2">
+    <div className={cn("space-y-2 border rounded-md p-2 sm:p-4", error && "border-destructive")}>
+      <div className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">
         {getTypeLabel(imageType)} {required && <span className="text-red-500">*</span>}
       </div>
       
@@ -182,42 +182,42 @@ export function DragDropImage({
             <Button
               type="button"
               variant="destructive"
-              size="sm"
-              className="absolute top-0 right-0"
+              size="icon"
+              className="absolute top-0 right-0 w-6 h-6 sm:w-8 sm:h-8"
               onClick={handleClear}
             >
-              <X size={16} />
+              <X size={14} />
             </Button>
           </div>
-          <div className="mt-2 text-center text-xs text-muted-foreground">
+          <div className="mt-1 sm:mt-2 text-center text-xs text-muted-foreground">
             Required size: {width}×{height}
           </div>
         </div>
       ) : (
         <div
           className={cn(
-            'border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer p-4',
+            'border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer p-2 sm:p-4',
             isDragging ? 'border-primary bg-primary/10' : error ? 'border-destructive bg-destructive/10' : 'border-border'
           )}
-          style={{ height: displayHeight + 40, minHeight: '100px' }}
+          style={{ height: displayHeight + 20, minHeight: '80px' }}
           onClick={handleClick}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {error ? (
-            <AlertCircle size={24} className="text-destructive mb-2" />
+            <AlertCircle size={20} className="text-destructive mb-1 sm:mb-2" />
           ) : (
-            <Upload size={24} className="text-muted-foreground mb-2" />
+            <Upload size={20} className="text-muted-foreground mb-1 sm:mb-2" />
           )}
-          <p className="text-sm text-center text-muted-foreground">
-            Drag & drop or click to select
+          <p className="text-xs sm:text-sm text-center text-muted-foreground">
+            Tap to select image
           </p>
-          <p className="text-xs text-center text-muted-foreground mt-1">
+          <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1">
             Required size: {width}×{height}
           </p>
           {error && (
-            <p className="text-xs text-center text-destructive mt-2">
+            <p className="text-[10px] sm:text-xs text-center text-destructive mt-1 sm:mt-2">
               {error}
             </p>
           )}
