@@ -43,19 +43,19 @@ export function ProLayout({ children }: ProLayoutProps) {
       <div className="flex gap-4 md:gap-6 min-h-[calc(100vh-8rem)]">
         {/* Desktop Sidebar */}
         <div 
-          className={`hidden md:block ${collapsed ? 'w-[70px]' : 'w-60'} transition-all duration-300 ease-in-out relative`}
+          className={`hidden md:block ${collapsed ? 'w-[90px]' : 'w-64'} transition-all duration-300 ease-in-out relative`}
         >
-          <div className="absolute right-0 top-0 z-10 transform translate-x-1/2 mt-2">
+          <div className="absolute right-0 top-0 z-10 transform translate-x-1/2 mt-4">
             <Button 
               variant="outline" 
               size="icon" 
-              className="rounded-full h-6 w-6 bg-background border shadow-sm"
+              className="rounded-full h-7 w-7 bg-background border shadow-sm"
               onClick={() => setCollapsed(!collapsed)}
             >
-              {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+              {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </Button>
           </div>
-          <div className="border rounded-lg bg-background/60 h-full p-4 border-border">
+          <div className="border rounded-lg bg-background/60 h-full px-4 py-6 border-border">
             <ProDashboardSidebar collapsed={collapsed} />
           </div>
         </div>

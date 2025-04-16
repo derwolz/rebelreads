@@ -22,7 +22,7 @@ function NavItem({ href, active, children, icon, collapsed }: NavItemProps) {
               <Button
                 variant={active ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-center", 
+                  "w-full justify-center h-11", 
                   active && "bg-secondary"
                 )}
                 size="icon"
@@ -45,12 +45,12 @@ function NavItem({ href, active, children, icon, collapsed }: NavItemProps) {
       <Button
         variant={active ? "secondary" : "ghost"}
         className={cn(
-          "w-full justify-start gap-2", 
+          "w-full justify-start gap-3 h-11 px-4", 
           active && "bg-secondary"
         )}
       >
         {icon}
-        {children}
+        <span>{children}</span>
       </Button>
     </Link>
   );
@@ -64,11 +64,11 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
   const [location] = useLocation();
 
   return (
-    <nav className={cn("space-y-2", collapsed ? "w-12" : "w-60")}>
+    <nav className={cn("space-y-3", collapsed ? "w-full" : "w-full")}>
       <NavItem
         href="/pro"
         active={location === "/pro"}
-        icon={<LineChart className="h-4 w-4" />}
+        icon={<LineChart className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Analytics
@@ -76,7 +76,7 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
       <NavItem
         href="/pro/reviews"
         active={location === "/pro/reviews"}
-        icon={<MessageSquare className="h-4 w-4" />}
+        icon={<MessageSquare className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Review Management
@@ -84,7 +84,7 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
       <NavItem
         href="/pro/action"
         active={location === "/pro/action"}
-        icon={<Flag className="h-4 w-4" />}
+        icon={<Flag className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Take Action
@@ -92,7 +92,7 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
       <NavItem
         href="/pro/book-management"
         active={location === "/pro/book-management"}
-        icon={<User className="h-4 w-4" />}
+        icon={<User className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Book Management
@@ -100,7 +100,7 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
       <NavItem
         href="/pro/author"
         active={location === "/pro/author"}
-        icon={<Settings className="h-4 w-4" />}
+        icon={<Settings className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Author Profile
