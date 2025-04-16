@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
-import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Megaphone, Star, LineChart, Wallet, Plus, LockIcon, Menu } from "lucide-react";
+import { Megaphone, Star, LineChart, Wallet, Plus, LockIcon } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
 import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
 import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
@@ -16,6 +14,7 @@ import { PurchaseCreditsModal } from "@/components/purchase-credits-modal";
 import { ProActionWrapper } from "@/components/pro-action-wrapper";
 import { ProPaywall } from "@/components/pro-paywall";
 import { useAuth } from "@/hooks/use-auth";
+import { ProLayout } from "@/components/pro-layout";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
@@ -183,70 +182,39 @@ export default function ProActionPage() {
   );
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      {/* Mobile Sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[240px] p-0">
-          <div className="h-full pt-8">
-            <ProDashboardSidebar />
-          </div>
-        </SheetContent>
-      </Sheet>
+    <ProLayout>
+      {/* Wrap action content in ProActionWrapper */}
+      <ProActionWrapper>
+        {actionContent}
+      </ProActionWrapper>
 
-      <div className="flex gap-8">
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block w-60">
-          <ProDashboardSidebar />
-        </div>
+      <ReviewBoostWizard
+        open={isReviewBoostOpen}
+        onClose={() => setIsReviewBoostOpen(false)}
+        books={books || []}
+      />
 
-        <div className="flex-1">
-          {/* Mobile menu button - only visible on mobile */}
-          <div className="md:hidden mb-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-2"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu className="h-4 w-4" />
-              <span>Menu</span>
-            </Button>
-          </div>
-          
-          {/* Wrap action content in ProActionWrapper */}
-          <ProActionWrapper>
-            {actionContent}
-          </ProActionWrapper>
+      <AdBiddingWizard
+        open={isAdBiddingOpen}
+        onClose={() => setIsAdBiddingOpen(false)}
+        books={books || []}
+      />
 
-          <ReviewBoostWizard
-            open={isReviewBoostOpen}
-            onClose={() => setIsReviewBoostOpen(false)}
-            books={books || []}
-          />
+      <SurveyBuilderWizard
+        open={isSurveyBuilderOpen}
+        onClose={() => setIsSurveyBuilderOpen(false)}
+      />
 
-          <AdBiddingWizard
-            open={isAdBiddingOpen}
-            onClose={() => setIsAdBiddingOpen(false)}
-            books={books || []}
-          />
-
-          <SurveyBuilderWizard
-            open={isSurveyBuilderOpen}
-            onClose={() => setIsSurveyBuilderOpen(false)}
-          />
-
-          <PurchaseCreditsModal
-            open={isPurchaseModalOpen}
-            onClose={() => setIsPurchaseModalOpen(false)}
-          />
-          
-          <Dialog open={showProPaywall} onOpenChange={setShowProPaywall}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <ProPaywall onClose={() => setShowProPaywall(false)} />
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-    </main>
+      <PurchaseCreditsModal
+        open={isPurchaseModalOpen}
+        onClose={() => setIsPurchaseModalOpen(false)}
+      />
+      
+      <Dialog open={showProPaywall} onOpenChange={setShowProPaywall}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <ProPaywall onClose={() => setShowProPaywall(false)} />
+        </DialogContent>
+      </Dialog>
+    </ProLayout>
   );
 }

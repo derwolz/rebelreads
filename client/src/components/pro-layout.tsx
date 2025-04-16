@@ -1,29 +1,23 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { ProDashboardSidebar } from "@/components/pro-dashboard-sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 interface ProLayoutProps {
   children: React.ReactNode;
 }
 
 export function ProLayout({ children }: ProLayoutProps) {
-  const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [location] = useLocation();
 
   // Close mobile sidebar when route changes
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location]);
-
-  // Toggle sidebar collapsed state
-  const toggleCollapsed = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -31,46 +25,27 @@ export function ProLayout({ children }: ProLayoutProps) {
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[240px] p-0">
           <div className="h-full pt-8">
-            <div className="px-2 mb-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-full justify-start"
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Close Menu
-              </Button>
-            </div>
-            <ProDashboardSidebar collapsed={false} />
+            <ProDashboardSidebar />
           </div>
         </SheetContent>
       </Sheet>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 md:gap-6">
         {/* Desktop Sidebar */}
         <div 
-          className={cn(
-            "hidden md:flex md:flex-col border-r transition-all duration-300 ease-in-out", 
-            isCollapsed ? "w-16" : "w-60"
-          )}
+          className={`hidden md:block ${collapsed ? 'w-[70px]' : 'w-60'} transition-all duration-300 ease-in-out relative`}
         >
-          <div className="mb-4 mt-1 px-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleCollapsed}
-              className="w-full justify-center"
-              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          <div className="absolute right-0 top-0 z-10 transform translate-x-1/2 mt-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full h-6 w-6 bg-background border shadow-sm"
+              onClick={() => setCollapsed(!collapsed)}
             >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
+              {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
             </Button>
           </div>
-          <ProDashboardSidebar collapsed={isCollapsed} />
+          <ProDashboardSidebar collapsed={collapsed} />
         </div>
         
         <div className="flex-1 min-w-0">
