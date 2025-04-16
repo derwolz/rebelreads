@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { UserBlock } from "@/types";
-import { BLOCK_TYPE_OPTIONS } from "@/constants";
+import type { UserBlock } from "../types";
+import { BLOCK_TYPE_OPTIONS } from "../constants";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
