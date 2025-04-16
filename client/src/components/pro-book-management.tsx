@@ -206,7 +206,7 @@ export function ProBookManagement() {
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" className="h-9">Delete</Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-md">
+                    <AlertDialogContent className="max-w-[85vw] w-full sm:max-w-md p-4 sm:p-6">
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>

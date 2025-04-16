@@ -166,7 +166,7 @@ export function BookUploadDialog({ book }: { book?: Book }) {
           <Button className="w-full">Add Book</Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-[85vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
         </DialogHeader>
