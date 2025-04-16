@@ -544,15 +544,26 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 0:
         return formData.title && formData.description;
       case 1:
-        // Validate that all required images are provided (either file or previewUrl)
+        // Validate that all required images are provided (either file or previewUrl) AND have no dimension errors
         console.log("Checking required images:", formData.bookImages);
+        
+        // Check if all required images are provided
         const imageStatuses = Object.entries(formData.bookImages).map(([type, img]) => 
-          `${type}: ${img.file ? 'Yes (File)' : (img.previewUrl ? 'Yes (Existing)' : 'No')}`
+          `${type}: ${img.file ? 'Yes (File)' : (img.previewUrl ? 'Yes (Existing)' : 'No')}${img.error ? ` - ERROR: ${img.error}` : ''}`
         );
         console.log("Image statuses:", imageStatuses);
-        const requiredImages = Object.values(formData.bookImages).every(img => img.file !== null || img.previewUrl !== undefined);
-        console.log("All required images provided:", requiredImages);
-        return requiredImages;
+        
+        // Check for both presence and no errors
+        const hasAllRequiredImages = Object.values(formData.bookImages).every(img => 
+          (img.file !== null || img.previewUrl !== undefined)
+        );
+        
+        const hasNoErrors = Object.values(formData.bookImages).every(img => !img.error);
+        
+        console.log("All required images provided:", hasAllRequiredImages);
+        console.log("No dimension errors:", hasNoErrors);
+        
+        return hasAllRequiredImages && hasNoErrors;
       case 2:
         return (
           !formData.hasAwards ||
@@ -651,7 +662,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                     width={imageData.width}
                     height={imageData.height}
                     previewUrl={imageData.previewUrl}
-                    onChange={(file) => handleImageChange(imageType, file)}
+                    onChange={(file, hasError, errorMessage) => handleImageChange(imageType, file, hasError, errorMessage)}
                     required={true}
                   />
                 );
