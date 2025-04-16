@@ -231,28 +231,28 @@ router.get("/view/:id", async (req: Request, res: Response) => {
     if (userId) {
       // Check for blocked content
       // 1. Get all blocked authors, books, publishers, taxonomies for this user
-      const userBlocks = await db
+      const userBlocksData: any[] = await db
         .select()
         .from(userBlocks)
         .where(eq(userBlocks.userId, userId));
         
-      if (userBlocks.length > 0) {
-        console.log(`Found ${userBlocks.length} user blocks, filtering content`);
+      if (userBlocksData.length > 0) {
+        console.log(`Found ${userBlocksData.length} user blocks, filtering content`);
         
         // Group blocks by type
-        const blockedBooks = userBlocks
+        const blockedBooks = userBlocksData
           .filter(block => block.blockType === 'book')
           .map(block => block.blockId);
           
-        const blockedAuthors = userBlocks
+        const blockedAuthors = userBlocksData
           .filter(block => block.blockType === 'author')
           .map(block => block.blockId);
           
-        const blockedPublishers = userBlocks
+        const blockedPublishers = userBlocksData
           .filter(block => block.blockType === 'publisher')
           .map(block => block.blockId);
           
-        const blockedTaxonomies = userBlocks
+        const blockedTaxonomies = userBlocksData
           .filter(block => block.blockType === 'taxonomy')
           .map(block => block.blockId);
         
@@ -260,8 +260,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
         const bookAuthorRelations = await db
           .select({
             bookId: books.id,
-            authorId: books.authorId,
-            publisherId: books.publisherId
+            authorId: books.authorId
           })
           .from(books)
           .where(inArray(books.id, bookIds));
@@ -287,13 +286,10 @@ router.get("/view/:id", async (req: Request, res: Response) => {
           filteredBookIds = filteredBookIds.filter(bookId => !booksWithBlockedAuthors.includes(bookId));
         }
         
-        // Filter out books by blocked publishers
-        if (blockedPublishers.length > 0 && bookAuthorRelations.some(r => r.publisherId !== null)) {
-          const booksWithBlockedPublishers = bookAuthorRelations
-            .filter(relation => relation.publisherId !== null && blockedPublishers.includes(relation.publisherId))
-            .map(relation => relation.bookId);
-            
-          filteredBookIds = filteredBookIds.filter(bookId => !booksWithBlockedPublishers.includes(bookId));
+        // Publisher filtering not implemented in this version
+        // We'll skip publisher filtering for now since the books schema doesn't have a publisherId field
+        if (blockedPublishers.length > 0) {
+          console.log(`Note: ${blockedPublishers.length} publishers are blocked but publisher filtering is not implemented yet`);
         }
         
         // Filter out books with blocked taxonomies
