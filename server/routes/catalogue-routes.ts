@@ -21,78 +21,79 @@ console.log("Catalogue routes registered");
 
 /**
  * GET /api/catalogue/publisher
- * Get all publishers along with their authors and books with genre taxonomies
- * Authenticated route
+ * Get only the current user's publisher data along with their authors and books with genre taxonomies
+ * Protected route: Requires publisher authentication only - prevents corporate espionage
  */
-router.get("/publisher", requireAuth, async (req: Request, res: Response) => {
+router.get("/publisher", requirePublisher, async (req: Request, res: Response) => {
   try {
-    // Get all publishers
-    const publishersList = await dbStorage.getPublishers();
+    // Get only the publisher for the authenticated user
+    const publisher = await dbStorage.getPublisherByUserId(req.user!.id);
     
-    // Process each publisher to get their authors and books
-    const publishersWithAuthors = await Promise.all(
-      publishersList.map(async (publisher) => {
-        // Get authors for this publisher
-        const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
+    if (!publisher) {
+      return res.status(403).json({ error: "You are not authorized to access publisher information" });
+    }
+    
+    // Get authors for this publisher
+    const publisherAuthors = await dbStorage.getPublisherAuthors(publisher.id);
+    
+    // For each author, get their books with genre taxonomies
+    const authorsWithBooks = await Promise.all(
+      publisherAuthors.map(async (author) => {
+        // Get user data for this author
+        const userData = await db.select().from(users).where(eq(users.id, author.userId)).limit(1);
         
-        // For each author, get their books with genre taxonomies
-        const authorsWithBooks = await Promise.all(
-          publisherAuthors.map(async (author) => {
-            // Get user data for this author
-            const userData = await db.select().from(users).where(eq(users.id, author.userId)).limit(1);
+        if (userData.length === 0) {
+          return null;
+        }
+        
+        const user = userData[0];
+        
+        // Get books by this author
+        const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+        
+        // Add genre taxonomies to each book
+        const booksWithTaxonomies = await Promise.all(
+          authorBooks.map(async (book) => {
+            // Get taxonomies for this book
+            const taxonomies = await dbStorage.getBookTaxonomies(book.id);
             
-            if (userData.length === 0) {
-              return null;
-            }
-            
-            const user = userData[0];
-            
-            // Get books by this author
-            const authorBooks = await dbStorage.getBooksByAuthor(author.id);
-            
-            // Add genre taxonomies to each book
-            const booksWithTaxonomies = await Promise.all(
-              authorBooks.map(async (book) => {
-                // Get taxonomies for this book
-                const taxonomies = await dbStorage.getBookTaxonomies(book.id);
-                
-                // Return the book with taxonomies
-                return {
-                  ...book,
-                  genreTaxonomies: taxonomies
-                };
-              })
-            );
-            
+            // Return the book with taxonomies
             return {
-              author: {
-                ...author,
-                user: {
-                  id: user.id,
-                  username: user.username,
-                  email: user.email,
-                  displayName: user.displayName
-                }
-              },
-              books: booksWithTaxonomies
+              ...book,
+              genreTaxonomies: taxonomies
             };
           })
         );
         
-        // Filter out null values
-        const catalogue = authorsWithBooks.filter(item => item !== null);
-        
         return {
-          publisher,
-          catalogue
+          author: {
+            ...author,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              displayName: user.displayName
+            }
+          },
+          books: booksWithTaxonomies
         };
       })
     );
     
-    res.json(publishersWithAuthors);
+    // Filter out null values
+    const catalogue = authorsWithBooks.filter(item => item !== null);
+    
+    // Return single publisher data object
+    const publisherData = {
+      publisher,
+      catalogue
+    };
+    
+    // Return as array for backwards compatibility
+    res.json([publisherData]);
   } catch (error) {
-    console.error("Error getting all publishers' catalogues:", error);
-    res.status(500).json({ error: "Failed to retrieve publishers catalogues" });
+    console.error("Error getting publisher catalogue:", error);
+    res.status(500).json({ error: "Failed to retrieve publisher catalogue" });
   }
 });
 
