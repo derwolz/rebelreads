@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import express from "express";
 import { setupAuth } from "./auth";
 import { dbStorage } from "./storage";
+import { api404Handler } from "./middleware/api-404-handler";
 
 // Import route modules
 import landingRoutes from "./routes/landing-routes";
@@ -115,20 +116,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register content filter routes
   app.use("/api/filters", filterRoutes);
 
-  // Catchall for non-existent API routes (404 Not Found)
-  // This needs to check if the route is not found AFTER authentication
-  app.all('/api/*', (req, res, next) => {
-    // If request already has a status code, don't modify the response
-    if (res.statusCode !== 200 && res.statusCode !== 304) {
-      return next();
-    }
-    
-    console.warn(`API not found: ${req.method} ${req.path}`);
-    return res.status(404).json({ 
-      error: "Not Found",
-      message: `The requested endpoint ${req.path} does not exist` 
-    });
-  });
+  // Use our API 404 handler as the last API route handler
+  app.use('/api', api404Handler);
   
   // Catch-all for any non-API routes that don't match anything else
   // This will be handled by the frontend router for SPA
