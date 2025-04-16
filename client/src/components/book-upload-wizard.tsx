@@ -166,7 +166,7 @@ export function BookUploadDialog({ book }: { book?: Book }) {
           <Button className="w-full">Add Book</Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-[90vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
         </DialogHeader>
@@ -1180,29 +1180,26 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   return (
     <div className="space-y-8">
       <div className="flex justify-between mb-6">
-        <div className="flex items-center overflow-x-auto pb-2 hide-scrollbar">
-          <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex items-center max-w-[50%] overflow-hidden">
+          <div className="flex items-center gap-0">
             {STEPS.map((step, index) => (
               <div key={step} className="flex items-center">
                 <Button
                   variant={currentStep === index ? "default" : "ghost"}
                   className={cn(
-                    "h-7 w-7 sm:h-8 sm:w-8 p-0",
+                    "h-4 rounded-full px-1 min-w-0",
                     index > currentStep && "opacity-50 cursor-not-allowed",
+                    currentStep === index ? "w-4" : "w-3"
                   )}
                   onClick={() => index <= currentStep && setCurrentStep(index)}
                   disabled={index > currentStep}
                 >
-                  <span className="text-xs sm:text-sm">{index + 1}</span>
                 </Button>
-                {index < STEPS.length - 1 && (
-                  <div className="w-3 sm:w-6 h-px bg-border" />
-                )}
               </div>
             ))}
           </div>
         </div>
-        <div className="hidden sm:block text-sm font-medium">
+        <div className="text-sm font-medium truncate">
           {STEPS[currentStep]}
         </div>
       </div>
