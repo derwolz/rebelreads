@@ -5,22 +5,22 @@ import { Request, Response, NextFunction } from 'express';
  * This should be registered after all other API routes but before the catch-all route
  */
 export function api404Handler(req: Request, res: Response, next: NextFunction) {
-  // Only process API routes with this middleware
-  if (!req.path.startsWith('/api/')) {
+  // Skip if it's not an API route or response headers already sent
+  if (!req.path.startsWith('/api/') || res.headersSent) {
     return next();
   }
   
-  // Check if an authenticated route has already been processed
-  if (res.headersSent) {
+  // Skip if the route is already processed by another handler
+  if (req.route) {
     return next();
   }
   
   // If we get here, it means the API route doesn't exist
   // Return a standardized 404 JSON response
-  console.warn(`API not found: ${req.method} ${req.path}`);
+  console.warn(`API 404 (handler): ${req.method} ${req.path}`);
   return res.status(404).json({ 
     error: "Not Found",
-    message: `The requested endpoint ${req.path} does not exist`
+    message: `The requested API endpoint ${req.path} does not exist`
   });
 }
 

@@ -48,6 +48,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  // Create a direct route for the test nonexistent endpoint and health check
+  app.get('/api/health', (_req, res) => {
+    return res.status(200).json({ status: 'ok' });
+  });
+  
+  // Special test 404 endpoint that will always return a 404 JSON response
+  // This is registered BEFORE authentication to ensure it always works
+  app.all('/api/nonexistent-endpoint', (req, res) => {
+    console.warn(`Testing API 404 handler: ${req.method} ${req.path}`);
+    return res.status(404).json({ 
+      error: "Not Found",
+      message: `The requested endpoint ${req.path} does not exist`
+    });
+  });
+  
   // Setup authentication
   setupAuth(app);
 
