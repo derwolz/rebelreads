@@ -4,6 +4,7 @@ import { log } from "../vite";
 import { db } from "../db";
 import { eq, and, inArray, not, isNull, sql, desc } from "drizzle-orm";
 import { books, followers, ratings, reading_status, authors, bookImages } from "@shared/schema";
+import { applyContentFilters } from "../utils/content-filters";
 
 const router = Router();
 
@@ -114,9 +115,19 @@ router.get("/followed-authors", async (req: Request, res: Response) => {
       .where(whereClause);
     
     // Get all book IDs to fetch images
-    const bookIds = allBooks.map(book => book.id);
+    let bookIds = allBooks.map(book => book.id);
     
     if (bookIds.length === 0) return res.json([]);
+    
+    // Apply content filtering to book IDs
+    console.log(`Found ${bookIds.length} books from authors user follows, applying content filters`);
+    bookIds = await applyContentFilters(userId, bookIds);
+    console.log(`After content filtering: ${bookIds.length} books remain`);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Filter allBooks to only include books that passed content filtering
+    const filteredBooks = allBooks.filter(book => bookIds.includes(book.id));
     
     // Fetch all images for these books
     const allImages = await db.select()
@@ -137,14 +148,14 @@ router.get("/followed-authors", async (req: Request, res: Response) => {
     });
     
     // Add images to books
-    const booksWithImages = allBooks.map(book => ({
+    const booksWithImages = filteredBooks.map(book => ({
       ...book,
       images: imagesByBookId.get(book.id) || []
     }));
     
     // Shuffle array and take the requested count
     const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
-    const selectedBooks = shuffled.slice(0, count);
+    const selectedBooks = shuffled.slice(0, Math.min(count, shuffled.length));
     
     res.json(selectedBooks);
   } catch (error) {
@@ -210,7 +221,19 @@ router.get("/wishlist", async (req: Request, res: Response) => {
     }
     
     // Get all book IDs to fetch images
-    const bookIds = wishlistedBooks.map(book => book.id);
+    let bookIds = wishlistedBooks.map(book => book.id);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Apply content filtering to book IDs
+    console.log(`Found ${bookIds.length} wishlisted books, applying content filters`);
+    bookIds = await applyContentFilters(userId, bookIds);
+    console.log(`After content filtering: ${bookIds.length} wishlisted books remain`);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Filter wishlistedBooks to only include books that passed content filtering
+    const filteredBooks = wishlistedBooks.filter(book => bookIds.includes(book.id));
     
     // Fetch all images for these books
     const allImages = await db.select()
@@ -231,14 +254,14 @@ router.get("/wishlist", async (req: Request, res: Response) => {
     });
     
     // Add images to books
-    const booksWithImages = wishlistedBooks.map(book => ({
+    const booksWithImages = filteredBooks.map(book => ({
       ...book,
       images: imagesByBookId.get(book.id) || []
     }));
     
     // Shuffle array and take the requested count
     const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
-    const selectedBooks = shuffled.slice(0, count);
+    const selectedBooks = shuffled.slice(0, Math.min(count, shuffled.length));
     
     res.json(selectedBooks);
   } catch (error) {
