@@ -58,8 +58,19 @@ export class FilterStorage {
   }
   
   // Search for entities to block based on type and query
-  async searchContentToBlock(blockType: string, query: string): Promise<{ id: number; name: string; type?: string }[]> {
+  async searchContentToBlock(blockType: string, query: string, userId: number): Promise<{ id: number; name: string; type?: string }[]> {
     const searchTerm = `%${query}%`;
+    
+    // Get currently blocked items of this type for the user
+    const userBlockedIds = await db.select({ blockId: userBlocks.blockId })
+      .from(userBlocks)
+      .where(and(
+        eq(userBlocks.userId, userId),
+        eq(userBlocks.blockType, blockType)
+      ));
+    
+    // Create array of blocked IDs
+    const blockedIds = userBlockedIds.map(item => item.blockId);
     
     switch(blockType) {
       case "author":
@@ -71,10 +82,13 @@ export class FilterStorage {
         .where(ilike(authors.author_name, searchTerm))
         .limit(10);
         
-        return authorResults.map(author => ({
-          id: author.id,
-          name: author.name
-        }));
+        // Filter out already blocked authors
+        return authorResults
+          .filter(author => !blockedIds.includes(author.id))
+          .map(author => ({
+            id: author.id,
+            name: author.name
+          }));
         
       case "book":
         const bookResults = await db.select({
@@ -85,10 +99,13 @@ export class FilterStorage {
         .where(ilike(books.title, searchTerm))
         .limit(10);
         
-        return bookResults.map(book => ({
-          id: book.id,
-          name: book.name
-        }));
+        // Filter out already blocked books
+        return bookResults
+          .filter(book => !blockedIds.includes(book.id))
+          .map(book => ({
+            id: book.id,
+            name: book.name
+          }));
         
       case "publisher":
         const publisherResults = await db.select({
@@ -99,10 +116,13 @@ export class FilterStorage {
         .where(ilike(publishers.publisher_name, searchTerm))
         .limit(10);
         
-        return publisherResults.map(publisher => ({
-          id: publisher.id,
-          name: publisher.name
-        }));
+        // Filter out already blocked publishers
+        return publisherResults
+          .filter(publisher => !blockedIds.includes(publisher.id))
+          .map(publisher => ({
+            id: publisher.id,
+            name: publisher.name
+          }));
         
       case "taxonomy":
         const taxonomyResults = await db.select({
@@ -114,11 +134,14 @@ export class FilterStorage {
         .where(ilike(genreTaxonomies.name, searchTerm))
         .limit(10);
         
-        return taxonomyResults.map(taxonomy => ({
-          id: taxonomy.id,
-          name: taxonomy.name,
-          type: taxonomy.type
-        }));
+        // Filter out already blocked taxonomies
+        return taxonomyResults
+          .filter(taxonomy => !blockedIds.includes(taxonomy.id))
+          .map(taxonomy => ({
+            id: taxonomy.id,
+            name: taxonomy.name,
+            type: taxonomy.type
+          }));
         
       default:
         return [];
