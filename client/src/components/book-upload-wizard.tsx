@@ -24,6 +24,7 @@ interface BookImageFile {
   width: number;
   height: number;
   previewUrl?: string; // URL for existing images when editing
+  error?: string; // Track validation errors
 }
 import {
   Dialog,
@@ -520,15 +521,16 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
     }));
   };
   
-  const handleImageChange = (imageType: typeof IMAGE_TYPES[number], file: File) => {
-    console.log(`Image changed for ${imageType}:`, file.name, file.size);
+  const handleImageChange = (imageType: typeof IMAGE_TYPES[number], file: File, hasError?: boolean, errorMessage?: string) => {
+    console.log(`Image changed for ${imageType}:`, file.name, file.size, hasError ? `Error: ${errorMessage}` : 'No errors');
     setFormData((prev) => ({
       ...prev,
       bookImages: {
         ...prev.bookImages,
         [imageType]: {
           ...prev.bookImages[imageType],
-          file
+          file,
+          error: hasError ? errorMessage : undefined
         }
       }
     }));

@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface DragDropImageProps {
   value: File | null;
-  onChange: (file: File) => void;
+  onChange: (file: File, hasError?: boolean, errorMessage?: string) => void;
   title?: string;
   previewUrl?: string;
   imageType: typeof IMAGE_TYPES[number];
@@ -64,12 +64,14 @@ export function DragDropImage({
     
     // Check file size first (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image is too large (max 5MB)");
+      const errorMessage = "Image is too large (max 5MB)";
+      setError(errorMessage);
       toast({
         title: "Image too large",
         description: "Please upload an image smaller than 5MB",
         variant: "destructive"
       });
+      onChange(file, true, errorMessage);
       return;
     }
     
@@ -84,18 +86,22 @@ export function DragDropImage({
       const heightMatches = Math.abs(img.height - height) <= tolerance;
       
       if (!widthMatches || !heightMatches) {
-        setError(`Image must be ${width}×${height} pixels`);
+        const errorMessage = `Image must be ${width}×${height} pixels`;
+        setError(errorMessage);
         toast({
           title: "Wrong image dimensions",
           description: `The image must be ${width}×${height} pixels, but got ${img.width}×${img.height}`,
           variant: "destructive"
         });
+        
+        // Pass the file but with error information
+        onChange(file, true, errorMessage);
         URL.revokeObjectURL(objectUrl);
         return;
       }
       
       // Image is valid, proceed
-      onChange(file);
+      onChange(file, false);
       
       // Create preview
       const reader = new FileReader();
@@ -108,12 +114,14 @@ export function DragDropImage({
     };
     
     img.onerror = () => {
-      setError("Failed to load image");
+      const errorMessage = "Failed to load image";
+      setError(errorMessage);
       toast({
         title: "Image error",
         description: "Failed to process the image. Please try another one.",
         variant: "destructive"
       });
+      onChange(file, true, errorMessage);
       URL.revokeObjectURL(objectUrl);
     };
     
