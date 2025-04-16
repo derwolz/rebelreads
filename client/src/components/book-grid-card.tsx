@@ -13,6 +13,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
 import {
   Tooltip,
   TooltipContent,
@@ -88,14 +89,13 @@ export function BookGridCard({ book }: { book: Book }) {
   // Record impression when card becomes visible
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
-      const recordImpression = async () => {
-        await apiRequest("POST", `/api/books/${book.id}/impression`, {
-          source: "grid",
-          context: window.location.pathname,
-        });
-        setHasRecordedImpression(true);
-      };
-      recordImpression();
+      // Store impression in local storage instead of sending API request immediately
+      recordLocalImpression(
+        book.id,
+        "grid",
+        window.location.pathname
+      );
+      setHasRecordedImpression(true);
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
@@ -131,15 +131,17 @@ export function BookGridCard({ book }: { book: Book }) {
       }
     : null;
 
-  const handleCardClick = async (e: React.MouseEvent) => {
+  const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    // Record click-through before navigation
-    await apiRequest("POST", `/api/books/${book.id}/click-through`, {
-      source: "grid",
-      referrer: window.location.pathname,
-    });
+    // Record click-through in local storage before navigation
+    // This will also trigger an immediate sync with the server
+    recordLocalClickThrough(
+      book.id,
+      "grid",
+      window.location.pathname
+    );
     navigate(`/books/${book.id}`);
   };
 
