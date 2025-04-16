@@ -24,6 +24,7 @@ import catalogueRoutes from "./routes/catalogue-routes";
 import publisherRoutes from "./routes/publisher-routes";
 import catalogueAuthorsRoutes from "./routes/catalogue-routes-authors";
 import cataloguePublisherRoutes from "./routes/catalogue-routes-publisher";
+import cataloguePublisherAuthorsRoutes from "./routes/catalogue-routes-publisher-authors";
 import filterRoutes from "./routes/filter-routes";
 import simpleApiRoutes from "./routes/simple-api";
 import debugRoutes from "./routes/debug-routes";
@@ -104,6 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/catalogue", catalogueRoutes);
   app.use("/api/catalogue/authors", catalogueAuthorsRoutes);
   app.use("/api/catalogue/publisher", cataloguePublisherRoutes);
+  app.use("/api/catalogue/publishers/authors", cataloguePublisherAuthorsRoutes);
   
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);

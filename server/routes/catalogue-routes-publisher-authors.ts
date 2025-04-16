@@ -52,8 +52,8 @@ const authorSchema = z.object({
   author_name: z.string().min(1, "Author name is required"),
   author_image: z.any().optional(),
   bio: z.string().optional(),
-  birth_date: z.string().optional().transform(val => val ? new Date(val) : undefined),
-  death_date: z.string().optional().transform(val => val ? new Date(val) : undefined),
+  birth_date: z.string().optional().transform(val => val ? val : null),
+  death_date: z.string().optional().transform(val => val ? val : null),
   website: z.string().url().optional(),
 });
 
