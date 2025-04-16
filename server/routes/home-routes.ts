@@ -220,6 +220,31 @@ router.get("/my-books", async (req, res) => {
   res.json(books);
 });
 
+// Get all ratings for an author's books
+router.get("/my-books/ratings", async (req, res) => {
+  if (!req.isAuthenticated()) return res.sendStatus(401);
+  
+  // Get the author ID from the user ID
+  const author = await dbStorage.getAuthorByUserId(req.user!.id);
+  
+  if (!author) {
+    return res.status(403).json({ error: "User is not an author or author record not found" });
+  }
+  
+  // Get all books by this author
+  const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+  
+  if (!authorBooks || authorBooks.length === 0) {
+    return res.json([]);
+  }
+  
+  // Get all ratings for all books by this author
+  const bookIds = authorBooks.map(book => book.id);
+  const allRatings = await dbStorage.getRatingsForBooks(bookIds);
+  
+  res.json(allRatings);
+});
+
 router.post("/books", multipleImageUpload, async (req, res) => {
   if (!req.isAuthenticated() || !req.user!.isAuthor) {
     return res.sendStatus(401);

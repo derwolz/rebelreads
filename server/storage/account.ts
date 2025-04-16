@@ -40,6 +40,7 @@ export interface IAccountStorage {
   toggleAuthorStatus(id: number): Promise<User>;
 
   getRatings(bookId: number): Promise<Rating[]>;
+  getRatingsForBooks(bookIds: number[]): Promise<Rating[]>;
   createRating(rating: Omit<Rating, "id">): Promise<Rating>;
   getUserRatings(userId: number): Promise<Rating[]>;
   
@@ -185,6 +186,32 @@ export class AccountStorage implements IAccountStorage {
       })
       .from(ratings)
       .where(eq(ratings.bookId, bookId));
+  }
+  
+  async getRatingsForBooks(bookIds: number[]): Promise<Rating[]> {
+    if (!bookIds || bookIds.length === 0) {
+      return [];
+    }
+    
+    return await db
+      .select({
+        id: ratings.id,
+        userId: ratings.userId,
+        bookId: ratings.bookId,
+        enjoyment: ratings.enjoyment,
+        writing: ratings.writing,
+        themes: ratings.themes,
+        characters: ratings.characters,
+        worldbuilding: ratings.worldbuilding,
+        review: ratings.review,
+        analysis: ratings.analysis,
+        createdAt: ratings.createdAt,
+        featured: ratings.featured,
+        report_status: ratings.report_status,
+        report_reason: ratings.report_reason,
+      })
+      .from(ratings)
+      .where(inArray(ratings.bookId, bookIds));
   }
 
   async getFollowerMetrics(authorId: number, days: number = 30) {
