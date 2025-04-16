@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -93,23 +94,23 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
   // Record impression when card becomes visible
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
-      const recordImpression = async () => {
-        await apiRequest("POST", `/api/books/${book.id}/impression`, {
-          source: "mini",
-          context: window.location.pathname,
-        });
-        setHasRecordedImpression(true);
-      };
-      recordImpression();
+      // Use local storage for impression tracking
+      recordLocalImpression(
+        book.id,
+        "mini",
+        window.location.pathname
+      );
+      setHasRecordedImpression(true);
     }
   }, [isVisible, hasRecordedImpression, book.id]);
 
-  const handleClick = async () => {
-    // Record click-through before navigation
-    await apiRequest("POST", `/api/books/${book.id}/click-through`, {
-      source: "mini",
-      referrer: window.location.pathname,
-    });
+  const handleClick = () => {
+    // Use local storage for click-through tracking
+    recordLocalClickThrough(
+      book.id,
+      "mini",
+      window.location.pathname
+    );
     navigate(`/books/${book.id}`);
   };
 
@@ -131,7 +132,7 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
       <div className="overflow-hidden pt-0.5">
         <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">{book.title}</h3>
         <div className="flex items-center gap-1 mt-0.5">
-          <p className="text-xs text-muted-foreground line-clamp-1 mr-1">{book.author}</p>
+          <p className="text-xs text-muted-foreground line-clamp-1 mr-1">{book.authorName}</p>
           {isTv && <span className="text-[10px] px-1 bg-muted/50 rounded text-muted-foreground">TV</span>}
         </div>
         <div className="flex items-center gap-1 mt-1">
