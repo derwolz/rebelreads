@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { dbStorage } from "../storage";
 import { requirePublisher } from "../middleware/author-auth";
-import { db } from "../db";
+import { db, pool } from "../db";
 import { authors, books, bookImages, publishersAuthors, publishers, genreTaxonomies, bookGenreTaxonomies } from "@shared/schema";
 import { eq, and, inArray, isNull } from "drizzle-orm";
 import multer from "multer";
@@ -146,24 +146,30 @@ router.post("/", requirePublisher, bookImagesUpload, async (req: Request, res: R
           continue;
         }
         
-        // Create the book
+        // Create the book with proper null handling for optional fields
         const newBook = await dbStorage.createBook({
           title: bookData.title,
           authorId: bookData.authorId,
           description: bookData.description,
-          pageCount: bookData.pageCount || 0,
-          formats: bookData.formats,
+          pageCount: bookData.pageCount !== undefined ? bookData.pageCount : 0,
+          formats: bookData.formats || [],
           publishedDate: bookData.publishedDate || null,
           awards: bookData.awards || [],
-          originalTitle: bookData.originalTitle,
-          series: bookData.series,
-          setting: bookData.setting,
+          originalTitle: bookData.originalTitle || null,
+          series: bookData.series || null,
+          setting: bookData.setting || null,
           characters: bookData.characters || [],
-          isbn: bookData.isbn,
-          asin: bookData.asin,
-          language: bookData.language,
+          isbn: bookData.isbn || null,
+          asin: bookData.asin || null,
+          language: bookData.language || "English",
           promoted: false,
-          referralLinks: []
+          referralLinks: [],
+          // Add required fields for the database model
+          impressionCount: 0,
+          clickThroughCount: 0,
+          lastImpressionAt: null,
+          lastClickThroughAt: null,
+          internal_details: null
         });
         
         // Extract file prefix for this book
@@ -205,7 +211,7 @@ router.post("/", requirePublisher, bookImagesUpload, async (req: Request, res: R
                   })
                   .returning();
                 
-                bookImages.push(bookImage[0]);
+                capturedBookImages.push(imageResult[0]);
               }
             }
           }
@@ -223,13 +229,12 @@ router.post("/", requirePublisher, bookImagesUpload, async (req: Request, res: R
           
           // Add book-genre relations
           for (const taxonomy of genreTaxonomiesResult) {
-            await db
-              .insert(bookGenreTaxonomies)
-              .values({
-                bookId: newBook.id,
-                taxonomyId: taxonomy.id
-              })
-              .onConflictDoNothing();
+            // Using pool.query directly to bypass type issues
+            await pool.query(`
+              INSERT INTO book_genre_taxonomies (book_id, taxonomy_id) 
+              VALUES ($1, $2) 
+              ON CONFLICT DO NOTHING
+            `, [newBook.id, taxonomy.id]);
           }
           
           // Check for any genres that weren't found
@@ -242,7 +247,7 @@ router.post("/", requirePublisher, bookImagesUpload, async (req: Request, res: R
         // Add the created book to the results
         createdBooks.push({
           ...newBook,
-          images: bookImages
+          images: capturedBookImages
         });
       } catch (error) {
         console.error(`Error processing book ${bookData.title}:`, error);
