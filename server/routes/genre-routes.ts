@@ -10,7 +10,8 @@ import {
   books,
   bookImages,
   authors,
-  userBlocks
+  userBlocks,
+  publishersAuthors
 } from "@shared/schema";
 import { eq, and, isNull, sql, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
@@ -354,7 +355,9 @@ router.get("/view/:id", async (req: Request, res: Response) => {
             ));
           
           // Get unique book IDs from results
-          const potentialAdditionalBookIds = [...new Set(additionalBooksResult.map(b => b.bookId))];
+          const additionalBookIdsArray = additionalBooksResult.map(b => b.bookId);
+          const potentialAdditionalBookIds = additionalBookIdsArray.filter((id, index) => 
+            additionalBookIdsArray.indexOf(id) === index);
           
           if (potentialAdditionalBookIds.length > 0) {
             console.log(`Found ${potentialAdditionalBookIds.length} potential additional books`);
@@ -407,12 +410,22 @@ router.get("/view/:id", async (req: Request, res: Response) => {
             }
             
             // Filter out books by authors from blocked publishers
-            if (blockedPublishers.length > 0 && authorsFromBlockedPublishers.length > 0) {
-              const goodAdditionalBooks = additionalBooksInfoResult.filter(
-                book => !authorsFromBlockedPublishers.includes(book.authorId)
-              );
+            if (blockedPublishers.length > 0) {
+              // First, find all authors associated with blocked publishers
+              const authorsFromBlockedPublishersResult = await db
+                .select({ authorId: publishersAuthors.authorId })
+                .from(publishersAuthors)
+                .where(inArray(publishersAuthors.publisherId, blockedPublishers));
               
-              filteredAdditionalBookIds = goodAdditionalBooks.map(b => b.id);
+              const authorsFromBlockedPublishers = authorsFromBlockedPublishersResult.map(a => a.authorId);
+              
+              if (authorsFromBlockedPublishers.length > 0) {
+                const goodAdditionalBooks = additionalBooksInfoResult.filter(
+                  book => !authorsFromBlockedPublishers.includes(book.authorId)
+                );
+                
+                filteredAdditionalBookIds = goodAdditionalBooks.map(b => b.id);
+              }
             }
             
             // Add the additional filtered book IDs to our list
