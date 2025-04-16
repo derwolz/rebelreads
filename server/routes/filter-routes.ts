@@ -166,8 +166,7 @@ router.get("/search/:blockType", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid block type" });
     }
 
-    // Pass user ID to filter out already blocked items
-    const results = await dbStorage.searchContentToBlock(blockType, q as string, req.user.id);
+    const results = await dbStorage.searchContentToBlock(blockType, q as string);
     return res.json(results);
   } catch (error) {
     console.error("Error searching content to block:", error);

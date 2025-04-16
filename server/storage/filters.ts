@@ -58,25 +58,8 @@ export class FilterStorage {
   }
   
   // Search for entities to block based on type and query
-  async searchContentToBlock(blockType: string, query: string, userId?: number): Promise<{ id: number; name: string; type?: string }[]> {
+  async searchContentToBlock(blockType: string, query: string): Promise<{ id: number; name: string; type?: string }[]> {
     const searchTerm = `%${query}%`;
-    
-    // Function to filter out already blocked items
-    const filterBlocked = async (results: { id: number; name: string; type?: string }[], userId: number): Promise<{ id: number; name: string; type?: string }[]> => {
-      if (!userId) return results;
-      
-      // For each result, check if it's already blocked
-      const filteredResults = [];
-      
-      for (const result of results) {
-        const blocked = await this.checkUserBlock(userId, blockType, result.id);
-        if (!blocked) {
-          filteredResults.push(result);
-        }
-      }
-      
-      return filteredResults;
-    };
     
     switch(blockType) {
       case "author":
@@ -88,12 +71,10 @@ export class FilterStorage {
         .where(ilike(authors.author_name, searchTerm))
         .limit(10);
         
-        const mappedAuthors = authorResults.map(author => ({
+        return authorResults.map(author => ({
           id: author.id,
           name: author.name
         }));
-        
-        return userId ? await filterBlocked(mappedAuthors, userId) : mappedAuthors;
         
       case "book":
         const bookResults = await db.select({
@@ -104,12 +85,10 @@ export class FilterStorage {
         .where(ilike(books.title, searchTerm))
         .limit(10);
         
-        const mappedBooks = bookResults.map(book => ({
+        return bookResults.map(book => ({
           id: book.id,
           name: book.name
         }));
-        
-        return userId ? await filterBlocked(mappedBooks, userId) : mappedBooks;
         
       case "publisher":
         const publisherResults = await db.select({
@@ -120,12 +99,10 @@ export class FilterStorage {
         .where(ilike(publishers.publisher_name, searchTerm))
         .limit(10);
         
-        const mappedPublishers = publisherResults.map(publisher => ({
+        return publisherResults.map(publisher => ({
           id: publisher.id,
           name: publisher.name
         }));
-        
-        return userId ? await filterBlocked(mappedPublishers, userId) : mappedPublishers;
         
       case "taxonomy":
         const taxonomyResults = await db.select({
@@ -137,13 +114,11 @@ export class FilterStorage {
         .where(ilike(genreTaxonomies.name, searchTerm))
         .limit(10);
         
-        const mappedTaxonomies = taxonomyResults.map(taxonomy => ({
+        return taxonomyResults.map(taxonomy => ({
           id: taxonomy.id,
           name: taxonomy.name,
           type: taxonomy.type
         }));
-        
-        return userId ? await filterBlocked(mappedTaxonomies, userId) : mappedTaxonomies;
         
       default:
         return [];
