@@ -9,9 +9,10 @@ import {
   bookGenreTaxonomies, 
   books,
   bookImages,
-  authors
+  authors,
+  userBlocks
 } from "@shared/schema";
-import { eq, and, isNull, sql, inArray } from "drizzle-orm";
+import { eq, and, isNull, sql, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -180,11 +181,13 @@ router.post("/import", adminAuthMiddleware, async (req: Request, res: Response) 
 /**
  * Get books for a specific genre view
  * This route is used by the dynamic home sections to display books by genre view
+ * Includes content filtering based on user blocks
  */
 router.get("/view/:id", async (req: Request, res: Response) => {
   try {
     const viewId = parseInt(req.params.id);
     const count = parseInt(req.query.count as string) || 10;
+    const userId = req.user?.id;
     
     if (isNaN(viewId)) {
       return res.status(400).json({ error: "Invalid view ID" });
@@ -223,7 +226,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
     console.log(`Found book IDs: ${bookIds.join(', ')}`);
     
     // 3. Get the complete book data with author information
-    const booksResult = await db
+    let booksResult = await db
       .select({
         id: books.id,
         title: books.title,
@@ -254,13 +257,140 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       .from(books)
       .leftJoin(authors, eq(books.authorId, authors.id))
       .where(inArray(books.id, bookIds))
-      .limit(count);
+      .limit(count * 2); // Fetch more books to account for filtering
     
-    // 4. Get book images
+    // 4. Apply content filtering if user is authenticated
+    if (userId) {
+      // Get user's blocks
+      const userBlocksResult = await db
+        .select()
+        .from(userBlocks)
+        .where(eq(userBlocks.userId, userId));
+      
+      if (userBlocksResult && userBlocksResult.length > 0) {
+        // Group blocks by type for easier filtering
+        const blockedAuthors = userBlocksResult
+          .filter(block => block.blockType === 'author')
+          .map(block => block.blockId);
+        
+        const blockedBooks = userBlocksResult
+          .filter(block => block.blockType === 'book')
+          .map(block => block.blockId);
+        
+        const blockedPublishers = userBlocksResult
+          .filter(block => block.blockType === 'publisher')
+          .map(block => block.blockId);
+        
+        const blockedTaxonomies = userBlocksResult
+          .filter(block => block.blockType === 'taxonomy')
+          .map(block => block.blockId);
+        
+        // Note: need to log these before filtering
+        if (blockedAuthors.length > 0) {
+          console.log(`User has ${blockedAuthors.length} blocked authors`);
+        }
+        
+        if (blockedBooks.length > 0) {
+          console.log(`User has ${blockedBooks.length} blocked books`);
+        }
+        
+        if (blockedPublishers.length > 0) {
+          console.log(`User has ${blockedPublishers.length} blocked publishers but publisher filtering is not implemented yet`);
+        }
+        
+        if (blockedTaxonomies.length > 0) {
+          console.log(`User has ${blockedTaxonomies.length} blocked taxonomies`);
+        }
+        
+        // Filter out blocked content
+        const initialCount = booksResult.length;
+        booksResult = booksResult.filter(book => {
+          // Check if book is directly blocked
+          if (blockedBooks.includes(book.id)) {
+            return false;
+          }
+          
+          // Check if author is blocked
+          if (book.authorId && blockedAuthors.includes(book.authorId)) {
+            return false;
+          }
+          
+          // Note: Publisher filtering will be implemented when publisherId is added to books table
+          // For now we only filter books and authors
+          
+          // We can't easily filter by taxonomy here because we'd need to join 
+          // with bookGenreTaxonomies, so for now we'll handle basic filters
+          return true;
+        });
+        
+        console.log(`After filtering blocked content, ${booksResult.length} books remain`);
+        
+        // If we've filtered too many books, try to get more
+        if (booksResult.length < count && booksResult.length < initialCount) {
+          const remainingRequired = count - booksResult.length;
+          const filteredIds = booksResult.map(book => book.id);
+          const allBlockedIds = [...filteredIds, ...blockedBooks];
+          const blockedOrIncludedAuthors = [...blockedAuthors];
+          booksResult.forEach(book => {
+            if (book.authorId && !blockedOrIncludedAuthors.includes(book.authorId)) {
+              blockedOrIncludedAuthors.push(book.authorId);
+            }
+          });
+          
+          // Query for additional books that aren't blocked
+          const additionalBooks = await db
+            .select({
+              id: books.id,
+              title: books.title,
+              authorId: books.authorId,
+              description: books.description,
+              promoted: books.promoted,
+              pageCount: books.pageCount,
+              formats: books.formats,
+              publishedDate: books.publishedDate,
+              awards: books.awards,
+              originalTitle: books.originalTitle,
+              series: books.series,
+              setting: books.setting,
+              characters: books.characters,
+              isbn: books.isbn,
+              asin: books.asin,
+              language: books.language,
+              referralLinks: books.referralLinks,
+              impressionCount: books.impressionCount,
+              clickThroughCount: books.clickThroughCount,
+              lastImpressionAt: books.lastImpressionAt,
+              lastClickThroughAt: books.lastClickThroughAt,
+              internal_details: books.internal_details,
+              // Join author information
+              authorName: authors.author_name,
+              authorImageUrl: authors.author_image_url
+            })
+            .from(books)
+            .leftJoin(authors, eq(books.authorId, authors.id))
+            .where(and(
+              inArray(books.id, bookIds),
+              notInArray(books.id, allBlockedIds),
+              notInArray(books.authorId, blockedOrIncludedAuthors)
+            ))
+            .limit(remainingRequired);
+          
+          // Add the additional books
+          booksResult = [...booksResult, ...additionalBooks];
+          console.log(`Added ${additionalBooks.length} additional non-blocked books`);
+        }
+      }
+    }
+    
+    // Limit results to requested count
+    booksResult = booksResult.slice(0, count);
+    
+    // 5. Get book images
+    const finalBookIds = booksResult.map(book => book.id);
     const imagesResult = await db
       .select()
       .from(bookImages)
-      .where(inArray(bookImages.bookId, bookIds));
+      .where(inArray(bookImages.bookId, finalBookIds));
     
     // Group images by book ID
     const imagesByBookId = new Map();
