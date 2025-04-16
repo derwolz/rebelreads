@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IMAGE_TYPES } from '@shared/schema';
 import { Button } from './ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface DragDropImageProps {
   value: File | null;
@@ -25,9 +26,11 @@ export function DragDropImage({
   height,
   required = false,
 }: DragDropImageProps) {
+  const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(previewUrl || null);
+  const [error, setError] = useState<string | null>(null);
 
   // Calculate display dimensions to keep aspect ratio but limit size on screen
   const maxDisplayHeight = 200; // Maximum height for display
@@ -57,14 +60,64 @@ export function DragDropImage({
   };
 
   const handleImageSelected = (file: File) => {
-    onChange(file);
+    setError(null);
     
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
+    // Check file size first (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image is too large (max 5MB)");
+      toast({
+        title: "Image too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create an Image object to check dimensions
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      // Allow a small tolerance (±10 pixels) for image dimensions
+      const tolerance = 10;
+      const widthMatches = Math.abs(img.width - width) <= tolerance;
+      const heightMatches = Math.abs(img.height - height) <= tolerance;
+      
+      if (!widthMatches || !heightMatches) {
+        setError(`Image must be ${width}×${height} pixels`);
+        toast({
+          title: "Wrong image dimensions",
+          description: `The image must be ${width}×${height} pixels, but got ${img.width}×${img.height}`,
+          variant: "destructive"
+        });
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+      
+      // Image is valid, proceed
+      onChange(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      URL.revokeObjectURL(objectUrl);
     };
-    reader.readAsDataURL(file);
+    
+    img.onerror = () => {
+      setError("Failed to load image");
+      toast({
+        title: "Image error",
+        description: "Failed to process the image. Please try another one.",
+        variant: "destructive"
+      });
+      URL.revokeObjectURL(objectUrl);
+    };
+    
+    img.src = objectUrl;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +132,7 @@ export function DragDropImage({
 
   const handleClear = () => {
     setPreview(null);
+    setError(null);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
@@ -104,7 +158,7 @@ export function DragDropImage({
   };
 
   return (
-    <div className="space-y-2 border rounded-md p-4">
+    <div className={cn("space-y-2 border rounded-md p-4", error && "border-destructive")}>
       <div className="text-sm font-medium mb-2">
         {getTypeLabel(imageType)} {required && <span className="text-red-500">*</span>}
       </div>
@@ -128,14 +182,14 @@ export function DragDropImage({
             </Button>
           </div>
           <div className="mt-2 text-center text-xs text-muted-foreground">
-            Recommended size: {width}×{height}
+            Required size: {width}×{height}
           </div>
         </div>
       ) : (
         <div
           className={cn(
             'border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer p-4',
-            isDragging ? 'border-primary bg-primary/10' : 'border-border'
+            isDragging ? 'border-primary bg-primary/10' : error ? 'border-destructive bg-destructive/10' : 'border-border'
           )}
           style={{ height: displayHeight + 40, minHeight: '100px' }}
           onClick={handleClick}
@@ -143,13 +197,22 @@ export function DragDropImage({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <Upload size={24} className="text-muted-foreground mb-2" />
+          {error ? (
+            <AlertCircle size={24} className="text-destructive mb-2" />
+          ) : (
+            <Upload size={24} className="text-muted-foreground mb-2" />
+          )}
           <p className="text-sm text-center text-muted-foreground">
             Drag & drop or click to select
           </p>
           <p className="text-xs text-center text-muted-foreground mt-1">
-            Recommended size: {width}×{height}
+            Required size: {width}×{height}
           </p>
+          {error && (
+            <p className="text-xs text-center text-destructive mt-2">
+              {error}
+            </p>
+          )}
         </div>
       )}
       <input
