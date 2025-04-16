@@ -62,6 +62,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AppearanceSettings } from "@/components/appearance-settings";
+import { ContentFiltersSettings } from "@/components/content-filters-settings";
 import { cn } from "@/lib/utils";
 
 interface SortableReferralLinkProps {
@@ -375,6 +376,8 @@ export default function SettingsPage() {
     content = <GenrePreferencesSettings />;
   } else if (location === "/settings/homepage") {
     content = <HomepageSettings />;
+  } else if (location === "/settings/filters") {
+    content = <ContentFiltersSettings />;
   } else if (location === "/settings/author" && isAuthor) {
     content = (
       <Card>

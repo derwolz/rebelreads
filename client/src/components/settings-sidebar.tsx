@@ -10,6 +10,7 @@ import {
   BookOpen,
   LayoutGrid,
   ChevronRight,
+  Filter,
 } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState } from "react";
