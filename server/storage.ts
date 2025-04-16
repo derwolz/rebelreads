@@ -238,15 +238,12 @@ export const dbStorage = {
   
   // Content filters and blocks
   getUserBlocks: filterStorage.getUserBlocks.bind(filterStorage),
-  getBlocksByType: filterStorage.getBlocksByType.bind(filterStorage),
-  addBlock: filterStorage.addBlock.bind(filterStorage),
-  removeBlock: filterStorage.removeBlock.bind(filterStorage),
-  removeBlockByTypeAndId: filterStorage.removeBlockByTypeAndId.bind(filterStorage),
-  isBlocked: filterStorage.isBlocked.bind(filterStorage),
-  searchAuthors: filterStorage.searchAuthors.bind(filterStorage),
-  searchPublishers: filterStorage.searchPublishers.bind(filterStorage),
-  searchBooks: filterStorage.searchBooks.bind(filterStorage),
-  searchTaxonomies: filterStorage.searchTaxonomies.bind(filterStorage),
+  getUserBlocksByType: filterStorage.getUserBlocksByType.bind(filterStorage),
+  createUserBlock: filterStorage.createUserBlock.bind(filterStorage),
+  deleteUserBlock: filterStorage.deleteUserBlock.bind(filterStorage),
+  deleteUserBlockByTypeAndId: filterStorage.deleteUserBlockByTypeAndId.bind(filterStorage),
+  checkUserBlock: filterStorage.checkUserBlock.bind(filterStorage),
+  searchContentToBlock: filterStorage.searchContentToBlock.bind(filterStorage),
 };
 
 // Export interfaces from their respective modules
@@ -262,7 +259,6 @@ export type { IBetaKeyStorage } from "./storage/beta-keys";
 export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 export type { IFeedbackStorage } from "./storage/feedback";
 export type { ISellerStorage } from "./storage/seller";
-export type { IFilterStorage } from "./storage/filters";
 
 // Re-export storage classes
 export {

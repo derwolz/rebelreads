@@ -1,80 +1,52 @@
-import { 
-  InsertUserBlock, 
-  UserBlock, 
-  userBlocks,
-  authors,
-  publishers,
-  books,
-  genreTaxonomies,
-  BLOCK_TYPE_OPTIONS
-} from "@shared/schema";
 import { db } from "../db";
-import { eq, and, inArray, sql } from "drizzle-orm";
+import { InsertUserBlock, UserBlock, userBlocks, authors, books, publishers, genreTaxonomies } from "../../shared/schema";
+import { SQL, and, eq, ilike, or } from "drizzle-orm";
 
-export interface IFilterStorage {
-  // Block management
-  getUserBlocks(userId: number): Promise<UserBlock[]>;
-  getBlocksByType(userId: number, blockType: typeof BLOCK_TYPE_OPTIONS[number]): Promise<UserBlock[]>;
-  addBlock(block: InsertUserBlock): Promise<UserBlock>;
-  removeBlock(id: number, userId: number): Promise<void>;
-  removeBlockByTypeAndId(userId: number, blockType: typeof BLOCK_TYPE_OPTIONS[number], blockId: number): Promise<void>;
-  isBlocked(userId: number, blockType: typeof BLOCK_TYPE_OPTIONS[number], blockId: number): Promise<boolean>;
+export class FilterStorage {
   
-  // Search for content to block
-  searchAuthors(query: string): Promise<{ id: number, name: string }[]>;
-  searchPublishers(query: string): Promise<{ id: number, name: string }[]>;
-  searchBooks(query: string): Promise<{ id: number, title: string }[]>;
-  searchTaxonomies(query: string): Promise<{ id: number, name: string, type: string }[]>;
-}
-
-export class FilterStorage implements IFilterStorage {
+  // Get all blocks for a user
   async getUserBlocks(userId: number): Promise<UserBlock[]> {
-    return await db
-      .select()
-      .from(userBlocks)
-      .where(eq(userBlocks.userId, userId));
+    return db.select().from(userBlocks).where(eq(userBlocks.userId, userId));
   }
-
-  async getBlocksByType(userId: number, blockType: typeof BLOCK_TYPE_OPTIONS[number]): Promise<UserBlock[]> {
-    return await db
-      .select()
+  
+  // Get blocks by type for a user
+  async getUserBlocksByType(userId: number, blockType: string): Promise<UserBlock[]> {
+    return db.select()
       .from(userBlocks)
       .where(and(
         eq(userBlocks.userId, userId),
         eq(userBlocks.blockType, blockType)
       ));
   }
-
-  async addBlock(block: InsertUserBlock): Promise<UserBlock> {
-    const [newBlock] = await db
-      .insert(userBlocks)
-      .values(block)
-      .returning();
-    return newBlock;
+  
+  // Create a new user block
+  async createUserBlock(data: InsertUserBlock): Promise<UserBlock> {
+    const [result] = await db.insert(userBlocks).values(data).returning();
+    return result;
   }
-
-  async removeBlock(id: number, userId: number): Promise<void> {
-    await db
-      .delete(userBlocks)
+  
+  // Delete a user block by ID
+  async deleteUserBlock(id: number, userId: number): Promise<void> {
+    await db.delete(userBlocks)
       .where(and(
         eq(userBlocks.id, id),
         eq(userBlocks.userId, userId)
       ));
   }
-
-  async removeBlockByTypeAndId(userId: number, blockType: typeof BLOCK_TYPE_OPTIONS[number], blockId: number): Promise<void> {
-    await db
-      .delete(userBlocks)
+  
+  // Delete a user block by type and blockId
+  async deleteUserBlockByTypeAndId(userId: number, blockType: string, blockId: number): Promise<void> {
+    await db.delete(userBlocks)
       .where(and(
         eq(userBlocks.userId, userId),
         eq(userBlocks.blockType, blockType),
         eq(userBlocks.blockId, blockId)
       ));
   }
-
-  async isBlocked(userId: number, blockType: typeof BLOCK_TYPE_OPTIONS[number], blockId: number): Promise<boolean> {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)` })
+  
+  // Check if a specific entity is blocked
+  async checkUserBlock(userId: number, blockType: string, blockId: number): Promise<UserBlock | undefined> {
+    const results = await db.select()
       .from(userBlocks)
       .where(and(
         eq(userBlocks.userId, userId),
@@ -82,51 +54,74 @@ export class FilterStorage implements IFilterStorage {
         eq(userBlocks.blockId, blockId)
       ));
     
-    return result.count > 0;
+    return results[0];
   }
-
-  async searchAuthors(query: string): Promise<{ id: number, name: string }[]> {
-    return await db
-      .select({
-        id: authors.id,
-        name: authors.author_name,
-      })
-      .from(authors)
-      .where(sql`${authors.author_name} ILIKE ${`%${query}%`}`)
-      .limit(10);
-  }
-
-  async searchPublishers(query: string): Promise<{ id: number, name: string }[]> {
-    return await db
-      .select({
-        id: publishers.id,
-        name: publishers.publisher_name,
-      })
-      .from(publishers)
-      .where(sql`${publishers.publisher_name} ILIKE ${`%${query}%`}`)
-      .limit(10);
-  }
-
-  async searchBooks(query: string): Promise<{ id: number, title: string }[]> {
-    return await db
-      .select({
-        id: books.id,
-        title: books.title,
-      })
-      .from(books)
-      .where(sql`${books.title} ILIKE ${`%${query}%`}`)
-      .limit(10);
-  }
-
-  async searchTaxonomies(query: string): Promise<{ id: number, name: string, type: string }[]> {
-    return await db
-      .select({
-        id: genreTaxonomies.id,
-        name: genreTaxonomies.name,
-        type: genreTaxonomies.type,
-      })
-      .from(genreTaxonomies)
-      .where(sql`${genreTaxonomies.name} ILIKE ${`%${query}%`}`)
-      .limit(10);
+  
+  // Search for entities to block based on type and query
+  async searchContentToBlock(blockType: string, query: string): Promise<{ id: number; name: string; type?: string }[]> {
+    const searchTerm = `%${query}%`;
+    
+    switch(blockType) {
+      case "author":
+        const authorResults = await db.select({
+          id: authors.id,
+          name: authors.author_name
+        })
+        .from(authors)
+        .where(ilike(authors.author_name, searchTerm))
+        .limit(10);
+        
+        return authorResults.map(author => ({
+          id: author.id,
+          name: author.name
+        }));
+        
+      case "book":
+        const bookResults = await db.select({
+          id: books.id,
+          name: books.title
+        })
+        .from(books)
+        .where(ilike(books.title, searchTerm))
+        .limit(10);
+        
+        return bookResults.map(book => ({
+          id: book.id,
+          name: book.name
+        }));
+        
+      case "publisher":
+        const publisherResults = await db.select({
+          id: publishers.id,
+          name: publishers.publisher_name
+        })
+        .from(publishers)
+        .where(ilike(publishers.publisher_name, searchTerm))
+        .limit(10);
+        
+        return publisherResults.map(publisher => ({
+          id: publisher.id,
+          name: publisher.name
+        }));
+        
+      case "taxonomy":
+        const taxonomyResults = await db.select({
+          id: genreTaxonomies.id,
+          name: genreTaxonomies.name,
+          type: genreTaxonomies.type
+        })
+        .from(genreTaxonomies)
+        .where(ilike(genreTaxonomies.name, searchTerm))
+        .limit(10);
+        
+        return taxonomyResults.map(taxonomy => ({
+          id: taxonomy.id,
+          name: taxonomy.name,
+          type: taxonomy.type
+        }));
+        
+      default:
+        return [];
+    }
   }
 }
