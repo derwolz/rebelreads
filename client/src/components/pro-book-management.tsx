@@ -115,18 +115,18 @@ export function ProBookManagement() {
             return (
               <div
                 key={book.id}
-                className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
                 onClick={(e) => handleCardClick(e, book.id)}
               >
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 mb-3 sm:mb-0">
                   <img
                     src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
                     alt={book.title}
-                    className="w-16 h-24 object-cover rounded"
+                    className="w-12 h-18 sm:w-16 sm:h-24 object-cover rounded"
                   />
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">{book.title}</h3>
-                    <div className="flex items-center gap-2">
+                  <div className="space-y-1 sm:space-y-2">
+                    <h3 className="font-semibold text-sm sm:text-base">{book.title}</h3>
+                    <div className="flex items-center gap-1 sm:gap-2">
                       {averageRatings ? (
                         <TooltipProvider>
                           <Tooltip>
@@ -200,13 +200,13 @@ export function ProBookManagement() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-end gap-2 mt-2 sm:mt-0" onClick={e => e.stopPropagation()}>
                   <BookUploadDialog book={book} />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive">Delete</Button>
+                      <Button variant="destructive" size="sm" className="h-9">Delete</Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-md">
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -214,8 +214,8 @@ export function ProBookManagement() {
                           delete your book and remove it from our servers.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                        <AlertDialogCancel className="mt-2 sm:mt-0">Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteBookMutation.mutate(book.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

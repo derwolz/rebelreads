@@ -158,7 +158,7 @@ export function BookUploadDialog({ book }: { book?: Book }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {book ? (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="h-9">
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
@@ -166,7 +166,7 @@ export function BookUploadDialog({ book }: { book?: Book }) {
           <Button className="w-full">Add Book</Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{book ? "Edit Book" : "Add New Book"}</DialogTitle>
         </DialogHeader>
@@ -1179,43 +1179,62 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {STEPS.map((step, index) => (
-            <div key={step} className="flex items-center">
-              <Button
-                variant={currentStep === index ? "default" : "ghost"}
-                className={cn(
-                  "h-8",
-                  index > currentStep && "opacity-50 cursor-not-allowed",
+      <div className="flex justify-between mb-6">
+        <div className="flex items-center overflow-x-auto pb-2 hide-scrollbar">
+          <div className="flex items-center gap-1 sm:gap-2">
+            {STEPS.map((step, index) => (
+              <div key={step} className="flex items-center">
+                <Button
+                  variant={currentStep === index ? "default" : "ghost"}
+                  className={cn(
+                    "h-7 w-7 sm:h-8 sm:w-8 p-0",
+                    index > currentStep && "opacity-50 cursor-not-allowed",
+                  )}
+                  onClick={() => index <= currentStep && setCurrentStep(index)}
+                  disabled={index > currentStep}
+                >
+                  <span className="text-xs sm:text-sm">{index + 1}</span>
+                </Button>
+                {index < STEPS.length - 1 && (
+                  <div className="w-3 sm:w-6 h-px bg-border" />
                 )}
-                onClick={() => index <= currentStep && setCurrentStep(index)}
-                disabled={index > currentStep}
-              >
-                {index + 1}
-              </Button>
-              {index < STEPS.length - 1 && (
-                <div className="w-8 h-px bg-border" />
-              )}
-            </div>
-          ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="hidden sm:block text-sm font-medium">
+          {STEPS[currentStep]}
         </div>
       </div>
+      <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
 
       <div className="min-h-[400px]">{renderStep()}</div>
 
-      <div className="flex justify-between">
+      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-between mt-6">
         <Button
           variant="outline"
           onClick={() => setCurrentStep((prev) => prev - 1)}
           disabled={currentStep === 0}
+          className="sm:max-w-[100px] w-full"
         >
           Previous
         </Button>
+        <div className="text-xs text-center text-muted-foreground mt-1 mb-2 sm:hidden">
+          Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
+        </div>
         {currentStep === STEPS.length - 1 ? (
           <Button
             onClick={() => uploadMutation.mutate(formData)}
             disabled={uploadMutation.isPending || !canProceed()}
+            className="sm:max-w-[100px] w-full"
           >
             {uploadMutation.isPending
               ? book
@@ -1229,6 +1248,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <Button
             onClick={() => setCurrentStep((prev) => prev + 1)}
             disabled={!canProceed()}
+            className="sm:max-w-[100px] w-full"
           >
             Next
           </Button>
