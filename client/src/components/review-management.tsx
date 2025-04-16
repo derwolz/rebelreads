@@ -41,8 +41,7 @@ function ReportDialog({ reviewId, onReport }: ReportDialogProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          <Flag className="h-4 w-4 mr-2" />
-          Report
+          <Flag className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -94,8 +93,7 @@ function ReplyForm({ reviewId, onReply }: ReplyFormProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          <MessageSquare className="h-4 w-4 mr-2" />
-          Reply
+          <MessageSquare className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>
