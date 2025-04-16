@@ -9,6 +9,7 @@ export interface LocalImpression {
   source: string;
   context: string;
   timestamp: number;
+  type?: string; // Optional type field for different impression types (e.g., "view", "detail-expand")
 }
 
 export interface LocalClickThrough {
@@ -49,14 +50,17 @@ export function getStoredClickThroughs(): LocalClickThrough[] {
 export function recordLocalImpression(
   bookId: number,
   source: string,
-  context: string
+  context: string,
+  type: string = "view" // Default type is "view"
 ): void {
   try {
     const impressions = getStoredImpressions();
     
     // Check if this impression already exists to avoid duplicates
-    const exists = impressions.some(
-      (imp) => imp.bookId === bookId && imp.source === source && imp.context === context
+    // For detail-expand type, we allow multiple entries for the same book
+    const exists = type !== "detail-expand" && impressions.some(
+      (imp) => imp.bookId === bookId && imp.source === source && 
+               imp.context === context && imp.type === type
     );
     
     if (!exists) {
@@ -65,6 +69,7 @@ export function recordLocalImpression(
         source,
         context,
         timestamp: Date.now(),
+        type
       };
       
       impressions.push(newImpression);
@@ -160,6 +165,7 @@ export async function syncWithServer(): Promise<void> {
         await apiRequest("POST", `/api/books/${impression.bookId}/impression`, {
           source: impression.source,
           context: impression.context,
+          type: impression.type || "view" // Include the impression type
         });
         processedImpressions.push(impression);
       } catch (error) {

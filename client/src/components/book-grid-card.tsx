@@ -11,7 +11,7 @@ import { StarRating } from "./star-rating";
 import { WishlistButton } from "./wishlist-button";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
 import {
@@ -59,6 +59,9 @@ export function BookGridCard({ book }: { book: Book }) {
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
+  const [hasRecordedDetailExpand, setHasRecordedDetailExpand] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
@@ -98,6 +101,34 @@ export function BookGridCard({ book }: { book: Book }) {
       setHasRecordedImpression(true);
     }
   }, [isVisible, hasRecordedImpression, book.id]);
+
+  // Handle hover state for "detail-expand" impression type
+  useEffect(() => {
+    if (isHovering && !hasRecordedDetailExpand) {
+      // Start a timer for 300ms (0.3 seconds)
+      hoverTimerRef.current = setTimeout(() => {
+        // After 0.3 seconds of continuous hovering, record a "detail-expand" impression
+        recordLocalImpression(
+          book.id,
+          "grid",
+          window.location.pathname,
+          "detail-expand"
+        );
+        setHasRecordedDetailExpand(true);
+      }, 300);
+    } else if (!isHovering && hoverTimerRef.current) {
+      // Clear the timer if user stops hovering before 0.3 seconds
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+
+    // Clean up timer when component unmounts
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, [isHovering, hasRecordedDetailExpand, book.id]);
 
   // Calculate individual unweighted ratings per vector
   const unweightedRatings = ratings?.length
