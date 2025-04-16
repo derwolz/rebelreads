@@ -7,7 +7,6 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { dbStorage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-import { isPublicApiRoute } from "./middleware/public-api-routes";
 
 declare global {
   namespace Express {
@@ -380,63 +379,19 @@ export function setupAuth(app: Express) {
     res.json(req.user);
   });
   
-  // Check for non-existent API routes before authentication check
-  app.use((req, res, next) => {
-    // Only handle API routes that don't match any existing routes
-    if (req.path.startsWith('/api/') && !req.route) {
-      // First check a list of explicitly registered API routes
-      const existingApiPaths = [
-        '/api/user', 
-        '/api/books', 
-        '/api/nonexistent-endpoint',
-        '/api/health',
-        '/api/authors',
-        '/api/recommendations',
-        '/api/genres',
-        '/api/catalogue',
-        '/api/feedback',
-        '/api/landing',
-        '/api/beta',
-        '/api/popular-books',
-        '/api/search',
-        '/api/pro',
-        '/api/publishers',
-        '/api/filters',
-        '/api/ads',
-        '/api/homepage-layout',
-        '/api/admin',
-        '/api/auth',
-        '/api/sales',
-        '/api/author-analytics',
-        '/api/account',
-        '/api/public'
-      ];
-      
-      // Check if the path matches any existing API path (as a prefix)
-      const isKnownApiPath = existingApiPaths.some(path => 
-        req.path === path || req.path.startsWith(path + '/')
-      );
-      
-      if (!isKnownApiPath) {
-        // This is an unknown API path, return 404
-        console.warn(`API 404 (auth check): ${req.method} ${req.path}`);
-        return res.status(404).json({ 
-          error: "Not Found", 
-          message: `The requested API endpoint ${req.path} does not exist` 
-        });
-      }
-    }
-    
-    next();
-  });
-  
   // Add middleware to ensure API routes always return JSON for unauthenticated requests
   app.use((req, res, next) => {
     // For API routes, ensure proper error response for unauthenticated requests
-    // Skip public routes defined in public-api-routes.ts
     if (req.path.startsWith('/api/') && 
         !req.isAuthenticated() && 
-        !isPublicApiRoute(req.path) && 
+        !req.path.startsWith('/api/auth/') && 
+        !req.path.startsWith('/api/beta/') &&
+        !req.path.startsWith('/api/popular-books') && // Allow unauthenticated access to popular books
+        !req.path.startsWith('/api/landing/') && // Allow unauthenticated access to landing page
+        !req.path.startsWith('/api/signup-interest') && // Allow unauthenticated signup interest
+        !req.path.startsWith('/api/debug/') && // Allow unauthenticated access to debug endpoints
+        !req.path.match(/^\/api\/books(\/\d+)?(\/ratings|\/reading-status|\/taxonomies)?$/) && 
+        !req.path.match(/^\/api\/genres.*$/) && // Allow unauthenticated access to genres for the landing page
         req.method !== 'OPTIONS') {
       // Set content type explicitly to prevent HTML responses
       res.setHeader('Content-Type', 'application/json');

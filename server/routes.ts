@@ -3,7 +3,6 @@ import { createServer, type Server } from "http";
 import express from "express";
 import { setupAuth } from "./auth";
 import { dbStorage } from "./storage";
-import { api404Handler } from "./middleware/api-404-handler";
 
 // Import route modules
 import landingRoutes from "./routes/landing-routes";
@@ -45,21 +44,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(403).json({ 
       error: "Access denied",
       message: "Debug endpoints have been disabled for security reasons" 
-    });
-  });
-  
-  // Create a direct route for the test nonexistent endpoint and health check
-  app.get('/api/health', (_req, res) => {
-    return res.status(200).json({ status: 'ok' });
-  });
-  
-  // Special test 404 endpoint that will always return a 404 JSON response
-  // This is registered BEFORE authentication to ensure it always works
-  app.all('/api/nonexistent-endpoint', (req, res) => {
-    console.warn(`Testing API 404 handler: ${req.method} ${req.path}`);
-    return res.status(404).json({ 
-      error: "Not Found",
-      message: `The requested endpoint ${req.path} does not exist`
     });
   });
   
@@ -131,12 +115,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register content filter routes
   app.use("/api/filters", filterRoutes);
 
-  // Use our API 404 handler as the last API route handler
-  app.use('/api', api404Handler);
-  
-  // Catch-all for any non-API routes that don't match anything else
-  // This will be handled by the frontend router for SPA
-  
   const httpServer = createServer(app);
   return httpServer;
 }
