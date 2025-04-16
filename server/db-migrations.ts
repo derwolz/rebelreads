@@ -1457,6 +1457,56 @@ async function removeHasBetaAccessFromUsers() {
   }
 }
 
+/**
+ * Migration function to create the user_blocks table for content filtering
+ */
+async function createUserBlocksTable() {
+  try {
+    // Check if user_blocks table exists
+    const checkResult = await db.execute(sql`
+      SELECT table_name
+      FROM information_schema.tables 
+      WHERE table_name = 'user_blocks'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Creating 'user_blocks' table...");
+      await db.execute(sql`
+        CREATE TABLE user_blocks (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          block_type TEXT NOT NULL,
+          block_id INTEGER NOT NULL,
+          block_name TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      
+      // Create index for faster filtering
+      await db.execute(sql`
+        CREATE INDEX user_blocks_user_id_idx ON user_blocks(user_id)
+      `);
+      
+      // Create index for combined user and block type filtering
+      await db.execute(sql`
+        CREATE INDEX user_blocks_type_idx ON user_blocks(user_id, block_type)
+      `);
+      
+      // Create unique constraint to prevent duplicate blocks
+      await db.execute(sql`
+        CREATE UNIQUE INDEX user_blocks_unique_idx ON user_blocks(user_id, block_type, block_id)
+      `);
+      
+      console.log("Table 'user_blocks' created successfully");
+    } else {
+      console.log("Table 'user_blocks' already exists");
+    }
+  } catch (error) {
+    console.error("Error creating user_blocks table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   // Remove has_beta_access column from users table
@@ -1498,6 +1548,8 @@ export async function runMigrations() {
   await removeAuthorPublisherFieldsFromUsers();
   // Remove pro columns from authors table (already tracked in users table)
   await removeProColumnsFromAuthors();
+  // Create user_blocks table for content filtering
+  await createUserBlocksTable();
   // Create feedback tickets table for beta feedback
   await createFeedbackTicketsTable();
   // Add admin_notes column to feedback_tickets table

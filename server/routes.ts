@@ -24,6 +24,7 @@ import catalogueRoutes from "./routes/catalogue-routes";
 import publisherRoutes from "./routes/publisher-routes";
 import catalogueAuthorsRoutes from "./routes/catalogue-routes-authors";
 import cataloguePublisherRoutes from "./routes/catalogue-routes-publisher";
+import filterRoutes from "./routes/filter-routes";
 import simpleApiRoutes from "./routes/simple-api";
 import debugRoutes from "./routes/debug-routes";
 
@@ -106,6 +107,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);
+  
+  // Register content filter routes
+  app.use("/api/filters", filterRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

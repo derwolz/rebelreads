@@ -101,6 +101,13 @@ export function SettingsSidebar({
       >
         Homepage Layout
       </NavItem>
+      <NavItem
+        href="/settings/filters"
+        active={location === "/settings/filters"}
+        icon={<Filter className="h-4 w-4" />}
+      >
+        Content Filters
+      </NavItem>
     </>
   );
 
