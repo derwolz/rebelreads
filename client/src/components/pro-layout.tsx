@@ -11,8 +11,18 @@ interface ProLayoutProps {
 
 export function ProLayout({ children }: ProLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  // Initialize with localStorage value or default to false
+  const [collapsed, setCollapsed] = useState(() => {
+    // Get value from localStorage if available
+    const savedState = localStorage.getItem('pro-sidebar-collapsed');
+    return savedState ? savedState === 'true' : false;
+  });
   const [location] = useLocation();
+
+  // Save collapsed state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('pro-sidebar-collapsed', String(collapsed));
+  }, [collapsed]);
 
   // Close mobile sidebar when route changes
   useEffect(() => {
@@ -20,7 +30,7 @@ export function ProLayout({ children }: ProLayoutProps) {
   }, [location]);
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)]">
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[240px] p-0">
@@ -30,7 +40,7 @@ export function ProLayout({ children }: ProLayoutProps) {
         </SheetContent>
       </Sheet>
 
-      <div className="flex gap-4 md:gap-6">
+      <div className="flex gap-4 md:gap-6 min-h-[calc(100vh-8rem)]">
         {/* Desktop Sidebar */}
         <div 
           className={`hidden md:block ${collapsed ? 'w-[70px]' : 'w-60'} transition-all duration-300 ease-in-out relative`}
@@ -45,7 +55,9 @@ export function ProLayout({ children }: ProLayoutProps) {
               {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
             </Button>
           </div>
-          <ProDashboardSidebar collapsed={collapsed} />
+          <div className="border rounded-lg bg-background/60 h-full p-4 border-border">
+            <ProDashboardSidebar collapsed={collapsed} />
+          </div>
         </div>
         
         <div className="flex-1 min-w-0">
