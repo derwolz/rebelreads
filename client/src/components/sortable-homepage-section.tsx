@@ -93,18 +93,18 @@ export function SortableHomepageSection({
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </div>
       
-      <div className="flex items-center p-4 pl-10">
+      <div className="flex flex-col sm:flex-row sm:items-center p-3 sm:p-4 pl-10">
         {isEditing ? (
           <Input
             value={section.title}
             onChange={handleTitleChange}
-            className="max-w-[250px] mr-auto"
+            className="max-w-full sm:max-w-[250px] mb-3 sm:mb-0 sm:mr-auto"
             onBlur={() => setIsEditing(false)}
             autoFocus
           />
         ) : (
           <div 
-            className="font-medium text-lg mr-auto cursor-pointer hover:underline" 
+            className="font-medium text-base sm:text-lg mb-3 sm:mb-0 sm:mr-auto cursor-pointer hover:underline" 
             onClick={() => setIsEditing(true)}
             title="Click to edit title"
           >
@@ -112,31 +112,32 @@ export function SortableHomepageSection({
           </div>
         )}
         
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant={section.displayMode === "carousel" ? "default" : "outline"}
-                size="sm"
-                onClick={() => section.displayMode !== "carousel" && handleDisplayModeChange("carousel")}
-              >
-                Carousel
-              </Button>
-              <Button 
-                variant={section.displayMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => section.displayMode !== "grid" && handleDisplayModeChange("grid")}
-              >
-                Grid
-              </Button>
-            </div>
+        <div className="flex flex-wrap gap-3 sm:space-x-4 sm:gap-0">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={section.displayMode === "carousel" ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-2 text-xs sm:text-sm"
+              onClick={() => section.displayMode !== "carousel" && handleDisplayModeChange("carousel")}
+            >
+              Carousel
+            </Button>
+            <Button 
+              variant={section.displayMode === "grid" ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-2 text-xs sm:text-sm"
+              onClick={() => section.displayMode !== "grid" && handleDisplayModeChange("grid")}
+            >
+              Grid
+            </Button>
           </div>
           
           {section.displayMode === "grid" && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button 
                 variant={section.itemCount === 10 ? "default" : "outline"}
                 size="sm"
+                className="h-8 w-8 p-0 text-xs"
                 onClick={() => updateItemCount(10)}
               >
                 10
@@ -144,6 +145,7 @@ export function SortableHomepageSection({
               <Button 
                 variant={section.itemCount === 20 ? "default" : "outline"}
                 size="sm"
+                className="h-8 w-8 p-0 text-xs"
                 onClick={() => updateItemCount(20)}
               >
                 20
@@ -151,6 +153,7 @@ export function SortableHomepageSection({
               <Button 
                 variant={section.itemCount === 30 ? "default" : "outline"}
                 size="sm"
+                className="h-8 w-8 p-0 text-xs"
                 onClick={() => updateItemCount(30)}
               >
                 30
@@ -163,7 +166,7 @@ export function SortableHomepageSection({
             size="icon" 
             onClick={onRemove}
             title="Remove Section"
-            className="text-destructive hover:text-destructive"
+            className="text-destructive hover:text-destructive h-8 w-8"
           >
             <Trash className="h-4 w-4" />
           </Button>

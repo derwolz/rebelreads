@@ -320,18 +320,20 @@ export function HomepageSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Homepage Layout</h2>
           <p className="text-muted-foreground">
             Customize which sections appear on your homepage and their order.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-start md:self-end">
           <Button 
             variant="outline" 
             onClick={resetLayout} 
             disabled={saveMutation.isPending}
+            size="sm"
+            className="h-9"
           >
             <Undo className="h-4 w-4 mr-2" />
             Reset
@@ -339,6 +341,8 @@ export function HomepageSettings() {
           <Button 
             onClick={saveLayout} 
             disabled={saveMutation.isPending}
+            size="sm"
+            className="h-9"
           >
             <Save className="h-4 w-4 mr-2" />
             Save Layout
@@ -346,26 +350,18 @@ export function HomepageSettings() {
         </div>
       </div>
 
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertTitle>Tip</AlertTitle>
-        <AlertDescription>
-          Drag sections to reorder them. Toggle visibility to show or hide a section.
-        </AlertDescription>
-      </Alert>
-
-      <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+      <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="active">Active Sections</TabsTrigger>
           <TabsTrigger value="available">Available Sections</TabsTrigger>
         </TabsList>
         
         <TabsContent value="active" className="pt-4">
-          <ScrollArea className="h-[550px] pr-4">
+          <ScrollArea className="h-[400px] sm:h-[450px] md:h-[550px] pr-4">
             <div className="space-y-4">
               {sections.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
-                  <p className="text-muted-foreground">No sections added yet.</p>
+                <div className="flex flex-col items-center justify-center p-4 sm:p-8 border rounded-lg">
+                  <p className="text-muted-foreground text-center">No sections added yet.</p>
                   <Button variant="link" onClick={() => setActiveTab("available")}>
                     Add sections from the available list
                   </Button>
@@ -399,10 +395,10 @@ export function HomepageSettings() {
         </TabsContent>
         
         <TabsContent value="available" className="pt-4">
-          <ScrollArea className="h-[550px] pr-4">
+          <ScrollArea className="h-[400px] sm:h-[450px] md:h-[550px] pr-4">
             {availableSections.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-8 border rounded-lg">
-                <p className="text-muted-foreground">No additional sections available.</p>
+              <div className="flex flex-col items-center justify-center p-4 sm:p-8 border rounded-lg">
+                <p className="text-muted-foreground text-center">No additional sections available.</p>
                 <Button variant="link" onClick={() => setActiveTab("active")}>
                   Go back to active sections
                 </Button>
@@ -411,10 +407,10 @@ export function HomepageSettings() {
               <div className="space-y-3">
                 {availableSections.map((section) => (
                   <Card key={section.id}>
-                    <CardHeader className="p-4">
-                      <div className="flex justify-between items-start">
+                    <CardHeader className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                         <div>
-                          <CardTitle className="flex items-center gap-2">
+                          <CardTitle className="flex items-center flex-wrap gap-2 text-base sm:text-lg">
                             {section.title}
                             {section.customViewId && <Badge>Custom View</Badge>}
                           </CardTitle>
@@ -425,6 +421,7 @@ export function HomepageSettings() {
                         <Button 
                           onClick={() => addSection(section)}
                           size="sm"
+                          className="self-start"
                         >
                           <PlusCircle className="h-4 w-4 mr-2" />
                           Add
