@@ -41,30 +41,30 @@ export default function ProActionPage() {
   const actionContent = (
     <div>
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
         {/* Ad Management */}
-        <Card>
-          <CardHeader>
-            <Megaphone className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>Ad Management</CardTitle>
-            <CardDescription>
+        <Card className="h-full">
+          <CardHeader className="p-4 sm:p-6">
+            <Megaphone className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+            <CardTitle className="text-lg sm:text-xl">Ad Management</CardTitle>
+            <CardDescription className="text-sm">
               Create and manage advertising campaigns for your books
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 mb-6 text-sm">
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ul className="space-y-2 mb-4 sm:mb-6 text-xs sm:text-sm">
               <li>• Target specific reader demographics</li>
               <li>• Set custom budgets and schedules</li>
               <li>• Track campaign performance</li>
               <li>• Optimize your reach</li>
             </ul>
             {isPro ? (
-              <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full">
+              <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full text-sm">
                 Manage Ads
               </Button>
             ) : (
               <Button 
-                className="w-full opacity-70 cursor-not-allowed" 
+                className="w-full opacity-70 cursor-not-allowed text-sm" 
                 variant="outline"
                 disabled
                 onClick={() => setShowProPaywall(true)}
@@ -77,28 +77,28 @@ export default function ProActionPage() {
         </Card>
 
         {/* Review Boost */}
-        <Card>
-          <CardHeader>
-            <Star className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>Boost Reviews</CardTitle>
-            <CardDescription>
+        <Card className="h-full">
+          <CardHeader className="p-4 sm:p-6">
+            <Star className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+            <CardTitle className="text-lg sm:text-xl">Boost Reviews</CardTitle>
+            <CardDescription className="text-sm">
               Increase your book's visibility with authentic reader reviews
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 mb-6 text-sm">
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ul className="space-y-2 mb-4 sm:mb-6 text-xs sm:text-sm">
               <li>• Connect with engaged readers</li>
               <li>• Get honest, quality feedback</li>
               <li>• Improve book visibility</li>
               <li>• Build social proof</li>
             </ul>
             {isPro ? (
-              <Button onClick={() => setIsReviewBoostOpen(true)} className="w-full">
+              <Button onClick={() => setIsReviewBoostOpen(true)} className="w-full text-sm">
                 Start Boost
               </Button>
             ) : (
               <Button 
-                className="w-full opacity-70 cursor-not-allowed" 
+                className="w-full opacity-70 cursor-not-allowed text-sm" 
                 variant="outline"
                 disabled
                 onClick={() => setShowProPaywall(true)}
@@ -111,28 +111,28 @@ export default function ProActionPage() {
         </Card>
 
         {/* Create Survey */}
-        <Card>
-          <CardHeader>
-            <LineChart className="w-8 h-8 text-primary mb-2" />
-            <CardTitle>Create Survey</CardTitle>
-            <CardDescription>
+        <Card className="h-full">
+          <CardHeader className="p-4 sm:p-6">
+            <LineChart className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+            <CardTitle className="text-lg sm:text-xl">Create Survey</CardTitle>
+            <CardDescription className="text-sm">
               Gather valuable insights from your readers
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 mb-6 text-sm">
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ul className="space-y-2 mb-4 sm:mb-6 text-xs sm:text-sm">
               <li>• Create custom questionnaires</li>
               <li>• Collect reader feedback</li>
               <li>• Analyze responses</li>
               <li>• Make data-driven decisions</li>
             </ul>
             {isPro ? (
-              <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full">
+              <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full text-sm">
                 Create Survey
               </Button>
             ) : (
               <Button 
-                className="w-full opacity-70 cursor-not-allowed" 
+                className="w-full opacity-70 cursor-not-allowed text-sm" 
                 variant="outline"
                 disabled
                 onClick={() => setShowProPaywall(true)}
@@ -147,10 +147,10 @@ export default function ProActionPage() {
 
       {/* Active Campaigns Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-start sm:items-center justify-between flex-wrap gap-2 p-4 sm:p-6">
           <div>
-            <CardTitle>Active Campaigns</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Active Campaigns</CardTitle>
+            <CardDescription className="text-sm">
               Monitor and manage your ongoing promotional campaigns
             </CardDescription>
           </div>
@@ -161,13 +161,13 @@ export default function ProActionPage() {
             </div>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6 pt-0">
           {isPro ? (
             <CampaignTable />
           ) : (
-            <div className="text-center py-8 border border-dashed rounded-md border-muted-foreground/30">
-              <LockIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">Upgrade to Pro to view your campaigns</p>
+            <div className="text-center py-6 sm:py-8 border border-dashed rounded-md border-muted-foreground/30 mx-4 sm:mx-0 mb-4 sm:mb-0">
+              <LockIcon className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-muted-foreground mb-4 text-sm">Upgrade to Pro to view your campaigns</p>
               <Button 
                 variant="outline" 
                 size="sm"

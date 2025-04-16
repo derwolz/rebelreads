@@ -20,8 +20,8 @@ export function ProActionWrapper({ children }: ProActionWrapperProps) {
     enabled: isAuthor,
   });
 
-  // Check if user is pro (using any as a temporary solution since the type definition might be outdated)
-  const isPro = user && (user as any).isPro;
+  // Check if user is pro
+  const isPro = user && user.is_pro;
 
   // If user is pro, show the full content
   if (isPro) {
@@ -31,11 +31,12 @@ export function ProActionWrapper({ children }: ProActionWrapperProps) {
   // Simple wrapper for non-Pro users
   // Just add an upgrade banner at the top
   const upgradeOverlay = (
-    <div className="mt-8 mb-12 bg-primary/5 border border-primary/20 rounded-lg p-6 text-center">
-      <h2 className="text-2xl font-bold mb-2">Unlock Your Author Potential</h2>
-      <p className="text-muted-foreground mb-4">Boost your visibility and reach more readers with Pro features</p>
+    <div className="mt-4 sm:mt-8 mb-8 sm:mb-12 bg-primary/5 border border-primary/20 rounded-lg p-4 sm:p-6 text-center">
+      <h2 className="text-xl sm:text-2xl font-bold mb-2">Unlock Your Author Potential</h2>
+      <p className="text-sm text-muted-foreground mb-4">Boost your visibility and reach more readers with Pro features</p>
       <Button 
-        size="lg" 
+        size="default" 
+        className="w-full sm:w-auto"
         onClick={() => setShowFullPaywall(true)}
       >
         Upgrade to Pro
@@ -45,9 +46,9 @@ export function ProActionWrapper({ children }: ProActionWrapperProps) {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Take Action</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Take Action</h1>
         </div>
 
         {/* Upgrade banner */}
@@ -59,7 +60,7 @@ export function ProActionWrapper({ children }: ProActionWrapperProps) {
       
       {/* Full paywall dialog */}
       <Dialog open={showFullPaywall} onOpenChange={setShowFullPaywall}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto px-4 pt-5 sm:px-6 sm:pt-6">
           <ProPaywall onClose={() => setShowFullPaywall(false)} />
         </DialogContent>
       </Dialog>
