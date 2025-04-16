@@ -1155,8 +1155,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                 )}
               </Card>
               {formData.referralLinks.length > 0 && (
-                <Card className="p-4">
-                  <h3 className="font-medium mb-2">Referral Links</h3>
+                <Card className="p-3 sm:p-4">
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">Referral Links</h3>
                   <dl className="space-y-1">
                     {formData.referralLinks.map((link, i) => (
                       <div key={i} className="text-sm">
