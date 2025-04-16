@@ -32,11 +32,8 @@ export function DragDropImage({
   const [preview, setPreview] = useState<string | null>(previewUrl || null);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate display dimensions to keep aspect ratio but limit size on screen
-  const maxDisplayHeight = 200; // Maximum height for display
-  const scale = Math.min(1, maxDisplayHeight / height);
-  const displayWidth = width * scale;
-  const displayHeight = height * scale;
+  // Use 100% width as requested by the user instead of scaling
+  const displayHeight = 200; // Fixed display height
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -173,7 +170,7 @@ export function DragDropImage({
       
       {preview || value ? (
         <div className="relative">
-          <div style={{ width: displayWidth, height: displayHeight }} className="relative mx-auto">
+          <div style={{ width: "100%", height: displayHeight }} className="relative mx-auto">
             <img
               src={preview || URL.createObjectURL(value as File)}
               alt={title || 'Book image'}
