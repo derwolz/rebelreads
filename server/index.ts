@@ -82,10 +82,24 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Error handler for API routes
+  app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    
+    console.error(`API Error: ${status} ${message}`, err);
+    return res.status(status).json({ 
+      error: message,
+      status
+    });
+  });
+  
+  // Generic error handler for non-API routes
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    console.error(`Error: ${status} ${message}`, err);
     res.status(status).json({ message });
     throw err;
   });

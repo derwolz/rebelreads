@@ -115,6 +115,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register content filter routes
   app.use("/api/filters", filterRoutes);
 
+  // Catchall for non-existent API routes (404 Not Found)
+  // This needs to check if the route is not found AFTER authentication
+  app.all('/api/*', (req, res, next) => {
+    // If request already has a status code, don't modify the response
+    if (res.statusCode !== 200 && res.statusCode !== 304) {
+      return next();
+    }
+    
+    console.warn(`API not found: ${req.method} ${req.path}`);
+    return res.status(404).json({ 
+      error: "Not Found",
+      message: `The requested endpoint ${req.path} does not exist` 
+    });
+  });
+  
+  // Catch-all for any non-API routes that don't match anything else
+  // This will be handled by the frontend router for SPA
+  
   const httpServer = createServer(app);
   return httpServer;
 }
