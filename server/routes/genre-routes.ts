@@ -9,7 +9,8 @@ import {
   bookGenreTaxonomies, 
   books,
   bookImages,
-  authors
+  authors,
+  userBlocks
 } from "@shared/schema";
 import { eq, and, isNull, sql, inArray } from "drizzle-orm";
 import { z } from "zod";
@@ -222,6 +223,92 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       .filter((id, index, self) => self.indexOf(id) === index);
     console.log(`Found book IDs: ${bookIds.join(', ')}`);
     
+    // Get user ID from authenticated session if available
+    const userId = req.user?.id;
+    
+    // If user is authenticated, filter out blocked content
+    let filteredBookIds = [...bookIds];
+    if (userId) {
+      // Check for blocked content
+      // 1. Get all blocked authors, books, publishers, taxonomies for this user
+      const userBlocks = await db
+        .select()
+        .from(userBlocks)
+        .where(eq(userBlocks.userId, userId));
+        
+      if (userBlocks.length > 0) {
+        console.log(`Found ${userBlocks.length} user blocks, filtering content`);
+        
+        // Group blocks by type
+        const blockedBooks = userBlocks
+          .filter(block => block.blockType === 'book')
+          .map(block => block.blockId);
+          
+        const blockedAuthors = userBlocks
+          .filter(block => block.blockType === 'author')
+          .map(block => block.blockId);
+          
+        const blockedPublishers = userBlocks
+          .filter(block => block.blockType === 'publisher')
+          .map(block => block.blockId);
+          
+        const blockedTaxonomies = userBlocks
+          .filter(block => block.blockType === 'taxonomy')
+          .map(block => block.blockId);
+        
+        // Get book author relations for filtering
+        const bookAuthorRelations = await db
+          .select({
+            bookId: books.id,
+            authorId: books.authorId,
+            publisherId: books.publisherId
+          })
+          .from(books)
+          .where(inArray(books.id, bookIds));
+        
+        // Get book taxonomy relations for filtering
+        const bookTaxonomyRelations = await db
+          .select({
+            bookId: bookGenreTaxonomies.bookId,
+            taxonomyId: bookGenreTaxonomies.taxonomyId
+          })
+          .from(bookGenreTaxonomies)
+          .where(inArray(bookGenreTaxonomies.bookId, bookIds));
+        
+        // Filter out books that are directly blocked
+        filteredBookIds = filteredBookIds.filter(bookId => !blockedBooks.includes(bookId));
+        
+        // Filter out books by blocked authors
+        if (blockedAuthors.length > 0) {
+          const booksWithBlockedAuthors = bookAuthorRelations
+            .filter(relation => blockedAuthors.includes(relation.authorId))
+            .map(relation => relation.bookId);
+            
+          filteredBookIds = filteredBookIds.filter(bookId => !booksWithBlockedAuthors.includes(bookId));
+        }
+        
+        // Filter out books by blocked publishers
+        if (blockedPublishers.length > 0 && bookAuthorRelations.some(r => r.publisherId !== null)) {
+          const booksWithBlockedPublishers = bookAuthorRelations
+            .filter(relation => relation.publisherId !== null && blockedPublishers.includes(relation.publisherId))
+            .map(relation => relation.bookId);
+            
+          filteredBookIds = filteredBookIds.filter(bookId => !booksWithBlockedPublishers.includes(bookId));
+        }
+        
+        // Filter out books with blocked taxonomies
+        if (blockedTaxonomies.length > 0) {
+          const booksWithBlockedTaxonomies = bookTaxonomyRelations
+            .filter(relation => blockedTaxonomies.includes(relation.taxonomyId))
+            .map(relation => relation.bookId);
+            
+          filteredBookIds = filteredBookIds.filter(bookId => !booksWithBlockedTaxonomies.includes(bookId));
+        }
+        
+        console.log(`After filtering blocked content, ${filteredBookIds.length} books remain`);
+      }
+    }
+    
     // 3. Get the complete book data with author information
     const booksResult = await db
       .select({
@@ -253,14 +340,14 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       })
       .from(books)
       .leftJoin(authors, eq(books.authorId, authors.id))
-      .where(inArray(books.id, bookIds))
+      .where(inArray(books.id, filteredBookIds))
       .limit(count);
     
     // 4. Get book images
     const imagesResult = await db
       .select()
       .from(bookImages)
-      .where(inArray(bookImages.bookId, bookIds));
+      .where(inArray(bookImages.bookId, filteredBookIds));
     
     // Group images by book ID
     const imagesByBookId = new Map();
