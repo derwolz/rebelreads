@@ -1,204 +1,186 @@
 import { Router, Request, Response } from "express";
-import { dbStorage } from "../storage";
 import { db } from "../db";
 import { 
-  genreTaxonomies, 
+  books, 
+  authors, 
   bookGenreTaxonomies, 
-  books,
-  viewGenres,
   bookImages,
-  authors,
-  userBlocks
+  genreTaxonomies,
+  viewGenres,
+  userBlocks,
+  userGenreViews
 } from "@shared/schema";
-import { eq, and, inArray, desc, sql, isNull } from "drizzle-orm";
-import { z } from "zod";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 const router = Router();
 
 /**
- * GET /api/discover
- * Get books by taxonomy from various sources
- * This acts as the main handler for the discovery feature
+ * Get the taxonomically closest books to a specific view
+ * This route returns the top 150 books that match the taxonomies of a genre view
+ * Books are ranked by taxonomic similarity to the view
  */
-router.get("/", async (req: Request, res: Response) => {
+router.get("/genre/:viewId", async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 150;
-    
-    // Get popular books as a fallback
-    const popularBooks = await dbStorage.getPopularBooks(limit);
-    
-    res.json(popularBooks);
-  } catch (error) {
-    console.error("Error getting discovery books:", error);
-    res.status(500).json({ error: "Failed to retrieve books" });
-  }
-});
-
-/**
- * GET /api/discover/popular
- * Get popular books for discovery
- */
-router.get("/popular", async (req: Request, res: Response) => {
-  try {
-    const limit = parseInt(req.query.limit as string) || 150;
-    
-    const popularBooks = await dbStorage.getPopularBooks(limit);
-    
-    res.json(popularBooks);
-  } catch (error) {
-    console.error("Error getting popular books:", error);
-    res.status(500).json({ error: "Failed to retrieve popular books" });
-  }
-});
-
-/**
- * GET /api/discover/genre/:id
- * Get books by genre view for discovery
- * This pulls all books that have taxonomies from the specified genre view
- */
-router.get("/genre/:id", async (req: Request, res: Response) => {
-  try {
-    const viewId = parseInt(req.params.id);
-    const limit = parseInt(req.query.limit as string) || 150;
+    const viewId = parseInt(req.params.viewId);
+    const userId = req.user?.id;
+    const limit = 150; // Return up to 150 top matches
     
     if (isNaN(viewId)) {
       return res.status(400).json({ error: "Invalid view ID" });
     }
     
-    console.log(`Fetching books for discovery by genre view ID: ${viewId}`);
-
-    // 1. Get all genre taxonomy IDs from this view
-    const viewGenresResult = await db
-      .select({ taxonomyId: viewGenres.taxonomyId })
-      .from(viewGenres)
-      .where(eq(viewGenres.viewId, viewId));
+    console.log(`Finding taxonomically similar books for view ID: ${viewId}`);
     
-    if (!viewGenresResult || viewGenresResult.length === 0) {
-      console.log(`No genres found for view ID: ${viewId}`);
+    // 1. Get the genre view information
+    const viewResult = await db.select()
+      .from(userGenreViews)
+      .where(eq(userGenreViews.id, viewId))
+      .limit(1);
+    
+    if (viewResult.length === 0) {
+      return res.status(404).json({ error: "Genre view not found" });
+    }
+    
+    // 2. Get all taxonomy IDs associated with this view
+    const viewTaxonomiesResult = await db.select({
+      taxonomyId: viewGenres.taxonomyId,
+      rank: viewGenres.rank,
+      type: viewGenres.type,
+      name: genreTaxonomies.name,
+      category: genreTaxonomies.type,
+    })
+    .from(viewGenres)
+    .innerJoin(genreTaxonomies, eq(viewGenres.taxonomyId, genreTaxonomies.id))
+    .where(eq(viewGenres.viewId, viewId))
+    .orderBy(viewGenres.rank);
+    
+    if (!viewTaxonomiesResult || viewTaxonomiesResult.length === 0) {
+      console.log(`No taxonomies found for view ID: ${viewId}`);
       return res.json([]);
     }
     
-    const taxonomyIds = viewGenresResult.map(g => g.taxonomyId);
-    console.log(`Found taxonomy IDs for view: ${taxonomyIds.join(', ')}`);
+    const taxonomyIds = viewTaxonomiesResult.map(t => t.taxonomyId);
     
-    // 2. Get all books that have these taxonomies
-    // Join with book taxonomy relationships ordered by importance
-    const booksResult = await db
-      .select({
-        id: books.id,
-        title: books.title,
-        authorId: books.authorId,
-        description: books.description,
-        promoted: books.promoted,
-        pageCount: books.pageCount,
-        formats: books.formats,
-        publishedDate: books.publishedDate,
-        awards: books.awards,
-        originalTitle: books.originalTitle,
-        series: books.series,
-        setting: books.setting,
-        characters: books.characters,
-        isbn: books.isbn,
-        asin: books.asin,
-        language: books.language,
-        referralLinks: books.referralLinks,
-        impressionCount: books.impressionCount,
-        clickThroughCount: books.clickThroughCount,
-        lastImpressionAt: books.lastImpressionAt,
-        lastClickThroughAt: books.lastClickThroughAt,
-        internal_details: books.internal_details,
-        // Join author information
-        authorName: authors.author_name,
-        authorImageUrl: authors.author_image_url,
-        importance: sql<string>`AVG(${bookGenreTaxonomies.importance})`
-      })
-      .from(books)
-      .innerJoin(bookGenreTaxonomies, eq(books.id, bookGenreTaxonomies.bookId))
-      .leftJoin(authors, eq(books.authorId, authors.id))
-      .where(inArray(bookGenreTaxonomies.taxonomyId, taxonomyIds))
-      .groupBy(
-        books.id, 
-        books.title, 
-        books.authorId, 
-        books.description,
-        books.promoted,
-        books.pageCount,
-        books.formats,
-        books.publishedDate,
-        books.awards,
-        books.originalTitle,
-        books.series,
-        books.setting,
-        books.characters,
-        books.isbn,
-        books.asin,
-        books.language,
-        books.referralLinks,
-        books.impressionCount,
-        books.clickThroughCount,
-        books.lastImpressionAt,
-        books.lastClickThroughAt,
-        books.internal_details,
-        authors.author_name,
-        authors.author_image_url
-      )
-      .orderBy(desc(sql<string>`AVG(${bookGenreTaxonomies.importance})`))
-      .limit(limit);
-    
-    if (!booksResult || booksResult.length === 0) {
-      console.log(`No books found for genre view ID: ${viewId}`);
-      
-      // Fallback to popular books if no matches found
-      const popularBooks = await dbStorage.getPopularBooks(limit);
-      return res.json(popularBooks);
-    }
-
-    // 3. Get all images for these books
-    const bookIds = booksResult.map(book => book.id);
-    
-    const bookImagesResult = await db
-      .select()
-      .from(bookImages)
-      .where(inArray(bookImages.bookId, bookIds));
-    
-    // Assign images to each book
-    const booksWithImages = booksResult.map(book => {
-      const images = bookImagesResult.filter(img => img.bookId === book.id);
-      return {
-        ...book,
-        images,
-        // Remove importance from the response
-        importance: undefined
-      };
+    // 3. Create a map of taxonomy importance based on rank
+    // We'll use a formula of 1/(1+ln(rank)) to give more weight to higher-ranked taxonomies
+    const taxonomyImportance: Record<number, number> = {};
+    viewTaxonomiesResult.forEach((taxonomy, index) => {
+      const rank = taxonomy.rank || (index + 1);
+      taxonomyImportance[taxonomy.taxonomyId] = 1.0 / (1.0 + Math.log(rank));
     });
     
-    console.log(`Returning ${booksWithImages.length} books for genre view discovery`);
-    res.json(booksWithImages);
+    console.log(`Found ${taxonomyIds.length} taxonomies for view ID: ${viewId}`);
     
-  } catch (error) {
-    console.error("Error getting genre books for discovery:", error);
-    res.status(500).json({ error: "Failed to retrieve books" });
-  }
-});
-
-/**
- * GET /api/discover/recommendations
- * Get recommended books for the current user
- */
-router.get("/recommendations", async (req: Request, res: Response) => {
-  try {
-    const limit = parseInt(req.query.limit as string) || 150;
+    // 4. Calculate the most taxonomically similar books
+    // Using a SQL query to calculate weighted similarity scores
+    const query = sql`
+      WITH book_taxonomies AS (
+        SELECT 
+          bt.book_id,
+          bt.taxonomy_id,
+          CASE 
+            WHEN ${sql.raw(Object.entries(taxonomyImportance)
+              .map(([id, weight]) => `bt.taxonomy_id = ${id} THEN ${weight}`)
+              .join('\n              WHEN ')
+            )}
+            ELSE 0.5
+          END as weight
+        FROM book_genre_taxonomies bt
+        WHERE bt.taxonomy_id IN (${sql.join(taxonomyIds)})
+      ),
+      book_scores AS (
+        SELECT 
+          book_id,
+          SUM(weight) as total_score,
+          COUNT(taxonomy_id) as matching_count
+        FROM book_taxonomies
+        GROUP BY book_id
+        ORDER BY total_score DESC, matching_count DESC
+        LIMIT ${limit * 2} -- Get more than we need to account for filtering
+      )
+      SELECT 
+        b.id,
+        b.title,
+        b.description,
+        b.published_date,
+        b.language,
+        b.page_count,
+        a.id as author_id,
+        a.name as author_name,
+        a.image_url as author_image_url,
+        img.url as cover_url,
+        bs.total_score,
+        bs.matching_count
+      FROM book_scores bs
+      JOIN books b ON bs.book_id = b.id
+      JOIN authors a ON b.author_id = a.id
+      LEFT JOIN book_images img ON b.id = img.book_id AND img.position = 1
+      WHERE b.deleted_at IS NULL
+      ORDER BY bs.total_score DESC, bs.matching_count DESC
+      LIMIT ${limit}
+    `;
     
-    if (!req.user) {
-      return res.status(401).json({ error: "Not authenticated" });
+    const similarBooks = await db.execute(query);
+    
+    // 5. Apply content filtering if the user is authenticated
+    let filteredBooks = similarBooks;
+    if (userId) {
+      // Get user's content blocks
+      const userBlocksResult = await db
+        .select()
+        .from(userBlocks)
+        .where(eq(userBlocks.userId, userId));
+      
+      if (userBlocksResult && userBlocksResult.length > 0) {
+        // Group blocks by type
+        const blockedAuthors = userBlocksResult
+          .filter(block => block.blockType === 'author')
+          .map(block => block.blockId);
+        
+        const blockedBooks = userBlocksResult
+          .filter(block => block.blockType === 'book')
+          .map(block => block.blockId);
+        
+        // Apply filtering
+        filteredBooks = similarBooks.filter(book => {
+          // Skip books by blocked authors
+          if (blockedAuthors.includes(book.author_id)) {
+            return false;
+          }
+          
+          // Skip directly blocked books
+          if (blockedBooks.includes(book.id)) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        console.log(`Filtered out ${similarBooks.length - filteredBooks.length} blocked items`);
+      }
     }
     
-    const recommendations = await dbStorage.getRecommendations(req.user.id, limit);
+    // 6. Format the response
+    const formattedBooks = filteredBooks.map(book => ({
+      id: book.id,
+      title: book.title,
+      description: book.description,
+      publishedDate: book.published_date,
+      language: book.language,
+      pageCount: book.page_count,
+      authorId: book.author_id,
+      authorName: book.author_name,
+      authorImageUrl: book.author_image_url,
+      coverUrl: book.cover_url,
+      taxonomicScore: book.total_score,
+      matchingTaxonomies: book.matching_count
+    }));
     
-    res.json(recommendations);
+    console.log(`Returning ${formattedBooks.length} taxonomically similar books`);
+    res.json(formattedBooks);
   } catch (error) {
-    console.error("Error getting recommended books for discovery:", error);
-    res.status(500).json({ error: "Failed to retrieve recommendations" });
+    console.error("Error finding taxonomically similar books:", error);
+    res.status(500).json({ error: "Failed to find similar books" });
   }
 });
 
