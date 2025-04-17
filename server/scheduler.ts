@@ -33,39 +33,49 @@ export class Scheduler {
 
   /**
    * Schedule the popular books calculation to run daily at midnight GMT
+   * Uses weighted interaction algorithm with hover (0.25), card click (0.5), referral click (1.0)
    */
   public schedulePopularBooksCalculation(): void {
     // First, calculate the time until midnight GMT
     const timeUntilMidnight = this.getTimeUntilMidnightGMT();
     
-    console.log(`Scheduling popular books calculation in ${Math.floor(timeUntilMidnight / 1000 / 60)} minutes`);
+    console.log(`Scheduling weighted popular books calculation in ${Math.floor(timeUntilMidnight / 1000 / 60)} minutes`);
     
     // Clear any existing timer
     if (this.timer) {
       clearTimeout(this.timer);
     }
     
-    // Schedule the first run at midnight
+    // Run once at startup to ensure we have data
+    console.log("Running initial weighted popular books calculation at startup");
+    this.runPopularBooksCalculation();
+    
+    // Schedule the next run at midnight
     this.timer = setTimeout(async () => {
+      console.log("Running scheduled weighted popular books calculation at midnight GMT");
       await this.runPopularBooksCalculation();
       
       // Then schedule to run daily (every 24 hours)
       setInterval(async () => {
+        console.log("Running daily weighted popular books calculation");
         await this.runPopularBooksCalculation();
       }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
     }, timeUntilMidnight);
   }
 
   /**
-   * Run the popular books calculation
+   * Run the popular books calculation with weighted interactions
+   * Hover (detail-expand): 0.25
+   * Card click: 0.5
+   * Referral link click: 1.0
    */
   private async runPopularBooksCalculation(): Promise<void> {
     try {
-      console.log(`Running popular books calculation - ${new Date().toISOString()}`);
+      console.log(`Running weighted popular books calculation - ${new Date().toISOString()}`);
       await dbStorage.calculatePopularBooks();
-      console.log(`Popular books calculation completed - ${new Date().toISOString()}`);
+      console.log(`Weighted popular books calculation completed - ${new Date().toISOString()}`);
     } catch (error) {
-      console.error("Error in scheduled popular books calculation:", error);
+      console.error("Error in scheduled weighted popular books calculation:", error);
     }
   }
 

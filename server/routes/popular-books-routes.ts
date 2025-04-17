@@ -1,101 +1,96 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { dbStorage } from "../storage";
-import { Book, PopularBook } from "@shared/schema";
-import { db } from "../db";
-import { eq, inArray } from "drizzle-orm";
-import { books } from "@shared/schema";
 
 const router = Router();
 
 /**
  * GET /api/popular-books
- * Returns the top popular books based on the calculated sigmoid decay value
- * This endpoint is public and does not require authentication
- * 
- * Query parameters:
- * - limit: Maximum number of books to return (default: 10)
- * - random: If "true", returns N random books from the top 50
- * - count: Number of random books to return when random=true (default: 5)
+ * Get current popular books based on weighted interactions
+ * Weighted interactions: hover (0.25), card click (0.5), referral click (1.0)
  */
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (req, res) => {
   try {
-    // Check if we want random selection
-    const randomize = req.query.random === "true";
+    // Optional limit parameter, default to 10
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
     
-    // Get limit - this is either the final limit or the pool size for randomization
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : (randomize ? 50 : 10);
+    // Get popular books with book details
+    const popularBooks = await dbStorage.getPopularBooks(limit);
     
-    // For random selection, we'll pick this many books from the pool
-    const randomCount = req.query.count ? parseInt(req.query.count as string) : 5;
-    
-    // Get popular book records - always get the top 'limit' books first
-    const popularBooksRecords = await dbStorage.getPopularBooks(limit);
-    
-    if (popularBooksRecords.length === 0) {
-      // If no popular books exist yet, return empty array
-      return res.json([]);
+    if (!popularBooks || popularBooks.length === 0) {
+      // If no popular books are found, trigger a calculation
+      await dbStorage.calculatePopularBooks();
+      // Fetch newly calculated popular books
+      const freshPopularBooks = await dbStorage.getPopularBooks(limit);
+      
+      if (!freshPopularBooks || freshPopularBooks.length === 0) {
+        // Still no popular books, return empty array
+        return res.json([]);
+      }
+      
+      // Return fresh calculation
+      return res.json(freshPopularBooks);
     }
     
-    // Get the actual book data for these records
-    const bookIds = popularBooksRecords.map(record => record.bookId);
-    const bookData = await db
-      .select()
-      .from(books)
-      .where(inArray(books.id, bookIds));
+    // Enrich popular books with book details (title, author, cover)
+    const enrichedPopularBooks = await Promise.all(
+      popularBooks.map(async (popularBook) => {
+        try {
+          // Get basic book info
+          const book = await dbStorage.getBook(popularBook.bookId);
+          
+          if (!book) {
+            return popularBook; // Return as is if book not found
+          }
+          
+          // Get author info
+          const author = await dbStorage.getAuthor(book.authorId);
+          
+          // Get book images
+          const images = await dbStorage.getBookImages(book.id);
+          
+          // Get rating count
+          const ratings = await dbStorage.getBookRatings(book.id);
+          
+          // Return enriched popular book
+          return {
+            ...popularBook,
+            title: book.title,
+            description: book.description,
+            authorId: book.authorId,
+            authorName: author?.author_name || null,
+            authorImageUrl: author?.profileImageUrl || null,
+            images: images || [],
+            ratingCount: ratings.length
+          };
+        } catch (error) {
+          console.error(`Error enriching popular book ${popularBook.bookId}:`, error);
+          return popularBook; // Return as is on error
+        }
+      })
+    );
     
-    // Create a map for easy lookup
-    const bookMap = new Map<number, Book>();
-    bookData.forEach(book => {
-      bookMap.set(book.id, book);
-    });
-    
-    // Join the data together
-    let result = popularBooksRecords.map(record => {
-      const book = bookMap.get(record.bookId);
-      if (!book) return null; // Skip if book not found
-      return {
-        ...book,
-        sigmoidValue: record.sigmoidValue,
-        popularRank: record.rank,
-        firstRankedAt: record.firstRankedAt
-      };
-    })
-    .filter(Boolean) // Remove any null entries
-    .sort((a, b) => a!.popularRank - b!.popularRank);
-    
-    // If randomize is true, select N random books from the result
-    if (randomize && result.length > 0) {
-      // Get a random subset of books
-      const shuffled = [...result].sort(() => 0.5 - Math.random());
-      // Pick the number requested or the max available
-      const count = Math.min(randomCount, shuffled.length);
-      result = shuffled.slice(0, count);
-    }
-    
-    return res.json(result);
+    res.json(enrichedPopularBooks);
   } catch (error) {
-    console.error("Error getting popular books:", error);
-    return res.status(500).json({ error: "Failed to retrieve popular books" });
+    console.error("Error fetching popular books:", error);
+    res.status(500).json({ error: "Failed to fetch popular books" });
   }
 });
 
 /**
- * POST /api/popular-books/calculate
- * Admin endpoint to trigger manual calculation of popular books
+ * POST /api/popular-books/recalculate
+ * Force recalculation of popular books (admin only)
  */
-router.post("/calculate", async (req: Request, res: Response) => {
+router.post("/recalculate", async (req, res) => {
+  if (!req.isAuthenticated() || !req.user?.isAdmin) {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+  
   try {
-    // Check if the user is authenticated and has admin privileges
-    // @ts-ignore - The auth middleware adds the user property
-    if (!req.user || !req.user.isAuthor) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-    
     await dbStorage.calculatePopularBooks();
-    return res.json({ success: true, message: "Popular books calculation completed" });
+    res.json({ success: true, message: "Popular books recalculated" });
   } catch (error) {
-    console.error("Error calculating popular books:", error);
-    return res.status(500).json({ error: "Failed to calculate popular books" });
+    console.error("Error recalculating popular books:", error);
+    res.status(500).json({ error: "Failed to recalculate popular books" });
   }
 });
 
