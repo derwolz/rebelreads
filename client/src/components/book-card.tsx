@@ -1,10 +1,5 @@
-import {
-  Book,
-  Rating,
-  calculateWeightedRating,
-  DEFAULT_RATING_WEIGHTS,
-  RatingPreferences,
-} from "@shared/schema";
+import { Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
+import { Book } from "../types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
@@ -52,7 +47,15 @@ function isNewBook(book: Book) {
   return book.publishedDate ? new Date(book.publishedDate) > oneWeekAgo : false;
 }
 
-export function BookCard({ book }: { book: Book }) {
+export function BookCard({ 
+  book, 
+  taxonomicScore, 
+  matchingTaxonomies 
+}: { 
+  book: Book, 
+  taxonomicScore?: number, 
+  matchingTaxonomies?: number 
+}) {
   const [showDetailed, setShowDetailed] = useState(false);
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
@@ -256,6 +259,22 @@ export function BookCard({ book }: { book: Book }) {
                       ({averageRatings?.overall.toFixed(2) || "0.00"})
                     </span>
                   </div>
+                  
+                  {/* Show taxonomic score information if available */}
+                  {taxonomicScore !== undefined && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      <div className="flex justify-between">
+                        <span>Match Score:</span>
+                        <span className="font-medium">{taxonomicScore.toFixed(2)}</span>
+                      </div>
+                      {matchingTaxonomies !== undefined && (
+                        <div className="flex justify-between">
+                          <span>Matching Taxonomies:</span>
+                          <span className="font-medium">{matchingTaxonomies}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div
