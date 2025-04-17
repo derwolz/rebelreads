@@ -75,7 +75,10 @@ const bookshelfFormSchema = z.object({
   coverImageUrl: z.string().optional(),
 });
 
-type BookshelfFormValues = z.infer<typeof bookshelfFormSchema>;
+// We need to extend the generated type to allow for File objects during form handling
+type BookshelfFormValues = z.infer<typeof bookshelfFormSchema> & {
+  coverImageUrl?: string | File | null;
+};
 
 // Form schema for notes
 const noteFormSchema = z.object({
@@ -393,17 +396,51 @@ export function BookShelfSettings() {
   // Create bookshelf mutation
   const createShelfMutation = useMutation({
     mutationFn: async (values: BookshelfFormValues) => {
-      const res = await fetch("/api/bookshelves", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      
-      if (!res.ok) {
-        throw new Error("Failed to create bookshelf");
+      // Handle file upload if coverImageUrl is a File
+      if (values.coverImageUrl instanceof File) {
+        const formData = new FormData();
+        formData.append('coverImage', values.coverImageUrl);
+        
+        // First create the bookshelf without a cover image
+        const initialData = { ...values, coverImageUrl: "/images/default-bookshelf-cover.svg" };
+        
+        const res = await fetch("/api/bookshelves", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(initialData),
+        });
+        
+        if (!res.ok) {
+          throw new Error("Failed to create bookshelf");
+        }
+        
+        const newShelf = await res.json();
+        
+        // Then upload the cover image
+        const uploadRes = await fetch(`/api/bookshelves/${newShelf.id}/cover`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!uploadRes.ok) {
+          throw new Error("Failed to upload cover image");
+        }
+        
+        return uploadRes.json();
+      } else {
+        // Regular bookshelf creation without file upload
+        const res = await fetch("/api/bookshelves", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        
+        if (!res.ok) {
+          throw new Error("Failed to create bookshelf");
+        }
+        
+        return res.json();
       }
-      
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookshelves"] });
@@ -426,17 +463,50 @@ export function BookShelfSettings() {
   // Update bookshelf mutation
   const updateShelfMutation = useMutation({
     mutationFn: async ({ id, values }: { id: number; values: BookshelfFormValues }) => {
-      const res = await fetch(`/api/bookshelves/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      
-      if (!res.ok) {
-        throw new Error("Failed to update bookshelf");
+      // Handle file upload if coverImageUrl is a File
+      if (values.coverImageUrl instanceof File) {
+        const formData = new FormData();
+        formData.append('coverImage', values.coverImageUrl);
+        
+        // First update the bookshelf without changing the cover image
+        const dataToUpdate = { ...values };
+        delete dataToUpdate.coverImageUrl;  // Remove file from JSON data
+        
+        const res = await fetch(`/api/bookshelves/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataToUpdate),
+        });
+        
+        if (!res.ok) {
+          throw new Error("Failed to update bookshelf");
+        }
+        
+        // Then upload the cover image
+        const uploadRes = await fetch(`/api/bookshelves/${id}/cover`, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!uploadRes.ok) {
+          throw new Error("Failed to upload cover image");
+        }
+        
+        return uploadRes.json();
+      } else {
+        // Regular bookshelf update without file upload
+        const res = await fetch(`/api/bookshelves/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        
+        if (!res.ok) {
+          throw new Error("Failed to update bookshelf");
+        }
+        
+        return res.json();
       }
-      
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookshelves"] });
