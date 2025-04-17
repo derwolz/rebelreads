@@ -124,8 +124,7 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
     navigate(`/books/${book.id}`);
   };
 
-  // Random TV indicator as shown in the reference image
-  const isTv = Math.random() > 0.5;
+
   
   return (
     <div 
@@ -143,7 +142,7 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
         <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">{book.title}</h3>
         <div className="flex items-center gap-1 mt-0.5">
           <p className="text-xs text-muted-foreground line-clamp-1 mr-1">{book.authorName}</p>
-          {isTv && <span className="text-[10px] px-1 bg-muted/50 rounded text-muted-foreground">TV</span>}
+         
         </div>
         <div className="flex items-center gap-1 mt-1">
           <div className="flex">

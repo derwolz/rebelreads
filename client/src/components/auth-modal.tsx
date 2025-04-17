@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocation } from "wouter";
-import { SiGoogle, SiAmazon, SiX } from "react-icons/si";
+import { SiGoogle } from "react-icons/si";
 import {
   Dialog,
   DialogContent,
@@ -105,22 +105,6 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
             >
               <SiGoogle className="mr-2" />
               Continue with Google
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleSSOLogin('amazon')}
-            >
-              <SiAmazon className="mr-2" />
-              Continue with Amazon
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => handleSSOLogin('x')}
-            >
-              <SiX className="mr-2" />
-              Continue with X
             </Button>
 
             <div className="relative">

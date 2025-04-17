@@ -441,6 +441,10 @@
 .animate-bubble {
   animation: bubble 6s ease-in infinite;
 }
+.fill-tertiary{
+  fill: hsl(var(--tertiary));
+  stroke: hsl(var(--tertiary));
+}
 
 @tailwind utilities;
 

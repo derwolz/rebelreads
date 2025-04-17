@@ -40,7 +40,7 @@ export function StarRating({
           key={i}
           className={cn(
             sizeClasses,
-            "cursor-pointer transition-colors fill-primary text-primary",
+            "cursor-pointer transition-colors fill-tertiary text-tertiary",
             readOnly && "cursor-default"
           )}
           onClick={() => !readOnly && onChange?.(i + 1)}
@@ -61,7 +61,7 @@ export function StarRating({
             <Star
               className={cn(
                 sizeClasses,
-                "cursor-pointer transition-colors fill-primary text-primary",
+                "cursor-pointer transition-colors fill-tertiary text-primary",
                 readOnly && "cursor-default"
               )}
             />
@@ -75,7 +75,7 @@ export function StarRating({
           key={i}
           className={cn(
             sizeClasses,
-            "cursor-pointer transition-colors fill-primary text-primary",
+            "cursor-pointer transition-colors fill-tertiary text-primary",
             readOnly && "cursor-default"
           )}
           onClick={() => !readOnly && onChange?.(i + 1)}
