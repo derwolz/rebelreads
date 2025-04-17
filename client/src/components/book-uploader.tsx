@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, GripVertical } from "lucide-react";
-import { AVAILABLE_GENRES, FORMAT_OPTIONS } from "@shared/schema";
+import { AVAILABLE_GENRES, FORMAT_OPTIONS, ReferralLink, RETAILER_OPTIONS } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -31,19 +31,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-const RETAILER_OPTIONS = [
-  "Amazon",
-  "Barnes & Noble",
-  "IndieBound",
-  "Custom",
-] as const;
-
-interface ReferralLink {
-  retailer: typeof RETAILER_OPTIONS[number];
-  url: string;
-  customName?: string;
-}
 
 interface SortableReferralLinkProps {
   link: ReferralLink;
@@ -75,7 +62,19 @@ function SortableReferralLink({
       >
         <GripVertical className="h-4 w-4" />
       </button>
-      <span className="text-sm">{link.customName || link.retailer}:</span>
+      <div className="flex items-center gap-1">
+        {link.faviconUrl && (
+          <img 
+            src={link.faviconUrl} 
+            alt=""
+            className="w-4 h-4 inline-block" 
+          />
+        )}
+        <span className="text-sm">{link.customName || link.retailer}:</span>
+        {link.domain && (
+          <span className="text-xs text-muted-foreground">({link.domain})</span>
+        )}
+      </div>
       <Input
         value={link.url}
         onChange={(e) => onChange(e.target.value)}

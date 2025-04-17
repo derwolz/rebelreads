@@ -2,8 +2,7 @@
  * Utilities for fetching and handling website favicons
  */
 import fetch from 'node-fetch';
-import { URL } from 'url';
-import type { ReferralLink } from '../../shared/schema';
+import { ReferralLink } from '@shared/schema';
 
 /**
  * Extract the domain name from a URL
@@ -12,12 +11,13 @@ import type { ReferralLink } from '../../shared/schema';
  */
 export function extractDomain(url: string): string {
   try {
-    const parsedUrl = new URL(url);
-    // Remove 'www.' prefix if it exists
-    const hostname = parsedUrl.hostname.replace(/^www\./, '');
-    return hostname;
+    // Remove protocol and get hostname
+    const hostname = new URL(url).hostname;
+    
+    // Remove 'www.' prefix if present
+    return hostname.replace(/^www\./, '');
   } catch (error) {
-    console.error('Error extracting domain:', error);
+    console.error('Error extracting domain from URL:', error);
     return '';
   }
 }
@@ -31,54 +31,23 @@ export async function getFaviconUrl(url: string): Promise<string | null> {
   try {
     const domain = extractDomain(url);
     if (!domain) return null;
-
-    // Try common favicon locations
-    const faviconOptions = [
-      // Google's favicon service
-      `https://www.google.com/s2/favicons?domain=${domain}&sz=32`,
-      
-      // Common favicon paths
-      `https://${domain}/favicon.ico`,
-      `https://www.${domain}/favicon.ico`,
-      `https://${domain}/favicon.png`,
-      `https://www.${domain}/favicon.png`,
-    ];
     
-    // Check the google favicon service first (usually works most reliably)
-    const googleFaviconUrl = faviconOptions[0];
-    return googleFaviconUrl;
+    // First try Google's favicon service
+    const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
     
-    // Note: The code below does more thorough checks but might be unnecessary
-    // as Google's favicon service is usually reliable. Uncomment if needed.
-    
-    /*
-    // First try Google's favicon service as it's most reliable
-    try {
-      const response = await fetch(googleFaviconUrl, { method: 'HEAD' });
-      if (response.ok) {
-        return googleFaviconUrl;
-      }
-    } catch (error) {
-      console.log('Google favicon service not available, trying direct paths');
+    // Verify if the favicon exists
+    const response = await fetch(googleFaviconUrl, { method: 'HEAD' });
+    if (response.ok) {
+      return googleFaviconUrl;
     }
     
-    // Then try common favicon locations
-    for (let i = 1; i < faviconOptions.length; i++) {
-      try {
-        const response = await fetch(faviconOptions[i], { method: 'HEAD' });
-        if (response.ok) {
-          return faviconOptions[i];
-        }
-      } catch (error) {
-        // Continue to the next option
-      }
-    }
-    */
+    // If Google's service fails, try a direct favicon.ico approach
+    const directFaviconUrl = `https://${domain}/favicon.ico`;
     
-    // If all fails, return null
-    return null;
+    // We don't actually need to verify this one as we'll use it as a fallback
+    return directFaviconUrl;
   } catch (error) {
-    console.error('Error getting favicon URL:', error);
+    console.error('Error fetching favicon URL:', error);
     return null;
   }
 }
