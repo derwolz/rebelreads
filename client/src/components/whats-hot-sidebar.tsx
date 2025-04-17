@@ -31,11 +31,11 @@ function BookItemSkeleton() {
   );
 }
 
-interface TopAnimeOptions {
+interface PopularityFilterOptions {
   period: "day" | "week" | "month";
 }
 
-function TopAnimeFilter({ activePeriod, onChange }: { 
+function PopularityFilter({ activePeriod, onChange }: { 
   activePeriod: "day" | "week" | "month",
   onChange: (period: "day" | "week" | "month") => void 
 }) {
@@ -171,19 +171,19 @@ export function WhatsHotSidebar() {
   };
 
   return (
-    <div className={`fixed right-4 z-40 transition-all duration-300 ease-in-out ${
+    <div className={`fixed z-40 transition-all duration-300 ease-in-out ${
       isMinimized 
-        ? 'lg:w-16 bottom-4' 
-        : 'lg:w-72 bottom-4'
+        ? 'w-16 right-4 bottom-4' 
+        : 'w-[90vw] sm:w-[350px] right-4 bottom-4 max-h-[70vh] overflow-hidden'
     }`}>
-      <div className={`bg-muted/10 shadow-lg p-4 rounded-lg border border-border/20 ${
-        isMinimized ? 'bg-primary/10' : ''
+      <div className={`bg-muted/10 shadow-lg p-4 rounded-lg border border-border/20 backdrop-blur-sm ${
+        isMinimized ? 'bg-primary/10' : 'bg-background/95'
       }`}>
         {/* Header with minimize button */}
         <div className="flex items-center justify-between mb-2">
           {!isMinimized && (
             <>
-              <h2 className="text-lg font-medium">Top anime</h2>
+              <h2 className="text-lg font-medium">What's Hot</h2>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -209,12 +209,12 @@ export function WhatsHotSidebar() {
         {/* Content - shown only when not minimized */}
         {!isMinimized && (
           <>
-            <TopAnimeFilter 
+            <PopularityFilter 
               activePeriod={periodFilter} 
               onChange={setPeriodFilter} 
             />
             
-            <div className="space-y-1 max-h-[70vh] overflow-y-auto">
+            <div className="space-y-1 max-h-[55vh] overflow-y-auto pr-1 custom-scrollbar">
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <BookItemSkeleton key={i} />
