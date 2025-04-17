@@ -37,6 +37,7 @@ import SalesPanel from "@/pages/sales-panel";
 import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
+import ProReviewsPage from "@/pages/pro-reviews-page";
 
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
@@ -112,7 +113,7 @@ function Router() {
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
-        <ProtectedRoute path="/pro/reviews" component={ProDashboard} />
+        <ProtectedRoute path="/pro/reviews" component={()=>import("./pages/pro-reviews-page").then(m=>m.default)()} />
         <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
         <ProtectedRoute path="/pro/author" component={ProAuthorProfilePage} />
         <ProtectedRoute path="/follower-test" component={FollowerTest} />
