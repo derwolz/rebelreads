@@ -75,6 +75,45 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
 
+  // Fetch ratings for this specific book
+  const { data: ratings } = useQuery<Rating[]>({
+    queryKey: [`/api/books/${book.id}/ratings`],
+  });
+
+  // Fetch user's rating preferences
+  const { data: ratingPreferences } = useQuery<RatingPreferences>({
+    queryKey: ["/api/rating-preferences"],
+  });
+
+  // Calculate individual unweighted ratings per vector
+  const unweightedRatings = ratings?.length
+    ? {
+        enjoyment:
+          ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
+        writing:
+          ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+        themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
+        characters:
+          ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
+        worldbuilding:
+          ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+      }
+    : null;
+
+  // Calculate overall weighted rating using user preferences
+  const averageRating = unweightedRatings
+    ? calculateWeightedRating(
+        {
+          enjoyment: unweightedRatings.enjoyment,
+          writing: unweightedRatings.writing,
+          themes: unweightedRatings.themes,
+          characters: unweightedRatings.characters,
+          worldbuilding: unweightedRatings.worldbuilding,
+        } as Rating,
+        ratingPreferences,
+      )
+    : 0;
+
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -123,8 +162,6 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
     
     navigate(`/books/${book.id}`);
   };
-
-
   
   return (
     <div 
@@ -145,17 +182,14 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
          
         </div>
         <div className="flex items-center gap-1 mt-1">
-          <div className="flex">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div 
-                key={i} 
-                className={`w-3 h-3 ${i < Math.min(Math.ceil(Math.random() * 5), 5) ? 'text-yellow-500' : 'text-muted-foreground/20'}`}
-              >
-                ★
-              </div>
-            ))}
-          </div>
-          <span className="text-[10px] text-muted-foreground ml-1">{Math.ceil(Math.random() * 1000)}</span>
+          <StarRating 
+            rating={averageRating} 
+            readOnly 
+            size="sm" 
+          />
+          <span className="text-[10px] text-muted-foreground ml-1">
+            {ratings?.length ? `(${averageRating.toFixed(1)})` : "No ratings"}
+          </span>
         </div>
       </div>
     </div>
