@@ -272,16 +272,32 @@ export default function BookDetails() {
                           rel="noopener noreferrer"
                           className="w-full"
                           onClick={async (e) => {
+                            // Prevent default to handle the tracking
                             e.preventDefault();
-                            await apiRequest(
-                              "POST",
-                              `/api/books/${book.id}/click-through`,
-                              {
-                                source: `referral_${link.retailer.toLowerCase()}`,
-                                referrer: window.location.pathname,
-                              },
-                            );
-                            window.open(link.url, "_blank");
+                            
+                            // Process the click-through tracking
+                            try {
+                              await apiRequest(
+                                "POST",
+                                `/api/books/${book.id}/click-through`,
+                                {
+                                  source: `referral_${link.retailer.toLowerCase()}`,
+                                  referrer: window.location.pathname,
+                                },
+                              );
+                            } catch (error) {
+                              console.error("Failed to record click-through:", error);
+                              // Continue with navigation even if tracking fails
+                            }
+                            
+                            // Ensure URL has a proper protocol
+                            let targetUrl = link.url;
+                            if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+                              targetUrl = 'https://' + targetUrl;
+                            }
+                            
+                            // Open the URL in a new tab
+                            window.open(targetUrl, "_blank");
                           }}
                         >
                           {/* Apply different styles based on position:
