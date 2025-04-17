@@ -1507,6 +1507,101 @@ async function createUserBlocksTable() {
   }
 }
 
+/**
+ * Add database indexes to improve performance on frequently queried columns
+ * Includes indexes for foreign keys, search columns, and commonly accessed fields
+ */
+async function addDatabaseIndexes() {
+  try {
+    console.log("Adding database indexes for improved performance...");
+    
+    // Check for existing indexes to avoid errors
+    const indexesResult = await db.execute(sql`
+      SELECT indexname FROM pg_indexes 
+      WHERE tablename IN (
+        'books', 'users', 'authors', 'book_genre_taxonomies', 'ratings', 
+        'reading_status', 'author_page_views', 'publishers_authors'
+      )
+    `);
+    
+    const existingIndexes = indexesResult.rows.map(row => row.indexname);
+    
+    // Define indexes to create - key is index name, value is the SQL to create it
+    const indexesToCreate = {
+      // Books table indexes
+      "idx_books_authorid": sql`CREATE INDEX IF NOT EXISTS idx_books_authorid ON books (author_id)`,
+      "idx_books_title": sql`CREATE INDEX IF NOT EXISTS idx_books_title ON books (title)`,
+      "idx_books_published": sql`CREATE INDEX IF NOT EXISTS idx_books_published ON books (published_date)`,
+      "idx_books_impressions": sql`CREATE INDEX IF NOT EXISTS idx_books_impressions ON books (impression_count DESC)`,
+      
+      // Book taxonomies indexes
+      "idx_book_genre_taxonomies_bookid": sql`CREATE INDEX IF NOT EXISTS idx_book_genre_taxonomies_bookid ON book_genre_taxonomies (book_id)`,
+      "idx_book_genre_taxonomies_taxid": sql`CREATE INDEX IF NOT EXISTS idx_book_genre_taxonomies_taxid ON book_genre_taxonomies (taxonomy_id)`,
+      "idx_book_genre_importance": sql`CREATE INDEX IF NOT EXISTS idx_book_genre_importance ON book_genre_taxonomies (importance DESC)`,
+      
+      // Book images index
+      "idx_book_images_bookid": sql`CREATE INDEX IF NOT EXISTS idx_book_images_bookid ON book_images (book_id)`,
+      "idx_book_images_type": sql`CREATE INDEX IF NOT EXISTS idx_book_images_type ON book_images (image_type)`,
+      
+      // Reading status indexes
+      "idx_reading_status_userid": sql`CREATE INDEX IF NOT EXISTS idx_reading_status_userid ON reading_status (user_id)`,
+      "idx_reading_status_bookid": sql`CREATE INDEX IF NOT EXISTS idx_reading_status_bookid ON reading_status (book_id)`,
+      "idx_reading_status_wishlist": sql`CREATE INDEX IF NOT EXISTS idx_reading_status_wishlist ON reading_status (user_id, is_wishlisted) 
+                                         WHERE is_wishlisted = true`,
+      "idx_reading_status_completed": sql`CREATE INDEX IF NOT EXISTS idx_reading_status_completed ON reading_status (user_id, is_completed) 
+                                          WHERE is_completed = true`,
+      
+      // Ratings indexes
+      "idx_ratings_bookid": sql`CREATE INDEX IF NOT EXISTS idx_ratings_bookid ON ratings (book_id)`,
+      "idx_ratings_userid": sql`CREATE INDEX IF NOT EXISTS idx_ratings_userid ON ratings (user_id)`,
+      "idx_ratings_featured": sql`CREATE INDEX IF NOT EXISTS idx_ratings_featured ON ratings (featured) 
+                                  WHERE featured = true`,
+      
+      // User table indexes
+      "idx_users_email": sql`CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)`,
+      "idx_users_username": sql`CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)`,
+      "idx_users_pro": sql`CREATE INDEX IF NOT EXISTS idx_users_pro ON users (is_pro) 
+                           WHERE is_pro = true`,
+      
+      // Author table indexes  
+      "idx_authors_userid": sql`CREATE INDEX IF NOT EXISTS idx_authors_userid ON authors (user_id)`,
+      
+      // Author analytics indexes
+      "idx_author_page_views_authorid": sql`CREATE INDEX IF NOT EXISTS idx_author_page_views_authorid ON author_page_views (author_id)`,
+      "idx_author_page_views_date": sql`CREATE INDEX IF NOT EXISTS idx_author_page_views_date ON author_page_views (entered_at)`,
+      
+      // Publisher-Author relationship index
+      "idx_publishers_authors_publisherid": sql`CREATE INDEX IF NOT EXISTS idx_publishers_authors_publisherid ON publishers_authors (publisher_id)`,
+      "idx_publishers_authors_authorid": sql`CREATE INDEX IF NOT EXISTS idx_publishers_authors_authorid ON publishers_authors (author_id)`,
+      
+      // User blocks index (for content filtering)
+      "idx_user_blocks_userid": sql`CREATE INDEX IF NOT EXISTS idx_user_blocks_userid ON user_blocks (user_id)`,
+      
+      // View genres index (for user preferences)
+      "idx_view_genres_viewid": sql`CREATE INDEX IF NOT EXISTS idx_view_genres_viewid ON view_genres (view_id)`,
+      
+      // User genre views index
+      "idx_user_genre_views_userid": sql`CREATE INDEX IF NOT EXISTS idx_user_genre_views_userid ON user_genre_views (user_id)`
+    };
+    
+    // Create each index if it doesn't already exist
+    for (const [indexName, createSql] of Object.entries(indexesToCreate)) {
+      if (!existingIndexes.includes(indexName.toLowerCase())) {
+        console.log(`Creating index: ${indexName}`);
+        await db.execute(createSql);
+        console.log(`Index ${indexName} created successfully`);
+      } else {
+        console.log(`Index ${indexName} already exists, skipping`);
+      }
+    }
+    
+    console.log("Database indexing completed");
+  } catch (error) {
+    console.error("Error adding database indexes:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   // Remove has_beta_access column from users table
@@ -1561,6 +1656,10 @@ export async function runMigrations() {
   // Create publisher_sellers table for authenticating salesmen
   await createPublisherSellersTable();
   await createSellersTableAndUpdatePublisherSellers();
+  
+  // Add performance optimization indexes
+  await addDatabaseIndexes();
+  
   console.log("Migrations completed");
 }
 
