@@ -58,6 +58,7 @@ import { useState, useEffect } from "react";
 import type { ReferralLink } from "@shared/schema";
 import { ReviewCard } from "@/components/review-card";
 import { WishlistButton } from "@/components/wishlist-button";
+import { ShelveItDialog } from "@/components/shelve-it-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
 import { ContentReportDialog } from "@/components/content-report-dialog";
@@ -270,12 +271,18 @@ export default function BookDetails() {
                 alt={book.title}
                 className="w-full rounded-lg shadow-lg"
               />
-              <div className="absolute top-2 left-2">
+              <div className="absolute top-2 left-2 flex space-x-2">
                 <WishlistButton
                   bookId={book.id}
                   variant="ghost"
                   size="icon"
                   className="bg-black/40 hover:bg-black/60 rounded-full w-10 h-10 text-white hover:text-white [&[data-wishlisted='true']]:text-red-500 [&[data-wishlisted='true']]:hover:text-red-600 transition-colors"
+                />
+                <ShelveItDialog
+                  bookId={book.id}
+                  variant="ghost"
+                  size="icon"
+                  className="bg-black/40 hover:bg-black/60 rounded-full w-10 h-10 text-white hover:text-white transition-colors"
                 />
               </div>
             </div>

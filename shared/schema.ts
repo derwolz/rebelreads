@@ -282,7 +282,7 @@ export const replies = pgTable("replies", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Replace bookshelves table with reading_status
+// Reading status table for wishlisting and completion tracking
 export const reading_status = pgTable("reading_status", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
