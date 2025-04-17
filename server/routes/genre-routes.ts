@@ -11,7 +11,8 @@ import {
   bookImages,
   authors,
   userBlocks,
-  publishersAuthors
+  publishersAuthors,
+  userGenreViews
 } from "@shared/schema";
 import { eq, and, isNull, sql, inArray, notInArray } from "drizzle-orm";
 import { z } from "zod";
@@ -510,6 +511,69 @@ router.get("/view/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching books for genre view:", error);
     res.status(500).json({ error: "Failed to fetch books for genre view" });
+  }
+});
+
+/**
+ * Get genre view information by ID
+ * This endpoint returns the name and details of a specific genre view
+ */
+router.get("/view-info/:id", async (req: Request, res: Response) => {
+  try {
+    const viewId = parseInt(req.params.id);
+    
+    if (isNaN(viewId)) {
+      return res.status(400).json({ error: "Invalid view ID" });
+    }
+    
+    // Get the genre view information
+    const viewResult = await db.select()
+      .from(userGenreViews)
+      .where(eq(userGenreViews.id, viewId))
+      .limit(1);
+    
+    if (viewResult.length === 0) {
+      return res.status(404).json({ error: "Genre view not found" });
+    }
+    
+    res.json(viewResult[0]);
+  } catch (error) {
+    console.error("Error fetching genre view info:", error);
+    res.status(500).json({ error: "Failed to fetch genre view information" });
+  }
+});
+
+/**
+ * Get taxonomies associated with a genre view
+ * This endpoint returns all the taxonomies (genres, subgenres, themes, tropes) associated with a view
+ */
+router.get("/view-taxonomies/:id", async (req: Request, res: Response) => {
+  try {
+    const viewId = parseInt(req.params.id);
+    
+    if (isNaN(viewId)) {
+      return res.status(400).json({ error: "Invalid view ID" });
+    }
+    
+    // Get all taxonomies associated with this view
+    const viewTaxonomiesResult = await db.select({
+      id: viewGenres.id,
+      viewId: viewGenres.viewId,
+      taxonomyId: viewGenres.taxonomyId,
+      type: viewGenres.type,
+      rank: viewGenres.rank,
+      name: genreTaxonomies.name,
+      category: genreTaxonomies.type,
+    })
+    .from(viewGenres)
+    .innerJoin(genreTaxonomies, eq(viewGenres.taxonomyId, genreTaxonomies.id))
+    .where(eq(viewGenres.viewId, viewId))
+    .orderBy(viewGenres.rank);
+    
+    res.json(viewTaxonomiesResult);
+  } catch (error) {
+    console.error("Error fetching view taxonomies:", error);
+    res.status(500).json({ error: "Failed to fetch view taxonomies" });
   }
 });
 

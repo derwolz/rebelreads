@@ -130,7 +130,7 @@ export default function DiscoverPage() {
     }
   };
 
-  // Get the genre view name and taxonomies if applicable
+  // Get the genre view name and details if applicable
   const { data: genreView } = useQuery({
     queryKey: ["/api/genres/view-info", id],
     queryFn: async () => {
@@ -152,16 +152,9 @@ export default function DiscoverPage() {
     queryFn: async () => {
       if (type === "genre" && id) {
         try {
-          // This would be the actual endpoint in a real implementation
-          // For now, we'll simulate taxonomy data
-          return [
-            { id: 1, name: "Fantasy", category: "genre", taxonomyId: 1 },
-            { id: 2, name: "Epic Fantasy", category: "subgenre", taxonomyId: 2 },
-            { id: 3, name: "Urban Fantasy", category: "subgenre", taxonomyId: 3 },
-            { id: 4, name: "Magic School", category: "trope", taxonomyId: 4 },
-            { id: 5, name: "Dragon", category: "theme", taxonomyId: 5 },
-            { id: 6, name: "Coming of Age", category: "theme", taxonomyId: 6 },
-          ];
+          const response = await fetch(`/api/genres/view-taxonomies/${id}`);
+          if (!response.ok) throw new Error("Failed to load view taxonomies");
+          return response.json();
         } catch (error) {
           console.error("Error fetching taxonomies:", error);
           return [];
