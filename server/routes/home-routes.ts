@@ -13,6 +13,7 @@ import {
   bookGenreTaxonomies, 
   genreTaxonomies 
 } from "@shared/schema";
+import { enhanceReferralLinks } from "../utils/favicon-utils";
 import { eq, and, inArray, notInArray, desc, avg, count, sql } from "drizzle-orm";
 
 // Configure multer for file uploads
@@ -269,6 +270,19 @@ router.post("/books", multipleImageUpload, async (req, res) => {
     
     // Extract and handle taxonomy data separately
     const genreTaxonomies = req.body.genreTaxonomies ? JSON.parse(req.body.genreTaxonomies) : [];
+    
+    // Process referral links if present
+    let referralLinks = [];
+    if (req.body.referralLinks) {
+      try {
+        const parsedLinks = JSON.parse(req.body.referralLinks);
+        // Enhance with domain and favicon information
+        referralLinks = await enhanceReferralLinks(parsedLinks);
+        console.log("Enhanced referral links for new book:", JSON.stringify(referralLinks, null, 2));
+      } catch (error) {
+        console.error("Error processing referral links:", error);
+      }
+    }
 
     // Get the author ID from the user ID (not using user.id directly since we need author.id)
     const author = await dbStorage.getAuthorByUserId(req.user!.id);
@@ -282,6 +296,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
       title: req.body.title,
       description: req.body.description,
       authorId: author.id, // Use the author ID instead of the user ID
+      referralLinks: referralLinks,
       formats: formats,
       promoted: false,
       pageCount: req.body.pageCount ? parseInt(req.body.pageCount) : null,
@@ -413,7 +428,22 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
     if (bookData.isbn) safeBookData.isbn = bookData.isbn;
     if (bookData.asin) safeBookData.asin = bookData.asin;
     if (bookData.language) safeBookData.language = bookData.language;
-    if (bookData.referralLinks) safeBookData.referralLinks = bookData.referralLinks;
+    
+    // Process referral links to add domain and favicon information
+    if (bookData.referralLinks) {
+      console.log("Processing referral links for favicon enhancement");
+      try {
+        // Enhance referral links with domain and favicon information
+        const enhancedLinks = await enhanceReferralLinks(bookData.referralLinks);
+        safeBookData.referralLinks = enhancedLinks;
+        console.log("Enhanced referral links:", JSON.stringify(enhancedLinks, null, 2));
+      } catch (error) {
+        console.error("Error enhancing referral links:", error);
+        // If enhancement fails, still update with original links
+        safeBookData.referralLinks = bookData.referralLinks;
+      }
+    }
+    
     if (bookData.internal_details) safeBookData.internal_details = bookData.internal_details;
     
     console.log("Safe book data:", JSON.stringify(safeBookData, null, 2));
