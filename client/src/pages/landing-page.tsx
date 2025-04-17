@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { BrandedNav } from "@/components/branded-nav";
 import { HowItWorksSidebar } from "@/components/how-it-works-sidebar";
 import { FrostedGlassBackground } from "@/components/frosted-glass-background";
 import { ChevronRight } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthModal } from "@/components/auth-modal";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import author_1 from "@/public/videos/author_1.mp4";
 import author_2 from "@/public/videos/author_2.mp4";
 import author_3 from "@/public/videos/author_3.mp4";
@@ -260,9 +264,21 @@ const LandingPage = () => {
   const { setTheme } = useTheme();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const search = useSearch();
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [showBetaAlert, setShowBetaAlert] = useState(false);
+  
+  // Check if user is redirected here due to not having beta access
+  useEffect(() => {
+    const searchParams = new URLSearchParams(search);
+    if (searchParams.get('nobeta') === 'true' && searchParams.get('loggedin') === 'true') {
+      setShowBetaAlert(true);
+    }
+  }, [search]);
 
   // This hook was merged with the more detailed one below
 
@@ -625,6 +641,38 @@ const LandingPage = () => {
       {/* Use the new FrostedGlassBackground component */}
       <FrostedGlassBackground blurIntensity="45px" />
 
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onOpenChange={setShowAuthModal} 
+      />
+      
+      {/* Beta access alert for users who are logged in but don't have beta access */}
+      {showBetaAlert && (
+        <div className="fixed top-20 inset-x-0 mx-auto z-50 max-w-md">
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle>Beta Access Required</AlertTitle>
+            <AlertDescription className="text-sm mt-2">
+              You're signed in, but you need a beta key to access the full application. 
+              You can explore the landing page or try again with a valid beta key.
+              
+              {user && (
+                <div className="mt-2">
+                  <Button 
+                    variant="outline" 
+                    className="text-xs mr-2"
+                    onClick={() => setShowAuthModal(true)}
+                  >
+                    Try Again with Beta Key
+                  </Button>
+                </div>
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+      
       <div className="scroll-container h-screen overflow-y-auto scroll-smooth snap-y snap-mandatory scroll-snap-align:center">
         <section className="snap-section min-h-screen flex items-center justify-center relative snap-start ">
           <div className="text-center space-y-12 relative z-10 backdrop-blur-lg bg-background/70 p-12 rounded-2xl shadow-xl">

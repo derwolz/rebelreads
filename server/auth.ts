@@ -361,7 +361,7 @@ export function setupAuth(app: Express) {
         
         if (isBetaActive && req.user) {
           // Get the beta key from session if it exists
-          const pendingBetaKey = (req.session as any).pending_beta_key;
+          const pendingBetaKey = (req.session as any).google_auth_beta_key;
           
           // Check if the user has used a beta key before
           let hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(req.user.id);
@@ -380,7 +380,7 @@ export function setupAuth(app: Express) {
             }
             
             // Clear the pending beta key
-            delete (req.session as any).pending_beta_key;
+            delete (req.session as any).google_auth_beta_key;
           }
           
           if (!hasUsedBetaKey) {
