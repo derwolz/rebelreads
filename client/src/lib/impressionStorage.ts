@@ -162,10 +162,28 @@ export async function syncWithServer(): Promise<void> {
     // Process impressions
     for (const impression of impressions) {
       try {
+        // Determine weight based on interaction type
+        let weight = 1.0; // Default weight
+        
+        switch (impression.type) {
+          case "detail-expand": // Hover/detail expand interactions
+            weight = 0.25;
+            break;
+          case "card-click": // Book card clicks
+            weight = 0.5;
+            break;
+          case "referral-click": // Referral link clicks
+            weight = 1.0;
+            break;
+          default:
+            weight = 1.0; // Default view impression
+        }
+        
         await apiRequest("POST", `/api/books/${impression.bookId}/impression`, {
           source: impression.source,
           context: impression.context,
-          type: impression.type || "view" // Include the impression type
+          type: impression.type || "view",
+          weight: weight
         });
         processedImpressions.push(impression);
       } catch (error) {

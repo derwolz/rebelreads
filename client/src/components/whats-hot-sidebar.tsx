@@ -106,12 +106,21 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
   }, [isVisible, hasRecordedImpression, book.id]);
 
   const handleClick = () => {
-    // Use local storage for click-through tracking
+    // Record impression with card-click type (weighted at 0.5)
+    recordLocalImpression(
+      book.id,
+      "mini",
+      window.location.pathname,
+      "card-click" 
+    );
+    
+    // Also record click-through for traditional tracking
     recordLocalClickThrough(
       book.id,
       "mini",
       window.location.pathname
     );
+    
     navigate(`/books/${book.id}`);
   };
 

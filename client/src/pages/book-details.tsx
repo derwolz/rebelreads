@@ -295,9 +295,21 @@ export default function BookDetails() {
                             // Prevent default to handle the tracking
                             e.preventDefault();
                             
-                            // Process the click-through tracking
+                            // Process the click-through and weight tracking
                             try {
-                              // Record book click-through with the referral link retailer as the source
+                              // Record weighted impression with referral-click type (weight 1.0)
+                              await apiRequest(
+                                "POST",
+                                `/api/books/${book.id}/impression`,
+                                {
+                                  source: `referral_${link.retailer.toLowerCase()}_click`,
+                                  context: "book_details",
+                                  type: "referral-click",
+                                  weight: 1.0
+                                }
+                              );
+                              
+                              // Also record standard click-through for traditional tracking
                               await apiRequest(
                                 "POST",
                                 `/api/books/${book.id}/click-through`,

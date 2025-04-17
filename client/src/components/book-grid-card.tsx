@@ -165,9 +165,18 @@ export function BookGridCard({ book }: { book: Book }) {
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    // Record click-through in local storage before navigation
-    // This will also trigger an immediate sync with the server
+    
+    // Record impression with card-click type (weighted at 0.5)
+    recordLocalImpression(
+      book.id, 
+      "grid", 
+      window.location.pathname,
+      "card-click"
+    );
+    
+    // Also record click-through for traditional tracking
     recordLocalClickThrough(book.id, "grid", window.location.pathname);
+    
     navigate(`/books/${book.id}`);
   };
 

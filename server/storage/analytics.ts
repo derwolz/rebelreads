@@ -293,6 +293,7 @@ export class AnalyticsStorage implements IAnalyticsStorage {
   /**
    * Calculate popular books using a sigmoid function with a threshold of 14 days
    * This function should be run daily at 00:00:00 GMT
+   * Uses weighted interactions: hover (0.25), card click (0.5), referral click (1.0)
    */
   async calculatePopularBooks(): Promise<void> {
     try {
@@ -300,25 +301,68 @@ export class AnalyticsStorage implements IAnalyticsStorage {
       const now = new Date();
       const threshold = 14; // 14 days threshold
 
-      // Find all books with referral click-throughs
+      // Get books with meaningful interaction counts for ranking
+      const bookIds = await db
+        .select({
+          id: books.id,
+        })
+        .from(books)
+        .where(
+          and(
+            gt(books.impressionCount, 0),
+            gt(books.clickThroughCount, 0)
+          )
+        )
+        .limit(100) // Consider top 100 books with both impressions and clicks
+        .then(result => result.map(book => book.id));
+      
+      if (bookIds.length === 0) {
+        console.log('No books with impressions and clicks found');
+        return;
+      }
+      
+      // Get weighted impressions for each book
+      const weightedImpressions = await db
+        .select({
+          bookId: bookImpressions.bookId,
+          // Sum the weight values for impressions
+          totalWeightedImpressions: sql<string>`SUM(${bookImpressions.weight})`,
+        })
+        .from(bookImpressions)
+        .where(inArray(bookImpressions.bookId, bookIds))
+        .groupBy(bookImpressions.bookId);
+      
+      // Create a map for impression weights
+      const impressionWeightMap = new Map<number, number>();
+      weightedImpressions.forEach(record => {
+        impressionWeightMap.set(
+          record.bookId, 
+          parseFloat(record.totalWeightedImpressions)
+        );
+      });
+
+      // Get referral click-throughs (still highest weighted)
       const clickThroughResults = await db
         .select({
           bookId: bookClickThroughs.bookId,
           totalClicks: sql<number>`count(*)`,
         })
         .from(bookClickThroughs)
-        .where(like(bookClickThroughs.source, 'referral_%'))
-        .groupBy(bookClickThroughs.bookId)
-        .orderBy(desc(sql<number>`count(*)`))
-        .limit(50); // Get top 50 candidates to process further
+        .where(
+          and(
+            inArray(bookClickThroughs.bookId, bookIds),
+            like(bookClickThroughs.source, 'referral_%')
+          )
+        )
+        .groupBy(bookClickThroughs.bookId);
       
-      if (clickThroughResults.length === 0) {
-        console.log('No books with referral click-throughs found');
-        return;
-      }
+      // Create a map for referral clicks
+      const clicksMap = new Map<number, number>();
+      clickThroughResults.forEach(record => {
+        clicksMap.set(record.bookId, record.totalClicks);
+      });
       
       // Get book data for calculating sigmoid
-      const bookIds = clickThroughResults.map(result => result.bookId);
       const bookData = await db
         .select({
           id: books.id,
@@ -342,8 +386,13 @@ export class AnalyticsStorage implements IAnalyticsStorage {
       
       // Calculate sigmoid values for each book
       const scoreData = bookData.map(book => {
-        const clickThroughData = clickThroughResults.find(ct => ct.bookId === book.id);
-        const totalClicks = clickThroughData ? clickThroughData.totalClicks : 0;
+        // Get weighted impressions and referral clicks
+        const weightedImpressionValue = impressionWeightMap.get(book.id) || 0;
+        const referralClicks = clicksMap.get(book.id) || 0;
+        
+        // Combined weighted interaction score (impressions + referral clicks)
+        // Referral clicks are already factored in with weight 1.0 by default
+        const totalWeightedInteractions = weightedImpressionValue + referralClicks;
         
         const existingPopular = existingPopularBooksMap.get(book.id);
         let firstRankedAt = now;
@@ -361,14 +410,16 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         // Sigmoid function: 1 / (1 + e^((days_since_first_ranked - threshold) / 2))
         const sigmoidDecay = 1 / (1 + Math.exp((daysSinceFirstRanked - threshold) / 2));
         
-        // Final score is totalClicks * sigmoidDecay
-        const score = totalClicks * sigmoidDecay;
+        // Final score is weighted interactions * sigmoidDecay
+        const score = totalWeightedInteractions * sigmoidDecay;
         
         return {
           bookId: book.id,
           totalImpressions: book.impressionCount,
           totalClickThroughs: book.clickThroughCount,
-          referralClicks: totalClicks,
+          weightedImpressions: weightedImpressionValue,
+          referralClicks: referralClicks,
+          totalWeightedInteractions: totalWeightedInteractions,
           sigmoidValue: score,
           firstRankedAt: firstRankedAt,
         };
