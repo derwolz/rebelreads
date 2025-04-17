@@ -10,7 +10,7 @@ import {
   RatingPreferences,
   GenreTaxonomy,
 } from "@shared/schema";
-import { Heart } from "lucide-react";
+import { Heart, ChevronRight } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect } from "react";
 import type { ReferralLink } from "@shared/schema";
 import { ReviewCard } from "@/components/review-card";
@@ -313,10 +321,12 @@ export default function BookDetails() {
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4 items-center">
                 <TooltipProvider>
-                  {bookTaxonomies && bookTaxonomies.length > 0
-                    ? bookTaxonomies.map((taxonomy) => (
+                  {bookTaxonomies && bookTaxonomies.length > 0 ? (
+                    <>
+                      {/* Show only the first 5 items */}
+                      {bookTaxonomies.slice(0, 5).map((taxonomy) => (
                         <Tooltip
                           key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}
                         >
@@ -344,18 +354,75 @@ export default function BookDetails() {
                             </TooltipContent>
                           )}
                         </Tooltip>
-                      ))
-                    : // Fallback for compatibility with older books that still use the genres array
-                      Array.isArray((book as any).genres) &&
-                      (book as any).genres.map((genre: string) => (
-                        <Badge
-                          key={genre}
-                          variant="secondary"
-                          className="text-sm"
-                        >
-                          {genre}
-                        </Badge>
                       ))}
+                      
+                      {/* Show the expand button if there are more than 5 items */}
+                      {bookTaxonomies.length > 5 && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 ml-1"
+                            >
+                              <span>+{bookTaxonomies.length - 5} more</span>
+                              <ChevronRight className="h-3 w-3" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Genres, Themes & Tropes</DialogTitle>
+                            </DialogHeader>
+                            <ScrollArea className="max-h-[60vh] mt-4 pr-4">
+                              <div className="flex flex-wrap gap-2">
+                                {bookTaxonomies.map((taxonomy) => (
+                                  <Tooltip
+                                    key={`dialog-${taxonomy.taxonomyId}-${taxonomy.rank}`}
+                                  >
+                                    <TooltipTrigger>
+                                      <div>
+                                        <Badge
+                                          variant={
+                                            taxonomy.type === "genre"
+                                              ? "default"
+                                              : taxonomy.type === "subgenre"
+                                                ? "secondary"
+                                                : taxonomy.type === "theme"
+                                                  ? "outline"
+                                                  : "destructive"
+                                          }
+                                          className="text-sm cursor-help"
+                                        >
+                                          {taxonomy.name}
+                                        </Badge>
+                                      </div>
+                                    </TooltipTrigger>
+                                    {taxonomy.description && (
+                                      <TooltipContent className="max-w-xs">
+                                        <p>{taxonomy.description}</p>
+                                      </TooltipContent>
+                                    )}
+                                  </Tooltip>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </>
+                  ) : (
+                    // Fallback for compatibility with older books that still use the genres array
+                    Array.isArray((book as any).genres) &&
+                    (book as any).genres.map((genre: string) => (
+                      <Badge
+                        key={genre}
+                        variant="secondary"
+                        className="text-sm"
+                      >
+                        {genre}
+                      </Badge>
+                    ))
+                  )}
                 </TooltipProvider>
               </div>
 
