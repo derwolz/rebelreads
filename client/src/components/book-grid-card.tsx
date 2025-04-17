@@ -13,7 +13,10 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
+import {
+  recordLocalImpression,
+  recordLocalClickThrough,
+} from "@/lib/impressionStorage";
 import {
   Tooltip,
   TooltipContent,
@@ -93,11 +96,7 @@ export function BookGridCard({ book }: { book: Book }) {
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
       // Store impression in local storage instead of sending API request immediately
-      recordLocalImpression(
-        book.id,
-        "grid",
-        window.location.pathname
-      );
+      recordLocalImpression(book.id, "grid", window.location.pathname);
       setHasRecordedImpression(true);
     }
   }, [isVisible, hasRecordedImpression, book.id]);
@@ -112,7 +111,7 @@ export function BookGridCard({ book }: { book: Book }) {
           book.id,
           "grid",
           window.location.pathname,
-          "detail-expand"
+          "detail-expand",
         );
         setHasRecordedDetailExpand(true);
       }, 300);
@@ -168,25 +167,23 @@ export function BookGridCard({ book }: { book: Book }) {
     }
     // Record click-through in local storage before navigation
     // This will also trigger an immediate sync with the server
-    recordLocalClickThrough(
-      book.id,
-      "grid",
-      window.location.pathname
-    );
+    recordLocalClickThrough(book.id, "grid", window.location.pathname);
     navigate(`/books/${book.id}`);
   };
 
   return (
-    <div className="relative" style={{ height: "12rem", width: "100%" }}>
+    <div className="relative my-6 " style={{ height: "12rem", width: "13rem" }}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Card
               id={`book-grid-card-${book.id}`}
               className={`
-                overflow-hidden cursor-pointer h-48 w-full
+              overflow-hidden relative
+                 cursor-pointer h-48 w-full 
                 transition-all duration-300 ease-in-out
                 hover:scale-105
+                
                 ${book.promoted ? "shadow-[0_0_15px_-3px_var(--primary)] border-primary/20" : ""}
               `}
               onClick={handleCardClick}
@@ -195,8 +192,8 @@ export function BookGridCard({ book }: { book: Book }) {
             >
               {/* New Book Banner */}
               {isNewBook(book) && (
-                <div className="absolute -bottom-6 -right-9 z-20">
-                  <div className="bg-[#7fffd4] text-black text-xs px-8 py-0.1 rotate-[-45deg] origin-top-left shadow-sm">
+                <div className="absolute  -bottom-6 -right-9 z-20">
+                  <div className="bg-[#7fffd4] text-black text-xs px-8 py-0.1 -rotate-45 origin-bottom-left -translate-y-1/2  overflow-hidden shadow-sm">
                     New
                   </div>
                 </div>
@@ -212,12 +209,15 @@ export function BookGridCard({ book }: { book: Book }) {
                   </Badge>
                 </div>
               )}
-              <div className="absolute bg-black/20 top-2 left-[40%] z-10">
+              <div className="absolute bg-black/20 top-2 left-[75%] z-10">
                 <WishlistButton bookId={book.id} variant="ghost" size="icon" />
               </div>
               <div className="flex h-full">
                 <img
-                  src={book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png"}
+                  src={
+                    book.images?.find((img) => img.imageType === "grid-item")
+                      ?.imageUrl || "/images/placeholder-book.png"
+                  }
                   alt={book.title}
                   className="w-1/3 object-cover"
                 />
