@@ -428,6 +428,66 @@ export default function BookDetails() {
                                 <Ban className="mr-2 h-4 w-4" /> 
                                 Block book: {book.title}
                               </Button>
+                              
+                              {bookTaxonomies && bookTaxonomies.length > 0 && (
+                                <>
+                                  <div className="mt-4 pt-4 border-t">
+                                    <h4 className="font-medium mb-2">Block genres or themes:</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      {bookTaxonomies.map((taxonomy) => (
+                                        <Button
+                                          key={taxonomy.taxonomyId}
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={async () => {
+                                            if (!user) {
+                                              setAuthModalOpen(true);
+                                              return;
+                                            }
+                                            
+                                            try {
+                                              const res = await apiRequest(
+                                                "POST",
+                                                "/api/filters",
+                                                {
+                                                  blockType: "taxonomy",
+                                                  blockId: taxonomy.taxonomyId,
+                                                  blockName: taxonomy.name
+                                                }
+                                              );
+                                              if (res.ok) {
+                                                toast({
+                                                  title: `"${taxonomy.name}" blocked`,
+                                                  description: `You won't see books with the ${taxonomy.type}: ${taxonomy.name}`
+                                                });
+                                                setBlockDialogOpen(false);
+                                              } else {
+                                                toast({
+                                                  title: "Failed to block taxonomy",
+                                                  description: "Please try again later.",
+                                                  variant: "destructive"
+                                                });
+                                              }
+                                            } catch (error) {
+                                              toast({
+                                                title: "Error",
+                                                description: "Failed to block taxonomy. Please try again later.",
+                                                variant: "destructive"
+                                              });
+                                            }
+                                          }}
+                                          className="flex items-center gap-1"
+                                        >
+                                          <Ban className="h-3 w-3" />
+                                          <span className={taxonomy.type === "genre" ? "font-medium" : ""}>
+                                            {taxonomy.name}
+                                          </span>
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         </DialogContent>
