@@ -150,6 +150,37 @@ router.get("/books/:id/taxonomies", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/books/:id/author
+ * Get author details for a specific book
+ * Public endpoint - no authentication required
+ */
+router.get("/books/:id/author", async (req, res) => {
+  const bookId = parseInt(req.params.id);
+  if (isNaN(bookId)) {
+    return res.status(400).json({ error: "Invalid book ID" });
+  }
+
+  try {
+    // Check if the bookId exists first
+    const book = await dbStorage.getBook(bookId);
+    if (!book) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    // Get the author for this book
+    const author = await dbStorage.getAuthor(book.authorId);
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    return res.json(author);
+  } catch (error) {
+    console.error("Error fetching book author:", error);
+    return res.status(500).json({ error: "Failed to fetch book author" });
+  }
+});
+
 router.post("/books/:id/ratings", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 

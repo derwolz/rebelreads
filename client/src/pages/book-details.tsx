@@ -88,6 +88,7 @@ export default function BookDetails() {
   });
   const { data: author } = useQuery<Author>({
     queryKey: [`/api/books/${book?.id}/author`],
+    enabled: !!book?.id, // Only run query when book is loaded
   });
   // Fetch taxonomies for this book
   const { data: bookTaxonomies = [] } = useQuery<
@@ -293,14 +294,16 @@ export default function BookDetails() {
                     href={`/authors/${book.authorId}`}
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {author?.author_name}
+                    {author?.author_name || book.authorName}
                   </Link>
                 </p>
-                <FollowButton
-                  authorId={book.authorId}
-                  authorName={author.author_name}
-                  className="ml-2"
-                />
+                {author?.author_name && (
+                  <FollowButton
+                    authorId={book.authorId}
+                    authorName={author.author_name}
+                    className="ml-2"
+                  />
+                )}
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
