@@ -332,6 +332,9 @@ export default function BookDetails() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => setReportDialogOpen(true)}>
+                        <Flag className="mr-2" /> Report content
+                      </DropdownMenuItem>
                       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
                         <DialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => {
@@ -965,6 +968,15 @@ export default function BookDetails() {
           </div>
         </div>
       </main>
+      
+      {/* Report Content Dialog */}
+      {book && (
+        <ContentReportDialog 
+          bookId={book.id} 
+          open={reportDialogOpen} 
+          onOpenChange={setReportDialogOpen} 
+        />
+      )}
     </div>
   );
 }
