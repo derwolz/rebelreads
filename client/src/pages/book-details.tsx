@@ -225,7 +225,23 @@ export default function BookDetails() {
                           }}
                         >
                           <Button variant="outline" className="w-full">
-                            {link.customName || link.retailer}
+                            {link.faviconUrl && (
+                              <img 
+                                src={link.faviconUrl} 
+                                alt=""
+                                className="w-4 h-4 mr-2 inline-block"
+                              />
+                            )}
+                            {link.domain ? (
+                              <span>
+                                {link.customName || link.retailer}{' '}
+                                <span className="text-xs text-muted-foreground">
+                                  ({link.domain})
+                                </span>
+                              </span>
+                            ) : (
+                              link.customName || link.retailer
+                            )}
                             <ExternalLink className="ml-2 h-4 w-4" />
                           </Button>
                         </a>

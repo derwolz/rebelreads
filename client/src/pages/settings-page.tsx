@@ -99,7 +99,19 @@ function SortableReferralLink({ link, index, onChange, onRemove }: SortableRefer
       >
         <GripVertical className="h-4 w-4" />
       </button>
-      <span className="text-sm">{link.customName || link.retailer}:</span>
+      <div className="flex items-center gap-1">
+        {link.faviconUrl && (
+          <img 
+            src={link.faviconUrl} 
+            alt=""
+            className="w-4 h-4 inline-block" 
+          />
+        )}
+        <span className="text-sm">{link.customName || link.retailer}:</span>
+        {link.domain && (
+          <span className="text-xs text-muted-foreground">({link.domain})</span>
+        )}
+      </div>
       <Input
         value={link.url}
         onChange={(e) => onChange(e.target.value)}
