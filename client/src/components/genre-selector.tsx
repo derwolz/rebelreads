@@ -509,7 +509,7 @@ function TaxonomyGenreSelector({
 
   // Check if a taxonomy type has reached its maximum allowed count
   // Maximum total taxonomies allowed
-  const MAX_TOTAL_TAXONOMIES = 20;
+  const MAX_TOTAL_TAXONOMIES = restrictLimits ? 20 : 100; // Set a higher limit when restrictLimits is false
   
   // Calculate remaining taxonomy slots
   const getRemainingSlots = () => {
@@ -520,15 +520,9 @@ function TaxonomyGenreSelector({
     // Always check if we've hit the total maximum first
     if (selectedTaxonomies.length >= MAX_TOTAL_TAXONOMIES) return true;
     
-    // If limits are not restricted, check only specific types
+    // If limits are not restricted, no type has any restriction
     if (!restrictLimits) {
-      // Only restrict genres and subgenres
-      if (type === "genre") {
-        return getSelectedByType(type).length >= 2;
-      } else if (type === "subgenre") {
-        return getSelectedByType(type).length >= 5;
-      }
-      // Themes and tropes are unrestricted
+      // When restrictLimits is false, don't apply any limits to genres or subgenres
       return false;
     }
     
@@ -675,23 +669,27 @@ function TaxonomyGenreSelector({
                 </TabsList>
                 
                 {/* Total slots remaining indicator */}
-                <div className="flex justify-end mb-2">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700">
-                    <span className="text-xl font-bold">{getRemainingSlots()}</span>
+                {restrictLimits && (
+                  <div className="flex justify-end mb-2">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700">
+                      <span className="text-xl font-bold">{getRemainingSlots()}</span>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {/* Show total taxonomies counter when restricted or not */}
                 <div className={`text-sm font-medium mb-4 ${
-                  selectedTaxonomies.length >= MAX_TOTAL_TAXONOMIES 
+                  restrictLimits && selectedTaxonomies.length >= MAX_TOTAL_TAXONOMIES 
                     ? "text-red-500" 
-                    : selectedTaxonomies.length < 5 && restrictLimits 
+                    : restrictLimits && selectedTaxonomies.length < 5 
                       ? "text-amber-500" 
                       : "text-green-600"
                 }`}>
                   {restrictLimits && selectedTaxonomies.length < 5 
                     ? `Total taxonomies selected: ${selectedTaxonomies.length}/5 (need to select at least 5 total)` 
-                    : `Total taxonomies: ${selectedTaxonomies.length}/${MAX_TOTAL_TAXONOMIES}`
+                    : restrictLimits
+                      ? `Total taxonomies: ${selectedTaxonomies.length}/${MAX_TOTAL_TAXONOMIES}`
+                      : `Total taxonomies selected: ${selectedTaxonomies.length} (no limit)`
                   }
                 </div>
                 
