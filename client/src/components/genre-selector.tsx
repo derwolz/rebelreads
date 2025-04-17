@@ -669,13 +669,11 @@ function TaxonomyGenreSelector({
                 </TabsList>
                 
                 {/* Total slots remaining indicator */}
-                {restrictLimits && (
-                  <div className="flex justify-end mb-2">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700">
-                      <span className="text-xl font-bold">{getRemainingSlots()}</span>
-                    </div>
+                <div className="flex justify-end mb-2">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700">
+                    <span className="text-xl font-bold">{getRemainingSlots()}</span>
                   </div>
-                )}
+                </div>
                 
                 {/* Show total taxonomies counter when restricted or not */}
                 <div className={`text-sm font-medium mb-4 ${
