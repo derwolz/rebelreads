@@ -726,7 +726,7 @@ export function BookShelfSettings() {
                           <BookShelfCoverUploader
                             value={field.value || null}
                             onChange={(value) => {
-                              if (value && typeof values.coverImageUrl !== "string") {
+                              if (value && typeof value !== "string") {
                                 // We'll handle the file upload separately, because we need to save the file
                                 // to the server and get a URL back
                                 field.onChange(value);
@@ -816,7 +816,7 @@ export function BookShelfSettings() {
                       <BookShelfCoverUploader
                         value={field.value || null}
                         onChange={(value) => {
-                          if (value && typeof values.coverImageUrl !== "string") {
+                          if (value && typeof value !== "string") {
                             // We'll handle the file upload separately, because we need to save the file
                             // to the server and get a URL back
                             field.onChange(value);

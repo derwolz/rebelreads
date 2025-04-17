@@ -177,7 +177,7 @@ export function BookShelfCoverUploader({
         <div className="relative">
           <div style={{ width: "100%", height: displayHeight }} className="relative mx-auto">
             <img
-              src={preview || (value instanceof File ? URL.createObjectURL(value) : "")}
+              src={preview || (value && typeof value !== "string" ? URL.createObjectURL(value) : "")}
               alt="Bookshelf cover"
               className="object-contain w-full h-full"
             />
