@@ -391,6 +391,8 @@ export default function SettingsPage() {
     content = <HomepageSettings />;
   } else if (location === "/settings/filters") {
     content = <ContentFiltersSettings />;
+  } else if (location === "/settings/book-shelf") {
+    content = <BookShelfSettings />;
   } else if (location === "/settings/author" && isAuthor) {
     content = (
       <Card>
