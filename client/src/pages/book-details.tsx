@@ -3,6 +3,7 @@ import { useRoute, Link } from "wouter";
 import {
   Book,
   Rating,
+  Author,
   calculateWeightedRating,
   RATING_CRITERIA,
   DEFAULT_RATING_WEIGHTS,
@@ -78,13 +79,16 @@ export default function BookDetails() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
 
   const { data: book } = useQuery<Book>({
+
     queryKey: [`/api/books/${params?.id}`],
   });
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${params?.id}/ratings`],
   });
-
+  const { data: author } = useQuery<Author>({
+    queryKey: [`/api/books/${book?.id}/author`],
+  });
   // Fetch taxonomies for this book
   const { data: bookTaxonomies = [] } = useQuery<
     {
@@ -262,15 +266,13 @@ export default function BookDetails() {
                             )}
                             {link.domain ? (
                               <span>
-                                {link.customName || link.retailer}{" "}
-                                <span className="text-xs text-muted-foreground">
-                                  ({link.domain})
-                                </span>
+                                {link.domain || link.retailer}{" "}
+                                
                               </span>
                             ) : (
                               link.customName || link.retailer
                             )}
-                            <ExternalLink className="ml-2 h-4 w-4" />
+                            
                           </Button>
                         </a>
                       ),
@@ -291,12 +293,12 @@ export default function BookDetails() {
                     href={`/authors/${book.authorId}`}
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {book.author}
+                    {author?.author_name}
                   </Link>
                 </p>
                 <FollowButton
                   authorId={book.authorId}
-                  authorName={book.author}
+                  authorName={author.author_name}
                   className="ml-2"
                 />
               </div>
