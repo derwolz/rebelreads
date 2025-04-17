@@ -221,8 +221,8 @@ export default function BookDetails() {
       />
       <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Left column with book cover and action buttons */}
-          <div>
+          {/* Left column with book cover and action buttons - sticky */}
+          <div className="md:sticky md:top-20 self-start" style={{ maxHeight: 'calc(100vh - 120px)' }}>
             <div className="relative">
               <img
                 src={
@@ -241,7 +241,7 @@ export default function BookDetails() {
                 />
               </div>
             </div>
-            <div className="mt-4 space-y-2 gap-2">
+            <div className="mt-4 space-y-2 gap-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
