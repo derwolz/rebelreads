@@ -11,6 +11,7 @@ import { HomepageLayoutStorage } from "./storage/homepage-layout";
 import { FeedbackStorage } from "./storage/feedback";
 import { SellerStorage } from "./storage/seller";
 import { FilterStorage } from "./storage/filters";
+import { ContentReportStorage } from "./storage/content-reports";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -26,6 +27,7 @@ const homepageLayoutStorage = new HomepageLayoutStorage();
 const feedbackStorage = new FeedbackStorage();
 const sellerStorage = new SellerStorage();
 const filterStorage = new FilterStorage();
+const contentReportStorage = new ContentReportStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -245,6 +247,15 @@ export const dbStorage = {
   deleteUserBlockByTypeAndId: filterStorage.deleteUserBlockByTypeAndId.bind(filterStorage),
   checkUserBlock: filterStorage.checkUserBlock.bind(filterStorage),
   searchContentToBlock: filterStorage.searchContentToBlock.bind(filterStorage),
+  
+  // Content reports
+  getContentReports: contentReportStorage.getContentReports.bind(contentReportStorage),
+  getContentReportsByBook: contentReportStorage.getContentReportsByBook.bind(contentReportStorage),
+  getContentReportsByUser: contentReportStorage.getContentReportsByUser.bind(contentReportStorage),
+  getContentReport: contentReportStorage.getContentReport.bind(contentReportStorage),
+  createContentReport: contentReportStorage.createContentReport.bind(contentReportStorage),
+  updateContentReportStatus: contentReportStorage.updateContentReportStatus.bind(contentReportStorage),
+  deleteContentReport: contentReportStorage.deleteContentReport.bind(contentReportStorage),
 };
 
 // Export interfaces from their respective modules
@@ -260,6 +271,7 @@ export type { IBetaKeyStorage } from "./storage/beta-keys";
 export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 export type { IFeedbackStorage } from "./storage/feedback";
 export type { ISellerStorage } from "./storage/seller";
+export type { IContentReportStorage } from "./storage/content-reports";
 
 // Re-export storage classes
 export {
@@ -276,4 +288,5 @@ export {
   FeedbackStorage,
   SellerStorage,
   FilterStorage,
+  ContentReportStorage,
 };

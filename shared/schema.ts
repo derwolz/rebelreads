@@ -231,6 +231,44 @@ export const reports = pgTable("reports", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Violation types for content reporting
+export const CONTENT_VIOLATION_TYPES = [
+  "copyright_infringement",
+  "adult_content",
+  "hate_speech",
+  "misleading_information",
+  "inappropriate_content",
+  "illegal_content",
+  "spam",
+  "other"
+] as const;
+
+export const contentReports = pgTable("content_reports", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  violationType: text("violation_type").notNull(), // One of CONTENT_VIOLATION_TYPES
+  details: text("details"),
+  status: text("status").notNull().default("pending"), // "pending", "reviewed", "resolved", "dismissed"
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Schema for content report creation
+export const insertContentReportSchema = createInsertSchema(contentReports).omit({
+  id: true,
+  status: true, 
+  adminNotes: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  violationType: z.enum(CONTENT_VIOLATION_TYPES),
+});
+
+export type ContentReport = typeof contentReports.$inferSelect;
+export type InsertContentReport = z.infer<typeof insertContentReportSchema>;
+
 export const replies = pgTable("replies", {
   id: serial("id").primaryKey(),
   reviewId: integer("review_id").notNull(),
