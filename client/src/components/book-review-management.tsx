@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, ThumbsUp, Flag, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/api-helpers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,20 +55,37 @@ export function BookReviewManagement({ bookId }: BookReviewManagementProps) {
   const [replyContent, setReplyContent] = useState<{ [key: number]: string }>({});
   const [submitting, setSubmitting] = useState<{ [key: number]: boolean }>({});
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
+  interface ReviewResponse {
+    reviews: Review[];
+    hasMore: boolean;
+    totalPages: number;
+  }
+
+  const { data, isLoading, isError, error, refetch } = useQuery<ReviewResponse>({
     queryKey: ["book-reviews", bookId, page],
-    queryFn: () => apiRequest(`/api/pro/book-reviews/${bookId}?page=${page}`, {
-      method: "GET"
-    }),
+    queryFn: () => apiRequest<ReviewResponse>(`/api/pro/book-reviews/${bookId}?page=${page}`),
     enabled: !!bookId,
-  } as any);
+  });
+
+  interface FeatureResponse {
+    success: boolean;
+    featured: boolean;
+    reviewId: number;
+  }
+
+  interface ReplyResponse extends Reply {
+    author: {
+      username: string;
+      profileImageUrl: string | null;
+    }
+  }
 
   const featureReview = async (reviewId: number, featured: boolean) => {
     try {
-      await apiRequest(`/api/pro/reviews/${reviewId}/feature`, {
+      await apiRequest<FeatureResponse>(`/api/pro/reviews/${reviewId}/feature`, {
         method: "POST",
-        body: JSON.stringify({ featured }),
-      } as any);
+        body: { featured }
+      });
       
       toast({
         title: featured ? "Review featured" : "Review unfeatured",
@@ -102,10 +119,10 @@ export function BookReviewManagement({ bookId }: BookReviewManagementProps) {
     setSubmitting({ ...submitting, [reviewId]: true });
     
     try {
-      await apiRequest(`/api/pro/reviews/${reviewId}/reply`, {
+      await apiRequest<ReplyResponse>(`/api/pro/reviews/${reviewId}/reply`, {
         method: "POST",
-        body: JSON.stringify({ content: replyContent[reviewId] }),
-      } as any);
+        body: { content: replyContent[reviewId] }
+      });
       
       // Clear the input
       setReplyContent({ ...replyContent, [reviewId]: "" });
@@ -179,8 +196,8 @@ export function BookReviewManagement({ bookId }: BookReviewManagementProps) {
     );
   }
 
-  const data2 = data as any || { reviews: [], hasMore: false, totalPages: 0 };
-  const { reviews, hasMore, totalPages } = data2;
+  // Use data with proper typing, or fallback to empty state if undefined
+  const { reviews = [], hasMore = false, totalPages = 0 } = data || {};
 
   return (
     <div className="space-y-4">

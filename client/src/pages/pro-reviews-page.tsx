@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookReviewManagement } from "@/components/book-review-management";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/api-helpers";
 import { ProLayout } from "@/components/pro-layout";
 import { Search } from "lucide-react";
 import { AlertCircle } from "lucide-react";
@@ -23,13 +23,12 @@ export default function ProReviewsPage() {
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: authorBooks, isLoading, isError, error } = useQuery({
+  const { data: authorBooks, isLoading, isError, error } = useQuery<Book[]>({
     queryKey: ["/api/pro/reviews"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("/api/pro/reviews", {
-          method: "GET"
-        }) as any;
+        // Try to fetch reviews which contain book information
+        const response = await apiRequest<{reviews: any[]}>("/api/pro/reviews");
         
         // Extract unique books from reviews
         const booksMap = new Map<number, Book>();
@@ -52,9 +51,7 @@ export default function ProReviewsPage() {
       } catch (err) {
         console.error("Error fetching pro reviews:", err);
         // Fall back to alternative method: get author books directly
-        const myBooks = await apiRequest("/api/my-books", {
-          method: "GET"
-        }) as any;
+        const myBooks = await apiRequest<any[]>("/api/my-books");
         
         return myBooks.map((book: any) => ({
           id: book.id,
@@ -65,7 +62,7 @@ export default function ProReviewsPage() {
         }));
       }
     },
-  } as any);
+  });
 
   // Set the first book as selected when data loads
   useEffect(() => {
