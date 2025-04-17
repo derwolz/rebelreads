@@ -4,6 +4,46 @@ import { bookShelves, shelfBooks, notes, books } from "../../shared/schema";
 import { eq, and, desc, asc } from "drizzle-orm";
 import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema } from "../../shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure directories for bookshelf cover image uploads
+const uploadsDir = "./uploads";
+const bookshelfCoversDir = path.join(uploadsDir, "bookshelf-covers");
+
+// Create directories if they don't exist
+[uploadsDir, bookshelfCoversDir].forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+// Configure multer for bookshelf cover image uploads
+const bookshelfCoverStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, bookshelfCoversDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const bookshelfCoverUpload = multer({
+  storage: bookshelfCoverStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB size limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow images
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  },
+});
 
 const router = Router();
 
