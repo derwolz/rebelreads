@@ -162,8 +162,8 @@ router.get("/dashboard", async (req: Request, res: Response) => {
   }
 
   try {
-    // First get the author information
-    const author = await dbStorage.getAuthor(req.user.id);
+    // First get the author information by looking up from user ID
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
       console.log(`No author record found for user ${req.user.id}`);
@@ -268,10 +268,11 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    console.log("Fetching real reviews for author user ID:", req.user.id);
+    console.log("Fetching real reviews for user ID:", req.user.id);
     
     // First get the author information since author.id may not be the same as user.id
-    const author = await dbStorage.getAuthor(req.user.id);
+    // We need to use getAuthorByUserId since we have the user ID, not the author ID
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
       console.log(`No author record found for user ${req.user.id}`);
@@ -395,8 +396,8 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     
     console.log(`Fetching reviews for book ID: ${bookId}, page: ${page}`);
     
-    // Get the actual author ID first
-    const author = await dbStorage.getAuthor(req.user.id);
+    // Get the actual author ID first by looking up the user ID
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
       console.log(`No author record found for user ${req.user.id}`);
