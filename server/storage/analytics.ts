@@ -19,6 +19,8 @@ export interface IAnalyticsStorage {
     userId: number | null,
     source: string,
     context: string,
+    type?: string,
+    weight?: number,
   ): Promise<BookImpression>;
   recordBookClickThrough(
     bookId: number,
@@ -53,10 +55,22 @@ export class AnalyticsStorage implements IAnalyticsStorage {
     userId: number | null,
     source: string,
     context: string,
+    type: string = "view",
+    weight: number = 1.0
   ): Promise<BookImpression> {
+    // Convert weight to string for decimal column
+    const weightStr = weight.toString();
+    
     const [impression] = await db
       .insert(bookImpressions)
-      .values({ bookId, userId, source, context })
+      .values({ 
+        bookId, 
+        userId, 
+        source, 
+        context,
+        type,
+        weight: weightStr
+      })
       .returning();
 
     await this.updateBookStats(bookId, "impression");

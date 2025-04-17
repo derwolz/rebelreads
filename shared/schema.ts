@@ -307,6 +307,8 @@ export const bookImpressions = pgTable("book_impressions", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   source: text("source").notNull(), // e.g., 'card', 'grid', 'carousel'
   context: text("context").notNull(), // e.g., 'home', 'search', 'author-page'
+  type: text("type").default("view"), // e.g., 'view', 'detail-expand', 'card-click'
+  weight: decimal("weight").default("1"), // Weight of the interaction (0.25, 0.5, 1.0)
 });
 
 export const bookClickThroughs = pgTable("book_click_throughs", {

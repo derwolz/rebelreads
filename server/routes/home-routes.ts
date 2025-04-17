@@ -621,17 +621,42 @@ router.post("/books/:id/impression", async (req, res) => {
       return res.status(400).json({ error: "Invalid book ID" });
     }
 
-    const { source, context } = req.body;
+    const { source, context, type, weight } = req.body;
     
     if (!source || !context) {
       return res.status(400).json({ error: "Source and context are required" });
+    }
+    
+    // Determine interaction weight based on type
+    let interactionWeight = 1.0; // default weight
+    
+    if (weight !== undefined) {
+      // Use explicit weight if provided
+      interactionWeight = parseFloat(weight);
+    } else if (type) {
+      // Assign weight based on interaction type
+      switch (type) {
+        case "detail-expand": // Hover interactions
+          interactionWeight = 0.25;
+          break;
+        case "card-click": // Clicking on book card
+          interactionWeight = 0.5;
+          break;
+        case "referral-click": // Clicking on referral link
+          interactionWeight = 1.0;
+          break;
+        default:
+          interactionWeight = 1.0;
+      }
     }
 
     const impression = await dbStorage.recordBookImpression(
       bookId,
       req.isAuthenticated() ? req.user!.id : null,
       source,
-      context
+      context,
+      type || "view",
+      interactionWeight
     );
 
     res.status(201).json(impression);
