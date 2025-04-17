@@ -1602,6 +1602,88 @@ async function addDatabaseIndexes() {
   }
 }
 
+/**
+ * Create book shelf, shelf books, and notes tables for the BookShelf feature
+ */
+async function createBookShelfTables() {
+  try {
+    // Check if tables exist
+    const bookshelvesResult = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'book_shelves'
+    `);
+
+    if (bookshelvesResult.rows.length === 0) {
+      console.log("Creating book_shelves table...");
+      await db.execute(sql`
+        CREATE TABLE book_shelves (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          title TEXT NOT NULL,
+          cover_image_url TEXT DEFAULT '/images/default-bookshelf-cover.svg',
+          rank INTEGER NOT NULL DEFAULT 0,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("book_shelves table created successfully");
+    } else {
+      console.log("book_shelves table already exists");
+    }
+
+    const shelfBooksResult = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'shelf_books'
+    `);
+
+    if (shelfBooksResult.rows.length === 0) {
+      console.log("Creating shelf_books table...");
+      await db.execute(sql`
+        CREATE TABLE shelf_books (
+          id SERIAL PRIMARY KEY,
+          shelf_id INTEGER NOT NULL REFERENCES book_shelves(id),
+          book_id INTEGER NOT NULL REFERENCES books(id),
+          rank INTEGER NOT NULL DEFAULT 0,
+          added_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("shelf_books table created successfully");
+    } else {
+      console.log("shelf_books table already exists");
+    }
+
+    const notesResult = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'notes'
+    `);
+
+    if (notesResult.rows.length === 0) {
+      console.log("Creating notes table...");
+      await db.execute(sql`
+        CREATE TABLE notes (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          content TEXT NOT NULL,
+          type TEXT NOT NULL,
+          book_id INTEGER REFERENCES books(id),
+          shelf_id INTEGER REFERENCES book_shelves(id),
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("notes table created successfully");
+    } else {
+      console.log("notes table already exists");
+    }
+  } catch (error) {
+    console.error("Error creating bookshelf tables:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   // Remove has_beta_access column from users table
@@ -1622,6 +1704,8 @@ export async function runMigrations() {
   await removeFavoriteGenresFromUsers();
   // Remove user taxonomy tables
   await removeUserTaxonomyTables();
+  // Create bookshelf tables
+  await createBookShelfTables();
   // Create user genre preferences table
   await createUserGenrePreferencesTable();
   // Add content_views column to user_genre_preferences table
