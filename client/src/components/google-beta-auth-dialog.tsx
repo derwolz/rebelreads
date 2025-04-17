@@ -70,6 +70,14 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
       const storeBetaKeyResult = await storeBetaKeyResponse.json();
       
       if (storeBetaKeyResponse.ok && storeBetaKeyResult.success) {
+        // Also store the beta key in localStorage for redundancy
+        if (data.betaKey) {
+          // Store the beta key in localStorage with a timestamp to expire it later if needed
+          localStorage.setItem('sirened_beta_key', data.betaKey);
+          localStorage.setItem('sirened_beta_key_timestamp', Date.now().toString());
+          console.log('Beta key stored in localStorage:', data.betaKey);
+        }
+        
         // Redirect to Google OAuth endpoint
         window.location.href = "/api/auth/google";
       } else {

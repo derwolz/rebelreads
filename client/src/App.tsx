@@ -45,6 +45,7 @@ import { Redirect, useLocation } from "wouter";
 import { useBeta } from "@/hooks/use-beta";
 import { useAuth } from "@/hooks/use-auth";
 import { TestImages } from "@/pages/test-images";
+import AuthCheckPage from "@/pages/auth-check";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";

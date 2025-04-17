@@ -369,16 +369,70 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // New endpoint to verify a beta key from the client-side localStorage
+  // The client will call this after a successful Google login if they have a beta key stored locally
+  app.post("/api/auth/verify-local-beta-key", async (req, res) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ success: false, message: "Not authenticated" });
+      }
+      
+      console.log("Local beta key verification for user:", req.user?.id);
+      const { betaKey } = req.body;
+      
+      if (!betaKey) {
+        return res.status(400).json({ success: false, message: "No beta key provided" });
+      }
+      
+      console.log("Verifying local beta key:", betaKey);
+      
+      // Check if the user already has beta access
+      const hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(req.user!.id);
+      
+      if (hasUsedBetaKey) {
+        console.log("User already has beta access, no need to verify the key");
+        return res.status(200).json({ success: true, message: "User already has beta access" });
+      }
+      
+      // Validate the key
+      const isValidKey = await dbStorage.validateBetaKey(betaKey);
+      console.log("Beta key valid:", isValidKey);
+      
+      if (!isValidKey) {
+        return res.status(400).json({ success: false, message: "Invalid beta key" });
+      }
+      
+      // Record the beta key usage
+      const betaKeyObj = await dbStorage.getBetaKeyByKey(betaKey);
+      if (!betaKeyObj) {
+        return res.status(400).json({ success: false, message: "Beta key not found" });
+      }
+      
+      console.log("Recording beta key usage for key:", betaKeyObj.id, "and user:", req.user!.id);
+      await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user!.id);
+      
+      return res.status(200).json({ success: true, message: "Beta key accepted" });
+    } catch (error) {
+      console.error("Error verifying local beta key:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
+
   app.get(
     "/api/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/login" }),
     async (req, res) => {
       try {
         console.log("Google auth callback received, user:", req.user?.id);
+        console.log("Session ID:", req.session.id);
         
         // Check if beta is active
         const isBetaActive = await dbStorage.isBetaActive();
         console.log("Beta active:", isBetaActive);
+        
+        // Variable to track if we need to verify a local beta key after redirect
+        let shouldVerifyLocalKey = false;
         
         if (isBetaActive && req.user) {
           // First check if the user already has a beta key tied to their account
@@ -387,12 +441,19 @@ export function setupAuth(app: Express) {
           
           // If they don't already have a key, check if they provided one with this login
           if (!hasUsedBetaKey) {
-            // Get the beta key from session if it exists
-            const pendingBetaKey = (req.session as any).pending_beta_key;
+            // First try to get the beta key from pending_beta_key, then fall back to google_auth_beta_key
+            let pendingBetaKey = (req.session as any).pending_beta_key || '';
+            
+            if (!pendingBetaKey && (req.session as any).google_auth_beta_key) {
+              pendingBetaKey = (req.session as any).google_auth_beta_key;
+              console.log("No pending_beta_key found, using google_auth_beta_key instead:", pendingBetaKey);
+            }
+            
             console.log("Pending beta key from session:", pendingBetaKey);
             
             // If they provided a key with this login, validate and record it
             if (pendingBetaKey) {
+              // Even though we already validated in the store endpoint, validate again to be sure
               const isValidKey = await dbStorage.validateBetaKey(pendingBetaKey);
               console.log("Beta key valid:", isValidKey);
               
@@ -402,24 +463,35 @@ export function setupAuth(app: Express) {
                 console.log("Found beta key object:", betaKeyObj?.id);
                 
                 if (betaKeyObj) {
-                  console.log("Recording beta key usage for key:", betaKeyObj.id, "and user:", req.user.id);
-                  const betaKeyUsage = await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user.id);
-                  console.log("Beta key usage recorded:", betaKeyUsage);
-                  hasUsedBetaKey = true;
+                  try {
+                    console.log("Recording beta key usage for key:", betaKeyObj.id, "and user:", req.user.id);
+                    const betaKeyUsage = await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user.id);
+                    console.log("Beta key usage recorded:", betaKeyUsage);
+                    hasUsedBetaKey = true;
+                  } catch (dbError) {
+                    console.error("Error recording beta key usage:", dbError);
+                    // Try to recover if possible - check if record exists despite error
+                    hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(req.user.id);
+                    console.log("Double-checking if user has beta key after error:", hasUsedBetaKey);
+                  }
                 } else {
                   console.log("Failed to find beta key object for key:", pendingBetaKey);
                 }
               }
               
-              // Clear the pending beta key from session
+              // Clear the pending beta keys from session regardless of outcome
               delete (req.session as any).pending_beta_key;
-              console.log("Cleared pending beta key from session");
+              delete (req.session as any).google_auth_beta_key;
+              console.log("Cleared pending beta keys from session");
             } else {
               console.log("No pending beta key found in session");
+              // We'll need to check localStorage for a beta key after redirect
+              shouldVerifyLocalKey = true;
             }
             
-            // If they still don't have a valid beta key, log them out and redirect to landing page
-            if (!hasUsedBetaKey) {
+            // If they still don't have a valid beta key and we don't need to check localStorage,
+            // log them out and redirect to landing page
+            if (!hasUsedBetaKey && !shouldVerifyLocalKey) {
               console.log("User still doesn't have a valid beta key, logging out");
               req.logout(() => {
                 return res.redirect("/landing");
@@ -429,9 +501,13 @@ export function setupAuth(app: Express) {
           }
         }
         
-        // Successful authentication, redirect based on user type
+        // Successful authentication, redirect to appropriate page
         console.log("Authentication successful, user is author:", req.user?.isAuthor);
-        if (req.user?.isAuthor) {
+        
+        // For beta users, we'll redirect to a special page that will check localStorage
+        if (isBetaActive && shouldVerifyLocalKey) {
+          res.redirect("/auth-check");
+        } else if (req.user?.isAuthor) {
           res.redirect("/pro");
         } else {
           res.redirect("/");
@@ -450,6 +526,9 @@ export function setupAuth(app: Express) {
       const { betaKey } = req.body;
       console.log("Received beta key:", betaKey);
       
+      // This is a critical endpoint where we validate and prepare for the Google OAuth flow
+      let validatedBetaKey = null;
+      
       // Beta key is optional now, but if provided, validate it
       if (betaKey) {
         console.log("Validating beta key");
@@ -460,11 +539,21 @@ export function setupAuth(app: Express) {
           console.log("Invalid beta key, returning 400");
           return res.status(400).json({ error: "Invalid beta key" });
         }
+        
+        // If it's valid, store the validated key
+        validatedBetaKey = betaKey;
+        
+        // Get the beta key object for reference
+        const betaKeyObj = await dbStorage.getBetaKeyByKey(betaKey);
+        console.log("Beta key object found:", betaKeyObj?.id);
       }
       
-      // Store the beta key in session for later use (even if empty)
-      (req.session as any).pending_beta_key = betaKey || "";
+      // Store both in the session to increase redundancy
+      (req.session as any).pending_beta_key = validatedBetaKey || "";
+      (req.session as any).google_auth_beta_key = validatedBetaKey || "";
+      
       console.log("Stored beta key in session:", (req.session as any).pending_beta_key);
+      console.log("Also stored as google_auth_beta_key:", (req.session as any).google_auth_beta_key);
       console.log("Session ID:", req.session.id);
       
       // Save the session explicitly to ensure it's persisted
