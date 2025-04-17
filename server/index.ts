@@ -2,12 +2,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./db-migrations";
+import { runImpressionMigrations } from "./db-migrations-impressions";
 import { Scheduler } from "./scheduler";
 
 // Run database migrations before starting the server
 (async () => {
   try {
+    console.log("Running database migrations...");
     await runMigrations();
+    // Run the new impression migrations
+    await runImpressionMigrations();
     console.log("Database migrations completed successfully");
   } catch (error) {
     console.error("Error running migrations:", error);
