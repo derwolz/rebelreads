@@ -36,6 +36,10 @@ export interface Book {
   authorName?: string;
   authorImageUrl?: string | null;
   images?: BookImage[];
+  // Taxonomy-based similarity score properties
+  taxonomicScore?: number;
+  matchingTaxonomies?: number;
+  coverUrl?: string | null; // Used in discover page
 }
 
 export interface BookImage {

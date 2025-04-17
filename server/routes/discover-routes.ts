@@ -73,16 +73,19 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
     
     // 4. Calculate the most taxonomically similar books
     // Using a SQL query to calculate weighted similarity scores
+    // Create the CASE statement for weighted taxonomies
+    let caseStatement = '';
+    Object.entries(taxonomyImportance).forEach(([id, weight], index) => {
+      caseStatement += `WHEN bt.taxonomy_id = ${id} THEN ${weight}\n            `;
+    });
+    
     const query = sql`
       WITH book_taxonomies AS (
         SELECT 
           bt.book_id,
           bt.taxonomy_id,
           CASE 
-            ${sql.raw(Object.entries(taxonomyImportance)
-              .map(([id, weight]) => `WHEN bt.taxonomy_id = ${id} THEN ${weight}`)
-              .join('\n            ')
-            )}
+            ${sql.raw(caseStatement)}
             ELSE 0.5
           END as weight
         FROM book_genre_taxonomies bt
@@ -120,7 +123,11 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
       LIMIT ${limit}
     `;
     
-    const similarBooks = await db.execute(query) as any[];
+    const similarBooksResult = await db.execute(query);
+    // Cast the result to proper format according to the database driver
+    const similarBooks = similarBooksResult.rows && Array.isArray(similarBooksResult.rows) 
+      ? similarBooksResult.rows 
+      : [];
     
     // 5. Apply content filtering if the user is authenticated
     let filteredBooks = similarBooks;
