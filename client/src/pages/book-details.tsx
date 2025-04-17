@@ -266,19 +266,15 @@ export default function BookDetails() {
                     {/* Record impressions for all referral links when they are displayed */}
                     {useEffect(() => {
                       // Only record impressions if the book has referral links
-                      if (book.referralLinks && book.referralLinks.length > 0) {
-                        // Record impressions for each referral link
-                        book.referralLinks.forEach((link, index) => {
+                      if (book.referralLinks && Array.isArray(book.referralLinks) && book.referralLinks.length > 0) {
+                        // Record a book impression with each referral link as source
+                        book.referralLinks.forEach((link: ReferralLink, index: number) => {
                           apiRequest(
                             "POST",
-                            "/api/ads/impressions",
+                            `/api/books/${book.id}/impression`,
                             {
-                              campaignId: 0, // 0 indicates organic/referral link
-                              bookId: book.id,
-                              adType: "referral_link",
-                              position: `position_${index}`, // Track position in the list
-                              source: "book_details",
-                              clicked: false, // Just an impression, not clicked yet
+                              source: `referral_${link.retailer.toLowerCase()}_display`, 
+                              context: "book_details"
                             }
                           ).catch(error => {
                             console.error("Failed to record referral link impression:", error);
@@ -301,28 +297,14 @@ export default function BookDetails() {
                             
                             // Process the click-through tracking
                             try {
-                              // Record book click-through
+                              // Record book click-through with the referral link retailer as the source
                               await apiRequest(
                                 "POST",
                                 `/api/books/${book.id}/click-through`,
                                 {
-                                  source: `referral_${link.retailer.toLowerCase()}`,
+                                  source: `referral_${link.retailer.toLowerCase()}_click`,
                                   referrer: window.location.pathname,
                                 },
-                              );
-                              
-                              // Also record as an ad impression with clicked=true
-                              await apiRequest(
-                                "POST",
-                                "/api/ads/impressions",
-                                {
-                                  campaignId: 0, // 0 indicates organic/referral link
-                                  bookId: book.id,
-                                  adType: "referral_link",
-                                  position: `position_${index}`, // Track position in the list
-                                  source: "book_details",
-                                  clicked: true, // This was clicked
-                                }
                               );
                             } catch (error) {
                               console.error("Failed to record click-through:", error);
