@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -45,6 +45,14 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
       betaKey: "",
     },
   });
+  
+  // Reset form when dialog is closed
+  useEffect(() => {
+    if (!isOpen) {
+      form.reset({ betaKey: "" });
+      setIsSubmitting(false);
+    }
+  }, [isOpen, form]);
 
   const onSubmit = async (data: BetaKeyFormData) => {
     try {
