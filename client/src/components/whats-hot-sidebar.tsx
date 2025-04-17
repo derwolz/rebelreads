@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 // Extended interface to include popularity data
 interface PopularBook extends Book {
@@ -156,6 +157,7 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
 export function WhatsHotSidebar() {
   const [, navigate] = useLocation();
   const [periodFilter, setPeriodFilter] = useState<"day" | "week" | "month">("day");
+  const [isMinimized, setIsMinimized] = useState(false);
   
   // Fetch popular books from our new API endpoint
   const { data: popularBooks, isLoading } = useQuery<PopularBook[]>({
@@ -163,34 +165,74 @@ export function WhatsHotSidebar() {
     staleTime: 1000 * 60 * 60, // 1 hour - since these are calculated daily
   });
 
+  // Toggle the minimized state
+  const toggleMinimize = () => {
+    setIsMinimized(!isMinimized);
+  };
+
   return (
-    <div className="w-full lg:w-72 flex-shrink-0">
-      <div className="bg-muted/10 p-4 rounded-lg">
+    <div className={`fixed right-4 z-40 transition-all duration-300 ease-in-out ${
+      isMinimized 
+        ? 'lg:w-16 bottom-4' 
+        : 'lg:w-72 bottom-4'
+    }`}>
+      <div className={`bg-muted/10 shadow-lg p-4 rounded-lg border border-border/20 ${
+        isMinimized ? 'bg-primary/10' : ''
+      }`}>
+        {/* Header with minimize button */}
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-medium">Top anime</h2>
-          <TopAnimeFilter 
-            activePeriod={periodFilter} 
-            onChange={setPeriodFilter} 
-          />
-        </div>
-        
-        <div className="space-y-1">
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <BookItemSkeleton key={i} />
-            ))
-          ) : popularBooks?.length ? (
-            popularBooks.slice(0, 5).map((book, index) => (
-              <MiniBookCard 
-                key={book.id} 
-                book={book} 
-                rank={index + 1} 
-              />
-            ))
-          ) : (
-            <p className="text-muted-foreground text-sm">No popular books available</p>
+          {!isMinimized && (
+            <>
+              <h2 className="text-lg font-medium">Top anime</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-2 h-8 w-8 p-0" 
+                onClick={toggleMinimize}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          {isMinimized && (
+            <Button
+              variant="ghost"
+              className="w-full flex items-center justify-center"
+              onClick={toggleMinimize}
+            >
+              <ChevronUp className="h-4 w-4" />
+              <span className="ml-1 sr-only">Expand</span>
+            </Button>
           )}
         </div>
+        
+        {/* Content - shown only when not minimized */}
+        {!isMinimized && (
+          <>
+            <TopAnimeFilter 
+              activePeriod={periodFilter} 
+              onChange={setPeriodFilter} 
+            />
+            
+            <div className="space-y-1 max-h-[70vh] overflow-y-auto">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <BookItemSkeleton key={i} />
+                ))
+              ) : popularBooks?.length ? (
+                popularBooks.slice(0, 5).map((book, index) => (
+                  <MiniBookCard 
+                    key={book.id} 
+                    book={book} 
+                    rank={index + 1} 
+                  />
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">No popular books available</p>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

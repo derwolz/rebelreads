@@ -119,10 +119,10 @@ export default function HomePage() {
           <HeroCarousel />
         </section>
 
-        {/* Main Content Area with Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Content Area - Left Side on Desktop */}
-          <div className="flex-1 order-2 lg:order-1">
+        {/* Main Content Area */}
+        <div className="w-full">
+          {/* Content Area */}
+          <div className="w-full lg:pr-8">
             {/* New Arrivals Section */}
             {newBooks && newBooks.length > 0 && (
               <div className="max-w-[1024px]  mb-8">
@@ -133,7 +133,6 @@ export default function HomePage() {
                 />
               </div>
             )}
-
 
             {/* Dynamic Home Sections for logged-in users */}
             {user ? (
@@ -156,29 +155,24 @@ export default function HomePage() {
                 />
               </div>
             )}
+            
+            {/* Vertical Banner Ad that was previously in sidebar - only shown on mobile */}
+            {books && books.length > 1 && (
+              <div className="mt-8 block lg:hidden">
+                <VerticalBannerAd
+                  campaignId={1}
+                  bookId={books[1].id}
+                  imageSrc={books[1].images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
+                  title={books[1].title}
+                  description={books[1].description?.substring(0, 80) + '...'}
+                  source="home-sidebar"
+                />
+              </div>
+            )}
           </div>
-
-          {/* What's Hot Sidebar - Right Side on Desktop */}
-          <div className="lg:w-72 order-1 lg:order-2 mb-8 lg:mb-0">
-            {/* What's Hot Section - Mobile: Horizontal, Desktop: Vertical */}
-            <div className="sticky top-20">
-              <WhatsHotSidebar />
-              
-              {/* Vertical Banner Ad in Sidebar */}
-              {books && books.length > 1 && (
-                <div className="mt-8">
-                  <VerticalBannerAd
-                    campaignId={1}
-                    bookId={books[1].id}
-                    imageSrc={books[1].images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
-                    title={books[1].title}
-                    description={books[1].description?.substring(0, 80) + '...'}
-                    source="home-sidebar"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+          
+          {/* The WhatsHotSidebar is now floating, added to the page outside the layout */}
+          <WhatsHotSidebar />
         </div>
       </main>
     </div>
