@@ -339,16 +339,34 @@ export function setupAuth(app: Express) {
 
   // Google OAuth routes
   app.get("/api/auth/google", (req, res, next) => {
+    console.log("Google auth endpoint called, session ID:", req.session.id);
+    
     // Store beta key in session if provided
     const { google_auth_beta_key } = req.session as any;
+    console.log("google_auth_beta_key:", google_auth_beta_key);
+    
+    // Check for pending beta key that would have been set by the store-beta-key endpoint
+    console.log("Checking for pending_beta_key:", (req.session as any).pending_beta_key);
+    
     // If beta key is in the session, store it for use in the callback
     if (google_auth_beta_key) {
+      console.log("Found google_auth_beta_key, setting pending_beta_key");
       (req.session as any).pending_beta_key = google_auth_beta_key;
       // Clear the temporary key
       delete (req.session as any).google_auth_beta_key;
+      console.log("Cleared google_auth_beta_key, new pending_beta_key:", (req.session as any).pending_beta_key);
     }
     
-    passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+    // Save the session to make sure our beta key is persisted
+    req.session.save(err => {
+      if (err) {
+        console.error("Error saving session:", err);
+      } else {
+        console.log("Session saved before Google auth redirect");
+      }
+      
+      passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+    });
   });
 
   app.get(
@@ -356,37 +374,53 @@ export function setupAuth(app: Express) {
     passport.authenticate("google", { failureRedirect: "/login" }),
     async (req, res) => {
       try {
+        console.log("Google auth callback received, user:", req.user?.id);
+        
         // Check if beta is active
         const isBetaActive = await dbStorage.isBetaActive();
+        console.log("Beta active:", isBetaActive);
         
         if (isBetaActive && req.user) {
           // First check if the user already has a beta key tied to their account
           let hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(req.user.id);
+          console.log("User has previously used beta key:", hasUsedBetaKey);
           
           // If they don't already have a key, check if they provided one with this login
           if (!hasUsedBetaKey) {
             // Get the beta key from session if it exists
             const pendingBetaKey = (req.session as any).pending_beta_key;
+            console.log("Pending beta key from session:", pendingBetaKey);
             
             // If they provided a key with this login, validate and record it
             if (pendingBetaKey) {
               const isValidKey = await dbStorage.validateBetaKey(pendingBetaKey);
+              console.log("Beta key valid:", isValidKey);
               
               if (isValidKey) {
                 // Record the beta key usage
                 const betaKeyObj = await dbStorage.getBetaKeyByKey(pendingBetaKey);
+                console.log("Found beta key object:", betaKeyObj?.id);
+                
                 if (betaKeyObj) {
-                  await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user.id);
+                  console.log("Recording beta key usage for key:", betaKeyObj.id, "and user:", req.user.id);
+                  const betaKeyUsage = await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user.id);
+                  console.log("Beta key usage recorded:", betaKeyUsage);
                   hasUsedBetaKey = true;
+                } else {
+                  console.log("Failed to find beta key object for key:", pendingBetaKey);
                 }
               }
               
               // Clear the pending beta key from session
               delete (req.session as any).pending_beta_key;
+              console.log("Cleared pending beta key from session");
+            } else {
+              console.log("No pending beta key found in session");
             }
             
             // If they still don't have a valid beta key, log them out and redirect to landing page
             if (!hasUsedBetaKey) {
+              console.log("User still doesn't have a valid beta key, logging out");
               req.logout(() => {
                 return res.redirect("/landing");
               });
@@ -396,6 +430,7 @@ export function setupAuth(app: Express) {
         }
         
         // Successful authentication, redirect based on user type
+        console.log("Authentication successful, user is author:", req.user?.isAuthor);
         if (req.user?.isAuthor) {
           res.redirect("/pro");
         } else {
@@ -411,21 +446,37 @@ export function setupAuth(app: Express) {
   // Endpoint to store beta key in session before Google OAuth redirect
   app.post("/api/auth/google/store-beta-key", async (req, res) => {
     try {
+      console.log("Store beta key endpoint called");
       const { betaKey } = req.body;
+      console.log("Received beta key:", betaKey);
       
       // Beta key is optional now, but if provided, validate it
       if (betaKey) {
+        console.log("Validating beta key");
         const isValid = await dbStorage.validateBetaKey(betaKey);
+        console.log("Beta key validation result:", isValid);
         
         if (!isValid) {
+          console.log("Invalid beta key, returning 400");
           return res.status(400).json({ error: "Invalid beta key" });
         }
       }
       
       // Store the beta key in session for later use (even if empty)
       (req.session as any).pending_beta_key = betaKey || "";
+      console.log("Stored beta key in session:", (req.session as any).pending_beta_key);
+      console.log("Session ID:", req.session.id);
       
-      res.status(200).json({ success: true });
+      // Save the session explicitly to ensure it's persisted
+      req.session.save(err => {
+        if (err) {
+          console.error("Error saving session:", err);
+          return res.status(500).json({ error: "Failed to save session" });
+        }
+        
+        console.log("Session saved successfully with beta key");
+        res.status(200).json({ success: true });
+      });
     } catch (error) {
       console.error("Error storing beta key:", error);
       res.status(500).json({ error: "Failed to store beta key" });
