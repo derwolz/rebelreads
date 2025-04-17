@@ -32,6 +32,8 @@ export const referralLinkSchema = z.object({
   retailer: z.enum(RETAILER_OPTIONS),
   url: z.string().url("Please enter a valid URL"),
   customName: z.string().optional(),
+  domain: z.string().optional(), // Store the extracted domain name
+  faviconUrl: z.string().optional(), // Store the URL to the website's favicon
 });
 
 export type ReferralLink = z.infer<typeof referralLinkSchema>;
