@@ -100,7 +100,7 @@ export default function DiscoverPage() {
       case "to-review":
         return "/api/books/to-review?limit=150";
       case "genre":
-        return id ? `/api/discover/genre/${id}` : "/api/books?limit=150";
+        return id ? `/api/genres/view/${id}?count=150` : "/api/books?limit=150";
       default:
         return "/api/books?limit=150";
     }
