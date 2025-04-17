@@ -257,7 +257,14 @@ export default function BookDetails() {
                             window.open(link.url, "_blank");
                           }}
                         >
-                          <Button variant="outline" className="w-full">
+                          {/* Apply different styles based on position:
+                            First link: primary color
+                            Second link: secondary color
+                            Rest: gray (muted) */}
+                          <Button 
+                            variant={index === 0 ? "default" : index === 1 ? "secondary" : "outline"} 
+                            className="w-full"
+                          >
                             {link.faviconUrl && (
                               <img
                                 src={link.faviconUrl}
@@ -273,7 +280,7 @@ export default function BookDetails() {
                             ) : (
                               link.customName || link.retailer
                             )}
-                            
+                            <ExternalLink className="w-4 h-4 ml-2 inline-block" />
                           </Button>
                         </a>
                       ),
