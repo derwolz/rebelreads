@@ -19,8 +19,15 @@ import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { FollowButton } from "@/components/follow-button";
 import { format } from "date-fns";
-import { ChevronDown, ExternalLink } from "lucide-react";
+import { ChevronDown, ExternalLink, MoreVertical, Ban } from "lucide-react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -83,9 +90,11 @@ export default function BookDetails() {
   const [, params] = useRoute("/books/:id");
   const { user } = useAuth();
   const { setIsOpen: setAuthModalOpen } = useAuthModal();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isGenresExpanded, setIsGenresExpanded] = useState(false);
   const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
 
   const { data: book } = useQuery<Book>({
 
@@ -302,7 +311,131 @@ export default function BookDetails() {
           {/* Right column with book details */}
           <div className="md:col-span-2 space-y-8">
             <div>
-              <h1 className="text-4xl font-bold mb-2">{book.title}</h1>
+              <div className="flex justify-between items-start mb-2">
+                <h1 className="text-4xl font-bold">{book.title}</h1>
+                
+                {user && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-full">
+                        <MoreVertical className="h-5 w-5" />
+                        <span className="sr-only">More actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+                        <DialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => {
+                            e.preventDefault();
+                          }}>
+                            <Ban className="mr-2" /> Block content
+                          </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Block content</DialogTitle>
+                          </DialogHeader>
+                          <div className="py-4 space-y-4">
+                            <p>Select what you'd like to block:</p>
+                            <div className="space-y-2">
+                              {author?.author_name && (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start"
+                                  onClick={async () => {
+                                    if (!user) {
+                                      setAuthModalOpen(true);
+                                      return;
+                                    }
+                                    
+                                    try {
+                                      const res = await apiRequest(
+                                        "POST",
+                                        "/api/filters",
+                                        {
+                                          blockType: "author",
+                                          blockId: book.authorId,
+                                          blockName: author.author_name
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        toast({
+                                          title: "Author blocked",
+                                          description: `You won't see content from ${author.author_name} anymore.`
+                                        });
+                                        setBlockDialogOpen(false);
+                                      } else {
+                                        toast({
+                                          title: "Failed to block author",
+                                          description: "Please try again later.",
+                                          variant: "destructive"
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to block author. Please try again later.",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Ban className="mr-2 h-4 w-4" /> 
+                                  Block author: {author.author_name}
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                onClick={async () => {
+                                  if (!user) {
+                                    setAuthModalOpen(true);
+                                    return;
+                                  }
+                                  
+                                  try {
+                                    const res = await apiRequest(
+                                      "POST",
+                                      "/api/filters",
+                                      {
+                                        blockType: "book",
+                                        blockId: book.id,
+                                        blockName: book.title
+                                      }
+                                    );
+                                    if (res.ok) {
+                                      toast({
+                                        title: "Book blocked",
+                                        description: `You won't see ${book.title} anymore.`
+                                      });
+                                      setBlockDialogOpen(false);
+                                    } else {
+                                      toast({
+                                        title: "Failed to block book",
+                                        description: "Please try again later.",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to block book. Please try again later.",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
+                              >
+                                <Ban className="mr-2 h-4 w-4" /> 
+                                Block book: {book.title}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
               <div className="flex items-center gap-4 mb-4">
                 <p className="text-xl">
                   by{" "}
