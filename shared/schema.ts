@@ -243,6 +243,11 @@ export const CONTENT_VIOLATION_TYPES = [
   "other"
 ] as const;
 
+export const NOTE_TYPES = [
+  "book",
+  "shelf"
+] as const;
+
 export const contentReports = pgTable("content_reports", {
   id: serial("id").primaryKey(),
   bookId: integer("book_id").notNull().references(() => books.id),
@@ -1169,6 +1174,38 @@ export type InsertHomepageLayout = typeof homepageLayouts.$inferInsert;
 export const BLOCK_TYPE_OPTIONS = ["author", "publisher", "book", "taxonomy"] as const;
 
 // User blocks table for filtering content
+// BookShelves table to store user-created bookshelves
+export const bookShelves = pgTable("book_shelves", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  coverImageUrl: text("cover_image_url").default("/images/default-bookshelf-cover.png"),
+  rank: integer("rank").notNull().default(0), // For drag and drop ordering
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ShelfBooks table to associate books with shelves
+export const shelfBooks = pgTable("shelf_books", {
+  id: serial("id").primaryKey(),
+  shelfId: integer("shelf_id").notNull().references(() => bookShelves.id),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  rank: integer("rank").notNull().default(0), // For drag and drop ordering within a shelf
+  addedAt: timestamp("added_at").notNull().defaultNow(),
+});
+
+// Notes table for both books and shelves
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  type: text("type").notNull(), // "book" or "shelf"
+  bookId: integer("book_id").references(() => books.id),
+  shelfId: integer("shelf_id").references(() => bookShelves.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const userBlocks = pgTable("user_blocks", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -1264,3 +1301,47 @@ export const insertFeedbackTicketSchema = createInsertSchema(feedbackTickets, {
 
 export type FeedbackTicket = typeof feedbackTickets.$inferSelect;
 export type InsertFeedbackTicket = z.infer<typeof insertFeedbackTicketSchema>;
+
+// Insert schemas for BookShelves, ShelfBooks, and Notes
+export const insertBookShelfSchema = createInsertSchema(bookShelves).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  rank: true, // We'll handle rank in the API
+}).extend({
+  title: z.string().min(1, "Bookshelf title is required"),
+  coverImageUrl: z.string().optional()
+});
+
+export const insertShelfBookSchema = createInsertSchema(shelfBooks).omit({
+  id: true,
+  addedAt: true,
+  rank: true, // We'll handle rank in the API
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  content: z.string().min(1, "Note content is required"),
+  type: z.enum(NOTE_TYPES),
+}).refine((data) => {
+  // Validate that exactly one of bookId or shelfId is provided based on type
+  if (data.type === "book") {
+    return !!data.bookId && !data.shelfId;
+  } else if (data.type === "shelf") {
+    return !!data.shelfId && !data.bookId;
+  }
+  return false;
+}, {
+  message: "A note must be associated with either a book or a shelf, but not both",
+  path: ["type"]
+});
+
+export type BookShelf = typeof bookShelves.$inferSelect;
+export type InsertBookShelf = z.infer<typeof insertBookShelfSchema>;
+export type ShelfBook = typeof shelfBooks.$inferSelect;
+export type InsertShelfBook = z.infer<typeof insertShelfBookSchema>;
+export type Note = typeof notes.$inferSelect;
+export type InsertNote = z.infer<typeof insertNoteSchema>;

@@ -31,6 +31,7 @@ import simpleApiRoutes from "./routes/simple-api";
 import debugRoutes from "./routes/debug-routes";
 import publicAuthorRoutes from "./routes/public-author-routes";
 import discoverRoutes from "./routes/discover-routes";
+import shelfRoutes from "./routes/shelf-routes";
 import { registerContentReportsRoutes } from "./routes/content-reports-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -123,6 +124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register discover routes for taxonomy-based search
   app.use("/api/discover", discoverRoutes);
+  
+  // Register bookshelf and notes routes
+  app.use("/", shelfRoutes);
   
   // Register content reports routes directly
   registerContentReportsRoutes(app);
