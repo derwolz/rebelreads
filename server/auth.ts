@@ -384,8 +384,8 @@ export function setupAuth(app: Express) {
           }
           
           if (!hasUsedBetaKey) {
-            // User doesn't have beta access - still login but redirect to a special page
-            return res.redirect("/landing?nobeta=true");
+            // User doesn't have beta access - redirect to landing page but keep them logged in
+            return res.redirect("/landing?nobeta=true&loggedin=true");
           }
         }
         

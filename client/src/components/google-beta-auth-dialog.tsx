@@ -94,9 +94,9 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Enter Beta Key for Google Sign-In</DialogTitle>
+          <DialogTitle>Optional: Enter Beta Key for Google Sign-In</DialogTitle>
           <DialogDescription>
-            Please enter your beta key to continue signing in with Google.
+            If you have a beta key, enter it below. You can still continue with Google without a beta key, but you may have limited access.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,7 +112,7 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                     <Input placeholder="Enter your beta key" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Required during beta testing phase. If you've already used a beta key before, you can skip this.
+                    Optional: Enter your beta key for full access. If you don't have one, you can still sign in but with limited access.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -127,12 +127,21 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                 Cancel
               </Button>
               <Button 
+                type="button"
+                onClick={() => window.location.href = '/api/auth/google'}
+                variant="outline"
+                className="gap-2"
+              >
+                <SiGoogle />
+                Continue without beta key
+              </Button>
+              <Button 
                 type="submit"
                 disabled={isSubmitting}
                 className="gap-2"
               >
                 <SiGoogle />
-                Continue with Google
+                Continue with beta key
               </Button>
             </div>
           </form>
