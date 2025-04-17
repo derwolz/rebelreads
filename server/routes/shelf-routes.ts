@@ -682,4 +682,49 @@ router.delete("/api/notes/:id", async (req: Request, res: Response) => {
   }
 });
 
+// Upload cover image for a bookshelf
+router.post("/api/bookshelves/:id/cover", bookshelfCoverUpload.single("coverImage"), async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+
+  try {
+    // Verify ownership
+    const isOwner = await verifyShelfOwnership(id, req.user.id);
+    if (!isOwner) {
+      return res.status(403).send("Forbidden");
+    }
+
+    if (!req.file) {
+      return res.status(400).send("No image uploaded");
+    }
+
+    // Generate URL path for the cover image
+    const coverImageUrl = `/uploads/bookshelf-covers/${req.file.filename}`;
+
+    // Update the bookshelf with the new cover image URL
+    const [updatedShelf] = await db
+      .update(bookShelves)
+      .set({
+        coverImageUrl,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(bookShelves.id, id),
+        eq(bookShelves.userId, req.user.id)
+      ))
+      .returning();
+
+    return res.status(200).json(updatedShelf);
+  } catch (error) {
+    console.error("Error uploading cover image:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
 export default router;

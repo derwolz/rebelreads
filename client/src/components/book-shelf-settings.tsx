@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Plus, PencilIcon, Trash2, GripVertical, BookOpen, X } from "lucide-react";
+import { BookShelfCoverUploader } from "@/components/book-shelf-cover-uploader";
 
 // Define types based on schema
 type BookShelf = {
@@ -650,9 +651,20 @@ export function BookShelfSettings() {
                     name="coverImageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cover Image URL (Optional)</FormLabel>
+                        <FormLabel>Cover Image</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="https://example.com/image.jpg" />
+                          <BookShelfCoverUploader
+                            value={field.value || null}
+                            onChange={(value) => {
+                              if (value instanceof File) {
+                                // We'll handle the file upload separately, because we need to save the file
+                                // to the server and get a URL back
+                                field.onChange(value);
+                              } else {
+                                field.onChange(value || "");
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -729,9 +741,20 @@ export function BookShelfSettings() {
                 name="coverImageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cover Image URL (Optional)</FormLabel>
+                    <FormLabel>Cover Image</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="https://example.com/image.jpg" />
+                      <BookShelfCoverUploader
+                        value={field.value || null}
+                        onChange={(value) => {
+                          if (value instanceof File) {
+                            // We'll handle the file upload separately, because we need to save the file
+                            // to the server and get a URL back
+                            field.onChange(value);
+                          } else {
+                            field.onChange(value || "");
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
