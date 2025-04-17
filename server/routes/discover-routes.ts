@@ -79,9 +79,9 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
           bt.book_id,
           bt.taxonomy_id,
           CASE 
-            WHEN ${sql.raw(Object.entries(taxonomyImportance)
-              .map(([id, weight]) => `bt.taxonomy_id = ${id} THEN ${weight}`)
-              .join('\n              WHEN ')
+            ${sql.raw(Object.entries(taxonomyImportance)
+              .map(([id, weight]) => `WHEN bt.taxonomy_id = ${id} THEN ${weight}`)
+              .join('\n            ')
             )}
             ELSE 0.5
           END as weight
@@ -120,7 +120,7 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
       LIMIT ${limit}
     `;
     
-    const similarBooks = await db.execute(query);
+    const similarBooks = await db.execute(query) as any[];
     
     // 5. Apply content filtering if the user is authenticated
     let filteredBooks = similarBooks;
@@ -142,7 +142,7 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
           .map(block => block.blockId);
         
         // Apply filtering
-        filteredBooks = similarBooks.filter(book => {
+        filteredBooks = similarBooks.filter((book: any) => {
           // Skip books by blocked authors
           if (blockedAuthors.includes(book.author_id)) {
             return false;
@@ -161,7 +161,7 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
     }
     
     // 6. Format the response
-    const formattedBooks = filteredBooks.map(book => ({
+    const formattedBooks = filteredBooks.map((book: any) => ({
       id: book.id,
       title: book.title,
       description: book.description,

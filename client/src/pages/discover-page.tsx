@@ -100,7 +100,7 @@ export default function DiscoverPage() {
       case "to-review":
         return "/api/books/to-review?limit=150";
       case "genre":
-        return id ? `/api/genres/view/${id}?limit=150` : "/api/books?limit=150";
+        return id ? `/api/discover/genre/${id}` : "/api/books?limit=150";
       default:
         return "/api/books?limit=150";
     }
@@ -168,7 +168,7 @@ export default function DiscoverPage() {
   // Initialize the taxonomies for filtering
   useEffect(() => {
     if (viewTaxonomies && viewTaxonomies.length > 0) {
-      const formattedTaxonomies = viewTaxonomies.map(tax => ({
+      const formattedTaxonomies = viewTaxonomies.map((tax: any) => ({
         id: tax.taxonomyId,
         name: tax.name,
         category: tax.category as 'genre' | 'subgenre' | 'trope' | 'theme',
