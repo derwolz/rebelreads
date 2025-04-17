@@ -1,151 +1,184 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ProLayout } from "@/components/pro-layout";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookReviewManagement } from "@/components/book-review-management";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { Search } from "lucide-react";
-import { Book, Rating } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BookReviewManagement } from "@/components/book-review-management";
+import { apiRequest } from "@/lib/queryClient";
+import { ProLayout } from "@/components/pro-layout";
+import { Search } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+
+interface Book {
+  id: number;
+  title: string;
+  author: string;
+  coverImageUrl: string;
+  authorId: number;
+}
 
 export default function ProReviewsPage() {
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
 
-  // Fetch author's books
-  const { data: books, isLoading: isLoadingBooks } = useQuery<Book[]>({
-    queryKey: ["/api/my-books"],
-  });
+  const { data: authorBooks, isLoading, isError, error } = useQuery({
+    queryKey: ["/api/pro/reviews"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/pro/reviews") as any;
+      
+      // Extract unique books from reviews
+      const booksMap = new Map<number, Book>();
+      
+      if (response && response.reviews) {
+        response.reviews.forEach((review: any) => {
+          if (review.book && !booksMap.has(review.bookId)) {
+            booksMap.set(review.bookId, {
+              id: review.bookId,
+              title: review.book.title,
+              author: review.book.author,
+              coverImageUrl: review.book.coverImageUrl,
+              authorId: review.authorId
+            });
+          }
+        });
+      }
+      
+      return Array.from(booksMap.values());
+    },
+  } as any);
+
+  // Set the first book as selected when data loads
+  useEffect(() => {
+    if (authorBooks && authorBooks.length > 0 && !selectedBookId) {
+      setSelectedBookId(authorBooks[0].id);
+    }
+  }, [authorBooks, selectedBookId]);
 
   // Filter books based on search query
-  useEffect(() => {
-    if (!books) return;
-    
-    if (!searchQuery.trim()) {
-      setFilteredBooks(books);
-      return;
-    }
-    
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = books.filter(book => 
-      book.title.toLowerCase().includes(query)
-    );
-    
-    setFilteredBooks(filtered);
-  }, [searchQuery, books]);
+  const filteredBooks = authorBooks?.filter(book => 
+    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.author.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
-  // Set the first book as selected when books are loaded
-  useEffect(() => {
-    if (books && books.length > 0 && !selectedBookId) {
-      setSelectedBookId(books[0].id);
-    }
-  }, [books, selectedBookId]);
-
-  // Function to get the mini image URL for a book
   const getBookMiniImage = (book: Book) => {
-    const miniImage = book.images?.find(img => img.imageType === "mini");
-    if (miniImage) return miniImage.imageUrl;
-    
-    // Fallback to other image types if mini isn't available
-    const fallbackTypes = ["book-card", "grid-item", "book-detail"];
-    for (const type of fallbackTypes) {
-      const image = book.images?.find(img => img.imageType === type);
-      if (image) return image.imageUrl;
-    }
-    
-    return "/images/placeholder-book.png";
+    // Return mini image or default book cover
+    return book.coverImageUrl || "/images/default-book-cover.png";
   };
+
+  if (isLoading) {
+    return (
+      <ProLayout>
+        <div className="p-4 md:p-8 space-y-8">
+          <h1 className="text-3xl font-bold">Book Reviews</h1>
+          <div className="p-4 space-y-4">
+            <Skeleton className="h-10 w-full max-w-sm" />
+            <div className="flex gap-4 overflow-x-auto py-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 w-32 flex-shrink-0 rounded-md" />
+              ))}
+            </div>
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </ProLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ProLayout>
+        <div className="p-4 md:p-8 space-y-8">
+          <h1 className="text-3xl font-bold">Book Reviews</h1>
+          <div className="rounded-md bg-destructive/15 p-4">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-destructive">Error loading your books</h3>
+                <div className="mt-2 text-sm text-destructive/80">
+                  <p>{(error as Error)?.message || "An unknown error occurred. Please try again later."}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProLayout>
+    );
+  }
 
   return (
     <ProLayout>
-      <div className="flex-1 space-y-8">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-2xl md:text-3xl font-bold">Review Management</h1>
-          
-          {/* Search Bar */}
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="p-4 md:p-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold">Book Reviews</h1>
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              type="search"
               placeholder="Search books..."
-              className="pl-9"
+              className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
 
-        {/* Book Carousel */}
-        <Card>
-          <CardContent className="pt-6">
-            {isLoadingBooks ? (
-              <div className="flex gap-4 overflow-x-auto py-2">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="flex-shrink-0 w-20">
-                    <Skeleton className="w-16 h-24 rounded" />
-                    <Skeleton className="w-16 h-4 mt-2" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Carousel
-                opts={{
-                  align: "start",
-                  dragFree: true,
-                }}
-                className="w-full"
-              >
-                <CarouselContent>
+        <div className="space-y-6">
+          {/* Book selection carousel */}
+          <div className="bg-muted/50 rounded-lg p-4">
+            <h2 className="text-xl font-semibold mb-4">Your Books</h2>
+            
+            {filteredBooks.length > 0 ? (
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex space-x-4 pb-4">
                   {filteredBooks.map((book) => (
-                    <CarouselItem key={book.id} className="basis-auto flex-shrink-0 ml-1 mr-4">
-                      <div 
-                        className={`flex flex-col items-center cursor-pointer transition-all ${
-                          selectedBookId === book.id 
-                            ? "scale-105 shadow-[0_0_15px_-3px_var(--tertiary)]" 
-                            : "hover:scale-105"
-                        }`}
-                        onClick={() => setSelectedBookId(book.id)}
-                      >
-                        <div 
-                          className={`w-16 h-24 rounded overflow-hidden shadow-sm ${
-                            selectedBookId === book.id 
-                              ? "border-2 border-tertiary" 
-                              : ""
-                          }`}
-                        >
+                    <Card 
+                      key={book.id} 
+                      className={`w-[125px] flex-shrink-0 cursor-pointer transition-all ${
+                        selectedBookId === book.id 
+                          ? 'ring-2 ring-amber-500 shadow-md' 
+                          : 'hover:shadow-md'
+                      }`}
+                      onClick={() => setSelectedBookId(book.id)}
+                    >
+                      <CardContent className="p-2 flex flex-col items-center">
+                        <div className="w-20 h-28 mb-2 overflow-hidden rounded-sm">
                           <img
                             src={getBookMiniImage(book)}
                             alt={book.title}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <p className="text-xs mt-1 w-16 text-center truncate" title={book.title}>
-                          {book.title}
-                        </p>
-                      </div>
-                    </CarouselItem>
+                        <div className="w-full text-center">
+                          <p className="text-sm font-medium truncate">{book.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{book.author}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-0" />
-                <CarouselNext className="right-0" />
-              </Carousel>
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            ) : (
+              <div className="text-center py-8">
+                {searchQuery ? (
+                  <p>No books found matching "{searchQuery}"</p>
+                ) : (
+                  <p>You don't have any books with reviews yet</p>
+                )}
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Reviews Section */}
-        {selectedBookId && (
-          <BookReviewManagement bookId={selectedBookId} />
-        )}
+          {/* Reviews for selected book */}
+          {selectedBookId ? (
+            <BookReviewManagement bookId={selectedBookId} />
+          ) : (
+            <div className="bg-muted rounded-lg p-6 text-center">
+              <p>Select a book to view its reviews</p>
+            </div>
+          )}
+        </div>
       </div>
     </ProLayout>
   );

@@ -113,7 +113,7 @@ function Router() {
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
-        <ProtectedRoute path="/pro/reviews" component={()=>import("./pages/pro-reviews-page").then(m=>m.default)()} />
+        <ProtectedRoute path="/pro/reviews" component={ProReviewsPage} />
         <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
         <ProtectedRoute path="/pro/author" component={ProAuthorProfilePage} />
         <ProtectedRoute path="/follower-test" component={FollowerTest} />

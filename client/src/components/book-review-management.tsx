@@ -1,223 +1,348 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StarIcon } from "lucide-react";
-import { StarRating } from "@/components/star-rating";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { Rating } from "@shared/schema";
+import { Star, ThumbsUp, Flag, MessageSquare } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 
 interface BookReviewManagementProps {
   bookId: number;
 }
 
+interface Review {
+  id: number;
+  userId: number;
+  bookId: number;
+  enjoyment: number;
+  writing: number;
+  themes: number;
+  characters: number;
+  worldbuilding: number;
+  text: string;
+  createdAt: string;
+  featured: boolean;
+  report_status?: string;
+  user: {
+    username: string;
+    displayName: string;
+    profileImageUrl: string | null;
+  };
+  replies: Reply[];
+}
+
+interface Reply {
+  id: number;
+  reviewId: number;
+  authorId: number;
+  content: string;
+  createdAt: string;
+  author: {
+    username: string;
+    profileImageUrl: string | null;
+  };
+}
+
 export function BookReviewManagement({ bookId }: BookReviewManagementProps) {
   const [page, setPage] = useState(1);
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Check if user is Pro
-  const isPro = user?.is_pro;
-  
-  // Fetch book details
-  const { data: book, isLoading: isLoadingBook } = useQuery({
-    queryKey: ["/api/books", bookId],
-    enabled: !!bookId,
-  });
-  
-  // Fetch reviews for this book
-  const { data: reviewsData, isLoading: isLoadingReviews } = useQuery({
-    queryKey: ["/api/pro/book-reviews", bookId, page],
-    queryFn: async () => {
-      const res = await fetch(`/api/pro/book-reviews/${bookId}?page=${page}`);
-      if (!res.ok) throw new Error("Failed to fetch reviews");
-      return res.json();
-    },
-    enabled: !!bookId,
-  });
+  const [replyContent, setReplyContent] = useState<{ [key: number]: string }>({});
+  const [submitting, setSubmitting] = useState<{ [key: number]: boolean }>({});
 
-  // Mutation for featuring a review
-  const featureMutation = useMutation({
-    mutationFn: async ({ reviewId, featured }: { reviewId: number; featured: boolean }) => {
-      const res = await fetch(`/api/pro/reviews/${reviewId}/feature`, {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["book-reviews", bookId, page],
+    queryFn: () => apiRequest(`/api/pro/book-reviews/${bookId}?page=${page}`),
+    enabled: !!bookId,
+  } as any);
+
+  const featureReview = async (reviewId: number, featured: boolean) => {
+    try {
+      await apiRequest(`/api/pro/reviews/${reviewId}/feature`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ featured }),
+      } as any);
+      
+      toast({
+        title: featured ? "Review featured" : "Review unfeatured",
+        description: featured 
+          ? "This review will now be highlighted on your book page" 
+          : "This review will no longer be highlighted",
+        variant: "default",
       });
       
-      if (res.status === 403) {
-        throw new Error("Pro subscription required to feature reviews");
-      }
-      
-      if (!res.ok) throw new Error("Failed to feature review");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/pro/book-reviews", bookId] });
-    },
-    onError: (error: Error) => {
+      refetch();
+    } catch (error) {
+      console.error("Error featuring review:", error);
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive"
+        description: "Could not update the review's featured status",
+        variant: "destructive",
       });
     }
-  });
-
-  // Handle featuring/unfeaturing a review
-  const handleFeatureToggle = (reviewId: number, currentlyFeatured: boolean) => {
-    featureMutation.mutate({
-      reviewId,
-      featured: !currentlyFeatured
-    });
   };
 
-  const isLoading = isLoadingBook || isLoadingReviews;
-  const reviews = reviewsData?.reviews || [];
-  const hasMore = reviewsData?.hasMore || false;
-
-  function calculateAverageRating(review: any) {
-    const metrics = [
-      review.enjoyment || 0,
-      review.writing || 0,
-      review.themes || 0,
-      review.characters || 0,
-      review.worldbuilding || 0
-    ];
+  const submitReply = async (reviewId: number) => {
+    if (!replyContent[reviewId] || replyContent[reviewId].trim() === "") {
+      toast({
+        title: "Cannot submit empty reply",
+        description: "Please enter some text for your reply",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    const total = metrics.reduce((sum, metric) => sum + metric, 0);
-    return total / metrics.filter(m => m > 0).length;
+    setSubmitting({ ...submitting, [reviewId]: true });
+    
+    try {
+      await apiRequest(`/api/pro/reviews/${reviewId}/reply`, {
+        method: "POST",
+        body: JSON.stringify({ content: replyContent[reviewId] }),
+      } as any);
+      
+      // Clear the input
+      setReplyContent({ ...replyContent, [reviewId]: "" });
+      
+      toast({
+        title: "Reply submitted",
+        description: "Your reply has been posted",
+        variant: "default",
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error("Error submitting reply:", error);
+      toast({
+        title: "Error",
+        description: "Could not submit your reply",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting({ ...submitting, [reviewId]: false });
+    }
+  };
+
+  function calculateAverageRating(review: Review) {
+    const ratings = [
+      review.enjoyment, 
+      review.writing, 
+      review.themes, 
+      review.characters, 
+      review.worldbuilding
+    ].filter(Boolean);
+    
+    if (ratings.length === 0) return 0;
+    return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
   }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">Reviews</h3>
+        </div>
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="mb-4">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-md bg-destructive/15 p-4 my-4">
+        <div className="flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-destructive" />
+          <div className="text-destructive font-medium">
+            Error loading reviews: {(error as Error)?.message || "Unknown error"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const data2 = data as any || { reviews: [], hasMore: false, totalPages: 0 };
+  const { reviews, hasMore, totalPages } = data2;
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">
-        Reviews for {book?.title || "Selected Book"}
-      </h2>
-      
-      {isLoading ? (
-        <Card>
-          <CardContent className="py-6">
-            <p>Loading reviews...</p>
-          </CardContent>
-        </Card>
-      ) : reviews.length === 0 ? (
-        <Card>
-          <CardContent className="py-6">
-            <p>No reviews found for this book.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {reviews.map((review: Rating & { user: any; featured?: boolean; replies?: any[] }) => (
-            <Card key={review.id} className={review.featured ? "border-primary" : undefined}>
-              <CardContent className="pt-6">
-                <div className="flex flex-col space-y-4">
-                  {/* Header: User info, timestamp, and average rating */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        {review.user?.profileImageUrl ? (
-                          <AvatarImage src={review.user.profileImageUrl} />
-                        ) : (
-                          <AvatarFallback>{review.user?.username?.[0] || "U"}</AvatarFallback>
-                        )}
-                      </Avatar>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-semibold">Reviews</h3>
+        <div className="text-sm text-muted-foreground">
+          Page {page} of {totalPages || 1}
+        </div>
+      </div>
+
+      {reviews && reviews.length > 0 ? (
+        <div className="space-y-4">
+          {reviews.map((review: Review) => (
+            <Card key={review.id} className={`mb-4 ${review.featured ? 'border-2 border-amber-500' : ''}`}>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <Avatar>
+                    <AvatarImage src={review.user.profileImageUrl || undefined} />
+                    <AvatarFallback>
+                      {review.user.displayName.charAt(0).toUpperCase() || review.user.username.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{review.user?.displayName || review.user?.username || "Anonymous Reader"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </p>
+                        <p className="font-medium">{review.user.displayName || review.user.username}</p>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Star className="mr-1 h-4 w-4 text-amber-500" />
+                            <span>{calculateAverageRating(review).toFixed(1)}</span>
+                          </div>
+                          <span className="mx-1">•</span>
+                          <span>{formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={review.featured ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => featureReview(review.id, !review.featured)}
+                        >
+                          <ThumbsUp className="mr-1 h-4 w-4" />
+                          {review.featured ? 'Featured' : 'Feature'}
+                        </Button>
+                        {review.report_status && review.report_status !== 'none' && (
+                          <Badge variant="destructive" className="flex items-center">
+                            <Flag className="mr-1 h-3 w-3" />
+                            Reported
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {review.featured && (
-                        <Badge variant="outline" className="border-primary text-primary">
-                          Featured
-                        </Badge>
+                    <div className="mt-2 space-y-1">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {review.enjoyment && (
+                          <div className="flex items-center text-sm">
+                            <span className="font-medium">Enjoyment:</span>
+                            <span className="ml-2">{review.enjoyment}/5</span>
+                          </div>
+                        )}
+                        {review.writing && (
+                          <div className="flex items-center text-sm">
+                            <span className="font-medium">Writing:</span>
+                            <span className="ml-2">{review.writing}/5</span>
+                          </div>
+                        )}
+                        {review.themes && (
+                          <div className="flex items-center text-sm">
+                            <span className="font-medium">Themes:</span>
+                            <span className="ml-2">{review.themes}/5</span>
+                          </div>
+                        )}
+                        {review.characters && (
+                          <div className="flex items-center text-sm">
+                            <span className="font-medium">Characters:</span>
+                            <span className="ml-2">{review.characters}/5</span>
+                          </div>
+                        )}
+                        {review.worldbuilding && (
+                          <div className="flex items-center text-sm">
+                            <span className="font-medium">Worldbuilding:</span>
+                            <span className="ml-2">{review.worldbuilding}/5</span>
+                          </div>
+                        )}
+                      </div>
+                      {review.text && (
+                        <p className="text-sm mt-2">{review.text}</p>
                       )}
-                      <div className="flex items-center space-x-1">
-                        <StarIcon className="h-4 w-4 text-yellow-500" fill="currentColor" />
-                        <span>{calculateAverageRating(review).toFixed(1)}</span>
+                    </div>
+
+                    {/* Replies section */}
+                    {review.replies && review.replies.length > 0 && (
+                      <div className="mt-4 border-t pt-2">
+                        <p className="text-sm font-medium mb-2">Replies:</p>
+                        <ScrollArea className="max-h-48">
+                          {review.replies.map((reply) => (
+                            <div key={reply.id} className="flex items-start gap-2 mb-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={reply.author.profileImageUrl || undefined} />
+                                <AvatarFallback>{reply.author.username.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="flex items-center gap-1">
+                                  <p className="text-xs font-medium">{reply.author.username}</p>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
+                                  </span>
+                                </div>
+                                <p className="text-sm">{reply.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </ScrollArea>
+                      </div>
+                    )}
+
+                    {/* Reply form */}
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Textarea
+                          placeholder="Write a reply..."
+                          value={replyContent[review.id] || ''}
+                          onChange={(e) => setReplyContent({ ...replyContent, [review.id]: e.target.value })}
+                          className="min-h-[80px] text-sm"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          size="sm"
+                          onClick={() => submitReply(review.id)}
+                          disabled={submitting[review.id] || !replyContent[review.id]}
+                        >
+                          <MessageSquare className="mr-1 h-4 w-4" />
+                          {submitting[review.id] ? 'Submitting...' : 'Reply'}
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Review content */}
-                  {review.review && (
-                    <div className="mt-2">
-                      <p className="text-sm leading-relaxed">{review.review}</p>
-                    </div>
-                  )}
-                  
-                  {/* Rating metrics */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Enjoyment</p>
-                      <StarRating rating={review.enjoyment || 0} readOnly size="xs" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Writing</p>
-                      <StarRating rating={review.writing || 0} readOnly size="xs" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Themes</p>
-                      <StarRating rating={review.themes || 0} readOnly size="xs" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Characters</p>
-                      <StarRating rating={review.characters || 0} readOnly size="xs" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Worldbuilding</p>
-                      <StarRating rating={review.worldbuilding || 0} readOnly size="xs" />
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex justify-end space-x-2 mt-4">
-                    {isPro && (
-                      <Button
-                        variant={review.featured ? "outline" : "secondary"}
-                        size="sm"
-                        onClick={() => handleFeatureToggle(review.id, !!review.featured)}
-                        disabled={featureMutation.isPending}
-                      >
-                        {featureMutation.isPending ? "Updating..." : review.featured ? "Unfeature" : "Feature This Review"}
-                      </Button>
-                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
-          
-          {/* Pagination */}
-          {(page > 1 || hasMore) && (
-            <div className="flex justify-center space-x-2 mt-4">
-              {page > 1 && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setPage(page - 1)}
-                >
-                  Previous
-                </Button>
-              )}
-              {hasMore && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setPage(page + 1)}
-                >
-                  Next
-                </Button>
-              )}
-            </div>
-          )}
-        </>
+
+          <div className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => setPage(p => p + 1)}
+              disabled={!hasMore}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-muted rounded-lg p-6 text-center">
+          <p>No reviews found for this book.</p>
+        </div>
       )}
     </div>
   );
