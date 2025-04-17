@@ -978,15 +978,21 @@ router.get("/dashboard", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
     
+    // Ensure user has all required fields
+    if (!user.username || user.username === null) {
+      console.warn(`User ${userId} has null username, using fallback`);
+      user.username = "User";
+    }
+    
     // Get user reading statistics
-    const wishlistedBooks = await dbStorage.getWishlistedBooks(userId);
+    const wishlistedBooks = await dbStorage.getWishlistedBooks(userId) || [];
     const wishlisted = wishlistedBooks.length;
     
-    const completedBooks = await dbStorage.getCompletedBooks(userId);
+    const completedBooks = await dbStorage.getCompletedBooks(userId) || [];
     const completed = completedBooks.length;
     
     // Get user's ratings for averages
-    const userRatings = await dbStorage.getUserRatings(userId);
+    const userRatings = await dbStorage.getUserRatings(userId) || [];
     
     let averageRatings = null;
     if (userRatings.length > 0) {
@@ -1020,25 +1026,32 @@ router.get("/dashboard", async (req: Request, res: Response) => {
     }
     
     // Get recent reviews with book information
-    const recentReviewsRaw = await db
-      .select({
-        id: ratings.id,
-        review: ratings.review,
-        enjoyment: ratings.enjoyment,
-        writing: ratings.writing,
-        themes: ratings.themes,
-        characters: ratings.characters,
-        worldbuilding: ratings.worldbuilding,
-        createdAt: ratings.createdAt,
-        bookId: books.id,
-        bookTitle: books.title,
-        bookAuthor: books.author
-      })
-      .from(ratings)
-      .innerJoin(books, eq(ratings.bookId, books.id))
-      .where(eq(ratings.userId, userId))
-      .orderBy(desc(ratings.createdAt))
-      .limit(5);
+    let recentReviewsRaw = [];
+    try {
+      recentReviewsRaw = await db
+        .select({
+          id: ratings.id,
+          review: ratings.review,
+          enjoyment: ratings.enjoyment,
+          writing: ratings.writing,
+          themes: ratings.themes,
+          characters: ratings.characters,
+          worldbuilding: ratings.worldbuilding,
+          createdAt: ratings.createdAt,
+          bookId: books.id,
+          bookTitle: books.title,
+          // Note: author column no longer exists in books table
+          authorId: books.authorId
+        })
+        .from(ratings)
+        .innerJoin(books, eq(ratings.bookId, books.id))
+        .where(eq(ratings.userId, userId))
+        .orderBy(desc(ratings.createdAt))
+        .limit(5);
+    } catch (error) {
+      console.error("Error fetching recent reviews:", error);
+      // Continue with empty reviews rather than failing the whole request
+    }
       
     // Get all book IDs from the reviews to fetch their images
     const reviewBookIds = recentReviewsRaw.map(review => review.bookId);
@@ -1241,11 +1254,11 @@ router.get("/dashboard", async (req: Request, res: Response) => {
     // Format the response
     const dashboard = {
       user: {
-        username: user.username,
-        bio: user.bio,
-        profileImageUrl: user.profileImageUrl,
-        followingCount,
-        followerCount,
+        username: user.username || 'User',
+        bio: user.bio || null,
+        profileImageUrl: user.profileImageUrl || null,
+        followingCount: followingCount || 0,
+        followerCount: followerCount || 0,
         socialMediaLinks: user.socialMediaLinks || []
       },
       readingStats: {
