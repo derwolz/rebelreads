@@ -11,6 +11,11 @@ import { ReferralLink } from '@shared/schema';
  */
 export function extractDomain(url: string): string {
   try {
+    // Add protocol if it doesn't exist
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
     // Remove protocol and get hostname
     const hostname = new URL(url).hostname;
     
@@ -18,7 +23,20 @@ export function extractDomain(url: string): string {
     return hostname.replace(/^www\./, '');
   } catch (error) {
     console.error('Error extracting domain from URL:', error);
-    return '';
+    
+    // Try a simple regex approach as fallback
+    try {
+      // Extract what looks like a domain
+      const domainMatch = url.match(/([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)/);
+      if (domainMatch && domainMatch[1]) {
+        return domainMatch[1];
+      }
+    } catch (e) {
+      // If all else fails, just use the URL as is
+      return url;
+    }
+    
+    return url; // Return original URL if we can't extract the domain
   }
 }
 
@@ -32,20 +50,8 @@ export async function getFaviconUrl(url: string): Promise<string | null> {
     const domain = extractDomain(url);
     if (!domain) return null;
     
-    // First try Google's favicon service
-    const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-    
-    // Verify if the favicon exists
-    const response = await fetch(googleFaviconUrl, { method: 'HEAD' });
-    if (response.ok) {
-      return googleFaviconUrl;
-    }
-    
-    // If Google's service fails, try a direct favicon.ico approach
-    const directFaviconUrl = `https://${domain}/favicon.ico`;
-    
-    // We don't actually need to verify this one as we'll use it as a fallback
-    return directFaviconUrl;
+    // Use Google's favicon service which works reliably for most domains
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
   } catch (error) {
     console.error('Error fetching favicon URL:', error);
     return null;

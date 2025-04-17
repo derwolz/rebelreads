@@ -125,7 +125,7 @@ export default function HomePage() {
           <div className="flex-1 order-2 lg:order-1">
             {/* New Arrivals Section */}
             {newBooks && newBooks.length > 0 && (
-              <div className="max-w-[1024px] overflow-hidden mb-8">
+              <div className="max-w-[1024px]  mb-8">
                 <BookCarousel 
                   title="Recently Updated"
                   books={newBooks}

@@ -506,6 +506,8 @@
 @layer base {
   :root {
     --background: 0 0% 100%; /* #FFFFFF */
+    --background-rgb: 255, 255, 255; /* #102B3F */
+    --background-hs: 0 0%;
     --foreground: 214 61% 15%; /* #102B3F */
 
     --primary: 271 56% 63%; /* #A06CD5 */
@@ -565,6 +567,8 @@
 
   .dark {
     --background: 214 61% 15%; /* #102B3F */
+    --background-hs: 214 61%;
+    --background-rgb: 10, 43, 63; /* #102B3F */
     --foreground: 0 0% 100%; /* White */
 
     --primary: 0 0% 100%; /* #FFFFFF - text_header */

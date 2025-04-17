@@ -164,7 +164,7 @@ export function BookCard({ book }: { book: Book }) {
   }, [book.promoted]);
   return (
     <div
-      className="relative group"
+      className="relative group "
       style={{ width: "256px", height: "512px", maxWidth: "100%" }}
     >
       <TooltipProvider>
@@ -174,7 +174,7 @@ export function BookCard({ book }: { book: Book }) {
               id={`book-card-${book.id}`}
               className={`
                  cursor-pointer w-full rounded-none shadow-xl shadow-black/15
-                transition-all duration-300 ease-in-out
+                transition-all duration-300 ease-in-out overflow-hidden
                 ${showDetailed ? "absolute inset-0 scale-105 shadow-xl z-50" : "relative z-10"}
                 ${book.promoted ? "animate-pulse-shadow border-primary/20" : ""}
               `}

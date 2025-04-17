@@ -1,6 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { Book, Rating, calculateWeightedRating, RATING_CRITERIA, DEFAULT_RATING_WEIGHTS, RatingPreferences, GenreTaxonomy } from "@shared/schema";
+import {
+  Book,
+  Rating,
+  calculateWeightedRating,
+  RATING_CRITERIA,
+  DEFAULT_RATING_WEIGHTS,
+  RatingPreferences,
+  GenreTaxonomy,
+} from "@shared/schema";
 import { Heart } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
@@ -38,23 +46,26 @@ import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
 
 // Position-based weights for rating criteria
-const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
+const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
 
 // Helper function to get weight percentage for a criteria based on preferences
-function getWeightPercentage(criteriaName: string, prefs?: RatingPreferences): string {
+function getWeightPercentage(
+  criteriaName: string,
+  prefs?: RatingPreferences,
+): string {
   if (!prefs) {
     // Use default weights if no user preferences
     return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
   }
-  
+
   // If we have individual weight columns, use those directly
   if (prefs[criteriaName as keyof RatingPreferences] !== undefined) {
     // Convert any string values to numbers for percentage calculation
     const value = prefs[criteriaName as keyof RatingPreferences];
-    const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+    const numericValue = typeof value === "string" ? parseFloat(value) : value;
     return `${(Number(numericValue) * 100).toFixed(0)}%`;
   }
-  
+
   // Fall back to default weights if preference structure is unknown
   return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}% [[default]] `;
 }
@@ -73,64 +84,69 @@ export default function BookDetails() {
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${params?.id}/ratings`],
   });
-  
+
   // Fetch taxonomies for this book
-  const { data: bookTaxonomies = [] } = useQuery<{
-    taxonomyId: number;
-    type: string;
-    rank: number;
-    name: string;
-    description?: string;
-  }[]>({
+  const { data: bookTaxonomies = [] } = useQuery<
+    {
+      taxonomyId: number;
+      type: string;
+      rank: number;
+      name: string;
+      description?: string;
+    }[]
+  >({
     queryKey: [`/api/books/${params?.id}/taxonomies`],
     // This endpoint might return 401 if not authenticated, so we'll handle empty results
     enabled: !!book?.id,
   });
-  
+
   // Fetch user's rating preferences if logged in
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
-    queryKey: ['/api/rating-preferences'],
+    queryKey: ["/api/rating-preferences"],
     enabled: !!user,
   });
 
   // Record click-through when the page loads
   useEffect(() => {
     if (book?.id) {
-      apiRequest(
-        "POST",
-        `/api/books/${book.id}/click-through`,
-        {
-          source: "direct",
-          referrer: document.referrer,
-        },
-      );
+      apiRequest("POST", `/api/books/${book.id}/click-through`, {
+        source: "direct",
+        referrer: document.referrer,
+      });
     }
   }, [book?.id]);
 
   if (!book) return null;
-  
+
   // Calculate individual unweighted ratings per vector
   const unweightedRatings = ratings?.length
     ? {
-        enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-        writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
+        enjoyment:
+          ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
+        writing:
+          ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
         themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-        characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-        worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+        characters:
+          ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
+        worldbuilding:
+          ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
       }
     : null;
-    
+
   // Calculate overall weighted rating using user preferences and the unweighted individual ratings
   const averageRatings = unweightedRatings
     ? {
         ...unweightedRatings,
-        overall: calculateWeightedRating({
-          enjoyment: unweightedRatings.enjoyment,
-          writing: unweightedRatings.writing,
-          themes: unweightedRatings.themes,
-          characters: unweightedRatings.characters,
-          worldbuilding: unweightedRatings.worldbuilding
-        } as Rating, ratingPreferences)
+        overall: calculateWeightedRating(
+          {
+            enjoyment: unweightedRatings.enjoyment,
+            writing: unweightedRatings.writing,
+            themes: unweightedRatings.themes,
+            characters: unweightedRatings.characters,
+            worldbuilding: unweightedRatings.worldbuilding,
+          } as Rating,
+          ratingPreferences,
+        ),
       }
     : null;
 
@@ -165,28 +181,40 @@ export default function BookDetails() {
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
       // Then by rating - using user preferences
-      return calculateWeightedRating(b, ratingPreferences) - 
-             calculateWeightedRating(a, ratingPreferences);
+      return (
+        calculateWeightedRating(b, ratingPreferences) -
+        calculateWeightedRating(a, ratingPreferences)
+      );
     });
 
   return (
     <div className="relative">
       {/* Background image */}
-      {book.images?.find(img => img.imageType === "background") && (
-        <div 
-          className="fixed inset-0 w-full h-full z-[-1] opacity-30 pointer-events-none bg-no-repeat bg-cover bg-center"
+      {book.images?.find((img) => img.imageType === "background") && (
+        <div
+          className="fixed inset-0 w-full h-full z-[-2]  pointer-events-none bg-no-repeat bg-cover bg-center "
           style={{
-            backgroundImage: `url('${book.images.find(img => img.imageType === "background")?.imageUrl}')`,
+            backgroundImage: `url('${book.images.find((img) => img.imageType === "background")?.imageUrl}')`,
           }}
         />
       )}
+      <div
+        className="fixed inset-0 w-full h-full z-[-1]"
+        style={{
+          background:
+            "linear-gradient(to right, rgb(var(--background-rgb)), rgba(var(--background-rgb), 0.9), rgba(var(--background-rgb), 0.9), rgba(var(--background-rgb), 0.9), rgb(var(--background-rgb)))",
+        }}
+      />
       <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid md:grid-cols-3 gap-8">
           {/* Left column with book cover and action buttons */}
           <div>
             <div className="relative">
               <img
-                src={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
+                src={
+                  book.images?.find((img) => img.imageType === "book-detail")
+                    ?.imageUrl || "/images/placeholder-book.png"
+                }
                 alt={book.title}
                 className="w-full rounded-lg shadow-lg"
               />
@@ -226,15 +254,15 @@ export default function BookDetails() {
                         >
                           <Button variant="outline" className="w-full">
                             {link.faviconUrl && (
-                              <img 
-                                src={link.faviconUrl} 
+                              <img
+                                src={link.faviconUrl}
                                 alt=""
                                 className="w-4 h-4 mr-2 inline-block"
                               />
                             )}
                             {link.domain ? (
                               <span>
-                                {link.customName || link.retailer}{' '}
+                                {link.customName || link.retailer}{" "}
                                 <span className="text-xs text-muted-foreground">
                                   ({link.domain})
                                 </span>
@@ -275,37 +303,47 @@ export default function BookDetails() {
 
               <div className="flex flex-wrap gap-2 mb-4">
                 <TooltipProvider>
-                  {bookTaxonomies && bookTaxonomies.length > 0 ? (
-                    bookTaxonomies.map((taxonomy) => (
-                      <Tooltip key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
-                        <TooltipTrigger>
-                          <div>
-                            <Badge 
-                              variant={taxonomy.type === 'genre' ? 'default' : 
-                                      taxonomy.type === 'subgenre' ? 'secondary' : 
-                                      taxonomy.type === 'theme' ? 'outline' : 
-                                      'destructive'} 
-                              className="text-sm cursor-help"
-                            >
-                              {taxonomy.name}
-                            </Badge>
-                          </div>
-                        </TooltipTrigger>
-                        {taxonomy.description && (
-                          <TooltipContent className="max-w-xs">
-                            <p>{taxonomy.description}</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    ))
-                  ) : (
-                    // Fallback for compatibility with older books that still use the genres array
-                    Array.isArray((book as any).genres) && (book as any).genres.map((genre: string) => (
-                      <Badge key={genre} variant="secondary" className="text-sm">
-                        {genre}
-                      </Badge>
-                    ))
-                  )}
+                  {bookTaxonomies && bookTaxonomies.length > 0
+                    ? bookTaxonomies.map((taxonomy) => (
+                        <Tooltip
+                          key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}
+                        >
+                          <TooltipTrigger>
+                            <div>
+                              <Badge
+                                variant={
+                                  taxonomy.type === "genre"
+                                    ? "default"
+                                    : taxonomy.type === "subgenre"
+                                      ? "secondary"
+                                      : taxonomy.type === "theme"
+                                        ? "outline"
+                                        : "destructive"
+                                }
+                                className="text-sm cursor-help"
+                              >
+                                {taxonomy.name}
+                              </Badge>
+                            </div>
+                          </TooltipTrigger>
+                          {taxonomy.description && (
+                            <TooltipContent className="max-w-xs">
+                              <p>{taxonomy.description}</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      ))
+                    : // Fallback for compatibility with older books that still use the genres array
+                      Array.isArray((book as any).genres) &&
+                      (book as any).genres.map((genre: string) => (
+                        <Badge
+                          key={genre}
+                          variant="secondary"
+                          className="text-sm"
+                        >
+                          {genre}
+                        </Badge>
+                      ))}
                 </TooltipProvider>
               </div>
 
@@ -453,10 +491,7 @@ export default function BookDetails() {
                   {averageRatings ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings.overall}
-                          readOnly
-                        />
+                        <StarRating rating={averageRatings.overall} readOnly />
                         <span className="text-sm text-muted-foreground">
                           ({averageRatings.overall.toFixed(2)})
                         </span>
@@ -470,7 +505,12 @@ export default function BookDetails() {
                         ) : null}
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Enjoyment ({getWeightPercentage("enjoyment", ratingPreferences)})
+                            Enjoyment (
+                            {getWeightPercentage(
+                              "enjoyment",
+                              ratingPreferences,
+                            )}
+                            )
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -485,7 +525,8 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Writing ({getWeightPercentage("writing", ratingPreferences)})
+                            Writing (
+                            {getWeightPercentage("writing", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -500,7 +541,8 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Themes ({getWeightPercentage("themes", ratingPreferences)})
+                            Themes (
+                            {getWeightPercentage("themes", ratingPreferences)})
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -515,7 +557,12 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            Characters ({getWeightPercentage("characters", ratingPreferences)})
+                            Characters (
+                            {getWeightPercentage(
+                              "characters",
+                              ratingPreferences,
+                            )}
+                            )
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -530,7 +577,12 @@ export default function BookDetails() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">
-                            World Building ({getWeightPercentage("worldbuilding", ratingPreferences)})
+                            World Building (
+                            {getWeightPercentage(
+                              "worldbuilding",
+                              ratingPreferences,
+                            )}
+                            )
                           </span>
                           <div className="flex items-center gap-2">
                             <StarRating
@@ -555,7 +607,11 @@ export default function BookDetails() {
                       <HorizontalBannerAd
                         campaignId={1}
                         bookId={book.id}
-                        imageSrc={book.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"}
+                        imageSrc={
+                          book.images?.find(
+                            (img) => img.imageType === "book-detail",
+                          )?.imageUrl || "/images/placeholder-book.png"
+                        }
                         title={`Readers also enjoyed: ${book.title}`}
                         description="More from this author and similar titles you might enjoy."
                         ctaText="Explore More"
@@ -564,7 +620,7 @@ export default function BookDetails() {
                       />
                     </div>
                   )}
-                  
+
                   <div className="space-y-4 mt-8">
                     <h3 className="text-xl font-semibold">Reviews</h3>
                     <div className="max-w-3xl space-y-4">

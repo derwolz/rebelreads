@@ -42,18 +42,12 @@ export function BookCarousel({ title, books, isLoading }: BookCarouselProps) {
           <CarouselContent>
             {isLoading
               ? Array.from({ length: 6 }).map((_, i) => (
-                  <CarouselItem
-                    key={i}
-                    className="sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/6"
-                  >
+                  <CarouselItem key={i} className="">
                     <BookCardSkeleton />
                   </CarouselItem>
                 ))
               : books?.map((book) => (
-                  <CarouselItem
-                    key={book.id}
-                    className="sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/6"
-                  >
+                  <CarouselItem key={book.id} className="">
                     <div className="flex justify-center relative px-1">
                       <BookCard book={book} />
                     </div>
