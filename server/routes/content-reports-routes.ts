@@ -16,8 +16,16 @@ export function registerContentReportsRoutes(app: Express) {
   // Create a content report for a book
   app.post('/api/books/:id/report', async (req: Request, res: Response) => {
     try {
+      // Log session information for debugging
+      console.log('Session information:', {
+        hasSession: !!req.session,
+        userId: req.session?.userId,
+        user: req.user,
+        isAuthenticated: req.isAuthenticated?.()
+      });
+      
       // Verify user is authenticated
-      if (!req.session.userId) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
@@ -29,11 +37,11 @@ export function registerContentReportsRoutes(app: Express) {
         return res.status(404).json({ error: 'Book not found' });
       }
 
-      // Parse and validate the report data
+      // Parse and validate the report data  
       const validatedData = insertContentReportSchema.parse({
         ...req.body,
         bookId,
-        userId: req.session.userId
+        userId: req.user.id // Use the authenticated user's ID
       });
 
       // Create the content report
@@ -55,7 +63,7 @@ export function registerContentReportsRoutes(app: Express) {
   app.get('/api/admin/books/:id/reports', async (req: Request, res: Response) => {
     try {
       // Verify user is authenticated and is an admin
-      if (!req.session.userId || !req.session.isAdmin) {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.session.isAdmin) {
         return res.status(401).json({ error: 'Admin access required' });
       }
 
@@ -75,7 +83,7 @@ export function registerContentReportsRoutes(app: Express) {
   app.patch('/api/admin/reports/:id', async (req: Request, res: Response) => {
     try {
       // Verify user is authenticated and is an admin
-      if (!req.session.userId || !req.session.isAdmin) {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.session.isAdmin) {
         return res.status(401).json({ error: 'Admin access required' });
       }
 
@@ -105,7 +113,7 @@ export function registerContentReportsRoutes(app: Express) {
   app.get('/api/admin/reports', async (req: Request, res: Response) => {
     try {
       // Verify user is authenticated and is an admin
-      if (!req.session.userId || !req.session.isAdmin) {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.session.isAdmin) {
         return res.status(401).json({ error: 'Admin access required' });
       }
       
