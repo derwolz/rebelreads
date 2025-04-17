@@ -263,6 +263,30 @@ export default function BookDetails() {
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
+                    {/* Record impressions for all referral links when they are displayed */}
+                    {useEffect(() => {
+                      // Only record impressions if the book has referral links
+                      if (book.referralLinks && book.referralLinks.length > 0) {
+                        // Record impressions for each referral link
+                        book.referralLinks.forEach((link, index) => {
+                          apiRequest(
+                            "POST",
+                            "/api/ads/impressions",
+                            {
+                              campaignId: 0, // 0 indicates organic/referral link
+                              bookId: book.id,
+                              adType: "referral_link",
+                              position: `position_${index}`, // Track position in the list
+                              source: "book_details",
+                              clicked: false, // Just an impression, not clicked yet
+                            }
+                          ).catch(error => {
+                            console.error("Failed to record referral link impression:", error);
+                          });
+                        });
+                      }
+                    }, [book.id, book.referralLinks])}
+                    
                     {book.referralLinks.map(
                       (link: ReferralLink, index: number) => (
                         <a
@@ -277,6 +301,7 @@ export default function BookDetails() {
                             
                             // Process the click-through tracking
                             try {
+                              // Record book click-through
                               await apiRequest(
                                 "POST",
                                 `/api/books/${book.id}/click-through`,
@@ -284,6 +309,20 @@ export default function BookDetails() {
                                   source: `referral_${link.retailer.toLowerCase()}`,
                                   referrer: window.location.pathname,
                                 },
+                              );
+                              
+                              // Also record as an ad impression with clicked=true
+                              await apiRequest(
+                                "POST",
+                                "/api/ads/impressions",
+                                {
+                                  campaignId: 0, // 0 indicates organic/referral link
+                                  bookId: book.id,
+                                  adType: "referral_link",
+                                  position: `position_${index}`, // Track position in the list
+                                  source: "book_details",
+                                  clicked: true, // This was clicked
+                                }
                               );
                             } catch (error) {
                               console.error("Failed to record click-through:", error);
