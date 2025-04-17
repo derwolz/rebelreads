@@ -50,21 +50,18 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
     try {
       setIsSubmitting(true);
       
-      // Store beta key in session storage for the callback to retrieve
-      sessionStorage.setItem("google_auth_beta_key", data.betaKey);
-      
-      // Validate the beta key before redirecting
-      const response = await fetch("/api/beta/validate", {
+      // First, store the beta key in the server session
+      const storeBetaKeyResponse = await fetch("/api/auth/google/store-beta-key", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ key: data.betaKey }),
+        body: JSON.stringify({ betaKey: data.betaKey }),
       });
       
-      const result = await response.json();
+      const storeBetaKeyResult = await storeBetaKeyResponse.json();
       
-      if (result.isValid) {
+      if (storeBetaKeyResponse.ok && storeBetaKeyResult.success) {
         // Redirect to Google OAuth endpoint
         window.location.href = "/api/auth/google";
       } else {

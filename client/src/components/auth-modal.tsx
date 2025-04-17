@@ -97,242 +97,242 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
             </DialogDescription>
           </DialogHeader>
 
-        <div className="space-y-4 mb-6">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => handleSSOLogin('google')}
-          >
-            <SiGoogle className="mr-2" />
-            Continue with Google
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => handleSSOLogin('amazon')}
-          >
-            <SiAmazon className="mr-2" />
-            Continue with Amazon
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => handleSSOLogin('x')}
-          >
-            <SiX className="mr-2" />
-            Continue with X
-          </Button>
+          <div className="space-y-4 mb-6">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSSOLogin('google')}
+            >
+              <SiGoogle className="mr-2" />
+              Continue with Google
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSSOLogin('amazon')}
+            >
+              <SiAmazon className="mr-2" />
+              Continue with Amazon
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => handleSSOLogin('x')}
+            >
+              <SiX className="mr-2" />
+              Continue with X
+            </Button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="login">
-            <Form {...loginForm}>
-              <form
-                onSubmit={loginForm.handleSubmit((data) => {
-                  loginMutation.mutate(data, {
-                    onSuccess: (user) => handleSuccess(user, false)
-                  });
-                })}
-              >
-                <FormField
-                  control={loginForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email or Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your email or username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                {useBeta().isBetaActive && (
+            <TabsContent value="login">
+              <Form {...loginForm}>
+                <form
+                  onSubmit={loginForm.handleSubmit((data) => {
+                    loginMutation.mutate(data, {
+                      onSuccess: (user) => handleSuccess(user, false)
+                    });
+                  })}
+                >
                   <FormField
                     control={loginForm.control}
-                    name="betaKey"
+                    name="email"
                     render={({ field }) => (
-                      <FormItem className="mt-4">
-                        <FormLabel>Beta Key</FormLabel>
+                      <FormItem>
+                        <FormLabel>Email or Username</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your beta key" {...field} />
+                          <Input placeholder="Enter your email or username" {...field} />
                         </FormControl>
-                        <FormDescription>
-                          Required for first-time login during beta testing phase.
-                          Returning users who have already used a beta key don't need to enter it again.
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                )}
-                <Button className="w-full mt-6" type="submit">
-                  Login
-                </Button>
-              </form>
-            </Form>
-          </TabsContent>
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="mt-4">
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {isBetaActive && (
+                    <FormField
+                      control={loginForm.control}
+                      name="betaKey"
+                      render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>Beta Key</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your beta key" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Required for first-time login during beta testing phase.
+                            Returning users who have already used a beta key don't need to enter it again.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  <Button className="w-full mt-6" type="submit">
+                    Login
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
 
-          <TabsContent value="register">
-            <Form {...registerForm}>
-              <form
-                onSubmit={registerForm.handleSubmit((data) => {
-                  registerMutation.mutate(data, {
-                    onSuccess: (user) => handleSuccess(user, true)
-                  });
-                })}
-              >
-                <FormField
-                  control={registerForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={registerForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={registerForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={registerForm.control}
-                  name="isAuthor"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>I am registering as a:</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={(value) => field.onChange(value === "author")}
-                          defaultValue="reader"
-                          className="flex flex-col space-y-1"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="reader" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Reader
-                            </FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="author" />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              Author
-                            </FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormDescription>
-                        Authors will have access to additional features for publishing and managing books
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={registerForm.control}
-                  name="newsletterOptIn"
-                  render={({ field }) => (
-                    <FormItem className="mt-4 flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Subscribe to newsletter
-                        </FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                {useBeta().isBetaActive && (
+            <TabsContent value="register">
+              <Form {...registerForm}>
+                <form
+                  onSubmit={registerForm.handleSubmit((data) => {
+                    registerMutation.mutate(data, {
+                      onSuccess: (user) => handleSuccess(user, true)
+                    });
+                  })}
+                >
                   <FormField
                     control={registerForm.control}
-                    name="betaKey"
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="username"
                     render={({ field }) => (
                       <FormItem className="mt-4">
-                        <FormLabel>Beta Key</FormLabel>
+                        <FormLabel>Username</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your beta key" {...field} />
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="mt-4">
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="isAuthor"
+                    render={({ field }) => (
+                      <FormItem className="mt-4">
+                        <FormLabel>I am registering as a:</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={(value) => field.onChange(value === "author")}
+                            defaultValue="reader"
+                            className="flex flex-col space-y-1"
+                          >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="reader" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Reader
+                              </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="author" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Author
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
                         </FormControl>
                         <FormDescription>
-                          Required during beta testing phase
+                          Authors will have access to additional features for publishing and managing books
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                )}
-                <Button className="w-full mt-6" type="submit">
-                  Register
-                </Button>
-              </form>
-            </Form>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+                  <FormField
+                    control={registerForm.control}
+                    name="newsletterOptIn"
+                    render={({ field }) => (
+                      <FormItem className="mt-4 flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            Subscribe to newsletter
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  {isBetaActive && (
+                    <FormField
+                      control={registerForm.control}
+                      name="betaKey"
+                      render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>Beta Key</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your beta key" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Required during beta testing phase
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  <Button className="w-full mt-6" type="submit">
+                    Register
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
