@@ -867,6 +867,24 @@ router.post("/authors/:id/unfollow", async (req, res) => {
   res.sendStatus(200);
 });
 
+// Check if user is following an author
+router.get("/authors/:id/following", async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ isFollowing: false });
+
+  const authorId = parseInt(req.params.id);
+  if (isNaN(authorId)) {
+    return res.status(400).json({ error: "Invalid author ID" });
+  }
+
+  try {
+    const isFollowing = await dbStorage.isFollowing(req.user!.id, authorId);
+    res.json({ isFollowing });
+  } catch (error) {
+    console.error("Error checking follow status:", error);
+    res.status(500).json({ error: "Failed to check follow status", isFollowing: false });
+  }
+});
+
 // User dashboard endpoint
 router.get("/dashboard", async (req: Request, res: Response) => {
   // Check if user is authenticated, return empty structure if not
