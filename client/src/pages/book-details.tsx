@@ -109,9 +109,9 @@ export default function BookDetails() {
     enabled: !!book?.id, // Only run query when book is loaded
   });
   
-  // Fetch publisher information for this author
+  // Fetch publisher information for this author using public endpoint
   const { data: publisher } = useQuery<any>({
-    queryKey: [`/api/authors/${author?.id}/publisher`],
+    queryKey: [`/api/public/authors/${author?.id}/publisher`],
     enabled: !!author?.id, // Only run query when author is loaded
   });
 

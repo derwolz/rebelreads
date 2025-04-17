@@ -29,6 +29,7 @@ import cataloguePublisherBooksRoutes from "./routes/catalogue-routes-publisher-b
 import filterRoutes from "./routes/filter-routes";
 import simpleApiRoutes from "./routes/simple-api";
 import debugRoutes from "./routes/debug-routes";
+import publicAuthorRoutes from "./routes/public-author-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -46,6 +47,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       message: "Debug endpoints have been disabled for security reasons" 
     });
   });
+  
+  // Register public routes BEFORE auth to make them available without authentication
+  app.use("/api/public", publicAuthorRoutes);
   
   // Setup authentication
   setupAuth(app);
