@@ -1,16 +1,63 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
 import { Book } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
-import { BookGridCard } from "@/components/book-grid-card";
+import { BookCard } from "@/components/book-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { ChevronDown, Filter, Search, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 // Type for page parameters
 type DiscoverPageParams = {
   type?: string;
   id?: string;
+};
+
+// Type for taxonomy data
+type Taxonomy = {
+  id: number;
+  name: string;
+  category: 'genre' | 'subgenre' | 'trope' | 'theme';
+  importance: number;
+  enabled: boolean;
+};
+
+// Type for genre view taxonomy data
+type GenreViewTaxonomy = {
+  id: number;
+  name: string;
+  category: string;
+  taxonomyId: number;
 };
 
 export default function DiscoverPage() {
@@ -19,9 +66,16 @@ export default function DiscoverPage() {
   const params = useParams<DiscoverPageParams>();
   const [page, setPage] = useState(1);
   const [loadedBooks, setLoadedBooks] = useState<Book[]>([]);
+  const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const pageSize = 10;
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [yearRange, setYearRange] = useState<[number, number]>([1900, new Date().getFullYear()]);
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   // Extract the type from URL path
   const type = params.type || "general";
@@ -76,7 +130,7 @@ export default function DiscoverPage() {
     }
   };
 
-  // Get the genre view name if applicable
+  // Get the genre view name and taxonomies if applicable
   const { data: genreView } = useQuery({
     queryKey: ["/api/genres/view-info", id],
     queryFn: async () => {
@@ -91,6 +145,61 @@ export default function DiscoverPage() {
   });
 
   const genreViewName = genreView?.name;
+  
+  // Get taxonomies for the view
+  const { data: viewTaxonomies } = useQuery({
+    queryKey: ["/api/genres/view-taxonomies", id],
+    queryFn: async () => {
+      if (type === "genre" && id) {
+        try {
+          // This would be the actual endpoint in a real implementation
+          // For now, we'll simulate taxonomy data
+          return [
+            { id: 1, name: "Fantasy", category: "genre", taxonomyId: 1 },
+            { id: 2, name: "Epic Fantasy", category: "subgenre", taxonomyId: 2 },
+            { id: 3, name: "Urban Fantasy", category: "subgenre", taxonomyId: 3 },
+            { id: 4, name: "Magic School", category: "trope", taxonomyId: 4 },
+            { id: 5, name: "Dragon", category: "theme", taxonomyId: 5 },
+            { id: 6, name: "Coming of Age", category: "theme", taxonomyId: 6 },
+          ];
+        } catch (error) {
+          console.error("Error fetching taxonomies:", error);
+          return [];
+        }
+      }
+      return [];
+    },
+    enabled: type === "genre" && !!id,
+  });
+  
+  // Initialize the taxonomies for filtering
+  useEffect(() => {
+    if (viewTaxonomies && viewTaxonomies.length > 0) {
+      const formattedTaxonomies = viewTaxonomies.map(tax => ({
+        id: tax.taxonomyId,
+        name: tax.name,
+        category: tax.category as 'genre' | 'subgenre' | 'trope' | 'theme',
+        importance: 1.0, // Default importance
+        enabled: true, // All enabled by default
+      }));
+      
+      setTaxonomies(formattedTaxonomies);
+    }
+  }, [viewTaxonomies]);
+  
+  // Check if we're on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // Fetch books data
   const {
@@ -101,19 +210,59 @@ export default function DiscoverPage() {
     queryKey: [getEndpoint()],
     enabled: true,
   });
-
-  // Initialize loadedBooks when data is first fetched
+  
+  // Apply filters whenever they change
   useEffect(() => {
-    if (fetchedBooks && fetchedBooks.length > 0) {
-      // Load the first 20 books immediately
-      setLoadedBooks(fetchedBooks.slice(0, 20));
-      setHasMore(fetchedBooks.length > 20);
+    if (!fetchedBooks) return;
+    
+    let filtered = [...fetchedBooks];
+    
+    // Apply search term filter
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(book => 
+        book.title.toLowerCase().includes(term) || 
+        book.description?.toLowerCase().includes(term) ||
+        book.authorName?.toLowerCase().includes(term)
+      );
     }
-  }, [fetchedBooks]);
+    
+    // Apply year range filter
+    filtered = filtered.filter(book => {
+      if (!book.publishedDate) return true;
+      
+      const year = new Date(book.publishedDate).getFullYear();
+      return year >= yearRange[0] && year <= yearRange[1];
+    });
+    
+    // Apply taxonomy filters (in a real implementation)
+    // This would filter based on enabled taxonomies
+    if (taxonomies.length > 0) {
+      const enabledTaxonomyIds = taxonomies
+        .filter(tax => tax.enabled)
+        .map(tax => tax.id);
+        
+      if (enabledTaxonomyIds.length < taxonomies.length) {
+        // In a real implementation, this would filter books by taxonomy
+        // This is a simplified version without actual taxonomy filtering
+        console.log('Filtering by taxonomies:', enabledTaxonomyIds);
+      }
+    }
+    
+    setFilteredBooks(filtered);
+    
+    // Update loaded books for immediate display
+    setLoadedBooks(filtered.slice(0, Math.min(20, filtered.length)));
+    setHasMore(filtered.length > 20);
+    setPage(1);
+    
+  }, [fetchedBooks, searchTerm, yearRange, taxonomies]);
+
+  /* The initialization is now handled in the filter effect above */
 
   // Function to load more books
   const loadMoreBooks = () => {
-    if (!fetchedBooks || isLoadingMore) return;
+    if (!filteredBooks || isLoadingMore) return;
     
     setIsLoadingMore(true);
     
@@ -121,7 +270,7 @@ export default function DiscoverPage() {
     const nextPage = page + 1;
     const startIndex = page * pageSize;
     const endIndex = startIndex + pageSize;
-    const nextBooks = fetchedBooks.slice(startIndex, endIndex);
+    const nextBooks = filteredBooks.slice(startIndex, endIndex);
     
     // Add new books to loaded books
     if (nextBooks.length > 0) {
@@ -131,11 +280,44 @@ export default function DiscoverPage() {
         setIsLoadingMore(false);
         
         // Check if we have more books to load
-        setHasMore(endIndex < fetchedBooks.length);
+        setHasMore(endIndex < filteredBooks.length);
       }, 500); // Small delay for a smoother experience
     } else {
       setIsLoadingMore(false);
       setHasMore(false);
+    }
+  };
+  
+  // Toggle taxonomy enabled state
+  const toggleTaxonomy = (id: number) => {
+    setTaxonomies(prev => 
+      prev.map(tax => 
+        tax.id === id 
+          ? { ...tax, enabled: !tax.enabled } 
+          : tax
+      )
+    );
+  };
+  
+  // Toggle filter drawer/sheet
+  const toggleFilters = () => {
+    setIsFiltersOpen(!isFiltersOpen);
+  };
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setYearRange([1900, new Date().getFullYear()]);
+    setTaxonomies(prev => prev.map(tax => ({ ...tax, enabled: true })));
+    setActiveFilters([]);
+  };
+  
+  // Add or remove active filter
+  const toggleFilter = (filter: string) => {
+    if (activeFilters.includes(filter)) {
+      setActiveFilters(prev => prev.filter(f => f !== filter));
+    } else {
+      setActiveFilters(prev => [...prev, filter]);
     }
   };
 
@@ -171,9 +353,163 @@ export default function DiscoverPage() {
     }
   }, [user, type]);
 
+  // Render filter panel content based on device type
+  const renderFilterContent = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-medium mb-2">Search</h3>
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search titles, descriptions..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-lg font-medium mb-2">Publication Year</h3>
+          <div className="px-2">
+            <Slider
+              defaultValue={yearRange}
+              min={1900}
+              max={new Date().getFullYear()}
+              step={1}
+              value={yearRange}
+              onValueChange={(value) => setYearRange(value as [number, number])}
+              className="my-6"
+            />
+            <div className="flex items-center justify-between text-sm">
+              <span>{yearRange[0]}</span>
+              <span>{yearRange[1]}</span>
+            </div>
+          </div>
+        </div>
+        
+        {taxonomies.length > 0 && (
+          <Accordion type="single" collapsible defaultValue="taxonomy-filters">
+            <AccordionItem value="taxonomy-filters">
+              <AccordionTrigger>
+                Taxonomies
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3">
+                  {taxonomies.map((tax) => (
+                    <div key={tax.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`tax-${tax.id}`} 
+                        checked={tax.enabled}
+                        onCheckedChange={() => toggleTaxonomy(tax.id)}
+                      />
+                      <Label 
+                        htmlFor={`tax-${tax.id}`}
+                        className="flex items-center gap-2"
+                      >
+                        {tax.name}
+                        <Badge variant="outline" className="text-xs">
+                          {tax.category}
+                        </Badge>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
+        
+        <div className="pt-4 flex justify-end">
+          <Button variant="outline" onClick={clearFilters} className="w-full">
+            Clear All Filters
+          </Button>
+        </div>
+      </div>
+    );
+  };
+  
+  // Show the filters in a sheet (side-opening) on desktop
+  const DesktopFilters = () => (
+    <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="group flex items-center gap-1 hover:bg-transparent p-0"
+          onClick={toggleFilters}
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${isFiltersOpen ? 'rotate-180' : 'rotate-0'}`} />
+          <span className="text-lg font-semibold group-hover:underline">Filters</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[320px] sm:w-[540px]">
+        <SheetHeader>
+          <SheetTitle>Filter Books</SheetTitle>
+          <SheetDescription>
+            Narrow down your search using these filters.
+          </SheetDescription>
+        </SheetHeader>
+        {renderFilterContent()}
+      </SheetContent>
+    </Sheet>
+  );
+  
+  // Show the filters in a drawer (bottom-opening) on mobile
+  const MobileFilters = () => (
+    <Drawer open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+      <DrawerTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="group flex items-center gap-1 hover:bg-transparent p-0"
+          onClick={toggleFilters}
+        >
+          <ChevronDown className={`h-4 w-4 transition-transform ${isFiltersOpen ? 'rotate-180' : 'rotate-0'}`} />
+          <span className="text-lg font-semibold group-hover:underline">Filters</span>
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Filter Books</DrawerTitle>
+          <DrawerDescription>
+            Narrow down your search using these filters.
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="px-4 pb-8">
+          {renderFilterContent()}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+
   return (
     <div className="container mx-auto pt-8 pb-16">
-      <h1 className="text-4xl font-bold mb-8">{getTitle()}</h1>
+      <div className="flex flex-col gap-2 mb-8">
+        <h1 className="text-4xl font-bold">{getTitle()}</h1>
+        <div className="flex items-center gap-4">
+          {isMobile ? <MobileFilters /> : <DesktopFilters />}
+          
+          {activeFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {activeFilters.map(filter => (
+                <Badge key={filter} variant="secondary" className="flex items-center gap-1">
+                  {filter}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 hover:bg-transparent"
+                    onClick={() => toggleFilter(filter)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
@@ -202,7 +538,7 @@ export default function DiscoverPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
             {loadedBooks.map((book) => (
               <div key={book.id} className="relative">
-                <BookGridCard book={book} />
+                <BookCard book={book} />
               </div>
             ))}
           </div>
