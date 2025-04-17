@@ -2,6 +2,15 @@ import { Express, Request, Response } from 'express';
 import { dbStorage } from '../storage';
 import { insertContentReportSchema } from '../../shared/schema';
 import { z } from 'zod';
+import { SessionData } from 'express-session';
+
+// Extend express session to include our custom properties
+declare module 'express-session' {
+  interface SessionData {
+    userId?: number;
+    isAdmin?: boolean;
+  }
+}
 
 export function registerContentReportsRoutes(app: Express) {
   // Create a content report for a book

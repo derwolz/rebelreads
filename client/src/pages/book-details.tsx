@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { FollowButton } from "@/components/follow-button";
 import { format } from "date-fns";
-import { ChevronDown, ExternalLink, MoreVertical, Ban } from "lucide-react";
+import { ChevronDown, ExternalLink, MoreVertical, Ban, Flag } from "lucide-react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -60,6 +60,7 @@ import { ReviewCard } from "@/components/review-card";
 import { WishlistButton } from "@/components/wishlist-button";
 import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
+import { ContentReportDialog } from "@/components/content-report-dialog";
 
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
@@ -95,6 +96,7 @@ export default function BookDetails() {
   const [isGenresExpanded, setIsGenresExpanded] = useState(false);
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const { data: book } = useQuery<Book>({
     queryKey: [`/api/books/${params?.id}`],

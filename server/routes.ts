@@ -30,6 +30,7 @@ import filterRoutes from "./routes/filter-routes";
 import simpleApiRoutes from "./routes/simple-api";
 import debugRoutes from "./routes/debug-routes";
 import publicAuthorRoutes from "./routes/public-author-routes";
+import { registerContentReportsRoutes } from "./routes/content-reports-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -118,6 +119,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register content filter routes
   app.use("/api/filters", filterRoutes);
+  
+  // Register content reports routes directly
+  registerContentReportsRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
