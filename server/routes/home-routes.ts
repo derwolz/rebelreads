@@ -201,6 +201,10 @@ router.get("/authors/:id/publisher", async (req, res) => {
     
     // Get the publisher for this author
     const publisher = await dbStorage.getAuthorPublisher(authorId);
+    
+    // For debugging
+    console.log(`Publisher for author ${authorId}:`, publisher);
+    
     if (!publisher) {
       return res.json(null); // No publisher associated with this author
     }
