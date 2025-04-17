@@ -397,7 +397,7 @@ export function BookShelfSettings() {
   const createShelfMutation = useMutation({
     mutationFn: async (values: BookshelfFormValues) => {
       // Handle file upload if coverImageUrl is a File
-      if (values.coverImageUrl && typeof values.coverImageUrl !== "string") {
+      if (values.coverImageUrl instanceof File) {
         const formData = new FormData();
         formData.append('coverImage', values.coverImageUrl);
         
@@ -464,7 +464,7 @@ export function BookShelfSettings() {
   const updateShelfMutation = useMutation({
     mutationFn: async ({ id, values }: { id: number; values: BookshelfFormValues }) => {
       // Handle file upload if coverImageUrl is a File
-      if (values.coverImageUrl && typeof values.coverImageUrl !== "string") {
+      if (values.coverImageUrl instanceof File) {
         const formData = new FormData();
         formData.append('coverImage', values.coverImageUrl);
         
@@ -726,7 +726,7 @@ export function BookShelfSettings() {
                           <BookShelfCoverUploader
                             value={field.value || null}
                             onChange={(value) => {
-                              if (value && typeof values.coverImageUrl !== "string") {
+                              if (value instanceof File) {
                                 // We'll handle the file upload separately, because we need to save the file
                                 // to the server and get a URL back
                                 field.onChange(value);
@@ -816,7 +816,7 @@ export function BookShelfSettings() {
                       <BookShelfCoverUploader
                         value={field.value || null}
                         onChange={(value) => {
-                          if (value && typeof values.coverImageUrl !== "string") {
+                          if (value instanceof File) {
                             // We'll handle the file upload separately, because we need to save the file
                             // to the server and get a URL back
                             field.onChange(value);

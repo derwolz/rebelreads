@@ -1179,7 +1179,7 @@ export const bookShelves = pgTable("book_shelves", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
-  coverImageUrl: text("cover_image_url").default("/images/default-bookshelf-cover.png"),
+  coverImageUrl: text("cover_image_url").default("/images/default-bookshelf-cover.svg"),
   rank: integer("rank").notNull().default(0), // For drag and drop ordering
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
