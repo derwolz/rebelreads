@@ -1,4 +1,4 @@
-import { Book } from "@shared/schema";
+import { Book, Rating, RatingPreferences, calculateWeightedRating, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { StarRating } from "@/components/star-rating";
 import { Skeleton } from "@/components/ui/skeleton";
