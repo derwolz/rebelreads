@@ -97,17 +97,24 @@ export default function BookDetails() {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
 
   const { data: book } = useQuery<Book>({
-
     queryKey: [`/api/books/${params?.id}`],
   });
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${params?.id}/ratings`],
   });
+
   const { data: author } = useQuery<Author>({
     queryKey: [`/api/books/${book?.id}/author`],
     enabled: !!book?.id, // Only run query when book is loaded
   });
+  
+  // Fetch publisher information for this author
+  const { data: publisher } = useQuery<any>({
+    queryKey: [`/api/authors/${author?.id}/publisher`],
+    enabled: !!author?.id, // Only run query when author is loaded
+  });
+
   // Fetch taxonomies for this book
   const { data: bookTaxonomies = [] } = useQuery<
     {
@@ -428,6 +435,54 @@ export default function BookDetails() {
                                 <Ban className="mr-2 h-4 w-4" /> 
                                 Block book: {book.title}
                               </Button>
+                              
+                              {/* Display the publisher block option only if the author has a publisher */}
+                              {publisher && (
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start"
+                                  onClick={async () => {
+                                    if (!user) {
+                                      setAuthModalOpen(true);
+                                      return;
+                                    }
+                                    
+                                    try {
+                                      const res = await apiRequest(
+                                        "POST",
+                                        "/api/filters",
+                                        {
+                                          blockType: "publisher",
+                                          blockId: publisher.id,
+                                          blockName: publisher.name
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        toast({
+                                          title: "Publisher blocked",
+                                          description: `You won't see content from ${publisher.name} anymore.`
+                                        });
+                                        setBlockDialogOpen(false);
+                                      } else {
+                                        toast({
+                                          title: "Failed to block publisher",
+                                          description: "Please try again later.",
+                                          variant: "destructive"
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to block publisher. Please try again later.",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Ban className="mr-2 h-4 w-4" /> 
+                                  Block publisher: {publisher.name}
+                                </Button>
+                              )}
                               
                               {bookTaxonomies && bookTaxonomies.length > 0 && (
                                 <>

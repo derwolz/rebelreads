@@ -181,6 +181,37 @@ router.get("/books/:id/author", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/authors/:id/publisher
+ * Get publisher details for a specific author
+ * Public endpoint - no authentication required
+ */
+router.get("/authors/:id/publisher", async (req, res) => {
+  const authorId = parseInt(req.params.id);
+  if (isNaN(authorId)) {
+    return res.status(400).json({ error: "Invalid author ID" });
+  }
+
+  try {
+    // Check if the author exists first
+    const author = await dbStorage.getAuthor(authorId);
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    // Get the publisher for this author
+    const publisher = await dbStorage.getAuthorPublisher(authorId);
+    if (!publisher) {
+      return res.json(null); // No publisher associated with this author
+    }
+    
+    return res.json(publisher);
+  } catch (error) {
+    console.error("Error fetching author publisher:", error);
+    return res.status(500).json({ error: "Failed to fetch author publisher" });
+  }
+});
+
 router.post("/books/:id/ratings", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
