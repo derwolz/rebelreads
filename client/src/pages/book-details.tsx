@@ -232,7 +232,7 @@ export default function BookDetails() {
                 />
               </div>
             </div>
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 gap-2">
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
@@ -262,8 +262,8 @@ export default function BookDetails() {
                             Second link: secondary color
                             Rest: gray (muted) */}
                           <Button 
-                            variant={index === 0 ? "default" : index === 1 ? "secondary" : "outline"} 
-                            className="w-full"
+                            variant={index === 0 ? "default" : index === 1 ? "outline" : "ghost"} 
+                            className="w-full my-1"
                           >
                             {link.faviconUrl && (
                               <img
