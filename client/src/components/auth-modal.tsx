@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { GoogleBetaAuthDialog } from "./google-beta-auth-dialog";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -35,7 +37,9 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
   const { user, loginMutation, registerMutation } = useAuth();
+  const { isBetaActive } = useBeta();
   const [, setLocation] = useLocation();
+  const [isGoogleBetaDialogOpen, setIsGoogleBetaDialogOpen] = useState(false);
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -56,8 +60,13 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
 
   const handleSSOLogin = (provider: string) => {
     if (provider === 'google') {
-      // Use relative URL for development
-      window.location.href = '/api/auth/google';
+      if (isBetaActive) {
+        // If beta is active, show the beta key dialog first
+        setIsGoogleBetaDialogOpen(true);
+      } else {
+        // If not in beta, proceed directly to Google OAuth
+        window.location.href = '/api/auth/google';
+      }
     } else {
       // For other providers that aren't implemented yet
       console.log(`Login with ${provider} - Not yet implemented`);
@@ -73,14 +82,20 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Welcome Back</DialogTitle>
-          <DialogDescription>
-            Sign in to your account or create a new one
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <GoogleBetaAuthDialog 
+        isOpen={isGoogleBetaDialogOpen} 
+        onOpenChange={setIsGoogleBetaDialogOpen} 
+      />
+      
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Welcome Back</DialogTitle>
+            <DialogDescription>
+              Sign in to your account or create a new one
+            </DialogDescription>
+          </DialogHeader>
 
         <div className="space-y-4 mb-6">
           <Button
@@ -318,5 +333,6 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
