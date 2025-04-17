@@ -162,8 +162,23 @@ router.get("/dashboard", async (req: Request, res: Response) => {
   }
 
   try {
-    // Get all books by this author
-    const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
+    // First get the author information
+    const author = await dbStorage.getAuthor(req.user.id);
+    
+    if (!author) {
+      console.log(`No author record found for user ${req.user.id}`);
+      return res.json({
+        totalReviews: 0,
+        averageRating: 0,
+        recentReports: 0,
+      });
+    }
+    
+    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
+    // Get all books by this author - use author.id instead of req.user.id
+    const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+    console.log(`Author books found for author ID ${author.id}:`, authorBooks.length, authorBooks.map((b: any) => b.id));
     
     if (!authorBooks || authorBooks.length === 0) {
       return res.json({
@@ -253,11 +268,25 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    console.log("Fetching real reviews for author:", req.user.id);
+    console.log("Fetching real reviews for author user ID:", req.user.id);
     
-    // Get all books by this author
-    const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
-    console.log("Author books found:", authorBooks.length, authorBooks.map((b: any) => b.id));
+    // First get the author information since author.id may not be the same as user.id
+    const author = await dbStorage.getAuthor(req.user.id);
+    
+    if (!author) {
+      console.log(`No author record found for user ${req.user.id}`);
+      return res.json({
+        reviews: [],
+        hasMore: false,
+        totalPages: 0
+      });
+    }
+    
+    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
+    // Get all books by this author - use author.id instead of req.user.id
+    const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+    console.log(`Author books found for author ID ${author.id}:`, authorBooks.length, authorBooks.map((b: any) => b.id));
     
     if (!authorBooks || authorBooks.length === 0) {
       console.log("No author books found, returning empty result");
@@ -366,11 +395,21 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     
     console.log(`Fetching reviews for book ID: ${bookId}, page: ${page}`);
     
+    // Get the actual author ID first
+    const author = await dbStorage.getAuthor(req.user.id);
+    
+    if (!author) {
+      console.log(`No author record found for user ${req.user.id}`);
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
     // Verify that this book belongs to the author
-    const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
+    const authorBooks = await dbStorage.getBooksByAuthor(author.id);
     const bookIds = authorBooks.map((book: { id: number }) => book.id);
     
-    console.log("Author book IDs:", bookIds);
+    console.log(`Author book IDs for author ID ${author.id}:`, bookIds);
     
     // For development purposes, allow access to all books 
     // Remove this in production and uncomment the check below
