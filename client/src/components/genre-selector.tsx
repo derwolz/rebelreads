@@ -366,10 +366,10 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
       ref={setNodeRef}
       style={{
         ...style,
-        background: `linear-gradient(to bottom, #3366cc, #000000 ${Math.min(100, 20 + 80 * parseFloat(calculateImportance(taxonomy.rank)))}%)`,
+        background: `linear-gradient(to bottom, rgba(var(--background-rgb),.5), rgba(var(--foreground-rgb), ${Math.min(0,100- 100 * parseFloat(calculateImportance(taxonomy.rank)))}%))`,
       }}
       className={cn(
-        "flex items-center justify-between p-2 border rounded-md text-white",
+        "flex items-center justify-between p-2 border rounded-md text-tertiary",
         isDragging && "opacity-80 shadow-lg"
       )}
       title={`Rank: ${taxonomy.rank}, Importance: ${calculateImportance(taxonomy.rank)}`}
@@ -508,8 +508,8 @@ function TaxonomyGenreSelector({
   };
 
   // Check if a taxonomy type has reached its maximum allowed count
-  // Maximum total taxonomies allowed
-  const MAX_TOTAL_TAXONOMIES = restrictLimits ? 20 : 100; // Set a higher limit when restrictLimits is false
+  // Maximum total taxonomies allowed - always 20
+  const MAX_TOTAL_TAXONOMIES = 20;
   
   // Calculate remaining taxonomy slots
   const getRemainingSlots = () => {
@@ -668,28 +668,12 @@ function TaxonomyGenreSelector({
                   </TabsTrigger>
                 </TabsList>
                 
-                {/* Total slots remaining indicator */}
-                <div className="flex justify-end mb-2">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700">
-                    <span className="text-xl font-bold">{getRemainingSlots()}</span>
+                {/* Warning counter only shown for strict mode with less than 5 selections */}
+                {restrictLimits && selectedTaxonomies.length < 5 && (
+                  <div className={`text-sm font-medium mb-4 text-amber-500`}>
+                    Total taxonomies selected: {selectedTaxonomies.length}/5 (need to select at least 5 total)
                   </div>
-                </div>
-                
-                {/* Show total taxonomies counter when restricted or not */}
-                <div className={`text-sm font-medium mb-4 ${
-                  restrictLimits && selectedTaxonomies.length >= MAX_TOTAL_TAXONOMIES 
-                    ? "text-red-500" 
-                    : restrictLimits && selectedTaxonomies.length < 5 
-                      ? "text-amber-500" 
-                      : "text-green-600"
-                }`}>
-                  {restrictLimits && selectedTaxonomies.length < 5 
-                    ? `Total taxonomies selected: ${selectedTaxonomies.length}/5 (need to select at least 5 total)` 
-                    : restrictLimits
-                      ? `Total taxonomies: ${selectedTaxonomies.length}/${MAX_TOTAL_TAXONOMIES}`
-                      : `Total taxonomies selected: ${selectedTaxonomies.length} (no limit)`
-                  }
-                </div>
+                )}
                 
                 <div className="relative mb-4">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -697,24 +681,29 @@ function TaxonomyGenreSelector({
                     placeholder={`Search ${tab}s...`}
                     value={search}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                    className="pl-8"
+                    className="pl-8 pr-14"
                   />
+                  
+                  {/* Total slots remaining indicator, now positioned on the search bar */}
+                  <div className="absolute -right-2 -top-1">
+                    <div className="flex items-center justify-center w-12  h-12 rounded-full   border-2 border-gray-700/90 dark:border-gray-900"
+                      style={{background:"hsl(var(--background))", border:"1px solid hsl(var(--primary-600))"}}
+                      >
+                      <span className="text-md font-bold">{getRemainingSlots()}</span>
+                    </div>
+                  </div>
                 </div>
                 
                 <TabsContent value="genre" className="m-0">
-                  <div className="font-medium mb-2">
-                    {restrictLimits 
-                      ? "Select up to 2 genres" 
-                      : "Select as many genres as you want"}
-                  </div>
-                  <ScrollArea className="h-64 border rounded-md p-2">
+ 
+                  <ScrollArea className="h-72 border  p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((genre) => (
                         <Button
                           key={genre.id}
                           variant="outline"
                           size="sm"
-                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          className=" text-white rounded-full hover:text-white"
                           onClick={() => addTaxonomy(genre)}
                           disabled={isMaxReached("genre")}
                           title={genre.description || genre.name}
@@ -732,19 +721,15 @@ function TaxonomyGenreSelector({
                 </TabsContent>
                 
                 <TabsContent value="subgenre" className="m-0">
-                  <div className="font-medium mb-2">
-                    {restrictLimits 
-                      ? "Select up to 5 subgenres (optional)" 
-                      : "Select as many subgenres as you want"}
-                  </div>
-                  <ScrollArea className="h-64 border rounded-md p-2">
+ 
+                  <ScrollArea className="h-72 border  p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((subgenre) => (
                         <Button
                           key={subgenre.id}
                           variant="outline"
                           size="sm"
-                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          className="text-white rounded-full hover:text-white"
                           onClick={() => addTaxonomy(subgenre)}
                           disabled={isMaxReached("subgenre")}
                           title={subgenre.description || subgenre.name}
@@ -762,19 +747,15 @@ function TaxonomyGenreSelector({
                 </TabsContent>
                 
                 <TabsContent value="theme" className="m-0">
-                  <div className="font-medium mb-2">
-                    {restrictLimits 
-                      ? "Select up to 6 themes" 
-                      : "Select as many themes as you want"}
-                  </div>
-                  <ScrollArea className="h-64 border rounded-md p-2">
+  
+                  <ScrollArea className="h-72 border   p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((theme) => (
                         <Button
                           key={theme.id}
                           variant="outline"
                           size="sm"
-                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          className="text-white rounded-full hover:text-white"
                           onClick={() => addTaxonomy(theme)}
                           disabled={isMaxReached("theme")}
                           title={theme.description || theme.name}
@@ -792,19 +773,15 @@ function TaxonomyGenreSelector({
                 </TabsContent>
                 
                 <TabsContent value="trope" className="m-0">
-                  <div className="font-medium mb-2">
-                    {restrictLimits 
-                      ? "Select up to 7 tropes" 
-                      : "Select as many tropes as you want"}
-                  </div>
-                  <ScrollArea className="h-64 border rounded-md p-2">
+
+                  <ScrollArea className="h-72 border  p-2">
                     <div className="flex flex-row flex-wrap gap-2">
                       {filteredTaxonomies().map((trope) => (
                         <Button
                           key={trope.id}
                           variant="outline"
                           size="sm"
-                          className="bg-gray-800/90 text-white border-gray-700 hover:bg-gray-700/90 hover:text-white"
+                          className=" text-white rounded-full  hover:text-white"
                           onClick={() => addTaxonomy(trope)}
                           disabled={isMaxReached("trope")}
                           title={trope.description || trope.name}
@@ -846,8 +823,8 @@ function TaxonomyGenreSelector({
                     items={selectedTaxonomies.map((item, index) => `${item.type}-${item.taxonomyId}-${index}`)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <ScrollArea className="h-96 pr-4">
-                      <div className="space-y-2">
+                    <ScrollArea className="h-96 border rounded pl-2 pr-4">
+                      <div className="space-y-2 my-1">
                         {selectedTaxonomies.map((taxonomy, index) => (
                           <SortableGenreItem 
                             key={`${taxonomy.type}-${taxonomy.taxonomyId}-${index}`}
