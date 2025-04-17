@@ -72,13 +72,11 @@ type Note = {
 // Form schema for creating/updating a bookshelf
 const bookshelfFormSchema = z.object({
   title: z.string().min(1, "Bookshelf title is required"),
-  coverImageUrl: z.string().optional(),
+  coverImageUrl: z.union([z.string(), z.instanceof(File), z.null()]).optional(),
 });
 
-// We need to extend the generated type to allow for File objects during form handling
-type BookshelfFormValues = z.infer<typeof bookshelfFormSchema> & {
-  coverImageUrl?: string | File | null;
-};
+// Type for form values
+type BookshelfFormValues = z.infer<typeof bookshelfFormSchema>;
 
 // Form schema for notes
 const noteFormSchema = z.object({

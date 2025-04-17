@@ -711,7 +711,7 @@ router.post("/api/bookshelves/:id/cover", bookshelfCoverUpload.single("coverImag
     const [updatedShelf] = await db
       .update(bookShelves)
       .set({
-        coverImageUrl,
+        coverImageUrl: coverImageUrl,
         updatedAt: new Date()
       })
       .where(and(

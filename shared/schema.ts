@@ -1310,7 +1310,7 @@ export const insertBookShelfSchema = createInsertSchema(bookShelves).omit({
   rank: true, // We'll handle rank in the API
 }).extend({
   title: z.string().min(1, "Bookshelf title is required"),
-  coverImageUrl: z.string().optional()
+  coverImageUrl: z.union([z.string(), z.instanceof(File), z.null()]).optional()
 });
 
 export const insertShelfBookSchema = createInsertSchema(shelfBooks).omit({
