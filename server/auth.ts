@@ -162,7 +162,7 @@ export function setupAuth(app: Express) {
         done(null, {
           ...user,
           isAuthor: false,
-          isPro: false
+          isPro: user.is_pro || false // Set isPro based on user's is_pro property even for non-authors
         });
       }
     } else {
