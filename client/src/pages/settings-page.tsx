@@ -63,6 +63,7 @@ import {
 } from "@/components/ui/select";
 import { AppearanceSettings } from "@/components/appearance-settings";
 import { ContentFiltersSettings } from "@/components/content-filters-settings";
+import { BookShelfSettings } from "@/components/book-shelf-settings";
 import { cn } from "@/lib/utils";
 
 interface SortableReferralLinkProps {

@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   ChevronRight,
   Filter,
+  BookOpenCheck,
 } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState } from "react";
@@ -108,6 +109,13 @@ export function SettingsSidebar({
         icon={<Filter className="h-4 w-4" />}
       >
         Content Filters
+      </NavItem>
+      <NavItem
+        href="/settings/book-shelf"
+        active={location === "/settings/book-shelf"}
+        icon={<BookOpenCheck className="h-4 w-4" />}
+      >
+        Book Shelves
       </NavItem>
     </>
   );
