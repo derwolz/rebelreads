@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -180,6 +180,19 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [showCoverUpload, setShowCoverUpload] = useState(!book);
+  
+  // Fetch book taxonomies when editing a book
+  const { data: bookTaxonomies } = useQuery<TaxonomyItem[]>({
+    queryKey: ["/api/books", book?.id, "taxonomies"],
+    queryFn: async () => {
+      if (!book?.id) return [];
+      const response = await fetch(`/api/books/${book.id}/taxonomies`);
+      if (!response.ok) throw new Error("Failed to fetch book taxonomies");
+      return response.json();
+    },
+    enabled: !!book?.id, // Only run this query if we have a book ID
+  });
+  
   const [formData, setFormData] = useState<FormData>(() => {
     // Create default empty book images structure
     const createEmptyBookImages = (): Record<typeof IMAGE_TYPES[number], BookImageFile> => {
@@ -293,6 +306,17 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   });
   const [characterInput, setCharacterInput] = useState("");
   const [awardInput, setAwardInput] = useState("");
+  
+  // Update form data when book taxonomies are loaded
+  useEffect(() => {
+    if (bookTaxonomies && bookTaxonomies.length > 0) {
+      console.log("Loaded book taxonomies:", bookTaxonomies);
+      setFormData(prevData => ({
+        ...prevData,
+        genreTaxonomies: bookTaxonomies
+      }));
+    }
+  }, [bookTaxonomies]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
