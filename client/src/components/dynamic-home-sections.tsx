@@ -4,6 +4,7 @@ import type { Book } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { BookCarousel } from "./book-carousel";
 import { BookGrid } from "./book-grid";
+import { useLocation } from "wouter";
 
 // Define the HomepageSection interface based on what's in the schema
 interface HomepageSection {
@@ -58,6 +59,7 @@ export function DynamicHomeSections({ sections: manualSections }: DynamicHomeSec
 // Individual section component
 function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   
   // Type guard to check if user is authenticated for certain section types
   if (!user && ["authors_you_follow", "wishlist", "reviewed", "completed"].includes(section.type)) {
@@ -124,19 +126,60 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
     // This is a placeholder and would need to be implemented properly
     displayBooks = books.slice(0, section.itemCount);
   }
-  console.log("Display Books:",section.title,displayBooks)
+  
+  // Define what happens when "Discover More" is clicked
+  const handleDiscoverMore = () => {
+    let searchPath = '';
+    
+    switch (section.type) {
+      case "authors_you_follow":
+        searchPath = '/discover/followed-authors';
+        break;
+      case "wishlist":
+        searchPath = '/discover/wishlist';
+        break;
+      case "reviewed":
+        searchPath = '/discover/reviewed';
+        break;
+      case "completed":
+        searchPath = '/discover/completed';
+        break;
+      case "popular":
+        searchPath = '/discover/popular';
+        break;
+      case "you_may_also_like":
+        searchPath = '/discover/recommendations';
+        break;
+      case "unreviewed":
+        searchPath = '/discover/to-review';
+        break;
+      case "custom_genre_view":
+        // For genre views, include the view ID
+        searchPath = section.customViewId 
+          ? `/discover/genre/${section.customViewId}` 
+          : '/discover';
+        break;
+      default:
+        searchPath = '/discover';
+    }
+    
+    navigate(searchPath);
+  };
+  
   // Render the section with the appropriate display mode
   return section.displayMode === "carousel" ? (
     <BookCarousel 
       title={section.title} 
       books={displayBooks} 
-      isLoading={isLoading} 
+      isLoading={isLoading}
+      onDiscoverMore={handleDiscoverMore}
     />
   ) : (
     <BookGrid 
       title={section.title} 
       books={displayBooks} 
-      isLoading={isLoading} 
+      isLoading={isLoading}
+      onDiscoverMore={handleDiscoverMore}
     />
   );
 }

@@ -23,9 +23,10 @@ interface BookCarouselProps {
   title: string;
   books?: Book[];
   isLoading: boolean;
+  onDiscoverMore?: () => void;
 }
 
-export function BookCarousel({ title, books, isLoading }: BookCarouselProps) {
+export function BookCarousel({ title, books, isLoading, onDiscoverMore }: BookCarouselProps) {
   // Define custom options for Embla Carousel that allow flexibility
   const carouselOptions = {
     align: "start" as const,
@@ -36,7 +37,31 @@ export function BookCarousel({ title, books, isLoading }: BookCarouselProps) {
 
   return (
     <section className="mb-12 relative">
-      <h2 className="text-3xl font-bold mb-6">{title}</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">{title}</h2>
+        {onDiscoverMore && (
+          <button 
+            onClick={onDiscoverMore}
+            className="text-primary hover:underline font-medium flex items-center" 
+          >
+            Discover More
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              className="ml-1"
+            >
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </button>
+        )}
+      </div>
       <div className="max-w-[95vw] mx-auto">
         <Carousel className="w-full" opts={carouselOptions}>
           <CarouselContent>

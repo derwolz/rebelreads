@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -38,6 +38,7 @@ import HowItWorks from "@/pages/how-it-works";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
+import DiscoverPage from "@/pages/discover-page";
 
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
@@ -100,6 +101,11 @@ function Router() {
         <Route path="/publishers/:id" component={PublisherPage} />
         <Route path="/ad-showcase" component={AdShowcasePage} />
         <Route path="/test-images" component={TestImages} />
+        
+        {/* Discover routes - new taxonomy-based search pages */}
+        <Route path="/discover" component={DiscoverPage} />
+        <Route path="/discover/:type" component={DiscoverPage} />
+        <Route path="/discover/:type/:id" component={DiscoverPage} />
 
         {/* Protected routes (always require login) */}
         <ProtectedRoute path="/settings" component={SettingsPage} />
