@@ -94,9 +94,9 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Optional: Enter Beta Key for Google Sign-In</DialogTitle>
+          <DialogTitle>Beta Key Required for Google Sign-In</DialogTitle>
           <DialogDescription>
-            If you have a beta key, enter it below. You can still continue with Google without a beta key, but you may have limited access.
+            A beta key is required to access the application. Without a valid beta key, you will not be able to sign in. If you don't have a beta key, please contact the administrator.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,7 +112,7 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                     <Input placeholder="Enter your beta key" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Optional: Enter your beta key for full access. If you don't have one, you can still sign in but with limited access.
+                    Required: Enter your beta key to access the application. You will not be able to sign in without a valid beta key.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -127,21 +127,12 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                 Cancel
               </Button>
               <Button 
-                type="button"
-                onClick={() => window.location.href = '/api/auth/google'}
-                variant="outline"
-                className="gap-2"
-              >
-                <SiGoogle />
-                Continue without beta key
-              </Button>
-              <Button 
                 type="submit"
                 disabled={isSubmitting}
                 className="gap-2"
               >
                 <SiGoogle />
-                Continue with beta key
+                Sign in with Google + Beta Key
               </Button>
             </div>
           </form>
