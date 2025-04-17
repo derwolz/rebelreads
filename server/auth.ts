@@ -360,35 +360,38 @@ export function setupAuth(app: Express) {
         const isBetaActive = await dbStorage.isBetaActive();
         
         if (isBetaActive && req.user) {
-          // Get the beta key from session if it exists
-          const pendingBetaKey = (req.session as any).google_auth_beta_key;
-          
-          // Check if the user has used a beta key before
+          // First check if the user already has a beta key tied to their account
           let hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(req.user.id);
           
-          // If they haven't used a beta key before but provided one with this login, validate and record it
-          if (!hasUsedBetaKey && pendingBetaKey) {
-            const isValidKey = await dbStorage.validateBetaKey(pendingBetaKey);
+          // If they don't already have a key, check if they provided one with this login
+          if (!hasUsedBetaKey) {
+            // Get the beta key from session if it exists
+            const pendingBetaKey = (req.session as any).pending_beta_key;
             
-            if (isValidKey) {
-              // Record the beta key usage
-              const betaKeyObj = await dbStorage.getBetaKeyByKey(pendingBetaKey);
-              if (betaKeyObj) {
-                await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user.id);
-                hasUsedBetaKey = true;
+            // If they provided a key with this login, validate and record it
+            if (pendingBetaKey) {
+              const isValidKey = await dbStorage.validateBetaKey(pendingBetaKey);
+              
+              if (isValidKey) {
+                // Record the beta key usage
+                const betaKeyObj = await dbStorage.getBetaKeyByKey(pendingBetaKey);
+                if (betaKeyObj) {
+                  await dbStorage.recordBetaKeyUsage(betaKeyObj.id, req.user.id);
+                  hasUsedBetaKey = true;
+                }
               }
+              
+              // Clear the pending beta key from session
+              delete (req.session as any).pending_beta_key;
             }
             
-            // Clear the pending beta key
-            delete (req.session as any).google_auth_beta_key;
-          }
-          
-          if (!hasUsedBetaKey) {
-            // User doesn't have beta access - log them out and redirect to login page
-            req.logout(() => {
-              return res.redirect("/login?error=nobeta");
-            });
-            return;
+            // If they still don't have a valid beta key, log them out and redirect to landing page
+            if (!hasUsedBetaKey) {
+              req.logout(() => {
+                return res.redirect("/landing");
+              });
+              return;
+            }
           }
         }
         
@@ -400,7 +403,7 @@ export function setupAuth(app: Express) {
         }
       } catch (error) {
         console.error("Google OAuth callback error:", error);
-        res.redirect("/login?error=oauth");
+        res.redirect("/landing");
       }
     }
   );
@@ -410,19 +413,17 @@ export function setupAuth(app: Express) {
     try {
       const { betaKey } = req.body;
       
-      if (!betaKey) {
-        return res.status(400).json({ error: "Beta key is required" });
+      // Beta key is optional now, but if provided, validate it
+      if (betaKey) {
+        const isValid = await dbStorage.validateBetaKey(betaKey);
+        
+        if (!isValid) {
+          return res.status(400).json({ error: "Invalid beta key" });
+        }
       }
       
-      // Validate the beta key
-      const isValid = await dbStorage.validateBetaKey(betaKey);
-      
-      if (!isValid) {
-        return res.status(400).json({ error: "Invalid beta key" });
-      }
-      
-      // Store the beta key in session for later use
-      (req.session as any).google_auth_beta_key = betaKey;
+      // Store the beta key in session for later use (even if empty)
+      (req.session as any).pending_beta_key = betaKey || "";
       
       res.status(200).json({ success: true });
     } catch (error) {

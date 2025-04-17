@@ -23,9 +23,9 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { SiGoogle } from "react-icons/si";
 
-// Schema for beta key validation
+// Schema for beta key validation - optional
 const betaKeySchema = z.object({
-  betaKey: z.string().min(1, "Beta key is required")
+  betaKey: z.string().optional()
 });
 
 type BetaKeyFormData = z.infer<typeof betaKeySchema>;
@@ -94,9 +94,9 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Beta Key Required for Google Sign-In</DialogTitle>
+          <DialogTitle>Beta Key Required for Access</DialogTitle>
           <DialogDescription>
-            A beta key is required to access the application. Without a valid beta key, you will not be able to sign in. If you don't have a beta key, please contact the administrator.
+            A beta key is required to access the application. If you already have a beta key associated with your account, you can continue signing in without entering it again. Otherwise, please enter your beta key below.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,7 +112,7 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                     <Input placeholder="Enter your beta key" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Required: Enter your beta key to access the application. You will not be able to sign in without a valid beta key.
+                    Optional if you already have a beta key associated with your account. Otherwise, you must enter a valid beta key to access the application.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -132,7 +132,7 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                 className="gap-2"
               >
                 <SiGoogle />
-                Sign in with Google + Beta Key
+                Continue with Google
               </Button>
             </div>
           </form>
