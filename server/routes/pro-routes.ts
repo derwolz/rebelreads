@@ -16,8 +16,8 @@ router.get("/status", async (req: Request, res: Response) => {
     const user = await db.query.users.findFirst({
       where: eq(users.id, req.user.id),
       columns: {
-        isPro: true,
-        proExpiresAt: true,
+        is_pro: true,
+        pro_expires_at: true,
       },
     });
 
@@ -26,11 +26,11 @@ router.get("/status", async (req: Request, res: Response) => {
     }
 
     // Check if pro has expired
-    const isProExpired = user.proExpiresAt && new Date(user.proExpiresAt) < new Date();
+    const isProExpired = user.pro_expires_at && new Date(user.pro_expires_at) < new Date();
 
     return res.json({
-      isPro: user.isPro && !isProExpired,
-      expiresAt: user.proExpiresAt,
+      isPro: user.is_pro && !isProExpired,
+      expiresAt: user.pro_expires_at,
     });
   } catch (error) {
     console.error("Error checking pro status:", error);
@@ -76,8 +76,8 @@ router.post("/upgrade", async (req: Request, res: Response) => {
     // Update user as Pro
     await db.update(users)
       .set({
-        isPro: true,
-        proExpiresAt: proExpiresAt,
+        is_pro: true,
+        pro_expires_at: proExpiresAt,
       })
       .where(eq(users.id, req.user.id));
 
@@ -129,8 +129,8 @@ router.post("/test-upgrade", async (req: Request, res: Response) => {
     // Update user as Pro
     await db.update(users)
       .set({
-        isPro: true,
-        proExpiresAt: proExpiresAt,
+        is_pro: true,
+        pro_expires_at: proExpiresAt,
       })
       .where(eq(users.id, req.user.id));
 
