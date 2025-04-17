@@ -84,6 +84,7 @@ export default function BookDetails() {
   const { user } = useAuth();
   const { setIsOpen: setAuthModalOpen } = useAuthModal();
   const [isOpen, setIsOpen] = useState(false);
+  const [isGenresExpanded, setIsGenresExpanded] = useState(false);
   const [ratingFilter, setRatingFilter] = useState<string>("all");
 
   const { data: book } = useQuery<Book>({
@@ -326,11 +327,8 @@ export default function BookDetails() {
                   <TooltipProvider>
                     {bookTaxonomies && bookTaxonomies.length > 0 ? (
                       <>
-                        {/* Show only the first 5 items */}
                         {bookTaxonomies.slice(0, 5).map((taxonomy) => (
-                          <Tooltip
-                            key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}
-                          >
+                          <Tooltip key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
                             <TooltipTrigger>
                               <div>
                                 <Badge
@@ -338,10 +336,10 @@ export default function BookDetails() {
                                     taxonomy.type === "genre"
                                       ? "default"
                                       : taxonomy.type === "subgenre"
-                                        ? "secondary"
-                                        : taxonomy.type === "theme"
-                                          ? "outline"
-                                          : "destructive"
+                                      ? "secondary"
+                                      : taxonomy.type === "theme"
+                                      ? "outline"
+                                      : "destructive"
                                   }
                                   className="text-sm cursor-help"
                                 >
@@ -357,66 +355,70 @@ export default function BookDetails() {
                           </Tooltip>
                         ))}
                         
-                        {/* Show the expand button if there are more than 5 items */}
                         {bookTaxonomies.length > 5 && (
-                          <Collapsible>
-                            <CollapsibleTrigger asChild>
-                              <Button 
-                                variant="outline"
-                                size="sm"
-                                className="h-7 gap-1 ml-1"
+                          <>
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 ml-1"
+                              onClick={() => setIsGenresExpanded(!isGenresExpanded)}
+                            >
+                              <span>+{bookTaxonomies.length - 5} more</span>
+                              <ChevronDown 
+                                className={`h-3 w-3 transition-transform duration-200 ${
+                                  isGenresExpanded ? "transform rotate-180" : ""
+                                }`} 
+                              />
+                            </Button>
+                            
+                            {isGenresExpanded && (
+                              <div 
+                                className="absolute z-10 top-full left-0 mt-2 p-4 rounded-md shadow-lg border bg-background w-full
+                                animate-in slide-in-from-top-2 fade-in-0 duration-300"
                               >
-                                <span>+{bookTaxonomies.length - 5} more</span>
-                                <ChevronDown className="h-3 w-3" />
-                              </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="absolute z-10 top-full left-0 mt-2 p-4 rounded-md shadow-lg border bg-background w-full">
-                              <ScrollArea className="max-h-[40vh]">
-                                <div className="flex flex-wrap gap-2">
-                                  {bookTaxonomies.map((taxonomy) => (
-                                    <Tooltip
-                                      key={`expanded-${taxonomy.taxonomyId}-${taxonomy.rank}`}
-                                    >
-                                      <TooltipTrigger>
-                                        <div>
-                                          <Badge
-                                            variant={
-                                              taxonomy.type === "genre"
-                                                ? "default"
-                                                : taxonomy.type === "subgenre"
+                                <ScrollArea className="max-h-[40vh]">
+                                  <div className="flex flex-wrap gap-2">
+                                    {bookTaxonomies.map((taxonomy) => (
+                                      <Tooltip
+                                        key={`expanded-${taxonomy.taxonomyId}-${taxonomy.rank}`}
+                                      >
+                                        <TooltipTrigger>
+                                          <div>
+                                            <Badge
+                                              variant={
+                                                taxonomy.type === "genre"
+                                                  ? "default"
+                                                  : taxonomy.type === "subgenre"
                                                   ? "secondary"
                                                   : taxonomy.type === "theme"
-                                                    ? "outline"
-                                                    : "destructive"
-                                            }
-                                            className="text-sm cursor-help"
-                                          >
-                                            {taxonomy.name}
-                                          </Badge>
-                                        </div>
-                                      </TooltipTrigger>
-                                      {taxonomy.description && (
-                                        <TooltipContent className="max-w-xs">
-                                          <p>{taxonomy.description}</p>
-                                        </TooltipContent>
-                                      )}
-                                    </Tooltip>
-                                  ))}
-                                </div>
-                              </ScrollArea>
-                            </CollapsibleContent>
-                          </Collapsible>
+                                                  ? "outline"
+                                                  : "destructive"
+                                              }
+                                              className="text-sm cursor-help"
+                                            >
+                                              {taxonomy.name}
+                                            </Badge>
+                                          </div>
+                                        </TooltipTrigger>
+                                        {taxonomy.description && (
+                                          <TooltipContent className="max-w-xs">
+                                            <p>{taxonomy.description}</p>
+                                          </TooltipContent>
+                                        )}
+                                      </Tooltip>
+                                    ))}
+                                  </div>
+                                </ScrollArea>
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     ) : (
                       // Fallback for compatibility with older books that still use the genres array
                       Array.isArray((book as any).genres) &&
                       (book as any).genres.map((genre: string) => (
-                        <Badge
-                          key={genre}
-                          variant="secondary"
-                          className="text-sm"
-                        >
+                        <Badge key={genre} variant="secondary" className="text-sm">
                           {genre}
                         </Badge>
                       ))
