@@ -59,7 +59,7 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
       return res.json([]);
     }
     
-    const taxonomyIds = viewTaxonomiesResult.map(t => t.taxonomyId);
+    const taxonomyIds = viewTaxonomiesResult.map((t) => t.taxonomyId);
     
     // 3. Create a map of taxonomy importance based on rank
     // We'll use a formula of 1/(1+ln(rank)) to give more weight to higher-ranked taxonomies
@@ -72,20 +72,14 @@ router.get("/genre/:viewId", async (req: Request, res: Response) => {
     console.log(`Found ${taxonomyIds.length} taxonomies for view ID: ${viewId}`);
     
     // 4. Calculate the most taxonomically similar books
-    // Using a SQL query to calculate weighted similarity scores
-    // Create the CASE statement for weighted taxonomies
-    let caseStatement = '';
-    Object.entries(taxonomyImportance).forEach(([id, weight], index) => {
-      caseStatement += `WHEN bt.taxonomy_id = ${id} THEN ${weight}\n            `;
-    });
-    
+    // Prepare the query with a straightforward approach
     const query = sql`
       WITH book_taxonomies AS (
         SELECT 
           bt.book_id,
           bt.taxonomy_id,
-          CASE 
-            ${sql.raw(caseStatement)}
+          CASE
+            WHEN bt.importance IS NOT NULL THEN bt.importance
             ELSE 0.5
           END as weight
         FROM book_genre_taxonomies bt
