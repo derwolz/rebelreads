@@ -147,6 +147,26 @@ export default function BookDetails() {
       });
     }
   }, [book?.id]);
+  
+  // Record impressions for referral links when they are displayed
+  useEffect(() => {
+    // Only record impressions if the book has referral links
+    if (book && book.referralLinks && Array.isArray(book.referralLinks) && book.referralLinks.length > 0) {
+      // Record a book impression with each referral link as source
+      book.referralLinks.forEach((link: ReferralLink) => {
+        apiRequest(
+          "POST",
+          `/api/books/${book.id}/impression`,
+          {
+            source: `referral_${link.retailer.toLowerCase()}_display`, 
+            context: "book_details"
+          }
+        ).catch(error => {
+          console.error("Failed to record referral link impression:", error);
+        });
+      });
+    }
+  }, [book?.id, book?.referralLinks]);
 
   if (!book) return null;
 
@@ -263,26 +283,6 @@ export default function BookDetails() {
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
-                    {/* Record impressions for all referral links when they are displayed */}
-                    {useEffect(() => {
-                      // Only record impressions if the book has referral links
-                      if (book.referralLinks && Array.isArray(book.referralLinks) && book.referralLinks.length > 0) {
-                        // Record a book impression with each referral link as source
-                        book.referralLinks.forEach((link: ReferralLink, index: number) => {
-                          apiRequest(
-                            "POST",
-                            `/api/books/${book.id}/impression`,
-                            {
-                              source: `referral_${link.retailer.toLowerCase()}_display`, 
-                              context: "book_details"
-                            }
-                          ).catch(error => {
-                            console.error("Failed to record referral link impression:", error);
-                          });
-                        });
-                      }
-                    }, [book.id, book.referralLinks])}
-                    
                     {book.referralLinks.map(
                       (link: ReferralLink, index: number) => (
                         <a
