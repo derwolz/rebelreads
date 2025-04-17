@@ -92,6 +92,7 @@ function Router() {
         
         {/* Auth wall */}
         <Route path="/auth" component={AuthWallPage} />
+        <Route path="/auth-check" component={AuthCheckPage} />
 
         {/* Public routes that require authentication in beta mode */}
         <Route path="/" component={HomeComponent} />
