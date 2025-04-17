@@ -45,11 +45,8 @@ router.get("/", async (req, res) => {
           // Get author info
           const author = await dbStorage.getAuthor(book.authorId);
           
-          // Get book images
-          const images = await dbStorage.getBookImages(book.id);
-          
           // Get rating count
-          const ratings = await dbStorage.getBookRatings(book.id);
+          const ratings = await dbStorage.getRatings(book.id);
           
           // Return enriched popular book
           return {
@@ -58,8 +55,8 @@ router.get("/", async (req, res) => {
             description: book.description,
             authorId: book.authorId,
             authorName: author?.author_name || null,
-            authorImageUrl: author?.profileImageUrl || null,
-            images: images || [],
+            authorImageUrl: author?.author_image_url || null,
+            images: book.images || [],
             ratingCount: ratings.length
           };
         } catch (error) {
@@ -81,7 +78,8 @@ router.get("/", async (req, res) => {
  * Force recalculation of popular books (admin only)
  */
 router.post("/recalculate", async (req, res) => {
-  if (!req.isAuthenticated() || !req.user?.isAdmin) {
+  // Check if user is an admin
+  if (!req.isAuthenticated() || !req.user || !(req.user as any).isAdmin) {
     return res.status(403).json({ error: "Admin access required" });
   }
   
