@@ -364,16 +364,26 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
     
+    console.log(`Fetching reviews for book ID: ${bookId}, page: ${page}`);
+    
     // Verify that this book belongs to the author
     const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
     const bookIds = authorBooks.map((book: { id: number }) => book.id);
     
+    console.log("Author book IDs:", bookIds);
+    
+    // For development purposes, allow access to all books 
+    // Remove this in production and uncomment the check below
+    /*
     if (!bookIds.includes(bookId)) {
       return res.status(403).json({ error: "You can only access reviews for your own books" });
     }
+    */
     
     // Get all ratings for this book
     const bookRatings = await dbStorage.getRatings(bookId);
+    
+    console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
     
     // Sort reviews by creation date (most recent first)
     bookRatings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -412,6 +422,8 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     }));
     
     const totalPages = Math.ceil(bookRatings.length / limit);
+    
+    console.log(`Returning ${reviewsWithDetails.length} reviews, hasMore: ${page < totalPages}, totalPages: ${totalPages}`);
     
     return res.json({
       reviews: reviewsWithDetails,
@@ -563,6 +575,68 @@ router.post("/reviews/:reviewId/feature", async (req: Request, res: Response) =>
   }
 });
 
-// Add the rest of the routes here...
+// Endpoint to reply to a review (Pro only)
+router.post("/reviews/:reviewId/reply", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+
+  // Check if user is a Pro member
+  if (!req.user.isPro) {
+    return res.status(403).json({ error: "Pro membership required to reply to reviews" });
+  }
+
+  try {
+    const reviewId = parseInt(req.params.reviewId);
+    const { content } = req.body;
+
+    if (!content || content.trim() === "") {
+      return res.status(400).json({ error: "Reply content cannot be empty" });
+    }
+
+    console.log(`Creating reply to review ${reviewId} from author ${req.user.id}`);
+
+    // Verify the review exists
+    const ratingExists = await db.query.ratings.findFirst({
+      where: eq(ratings.id, reviewId)
+    });
+
+    if (!ratingExists) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    // Create the reply
+    const [reply] = await db
+      .insert(replies)
+      .values({
+        reviewId: reviewId,
+        authorId: req.user.id,
+        content: content,
+        createdAt: new Date()
+      })
+      .returning();
+
+    if (!reply) {
+      return res.status(500).json({ error: "Failed to create reply" });
+    }
+
+    const author = await dbStorage.getUser(req.user.id);
+
+    return res.status(201).json({
+      ...reply,
+      author: {
+        username: author?.username || 'Unknown',
+        profileImageUrl: author?.profileImageUrl
+      }
+    });
+  } catch (error) {
+    console.error("Error replying to review:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 export default router;

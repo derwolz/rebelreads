@@ -57,7 +57,9 @@ export function BookReviewManagement({ bookId }: BookReviewManagementProps) {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["book-reviews", bookId, page],
-    queryFn: () => apiRequest(`/api/pro/book-reviews/${bookId}?page=${page}`),
+    queryFn: () => apiRequest(`/api/pro/book-reviews/${bookId}?page=${page}`, {
+      method: "GET"
+    }),
     enabled: !!bookId,
   } as any);
 

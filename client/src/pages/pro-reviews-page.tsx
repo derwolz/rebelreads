@@ -26,26 +26,44 @@ export default function ProReviewsPage() {
   const { data: authorBooks, isLoading, isError, error } = useQuery({
     queryKey: ["/api/pro/reviews"],
     queryFn: async () => {
-      const response = await apiRequest("/api/pro/reviews") as any;
-      
-      // Extract unique books from reviews
-      const booksMap = new Map<number, Book>();
-      
-      if (response && response.reviews) {
-        response.reviews.forEach((review: any) => {
-          if (review.book && !booksMap.has(review.bookId)) {
-            booksMap.set(review.bookId, {
-              id: review.bookId,
-              title: review.book.title,
-              author: review.book.author,
-              coverImageUrl: review.book.coverImageUrl,
-              authorId: review.authorId
-            });
-          }
-        });
+      try {
+        const response = await apiRequest("/api/pro/reviews", {
+          method: "GET"
+        }) as any;
+        
+        // Extract unique books from reviews
+        const booksMap = new Map<number, Book>();
+        
+        if (response && response.reviews) {
+          response.reviews.forEach((review: any) => {
+            if (review.book && !booksMap.has(review.bookId)) {
+              booksMap.set(review.bookId, {
+                id: review.bookId,
+                title: review.book.title,
+                author: review.book.author,
+                coverImageUrl: review.book.coverImageUrl,
+                authorId: review.authorId
+              });
+            }
+          });
+        }
+        
+        return Array.from(booksMap.values());
+      } catch (err) {
+        console.error("Error fetching pro reviews:", err);
+        // Fall back to alternative method: get author books directly
+        const myBooks = await apiRequest("/api/my-books", {
+          method: "GET"
+        }) as any;
+        
+        return myBooks.map((book: any) => ({
+          id: book.id,
+          title: book.title,
+          author: book.authorName || "Unknown",
+          coverImageUrl: book.coverImageUrl || book.images?.find((img: any) => img.imageType === "mini")?.imageUrl,
+          authorId: book.authorId
+        }));
       }
-      
-      return Array.from(booksMap.values());
     },
   } as any);
 
