@@ -542,11 +542,19 @@ export function GenrePreferencesSettings() {
     if (!activeViewId) return;
 
     // Find the currently selected items
-    const currentGenres = activeViewGenres.map((g) => g.taxonomyId);
-
+    const currentGenres = activeViewGenres.map((g) => ({
+      id: g.id,
+      taxonomyId: g.taxonomyId
+    }));
+    
     // Find new items that aren't in the current selection
     const newGenres = selected.filter(
-      (item) => !currentGenres.includes(item.taxonomyId),
+      (item) => !currentGenres.some(g => g.taxonomyId === item.taxonomyId),
+    );
+
+    // Find removed items that were in the current selection but not in the new selection
+    const removedGenres = currentGenres.filter(
+      (item) => !selected.some(s => s.taxonomyId === item.taxonomyId)
     );
 
     // Add each new genre to the view
@@ -557,6 +565,13 @@ export function GenrePreferencesSettings() {
         type: genre.type,
         rank: activeViewGenres.length + 1,
       });
+    });
+    
+    // Remove each deleted genre from the view
+    removedGenres.forEach((genre) => {
+      if (genre.id) {
+        removeGenreMutation.mutate(genre.id);
+      }
     });
   };
 
