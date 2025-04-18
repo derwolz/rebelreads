@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
-import { bookShelves, shelfBooks, notes, books } from "../../shared/schema";
+import { bookShelves, shelfBooks, notes, books, bookImages, authors } from "../../shared/schema";
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema } from "../../shared/schema";
 import { z } from "zod";
@@ -514,20 +514,58 @@ router.get("/api/book-shelf/:id", async (req: Request, res: Response) => {
       orderBy: desc(notes.createdAt)
     });
 
-    // Get books on this shelf with their details
-    const shelfBooksWithDetails = await db
+    // First get a reference to the table outside the query to avoid TypeScript errors
+    const shelfBooksTable = shelfBooks;
+    
+    // Get books on this shelf
+    const shelfBooksRows = await db
       .select({
-        id: shelfBooks.id,
-        bookId: shelfBooks.bookId,
-        shelfId: shelfBooks.shelfId,
-        rank: shelfBooks.rank,
-        addedAt: shelfBooks.addedAt,
-        book: books
+        id: shelfBooksTable.id,
+        bookId: shelfBooksTable.bookId,
+        shelfId: shelfBooksTable.shelfId,
+        rank: shelfBooksTable.rank,
+        addedAt: shelfBooksTable.addedAt
       })
-      .from(shelfBooks)
-      .innerJoin(books, eq(shelfBooks.bookId, books.id))
-      .where(eq(shelfBooks.shelfId, shelfId))
-      .orderBy(asc(shelfBooks.rank));
+      .from(shelfBooksTable)
+      .where(eq(shelfBooksTable.shelfId, shelfId))
+      .orderBy(asc(shelfBooksTable.rank));
+      
+    // Create an enhanced result array with full book details
+    const shelfBooksWithDetails: any[] = [];
+    
+    // Fetch detailed information for each book
+    for (const shelfBookRow of shelfBooksRows) {
+      // Get basic book information
+      const book = await db.query.books.findFirst({
+        where: eq(books.id, shelfBookRow.bookId)
+      });
+      
+      if (book) {
+        // Get book images
+        const bookImagesTable = bookImages;
+        const images = await db.query.bookImages.findMany({
+          where: eq(bookImagesTable.bookId, shelfBookRow.bookId)
+        });
+        
+        // Get author information
+        const author = await db.query.authors.findFirst({
+          where: eq(authors.id, book.authorId)
+        });
+        
+        // Create an enhanced book object with additional properties
+        const enhancedBook = {
+          ...book,
+          authorName: author?.author_name || "Unknown Author",
+          images: images
+        };
+        
+        // Compile enhanced book entry
+        shelfBooksWithDetails.push({
+          ...shelfBookRow,
+          book: enhancedBook
+        });
+      }
+    }
 
     // Get book notes for all books in this shelf
     const bookIds = shelfBooksWithDetails.map(sb => sb.bookId);
