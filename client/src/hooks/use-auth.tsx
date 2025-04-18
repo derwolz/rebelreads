@@ -182,8 +182,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const becomeAuthorMutation = useMutation({
-    mutationFn: async (authorData: any) => {
-      const res = await apiRequest("POST", "/api/become-author", authorData);
+    mutationFn: async (authorData: any = {}) => {
+      // If no data is provided, use default values based on the user
+      const dataToSend = authorData || {
+        authorName: user?.username || user?.email?.split('@')[0] || '',
+        bio: ''
+      };
+      
+      const res = await apiRequest("POST", "/api/become-author", dataToSend);
       return await res.json();
     },
     onSuccess: (authorData: Author) => {
