@@ -155,7 +155,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
               alt="Sirened Logo"
               className="h-14 w-14"
             />{" "}
-            <span className="text-xl">Sirened</span>
+            <span className="text-xl logo">Sirened</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-2 relative">
