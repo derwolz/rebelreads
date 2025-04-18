@@ -14,6 +14,7 @@ import {
 } from "@shared/schema";
 import { db } from "../db";
 import { eq, and, ilike, sql, desc, not, inArray } from "drizzle-orm";
+import { applyContentFilters } from "../utils/content-filters";
 
 export interface IBookStorage {
   getBooks(): Promise<Book[]>;
@@ -752,7 +753,19 @@ export class BookStorage implements IBookStorage {
       const bookScores = await db.execute(bookScoresQuery);
 
       // Get all book IDs from the results
-      const bookIds = bookScores.rows.map(row => row.id);
+      let bookIds = bookScores.rows.map(row => row.id);
+      
+      if (bookIds.length === 0) return [];
+      
+      // Apply content filtering to book IDs
+      console.log(`Found ${bookIds.length} recommended books, applying content filters`);
+      bookIds = await applyContentFilters(userId, bookIds);
+      console.log(`After content filtering: ${bookIds.length} recommended books remain`);
+      
+      if (bookIds.length === 0) return [];
+      
+      // Filter bookScores to only include books that passed content filtering
+      const filteredBookScores = bookScores.rows.filter(row => bookIds.includes(row.id));
       
       // Fetch all images for these books
       const allImages = await db.select()
@@ -769,8 +782,8 @@ export class BookStorage implements IBookStorage {
         imagesByBookId.get(image.bookId)!.push(image);
       });
       
-      // Extract books from the results and add image data
-      return bookScores.rows.map(row => ({
+      // Extract books from the filtered results and add image data
+      return filteredBookScores.map(row => ({
         id: row.id,
         title: row.title,
         description: row.description,
@@ -838,7 +851,19 @@ export class BookStorage implements IBookStorage {
       if (popularBooks.length === 0) return [];
       
       // Get all book IDs
-      const bookIds = popularBooks.map(book => book.id);
+      let bookIds = popularBooks.map(book => book.id);
+      
+      if (bookIds.length === 0) return [];
+      
+      // Apply content filtering to book IDs
+      console.log(`Found ${bookIds.length} popular fallback books, applying content filters`);
+      bookIds = await applyContentFilters(userId, bookIds);
+      console.log(`After content filtering: ${bookIds.length} popular fallback books remain`);
+      
+      if (bookIds.length === 0) return [];
+      
+      // Filter popularBooks to only include books that passed content filtering
+      const filteredBooks = popularBooks.filter(book => bookIds.includes(book.id));
       
       // Fetch all images for these books
       const allImages = await db.select()
@@ -856,7 +881,7 @@ export class BookStorage implements IBookStorage {
       });
       
       // Add images to books
-      return popularBooks.map(book => ({
+      return filteredBooks.map(book => ({
         ...book,
         images: imagesByBookId.get(book.id) || []
       })) as Book[];
