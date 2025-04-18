@@ -455,81 +455,77 @@ export default function BookShelfPage() {
       </div>
 
       {/* Bottom Section - Books Carousel */}
-      <div>
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Books in this Shelf</h2>
         {books.length > 0 ? (
-          <Carousel className="w-full">
-            <CarouselContent>
-              {books.map((shelfBook) => {
-                const bookId = shelfBook.bookId;
-                const bookNotesList = bookNotes.filter(note => note.bookId === bookId);
-                
-                return (
-                  <CarouselItem key={shelfBook.id} className="md:basis-1/5 lg:basis-1/6">
-                    <div className="p-1">
-                      <Card className="overflow-hidden">
+          <div className="relative">
+            <Carousel className="w-full">
+              <CarouselContent>
+                {books.map((shelfBook) => {
+                  const bookId = shelfBook.bookId;
+                  const bookNotesList = bookNotes.filter(note => note.bookId === bookId);
+                  
+                  // Convert ShelfBook to the appropriate format for BookCard
+                  const bookForCard = {
+                    id: shelfBook.book.id,
+                    title: shelfBook.book.title,
+                    description: shelfBook.book.description || "",
+                    authorId: 0, // Not used in this context
+                    authorName: "", // Not needed in this context
+                    images: [{
+                      imageType: "book-card",
+                      imageUrl: shelfBook.book.coverUrl || "/images/placeholder-book.png"
+                    }]
+                  };
+
+                  return (
+                    <CarouselItem key={shelfBook.id} className="md:basis-1/4 lg:basis-1/5">
+                      <div className="group relative p-1">
+                        {/* Use BookCard with customizations */}
                         <div className="relative">
-                          <div className="aspect-[2/3] bg-muted relative group">
-                            {/* Book cover image */}
-                            {shelfBook.book.coverUrl ? (
-                              <img 
-                                src={shelfBook.book.coverUrl} 
-                                alt={shelfBook.book.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <BookOpen className="h-12 w-12 text-muted-foreground" />
-                              </div>
-                            )}
-                            
-                            {/* Heart icon if there are notes */}
-                            {bookNotesList.length > 0 && (
-                              <div className="absolute top-2 left-2">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="bg-background/80 rounded-full p-1">
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          width="16"
-                                          height="16"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          className="text-red-500"
-                                        >
-                                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                                        </svg>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{bookNotesList.length} note{bookNotesList.length !== 1 ? 's' : ''}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            )}
-                            
-                            {/* Hover controls */}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-background/80 text-foreground"
-                                onClick={() => handleAddNote("book", bookId)}
-                              >
-                                <Plus className="h-4 w-4 mr-2" /> Add Note
-                              </Button>
+                          <img 
+                            src={shelfBook.book.coverUrl || "/images/placeholder-book.png"} 
+                            alt={shelfBook.book.title}
+                            className="w-full h-64 object-cover rounded-md"
+                          />
+                          
+                          {/* Notes badge */}
+                          {bookNotesList.length > 0 && (
+                            <div className="absolute top-2 left-2">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="secondary" className="bg-foreground/10 text-foreground">
+                                      {bookNotesList.length} {bookNotesList.length === 1 ? 'Note' : 'Notes'}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Click to view notes for this book</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
+                          )}
+                          
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-background/80 text-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddNote("book", bookId);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-2" /> Add Note
+                            </Button>
                           </div>
                         </div>
-                        <CardFooter className="p-2 flex flex-col items-start">
-                          <p className="font-medium text-sm truncate w-full">{shelfBook.book.title}</p>
-                          {/* If there are book notes, add a small indicator that they can click to see notes */}
+                        
+                        {/* Book details */}
+                        <div className="mt-2">
+                          <p className="font-medium text-sm truncate">{shelfBook.book.title}</p>
                           {bookNotesList.length > 0 && (
                             <Button 
                               variant="ghost" 
@@ -540,16 +536,16 @@ export default function BookShelfPage() {
                               View notes
                             </Button>
                           )}
-                        </CardFooter>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-            <CarouselPrevious className="left-2" />
-            <CarouselNext className="right-2" />
-          </Carousel>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+              <CarouselPrevious className="left-2" />
+              <CarouselNext className="right-2" />
+            </Carousel>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-[200px] bg-muted/20 rounded-lg">
             <p className="text-muted-foreground text-center">
