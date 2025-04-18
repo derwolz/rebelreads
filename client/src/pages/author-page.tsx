@@ -269,7 +269,7 @@ export default function AuthorPage() {
                     
                     <div className="grid gap-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm">Enjoyment (30%)</span>
+                        <span className="text-sm">Enjoyment</span>
                         <div className="flex items-center gap-2">
                           <StarRating
                             rating={author.aggregateRatings.enjoyment}
@@ -283,7 +283,7 @@ export default function AuthorPage() {
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm">Writing Style (30%)</span>
+                        <span className="text-sm">Writing Style</span>
                         <div className="flex items-center gap-2">
                           <StarRating
                             rating={author.aggregateRatings.writing}
@@ -297,7 +297,7 @@ export default function AuthorPage() {
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm">Themes (20%)</span>
+                        <span className="text-sm">Themes</span>
                         <div className="flex items-center gap-2">
                           <StarRating
                             rating={author.aggregateRatings.themes}
@@ -311,7 +311,7 @@ export default function AuthorPage() {
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm">Characters (10%)</span>
+                        <span className="text-sm">Characters</span>
                         <div className="flex items-center gap-2">
                           <StarRating
                             rating={author.aggregateRatings.characters}
@@ -325,7 +325,7 @@ export default function AuthorPage() {
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm">World Building (10%)</span>
+                        <span className="text-sm">World Building</span>
                         <div className="flex items-center gap-2">
                           <StarRating
                             rating={author.aggregateRatings.worldbuilding}

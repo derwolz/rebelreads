@@ -43,9 +43,26 @@ export default {
           800: "hsl(var(--secondary-800))",
           900: "hsl(var(--secondary-900))",
         },
+        tertiary: {
+          DEFAULT: "hsl(var(--tertiary))",
+          foreground: "hsl(var(--tertiary-foreground))",
+          100: "hsl(var(--tertiary-100))",
+          200: "hsl(var(--tertiary-200))",
+          300: "hsl(var(--tertiary-300))",
+          400: "hsl(var(--tertiary-400))",
+          500: "hsl(var(--tertiary-500))",
+          600: "hsl(var(--tertiary-600))",
+          700: "hsl(var(--tertiary-700))",
+          800: "hsl(var(--tertiary-800))",
+          900: "hsl(var(--tertiary-900))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--accent-gold))",
+          foreground: "hsl(0 0% 0%)",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",

@@ -214,12 +214,12 @@ export function BookCard({
                 className="w-full h-96 object-cover object-center"
                 style={{ aspectRatio: "1/1" }}
               />
-              <CardContent className="p-4 relative">
+              <CardContent className="p-4  relative">
                 <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%] ">
                   {/* New Book Banner */}
                   {isNewBook(book) && (
                     <div className="absolute -bottom-8 -right-12 z-20">
-                      <div className="bg-[#7fffd4] text-black text-xs px-16 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
+                      <div className="bg-gold text-gold-foreground text-xs px-16 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
                         New
                       </div>
                     </div>
