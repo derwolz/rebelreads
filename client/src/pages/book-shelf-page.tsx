@@ -482,19 +482,47 @@ export default function BookShelfPage() {
                         <div className="relative">
                           {/* Convert shelf book to the format expected by BookCard */}
                           <BookCard 
-                            book={{
-                              id: shelfBook.book.id,
-                              title: shelfBook.book.title,
-                              description: shelfBook.book.description || "",
-                              authorId: 0,
-                              authorName: shelfBook.book.authorName || "Unknown Author",
-                              images: shelfBook.book.images || [
-                                {
-                                  imageType: "book-card",
-                                  imageUrl: shelfBook.book.coverUrl || "/images/placeholder-book.png"
-                                }
-                              ]
-                            }}
+                            book={
+                              {
+                                ...shelfBook.book,
+                                authorId: shelfBook.book.authorId || 0,
+                                authorName: shelfBook.book.authorName || "Unknown Author",
+                                description: shelfBook.book.description || "",
+                                promoted: shelfBook.book.promoted ?? null,
+                                pageCount: shelfBook.book.pageCount ?? null,
+                                formats: shelfBook.book.formats ?? [],
+                                publishedDate: shelfBook.book.publishedDate ?? null,
+                                awards: shelfBook.book.awards ?? null,
+                                originalTitle: shelfBook.book.originalTitle ?? null,
+                                series: shelfBook.book.series ?? null,
+                                setting: shelfBook.book.setting ?? null,
+                                characters: shelfBook.book.characters ?? null,
+                                isbn: shelfBook.book.isbn ?? null,
+                                asin: shelfBook.book.asin ?? null,
+                                language: shelfBook.book.language ?? "en",
+                                referralLinks: shelfBook.book.referralLinks ?? [],
+                                impressionCount: shelfBook.book.impressionCount ?? 0,
+                                clickThroughCount: shelfBook.book.clickThroughCount ?? 0,
+                                lastImpressionAt: shelfBook.book.lastImpressionAt ?? null,
+                                lastClickThroughAt: shelfBook.book.lastClickThroughAt ?? null,
+                                internal_details: shelfBook.book.internal_details ?? null,
+                                images: (shelfBook.book.images && Array.isArray(shelfBook.book.images)) ? 
+                                  shelfBook.book.images : 
+                                  [
+                                    {
+                                      id: 0,
+                                      bookId: shelfBook.book.id,
+                                      imageType: "book-card",
+                                      imageUrl: shelfBook.book.coverUrl || "/images/placeholder-book.png",
+                                      width: 0,
+                                      height: 0,
+                                      sizeKb: null,
+                                      createdAt: new Date().toISOString(),
+                                      updatedAt: new Date().toISOString()
+                                    }
+                                  ]
+                              } as Book
+                            }
                           />
                           
                           {/* Notes badge */}
