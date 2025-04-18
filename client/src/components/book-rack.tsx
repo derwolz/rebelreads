@@ -1,22 +1,195 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import type { Book, BookImage } from "../types"; // Use the Book type from client/src/types.ts
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { BookCard } from "@/components/book-card";
+import { Link } from "wouter";
+import { useWindowSize } from "@/hooks/use-window-size";
+import { useQuery } from "@tanstack/react-query";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { apiRequest } from "@/lib/queryClient";
+import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
 
-// Possible lean angles in degrees
-const LEAN_OPTIONS = [
-  { angle: 0, probability: 0.88 },    // Straight - 92% chance
-  { angle: -5, probability: 0.04 },   // Slight lean left - 2% chance
-  { angle: -10, probability: 0.04 },  // Moderate lean left - 2% chance
-  { angle: 5, probability: 0.04 },    // Slight lean right - 2% chance
-  { angle: 10, probability: 0.04 },   // Moderate lean right - 2% chance
-];
+// Helper function to get a random height for book spines
+function getRandomHeight() {
+  // Return a height between 80% and 100% of the standard height
+  return 140 + Math.floor(Math.random() * 30);
+}
 
-// Original dimensions of the book spine images
-const SPINE_WIDTH = 56;
-const SPINE_HEIGHT = 212;
+// Helper function to get a random color for book spines
+function getRandomSpineColor() {
+  // Generate colors that work well for book spines
+  const colors = [
+    "bg-primary/90", "bg-primary/70", "bg-primary/60", 
+    "bg-primary-foreground", "bg-muted-foreground",
+    "bg-amber-800", "bg-amber-700", "bg-amber-600", 
+    "bg-zinc-800", "bg-zinc-700", "bg-zinc-600",
+    "bg-slate-800", "bg-slate-700", "bg-slate-600",
+    "bg-red-900", "bg-red-800", "bg-red-700",
+    "bg-green-900", "bg-green-800", "bg-green-700",
+    "bg-blue-900", "bg-blue-800", "bg-blue-700",
+    "bg-indigo-900", "bg-indigo-800", "bg-indigo-700",
+    "bg-purple-900", "bg-purple-800", "bg-purple-700",
+  ];
+  
+  return colors[Math.floor(Math.random() * colors.length)];
+}
 
-// Interface for BookRack component props
+// Function to generate a book spine element
+function BookSpine({ 
+  book, 
+  onClick,
+  index
+}: { 
+  book: Book, 
+  onClick: (bookId: number) => void,
+  index: number
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
+  const [hasRecordedDetailExpand, setHasRecordedDetailExpand] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Memo-ize these values so they don't change on re-renders
+  const height = useMemo(() => getRandomHeight(), []);
+  const spineColor = useMemo(() => getRandomSpineColor(), []);
+  const spineWidth = useMemo(() => 36 + Math.floor(Math.random() * 20), []);
+  
+  // Set up intersection observer to track when the spine becomes visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.5 }, // Spine must be 50% visible to count
+    );
+
+    const element = document.getElementById(`book-spine-${book.id}`);
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => observer.disconnect();
+  }, [book.id]);
+
+  // Record impression when spine becomes visible
+  useEffect(() => {
+    if (isVisible && !hasRecordedImpression) {
+      // Store impression in local storage
+      recordLocalImpression(book.id, "book_rack", window.location.pathname);
+      setHasRecordedImpression(true);
+    }
+  }, [isVisible, hasRecordedImpression, book.id]);
+
+  // Handle hover state for "detail-expand" impression type
+  useEffect(() => {
+    if (isHovering && !hasRecordedDetailExpand) {
+      // Start a timer for 300ms (0.3 seconds)
+      hoverTimerRef.current = setTimeout(() => {
+        // After 0.3 seconds of continuous hovering, record a "detail-expand" impression
+        recordLocalImpression(
+          book.id,
+          "book_rack",
+          window.location.pathname,
+          "detail-expand",
+        );
+        setHasRecordedDetailExpand(true);
+      }, 300);
+    } else if (!isHovering && hoverTimerRef.current) {
+      // Clear the timer if user stops hovering before 0.3 seconds
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+
+    // Clean up timer when component unmounts
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, [isHovering, hasRecordedDetailExpand, book.id]);
+
+  const handleClick = () => {
+    // Record click-through in local storage before calling the onClick handler
+    recordLocalClickThrough(book.id, "book_rack", window.location.pathname);
+    onClick(book.id);
+  };
+
+  // Generate text orientation - most books have vertical text, but some have horizontal
+  const textOrientation = useMemo(() => {
+    return Math.random() > 0.8 ? "horizontal" : "vertical";
+  }, []);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            id={`book-spine-${book.id}`}
+            className={cn(
+              "mx-0.5 cursor-pointer transition-all duration-300 ease-in-out hover:scale-y-105 hover:-translate-y-1",
+              spineColor
+            )}
+            style={{ 
+              height: `${height}px`,
+              width: `${spineWidth}px`,
+              marginTop: "auto"
+            }}
+            onClick={handleClick}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            <div className={cn(
+              "h-full w-full flex items-center justify-center p-1 bg-gradient-to-r from-black/5 to-white/10",
+              textOrientation === "vertical" ? "writing-vertical" : ""
+            )}>
+              <p className={cn(
+                "text-xs font-medium text-white truncate",
+                textOrientation === "vertical" ? "vertical-text" : ""
+              )}>
+                {book.title}
+              </p>
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-[300px] p-2 z-50">
+          <p className="font-bold">{book.title}</p>
+          <p className="text-sm opacity-90">{book.authorName}</p>
+          <p className="text-xs mt-1 opacity-75">
+            {book.description.length > 100
+              ? `${book.description.slice(0, 100)}...`
+              : book.description}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+// BookRack skeleton for loading state
+function BookRackSkeleton() {
+  // Generate a set of random spine widths for the skeleton
+  const spineWidths = useMemo(() => {
+    return Array.from({ length: 20 }, () => 36 + Math.floor(Math.random() * 20));
+  }, []);
+
+  return (
+    <div className="flex items-end h-48 w-full bg-muted/30 rounded-md">
+      {spineWidths.map((width, i) => (
+        <Skeleton 
+          key={i} 
+          className="h-36 mx-0.5" 
+          style={{ 
+            width: `${width}px`,
+            height: `${120 + Math.floor(Math.random() * 30)}px` 
+          }} 
+        />
+      ))}
+    </div>
+  );
+}
+
 interface BookRackProps {
   title: string;
   books?: Book[];
@@ -24,310 +197,67 @@ interface BookRackProps {
   className?: string;
 }
 
-interface BookSpineProps {
-  book: Book;
-  angle: number;
-  index: number;
-}
+export function BookRack({ title, books, isLoading, className }: BookRackProps) {
+  const { width: windowWidth } = useWindowSize();
+  const [, navigate] = Link.useLocation();
 
-// Calculate the geometric properties for a leaning book
-function calculateLeaningGeometry(angle: number) {
-  if (angle === 0) {
-    return {
-      width: SPINE_WIDTH,
-      offset: 0,
-    };
-  }
-  
-  // Convert angle to radians for trigonometry calculations
-  const radians = Math.abs(angle) * (Math.PI / 180);
-  
-  // Calculate additional width needed when book is leaning
-  // sin(angle) * height gives the additional horizontal space needed
-  const additionalWidth = Math.sin(radians) * SPINE_HEIGHT;
-  const totalWidth = Math.ceil(SPINE_WIDTH + additionalWidth);
-  
-  // Calculate the offset needed to center the book
-  // If leaning left (negative angle), we need positive offset (to the right)
-  // If leaning right (positive angle), we need negative offset (to the left)
-  const offset = angle < 0 
-    ? additionalWidth / 2  // Move right for left lean
-    : -additionalWidth / 2; // Move left for right lean
-  
-  return {
-    width: totalWidth,
-    offset,
-  };
-}
+  const handleBookClick = useCallback((bookId: number) => {
+    navigate(`/books/${bookId}`);
+  }, [navigate]);
 
-// Component to display a single book spine with appropriate rotation
-function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps) {
-  // Calculate geometric properties for this book spine
-  const { width, offset } = useMemo(() => {
-    return calculateLeaningGeometry(angle);
-  }, [angle]);
-  
-  // Get the book images
-  const spineImageUrl = book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png";
-  
-  // Determine if this book is being hovered
-  const isHovered = hoveredIndex === index;
-  
-  // Reference to the timeout for delayed actions
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Handle mouse enter - notify parent and set timer for card display
-  const handleMouseEnter = useCallback(() => {
-    // First just notify that this book is hovered (for scaling effect)
-    onHover(index, false);
-    
-    // Set a timer to show the card after a delay
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    timeoutRef.current = setTimeout(() => {
-      // After delay, notify that we want to show the card
-      onHover(index, true);
-    }, 300);
-  }, [index, onHover]);
-  
-  // Handle mouse leave - clear hover state
-  const handleMouseLeave = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    
-    onHover(null, false);
-  }, [onHover]);
-  
-  // Clean up timeouts when component unmounts
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-  
-  // Check if we should show the book card
-  const showBookCard = isHovered && hoveredIndex !== null;
-  
   return (
-    <div 
-      className="relative group inline-block"
-      style={{ 
-        width: `${width}px`,
-        height: `${SPINE_HEIGHT}px`,
-        zIndex: showBookCard ? 0 : 1,
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {/* Book Spine */}
-      <div 
-        className="absolute w-[56px] h-full transition-all duration-300 ease-in-out"
-        style={{ 
-          transform: `translateX(${offset}px) rotate(${angle}deg) ${isHovered ? 'scale(1.05)' : ''}`,
-          transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
-          left: `${(width - SPINE_WIDTH) / 2}px`, // Center the book in its container
-          zIndex: showBookCard ? 11 : 1, // Keep spine above card
-        }}
-      >
-        <img 
-          src={spineImageUrl} 
-          alt={book.title}
-          className="w-full h-full object-cover"
-          style={{ maxWidth: `${SPINE_WIDTH}px` }}
-        />
-      </div>
+    <section className={cn("my-8", className)}>
+      <h2 className="text-3xl font-bold mb-4">{title}</h2>
       
-      {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
-      {showBookCard && (
-        <div 
-          className="absolute bottom-0 transition-all duration-600 ease-in-out"
-          style={{
-            left: '50%',
-            transform: 'translateX(-50%) translateY(30%) ',
-            marginBottom: '10px',
-            zIndex: 50,
-            width: '256px', // Match the BookCard's width
-          }}
-        >
-          <BookCard book={book} />
-        </div>
-      )}
-    </div>
-  );
-}
+      <div className="w-full relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-muted/20 pointer-events-none" />
 
-// Update BookSpineProps to include the hover state management
-interface BookSpineProps {
-  book: Book;
-  angle: number;
-  index: number;
-  hoveredIndex: number | null;
-  onHover: (index: number | null, showCard: boolean) => void;
-}
-
-// Main BookRack component
-export function BookRack({ title, books = [], isLoading, className }: BookRackProps) {
-  // State to track which book is being hovered
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  // State to track if the book card is shown (after delay)
-  const [showingCard, setShowingCard] = useState<boolean>(false);
-  
-  // Handle hover events from child BookSpine components
-  const handleBookHover = useCallback((index: number | null, showCard: boolean) => {
-    setHoveredIndex(index);
-    setShowingCard(showCard);
-  }, []);
-  
-  // Create a stable book ID string for dependencies
-  const bookIdsString = useMemo(() => {
-    return books.map(book => book.id).join('-');
-  }, [books]);
-  
-  // Generate random angles once when books change
-  const bookAngles = useMemo(() => {
-    if (!books || books.length === 0) return [];
-    
-    const angles: number[] = [];
-    
-    // Generate a random angle for each book based on probabilities
-    for (let i = 0; i < books.length; i++) {
-      // Start with a random angle based on the probability distribution
-      let randomValue = Math.random();
-      let cumulativeProbability = 0;
-      let selectedAngle = 0;
-      
-      for (const option of LEAN_OPTIONS) {
-        cumulativeProbability += option.probability;
-        if (randomValue <= cumulativeProbability) {
-          selectedAngle = option.angle;
-          break;
-        }
-      }
-      
-      // Check if neighbors are already leaning
-      const prevAngle = i > 0 ? angles[i - 1] : null;
-      
-      // If this book would lean and the previous book is leaning, make it straight
-      if (selectedAngle !== 0 && prevAngle !== null && prevAngle !== 0) {
-        selectedAngle = 0;
-      }
-      
-      // Store the final selected angle
-      angles.push(selectedAngle);
-      
-      // Check forward to ensure the next book will be straight if this one leans
-      if (selectedAngle !== 0 && i + 1 < books.length) {
-        // Pre-assign the next book to be straight
-        angles.push(0);
-        i++; // Skip the next book since we've already assigned it
-      }
-    }
-    
-    return angles;
-  }, [bookIdsString]);
-  
-  // Calculate total width needed for all the books
-  const totalShelfWidth = useMemo(() => {
-    return bookAngles.reduce((total, angle) => {
-      const { width } = calculateLeaningGeometry(angle);
-      // Add a small gap between books
-      return total + width + 2;
-    }, 0);
-  }, [bookAngles]);
-  
-  // Skeleton placeholder when loading
-  if (isLoading) {
-    return (
-      <section className={cn("mb-12 relative", className)}>
-        <h2 className="text-3xl font-bold mb-6">{title}</h2>
-        <div className="flex gap-1 bg-muted/30 rounded-md p-4 h-[250px] w-full">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="bg-muted h-[212px] w-[56px] animate-pulse" />
-          ))}
-        </div>
-      </section>
-    );
-  }
-  
-  // No books available
-  if (!books || books.length === 0) {
-    return (
-      <section className={cn("mb-12 relative", className)}>
-        <h2 className="text-3xl font-bold mb-6">{title}</h2>
-        <div className="flex items-center justify-center bg-muted/30 rounded-md p-4 h-[250px]">
-          <p className="text-muted-foreground">No books available</p>
-        </div>
-      </section>
-    );
-  }
-  
-  return (
-    <section className={cn("mb-12 relative", className)}>
-      <h2 className="text-3xl font-bold mb-6">{title}</h2>
-      
-      {/* Book shelf */}
-      <div className="relative">
-        {/* The books container - positioned on the shelf */}
-        <div 
-          className="flex items-end bg-muted/10 rounded-md h-[400px] "
-          style={{ 
-            minHeight: showingCard ? '400px' : '250px',
-            transition: 'min-height 0.3s ease-in-out'
-          }}
-        >
-          <div className="flex justify-center items-center" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
-            {books.map((book, index) => {
-              // Get this book's angle
-              const angle = bookAngles[index] || 0;
-              
-              // Calculate the position shift based on hovered index
-              let positionShift = 0;
-              
-              if (hoveredIndex !== null && showingCard) {
-                // When a book is hovered and the card is shown:
-                // Books to the left of the hovered book shift left
-                if (index < hoveredIndex) {
-                  positionShift = -150; // shift left by 150px
-                }
-                // Books to the right of the hovered book shift right
-                else if (index > hoveredIndex) {
-                  positionShift = 150; // shift right by 150px
-                }
-              }
-              
-              // Use a unique key combining book ID and index
-              const key = `${book.id}-${index}`;
-              
-              return (
-                <div
-                  key={key}
-                  className="transition-transform duration-300 ease-in-out"
-                  style={{ 
-                    transform: `translateX(${positionShift}px)`,
-                  }}
-                >
+        <ScrollArea className="w-full h-full max-w-full">
+          <div className="flex items-end h-48 min-w-full">
+            {isLoading ? (
+              <BookRackSkeleton />
+            ) : (
+              <>
+                {/* Left bookend */}
+                <div className="h-40 w-4 bg-zinc-800 mr-2" />
+                
+                {books?.map((book, index) => (
                   <BookSpine 
+                    key={book.id} 
                     book={book} 
-                    angle={angle}
+                    onClick={handleBookClick}
                     index={index}
-                    hoveredIndex={hoveredIndex}
-                    onHover={handleBookHover}
                   />
-                </div>
-              );
-            })}
+                ))}
+                
+                {/* Right bookend */}
+                <div className="h-40 w-4 bg-zinc-800 ml-2" />
+              </>
+            )}
           </div>
-        </div>
+        </ScrollArea>
         
-        {/* The wooden shelf */}
-        <div className="border-t border-foreground bg-gradient-to-b from-foreground to-background w-full h-3"></div>
+        {/* Shelf base */}
+        <div className="h-2 w-full bg-zinc-900 mt-0.5" />
+        <div className="h-6 w-full bg-zinc-800" />
       </div>
     </section>
   );
+}
+
+// Add the CSS needed for vertical text in book spines
+// This will be added to the global CSS when this component is imported
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    .writing-vertical {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+    
+    .vertical-text {
+      transform: rotate(180deg);
+    }
+  `;
+  document.head.appendChild(style);
 }
