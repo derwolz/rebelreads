@@ -420,20 +420,62 @@ export class BookStorage implements IBookStorage {
   }
 
   async deleteBook(id: number, authorId: number): Promise<void> {
-    // First, delete any related book images to avoid foreign key constraint violations
-    await db
-      .delete(bookImages)
-      .where(eq(bookImages.bookId, id));
+    try {
+      // First, delete any related book images to avoid foreign key constraint violations
+      await db
+        .delete(bookImages)
+        .where(eq(bookImages.bookId, id));
       
-    // Next, delete any book genre taxonomies
-    await db
-      .delete(bookGenreTaxonomies)
-      .where(eq(bookGenreTaxonomies.bookId, id));
+      // Next, delete any book genre taxonomies
+      await db
+        .delete(bookGenreTaxonomies)
+        .where(eq(bookGenreTaxonomies.bookId, id));
       
-    // Now it's safe to delete the book itself
-    await db
-      .delete(books)
-      .where(and(eq(books.id, id), eq(books.authorId, authorId)));
+      // Delete reading statuses for this book
+      await db
+        .delete(reading_status)
+        .where(eq(reading_status.bookId, id));
+        
+      // Delete ratings for this book
+      await db
+        .delete(ratings)
+        .where(eq(ratings.bookId, id));
+      
+      // Delete content reports for this book
+      try {
+        const { contentReports } = await import('../../shared/schema');
+        await db.delete(contentReports).where(eq(contentReports.bookId, id));
+      } catch (error) {
+        console.error(`Error deleting content reports for book ${id}:`, error);
+        throw error;
+      }
+      
+      // Delete impressions for this book
+      try {
+        const { bookImpressions } = await import('../../shared/schema');
+        await db.delete(bookImpressions).where(eq(bookImpressions.bookId, id));
+      } catch (error) {
+        console.error(`Error deleting impressions for book ${id}:`, error);
+        // Continue with deletion even if this fails
+      }
+      
+      // Delete click-throughs for this book
+      try {
+        const { bookClickThroughs } = await import('../../shared/schema');
+        await db.delete(bookClickThroughs).where(eq(bookClickThroughs.bookId, id));
+      } catch (error) {
+        console.error(`Error deleting click-throughs for book ${id}:`, error);
+        // Continue with deletion even if this fails
+      }
+        
+      // Now it's safe to delete the book itself
+      await db
+        .delete(books)
+        .where(and(eq(books.id, id), eq(books.authorId, authorId)));
+    } catch (error) {
+      console.error(`Error deleting book ${id} for author ${authorId}:`, error);
+      throw error;
+    }
   }
   
   /**
@@ -492,6 +534,37 @@ export class BookStorage implements IBookStorage {
         .delete(ratings)
         .where(inArray(ratings.bookId, bookIds));
       console.log(`Deleted ratings for ${bookIds.length} books`);
+      
+      // Delete all content reports for these books - important to handle before deleting books due to FK constraint
+      try {
+        // Import contentReports from schema and use it to delete related content reports
+        const { contentReports } = await import('../../shared/schema');
+        await db.delete(contentReports).where(inArray(contentReports.bookId, bookIds));
+        console.log(`Deleted content reports for ${bookIds.length} books`);
+      } catch (error) {
+        console.error(`Error deleting content reports for books:`, error);
+        throw error;
+      }
+      
+      // Delete all book impressions
+      try {
+        const { bookImpressions } = await import('../../shared/schema');
+        await db.delete(bookImpressions).where(inArray(bookImpressions.bookId, bookIds));
+        console.log(`Deleted impressions for ${bookIds.length} books`);
+      } catch (error) {
+        console.error(`Error deleting book impressions:`, error);
+        // Continue with deletion even if this fails
+      }
+      
+      // Delete all book click-throughs
+      try {
+        const { bookClickThroughs } = await import('../../shared/schema');
+        await db.delete(bookClickThroughs).where(inArray(bookClickThroughs.bookId, bookIds));
+        console.log(`Deleted click-throughs for ${bookIds.length} books`);
+      } catch (error) {
+        console.error(`Error deleting book click-throughs:`, error);
+        // Continue with deletion even if this fails
+      }
       
       // Finally, delete the books themselves
       await db
