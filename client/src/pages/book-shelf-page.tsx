@@ -553,9 +553,6 @@ export default function BookShelfPage() {
                                     }
                                   ]
                               } as Book}
-                            bookNotes={bookNotesList}
-                            onAddNote={handleAddNote}
-                            onSelectNote={handleSelectNote}
                             onViewNotes={() => handleAddNote("book", shelfBook.bookId)}
                             onRemoveFromShelf={() => {
                               if (confirm("Are you sure you want to remove this book from the shelf?")) {
@@ -573,7 +570,7 @@ export default function BookShelfPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Badge variant="secondary" className="bg-foreground/10 text-foreground">
+                                    <Badge variant="secondary" className="bg-background/40 text-primary">
                                       {bookNotesList.length} {bookNotesList.length === 1 ? 'Note' : 'Notes'}
                                     </Badge>
                                   </TooltipTrigger>
