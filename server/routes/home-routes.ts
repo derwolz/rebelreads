@@ -60,10 +60,11 @@ const multipleImageUpload = multer({
 }).fields([
   { name: 'bookImage_book-detail', maxCount: 1 },
   { name: 'bookImage_background', maxCount: 1 },
-  { name: 'bookImage_book-card', maxCount: 1 },
   { name: 'bookImage_grid-item', maxCount: 1 },
-  { name: 'bookImage_mini', maxCount: 1 },
-  { name: 'bookImage_hero', maxCount: 1 }
+  { name: 'bookImage_hero', maxCount: 1 },
+  // We still accept these but they're optional now as they'll be auto-generated
+  { name: 'bookImage_book-card', maxCount: 1 },
+  { name: 'bookImage_mini', maxCount: 1 }
 ]);
 
 const router = Router();
@@ -384,7 +385,25 @@ router.post("/books", multipleImageUpload, async (req, res) => {
     const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] };
     const bookImageEntries = [];
 
-    // Extract image type info from field names
+    // Track if we have a book-detail image to use for auto-generation
+    let bookDetailFile: Express.Multer.File | null = null;
+    let bookDetailUrl: string = '';
+
+    // First pass: process the uploaded files and look for book-detail
+    for (const fieldName in uploadedFiles) {
+      if (fieldName.startsWith('bookImage_')) {
+        const imageType = fieldName.replace('bookImage_', '');
+        const file = uploadedFiles[fieldName][0]; // Get first file from array
+        
+        // Store the book-detail file for potential auto-generation
+        if (imageType === 'book-detail') {
+          bookDetailFile = file;
+          bookDetailUrl = `/uploads/covers/${file.filename}`;
+        }
+      }
+    }
+
+    // Second pass: process all image types (including auto-generated ones)
     for (const fieldName in uploadedFiles) {
       if (fieldName.startsWith('bookImage_')) {
         const imageType = fieldName.replace('bookImage_', '');
@@ -431,6 +450,36 @@ router.post("/books", multipleImageUpload, async (req, res) => {
           width,
           height,
           sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
+        });
+      }
+    }
+    
+    // Auto-generate book-card and mini images if we have a book-detail image
+    // but didn't receive explicit files for these types
+    if (bookDetailFile && bookDetailUrl) {
+      // Check if we don't already have book-card in our entries
+      if (!bookImageEntries.some(entry => entry.imageType === 'book-card')) {
+        console.log("Auto-generating book-card image from book-detail");
+        bookImageEntries.push({
+          bookId: book.id,
+          imageUrl: bookDetailUrl, // Use same image file - would be scaled on client side
+          imageType: 'book-card',
+          width: 256,
+          height: 440,
+          sizeKb: Math.round(bookDetailFile.size / 1024) // Use same file size
+        });
+      }
+      
+      // Check if we don't already have mini in our entries
+      if (!bookImageEntries.some(entry => entry.imageType === 'mini')) {
+        console.log("Auto-generating mini image from book-detail");
+        bookImageEntries.push({
+          bookId: book.id,
+          imageUrl: bookDetailUrl, // Use same image file - would be scaled on client side
+          imageType: 'mini',
+          width: 48,
+          height: 64,
+          sizeKb: Math.round(bookDetailFile.size / 1024) // Use same file size
         });
       }
     }
