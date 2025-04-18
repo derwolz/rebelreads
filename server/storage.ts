@@ -88,6 +88,7 @@ export const dbStorage = {
   updateBookTaxonomies: bookStorage.updateBookTaxonomies.bind(bookStorage),
   getBookTaxonomies: bookStorage.getBookTaxonomies.bind(bookStorage),
   deleteBook: bookStorage.deleteBook.bind(bookStorage),
+  deleteAllAuthorBooks: bookStorage.deleteAllAuthorBooks.bind(bookStorage),
   getAuthorGenres: bookStorage.getAuthorGenres.bind(bookStorage),
   selectBooks: bookStorage.selectBooks.bind(bookStorage),
   updateInternalDetails: bookStorage.updateInternalDetails.bind(bookStorage),
@@ -193,6 +194,7 @@ export const dbStorage = {
   updateAuthor: authorStorage.updateAuthor.bind(authorStorage),
   getAuthorFollowerCount: authorStorage.getAuthorFollowerCount.bind(authorStorage),
   getAuthorAggregateRatings: authorStorage.getAuthorAggregateRatings.bind(authorStorage),
+  deleteAuthor: authorStorage.deleteAuthor.bind(authorStorage),
 
   // Session store for auth
   sessionStore: accountStorage.sessionStore,

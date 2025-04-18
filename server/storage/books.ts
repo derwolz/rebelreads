@@ -435,6 +435,74 @@ export class BookStorage implements IBookStorage {
       .delete(books)
       .where(and(eq(books.id, id), eq(books.authorId, authorId)));
   }
+  
+  /**
+   * Delete all books by an author when they revoke author status
+   * @param userId The user ID of the author to delete all books for
+   */
+  async deleteAllAuthorBooks(userId: number): Promise<void> {
+    try {
+      // First, find the author record to get the author ID
+      const [author] = await db
+        .select()
+        .from(authors)
+        .where(eq(authors.userId, userId));
+        
+      if (!author) {
+        console.log(`No author found with user ID ${userId}, no books to delete`);
+        return;
+      }
+      
+      const authorId = author.id;
+      console.log(`Found author with ID ${authorId} for user ${userId}, deleting all their books`);
+      
+      // Get all books by this author
+      const authorBooks = await db
+        .select({ id: books.id })
+        .from(books)
+        .where(eq(books.authorId, authorId));
+        
+      const bookIds = authorBooks.map(book => book.id);
+      console.log(`Found ${bookIds.length} books to delete for author ${authorId}:`, bookIds);
+      
+      if (bookIds.length === 0) {
+        return; // No books to delete
+      }
+      
+      // First, delete all book images for these books
+      await db
+        .delete(bookImages)
+        .where(inArray(bookImages.bookId, bookIds));
+      console.log(`Deleted images for ${bookIds.length} books`);
+      
+      // Delete all book genre taxonomies
+      await db
+        .delete(bookGenreTaxonomies)
+        .where(inArray(bookGenreTaxonomies.bookId, bookIds));
+      console.log(`Deleted genre taxonomies for ${bookIds.length} books`);
+      
+      // Delete all reading statuses
+      await db
+        .delete(reading_status)
+        .where(inArray(reading_status.bookId, bookIds));
+      console.log(`Deleted reading statuses for ${bookIds.length} books`);
+      
+      // Delete all ratings
+      await db
+        .delete(ratings)
+        .where(inArray(ratings.bookId, bookIds));
+      console.log(`Deleted ratings for ${bookIds.length} books`);
+      
+      // Finally, delete the books themselves
+      await db
+        .delete(books)
+        .where(eq(books.authorId, authorId));
+      console.log(`Deleted all ${bookIds.length} books for author ${authorId}`);
+    } catch (error) {
+      console.error(`Error deleting books for author with user ID ${userId}:`, error);
+      throw error;
+    }
+  }
 
   async getAuthorGenres(
     authorId: number,

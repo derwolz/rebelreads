@@ -33,6 +33,7 @@ type AuthContextType = {
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
   becomeAuthorMutation: UseMutationResult<Author, Error, any>;
+  revokeAuthorMutation: UseMutationResult<any, Error, { confirmUsername: string }>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -215,6 +216,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Author registration error:", error);
       toast({
         title: "Failed to register as author",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const revokeAuthorMutation = useMutation({
+    mutationFn: async ({ confirmUsername }: { confirmUsername: string }) => {
+      const res = await apiRequest("POST", "/api/revoke-author", {
+        confirmUsername
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to revoke author status");
+      }
+      
+      return await res.json();
+    },
+    onSuccess: () => {
+      // Update author status cache and notify the user
+      queryClient.setQueryData(["/api/author-status"], { 
+        isAuthor: false, 
+        authorDetails: null 
+      });
+      
+      toast({
+        title: "Author status revoked",
+        description: "Your author status has been revoked. Your subscription benefits will remain active until their expiration.",
+      });
+      
+      // Also invalidate user data to make sure UI updates properly
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      
+      // Redirect to home page since we're no longer on an author page
+      window.location.href = "/";
+    },
+    onError: (error: Error) => {
+      console.error("Author revocation error:", error);
+      toast({
+        title: "Failed to revoke author status",
         description: error.message,
         variant: "destructive",
       });
