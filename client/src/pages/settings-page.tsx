@@ -390,31 +390,31 @@ export default function SettingsPage() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Revoke Author Status</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  <div className="space-y-4 py-2">
-                                    <div className="bg-destructive/10 text-destructive p-3 rounded-md border border-destructive/30">
-                                      <strong>Warning: This action cannot be undone!</strong>
+                                
+                                {/* Use regular div instead of AlertDialogDescription to avoid nesting issues */}
+                                <div className="space-y-4 py-2">
+                                  <div className="bg-destructive/10 text-destructive p-3 rounded-md border border-destructive/30">
+                                    <strong>Warning: This action cannot be undone!</strong>
+                                  </div>
+                                  
+                                  <p>Revoking your author status will:</p>
+                                  <div className="ml-5 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span>•</span> Delete all books you've published
                                     </div>
-                                    
-                                    <p>Revoking your author status will:</p>
-                                    <div className="ml-5 space-y-1">
-                                      <div className="flex items-center gap-2">
-                                        <span>•</span> Delete all books you've published
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span>•</span> Remove your author profile and analytics
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span>•</span> Remove access to author-specific features
-                                      </div>
+                                    <div className="flex items-center gap-2">
+                                      <span>•</span> Remove your author profile and analytics
                                     </div>
-                                    
-                                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
-                                      <strong className="text-amber-800">Pro Subscription Notice</strong>
-                                      <p className="text-amber-800 text-sm">Any active Pro subscription benefits will remain until the expiration date.</p>
+                                    <div className="flex items-center gap-2">
+                                      <span>•</span> Remove access to author-specific features
                                     </div>
                                   </div>
-                                </AlertDialogDescription>
+                                  
+                                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                                    <strong className="text-amber-800">Pro Subscription Notice</strong>
+                                    <p className="text-amber-800 text-sm">Any active Pro subscription benefits will remain until the expiration date.</p>
+                                  </div>
+                                </div>
                               </AlertDialogHeader>
                               
                               <div className="border-t pt-4 mt-2">
@@ -476,21 +476,21 @@ export default function SettingsPage() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Become an Author</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  <div className="space-y-4 py-2">
-                                    <p>
-                                      This is a significant change to your account. It will create a new author 
-                                      profile for you and enable publishing capabilities.
+                                
+                                {/* Use regular div instead of AlertDialogDescription to avoid nesting issues */}
+                                <div className="space-y-4 py-2">
+                                  <p>
+                                    This is a significant change to your account. It will create a new author 
+                                    profile for you and enable publishing capabilities.
+                                  </p>
+                                  
+                                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                                    <strong className="text-amber-800">Important</strong>
+                                    <p className="text-amber-800 text-sm">
+                                      This may affect your existing data. Please confirm you want to proceed.
                                     </p>
-                                    
-                                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
-                                      <strong className="text-amber-800">Important</strong>
-                                      <p className="text-amber-800 text-sm">
-                                        This may affect your existing data. Please confirm you want to proceed.
-                                      </p>
-                                    </div>
                                   </div>
-                                </AlertDialogDescription>
+                                </div>
                               </AlertDialogHeader>
                               
                               <div className="border-t pt-4 mt-2">
@@ -701,10 +701,10 @@ export default function SettingsPage() {
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
+                          <div className="mb-4">
                             This action cannot be undone. This will permanently delete your book
                             and remove it from our servers.
-                          </AlertDialogDescription>
+                          </div>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
