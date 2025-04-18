@@ -49,7 +49,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { TestImages } from "@/pages/test-images";
 import AuthCheckPage from "@/pages/auth-check";
 import { ImageGuidePage } from "@/pages/image-guide";
-import { BookRackTestPage } from "@/pages/book-rack-test";
+import BookRackTestPage from "@/pages/book-rack-test";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";

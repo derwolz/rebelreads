@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Book } from "@shared/schema";
+import type { Book, BookImage } from "../types"; // Use the Book type from client/src/types.ts
 import { cn } from "@/lib/utils";
 import { BookCard } from "@/components/book-card";
 
