@@ -153,13 +153,19 @@ export const books = pgTable("books", {
 });
 
 // Define the image types for books
-export const IMAGE_TYPES = [
+// We now only require the user to upload 4 types, and we'll generate the other 2
+export const UPLOAD_IMAGE_TYPES = [
   "book-detail",    // 480x600 - Used on book details page
   "background",     // 1300x1500 - Used as background on book details page
-  "book-card",      // 256x440 - Used in recommendations
   "grid-item",      // 56x212 - Used in grid layouts
-  "mini",           // 48x64 - Used in reviews and what's hot sections
   "hero"            // 1500x600 - Used in hero sections
+] as const;
+
+// All image types including auto-generated ones
+export const IMAGE_TYPES = [
+  ...UPLOAD_IMAGE_TYPES,
+  "book-card",      // 256x440 - Auto-generated from book-detail
+  "mini",           // 48x64 - Auto-generated from book-detail
 ] as const;
 
 // Book images table to store different image sizes for each book
@@ -185,7 +191,7 @@ export const insertBookImageSchema = createInsertSchema(bookImages).omit({
 // Schema for image data in book upload
 export const imageUploadSchema = z.object({
   file: z.any(), // File object (will be handled by multer)
-  type: z.enum(IMAGE_TYPES),
+  type: z.enum(UPLOAD_IMAGE_TYPES),
   width: z.number(),
   height: z.number(),
 });
