@@ -54,13 +54,19 @@ export default function DashboardPage(): React.JSX.Element {
     queryKey: ["/api/collections/completed"],
     enabled: !!user,
   });
+  
+  // Fetch user's bookshelves
+  const { data: bookshelves, isLoading: isLoadingBookshelves } = useQuery<BookShelf[]>({
+    queryKey: ["/api/bookshelves"],
+    enabled: !!user,
+  });
 
   const uniqueGenres = wishlistedBooks
-    ? Array.from(new Set(wishlistedBooks.flatMap(book => book.genres)))
+    ? Array.from(new Set(wishlistedBooks.flatMap(book => book.genres || [])))
     : [];
 
   const filteredBooks = wishlistedBooks?.filter(book =>
-    selectedGenre === "all" || book.genres.includes(selectedGenre)
+    selectedGenre === "all" || (book.genres || []).includes(selectedGenre)
   );
 
   if (isLoading) {
@@ -131,6 +137,19 @@ export default function DashboardPage(): React.JSX.Element {
               </div>
             </div>
           </CardHeader>
+        </Card>
+        
+        {/* Bookshelves Carousel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>My Bookshelves</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BookshelfCarousel 
+              bookshelves={bookshelves} 
+              isLoading={isLoadingBookshelves} 
+            />
+          </CardContent>
         </Card>
 
         <Card>

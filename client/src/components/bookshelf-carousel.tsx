@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { BookShelf } from "../../shared/schema";
+import { BookShelf } from "@shared/schema";
 import { 
   Carousel, 
   CarouselContent, 
@@ -12,12 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Book, BookOpen } from "lucide-react";
 
 interface BookshelfCarouselProps {
-  title: string;
   bookshelves?: BookShelf[];
   isLoading: boolean;
 }
 
-export function BookshelfCarousel({ title, bookshelves, isLoading }: BookshelfCarouselProps) {
+export function BookshelfCarousel({ bookshelves, isLoading }: BookshelfCarouselProps) {
   // Define custom options for carousel
   const carouselOptions = {
     align: "start" as const,
@@ -26,43 +25,40 @@ export function BookshelfCarousel({ title, bookshelves, isLoading }: BookshelfCa
   };
 
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-4">{title}</h2>
-      <div className="relative">
-        <Carousel className="w-full" opts={carouselOptions}>
-          <CarouselContent>
-            {isLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <CarouselItem key={i} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <BookshelfCardSkeleton />
-                  </CarouselItem>
-                ))
-              : bookshelves && bookshelves.length > 0
-              ? bookshelves.map((shelf) => (
-                  <CarouselItem key={shelf.id} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                    <BookshelfCard shelf={shelf} />
-                  </CarouselItem>
-                ))
-              : (
-                <CarouselItem className="basis-full">
-                  <div className="flex flex-col items-center justify-center h-40 bg-muted/20 rounded-lg p-4 text-center">
-                    <Book className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-muted-foreground">
-                      No bookshelves yet. Create one in your profile settings.
-                    </p>
-                  </div>
+    <div className="relative">
+      <Carousel className="w-full" opts={carouselOptions}>
+        <CarouselContent>
+          {isLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <CarouselItem key={i} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                  <BookshelfCardSkeleton />
                 </CarouselItem>
-              )}
-          </CarouselContent>
-          {bookshelves && bookshelves.length > 1 && (
-            <>
-              <CarouselPrevious className="left-0" />
-              <CarouselNext className="right-0" />
-            </>
-          )}
-        </Carousel>
-      </div>
-    </section>
+              ))
+            : bookshelves && bookshelves.length > 0
+            ? bookshelves.map((shelf) => (
+                <CarouselItem key={shelf.id} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                  <BookshelfCard shelf={shelf} />
+                </CarouselItem>
+              ))
+            : (
+              <CarouselItem className="basis-full">
+                <div className="flex flex-col items-center justify-center h-40 bg-muted/20 rounded-lg p-4 text-center">
+                  <Book className="h-10 w-10 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">
+                    No bookshelves yet. Create one in your profile settings.
+                  </p>
+                </div>
+              </CarouselItem>
+            )}
+        </CarouselContent>
+        {bookshelves && bookshelves.length > 1 && (
+          <>
+            <CarouselPrevious className="left-0" />
+            <CarouselNext className="right-0" />
+          </>
+        )}
+      </Carousel>
+    </div>
   );
 }
 
