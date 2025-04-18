@@ -4,7 +4,7 @@ import { MessageSquareText } from "lucide-react";
 import FeedbackForm from "./feedback-form";
 
 /**
- * A small button placed in the bottom right corner that opens the feedback form
+ * A small button placed in the bottom left corner that opens the feedback form
  */
 export default function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,7 +13,7 @@ export default function FeedbackButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 rounded-full p-3 shadow-md"
+        className="fixed bottom-4 left-4 rounded-full p-3 shadow-md z-50"
         size="icon"
         aria-label="Submit Feedback"
         title="Submit Feedback"

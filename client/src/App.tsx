@@ -40,6 +40,7 @@ import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
 import BookShelfPage from "@/pages/book-shelf-page";
+import FeedbackButton from "@/components/feedback-button";
 
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
@@ -158,6 +159,7 @@ function App() {
           <AuthProvider>
             <OnboardingProvider>
               <Router />
+              <FeedbackButton />
               <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
               <ReviewInviteDialog />
               <RatingCriteriaWizard />
