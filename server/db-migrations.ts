@@ -1684,6 +1684,34 @@ async function createBookShelfTables() {
   }
 }
 
+/**
+ * Add isShared column to bookShelves table
+ */
+async function addIsSharedColumnToBookShelves() {
+  try {
+    // Check if column exists first to avoid errors
+    const checkResult = await db.execute(sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'book_shelves' AND column_name = 'is_shared'
+    `);
+    
+    if (checkResult.rows.length === 0) {
+      console.log("Adding 'is_shared' column to book_shelves table...");
+      await db.execute(sql`
+        ALTER TABLE book_shelves 
+        ADD COLUMN is_shared boolean NOT NULL DEFAULT false
+      `);
+      console.log("Column 'is_shared' added successfully");
+    } else {
+      console.log("Column 'is_shared' already exists in book_shelves table");
+    }
+  } catch (error) {
+    console.error("Error adding 'is_shared' column to book_shelves table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   // Remove has_beta_access column from users table
@@ -1706,6 +1734,8 @@ export async function runMigrations() {
   await removeUserTaxonomyTables();
   // Create bookshelf tables
   await createBookShelfTables();
+  // Add isShared column to bookShelves table
+  await addIsSharedColumnToBookShelves();
   // Create user genre preferences table
   await createUserGenrePreferencesTable();
   // Add content_views column to user_genre_preferences table
