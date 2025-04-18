@@ -244,6 +244,35 @@ export default function BookShelfPage() {
       });
     },
   });
+  
+  // Remove Book from Shelf Mutation
+  const removeBookFromShelfMutation = useMutation({
+    mutationFn: async ({ shelfId, bookId }: { shelfId: number; bookId: number }) => {
+      const res = await fetch(`/api/bookshelves/${shelfId}/books/${bookId}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to remove book from shelf");
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      toast({
+        title: "Book removed",
+        description: "The book has been removed from this shelf.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Handle note submission
   const onSubmit = (values: NoteFormValues) => {
@@ -508,9 +537,8 @@ export default function BookShelfPage() {
                       <div className="group relative p-1">
                         <div className="relative">
                           {/* Convert shelf book to the format expected by BookCard */}
-                          <BookCard 
-                            book={
-                              {
+                          <BookShelfCard
+                            book={{
                                 ...shelfBook.book,
                                 authorId: shelfBook.book.authorId || 0,
                                 authorName: shelfBook.book.authorName || "Unknown Author",
@@ -548,8 +576,16 @@ export default function BookShelfPage() {
                                       updatedAt: new Date().toISOString()
                                     }
                                   ]
-                              } as Book
-                            }
+                              } as Book}
+                            onViewNotes={() => handleAddNote("book", shelfBook.bookId)}
+                            onRemoveFromShelf={() => {
+                              if (confirm("Are you sure you want to remove this book from the shelf?")) {
+                                removeBookFromShelfMutation.mutate({
+                                  shelfId: parseInt(id),
+                                  bookId: shelfBook.bookId
+                                });
+                              }
+                            }}
                           />
                           
                           {/* Notes badge */}
