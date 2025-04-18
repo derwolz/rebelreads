@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { MainNav } from "@/components/main-nav";
 import { BookCard } from "@/components/book-card";
+import { BookGridCard } from "@/components/book-grid-card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { FollowButton } from "@/components/follow-button";
 import { StarRating } from "@/components/star-rating";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
@@ -15,9 +23,20 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { Book, SocialMediaLink } from "@shared/schema";
+import type { Book, SocialMediaLink, BookShelf } from "@shared/schema";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
+import { BookOpen, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Interface representing a taxonomy with its usage weight
+interface AuthorTaxonomy {
+  id: number;
+  name: string;
+  type: string;
+  weight: number;
+  description?: string;
+}
 
 interface AuthorDetails {
   id: number;
@@ -41,21 +60,82 @@ interface AuthorDetails {
   socialMediaLinks?: SocialMediaLink[];
 }
 
+interface ShelfWithBooks {
+  shelf: BookShelf;
+  books: Book[];
+}
+
 export default function AuthorPage() {
   const [, params] = useRoute("/authors/:id");
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Fetch author details
   const {
     data: author,
-    isLoading,
-    error,
+    isLoading: isAuthorLoading,
+    error: authorError,
   } = useQuery<AuthorDetails>({
     queryKey: [`/api/authors/${params?.id}`],
     enabled: !!params?.id,
   });
 
-  if (isLoading) {
+  // Fetch author's bookshelves
+  const {
+    data: bookshelves,
+    isLoading: isBookshelvesLoading,
+  } = useQuery<ShelfWithBooks[]>({
+    queryKey: [`/api/authors/${params?.id}/bookshelves`],
+    enabled: !!params?.id,
+  });
+
+  // Filter books based on search term
+  const filteredBooks = useMemo(() => {
+    if (!author?.books) return [];
+    return author.books.filter(
+      (book) =>
+        book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.description.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [author?.books, searchTerm]);
+
+  // Organize taxonomies by extracting from author's books
+  const authorTaxonomies = useMemo(() => {
+    if (!author?.books) return [];
+    
+    // Map to track taxonomy usage with weights
+    const taxonomyMap = new Map<number, AuthorTaxonomy>();
+    
+    author.books.forEach(book => {
+      // Access book taxonomies (if present in the API response)
+      const bookTaxonomies = (book as any).genreTaxonomies || [];
+      
+      bookTaxonomies.forEach((taxonomy: any) => {
+        const existingTaxonomy = taxonomyMap.get(taxonomy.taxonomyId);
+        
+        if (existingTaxonomy) {
+          // Increase weight for existing taxonomy
+          existingTaxonomy.weight += 1;
+        } else {
+          // Add new taxonomy
+          taxonomyMap.set(taxonomy.taxonomyId, {
+            id: taxonomy.taxonomyId,
+            name: taxonomy.name,
+            type: taxonomy.type,
+            weight: 1,
+            description: taxonomy.description,
+          });
+        }
+      });
+    });
+    
+    // Convert to array and sort by weight (descending)
+    return Array.from(taxonomyMap.values())
+      .sort((a, b) => b.weight - a.weight);
+  }, [author?.books]);
+
+  // Loading state
+  if (isAuthorLoading) {
     return (
       <div>
         <MainNav />
@@ -70,7 +150,8 @@ export default function AuthorPage() {
     );
   }
 
-  if (error || !author) {
+  // Error state
+  if (authorError || !author) {
     return (
       <div>
         <main className="container mx-auto px-4 py-8">
@@ -82,165 +163,265 @@ export default function AuthorPage() {
       </div>
     );
   }
-  console.log("Author: ", author);
-  const filteredBooks = author.books.filter(
-    (book) =>
-      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
   return (
-    <div>
-      
+    <div className="bg-background/95 min-h-screen">
+      <MainNav />
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">
-                {author.authorName || author.username}
-              </h1>
-              <div className="flex items-center gap-4 text-muted-foreground">
-                <span>{author.followerCount} followers</span>
-                <span>•</span>
-                <span>{author.books.length} books</span>
-                {author.birthDate && (
-                  <>
+        {/* Author Profile Header - Top Section */}
+        <div className="mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Left column - Author Identity Card */}
+            <Card className="bg-card/50 backdrop-blur-sm shadow-lg overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-2xl">{author.authorName || author.username}</CardTitle>
+                <CardDescription className="flex flex-col space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span>{author.followerCount} followers</span>
                     <span>•</span>
+                    <span>{author.books.length} books</span>
+                  </div>
+                  
+                  {author.birthDate && (
                     <span className="text-sm">
                       Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
                       {author.deathDate && (
                         <>
-                          {" • "}Died:{" "}
-                          {format(new Date(author.deathDate), "MMMM d, yyyy")}
+                          {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
                         </>
                       )}
                     </span>
-                  </>
-                )}
-              </div>
-              {author.website && (
-                <a
-                  href={author.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline mt-2 inline-block"
-                >
-                  Visit Website
-                </a>
-              )}
-              {author.socialMediaLinks &&
-                author.socialMediaLinks.length > 0 && (
+                  )}
+                  
+                  {author.website && (
+                    <a
+                      href={author.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline mt-1 inline-block"
+                    >
+                      Visit Website
+                    </a>
+                  )}
+                </CardDescription>
+                
+                <div className="mt-4">
+                  <FollowButton
+                    authorId={author.id}
+                    authorName={author.authorName || author.username}
+                  />
+                </div>
+                
+                {author.socialMediaLinks && author.socialMediaLinks.length > 0 && (
                   <div className="mt-4">
                     <SocialMediaLinks links={author.socialMediaLinks} />
                   </div>
                 )}
+              </CardHeader>
+              
+              <CardContent>
+                {author.authorBio && (
+                  <div className="prose prose-sm max-w-none">
+                    {author.authorBio.split('\n').map((paragraph, index) => (
+                      <p key={index} className="text-sm text-muted-foreground">{paragraph}</p>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Taxonomy Display */}
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium mb-2">Common Themes & Genres</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {authorTaxonomies.slice(0, 10).map((taxonomy) => (
+                      <Badge 
+                        key={taxonomy.id} 
+                        variant={
+                          taxonomy.type === "genre" ? "default" :
+                          taxonomy.type === "subgenre" ? "secondary" :
+                          taxonomy.type === "theme" ? "outline" : "destructive"
+                        }
+                        className="text-xs"
+                      >
+                        {taxonomy.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Right column - Ratings */}
+            <div className="md:col-span-2">
+              {author.aggregateRatings && (
+                <Card className="h-full bg-card/50 backdrop-blur-sm shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Overall Ratings</CardTitle>
+                    <CardDescription>Average across all books</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 mb-4">
+                      <StarRating
+                        rating={Math.round(author.aggregateRatings.overall)}
+                        readOnly
+                        size="lg"
+                      />
+                      <span className="text-lg font-medium">
+                        {author.aggregateRatings.overall.toFixed(1)}
+                      </span>
+                    </div>
+                    
+                    <div className="grid gap-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Enjoyment (30%)</span>
+                        <div className="flex items-center gap-2">
+                          <StarRating
+                            rating={author.aggregateRatings.enjoyment}
+                            readOnly
+                            size="sm"
+                          />
+                          <span className="text-sm">
+                            {author.aggregateRatings.enjoyment.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Writing Style (30%)</span>
+                        <div className="flex items-center gap-2">
+                          <StarRating
+                            rating={author.aggregateRatings.writing}
+                            readOnly
+                            size="sm"
+                          />
+                          <span className="text-sm">
+                            {author.aggregateRatings.writing.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Themes (20%)</span>
+                        <div className="flex items-center gap-2">
+                          <StarRating
+                            rating={author.aggregateRatings.themes}
+                            readOnly
+                            size="sm"
+                          />
+                          <span className="text-sm">
+                            {author.aggregateRatings.themes.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Characters (10%)</span>
+                        <div className="flex items-center gap-2">
+                          <StarRating
+                            rating={author.aggregateRatings.characters}
+                            readOnly
+                            size="sm"
+                          />
+                          <span className="text-sm">
+                            {author.aggregateRatings.characters.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">World Building (10%)</span>
+                        <div className="flex items-center gap-2">
+                          <StarRating
+                            rating={author.aggregateRatings.worldbuilding}
+                            readOnly
+                            size="sm"
+                          />
+                          <span className="text-sm">
+                            {author.aggregateRatings.worldbuilding.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
-            <FollowButton
-              authorId={author.id}
-              authorName={author.authorName || author.username}
-            />
           </div>
-
-          {author.authorBio && (
-            <div className="prose max-w-none">
-              {author.authorBio.split('\n').map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
-          )}
-
-          {author.aggregateRatings && (
-            <div className="bg-muted rounded-lg p-6 space-y-4">
-              <h2 className="text-2xl font-semibold">Overall Ratings</h2>
-              <div className="flex items-center gap-2">
-                <StarRating
-                  rating={Math.round(author.aggregateRatings.overall)}
-                  readOnly
-                />
-                <span className="text-sm text-muted-foreground">
-                  Average across all books
-                </span>
-              </div>
-              <div className="grid gap-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Enjoyment (30%)</span>
-                  <StarRating
-                    rating={Math.round(author.aggregateRatings.enjoyment)}
-                    readOnly
-                    size="sm"
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Writing Style (30%)</span>
-                  <StarRating
-                    rating={Math.round(author.aggregateRatings.writing)}
-                    readOnly
-                    size="sm"
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Themes (20%)</span>
-                  <StarRating
-                    rating={Math.round(author.aggregateRatings.themes)}
-                    readOnly
-                    size="sm"
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Characters (10%)</span>
-                  <StarRating
-                    rating={Math.round(author.aggregateRatings.characters)}
-                    readOnly
-                    size="sm"
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">World Building (10%)</span>
-                  <StarRating
-                    rating={Math.round(author.aggregateRatings.worldbuilding)}
-                    readOnly
-                    size="sm"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {author.genres.map(({ genre, count }) => (
-              <Badge key={genre} variant="secondary" className="text-sm">
-                {genre} ({count})
-              </Badge>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Books</h2>
+        </div>
+        
+        {/* Books Section with Search */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Books</h2>
+            <div className="relative max-w-xs">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search books..."
-                className="max-w-xs"
+                className="pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-
-            <Carousel className="w-full">
-              <CarouselContent>
-                {filteredBooks.map((book) => (
+          </div>
+          
+          <Carousel className="w-full">
+            <CarouselContent>
+              {filteredBooks.length > 0 ? (
+                filteredBooks.map((book) => (
                   <CarouselItem
                     key={book.id}
-                    className="md:basis-1/2 lg:basis-1/3 pl-0 pr-1 pb-40"
+                    className="md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4 pb-4"
                   >
                     <BookCard book={book} />
                   </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </div>
+                ))
+              ) : (
+                <CarouselItem className="basis-full">
+                  <div className="flex justify-center items-center h-64 bg-muted/20 rounded-lg">
+                    <p className="text-muted-foreground">No books found</p>
+                  </div>
+                </CarouselItem>
+              )}
+            </CarouselContent>
+            <CarouselPrevious className="left-1" />
+            <CarouselNext className="right-1" />
+          </Carousel>
         </div>
+        
+        {/* Bookshelves Section */}
+        {isBookshelvesLoading ? (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold mb-6">Bookshelves</h2>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="animate-pulse">
+                <Skeleton className="h-8 w-48 mb-4" />
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-64 rounded-lg" />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : bookshelves && bookshelves.length > 0 ? (
+          <div className="space-y-10">
+            {bookshelves.map((shelfWithBooks) => (
+              <div key={shelfWithBooks.shelf.id} className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold">{shelfWithBooks.shelf.title}</h2>
+                  <BookOpen className="h-5 w-5 text-muted-foreground" />
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {shelfWithBooks.books.map((book) => (
+                    <div key={book.id} className="h-full">
+                      <BookGridCard book={book} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </main>
     </div>
   );

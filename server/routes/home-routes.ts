@@ -11,10 +11,13 @@ import {
   followers, 
   bookImages, 
   bookGenreTaxonomies, 
-  genreTaxonomies 
+  genreTaxonomies,
+  bookShelves,
+  shelfBooks,
+  authors
 } from "@shared/schema";
 import { enhanceReferralLinks } from "../utils/favicon-utils";
-import { eq, and, inArray, notInArray, desc, avg, count, sql } from "drizzle-orm";
+import { eq, and, inArray, notInArray, desc, avg, count, sql, asc } from "drizzle-orm";
 
 // Configure multer for file uploads
 const uploadsDir = "./uploads";
@@ -900,6 +903,70 @@ router.get("/authors/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching author details:", error);
     res.status(500).json({ error: "Failed to fetch author details" });
+  }
+});
+
+/**
+ * GET /api/authors/:id/bookshelves
+ * Get shared bookshelves for an author with the books they contain
+ * Public endpoint - no authentication required
+ */
+router.get("/authors/:id/bookshelves", async (req, res) => {
+  try {
+    const authorId = parseInt(req.params.id);
+    if (isNaN(authorId)) {
+      return res.status(400).json({ error: "Invalid author ID" });
+    }
+
+    // Get author details from storage
+    const author = await dbStorage.getAuthor(authorId);
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+
+    // Find shared bookshelves for this author
+    const sharedShelves = await db.select()
+      .from(bookShelves)
+      .where(and(
+        eq(bookShelves.userId, author.userId),
+        eq(bookShelves.isShared, true)
+      ))
+      .orderBy(asc(bookShelves.rank));
+
+    // Get books for each shelf
+    const shelvesWithBooks = await Promise.all(
+      sharedShelves.map(async (shelf) => {
+        // Get shelf-book relationships
+        const shelfBooksData = await db.select()
+          .from(shelfBooks)
+          .where(eq(shelfBooks.shelfId, shelf.id))
+          .orderBy(asc(shelfBooks.rank));
+
+        // Get the actual books
+        const bookIds = shelfBooksData.map(sb => sb.bookId);
+        let shelfBooks: any[] = [];
+        
+        if (bookIds.length > 0) {
+          // Fetch the books with their images
+          shelfBooks = await Promise.all(
+            bookIds.map(async (bookId) => {
+              const book = await dbStorage.getBook(bookId);
+              return book;
+            })
+          );
+        }
+
+        return {
+          shelf,
+          books: shelfBooks.filter(Boolean) // Filter out any null values
+        };
+      })
+    );
+
+    res.json(shelvesWithBooks);
+  } catch (error) {
+    console.error("Error fetching author bookshelves:", error);
+    res.status(500).json({ error: "Failed to fetch author bookshelves" });
   }
 });
 
