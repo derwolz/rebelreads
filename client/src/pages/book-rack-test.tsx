@@ -53,7 +53,10 @@ export function BookRackTestPage() {
       {!isLoading && books && books.length > 0 && (
         <BookRack
           title="Single Book Example (Repeated)"
-          books={Array(10).fill(books[0])}
+          books={Array(10).fill(null).map((_, i) => ({
+            ...books[0],
+            id: books[0].id + 1000 + i // Create unique IDs for repeated books
+          }))}
           isLoading={false}
         />
       )}
