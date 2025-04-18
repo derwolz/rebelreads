@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Book } from "@shared/schema";
 import { cn } from "@/lib/utils";
 
@@ -29,22 +29,42 @@ interface BookSpineProps {
   index: number;
 }
 
-// A utility function to calculate increased width needed for leaning books
-function calculateLeaningWidth(angle: number): number {
-  if (angle === 0) return SPINE_WIDTH;
+// Calculate the geometric properties for a leaning book
+function calculateLeaningGeometry(angle: number) {
+  if (angle === 0) {
+    return {
+      width: SPINE_WIDTH,
+      offset: 0,
+    };
+  }
   
-  // Using trigonometry to calculate width when tilted
-  // sin(angle) * height gives the additional horizontal space needed
+  // Convert angle to radians for trigonometry calculations
   const radians = Math.abs(angle) * (Math.PI / 180);
-  const additionalWidth = Math.sin(radians) * SPINE_HEIGHT;
   
-  return Math.ceil(SPINE_WIDTH + additionalWidth);
+  // Calculate additional width needed when book is leaning
+  // sin(angle) * height gives the additional horizontal space needed
+  const additionalWidth = Math.sin(radians) * SPINE_HEIGHT;
+  const totalWidth = Math.ceil(SPINE_WIDTH + additionalWidth);
+  
+  // Calculate the offset needed to center the book
+  // If leaning left (negative angle), we need positive offset (to the right)
+  // If leaning right (positive angle), we need negative offset (to the left)
+  const offset = angle < 0 
+    ? additionalWidth / 2  // Move right for left lean
+    : -additionalWidth / 2; // Move left for right lean
+  
+  return {
+    width: totalWidth,
+    offset,
+  };
 }
 
 // Component to display a single book spine with appropriate rotation
 function BookSpine({ book, angle, index }: BookSpineProps) {
-  // Calculate the actual width needed for this book spine when leaning
-  const calculatedWidth = calculateLeaningWidth(angle);
+  // Calculate geometric properties for this book spine
+  const { width, offset } = useMemo(() => {
+    return calculateLeaningGeometry(angle);
+  }, [angle]);
   
   // Get the grid-item image for the book spine
   const spineImageUrl = book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png";
@@ -53,18 +73,16 @@ function BookSpine({ book, angle, index }: BookSpineProps) {
     <div 
       className="relative inline-block"
       style={{ 
-        width: `${calculatedWidth}px`,
+        width: `${width}px`,
         height: `${SPINE_HEIGHT}px`,
-        // Adjust margins as needed for leaning effect
-        marginLeft: angle < 0 ? `${Math.abs(angle) * 2}px` : '0px',
-        marginRight: angle > 0 ? `${Math.abs(angle) * 2}px` : '0px',
       }}
     >
       <div 
-        className="w-[56px] h-full transition-transform duration-300 ease-in-out"
+        className="absolute w-[56px] h-full transition-transform duration-300 ease-in-out"
         style={{ 
-          transform: `rotate(${angle}deg)`,
+          transform: `translateX(${offset}px) rotate(${angle}deg)`,
           transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
+          left: `${(width - SPINE_WIDTH) / 2}px`, // Center the book in its container
         }}
       >
         <img 
@@ -85,8 +103,7 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
     return books.map(book => book.id).join('-');
   }, [books]);
   
-  // Use memo to generate random angles once when books change
-  // This prevents the infinite loop we were seeing
+  // Generate random angles once when books change
   const bookAngles = useMemo(() => {
     if (!books || books.length === 0) return [];
     
@@ -129,12 +146,12 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
     return angles;
   }, [bookIdsString]);
   
-  // Calculate total width needed for all the books - must be called on every render
+  // Calculate total width needed for all the books
   const totalShelfWidth = useMemo(() => {
-    return bookAngles.reduce((total, angle, index) => {
-      const calculatedWidth = calculateLeaningWidth(angle);
-      // Add some margin between books
-      return total + calculatedWidth + 2;
+    return bookAngles.reduce((total, angle) => {
+      const { width } = calculateLeaningGeometry(angle);
+      // Add a small gap between books
+      return total + width + 2;
     }, 0);
   }, [bookAngles]);
   
@@ -163,34 +180,35 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       </section>
     );
   }
-
+  
   return (
     <section className={cn("mb-12 relative", className)}>
       <h2 className="text-3xl font-bold mb-6">{title}</h2>
       
-      {/* Book shelf (brown wooden texture) */}
+      {/* Book shelf */}
       <div className="relative">
         {/* The books container - positioned on the shelf */}
         <div 
           className="flex items-end bg-muted/10 rounded-md p-4 h-[250px] overflow-x-auto"
-          style={{ minWidth: `${Math.min(totalShelfWidth, window.innerWidth * 0.9)}px` }}
         >
-          {books.map((book, index) => {
-            // Get this book's angle
-            const angle = bookAngles[index] || 0;
-            
-            // Use a unique key combining book ID and index
-            const key = `${book.id}-${index}`;
-            
-            return (
-              <BookSpine 
-                key={key}
-                book={book} 
-                angle={angle}
-                index={index}
-              />
-            );
-          })}
+          <div className="flex" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
+            {books.map((book, index) => {
+              // Get this book's angle
+              const angle = bookAngles[index] || 0;
+              
+              // Use a unique key combining book ID and index
+              const key = `${book.id}-${index}`;
+              
+              return (
+                <BookSpine 
+                  key={key}
+                  book={book} 
+                  angle={angle}
+                  index={index}
+                />
+              );
+            })}
+          </div>
         </div>
         
         {/* The wooden shelf */}
