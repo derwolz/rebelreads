@@ -1181,6 +1181,7 @@ export const bookShelves = pgTable("book_shelves", {
   title: text("title").notNull(),
   coverImageUrl: text("cover_image_url").default("/images/default-bookshelf-cover.svg"),
   rank: integer("rank").notNull().default(0), // For drag and drop ordering
+  isShared: boolean("is_shared").notNull().default(false), // Whether the bookshelf is shared publicly (for authors)
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -1310,7 +1311,8 @@ export const insertBookShelfSchema = createInsertSchema(bookShelves).omit({
   rank: true, // We'll handle rank in the API
 }).extend({
   title: z.string().min(1, "Bookshelf title is required"),
-  coverImageUrl: z.union([z.string(), z.instanceof(File), z.null()]).optional()
+  coverImageUrl: z.union([z.string(), z.instanceof(File), z.null()]).optional(),
+  isShared: z.boolean().optional().default(false) // Optional for backward compatibility
 });
 
 export const insertShelfBookSchema = createInsertSchema(shelfBooks).omit({
