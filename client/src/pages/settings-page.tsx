@@ -360,11 +360,47 @@ export default function SettingsPage() {
 
               <div className="flex justify-between items-center pt-4">
                 <div className="flex items-center space-x-4">
-                  <Switch
-                    checked={isAuthor}
-                    onCheckedChange={() => becomeAuthorMutation.mutate(undefined)}
-                  />
-                  <span>Register as an author</span>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <div className="flex items-center space-x-4 cursor-pointer">
+                        <Switch checked={isAuthor} />
+                        <span>Register as an author</span>
+                      </div>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Become an Author</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This is a significant change to your account. It will likely delete all your existing data and you will have to start again from the beginning.
+                          
+                          <div className="mt-4">
+                            <p className="font-semibold">To confirm this change, please type your username: {user?.username}</p>
+                            <Input 
+                              id="confirm-username" 
+                              className="mt-2" 
+                              placeholder="Enter your username to confirm"
+                              onChange={(e) => {
+                                const confirmButton = document.getElementById('confirm-author-button') as HTMLButtonElement;
+                                if (confirmButton) {
+                                  confirmButton.disabled = e.target.value !== user?.username;
+                                }
+                              }}
+                            />
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          id="confirm-author-button"
+                          disabled={true}
+                          onClick={() => becomeAuthorMutation.mutate(undefined)}
+                        >
+                          Confirm Change
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 <Button type="submit">Save Changes</Button>
               </div>
