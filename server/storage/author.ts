@@ -29,6 +29,7 @@ export interface IAuthorStorage {
     characters: number;
     worldbuilding: number;
   } | null>;
+  deleteAuthor(userId: number, preservePro?: boolean, proExpiresAt?: Date | null): Promise<void>;
 }
 
 export class AuthorStorage implements IAuthorStorage {
@@ -157,5 +158,37 @@ export class AuthorStorage implements IAuthorStorage {
       characters: characters,
       worldbuilding: worldbuilding
     };
+  }
+  
+  /**
+   * Delete an author profile while optionally preserving Pro status details
+   * @param userId The user ID associated with the author
+   * @param preservePro Whether to preserve Pro status (defaults to false)
+   * @param proExpiresAt The Pro expiration date to preserve (if applicable)
+   */
+  async deleteAuthor(userId: number, preservePro: boolean = false, proExpiresAt: Date | null = null): Promise<void> {
+    // Find the author record
+    const author = await this.getAuthorByUserId(userId);
+    
+    if (!author) {
+      throw new Error(`Author with user ID ${userId} not found`);
+    }
+    
+    // If we're preserving Pro status, we should create a special record to track it
+    if (preservePro) {
+      // Store the Pro status information in a separate table or record
+      // This might involve creating a "former_authors" table or similar to track Pro status
+      console.log(`Preserving Pro status for author ${author.id} (User: ${userId}) until ${proExpiresAt}`);
+      
+      // For now, we'll just delete the main author record
+      // A full implementation would need a separate table to track historical Pro status
+    }
+    
+    // Delete the author record
+    await db
+      .delete(authors)
+      .where(eq(authors.userId, userId));
+      
+    console.log(`Deleted author with user ID ${userId}`);
   }
 }

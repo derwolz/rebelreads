@@ -33,6 +33,7 @@ export interface IBookStorage {
     description?: string;
   }[]>;
   deleteBook(id: number, authorId: number): Promise<void>;
+  deleteAllAuthorBooks(userId: number): Promise<void>;
   getAuthorGenres(authorId: number): Promise<{ genre: string; count: number }[]>;
   selectBooks(query: string): Promise<Book[]>;
   updateInternalDetails(id: number, details: string): Promise<Book>;
