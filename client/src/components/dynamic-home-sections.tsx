@@ -1,16 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import type { Book } from "@shared/schema";
+import type { Book } from "../types"; // Import from client types instead of shared schema
 import { useAuth } from "@/hooks/use-auth";
 import { BookCarousel } from "./book-carousel";
 import { BookGrid } from "./book-grid";
+import { BookRack } from "./book-rack";
+import { useWindowSize } from "@/hooks/use-window-size";
 import { useLocation } from "wouter";
 
 // Define the HomepageSection interface based on what's in the schema
 interface HomepageSection {
   id: string;
   type: string;
-  displayMode: "carousel" | "grid";
+  displayMode: "carousel" | "grid" | "book_rack";
   title: string;
   itemCount: number;
   customViewId?: number;
@@ -166,20 +168,56 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
     navigate(searchPath);
   };
   
+  // Get window size for book_rack calculations
+  const { width: windowWidth } = useWindowSize();
+  
+  // For book_rack, calculate how many books we can fit
+  // First, calculate available spines based on window width divided by spine width (56px)
+  // Then reduce to 80% to leave some empty space, and ensure it's not more than 1000
+  let bookRackCount = section.itemCount;
+  if (section.displayMode === "book_rack" && windowWidth > 0) {
+    // Calculate based on windowWidth / 56 (spine width)
+    const maxSpines = Math.floor(windowWidth / 56);
+    // Take 80% and ensure it's not more than 1000
+    bookRackCount = Math.min(Math.floor(maxSpines * 0.8), 1000);
+    
+    // Ensure we're requesting the correct number of books if the endpoint supports it
+    if (endpoint.includes('?count=')) {
+      endpoint = endpoint.replace(/count=\d+/, `count=${bookRackCount}`);
+    } else if (endpoint.includes('?')) {
+      endpoint += `&count=${bookRackCount}`;
+    } else {
+      endpoint += `?count=${bookRackCount}`;
+    }
+  }
+  
   // Render the section with the appropriate display mode
-  return section.displayMode === "carousel" ? (
-    <BookCarousel 
-      title={section.title} 
-      books={displayBooks} 
-      isLoading={isLoading}
-      onDiscoverMore={handleDiscoverMore}
-    />
-  ) : (
-    <BookGrid 
-      title={section.title} 
-      books={displayBooks} 
-      isLoading={isLoading}
-      onDiscoverMore={handleDiscoverMore}
-    />
-  );
+  if (section.displayMode === "carousel") {
+    return (
+      <BookCarousel 
+        title={section.title} 
+        books={displayBooks} 
+        isLoading={isLoading}
+        onDiscoverMore={handleDiscoverMore}
+      />
+    );
+  } else if (section.displayMode === "book_rack") {
+    return (
+      <BookRack
+        title={section.title}
+        books={displayBooks || []}
+        isLoading={isLoading}
+        className="" // Optional class name
+      />
+    );
+  } else {
+    return (
+      <BookGrid 
+        title={section.title} 
+        books={displayBooks} 
+        isLoading={isLoading}
+        onDiscoverMore={handleDiscoverMore}
+      />
+    );
+  }
 }

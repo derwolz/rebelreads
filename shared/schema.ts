@@ -1147,7 +1147,7 @@ export const HOMEPAGE_SECTION_TYPES = [
   "custom_genre_view"
 ] as const;
 
-export const DISPLAY_MODE_TYPES = ["carousel", "grid"] as const;
+export const DISPLAY_MODE_TYPES = ["carousel", "grid", "book_rack"] as const;
 
 export const homepageLayouts = pgTable("homepage_layouts", {
   id: serial("id").primaryKey(),
