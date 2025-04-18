@@ -130,9 +130,17 @@ export function SortableHomepageSection({
             >
               Grid
             </Button>
+            <Button 
+              variant={section.displayMode === "book_rack" ? "default" : "outline"}
+              size="sm"
+              className="h-8 px-2 text-xs sm:text-sm"
+              onClick={() => section.displayMode !== "book_rack" && handleDisplayModeChange("book_rack")}
+            >
+              Book Rack
+            </Button>
           </div>
           
-          {section.displayMode === "grid" && (
+          {(section.displayMode === "grid" || section.displayMode === "book_rack") && (
             <div className="flex items-center gap-1 sm:gap-2">
               <Button 
                 variant={section.itemCount === 10 ? "default" : "outline"}
