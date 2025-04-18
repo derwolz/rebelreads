@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Book } from "../types";
 import { Rating, RatingPreferences, calculateWeightedRating, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
 import { StarRating } from "./star-rating";
-import { BookOpen, Trash2, CalendarIcon, Plus } from "lucide-react";
+import { BookOpen, Trash2, CalendarIcon, Plus, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -17,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
@@ -63,7 +64,9 @@ export function BookShelfCard({
   onAddNote,
   onSelectNote
 }: BookShelfCardProps) {
+  const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
+  const [isShelfOpenMobile, setIsShelfOpenMobile] = useState(false);
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
@@ -145,7 +148,15 @@ export function BookShelfCard({
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    // Record click-through before navigation
+    
+    // On mobile, toggle the shelf instead of navigating
+    if (isMobile) {
+      e.preventDefault();
+      setIsShelfOpenMobile(!isShelfOpenMobile);
+      return;
+    }
+    
+    // On desktop, record click-through and navigate
     await apiRequest("POST", `/api/books/${book.id}/click-through`, {
       source: "shelf-card",
       referrer: window.location.pathname,
@@ -187,8 +198,12 @@ export function BookShelfCard({
         className="absolute bottom-0 left-0 w-full h-full rounded bg-foreground rounded p-4 border-background border-2 shadow-md duration-300 ease-in-out overflow-hidden"
         style={{
           transformOrigin: "bottom right",
-          transform: isHovered ? "rotate(45deg)" : "rotate(0deg)",
+          // On desktop, rotate on hover; on mobile, rotate based on isShelfOpenMobile state
+          transform: isMobile 
+            ? (isShelfOpenMobile ? "rotate(45deg)" : "rotate(0deg)")
+            : (isHovered ? "rotate(45deg)" : "rotate(0deg)"),
           boxShadow: "0 -2px 5px rgba(0, 0, 0, 0.2)",
+          zIndex: (isMobile && isShelfOpenMobile) ? 40 : 20,
         }}
       >
         {/* Header with action buttons */}
@@ -196,6 +211,22 @@ export function BookShelfCard({
           <h4 className="text-white font-semibold text-sm">Notes ({bookNotes.length})</h4>
           
           <div className="flex gap-2">
+            {/* Mobile-only close button */}
+            {isMobile && isShelfOpenMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="bg-accent/80 text-white hover:bg-accent/90 h-7 px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsShelfOpenMobile(false);
+                }}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Close
+              </Button>
+            )}
+            
             <Button
               variant="ghost"
               size="sm"
@@ -225,7 +256,7 @@ export function BookShelfCard({
         </div>
         
         {/* Scrollable notes list */}
-        <ScrollArea className="h-[160px] pr-2">
+        <ScrollArea className="h-[130px] pr-2">
           {bookNotes.length > 0 ? (
             <div className="space-y-2">
               {bookNotes.map((note) => (
@@ -254,6 +285,29 @@ export function BookShelfCard({
             </div>
           )}
         </ScrollArea>
+        
+        {/* Mobile-only "View Book" button */}
+        {isMobile && isShelfOpenMobile && (
+          <div className="mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full bg-primary/10 text-white hover:bg-primary/20 border-primary/30"
+              onClick={async (e) => {
+                e.stopPropagation();
+                // Record click-through before navigation
+                await apiRequest("POST", `/api/books/${book.id}/click-through`, {
+                  source: "shelf-card-mobile",
+                  referrer: window.location.pathname,
+                });
+                navigate(`/books/${book.id}`);
+              }}
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              View Book Details
+            </Button>
+          </div>
+        )}
         
         {/* Wood grain effect for the shelf */}
         <div className="absolute inset-0 opacity-30 pointer-events-none" 
