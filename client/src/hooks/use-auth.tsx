@@ -184,9 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const becomeAuthorMutation = useMutation({
     mutationFn: async () => {
-      // The server endpoint expects 'authorName' (not author_name) as shown in account-routes.ts line 592
+      // The server endpoint expects 'author_name' (with underscore) as defined in the schema
       const res = await apiRequest("POST", "/api/become-author", {
-        authorName: user?.username || "",
+        author_name: user?.username || "",
         bio: ""
       });
       
