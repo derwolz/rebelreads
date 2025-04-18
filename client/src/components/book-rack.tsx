@@ -80,6 +80,11 @@ function BookSpine({ book, angle, index }: BookSpineProps) {
 
 // Main BookRack component
 export function BookRack({ title, books = [], isLoading, className }: BookRackProps) {
+  // Create a stable book ID string for dependencies
+  const bookIdsString = useMemo(() => {
+    return books.map(book => book.id).join('-');
+  }, [books]);
+  
   // Use memo to generate random angles once when books change
   // This prevents the infinite loop we were seeing
   const bookAngles = useMemo(() => {
@@ -122,7 +127,16 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
     }
     
     return angles;
-  }, [books.map(book => book.id).join('-')]);
+  }, [bookIdsString]);
+  
+  // Calculate total width needed for all the books - must be called on every render
+  const totalShelfWidth = useMemo(() => {
+    return bookAngles.reduce((total, angle, index) => {
+      const calculatedWidth = calculateLeaningWidth(angle);
+      // Add some margin between books
+      return total + calculatedWidth + 2;
+    }, 0);
+  }, [bookAngles]);
   
   // Skeleton placeholder when loading
   if (isLoading) {
@@ -149,15 +163,6 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       </section>
     );
   }
-  
-  // Calculate total width needed for all the books
-  const totalShelfWidth = useMemo(() => {
-    return bookAngles.reduce((total, angle, index) => {
-      const calculatedWidth = calculateLeaningWidth(angle);
-      // Add some margin between books
-      return total + calculatedWidth + 2;
-    }, 0);
-  }, [bookAngles]);
 
   return (
     <section className={cn("mb-12 relative", className)}>
