@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { AVAILABLE_GENRES, FORMAT_OPTIONS, IMAGE_TYPES } from "@shared/schema";
+import { AVAILABLE_GENRES, FORMAT_OPTIONS, IMAGE_TYPES, RETAILER_OPTIONS } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
@@ -60,12 +60,7 @@ import {
 import { Edit } from "lucide-react";
 import type { Book, BookImage } from "@shared/schema";
 
-const RETAILER_OPTIONS = [
-  "Amazon",
-  "Barnes & Noble",
-  "IndieBound",
-  "Custom",
-] as const;
+// Removed retailer options as per the requirement to use only custom links
 
 // BookImageFile interface is already defined at the top of the file
 
@@ -106,7 +101,7 @@ const STEPS = [
 interface SortableReferralLinkProps {
   link: ReferralLink;
   index: number;
-  onChange: (value: string) => void;
+  onChange: (field: 'url' | 'customName', value: string) => void;
   onRemove: () => void;
 }
 
@@ -125,7 +120,7 @@ function SortableReferralLink({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 flex-wrap w-full mb-2">
       <button
         {...attributes}
         {...listeners}
@@ -133,12 +128,24 @@ function SortableReferralLink({
       >
         <GripVertical className="h-4 w-4" />
       </button>
-      <span className="text-sm">{link.customName || link.retailer}:</span>
-      <Input
-        value={link.url}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-sm h-8"
-      />
+      <div className="flex flex-col sm:flex-row gap-2 flex-1">
+        <div className="flex-1">
+          <Input
+            value={link.customName || ""}
+            onChange={(e) => onChange('customName', e.target.value)}
+            className="text-sm h-8"
+            placeholder="Link name (optional)"
+          />
+        </div>
+        <div className="flex-[2]">
+          <Input
+            value={link.url}
+            onChange={(e) => onChange('url', e.target.value)}
+            className="text-sm h-8"
+            placeholder="URL (https://...)"
+          />
+        </div>
+      </div>
       <Button variant="ghost" size="sm" onClick={onRemove}>
         ×
       </Button>
@@ -934,7 +941,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Referral Links</h2>
             <p className="text-sm text-muted-foreground">
-              Add links where readers can purchase your book
+              Add custom links where readers can purchase your book. You can optionally provide a name for each link.
             </p>
 
             <DndContext
@@ -965,9 +972,9 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                     key={index}
                     link={link}
                     index={index}
-                    onChange={(newUrl) => {
+                    onChange={(field, value) => {
                       const newLinks = [...formData.referralLinks];
-                      newLinks[index] = { ...link, url: newUrl };
+                      newLinks[index] = { ...link, [field]: value };
                       setFormData((prev) => ({
                         ...prev,
                         referralLinks: newLinks,
@@ -987,12 +994,13 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
             </DndContext>
 
             <div className="flex gap-2 mt-2">
-              <Select
-                onValueChange={(value) => {
+              <Button
+                onClick={() => {
+                  // Import the retailer constant from schema to ensure type compatibility
                   const newLink: ReferralLink = {
-                    retailer: value as (typeof RETAILER_OPTIONS)[number],
+                    retailer: "Custom", // Using "Custom" from RETAILER_OPTIONS
                     url: "",
-                    customName: value === "Custom" ? "" : undefined,
+                    customName: "", // Initially empty, can be filled by user
                   };
                   setFormData((prev) => ({
                     ...prev,
@@ -1000,17 +1008,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   }));
                 }}
               >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Add retailer..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {RETAILER_OPTIONS.map((retailer) => (
-                    <SelectItem key={retailer} value={retailer}>
-                      {retailer}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                Add Link
+              </Button>
               {formData.referralLinks.length > 0 && (
                 <Button
                   variant="outline"
