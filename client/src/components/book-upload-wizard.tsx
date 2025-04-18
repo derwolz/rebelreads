@@ -668,6 +668,78 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
 
   // Legacy genre toggle removed
 
+  // Handle cancel button click
+  const handleCancel = () => {
+    // Check if there are any changes that would be lost
+    const hasChanges = !book && (
+      formData.title !== "" ||
+      formData.description !== "" ||
+      formData.series !== "" ||
+      formData.setting !== "" ||
+      formData.characters.length > 0 ||
+      formData.hasAwards ||
+      formData.awards.length > 0 ||
+      formData.formats.length > 0 ||
+      formData.pageCount > 0 ||
+      formData.publishedDate !== "" ||
+      formData.isbn !== "" ||
+      formData.asin !== "" ||
+      formData.language !== "English" ||
+      formData.originalTitle !== "" ||
+      formData.referralLinks.length > 0 ||
+      formData.internal_details !== "" ||
+      formData.genreTaxonomies.length > 0 ||
+      // Check if any images have been uploaded
+      Object.values(formData.bookImages).some(img => !!img.file)
+    );
+    
+    // If there are changes, show confirmation dialog
+    if (hasChanges) {
+      setShowCancelConfirm(true);
+    } else {
+      // If no changes, just close without confirmation
+      handleConfirmCancel();
+    }
+  };
+  
+  // Handle confirmed cancel action
+  const handleConfirmCancel = () => {
+    // Clear form data from local storage
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (error) {
+      console.error("Error removing form data from local storage:", error);
+    }
+    
+    // Reset form data and close the wizard
+    setFormData({
+      title: "",
+      description: "",
+      series: "",
+      setting: "",
+      characters: [],
+      hasAwards: false,
+      awards: [],
+      formats: [],
+      pageCount: 0,
+      publishedDate: "",
+      isbn: "",
+      asin: "",
+      language: "English",
+      originalTitle: "",
+      referralLinks: [],
+      internal_details: "",
+      genreTaxonomies: [],
+      bookImages: createEmptyBookImages(),
+    });
+    
+    // Close the confirmation dialog
+    setShowCancelConfirm(false);
+    
+    // Call onSuccess to close the wizard
+    onSuccess?.();
+  };
+  
   const canProceed = () => {
     switch (currentStep) {
       case 0:
@@ -1346,27 +1418,46 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           {STEPS[currentStep]}
         </div>
       </div>
-      <style jsx>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+      
+      {/* CSS classes for hiding scrollbars moved to global styles or tailwind */}
+
+      {/* Cancel confirmation dialog */}
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Book Upload?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel? All your progress will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continue Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel}>Yes, Cancel</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="min-h-[400px]">{renderStep()}</div>
 
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:justify-between mt-6">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentStep((prev) => prev - 1)}
-          disabled={currentStep === 0}
-          className="sm:max-w-[100px] w-full"
-        >
-          Previous
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          {/* Cancel button added */}
+          <Button
+            variant="destructive"
+            onClick={handleCancel}
+            className="flex-1 sm:flex-initial"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentStep((prev) => prev - 1)}
+            disabled={currentStep === 0}
+            className="flex-1 sm:flex-initial"
+          >
+            Previous
+          </Button>
+        </div>
         <div className="text-xs text-center text-muted-foreground mt-1 mb-2 sm:hidden">
           Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
         </div>
@@ -1374,7 +1465,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <Button
             onClick={() => uploadMutation.mutate(formData)}
             disabled={uploadMutation.isPending || !canProceed()}
-            className="sm:max-w-[100px] w-full"
+            className="w-full sm:w-auto"
           >
             {uploadMutation.isPending
               ? book
@@ -1388,7 +1479,7 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <Button
             onClick={() => setCurrentStep((prev) => prev + 1)}
             disabled={!canProceed()}
-            className="sm:max-w-[100px] w-full"
+            className="w-full sm:w-auto"
           >
             Next
           </Button>
