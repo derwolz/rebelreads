@@ -273,17 +273,29 @@ export function HomepageSettings() {
     );
   }
 
-  // Toggle display mode between carousel and grid
+  // Toggle display mode between carousel, grid, and book_rack
   function toggleDisplayMode(sectionId: string) {
     setSections(
-      sections.map((section) =>
-        section.id === sectionId
-          ? { 
-              ...section, 
-              displayMode: section.displayMode === "carousel" ? "grid" : "carousel" 
-            }
-          : section
-      )
+      sections.map((section) => {
+        if (section.id === sectionId) {
+          // Cycle through the three display modes
+          let newDisplayMode = "carousel";
+          
+          if (section.displayMode === "carousel") {
+            newDisplayMode = "grid";
+          } else if (section.displayMode === "grid") {
+            newDisplayMode = "book_rack";
+          } else if (section.displayMode === "book_rack") {
+            newDisplayMode = "carousel";
+          }
+          
+          return { 
+            ...section, 
+            displayMode: newDisplayMode as typeof section.displayMode
+          };
+        }
+        return section;
+      })
     );
   }
 
