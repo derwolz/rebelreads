@@ -467,6 +467,24 @@ export class BookStorage implements IBookStorage {
         console.error(`Error deleting click-throughs for book ${id}:`, error);
         // Continue with deletion even if this fails
       }
+      
+      // Delete shelf_books records that reference this book
+      try {
+        const { shelfBooks } = await import('../../shared/schema');
+        await db.delete(shelfBooks).where(eq(shelfBooks.bookId, id));
+      } catch (error) {
+        console.error(`Error deleting shelf book entries for book ${id}:`, error);
+        throw error;
+      }
+      
+      // Delete notes related to this book
+      try {
+        const { notes } = await import('../../shared/schema');
+        await db.delete(notes).where(eq(notes.bookId, id));
+      } catch (error) {
+        console.error(`Error deleting notes for book ${id}:`, error);
+        // Continue with deletion even if this fails
+      }
         
       // Now it's safe to delete the book itself
       await db
@@ -563,6 +581,26 @@ export class BookStorage implements IBookStorage {
         console.log(`Deleted click-throughs for ${bookIds.length} books`);
       } catch (error) {
         console.error(`Error deleting book click-throughs:`, error);
+        // Continue with deletion even if this fails
+      }
+      
+      // Delete all shelf_books records that reference these books
+      try {
+        const { shelfBooks } = await import('../../shared/schema');
+        await db.delete(shelfBooks).where(inArray(shelfBooks.bookId, bookIds));
+        console.log(`Deleted shelf book entries for ${bookIds.length} books`);
+      } catch (error) {
+        console.error(`Error deleting shelf book entries:`, error);
+        throw error;
+      }
+      
+      // Delete notes related to these books
+      try {
+        const { notes } = await import('../../shared/schema');
+        await db.delete(notes).where(inArray(notes.bookId, bookIds));
+        console.log(`Deleted notes for ${bookIds.length} books`);
+      } catch (error) {
+        console.error(`Error deleting notes:`, error);
         // Continue with deletion even if this fails
       }
       
