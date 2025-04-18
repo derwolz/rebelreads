@@ -68,7 +68,7 @@ interface BookshelfCardProps {
 
 function BookshelfCard({ shelf }: BookshelfCardProps) {
   return (
-    <Link href={`/bookshelves/${shelf.id}`}>
+    <Link href={`/book-shelf/${shelf.id}`}>
       <Card className="h-full overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer">
         <div className="aspect-[3/4] relative">
           <img
