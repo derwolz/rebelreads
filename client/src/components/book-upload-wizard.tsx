@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { AVAILABLE_GENRES, FORMAT_OPTIONS, IMAGE_TYPES, RETAILER_OPTIONS } from "@shared/schema";
+import { AVAILABLE_GENRES, FORMAT_OPTIONS, IMAGE_TYPES, UPLOAD_IMAGE_TYPES, RETAILER_OPTIONS } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
 import { BookCard } from "./book-card";
@@ -554,18 +554,48 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   
   const handleImageChange = (imageType: typeof IMAGE_TYPES[number], file: File, hasError?: boolean, errorMessage?: string) => {
     console.log(`Image changed for ${imageType}:`, file.name, file.size, hasError ? `Error: ${errorMessage}` : 'No errors');
-    setFormData((prev) => ({
-      ...prev,
-      bookImages: {
-        ...prev.bookImages,
-        [imageType]: {
-          ...prev.bookImages[imageType],
-          file,
-          error: hasError ? errorMessage : undefined
+    
+    // If this is the book-detail image, we'll also generate the book-card and mini images
+    if (imageType === "book-detail" && !hasError) {
+      setFormData((prev) => ({
+        ...prev,
+        bookImages: {
+          ...prev.bookImages,
+          [imageType]: {
+            ...prev.bookImages[imageType],
+            file,
+            error: hasError ? errorMessage : undefined
+          },
+          // Auto-generate book-card and mini by using the same file
+          // These will be processed on the server side by scaling down the book-detail image
+          "book-card": {
+            ...prev.bookImages["book-card"],
+            file, // Use the same file - will be resized server-side
+            error: undefined // Clear any previous errors
+          },
+          "mini": {
+            ...prev.bookImages["mini"],
+            file, // Use the same file - will be resized server-side
+            error: undefined // Clear any previous errors
+          }
         }
-      }
-    }));
-    console.log(`Updated form data bookImages for ${imageType}:`, !!file);
+      }));
+      console.log(`Updated form data bookImages for ${imageType} and auto-generated book-card and mini`);
+    } else {
+      // For other image types, just update that specific type
+      setFormData((prev) => ({
+        ...prev,
+        bookImages: {
+          ...prev.bookImages,
+          [imageType]: {
+            ...prev.bookImages[imageType],
+            file,
+            error: hasError ? errorMessage : undefined
+          }
+        }
+      }));
+      console.log(`Updated form data bookImages for ${imageType}:`, !!file);
+    }
   };
 
   // Legacy genre toggle removed
@@ -575,23 +605,28 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 0:
         return formData.title && formData.description;
       case 1:
-        // Validate that all required images are provided (either file or previewUrl) AND have no dimension errors
+        // Validate that all required upload images are provided (either file or previewUrl) AND have no dimension errors
         console.log("Checking required images:", formData.bookImages);
         
-        // Check if all required images are provided
-        const imageStatuses = Object.entries(formData.bookImages).map(([type, img]) => 
-          `${type}: ${img.file ? 'Yes (File)' : (img.previewUrl ? 'Yes (Existing)' : 'No')}${img.error ? ` - ERROR: ${img.error}` : ''}`
-        );
+        // Check if all required upload images are provided
+        const imageStatuses = UPLOAD_IMAGE_TYPES.map(type => {
+          const img = formData.bookImages[type];
+          return `${type}: ${img.file ? 'Yes (File)' : (img.previewUrl ? 'Yes (Existing)' : 'No')}${img.error ? ` - ERROR: ${img.error}` : ''}`;
+        });
         console.log("Image statuses:", imageStatuses);
         
-        // Check for both presence and no errors
-        const hasAllRequiredImages = Object.values(formData.bookImages).every(img => 
-          (img.file !== null || img.previewUrl !== undefined)
-        );
+        // Check for both presence and no errors in upload image types only
+        const hasAllRequiredImages = UPLOAD_IMAGE_TYPES.every(type => {
+          const img = formData.bookImages[type];
+          return (img.file !== null || img.previewUrl !== undefined);
+        });
         
-        const hasNoErrors = Object.values(formData.bookImages).every(img => !img.error);
+        const hasNoErrors = UPLOAD_IMAGE_TYPES.every(type => {
+          const img = formData.bookImages[type];
+          return !img.error;
+        });
         
-        console.log("All required images provided:", hasAllRequiredImages);
+        console.log("All required upload images provided:", hasAllRequiredImages);
         console.log("No dimension errors:", hasNoErrors);
         
         return hasAllRequiredImages && hasNoErrors;
@@ -679,11 +714,11 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Book Images</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Upload different images for your book to be displayed in various contexts. All images are required.
+              Upload the 4 required images for your book - we'll automatically generate the book-card and mini images from your book-detail image.
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-              {IMAGE_TYPES.map((imageType) => {
+              {UPLOAD_IMAGE_TYPES.map((imageType) => {
                 const imageData = formData.bookImages[imageType];
                 return (
                   <DragDropImage
@@ -698,6 +733,23 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   />
                 );
               })}
+            </div>
+            
+            <div className="bg-primary/5 p-4 rounded-md border border-primary/20 mt-4">
+              <h3 className="text-sm font-medium mb-2">Auto-generated Images</h3>
+              <p className="text-xs text-muted-foreground mb-2">
+                These images will be automatically created from your book-detail image to ensure consistent appearance across the platform.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="border rounded-md p-2 text-center">
+                  <div className="text-xs font-medium mb-1">Book Card (256×440)</div>
+                  <p className="text-[10px] text-muted-foreground">Used in recommendations</p>
+                </div>
+                <div className="border rounded-md p-2 text-center">
+                  <div className="text-xs font-medium mb-1">Mini (48×64)</div>
+                  <p className="text-[10px] text-muted-foreground">Used in reviews and listings</p>
+                </div>
+              </div>
             </div>
           </div>
         );
