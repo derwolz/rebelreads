@@ -594,31 +594,31 @@
     --primary-900: 0 0% 20%;
     --primary-rgb: 255, 255, 255; /* #FFFFFF in RGB */
 
-    --secondary: 271 56% 63%; /* #A06CD5 - Quaternary from spec */
-    --secondary-foreground: 0 0% 100%; /* White */
-    --secondary-100: 271 56% 90%;
-    --secondary-200: 271 56% 80%;
-    --secondary-300: 271 56% 70%;
-    --secondary-400: 271 56% 63%; /* #A06CD5 */
-    --secondary-500: 271 56% 55%;
-    --secondary-600: 271 56% 45%;
-    --secondary-700: 271 56% 35%;
-    --secondary-800: 271 56% 25%;
-    --secondary-900: 271 56% 15%;
-    --secondary-rgb: 160, 108, 213; /* #A06CD5 in RGB */
-
-    --tertiary: 35 81% 58%; /* #EFA738 - Same as light mode */
+    --tertiary: 271 56% 63%; /* #A06CD5 - Quaternary from spec */
     --tertiary-foreground: 0 0% 100%; /* White */
-    --tertiary-100: 35 81% 90%;
-    --tertiary-200: 35 81% 80%;
-    --tertiary-300: 35 81% 70%;
-    --tertiary-400: 35 81% 58%; /* #EFA738 */
-    --tertiary-500: 35 81% 50%;
-    --tertiary-600: 35 81% 40%;
-    --tertiary-700: 35 81% 30%;
-    --tertiary-800: 35 81% 20%;
-    --tertiary-900: 35 81% 10%;
-    --tertiary-rgb: 239, 167, 56; /* #EFA738 in RGB */
+    --tertiary-100: 271 56% 90%;
+    --tertiary-200: 271 56% 80%;
+    --tertiary-300: 271 56% 70%;
+    --tertiary-400: 271 56% 63%; /* #A06CD5 */
+    --tertiary-500: 271 56% 55%;
+    --tertiary-600: 271 56% 45%;
+    --tertiary-700: 271 56% 35%;
+    --tertiary-800: 271 56% 25%;
+    --tertiary-900: 271 56% 15%;
+    --tertiary-rgb: 160, 108, 213; /* #A06CD5 in RGB */
+
+    --secondary: 35 81% 58%; /* #EFA738 */
+    --secondary-foreground: 0 0% 100%; /* White */
+    --secondary-100: 35 81% 90%;
+    --secondary-200: 35 81% 80%;
+    --secondary-300: 35 81% 70%;
+    --secondary-400: 35 81% 58%; /* #EFA738 */
+    --secondary-500: 35 81% 50%;
+    --secondary-600: 35 81% 40%;
+    --secondary-700: 35 81% 30%;
+    --secondary-800: 35 81% 20%;
+    --secondary-900: 35 81% 10%;
+    --secondary-rgb: 239, 167, 56; /* #EFA738 in RGB */
 
     --muted: 214 40% 25%;
     --muted-foreground: 214 40% 80%;
