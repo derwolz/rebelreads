@@ -404,24 +404,39 @@ export default function AuthorPage() {
           </div>
         ) : bookshelves && bookshelves.length > 0 ? (
           <div className="space-y-10">
+            <h2 className="text-2xl font-bold mb-6">Bookshelves</h2>
             {bookshelves.map((shelfWithBooks) => (
               <div key={shelfWithBooks.shelf.id} className="space-y-6">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-bold">{shelfWithBooks.shelf.title}</h2>
+                  <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
                   <BookOpen className="h-5 w-5 text-muted-foreground" />
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {shelfWithBooks.books.map((book) => (
-                    <div key={book.id} className="h-full">
-                      <BookGridCard book={book} />
-                    </div>
-                  ))}
-                </div>
+                {shelfWithBooks.books.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {shelfWithBooks.books.map((book) => (
+                      <div key={book.id} className="h-full">
+                        <BookGridCard book={book} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex justify-center items-center h-32 bg-muted/20 rounded-lg">
+                    <p className="text-muted-foreground">No books in this bookshelf</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-16 text-center py-12 border rounded-lg bg-muted/10">
+            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-2xl font-semibold mb-2">No Shared Bookshelves</h2>
+            <p className="text-muted-foreground">
+              This author hasn't shared any bookshelves yet.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -944,11 +944,11 @@ router.get("/authors/:id/bookshelves", async (req, res) => {
 
         // Get the actual books
         const bookIds = shelfBooksData.map(sb => sb.bookId);
-        let shelfBooks: any[] = [];
+        let shelfBookItems: any[] = [];
         
         if (bookIds.length > 0) {
           // Fetch the books with their images
-          shelfBooks = await Promise.all(
+          shelfBookItems = await Promise.all(
             bookIds.map(async (bookId) => {
               const book = await dbStorage.getBook(bookId);
               return book;
