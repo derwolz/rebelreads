@@ -865,8 +865,18 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Promotional Images</h2>
-
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Promotional Images</h2>
+              <a 
+                href="/image-guide" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline flex items-center gap-1"
+              >
+                <Info className="h-4 w-4" /> 
+                Learn about image types
+              </a>
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
               {UPLOAD_IMAGE_TYPES.map((imageType) => {
