@@ -359,48 +359,58 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex justify-between items-center pt-4">
-                <div className="flex items-center space-x-4">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <div className="flex items-center space-x-4 cursor-pointer">
-                        <Switch checked={isAuthor} />
-                        <span>Register as an author</span>
-                      </div>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Become an Author</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This is a significant change to your account. It will likely delete all your existing data and you will have to start again from the beginning.
-                          
-                          <div className="mt-4">
-                            <p className="font-semibold">To confirm this change, please type your username: {user?.username}</p>
-                            <Input 
-                              id="confirm-username" 
-                              className="mt-2" 
-                              placeholder="Enter your username to confirm"
-                              onChange={(e) => {
-                                const confirmButton = document.getElementById('confirm-author-button') as HTMLButtonElement;
-                                if (confirmButton) {
-                                  confirmButton.disabled = e.target.value !== user?.username;
-                                }
-                              }}
-                            />
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          id="confirm-author-button"
-                          disabled={true}
-                          onClick={() => becomeAuthorMutation.mutate(undefined)}
-                        >
-                          Confirm Change
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                <div>
+                  {isAuthor ? (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium">You are registered as an author</span>
+                      <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
+                    </div>
+                  ) : (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" className="flex items-center gap-2">
+                          <span>Register as Author</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Become an Author</AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-4">
+                            <p>This is a significant change to your account. It will likely delete all your existing data and you will have to start again from the beginning.</p>
+                            
+                            <div className="border-t pt-4">
+                              <p className="font-semibold mb-2">To confirm this change, please type your username:</p>
+                              <p className="font-mono bg-muted px-2 py-1 rounded inline-block mb-2">{user?.username}</p>
+                              <Input 
+                                id="confirm-username" 
+                                className="mt-2" 
+                                placeholder="Enter your username to confirm"
+                                onChange={(e) => {
+                                  const confirmButton = document.getElementById('confirm-author-button') as HTMLButtonElement;
+                                  if (confirmButton) {
+                                    confirmButton.disabled = e.target.value !== user?.username;
+                                  }
+                                }}
+                              />
+                            </div>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            id="confirm-author-button"
+                            disabled={true}
+                            onClick={() => {
+                              becomeAuthorMutation.mutate(undefined);
+                            }}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Confirm Change
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
                 <Button type="submit">Save Changes</Button>
               </div>

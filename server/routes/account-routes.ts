@@ -607,6 +607,54 @@ router.post("/become-author", async (req: Request, res: Response) => {
   }
 });
 
+// Revoke author status and remove all related content
+router.post("/revoke-author", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Validate username confirmation
+    const confirmSchema = z.object({
+      confirmUsername: z.string()
+    });
+    
+    const { confirmUsername } = confirmSchema.parse(req.body);
+    
+    // Check if the confirmation username matches
+    if (confirmUsername !== req.user.username) {
+      return res.status(400).json({ error: "Username confirmation does not match" });
+    }
+    
+    // Check if the user is an author
+    const isExistingAuthor = await dbStorage.isUserAuthor(req.user.id);
+    
+    if (!isExistingAuthor) {
+      return res.status(400).json({ error: "User is not registered as an author" });
+    }
+    
+    // Get author details before deletion to check Pro status
+    const authorDetails = await dbStorage.getAuthorByUserId(req.user.id);
+    const isPro = authorDetails?.isPro || false;
+    const proExpiresAt = authorDetails?.proExpiresAt || null;
+    
+    // 1. Delete all books by this author
+    await dbStorage.deleteAllAuthorBooks(req.user.id);
+    
+    // 2. Delete the author record (but preserve pro status information)
+    await dbStorage.deleteAuthor(req.user.id, isPro, proExpiresAt);
+    
+    // Return success response
+    res.status(200).json({ message: "Author status revoked and all related content removed" });
+  } catch (error) {
+    console.error("Error revoking author status:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: "Invalid data format", details: error.errors });
+    }
+    res.status(500).json({ error: "Failed to revoke author status" });
+  }
+});
+
 // Check if the user is a publisher seller
 router.get("/publisher-seller-status", async (req: Request, res: Response) => {
   // Explicitly set content type for this route
