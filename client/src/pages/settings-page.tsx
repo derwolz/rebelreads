@@ -411,10 +411,17 @@ export default function SettingsPage() {
                             <AlertDialogAction 
                               id="revoke-author-button"
                               disabled={true}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault();
+                                console.log("Revoke button clicked");
                                 const confirmInput = document.getElementById('revoke-confirm-username') as HTMLInputElement;
+                                console.log("Confirm input:", confirmInput?.value);
+                                console.log("Username:", user?.username);
                                 if (confirmInput && confirmInput.value === user?.username) {
+                                  console.log("Submitting mutation...");
                                   revokeAuthorMutation.mutate({ confirmUsername: confirmInput.value });
+                                } else {
+                                  console.log("Username does not match, cannot submit");
                                 }
                               }}
                               className="bg-destructive hover:bg-destructive/90"
