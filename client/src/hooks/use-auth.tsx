@@ -276,6 +276,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logoutMutation,
         registerMutation,
         becomeAuthorMutation,
+        revokeAuthorMutation,
       }}
     >
       {children}

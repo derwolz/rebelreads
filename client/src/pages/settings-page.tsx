@@ -130,7 +130,7 @@ function SortableReferralLink({ link, index, onChange, onRemove }: SortableRefer
 }
 
 export default function SettingsPage() {
-  const { user, isAuthor, authorDetails, becomeAuthorMutation } = useAuth();
+  const { user, isAuthor, authorDetails, becomeAuthorMutation, revokeAuthorMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
@@ -361,9 +361,69 @@ export default function SettingsPage() {
               <div className="flex justify-between items-center pt-4">
                 <div>
                   {isAuthor ? (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium">You are registered as an author</span>
-                      <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium">You are registered as an author</span>
+                        <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive/10">
+                            <span>Revoke Author Status</span>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Revoke Author Status</AlertDialogTitle>
+                            <AlertDialogDescription className="space-y-4">
+                              <p className="font-medium text-destructive">Warning: This action cannot be undone!</p>
+                              <p>Revoking your author status will:</p>
+                              <ul className="list-disc pl-5 space-y-1">
+                                <li>Delete all books you've published</li>
+                                <li>Remove your author profile and analytics</li>
+                                <li>Remove access to author-specific features</li>
+                              </ul>
+                              
+                              <div className="bg-amber-50 border border-amber-200 p-3 rounded-md mt-4">
+                                <p className="font-medium text-amber-800">Pro Subscription Notice</p>
+                                <p className="text-amber-800 text-sm">Any active Pro subscription benefits will remain until the expiration date.</p>
+                              </div>
+                              
+                              <div className="border-t pt-4 mt-2">
+                                <p className="font-semibold mb-2">To confirm this permanent change, please type your username:</p>
+                                <p className="font-mono bg-muted px-2 py-1 rounded inline-block mb-2">{user?.username}</p>
+                                <Input 
+                                  id="revoke-confirm-username" 
+                                  className="mt-2" 
+                                  placeholder="Enter your username to confirm"
+                                  onChange={(e) => {
+                                    const confirmButton = document.getElementById('revoke-author-button') as HTMLButtonElement;
+                                    if (confirmButton) {
+                                      confirmButton.disabled = e.target.value !== user?.username;
+                                    }
+                                  }}
+                                />
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              id="revoke-author-button"
+                              disabled={true}
+                              onClick={() => {
+                                const confirmInput = document.getElementById('revoke-confirm-username') as HTMLInputElement;
+                                if (confirmInput && confirmInput.value === user?.username) {
+                                  revokeAuthorMutation.mutate({ confirmUsername: confirmInput.value });
+                                }
+                              }}
+                              className="bg-destructive hover:bg-destructive/90"
+                            >
+                              Permanently Revoke Status
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   ) : (
                     <AlertDialog>
