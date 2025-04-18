@@ -59,7 +59,20 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { 
+  GripVertical, 
+  BookText, 
+  Images, 
+  Award, 
+  BookOpen, 
+  Calendar, 
+  Tags, 
+  FileText, 
+  Link as LinkIcon, 
+  Eye,
+  Info,
+  Loader2
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -1392,30 +1405,100 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
     }
   };
 
+  // Get the corresponding icon for each step
+  const getStepIcon = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: return <BookText aria-hidden="true" className="h-4 w-4" />;
+      case 1: return <Images aria-hidden="true" className="h-4 w-4" />;
+      case 2: return <Award aria-hidden="true" className="h-4 w-4" />;
+      case 3: return <BookOpen aria-hidden="true" className="h-4 w-4" />;
+      case 4: return <Calendar aria-hidden="true" className="h-4 w-4" />;
+      case 5: return <Tags aria-hidden="true" className="h-4 w-4" />;
+      case 6: return <FileText aria-hidden="true" className="h-4 w-4" />;
+      case 7: return <LinkIcon aria-hidden="true" className="h-4 w-4" />;
+      case 8: return <Eye aria-hidden="true" className="h-4 w-4" />;
+      default: return <Info aria-hidden="true" className="h-4 w-4" />;
+    }
+  };
+  
+  // Check if a specific step can be navigated to based on data availability
+  const canSkipToStep = (stepIndex: number) => {
+    // Always allow skipping to current or previous steps
+    if (stepIndex <= currentStep) return true;
+
+    // For future steps, check if all the necessary data is available
+    // This is similar to canProceed but doesn't need to be as strict
+    for (let i = 0; i < stepIndex; i++) {
+      if (!canProceedFromStep(i)) return false;
+    }
+    
+    return true;
+  };
+  
+  // Helper function to check if we have the necessary data to proceed from a specific step
+  const canProceedFromStep = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0:
+        return !!formData.title && !!formData.description;
+      case 1:
+        // Check required images
+        return UPLOAD_IMAGE_TYPES.every(type => {
+          const img = formData.bookImages[type];
+          return (img.file !== null || img.previewUrl !== undefined) && !img.error;
+        });
+      case 2:
+        return !formData.hasAwards || (formData.hasAwards && formData.awards.length > 0);
+      case 3:
+        return formData.formats.length > 0;
+      case 4:
+        return !!formData.publishedDate;
+      case 5:
+        return formData.genreTaxonomies.length >= 5;
+      case 6:
+        return true; // Book details step doesn't have required fields
+      case 7:
+        return true; // Referral links are optional
+      default:
+        return true;
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <div className="flex justify-between mb-6">
-        <div className="flex items-center max-w-[50%] overflow-hidden">
-          <div className="flex items-center gap-0">
+      <div className="mb-6">
+        <div className="mb-2 flex justify-end">
+          <div className="text-sm font-medium">
+            Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
+          </div>
+        </div>
+        <div className="flex items-center w-full overflow-x-auto max-w-full pb-2">
+          <div className="flex items-center gap-1 w-full justify-between">
             {STEPS.map((step, index) => (
-              <div key={step} className="flex items-center">
+              <div key={step} className="flex flex-col items-center gap-1 min-w-[50px]">
                 <Button
                   variant={currentStep === index ? "default" : "ghost"}
+                  size="icon"
                   className={cn(
-                    "h-4 rounded-full px-1 min-w-0",
-                    index > currentStep && "opacity-50 cursor-not-allowed",
-                    currentStep === index ? "w-4" : "w-3"
+                    "h-8 w-8 rounded-full relative",
+                    !canSkipToStep(index) && "opacity-50 cursor-not-allowed",
+                    canSkipToStep(index) && index !== currentStep && "hover:bg-muted"
                   )}
-                  onClick={() => index <= currentStep && setCurrentStep(index)}
-                  disabled={index > currentStep}
+                  onClick={() => canSkipToStep(index) && setCurrentStep(index)}
+                  disabled={!canSkipToStep(index)}
+                  title={step}
+                  aria-label={step}
                 >
+                  {getStepIcon(index)}
+                  {index < currentStep && canProceedFromStep(index) && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                  )}
                 </Button>
+                <span className="text-[10px] text-muted-foreground text-center hidden sm:block">
+                  {step.split(' ')[0]}
+                </span>
               </div>
             ))}
           </div>
-        </div>
-        <div className="text-sm font-medium truncate">
-          {STEPS[currentStep]}
         </div>
       </div>
       
