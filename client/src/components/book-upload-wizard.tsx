@@ -865,10 +865,8 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Book Images</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Upload the 4 required images for your book - we'll automatically generate the book-card and mini images from your book-detail image.
-            </p>
+            <h2 className="text-lg font-semibold">Promotional Images</h2>
+
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
               {UPLOAD_IMAGE_TYPES.map((imageType) => {
@@ -886,23 +884,6 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
                   />
                 );
               })}
-            </div>
-            
-            <div className="bg-primary/5 p-4 rounded-md border border-primary/20 mt-4">
-              <h3 className="text-sm font-medium mb-2">Auto-generated Images</h3>
-              <p className="text-xs text-muted-foreground mb-2">
-                These images will be automatically created from your book-detail image to ensure consistent appearance across the platform.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="border rounded-md p-2 text-center">
-                  <div className="text-xs font-medium mb-1">Book Card (256×440)</div>
-                  <p className="text-[10px] text-muted-foreground">Used in recommendations</p>
-                </div>
-                <div className="border rounded-md p-2 text-center">
-                  <div className="text-xs font-medium mb-1">Mini (48×64)</div>
-                  <p className="text-[10px] text-muted-foreground">Used in reviews and listings</p>
-                </div>
-              </div>
             </div>
           </div>
         );
