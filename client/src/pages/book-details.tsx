@@ -750,7 +750,11 @@ export default function BookDetails() {
                 </div>
               )}
 
-              <p className="text-lg">{book.description}</p>
+              <div className="text-lg">
+                {book.description.split('\n').map((paragraph, index) => (
+                  <p key={index} className="mb-4">{paragraph}</p>
+                ))}
+              </div>
 
               <div className="grid gap-8">
                 <Collapsible open={isOpen} onOpenChange={setIsOpen}>

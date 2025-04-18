@@ -143,7 +143,9 @@ export default function AuthorPage() {
 
           {author.authorBio && (
             <div className="prose max-w-none">
-              <p>{author.authorBio}</p>
+              {author.authorBio.split('\n').map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
             </div>
           )}
 
