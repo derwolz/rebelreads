@@ -577,7 +577,22 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
       const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] };
       const bookImageEntries = [];
       
-      // Extract image type info from field names
+      // Track if book-detail was updated to auto-generate book-card and mini
+      let updatedBookDetailFile: Express.Multer.File | null = null;
+      let updatedBookDetailUrl: string = '';
+      
+      // First pass: Check if book-detail is being updated
+      for (const fieldName in uploadedFiles) {
+        if (fieldName === 'bookImage_book-detail') {
+          const file = uploadedFiles[fieldName][0]; // Get first file from array
+          updatedBookDetailFile = file;
+          updatedBookDetailUrl = `/uploads/covers/${file.filename}`;
+          console.log("Found updated book-detail image:", updatedBookDetailUrl);
+          break;
+        }
+      }
+      
+      // Second pass: Process all uploaded images
       for (const fieldName in uploadedFiles) {
         if (fieldName.startsWith('bookImage_')) {
           const imageType = fieldName.replace('bookImage_', '');
@@ -639,6 +654,70 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
               width,
               height,
               sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
+            });
+          }
+        }
+      }
+      
+      // If book-detail was updated, auto-generate book-card and mini if not explicitly uploaded
+      if (updatedBookDetailFile && updatedBookDetailUrl) {
+        const uploadedImageTypes = Object.keys(uploadedFiles).map(key => key.replace('bookImage_', ''));
+        console.log("Uploaded image types:", uploadedImageTypes);
+        
+        // Check if book-card isn't being updated explicitly
+        if (!uploadedImageTypes.includes('book-card')) {
+          // Find existing book-card image
+          const existingBookCard = book.images ? book.images.find(img => img.imageType === 'book-card') : null;
+          
+          if (existingBookCard) {
+            // Update the existing book-card with the new book-detail image
+            console.log("Auto-updating book-card with new book-detail image");
+            await db.update(bookImages)
+              .set({
+                imageUrl: updatedBookDetailUrl,
+                sizeKb: Math.round(updatedBookDetailFile.size / 1024),
+                updatedAt: new Date()
+              })
+              .where(eq(bookImages.id, existingBookCard.id));
+          } else {
+            // Create a new book-card image
+            console.log("Auto-generating new book-card from book-detail");
+            bookImageEntries.push({
+              bookId: book.id,
+              imageUrl: updatedBookDetailUrl,
+              imageType: 'book-card',
+              width: 256,
+              height: 440,
+              sizeKb: Math.round(updatedBookDetailFile.size / 1024)
+            });
+          }
+        }
+        
+        // Check if mini isn't being updated explicitly
+        if (!uploadedImageTypes.includes('mini')) {
+          // Find existing mini image
+          const existingMini = book.images ? book.images.find(img => img.imageType === 'mini') : null;
+          
+          if (existingMini) {
+            // Update the existing mini with the new book-detail image
+            console.log("Auto-updating mini with new book-detail image");
+            await db.update(bookImages)
+              .set({
+                imageUrl: updatedBookDetailUrl,
+                sizeKb: Math.round(updatedBookDetailFile.size / 1024),
+                updatedAt: new Date()
+              })
+              .where(eq(bookImages.id, existingMini.id));
+          } else {
+            // Create a new mini image
+            console.log("Auto-generating new mini from book-detail");
+            bookImageEntries.push({
+              bookId: book.id,
+              imageUrl: updatedBookDetailUrl,
+              imageType: 'mini',
+              width: 48,
+              height: 64,
+              sizeKb: Math.round(updatedBookDetailFile.size / 1024)
             });
           }
         }
