@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 
 // Possible lean angles in degrees
 const LEAN_OPTIONS = [
-  { angle: 0, probability: 0.90 },    // Straight - 92% chance
-  { angle: -5, probability: 0.025 },   // Slight lean left - 2% chance
-  { angle: -10, probability: 0.025 },  // Moderate lean left - 2% chance
-  { angle: 5, probability: 0.025 },    // Slight lean right - 2% chance
-  { angle: 10, probability: 0.025 },   // Moderate lean right - 2% chance
+  { angle: 0, probability: 0.92 },    // Straight - 92% chance
+  { angle: -5, probability: 0.02 },   // Slight lean left - 2% chance
+  { angle: -10, probability: 0.02 },  // Moderate lean left - 2% chance
+  { angle: 5, probability: 0.02 },    // Slight lean right - 2% chance
+  { angle: 10, probability: 0.02 },   // Moderate lean right - 2% chance
 ];
 
 // Original dimensions of the book spine images
@@ -20,7 +20,6 @@ interface BookRackProps {
   title: string;
   books?: Book[];
   isLoading: boolean;
-  width?: number;
   className?: string;
 }
 
@@ -43,7 +42,10 @@ function calculateLeaningWidth(angle: number): number {
 }
 
 // Component to display a single book spine with appropriate rotation
-function BookSpine({ book, angle,width, index }: BookSpineProps) {
+function BookSpine({ book, angle, index }: BookSpineProps) {
+  // Calculate the actual width needed for this book spine when leaning
+  const calculatedWidth = calculateLeaningWidth(angle);
+  
   // Get the grid-item image for the book spine
   const spineImageUrl = book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png";
   
@@ -51,27 +53,25 @@ function BookSpine({ book, angle,width, index }: BookSpineProps) {
     <div 
       className="relative inline-block"
       style={{ 
-        width: `${width}px`,
+        width: `${calculatedWidth}px`,
         height: `${SPINE_HEIGHT}px`,
-        marginLeft: '-2px', // Slightly overlap books to create a tight, realistic shelf look
+        // Adjust margins as needed for leaning effect
+        marginLeft: angle < 0 ? `${Math.abs(angle) * 2}px` : '0px',
+        marginRight: angle > 0 ? `${Math.abs(angle) * 2}px` : '0px',
       }}
     >
       <div 
-        className="w-full h-full transition-transform duration-300 ease-in-out"
+        className="w-[56px] h-full transition-transform duration-300 ease-in-out"
         style={{ 
           transform: `rotate(${angle}deg)`,
-          // Transform origin at the bottom of the book, slightly adjusted based on lean direction
-          transformOrigin: angle < 0 
-            ? 'bottom left' 
-            : angle > 0 
-              ? 'bottom right' 
-              : 'bottom center',
+          transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
         }}
       >
         <img 
           src={spineImageUrl} 
           alt={book.title}
-          className="w-full h-full object-cover shadow-sm"
+          className="w-full h-full object-cover"
+          style={{ maxWidth: `${SPINE_WIDTH}px` }}
         />
       </div>
     </div>
@@ -133,8 +133,8 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
   const totalShelfWidth = useMemo(() => {
     return bookAngles.reduce((total, angle, index) => {
       const calculatedWidth = calculateLeaningWidth(angle);
-      // No additional margin needed since we're handling positioning with absolute
-      return total + calculatedWidth + SPINE_WIDTH;
+      // Add some margin between books
+      return total + calculatedWidth + 2;
     }, 0);
   }, [bookAngles]);
   
@@ -168,41 +168,33 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
     <section className={cn("mb-12 relative", className)}>
       <h2 className="text-3xl font-bold mb-6">{title}</h2>
       
-      {/* Book shelf with wooden texture */}
+      {/* Book shelf (brown wooden texture) */}
       <div className="relative">
         {/* The books container - positioned on the shelf */}
-        <div className="relative">
-          <div 
-            className="flex items-end pt-4 px-2 pb-1 h-[250px] overflow-x-auto"
-            style={{ 
-              minWidth: `${Math.min(totalShelfWidth + 20, window.innerWidth * 0.9)}px` 
-            }}
-          >
-            {books.map((book, index) => {
-              // Get this book's angle
-              const angle = bookAngles[index] || 0;
-              
-              // Use a unique key combining book ID and index
-              const key = `${book.id}-${index}`;
-              
-              return (
-                <BookSpine 
-                  key={key}
-                  book={book} 
-                  angle={angle}
-                  width={calculateLeaningWidth(angle)}
-                  index={index}
-                />
-              );
-            })}
-          </div>
-          
-          {/* Add a subtle shadow at the top of books for realism */}
-          <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black/20 to-transparent pointer-events-none"></div>
+        <div 
+          className="flex items-end bg-muted/10 rounded-md p-4 h-[250px] overflow-x-auto"
+          style={{ minWidth: `${Math.min(totalShelfWidth, window.innerWidth * 0.9)}px` }}
+        >
+          {books.map((book, index) => {
+            // Get this book's angle
+            const angle = bookAngles[index] || 0;
+            
+            // Use a unique key combining book ID and index
+            const key = `${book.id}-${index}`;
+            
+            return (
+              <BookSpine 
+                key={key}
+                book={book} 
+                angle={angle}
+                index={index}
+              />
+            );
+          })}
         </div>
         
         {/* The wooden shelf */}
-        <div className="h-6 w-full bg-gradient-to-b from-amber-700 to-amber-900 shadow-md rounded-b-sm"></div>
+        <div className="h-3 w-full bg-amber-800"></div>
       </div>
     </section>
   );
