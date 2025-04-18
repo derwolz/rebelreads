@@ -575,7 +575,7 @@
   }
 
   .dark {
-    --background: 214 61% 15%; /* #102B3F */
+    --background: 214 61% 3%; /* #102B3F */
     --background-hs: 214 61%;
     --background-rgb: 10, 43, 63; /* #102B3F */
     --foreground: 0 0% 100%; /* White */
