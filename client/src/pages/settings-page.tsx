@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Book, UpdateProfile, ReferralLink, updateProfileSchema, RETAILER_OPTIONS } from "@shared/schema";
@@ -269,6 +269,7 @@ export default function SettingsPage() {
   }
 
   const AccountSettings = () => {
+    const revokeButtonRef = React.useRef<HTMLButtonElement>(null);
     return (
       <Card>
         <CardContent className="pt-6">
@@ -397,9 +398,11 @@ export default function SettingsPage() {
                                   className="mt-2" 
                                   placeholder="Enter your username to confirm"
                                   onChange={(e) => {
-                                    const confirmButton = document.getElementById('revoke-author-button') as HTMLButtonElement;
-                                    if (confirmButton) {
-                                      confirmButton.disabled = e.target.value !== user?.username;
+                                    // Use the ref to update button state
+                                    if (revokeButtonRef.current) {
+                                      const isMatch = e.target.value === user?.username;
+                                      console.log("Username match:", isMatch);
+                                      revokeButtonRef.current.disabled = !isMatch;
                                     }
                                   }}
                                 />
@@ -409,22 +412,20 @@ export default function SettingsPage() {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction 
-                              id="revoke-author-button"
+                              ref={revokeButtonRef}
                               disabled={true}
-                              onClick={(e) => {
-                                e.preventDefault();
+                              className="bg-destructive hover:bg-destructive/90"
+                              type="button"
+                              onClick={() => {
                                 console.log("Revoke button clicked");
                                 const confirmInput = document.getElementById('revoke-confirm-username') as HTMLInputElement;
-                                console.log("Confirm input:", confirmInput?.value);
-                                console.log("Username:", user?.username);
+                                console.log("Username match:", confirmInput?.value === user?.username);
+                                
                                 if (confirmInput && confirmInput.value === user?.username) {
-                                  console.log("Submitting mutation...");
+                                  console.log("Submitting revoke mutation...");
                                   revokeAuthorMutation.mutate({ confirmUsername: confirmInput.value });
-                                } else {
-                                  console.log("Username does not match, cannot submit");
                                 }
                               }}
-                              className="bg-destructive hover:bg-destructive/90"
                             >
                               Permanently Revoke Status
                             </AlertDialogAction>
