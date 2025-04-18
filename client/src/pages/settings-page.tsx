@@ -361,124 +361,181 @@ export default function SettingsPage() {
 
               <div className="flex justify-between items-center pt-4">
                 <div>
-                  {isAuthor ? (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium">You are registered as an author</span>
-                        <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="outline" className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive/10">
-                            <span>Revoke Author Status</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Revoke Author Status</AlertDialogTitle>
-                            <AlertDialogDescription className="space-y-4">
-                              <p className="font-medium text-destructive">Warning: This action cannot be undone!</p>
-                              <p>Revoking your author status will:</p>
-                              <ul className="list-disc pl-5 space-y-1">
-                                <li>Delete all books you've published</li>
-                                <li>Remove your author profile and analytics</li>
-                                <li>Remove access to author-specific features</li>
-                              </ul>
-                              
-                              <div className="bg-amber-50 border border-amber-200 p-3 rounded-md mt-4">
-                                <p className="font-medium text-amber-800">Pro Subscription Notice</p>
-                                <p className="text-amber-800 text-sm">Any active Pro subscription benefits will remain until the expiration date.</p>
-                              </div>
+                  <Card className="mb-4">
+                    <CardHeader className="pb-3">
+                      <CardTitle>Author Account Management</CardTitle>
+                      <CardDescription>Manage your author status</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {isAuthor ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-2">
+                            <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
+                            <span className="text-sm font-medium">You are registered as an author</span>
+                          </div>
+                          
+                          <p className="text-sm">
+                            As an author, you can publish books, manage your portfolio, and access analytics.
+                          </p>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="destructive" 
+                                className="w-full"
+                              >
+                                Revoke Author Status
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Revoke Author Status</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  <div className="space-y-4 py-2">
+                                    <div className="bg-destructive/10 text-destructive p-3 rounded-md border border-destructive/30">
+                                      <strong>Warning: This action cannot be undone!</strong>
+                                    </div>
+                                    
+                                    <p>Revoking your author status will:</p>
+                                    <div className="ml-5 space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span>•</span> Delete all books you've published
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span>•</span> Remove your author profile and analytics
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span>•</span> Remove access to author-specific features
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                                      <strong className="text-amber-800">Pro Subscription Notice</strong>
+                                      <p className="text-amber-800 text-sm">Any active Pro subscription benefits will remain until the expiration date.</p>
+                                    </div>
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
                               
                               <div className="border-t pt-4 mt-2">
-                                <p className="font-semibold mb-2">To confirm this permanent change, please type your username:</p>
-                                <p className="font-mono bg-muted px-2 py-1 rounded inline-block mb-2">{user?.username}</p>
-                                <Input 
-                                  id="revoke-confirm-username" 
-                                  className="mt-2" 
-                                  placeholder="Enter your username to confirm"
-                                  onChange={(e) => {
-                                    // Use the ref to update button state
-                                    if (revokeButtonRef.current) {
-                                      const isMatch = e.target.value === user?.username;
-                                      console.log("Username match:", isMatch);
-                                      revokeButtonRef.current.disabled = !isMatch;
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              ref={revokeButtonRef}
-                              disabled={true}
-                              className="bg-destructive hover:bg-destructive/90"
-                              type="button"
-                              onClick={() => {
-                                console.log("Revoke button clicked");
-                                const confirmInput = document.getElementById('revoke-confirm-username') as HTMLInputElement;
-                                console.log("Username match:", confirmInput?.value === user?.username);
+                                <div className="mb-4">
+                                  <div className="font-semibold mb-2">To confirm this permanent change, please type your username:</div>
+                                  <div className="font-mono bg-muted px-2 py-1 rounded inline-block mb-2">{user?.username}</div>
+                                </div>
                                 
-                                if (confirmInput && confirmInput.value === user?.username) {
-                                  console.log("Submitting revoke mutation...");
-                                  revokeAuthorMutation.mutate({ confirmUsername: confirmInput.value });
-                                }
-                              }}
-                            >
-                              Permanently Revoke Status
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  ) : (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="flex items-center gap-2">
-                          <span>Register as Author</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Become an Author</AlertDialogTitle>
-                          <AlertDialogDescription className="space-y-4">
-                            <p>This is a significant change to your account. It will likely delete all your existing data and you will have to start again from the beginning.</p>
-                            
-                            <div className="border-t pt-4">
-                              <p className="font-semibold mb-2">To confirm this change, please type your username:</p>
-                              <p className="font-mono bg-muted px-2 py-1 rounded inline-block mb-2">{user?.username}</p>
-                              <Input 
-                                id="confirm-username" 
-                                className="mt-2" 
-                                placeholder="Enter your username to confirm"
-                                onChange={(e) => {
-                                  const confirmButton = document.getElementById('confirm-author-button') as HTMLButtonElement;
-                                  if (confirmButton) {
-                                    confirmButton.disabled = e.target.value !== user?.username;
+                                <form onSubmit={(e) => {
+                                  e.preventDefault();
+                                  const form = e.target as HTMLFormElement;
+                                  const usernameInput = form.elements.namedItem('confirmUsername') as HTMLInputElement;
+                                  
+                                  if (usernameInput?.value === user?.username) {
+                                    console.log("Username confirmed, submitting mutation...");
+                                    revokeAuthorMutation.mutate({ confirmUsername: usernameInput.value });
+                                  } else {
+                                    console.log("Username does not match, cannot submit");
                                   }
-                                }}
-                              />
-                            </div>
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            id="confirm-author-button"
-                            disabled={true}
-                            onClick={() => {
-                              becomeAuthorMutation.mutate(undefined);
-                            }}
-                            className="bg-destructive hover:bg-destructive/90"
-                          >
-                            Confirm Change
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
+                                }}>
+                                  <div className="space-y-4">
+                                    <Input 
+                                      name="confirmUsername"
+                                      className="w-full" 
+                                      placeholder="Enter your username to confirm"
+                                    />
+                                    
+                                    <div className="flex justify-end gap-2">
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <Button 
+                                        type="submit"
+                                        variant="destructive"
+                                      >
+                                        Permanently Revoke Status
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </form>
+                              </div>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-sm">
+                            Becoming an author allows you to publish books, build your portfolio, 
+                            and connect with readers.
+                          </p>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="default" 
+                                className="w-full"
+                              >
+                                Register as Author
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Become an Author</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  <div className="space-y-4 py-2">
+                                    <p>
+                                      This is a significant change to your account. It will create a new author 
+                                      profile for you and enable publishing capabilities.
+                                    </p>
+                                    
+                                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                                      <strong className="text-amber-800">Important</strong>
+                                      <p className="text-amber-800 text-sm">
+                                        This may affect your existing data. Please confirm you want to proceed.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              
+                              <div className="border-t pt-4 mt-2">
+                                <div className="mb-4">
+                                  <div className="font-semibold mb-2">To confirm this change, please type your username:</div>
+                                  <div className="font-mono bg-muted px-2 py-1 rounded inline-block mb-2">{user?.username}</div>
+                                </div>
+                                
+                                <form onSubmit={(e) => {
+                                  e.preventDefault();
+                                  const form = e.target as HTMLFormElement;
+                                  const usernameInput = form.elements.namedItem('confirmUsername') as HTMLInputElement;
+                                  
+                                  if (usernameInput?.value === user?.username) {
+                                    console.log("Username confirmed, becoming author...");
+                                    becomeAuthorMutation.mutate(undefined);
+                                  } else {
+                                    console.log("Username does not match, cannot proceed");
+                                  }
+                                }}>
+                                  <div className="space-y-4">
+                                    <Input 
+                                      name="confirmUsername"
+                                      className="w-full" 
+                                      placeholder="Enter your username to confirm"
+                                    />
+                                    
+                                    <div className="flex justify-end gap-2">
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <Button 
+                                        type="submit"
+                                        variant="default"
+                                      >
+                                        Confirm Registration
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </form>
+                              </div>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
                 <Button type="submit">Save Changes</Button>
               </div>
