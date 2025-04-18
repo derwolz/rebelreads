@@ -188,7 +188,7 @@ export function BookShelfCard({
   return (
     <div
       className="relative"
-      style={{ width: "256px", height: "400px", maxWidth: "100%", zIndex:isHovered ? 30: 10 }}
+      style={{ width: "256px", height: "400px", maxWidth: "100%", zIndex:isHovered || (isMobile && isShelfOpenMobile) ? 30: 10 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -203,12 +203,12 @@ export function BookShelfCard({
             ? (isShelfOpenMobile ? "rotate(45deg)" : "rotate(0deg)")
             : (isHovered ? "rotate(45deg)" : "rotate(0deg)"),
           boxShadow: "0 -2px 5px rgba(0, 0, 0, 0.2)",
-          zIndex: (isMobile && isShelfOpenMobile) ? 40 : 20,
+          zIndex: (isMobile && isShelfOpenMobile) ? 40 : 0,
         }}
       >
         {/* Header with action buttons */}
         <div className="flex justify-between items-center mb-2">
-          <h4 className="text-white font-semibold text-sm">Notes ({bookNotes.length})</h4>
+
           
           <div className="flex gap-2">
             {/* Mobile-only close button */}

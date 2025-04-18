@@ -573,7 +573,7 @@ export default function BookShelfPage() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Badge variant="secondary" className="bg-foreground/10 text-foreground">
+                                    <Badge variant="secondary" className="bg-background/50 text-foreground">
                                       {bookNotesList.length} {bookNotesList.length === 1 ? 'Note' : 'Notes'}
                                     </Badge>
                                   </TooltipTrigger>
