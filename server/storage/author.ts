@@ -126,6 +126,7 @@ export class AuthorStorage implements IAuthorStorage {
         worldbuilding: avg(ratings.worldbuilding)
       })
       .from(ratings)
+      .innerJoin(books, eq(ratings.bookId, books.id))
       .where(
         eq(books.authorId, authorId)
       );
