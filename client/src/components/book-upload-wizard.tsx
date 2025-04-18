@@ -14,6 +14,16 @@ import { BookCard } from "./book-card";
 import { DragDropCover } from "@/components/drag-drop-cover";
 import { DragDropImage } from "@/components/drag-drop-image";
 import { GenreSelector, TaxonomyItem } from "@/components/genre-selector";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /**
  * Interface for storing book image files with their metadata
@@ -187,6 +197,10 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [showCoverUpload, setShowCoverUpload] = useState(!book);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  
+  // Local storage key for storing form data
+  const LOCAL_STORAGE_KEY = "book_upload_form_data";
   
   // Fetch book taxonomies when editing a book
   const { data: bookTaxonomies } = useQuery<TaxonomyItem[]>({
@@ -200,55 +214,57 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
     enabled: !!book?.id, // Only run this query if we have a book ID
   });
   
-  const [formData, setFormData] = useState<FormData>(() => {
-    // Create default empty book images structure
-    const createEmptyBookImages = (): Record<typeof IMAGE_TYPES[number], BookImageFile> => {
-      const images: Partial<Record<typeof IMAGE_TYPES[number], BookImageFile>> = {};
-      
-      // Initialize each image type with empty values
-      IMAGE_TYPES.forEach(type => {
-        let width = 0;
-        let height = 0;
-        
-        // Set dimensions based on image type
-        switch (type) {
-          case "book-detail":
-            width = 480;
-            height = 600;
-            break;
-          case "background":
-            width = 1300;
-            height = 1500;
-            break;
-          case "book-card":
-            width = 256;
-            height = 440;
-            break;
-          case "grid-item":
-            width = 56;
-            height = 212;
-            break;
-          case "mini":
-            width = 48;
-            height = 64;
-            break;
-          case "hero":
-            width = 1500;
-            height = 600;
-            break;
-        }
-        
-        images[type] = {
-          type,
-          file: null,
-          width,
-          height
-        };
-      });
-      
-      return images as Record<typeof IMAGE_TYPES[number], BookImageFile>;
-    };
+  // Helper function to create empty book images structure
+  const createEmptyBookImages = (): Record<typeof IMAGE_TYPES[number], BookImageFile> => {
+    const images: Partial<Record<typeof IMAGE_TYPES[number], BookImageFile>> = {};
     
+    // Initialize each image type with empty values
+    IMAGE_TYPES.forEach(type => {
+      let width = 0;
+      let height = 0;
+      
+      // Set dimensions based on image type
+      switch (type) {
+        case "book-detail":
+          width = 480;
+          height = 600;
+          break;
+        case "background":
+          width = 1300;
+          height = 1500;
+          break;
+        case "book-card":
+          width = 256;
+          height = 440;
+          break;
+        case "grid-item":
+          width = 56;
+          height = 212;
+          break;
+        case "mini":
+          width = 48;
+          height = 64;
+          break;
+        case "hero":
+          width = 1500;
+          height = 600;
+          break;
+      }
+      
+      images[type] = {
+        type,
+        file: null,
+        width,
+        height
+      };
+    });
+    
+    return images as Record<typeof IMAGE_TYPES[number], BookImageFile>;
+  };
+  
+  // Initialize form data from local storage or defaults
+  const [formData, setFormData] = useState<FormData>(() => {
+    // If editing an existing book, don't use local storage
     if (book) {
       // Create book images structure with existing images if available
       const bookImages = createEmptyBookImages();
@@ -290,6 +306,24 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       };
     }
     
+    // Check if we have saved form data in local storage for a new book
+    try {
+      const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        
+        // Reconstruct the formData object from saved data
+        // Note: Files cannot be stored in localStorage, so bookImages will still have null files
+        return {
+          ...parsedData,
+          bookImages: createEmptyBookImages() // Files can't be saved, so always create empty image containers
+        };
+      }
+    } catch (error) {
+      console.error("Error loading form data from local storage:", error);
+    }
+    
+    // Return default empty form if no local storage data exists
     return {
       title: "",
       description: "",
@@ -311,8 +345,33 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
       bookImages: createEmptyBookImages(),
     };
   });
+  
   const [characterInput, setCharacterInput] = useState("");
   const [awardInput, setAwardInput] = useState("");
+  
+  // Save form data to local storage whenever it changes
+  useEffect(() => {
+    // Only save to local storage if not editing an existing book
+    if (!book) {
+      try {
+        // Create a copy of formData that excludes file objects which can't be serialized
+        const dataToSave = {
+          ...formData,
+          // Remove file objects which can't be stored in localStorage
+          bookImages: Object.fromEntries(
+            Object.entries(formData.bookImages).map(([key, value]) => [
+              key,
+              { ...value, file: null }
+            ])
+          ),
+        };
+        
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+      } catch (error) {
+        console.error("Error saving form data to local storage:", error);
+      }
+    }
+  }, [formData, book]);
   
   // Update form data when book taxonomies are loaded
   useEffect(() => {
@@ -440,6 +499,15 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
           ? "Book updated successfully."
           : "Book uploaded successfully.",
       });
+      
+      // Clear form data from local storage after successful submission
+      if (!book) {
+        try {
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+        } catch (error) {
+          console.error("Error removing form data from local storage:", error);
+        }
+      }
       
       // Create default empty book images structure
       const emptyBookImages = (): Record<typeof IMAGE_TYPES[number], BookImageFile> => {
