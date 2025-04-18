@@ -182,14 +182,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const becomeAuthorMutation = useMutation({
-    mutationFn: async (authorData: any = {}) => {
-      // If no data is provided, use default values based on the user
-      const dataToSend = authorData || {
-        authorName: user?.username || user?.email?.split('@')[0] || '',
-        bio: ''
-      };
+    mutationFn: async () => {
+      // The server endpoint expects 'authorName' (not author_name) as shown in account-routes.ts line 592
+      const res = await apiRequest("POST", "/api/become-author", {
+        authorName: user?.username || "",
+        bio: ""
+      });
       
-      const res = await apiRequest("POST", "/api/become-author", dataToSend);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to register as author");
+      }
+      
       return await res.json();
     },
     onSuccess: (authorData: Author) => {
@@ -203,8 +207,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Success!",
         description: "You are now registered as an author.",
       });
+      
+      // Also invalidate user data to make sure UI updates properly
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
     onError: (error: Error) => {
+      console.error("Author registration error:", error);
       toast({
         title: "Failed to register as author",
         description: error.message,
