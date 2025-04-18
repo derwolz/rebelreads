@@ -198,6 +198,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                 </Button>
               </Link>
               <div className="flex items-center gap-2">
+                <Link href="/dashboard" className={"flex items-center gap-2"}>
                 <Avatar className="h-8 w-8">
                   <AvatarImage
                     src={user.profileImageUrl || undefined}
@@ -205,7 +206,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                   />
                   <AvatarFallback>👤</AvatarFallback>
                 </Avatar>
-                <Link href="/dashboard">
+                
                   <span className="text-sm text-muted-foreground hover:underline">
                     {user.username}
                   </span>
