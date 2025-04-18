@@ -958,7 +958,7 @@ router.get("/authors/:id/bookshelves", async (req, res) => {
 
         return {
           shelf,
-          books: shelfBooks.filter(Boolean) // Filter out any null values
+          books: shelfBookItems.filter(Boolean) // Filter out any null values
         };
       })
     );
