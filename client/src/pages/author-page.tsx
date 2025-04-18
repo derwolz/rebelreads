@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { MainNav } from "@/components/main-nav";
 import { BookCard } from "@/components/book-card";
 import { BookGridCard } from "@/components/book-grid-card";
 import { Input } from "@/components/ui/input";
@@ -138,7 +137,6 @@ export default function AuthorPage() {
   if (isAuthorLoading) {
     return (
       <div>
-        <MainNav />
         <main className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-muted rounded w-1/3" />
@@ -166,7 +164,6 @@ export default function AuthorPage() {
 
   return (
     <div className="bg-background/95 min-h-screen">
-      <MainNav />
       <main className="container mx-auto px-4 py-8">
         {/* Author Profile Header - Top Section */}
         <div className="mb-12">
