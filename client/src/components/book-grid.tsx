@@ -1,4 +1,4 @@
-import { Book } from "@shared/schema";
+import { Book } from "../types";
 import { BookGridCard } from "@/components/book-grid-card";
 import { Skeleton } from "@/components/ui/skeleton";
 

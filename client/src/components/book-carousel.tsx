@@ -1,4 +1,4 @@
-import { Book } from "@shared/schema";
+import { Book } from "../types";
 import { BookCard } from "@/components/book-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {

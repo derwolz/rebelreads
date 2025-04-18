@@ -191,24 +191,39 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
     }
   }
   
+  // Add book discovery button component that can be used with BookCarousel
+  const DiscoverMoreButton = () => (
+    <button 
+      onClick={handleDiscoverMore}
+      className="text-primary hover:underline font-medium flex items-center absolute right-0 top-0 mt-2" 
+    >
+      Discover More
+    </button>
+  );
+
   // Render the section with the appropriate display mode
   if (section.displayMode === "carousel") {
     return (
-      <BookCarousel 
-        title={section.title} 
-        books={displayBooks} 
-        isLoading={isLoading}
-        onDiscoverMore={handleDiscoverMore}
-      />
+      <div className="relative">
+        <BookCarousel 
+          title={section.title} 
+          books={displayBooks} 
+          isLoading={isLoading}
+        />
+        <DiscoverMoreButton />
+      </div>
     );
   } else if (section.displayMode === "book_rack") {
     return (
-      <BookRack
-        title={section.title}
-        books={displayBooks || []}
-        isLoading={isLoading}
-        className="" // Optional class name
-      />
+      <div className="relative">
+        <BookRack
+          title={section.title}
+          books={displayBooks || []}
+          isLoading={isLoading}
+          className="" // Optional class name
+        />
+        <DiscoverMoreButton />
+      </div>
     );
   } else {
     return (
