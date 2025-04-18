@@ -607,6 +607,7 @@
     --tertiary-900: 271 56% 15%;
     --tertiary-rgb: 160, 108, 213; /* #A06CD5 in RGB */
 
+    --accent-foreground: 0 0% 100%
     --secondary: 35 81% 58%; /* #EFA738 */
     --secondary-foreground: 0 0% 100%; /* White */
     --secondary-100: 35 81% 90%;
@@ -623,7 +624,7 @@
     --muted: 214 40% 25%;
     --muted-foreground: 214 40% 80%;
 
-    --accent: 35 81% 58%; /* Same as tertiary/CTA */
+    --accent: 271 56% 63%; /* Same as tertiary/CTA */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
@@ -631,7 +632,7 @@
 
     --border: 214 40% 25%;
     --input: 214 40% 25%;
-    --ring: 271 56% 63%; /* Same as secondary */
+    --ring: 35 81% 50%; /* Same as secondary */
   }
 
   * {
