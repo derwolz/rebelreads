@@ -13,7 +13,7 @@ import { DynamicHomeSections } from "@/components/dynamic-home-sections";
 interface HomepageSection {
   id: string;
   type: string;
-  displayMode: "carousel" | "grid";
+  displayMode: "carousel" | "grid" | "book_rack";
   title: string;
   itemCount: number;
   customViewId?: number;
@@ -80,8 +80,8 @@ export default function HomePage() {
         {
           id: "isekai",
           type: "custom_genre_view",
-          displayMode: "carousel",
-          title: "Isekai RPG",
+          displayMode: "book_rack", // Changed to book_rack view
+          title: "Explore Isekai RPG Books",
           itemCount: 10,
           customViewId: 2,
           visible: true

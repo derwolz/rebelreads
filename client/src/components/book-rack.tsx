@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import type { Book, BookImage } from "../types"; // Use the Book type from client/src/types.ts
 import { cn } from "@/lib/utils";
 import { BookCard } from "@/components/book-card";
+import { useLocation } from "wouter";
 
 // Possible lean angles in degrees
 const LEAN_OPTIONS = [
