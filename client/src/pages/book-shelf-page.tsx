@@ -292,31 +292,7 @@ export default function BookShelfPage() {
     setIsAddNoteDialogOpen(true);
   };
 
-  // Add custom keyframe animations to the head
-  useEffect(() => {
-    // Create a style element
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = `
-      @keyframes rotate-in-from-corner {
-        0% {
-          transform: scale(0) rotate(-90deg);
-          opacity: 0;
-        }
-        100% {
-          transform: scale(1) rotate(0);
-          opacity: 1;
-        }
-      }
-    `;
-    
-    // Add it to the document head
-    document.head.appendChild(styleElement);
-    
-    // Cleanup on unmount
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
+
 
   // Handle selecting a note
   const handleSelectNote = (note: Note) => {
@@ -535,7 +511,7 @@ export default function BookShelfPage() {
                   return (
                     <CarouselItem key={shelfBook.id} className="md:basis-1/4 lg:basis-1/5">
                       <div className="group relative p-1">
-                        <div className="relative">
+                        <div className="relative group">
                           {/* Convert shelf book to the format expected by BookCard */}
                           <BookShelfCard
                             book={{
@@ -577,7 +553,10 @@ export default function BookShelfPage() {
                                     }
                                   ]
                               } as Book}
+                            bookNotes={bookNotes.filter(note => note.bookId === shelfBook.bookId)}
                             onViewNotes={() => handleAddNote("book", shelfBook.bookId)}
+                            onAddNote={handleAddNote}
+                            onSelectNote={handleSelectNote}
                             onRemoveFromShelf={() => {
                               if (confirm("Are you sure you want to remove this book from the shelf?")) {
                                 removeBookFromShelfMutation.mutate({
@@ -653,44 +632,7 @@ export default function BookShelfPage() {
                             </DropdownMenu>
                           </div>
                           
-                          {/* Rotating Note Box */}
-                          <div 
-                            className="absolute bottom-0 right-0 w-full h-full opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
-                          >
-                            <div 
-                              className={`absolute w-full h-full flex items-center justify-center 
-                                ${bookNotesList.length > 0 ? "bg-primary/10" : "bg-secondary/10"} 
-                                backdrop-blur-sm rounded-sm shadow-md pointer-events-auto`}
-                              style={{
-                                transformOrigin: "bottom right",
-                                animation: "rotate-in-from-corner 0.3s forwards",
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (bookNotesList.length > 0) {
-                                  handleSelectNote(bookNotesList[0]);
-                                } else {
-                                  handleAddNote("book", bookId);
-                                }
-                              }}
-                            >
-                              <div className="text-center p-4">
-                                {bookNotesList.length > 0 ? (
-                                  <>
-                                    <BookOpen className="h-8 w-8 mx-auto mb-2 text-primary" />
-                                    <p className="font-medium text-base">View {bookNotesList.length} {bookNotesList.length === 1 ? 'Note' : 'Notes'}</p>
-                                    <p className="text-xs mt-1 text-muted-foreground">Click to read</p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Plus className="h-8 w-8 mx-auto mb-2 text-secondary" />
-                                    <p className="font-medium text-base">Add Note</p>
-                                    <p className="text-xs mt-1 text-muted-foreground">Capture your thoughts</p>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+
                           
                           {/* Old buttons (hidden) but keeping the functionality until we're sure the new UI works */}
                           <div className="hidden">

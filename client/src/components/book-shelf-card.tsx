@@ -8,8 +8,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { Book } from "../types";
 import { Rating, RatingPreferences, calculateWeightedRating, DEFAULT_RATING_WEIGHTS } from "@shared/schema";
 import { StarRating } from "./star-rating";
-import { BookOpen, Trash2 } from "lucide-react";
+import { BookOpen, Trash2, CalendarIcon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -24,16 +25,43 @@ function isNewBook(book: Book) {
   return book.publishedDate ? new Date(book.publishedDate) > oneWeekAgo : false;
 }
 
+// Note type from book-shelf-page.tsx
+type Note = {
+  id: number;
+  userId: number;
+  content: string;
+  type: "book" | "shelf";
+  bookId?: number;
+  shelfId?: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// Format date for notes
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString(undefined, { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric'
+  });
+}
+
 interface BookShelfCardProps {
   book: Book;
+  bookNotes?: Note[];
   onRemoveFromShelf?: (bookId: number) => void;
   onViewNotes?: (bookId: number) => void;
+  onAddNote?: (type: "book" | "shelf", bookId?: number) => void;
+  onSelectNote?: (note: Note) => void;
 }
 
 export function BookShelfCard({ 
   book, 
+  bookNotes = [],
   onRemoveFromShelf,
-  onViewNotes
+  onViewNotes,
+  onAddNote,
+  onSelectNote
 }: BookShelfCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [, navigate] = useLocation();
@@ -149,10 +177,93 @@ export function BookShelfCard({
   return (
     <div
       className="relative"
-      style={{ width: "256px", height: "400px", maxWidth: "100%" }}
+      style={{ width: "256px", height: "400px", maxWidth: "100%", zIndex:isHovered ? 30: 10 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+
+      {/* Bookshelf with notes */}
+      <div 
+        className="absolute bottom-0 left-0 w-full h-[250px] bg-amber-800 rounded p-4 border-t-4 border-amber-900 shadow-md duration-300 ease-in-out overflow-hidden"
+        style={{
+          transformOrigin: "bottom left",
+          transform: isHovered ? "rotate(30deg)" : "rotate(0deg)",
+          boxShadow: "0 -2px 5px rgba(0, 0, 0, 0.2)",
+        }}
+      >
+        {/* Header with action buttons */}
+        <div className="flex justify-between items-center mb-2">
+          <h4 className="text-white font-semibold text-sm">Notes ({bookNotes.length})</h4>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-white/20 text-white hover:bg-white/40 h-7 px-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddNote?.("book", book.id);
+              }}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-white/20 text-white hover:bg-white/40 h-7 px-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveFromShelf?.(book.id);
+              }}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Remove
+            </Button>
+          </div>
+        </div>
+        
+        {/* Scrollable notes list */}
+        <ScrollArea className="h-[160px] pr-2">
+          {bookNotes.length > 0 ? (
+            <div className="space-y-2">
+              {bookNotes.map((note) => (
+                <div 
+                  key={note.id}
+                  className="bg-white/10 rounded p-2 cursor-pointer hover:bg-white/20 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectNote?.(note);
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <Badge variant="outline" className="text-white/90 border-white/30 text-[10px] px-1 py-0">
+                      {formatDate(note.createdAt)}
+                    </Badge>
+                  </div>
+                  <p className="text-white text-xs line-clamp-2">{note.content}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-white/70 text-center">
+              <BookOpen className="h-5 w-5 mb-1 opacity-70" />
+              <p className="text-xs">No notes yet</p>
+              <p className="text-[10px] mt-1">Click Add to create one</p>
+            </div>
+          )}
+        </ScrollArea>
+        
+        {/* Wood grain effect for the shelf */}
+        <div className="absolute inset-0 opacity-30 pointer-events-none" 
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='none'/%3E%3Cpath d='M0 0c20 10 40 10 60 0s40-10 60 0v100c-20-10-40-10-60 0s-40 10-60 0V0z' fill='%23ffffff' fill-opacity='0.1'/%3E%3C/svg%3E")`,
+            backgroundSize: '100px 100px'
+          }}
+        />
+      </div>
+      
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -160,7 +271,7 @@ export function BookShelfCard({
               id={`book-shelf-card-${book.id}`}
               className={`
                 cursor-pointer w-full rounded-none shadow-md shadow-black/15
-                transition-all duration-300 ease-in-out overflow-hidden
+                transition-all duration-300 ease-in-out overflow-hidden hover:z-20
                 ${book.promoted ? "border-primary/20" : ""}
               `}
               style={{
@@ -182,9 +293,7 @@ export function BookShelfCard({
                 </div>
               )}
               
-              <div className="absolute bg-black/20 rounded-full top-2 left-2 z-10">
-                <WishlistButton bookId={book.id} variant="ghost" size="icon" />
-              </div>
+
 
               <img
                 src={
@@ -199,8 +308,8 @@ export function BookShelfCard({
                 <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%]">
                   {/* New Book Banner */}
                   {isNewBook(book) && (
-                    <div className="absolute -bottom-8 -right-12 z-20">
-                      <div className="bg-[#7fffd4] text-black text-xs px-16 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
+                    <div className="absolute -bottom-16 -right-16 z-30">
+                      <div className="bg-[#7fffd4] text-black text-xs px-16 py-.5 rotate-[-45deg] origin-bottom-left shadow-sm">
                         New
                       </div>
                     </div>
@@ -238,42 +347,7 @@ export function BookShelfCard({
         </Tooltip>
       </TooltipProvider>
 
-      {/* Bookshelf */}
-      <div 
-        className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-r from-amber-800 to-amber-600 border-t-2 border-amber-900 shadow-md transition-all duration-300 ease-in-out overflow-hidden flex justify-center items-center gap-3 z-20"
-        style={{
-          transformOrigin: "bottom left",
-          transform: isHovered ? "rotate(30deg)" : "rotate(0deg)",
-          boxShadow: "0 -2px 5px rgba(0, 0, 0, 0.2)"
-        }}
-      >
-        {/* Shelf buttons that are revealed when the shelf is rotated */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`bg-white/20 text-white hover:bg-white/40 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewNotes?.(book.id);
-          }}
-        >
-          <BookOpen className="h-4 w-4 mr-1" />
-          Notes
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`bg-white/20 text-white hover:bg-white/40 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemoveFromShelf?.(book.id);
-          }}
-        >
-          <Trash2 className="h-4 w-4 mr-1" />
-          Remove
-        </Button>
-      </div>
+
     </div>
   );
 }
