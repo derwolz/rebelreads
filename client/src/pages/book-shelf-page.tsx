@@ -63,23 +63,17 @@ type BookShelf = {
   updatedAt: string;
 };
 
+import { Book, BookImage } from "../types";
+
 type ShelfBook = {
   id: number;
   bookId: number;
   shelfId: number;
   rank: number;
   addedAt: string;
-  book: {
-    id: number;
-    title: string;
-    description: string;
+  book: Book & {
+    // Extra fields not in the Book interface but needed for display
     coverUrl?: string;
-    authorName?: string;
-    images?: {
-      imageType: string;
-      imageUrl: string;
-    }[];
-    // Other book properties
   };
 };
 
