@@ -355,14 +355,10 @@ export default function BookDetails() {
                                 className="w-4 h-4 mr-2 inline-block"
                               />
                             )}
-                            {link.domain ? (
-                              <span>
-                                {link.domain || link.retailer}{" "}
-                                
-                              </span>
-                            ) : (
-                              link.customName || link.retailer
-                            )}
+                            <span>
+                              {/* Show custom name if available, otherwise show domain or URL */}
+                              {link.customName || link.domain || link.url}{" "}
+                            </span>
                             <ExternalLink className="w-4 h-4 ml-2 inline-block" />
                           </Button>
                         </a>
