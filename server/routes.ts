@@ -33,6 +33,7 @@ import publicAuthorRoutes from "./routes/public-author-routes";
 import discoverRoutes from "./routes/discover-routes";
 import shelfRoutes from "./routes/shelf-routes";
 import { registerContentReportsRoutes } from "./routes/content-reports-routes";
+import { registerRandomBookRoutes } from "./routes/random-book-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -130,6 +131,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register content reports routes directly
   registerContentReportsRoutes(app);
+  
+  // Register random book routes for the image guide page
+  registerRandomBookRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
