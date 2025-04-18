@@ -8,8 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { SocialMediaLinks } from "@/components/social-media-links";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Book } from "@shared/schema";
+import { Book, BookShelf } from "@shared/schema";
 import { CompletedBooksGrid } from "@/components/completed-books-grid";
+import { BookshelfCarousel } from "@/components/bookshelf-carousel";
 
 interface DashboardData {
   user: {
