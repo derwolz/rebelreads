@@ -553,10 +553,7 @@ export default function BookShelfPage() {
                                     }
                                   ]
                               } as Book}
-                            bookNotes={bookNotes.filter(note => note.bookId === shelfBook.bookId)}
                             onViewNotes={() => handleAddNote("book", shelfBook.bookId)}
-                            onAddNote={handleAddNote}
-                            onSelectNote={handleSelectNote}
                             onRemoveFromShelf={() => {
                               if (confirm("Are you sure you want to remove this book from the shelf?")) {
                                 removeBookFromShelfMutation.mutate({
@@ -668,12 +665,10 @@ export default function BookShelfPage() {
                   );
                 })}
               </CarouselContent>
-              <CarouselPrevious className="left-2" />
-              <CarouselNext className="right-2" />
             </Carousel>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-[200px] bg-muted/20 rounded-lg">
+          <div className="flex items-center justify-center h-[200px] bg-muted/20 ">
             <p className="text-muted-foreground text-center">
               No books in this shelf yet.<br />
               Add books to get started.

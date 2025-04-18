@@ -184,10 +184,10 @@ export function BookShelfCard({
 
       {/* Bookshelf with notes */}
       <div 
-        className="absolute bottom-0 left-0 w-full h-[250px] bg-amber-800 rounded p-4 border-t-4 border-amber-900 shadow-md duration-300 ease-in-out overflow-hidden"
+        className="absolute bottom-0 left-0 w-full h-full rounded bg-foreground rounded p-4 border-background border-2 shadow-md duration-300 ease-in-out overflow-hidden"
         style={{
-          transformOrigin: "bottom left",
-          transform: isHovered ? "rotate(30deg)" : "rotate(0deg)",
+          transformOrigin: "bottom right",
+          transform: isHovered ? "rotate(45deg)" : "rotate(0deg)",
           boxShadow: "0 -2px 5px rgba(0, 0, 0, 0.2)",
         }}
       >
@@ -199,7 +199,7 @@ export function BookShelfCard({
             <Button
               variant="ghost"
               size="sm"
-              className="bg-white/20 text-white hover:bg-white/40 h-7 px-2"
+              className="bg-accent/80 text-white hover:bg-accent/90 h-7 px-2"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddNote?.("book", book.id);
@@ -212,7 +212,7 @@ export function BookShelfCard({
             <Button
               variant="ghost"
               size="sm"
-              className="bg-white/20 text-white hover:bg-white/40 h-7 px-2"
+              className="bg-accent/80 text-white hover:bg-accent/90 h-7 px-2"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemoveFromShelf?.(book.id);
@@ -231,7 +231,7 @@ export function BookShelfCard({
               {bookNotes.map((note) => (
                 <div 
                   key={note.id}
-                  className="bg-white/10 rounded p-2 cursor-pointer hover:bg-white/20 transition-colors"
+                  className="bg-accent/90 rounded p-2 cursor-pointer hover:bg-accent/80 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectNote?.(note);
