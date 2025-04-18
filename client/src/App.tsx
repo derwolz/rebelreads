@@ -39,6 +39,7 @@ import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
+import BookShelfPage from "@/pages/book-shelf-page";
 
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
@@ -120,6 +121,7 @@ function Router() {
         <ProtectedRoute path="/settings/homepage" component={() => <HomepageSettingsPage />} />
         <ProtectedRoute path="/settings/author" component={SettingsPage} />
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
+        <ProtectedRoute path="/book-shelf/:id" component={BookShelfPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProReviewsPage} />

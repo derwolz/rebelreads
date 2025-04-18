@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
 import { bookShelves, shelfBooks, notes, books } from "../../shared/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema } from "../../shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -100,13 +100,19 @@ router.post("/api/bookshelves", async (req: Request, res: Response) => {
 
     const newRank = highestRank.length > 0 ? highestRank[0].maxRank + 1 : 0;
 
+    // Create insert data with correct type
+    const insertData = {
+      title: validatedData.title,
+      userId: req.user.id,
+      rank: newRank,
+      ...(validatedData.coverImageUrl && typeof validatedData.coverImageUrl === 'string' 
+        ? { coverImageUrl: validatedData.coverImageUrl } 
+        : {})
+    };
+    
     const [newShelf] = await db
       .insert(bookShelves)
-      .values({
-        ...validatedData,
-        userId: req.user.id,
-        rank: newRank
-      })
+      .values(insertData)
       .returning();
 
     return res.status(201).json(newShelf);
@@ -139,12 +145,23 @@ router.patch("/api/bookshelves/:id", async (req: Request, res: Response) => {
 
     const validatedData = insertBookShelfSchema.partial().parse(req.body);
 
+    // Create update data with correct type
+    const updateData: Record<string, any> = {
+      updatedAt: new Date()
+    };
+    
+    // Only add string type coverImageUrl
+    if (validatedData.title) {
+      updateData.title = validatedData.title;
+    }
+    
+    if (validatedData.coverImageUrl && typeof validatedData.coverImageUrl === 'string') {
+      updateData.coverImageUrl = validatedData.coverImageUrl;
+    }
+    
     const [updatedShelf] = await db
       .update(bookShelves)
-      .set({
-        ...validatedData,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(and(
         eq(bookShelves.id, id),
         eq(bookShelves.userId, req.user.id)
@@ -453,6 +470,89 @@ router.patch("/api/bookshelves/:id/books/rank", async (req: Request, res: Respon
       return res.status(400).json(error.errors);
     }
     console.error("Error updating book ranks:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
+// Get detailed view of a bookshelf with its books and notes
+router.get("/api/book-shelf/:id", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const shelfId = parseInt(req.params.id);
+  if (isNaN(shelfId)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+
+  try {
+    // Verify ownership
+    const isOwner = await verifyShelfOwnership(shelfId, req.user.id);
+    if (!isOwner) {
+      return res.status(403).send("Forbidden");
+    }
+
+    // Get the shelf details
+    const shelf = await db.query.bookShelves.findFirst({
+      where: and(
+        eq(bookShelves.id, shelfId),
+        eq(bookShelves.userId, req.user.id)
+      )
+    });
+
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+
+    // Get shelf notes
+    const shelfNotes = await db.query.notes.findMany({
+      where: and(
+        eq(notes.shelfId, shelfId),
+        eq(notes.userId, req.user.id),
+        eq(notes.type, "shelf")
+      ),
+      orderBy: desc(notes.createdAt)
+    });
+
+    // Get books on this shelf with their details
+    const shelfBooksWithDetails = await db
+      .select({
+        id: shelfBooks.id,
+        bookId: shelfBooks.bookId,
+        shelfId: shelfBooks.shelfId,
+        rank: shelfBooks.rank,
+        addedAt: shelfBooks.addedAt,
+        book: books
+      })
+      .from(shelfBooks)
+      .innerJoin(books, eq(shelfBooks.bookId, books.id))
+      .where(eq(shelfBooks.shelfId, shelfId))
+      .orderBy(asc(shelfBooks.rank));
+
+    // Get book notes for all books in this shelf
+    const bookIds = shelfBooksWithDetails.map(sb => sb.bookId);
+    
+    // Define type for book notes array
+    let bookNotes: Array<typeof notes.$inferSelect> = [];
+    if (bookIds.length > 0) {
+      bookNotes = await db.query.notes.findMany({
+        where: and(
+          inArray(notes.bookId, bookIds),
+          eq(notes.userId, req.user.id),
+          eq(notes.type, "book")
+        )
+      });
+    }
+
+    // Return complete shelf data
+    return res.status(200).json({
+      shelf,
+      shelfNotes,
+      books: shelfBooksWithDetails,
+      bookNotes
+    });
+  } catch (error) {
+    console.error("Error fetching bookshelf details:", error);
     return res.status(500).send("Internal server error");
   }
 });
