@@ -1,5 +1,5 @@
-import { Book } from "../types";
 import {
+  Book,
   Rating,
   calculateWeightedRating,
   DEFAULT_RATING_WEIGHTS,
