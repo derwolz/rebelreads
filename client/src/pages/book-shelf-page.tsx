@@ -553,6 +553,9 @@ export default function BookShelfPage() {
                                     }
                                   ]
                               } as Book}
+                            bookNotes={bookNotesList}
+                            onAddNote={handleAddNote}
+                            onSelectNote={handleSelectNote}
                             onViewNotes={() => handleAddNote("book", shelfBook.bookId)}
                             onRemoveFromShelf={() => {
                               if (confirm("Are you sure you want to remove this book from the shelf?")) {
