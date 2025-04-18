@@ -49,6 +49,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { TestImages } from "@/pages/test-images";
 import AuthCheckPage from "@/pages/auth-check";
 import { ImageGuidePage } from "@/pages/image-guide";
+import { BookRackTestPage } from "@/pages/book-rack-test";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
@@ -107,6 +108,7 @@ function Router() {
         <Route path="/ad-showcase" component={AdShowcasePage} />
         <Route path="/test-images" component={TestImages} />
         <Route path="/image-guide" component={ImageGuidePage} />
+        <Route path="/book-rack-test" component={BookRackTestPage} />
         
         {/* Discover routes - new taxonomy-based search pages */}
         <Route path="/discover" component={DiscoverPage} />
