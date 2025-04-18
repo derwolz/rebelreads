@@ -1,14 +1,15 @@
-import { useMemo } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Book } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { BookCard } from "@/components/book-card";
 
 // Possible lean angles in degrees
 const LEAN_OPTIONS = [
-  { angle: 0, probability: 0.92 },    // Straight - 92% chance
-  { angle: -5, probability: 0.02 },   // Slight lean left - 2% chance
-  { angle: -10, probability: 0.02 },  // Moderate lean left - 2% chance
-  { angle: 5, probability: 0.02 },    // Slight lean right - 2% chance
-  { angle: 10, probability: 0.02 },   // Moderate lean right - 2% chance
+  { angle: 0, probability: 0.88 },    // Straight - 92% chance
+  { angle: -5, probability: 0.04 },   // Slight lean left - 2% chance
+  { angle: -10, probability: 0.04 },  // Moderate lean left - 2% chance
+  { angle: 5, probability: 0.04 },    // Slight lean right - 2% chance
+  { angle: 10, probability: 0.04 },   // Moderate lean right - 2% chance
 ];
 
 // Original dimensions of the book spine images
@@ -60,14 +61,58 @@ function calculateLeaningGeometry(angle: number) {
 }
 
 // Component to display a single book spine with appropriate rotation
-function BookSpine({ book, angle, index }: BookSpineProps) {
+function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps) {
   // Calculate geometric properties for this book spine
   const { width, offset } = useMemo(() => {
     return calculateLeaningGeometry(angle);
   }, [angle]);
   
-  // Get the grid-item image for the book spine
+  // Get the book images
   const spineImageUrl = book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png";
+  
+  // Determine if this book is being hovered
+  const isHovered = hoveredIndex === index;
+  
+  // Reference to the timeout for delayed actions
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Handle mouse enter - notify parent and set timer for card display
+  const handleMouseEnter = useCallback(() => {
+    // First just notify that this book is hovered (for scaling effect)
+    onHover(index, false);
+    
+    // Set a timer to show the card after a delay
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      // After delay, notify that we want to show the card
+      onHover(index, true);
+    }, 300);
+  }, [index, onHover]);
+  
+  // Handle mouse leave - clear hover state
+  const handleMouseLeave = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    onHover(null, false);
+  }, [onHover]);
+  
+  // Clean up timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  // Check if we should show the book card
+  const showBookCard = isHovered && hoveredIndex !== null;
   
   return (
     <div 
@@ -75,14 +120,19 @@ function BookSpine({ book, angle, index }: BookSpineProps) {
       style={{ 
         width: `${width}px`,
         height: `${SPINE_HEIGHT}px`,
+        zIndex: showBookCard ? 10 : 1,
       }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
+      {/* Book Spine */}
       <div 
-        className="absolute w-[56px] h-full transition-transform duration-300 ease-in-out"
+        className="absolute w-[56px] h-full transition-all duration-300 ease-in-out"
         style={{ 
-          transform: `translateX(${offset}px) rotate(${angle}deg)`,
+          transform: `translateX(${offset}px) rotate(${angle}deg) ${isHovered ? 'scale(1.05)' : ''}`,
           transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
           left: `${(width - SPINE_WIDTH) / 2}px`, // Center the book in its container
+          zIndex: showBookCard ? 11 : 1, // Keep spine above card
         }}
       >
         <img 
@@ -92,12 +142,48 @@ function BookSpine({ book, angle, index }: BookSpineProps) {
           style={{ maxWidth: `${SPINE_WIDTH}px` }}
         />
       </div>
+      
+      {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
+      {showBookCard && (
+        <div 
+          className="absolute bottom-0 transition-all duration-300 ease-in-out"
+          style={{
+            left: '50%',
+            transform: 'translateX(-50%)',
+            marginBottom: '10px',
+            zIndex: 5,
+            width: '256px', // Match the BookCard's width
+          }}
+        >
+          <BookCard book={book} />
+        </div>
+      )}
     </div>
   );
 }
 
+// Update BookSpineProps to include the hover state management
+interface BookSpineProps {
+  book: Book;
+  angle: number;
+  index: number;
+  hoveredIndex: number | null;
+  onHover: (index: number | null, showCard: boolean) => void;
+}
+
 // Main BookRack component
 export function BookRack({ title, books = [], isLoading, className }: BookRackProps) {
+  // State to track which book is being hovered
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  // State to track if the book card is shown (after delay)
+  const [showingCard, setShowingCard] = useState<boolean>(false);
+  
+  // Handle hover events from child BookSpine components
+  const handleBookHover = useCallback((index: number | null, showCard: boolean) => {
+    setHoveredIndex(index);
+    setShowingCard(showCard);
+  }, []);
+  
   // Create a stable book ID string for dependencies
   const bookIdsString = useMemo(() => {
     return books.map(book => book.id).join('-');
@@ -189,23 +275,51 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       <div className="relative">
         {/* The books container - positioned on the shelf */}
         <div 
-          className="flex items-end bg-muted/10 rounded-md p-4 h-[250px] overflow-x-auto"
+          className="flex items-end bg-muted/10 rounded-md p-4 h-[400px] overflow-x-auto"
+          style={{ 
+            minHeight: showingCard ? '400px' : '250px',
+            transition: 'min-height 0.3s ease-in-out'
+          }}
         >
           <div className="flex" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
             {books.map((book, index) => {
               // Get this book's angle
               const angle = bookAngles[index] || 0;
               
+              // Calculate the position shift based on hovered index
+              let positionShift = 0;
+              
+              if (hoveredIndex !== null && showingCard) {
+                // When a book is hovered and the card is shown:
+                // Books to the left of the hovered book shift left
+                if (index < hoveredIndex) {
+                  positionShift = -150; // shift left by 150px
+                }
+                // Books to the right of the hovered book shift right
+                else if (index > hoveredIndex) {
+                  positionShift = 150; // shift right by 150px
+                }
+              }
+              
               // Use a unique key combining book ID and index
               const key = `${book.id}-${index}`;
               
               return (
-                <BookSpine 
+                <div
                   key={key}
-                  book={book} 
-                  angle={angle}
-                  index={index}
-                />
+                  className="transition-transform duration-300 ease-in-out"
+                  style={{ 
+                    transform: `translateX(${positionShift}px)`,
+                  }}
+                >
+                  <BookSpine 
+                    book={book} 
+                    angle={angle}
+                    index={index}
+                    hoveredIndex={hoveredIndex}
+                    onHover={handleBookHover}
+                  />
+                </div>
               );
             })}
           </div>
