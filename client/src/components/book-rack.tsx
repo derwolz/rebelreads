@@ -116,11 +116,11 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
   
   return (
     <div 
-      className="relative inline-block"
+      className="relative group inline-block"
       style={{ 
         width: `${width}px`,
         height: `${SPINE_HEIGHT}px`,
-        zIndex: showBookCard ? 10 : 1,
+        zIndex: showBookCard ? 0 : 1,
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -146,12 +146,12 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
       {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
       {showBookCard && (
         <div 
-          className="absolute bottom-0 transition-all duration-300 ease-in-out"
+          className="absolute bottom-0 transition-all duration-600 ease-in-out"
           style={{
             left: '50%',
-            transform: 'translateX(-50%)',
+            transform: 'translateX(-50%) translateY(30%) ',
             marginBottom: '10px',
-            zIndex: 5,
+            zIndex: 50,
             width: '256px', // Match the BookCard's width
           }}
         >
@@ -275,13 +275,13 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       <div className="relative">
         {/* The books container - positioned on the shelf */}
         <div 
-          className="flex items-end bg-muted/10 rounded-md p-4 h-[400px] overflow-x-auto"
+          className="flex items-end bg-muted/10 rounded-md h-[400px] "
           style={{ 
             minHeight: showingCard ? '400px' : '250px',
             transition: 'min-height 0.3s ease-in-out'
           }}
         >
-          <div className="flex" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
+          <div className="flex justify-center items-center" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
             {books.map((book, index) => {
               // Get this book's angle
               const angle = bookAngles[index] || 0;
@@ -326,7 +326,7 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
         </div>
         
         {/* The wooden shelf */}
-        <div className="h-3 w-full bg-amber-800"></div>
+        <div className="border-t border-foreground bg-gradient-to-b from-foreground to-background w-full h-3"></div>
       </div>
     </section>
   );
