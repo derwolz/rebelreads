@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import type { Book, BookImage } from "../types"; // Use the Book type from client/src/types.ts
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { useQuery } from "@tanstack/react-query";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -199,7 +199,7 @@ interface BookRackProps {
 
 export function BookRack({ title, books, isLoading, className }: BookRackProps) {
   const { width: windowWidth } = useWindowSize();
-  const [, navigate] = Link.useLocation();
+  const [, navigate] = useLocation();
 
   const handleBookClick = useCallback((bookId: number) => {
     navigate(`/books/${bookId}`);

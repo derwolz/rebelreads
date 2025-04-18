@@ -11,7 +11,7 @@ const updateHomepageLayoutSchema = z.object({
     z.object({
       id: z.string(),
       type: z.enum(["authors_you_follow", "popular", "you_may_also_like", "wishlist", "unreviewed", "reviewed", "completed", "custom_genre_view"]),
-      displayMode: z.enum(["carousel", "grid"]),
+      displayMode: z.enum(["carousel", "grid", "book_rack"]),
       title: z.string(),
       itemCount: z.number(),
       visible: z.boolean(),
