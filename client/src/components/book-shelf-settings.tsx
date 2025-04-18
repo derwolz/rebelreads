@@ -840,6 +840,8 @@ export function BookShelfSettings() {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onViewNotes={handleViewNotes}
+                  onToggleShare={handleToggleShare}
+                  isAuthor={!!isAuthor}
                 />
               ))}
             </SortableContext>

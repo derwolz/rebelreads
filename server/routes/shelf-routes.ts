@@ -59,6 +59,15 @@ async function verifyShelfOwnership(shelfId: number, userId: number): Promise<bo
   return !!shelf;
 }
 
+// Helper function to verify if user is an author
+async function verifyUserIsAuthor(userId: number): Promise<boolean> {
+  const authorRecord = await db.query.authors.findFirst({
+    where: eq(authors.userId, userId)
+  });
+  
+  return !!authorRecord;
+}
+
 // Get all shelves for the current user
 router.get("/api/bookshelves", async (req: Request, res: Response) => {
   if (!req.user) {
@@ -816,6 +825,58 @@ router.delete("/api/notes/:id", async (req: Request, res: Response) => {
     return res.status(200).json(deletedNote);
   } catch (error) {
     console.error("Error deleting note:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
+// Toggle shelf sharing (only for authors)
+router.patch("/api/bookshelves/:id/share", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) {
+    return res.status(400).send("Invalid ID");
+  }
+
+  try {
+    // Verify ownership
+    const isOwner = await verifyShelfOwnership(id, req.user.id);
+    if (!isOwner) {
+      return res.status(403).send("Forbidden: You don't own this bookshelf");
+    }
+
+    // Verify user is an author
+    const isAuthor = await verifyUserIsAuthor(req.user.id);
+    if (!isAuthor) {
+      return res.status(403).send("Forbidden: Only authors can share bookshelves");
+    }
+
+    // Validate request data
+    const { isShared } = z.object({
+      isShared: z.boolean()
+    }).parse(req.body);
+
+    // Update the shelf's shared status
+    const [updatedShelf] = await db
+      .update(bookShelves)
+      .set({ 
+        isShared,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(bookShelves.id, id),
+        eq(bookShelves.userId, req.user.id)
+      ))
+      .returning();
+
+    return res.status(200).json(updatedShelf);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(error.errors);
+    }
+    console.error("Error toggling shelf sharing status:", error);
     return res.status(500).send("Internal server error");
   }
 });
