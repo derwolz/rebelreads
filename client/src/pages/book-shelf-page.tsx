@@ -26,15 +26,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { BookCard } from "@/components/book-card";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { BookOpen, Plus, X, Edit, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -59,6 +66,7 @@ type ShelfBook = {
     id: number;
     title: string;
     description: string;
+    coverUrl?: string;
     // Other book properties
   };
 };
@@ -331,9 +339,9 @@ export default function BookShelfPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Left Column - Shelf Notes */}
-        <div className="md:col-span-1">
+        <div>
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="text-lg">Shelf Notes</CardTitle>
@@ -383,8 +391,8 @@ export default function BookShelfPage() {
           </Card>
         </div>
 
-        {/* Middle Column - Active Note */}
-        <div className="md:col-span-1">
+        {/* Right Column - Active Note */}
+        <div>
           <Card className="h-full">
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -444,87 +452,112 @@ export default function BookShelfPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        {/* Right Column - Books Carousel with Notes */}
-        <div className="md:col-span-1">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="text-lg">Books</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {books.length > 0 ? (
-                <div className="space-y-4">
-                  <ScrollArea className="h-[400px] pr-4">
-                    {books.map((shelfBook) => {
-                      const bookId = shelfBook.bookId;
-                      const bookNotesList = bookNotes.filter(note => note.bookId === bookId);
-                      
-                      return (
-                        <div key={shelfBook.id} className="mb-6">
-                          <div className="flex items-center gap-4 mb-3">
-                            <div className="w-16 h-24 bg-muted rounded overflow-hidden">
-                              {/* Book cover would go here - replace with actual book cover image */}
-                              <div className="w-full h-full flex items-center justify-center bg-muted">
-                                <BookOpen className="text-muted-foreground" />
+      {/* Bottom Section - Books Carousel */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Books in this Shelf</h2>
+        {books.length > 0 ? (
+          <Carousel className="w-full">
+            <CarouselContent>
+              {books.map((shelfBook) => {
+                const bookId = shelfBook.bookId;
+                const bookNotesList = bookNotes.filter(note => note.bookId === bookId);
+                
+                return (
+                  <CarouselItem key={shelfBook.id} className="md:basis-1/5 lg:basis-1/6">
+                    <div className="p-1">
+                      <Card className="overflow-hidden">
+                        <div className="relative">
+                          <div className="aspect-[2/3] bg-muted relative group">
+                            {/* Book cover image */}
+                            {shelfBook.book.coverUrl ? (
+                              <img 
+                                src={shelfBook.book.coverUrl} 
+                                alt={shelfBook.book.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <BookOpen className="h-12 w-12 text-muted-foreground" />
                               </div>
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium">{shelfBook.book.title}</h4>
-                              <p className="text-sm text-muted-foreground line-clamp-2">
-                                {shelfBook.book.description}
-                              </p>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="mt-1"
-                                onClick={() => handleAddNote("book", bookId)}
-                              >
-                                <Plus className="h-3 w-3 mr-1" /> Add Note
-                              </Button>
-                            </div>
-                          </div>
-
-                          {bookNotesList.length > 0 && (
-                            <div className="pl-4 border-l-2 border-muted ml-8 mt-2">
-                              <p className="text-xs font-medium mb-2">Notes:</p>
-                              {bookNotesList.map(note => (
-                                <TooltipProvider key={note.id}>
+                            )}
+                            
+                            {/* Heart icon if there are notes */}
+                            {bookNotesList.length > 0 && (
+                              <div className="absolute top-2 left-2">
+                                <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <div 
-                                        key={note.id}
-                                        className={`p-2 mb-2 text-xs rounded cursor-pointer ${
-                                          activeNoteId === note.id ? "bg-primary/10" : "bg-muted"
-                                        }`}
-                                        onClick={() => handleSelectNote(note)}
-                                      >
-                                        <p className="line-clamp-2">{note.content}</p>
+                                      <div className="bg-background/80 rounded-full p-1">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          className="text-red-500"
+                                        >
+                                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                        </svg>
                                       </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>{getTruncatedContent(note.content)}</p>
+                                      <p>{bookNotesList.length} note{bookNotesList.length !== 1 ? 's' : ''}</p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
-                              ))}
+                              </div>
+                            )}
+                            
+                            {/* Hover controls */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-background/80 text-foreground"
+                                onClick={() => handleAddNote("book", bookId)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" /> Add Note
+                              </Button>
                             </div>
-                          )}
+                          </div>
                         </div>
-                      );
-                    })}
-                  </ScrollArea>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-[400px]">
-                  <p className="text-muted-foreground text-center">
-                    No books in this shelf yet.<br />
-                    Add books to get started.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                        <CardFooter className="p-2 flex flex-col items-start">
+                          <p className="font-medium text-sm truncate w-full">{shelfBook.book.title}</p>
+                          {/* If there are book notes, add a small indicator that they can click to see notes */}
+                          {bookNotesList.length > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="p-0 h-6 text-xs text-muted-foreground"
+                              onClick={() => handleSelectNote(bookNotesList[0])}
+                            >
+                              View notes
+                            </Button>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </Carousel>
+        ) : (
+          <div className="flex items-center justify-center h-[200px] bg-muted/20 rounded-lg">
+            <p className="text-muted-foreground text-center">
+              No books in this shelf yet.<br />
+              Add books to get started.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Note Dialog */}
