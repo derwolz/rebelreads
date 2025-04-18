@@ -328,7 +328,19 @@ router.get("/reviewed", async (req: Request, res: Response) => {
     }
     
     // Get all book IDs to fetch images
-    const bookIds = ratedBooks.map(book => book.id);
+    let bookIds = ratedBooks.map(book => book.id);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Apply content filtering to book IDs
+    console.log(`Found ${bookIds.length} reviewed books, applying content filters`);
+    bookIds = await applyContentFilters(userId, bookIds);
+    console.log(`After content filtering: ${bookIds.length} reviewed books remain`);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Filter ratedBooks to only include books that passed content filtering
+    const filteredBooks = ratedBooks.filter(book => bookIds.includes(book.id));
     
     // Fetch all images for these books
     const allImages = await db.select()
@@ -349,14 +361,14 @@ router.get("/reviewed", async (req: Request, res: Response) => {
     });
     
     // Add images to books
-    const booksWithImages = ratedBooks.map(book => ({
+    const booksWithImages = filteredBooks.map(book => ({
       ...book,
       images: imagesByBookId.get(book.id) || []
     }));
     
     // Shuffle array and take the requested count
     const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
-    const selectedBooks = shuffled.slice(0, count);
+    const selectedBooks = shuffled.slice(0, Math.min(count, shuffled.length));
     
     res.json(selectedBooks);
   } catch (error) {
@@ -423,7 +435,19 @@ router.get("/completed", async (req: Request, res: Response) => {
     }
     
     // Get all book IDs to fetch images
-    const bookIds = completedBooks.map(book => book.id);
+    let bookIds = completedBooks.map(book => book.id);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Apply content filtering to book IDs
+    console.log(`Found ${bookIds.length} completed books, applying content filters`);
+    bookIds = await applyContentFilters(userId, bookIds);
+    console.log(`After content filtering: ${bookIds.length} completed books remain`);
+    
+    if (bookIds.length === 0) return res.json([]);
+    
+    // Filter completedBooks to only include books that passed content filtering
+    const filteredBooks = completedBooks.filter(book => bookIds.includes(book.id));
     
     // Fetch all images for these books
     const allImages = await db.select()
@@ -444,14 +468,14 @@ router.get("/completed", async (req: Request, res: Response) => {
     });
     
     // Add images to books
-    const booksWithImages = completedBooks.map(book => ({
+    const booksWithImages = filteredBooks.map(book => ({
       ...book,
       images: imagesByBookId.get(book.id) || []
     }));
     
     // Shuffle array and take the requested count
     const shuffled = booksWithImages.sort(() => 0.5 - Math.random());
-    const selectedBooks = shuffled.slice(0, count);
+    const selectedBooks = shuffled.slice(0, Math.min(count, shuffled.length));
     
     res.json(selectedBooks);
   } catch (error) {

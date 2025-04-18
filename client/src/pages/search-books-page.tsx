@@ -37,15 +37,26 @@ export function SearchBooksPage() {
     isLoading,
     isError,
   } = useQuery<SearchResults>({
-    queryKey: ["/api/search/books", query],
+    queryKey: ["/api/search", query],
     queryFn: () =>
-      fetch(`/api/search/books?q=${query}`).then((response) => response.json()),
+      fetch(`/api/search?q=${query}`).then((response) => response.json()),
     enabled: true,
   });
 
+  // Helper function to extract genres from book taxonomies (compatibility layer)
+  const getBookGenres = (book: Book): string[] => {
+    if ((book as any).genreTaxonomies) {
+      return (book as any).genreTaxonomies
+        .filter((t: any) => t.type === 'genre')
+        .map((t: any) => t.name);
+    }
+    // Fallback for older book data
+    return (book as any).genres || [];
+  };
+
   // Get unique genres from all books
   const allGenres = Array.from(
-    new Set(searchResults?.books.flatMap((book) => book.genres) || [])
+    new Set(searchResults?.books.flatMap(getBookGenres) || [])
   ).sort();
 
   // Helper function to calculate average rating
@@ -58,21 +69,23 @@ export function SearchBooksPage() {
   // Apply filters to search results
   const filteredBooks = searchResults?.books.filter((book) => {
     // Genre filter
-    if (
-      filters.genres.length > 0 &&
-      !filters.genres.some((genre) => book.genres.includes(genre))
-    ) {
-      return false;
+    if (filters.genres.length > 0) {
+      const bookGenres = getBookGenres(book);
+      if (!filters.genres.some(genre => bookGenres.includes(genre))) {
+        return false;
+      }
     }
 
     // Date range filter
     if (filters.dateRange.from || filters.dateRange.to) {
-      const publishDate = new Date(book.publishedDate);
-      if (
-        (filters.dateRange.from && publishDate < filters.dateRange.from) ||
-        (filters.dateRange.to && publishDate > filters.dateRange.to)
-      ) {
-        return false;
+      if (book.publishedDate) {
+        const publishDate = new Date(book.publishedDate);
+        if (
+          (filters.dateRange.from && publishDate < filters.dateRange.from) ||
+          (filters.dateRange.to && publishDate > filters.dateRange.to)
+        ) {
+          return false;
+        }
       }
     }
 
