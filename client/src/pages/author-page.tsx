@@ -406,19 +406,43 @@ export default function AuthorPage() {
           <div className="space-y-10">
             <h2 className="text-2xl font-bold mb-6">Bookshelves</h2>
             {bookshelves.map((shelfWithBooks) => (
-              <div key={shelfWithBooks.shelf.id} className="space-y-6">
+              <div key={shelfWithBooks.shelf.id} className="space-y-4">
                 <div className="flex items-center gap-2">
                   <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
                   <BookOpen className="h-5 w-5 text-muted-foreground" />
                 </div>
                 
                 {shelfWithBooks.books.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {shelfWithBooks.books.map((book) => (
-                      <div key={book.id} className="h-full">
-                        <BookGridCard book={book} />
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Bookshelf cover on the left */}
+                    <div className="w-full md:w-48 flex-shrink-0">
+                      <div className="aspect-[2/3] relative rounded-lg overflow-hidden border shadow">
+                        <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-muted/60">
+                          <img 
+                            src={shelfWithBooks.shelf.coverImageUrl?.toString() || "/images/default-bookshelf-cover.svg"} 
+                            alt={`${shelfWithBooks.shelf.title} cover`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = "/images/default-bookshelf-cover.svg";
+                            }}
+                          />
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <BookOpen className="h-12 w-12 text-background/90" />
+                        </div>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {/* Books grid on the right */}
+                    <div className="flex-1">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {shelfWithBooks.books.map((book) => (
+                          <div key={book.id} className="h-full">
+                            <BookGridCard book={book} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex justify-center items-center h-32 bg-muted/20 rounded-lg">
