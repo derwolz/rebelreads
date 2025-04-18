@@ -621,7 +621,7 @@ export class BookStorage implements IBookStorage {
     // Query book_genre_taxonomies table through a join with books table
     const result = await db
       .select({
-        name: sql<string>`g.name`,
+        name: genreTaxonomies.name,
         count: sql<number>`count(*)`,
       })
       .from(books)
@@ -635,9 +635,9 @@ export class BookStorage implements IBookStorage {
       )
       .where(and(
         eq(books.authorId, authorId),
-        eq(sql`g.type`, 'genre')
+        eq(genreTaxonomies.type, 'genre')
       ))
-      .groupBy(sql`g.name`)
+      .groupBy(genreTaxonomies.name)
       .orderBy(sql`count(*) DESC`);
     
     // Transform result to expected format
