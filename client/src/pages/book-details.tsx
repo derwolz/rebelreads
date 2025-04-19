@@ -635,7 +635,7 @@ export default function BookDetails() {
                 <p className="text-xl">
                   by{" "}
                   <Link
-                    href={`/authors/${book.authorId}`}
+                    href={`/author?authorName=${encodeURIComponent(author?.author_name || book.authorName || '')}`}
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
                     {author?.author_name || book.authorName}

@@ -105,6 +105,7 @@ function Router() {
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
         <Route path="/authors/:id" component={AuthorPage} />
+        <Route path="/author" component={AuthorPage} />
         <Route path="/publishers/:id" component={PublisherPage} />
         <Route path="/ad-showcase" component={AdShowcasePage} />
         <Route path="/test-images" component={TestImages} />
