@@ -20,8 +20,8 @@ interface BookSearchProps {
   setSearchQuery: (query: string) => void;
   selectedBookIds: number[];
   handleBookSelect: (bookId: number) => void;
-  selectedMetrics: string[];
-  handleMetricToggle: (metric: string) => void;
+  selectedMetrics: MetricType[];
+  handleMetricToggle: (metric: MetricType) => void;
 }
 
 export function BookSearch({

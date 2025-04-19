@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { MetricType } from "./book-search";
 
 interface BookPerformanceItem {
   bookId: number;
@@ -24,7 +25,7 @@ interface BookPerformanceItem {
 interface BookPerformanceProps {
   performanceData: BookPerformanceItem[] | undefined;
   selectedBookIds: number[];
-  selectedMetrics: string[];
+  selectedMetrics: MetricType[];
 }
 
 export function BookPerformance({ 
