@@ -44,11 +44,13 @@ const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
 function SortableCriteriaItem({ 
   id, 
   index, 
-  savedWeights 
+  savedWeights,
+  currentWeights
 }: { 
   id: string; 
   index: number; 
-  savedWeights?: any
+  savedWeights?: any;
+  currentWeights?: Record<string, number>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
   
@@ -63,10 +65,15 @@ function SortableCriteriaItem({
   // Description from the schema
   const description = RATING_CRITERIA_DESCRIPTIONS[id as keyof typeof RATING_CRITERIA_DESCRIPTIONS];
   
-  // Weight percentage - use saved weight if available, otherwise calculate from position
-  const weight = savedWeights && savedWeights[id] !== undefined
-    ? savedWeights[id] * 100
-    : POSITION_WEIGHTS[index] * 100;
+  // Weight percentage calculation priority:
+  // 1. Current weights (after reordering)
+  // 2. Saved weights from database
+  // 3. Default position weights
+  const weight = currentWeights && currentWeights[id] !== undefined
+    ? currentWeights[id] * 100
+    : savedWeights && savedWeights[id] !== undefined
+      ? savedWeights[id] * 100
+      : POSITION_WEIGHTS[index] * 100;
   
   return (
     <div 
@@ -127,6 +134,7 @@ export function RatingPreferencesSettings({
   const [criteriaOrder, setCriteriaOrder] = useState<string[]>(
     initialCriteriaOrder || [...RATING_CRITERIA]
   );
+  const [currentWeights, setCurrentWeights] = useState<Record<string, number>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -155,6 +163,9 @@ export function RatingPreferencesSettings({
       // Generate new weights based on position
       const newWeights = generateCriteriaWeights(newOrder);
       console.log("New weights after reordering:", newWeights);
+      
+      // Update the weights state
+      setCurrentWeights(newWeights);
       
       setCriteriaOrder(newOrder);
     }
@@ -195,10 +206,15 @@ export function RatingPreferencesSettings({
         .map(([criterion]) => criterion);
         
       setCriteriaOrder(derivedOrder);
+      setCurrentWeights(weights); // Initialize current weights
       console.log("Derived criteria order from weights:", derivedOrder);
       console.log("Loaded weights from DB:", weights);
+    } else if (!preferencesData) {
+      // If no saved preferences, initialize with default weights based on initial order
+      const defaultWeights = generateCriteriaWeights(criteriaOrder);
+      setCurrentWeights(defaultWeights);
     }
-  }, [preferencesData, initialCriteriaOrder]);
+  }, [preferencesData, initialCriteriaOrder, criteriaOrder]);
   
   // Helper function to generate criteria weights from order
   const generateCriteriaWeights = (order: string[]): Record<string, number> => {
@@ -234,13 +250,12 @@ export function RatingPreferencesSettings({
   // Mutation to save preferences
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
-      // Generate weights based on the current criteria order
-      const weights = generateCriteriaWeights(criteriaOrder);
-      
-      console.log("Saving preferences with weights:", weights);
+      // Use current weights state instead of regenerating from order
+      // This ensures we use the weights that reflect the most recent user changes
+      console.log("Saving preferences with weights:", currentWeights);
       
       // Send just the weights (individual columns, not nested objects)
-      return apiRequest('POST', '/api/rating-preferences', weights);
+      return apiRequest('POST', '/api/rating-preferences', currentWeights);
     },
     onSuccess: () => {
       toast({
@@ -300,6 +315,7 @@ export function RatingPreferencesSettings({
               id={id} 
               index={index} 
               savedWeights={preferencesData ? preferencesData : undefined}
+              currentWeights={currentWeights}
             />
           ))}
         </SortableContext>
