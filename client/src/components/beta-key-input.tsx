@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { FormControl } from "@/components/ui/form";
 
 interface BetaKeyInputProps {
-  value: string;
+  value: string | undefined;
   onChange: (value: string) => void;
   placeholder?: string;
 }
@@ -46,7 +46,7 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
   useEffect(() => {
     const combinedValue = parts.join("-").replace(/-+$/, ""); // Remove trailing hyphens
     if (combinedValue !== value) {
-      onChange(combinedValue);
+      onChange(combinedValue || "");
     }
   }, [parts, onChange, value]);
 

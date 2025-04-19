@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { SiGoogle } from "react-icons/si";
+import { BetaKeyInput } from "@/components/beta-key-input";
 
 // Schema for beta key validation - optional
 const betaKeySchema = z.object({
@@ -117,7 +118,11 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                 <FormItem>
                   <FormLabel>Beta Key</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your beta key" {...field} />
+                    <BetaKeyInput 
+                      value={field.value} 
+                      onChange={field.onChange}
+                      placeholder="Enter beta key"
+                    />
                   </FormControl>
                   <FormDescription>
                     Optional if you already have a beta key associated with your account. Otherwise, you must enter a valid beta key to access the application.
