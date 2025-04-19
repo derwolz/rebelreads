@@ -94,6 +94,7 @@ function Router() {
 
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/partner" component={PartnerWithUs} />
+        <Route path="/privacy-policy" component={PrivacyPolicy} />
         
         {/* Auth wall */}
         <Route path="/auth" component={AuthWallPage} />

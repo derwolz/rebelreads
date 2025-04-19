@@ -950,9 +950,9 @@ const NewLandingPage = () => {
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className="text-primary underline">
+                <Link href="/privacy-policy" className="text-primary underline">
                   Privacy Policy
-                </a>
+                </Link>
               </div>
             </AnimateOnScroll>
           </div>
@@ -1138,9 +1138,9 @@ const NewLandingPage = () => {
                 <a href="#" className="hover:text-primary">
                   Terms of Service
                 </a>
-                <a href="#" className="hover:text-primary">
+                <Link href="/privacy-policy" className="hover:text-primary">
                   Privacy Policy
-                </a>
+                </Link>
                 <a href="#" className="hover:text-primary">
                   Cookie Policy
                 </a>
