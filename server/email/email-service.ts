@@ -63,7 +63,7 @@ export class EmailService {
 
       const msg = {
         to,
-        from: process.env.EMAIL_FROM || 'noreply@bookvault.example.com',
+        from: process.env.EMAIL_FROM || 'noreply@sirened.com',
         subject,
         text,
         html,
