@@ -110,24 +110,27 @@ export function isValidEmailFormat(email: string): boolean {
  */
 export function isSuspiciousLocalPart(email: string): boolean {
   if (!email || !email.includes('@')) return false;
-  
+
   const localPart = email.split('@')[0].toLowerCase();
-  
+
+  // Skip validation for common patterns like first+middle initial followed by lastname
+  const initialsLastNamePattern = /^[a-z]{1,2}[a-z]+$/;
+  if (initialsLastNamePattern.test(localPart)) return false;
+
   // Check for excessive numbers (like abc123456)
   const numberCount = (localPart.match(/\d/g) || []).length;
   if (numberCount > 4 && numberCount / localPart.length > 0.4) return true;
-  
-  // Check for random strings with few vowels
+
+  // Modified vowel check - less strict
   const vowelCount = (localPart.match(/[aeiou]/gi) || []).length;
-  if (localPart.length > 6 && vowelCount / localPart.length < 0.2) return true;
-  
-  // Check for patterns like keyboard smashing
-  const consecutiveConsonants = localPart.match(/[^aeiou]{5,}/gi);
+  if (localPart.length > 8 && vowelCount / localPart.length < 0.15) return true;
+
+  // Modified consecutive consonants check - allow more consonants in a row
+  const consecutiveConsonants = localPart.match(/[^aeiou]{6,}/gi);
   if (consecutiveConsonants && consecutiveConsonants.length > 0) return true;
-  
+
   return false;
 }
-
 /**
  * Comprehensive email validation function that runs all checks
  * 
