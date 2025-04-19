@@ -34,6 +34,7 @@ import discoverRoutes from "./routes/discover-routes";
 import shelfRoutes from "./routes/shelf-routes";
 import { registerContentReportsRoutes } from "./routes/content-reports-routes";
 import { registerRandomBookRoutes } from "./routes/random-book-routes";
+import accountVerificationRoutes from "./routes/account-verification-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -128,6 +129,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register bookshelf and notes routes
   app.use("/", shelfRoutes);
+  
+  // Register account verification routes
+  app.use("/api/account/verification", accountVerificationRoutes);
   
   // Register content reports routes directly
   registerContentReportsRoutes(app);
