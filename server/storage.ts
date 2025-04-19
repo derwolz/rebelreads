@@ -190,6 +190,7 @@ export const dbStorage = {
   getAuthors: authorStorage.getAuthors.bind(authorStorage),
   getAuthor: authorStorage.getAuthor.bind(authorStorage),
   getAuthorByUserId: authorStorage.getAuthorByUserId.bind(authorStorage),
+  getAuthorByName: authorStorage.getAuthorByName.bind(authorStorage),
   createAuthor: authorStorage.createAuthor.bind(authorStorage),
   isUserAuthor: authorStorage.isUserAuthor.bind(authorStorage),
   updateAuthor: authorStorage.updateAuthor.bind(authorStorage),

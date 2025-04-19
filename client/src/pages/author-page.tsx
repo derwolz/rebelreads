@@ -65,27 +65,47 @@ interface ShelfWithBooks {
 }
 
 export default function AuthorPage() {
-  const [, params] = useRoute("/authors/:id");
+  const [matchAuthorsId, paramsById] = useRoute("/authors/:id");
+  const [matchAuthorName] = useRoute("/author");
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Parse query parameters if we're using the secure URL format
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const authorName = urlSearchParams.get('authorName');
+  const isUsingSecureFormat = matchAuthorName && authorName;
+  
+  // For debugging
+  useEffect(() => {
+    if (isUsingSecureFormat) {
+      console.log(`Using secure author page format with authorName: ${authorName}`);
+    } else if (paramsById) {
+      console.log(`Using traditional author ID format with ID: ${paramsById.id}`);
+    }
+  }, [isUsingSecureFormat, authorName, paramsById]);
 
-  // Fetch author details
+  // Fetch author details - use the appropriate endpoint based on URL format
   const {
     data: author,
     isLoading: isAuthorLoading,
     error: authorError,
   } = useQuery<AuthorDetails>({
-    queryKey: [`/api/authors/${params?.id}`],
-    enabled: !!params?.id,
+    queryKey: isUsingSecureFormat 
+      ? [`/api/author?authorName=${encodeURIComponent(authorName!)}`]
+      : [`/api/authors/${paramsById?.id}`],
+    enabled: !!(isUsingSecureFormat || !!paramsById?.id),
   });
-
+  
+  // Get authorId for bookshelves query (works for both URL formats)
+  const authorId = author?.id;
+  
   // Fetch author's bookshelves
   const {
     data: bookshelves,
     isLoading: isBookshelvesLoading,
   } = useQuery<ShelfWithBooks[]>({
-    queryKey: [`/api/authors/${params?.id}/bookshelves`],
-    enabled: !!params?.id,
+    queryKey: [`/api/authors/${authorId}/bookshelves`],
+    enabled: !!authorId,
   });
 
   // Filter books based on search term

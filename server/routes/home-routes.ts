@@ -1081,6 +1081,64 @@ router.get("/authors/:id", async (req, res) => {
   }
 });
 
+// Get author details by name - new route to help prevent scraping by obscuring author IDs
+router.get("/author", async (req, res) => {
+  try {
+    const { authorName } = req.query;
+    
+    if (!authorName || typeof authorName !== 'string') {
+      return res.status(400).json({ error: "Author name is required as a query parameter" });
+    }
+    
+    console.log(`Searching for author with name: ${authorName}`);
+
+    // Get author details from storage by name
+    const author = await dbStorage.getAuthorByName(authorName);
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+
+    // Get user info for this author
+    const user = await dbStorage.getUser(author.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get books by this author
+    const books = await dbStorage.getBooksByAuthor(author.id);
+
+    // Get follower count
+    const followerCount = await dbStorage.getAuthorFollowerCount(author.id);
+
+    // Get author genres
+    const genres = await dbStorage.getAuthorGenres(author.id);
+    
+    // Get aggregate ratings for the author
+    const ratings = await dbStorage.getAuthorAggregateRatings(author.id);
+
+    // Combine all data
+    const authorDetails = {
+      id: author.id,
+      username: user.username,
+      authorName: author.author_name,
+      authorBio: author.bio,
+      birthDate: author.birth_date,
+      deathDate: author.death_date,
+      website: author.website,
+      books,
+      followerCount,
+      genres,
+      aggregateRatings: ratings,
+      socialMediaLinks: [] // Authors don't have social media links stored in DB yet
+    };
+
+    res.json(authorDetails);
+  } catch (error) {
+    console.error("Error fetching author details by name:", error);
+    res.status(500).json({ error: "Failed to fetch author details" });
+  }
+});
+
 /**
  * GET /api/authors/:id/bookshelves
  * Get shared bookshelves for an author with the books they contain
