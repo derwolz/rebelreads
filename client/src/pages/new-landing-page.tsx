@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CountUp } from "@/components/count-up";
 import { AnimateOnScroll, AnimatedChart } from "@/components/scroll-animations";
-import hero from "@/public/images/hero.webp";
+import hero from "@/public/images/antihero.webp";
 import antiHero from "@/public/images/antihero.webp";
 import {
   Dialog,
@@ -96,37 +96,7 @@ interface ValuePropProps {
   forReaders: string;
 }
 
-const ValueProposition = ({
-  title,
-  description,
-  forAuthors,
-  forReaders,
-}: ValuePropProps) => (
-  <div className="mb-12">
-    <h3 className="text-2xl font-bold mb-4 text-primary">{title}</h3>
-    <p className="text-muted-foreground mb-6">{description}</p>
-    <div className="grid md:grid-cols-2 gap-6">
-      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
-        <h4 className="text-lg font-semibold mb-2 flex items-center">
-          <span className="mr-2 text-primary">
-            <CheckCircle size={18} />
-          </span>
-          For Authors
-        </h4>
-        <p className="text-muted-foreground">{forAuthors}</p>
-      </div>
-      <div className="bg-white/5 backdrop-blur-sm p-6 rounded-none border border-primary/20">
-        <h4 className="text-lg font-semibold mb-2 flex items-center">
-          <span className="mr-2 text-primary">
-            <CheckCircle size={18} />
-          </span>
-          For Readers
-        </h4>
-        <p className="text-muted-foreground">{forReaders}</p>
-      </div>
-    </div>
-  </div>
-);
+
 
 // Main component
 // No need for sample taxonomy data as we're using the GenreSelector component
@@ -181,7 +151,7 @@ const NewLandingPage = () => {
 
   // Set theme
   useEffect(() => {
-    setTheme("system");
+    setTheme("dark");
   }, [setTheme]);
 
   // Submit the form after user selects their type
@@ -924,43 +894,7 @@ const NewLandingPage = () => {
         </AnimateOnScroll>
       </section>
 
-      {/* Value Proposition Section */}
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-4">
-          <AnimateOnScroll type="fade-in">
-            <h2 className="text-3xl md:text-4xl font-bold mb-16 text-center">
-              How Sirened Transforms Publishing
-            </h2>
-          </AnimateOnScroll>
 
-          <AnimateOnScroll type="slide-up" delay="none">
-            <ValueProposition
-              title="Fair Compensation"
-              description="The current publishing model takes significant royalties from authors while providing limited value."
-              forAuthors={`Keep <CountUp end={100} duration={1000} suffix="%" /> of your sales with no platform fees. Set your own prices and offer any format you want.`}
-              forReaders="Support authors directly, knowing that your purchase directly benefits their work rather than intermediaries."
-            />
-          </AnimateOnScroll>
-
-          <AnimateOnScroll type="slide-up" delay="short">
-            <ValueProposition
-              title="Content Discovery"
-              description="Traditional discovery is based on marketing budgets rather than quality or reader preferences."
-              forAuthors="Get discovered based on the quality of your work, not your marketing budget. Reach the exact readers who will love your books."
-              forReaders="Discover books tailored to your unique taste, not what's being pushed by publishers or algorithms."
-            />
-          </AnimateOnScroll>
-
-          <AnimateOnScroll type="slide-up" delay="medium">
-            <ValueProposition
-              title="Community Connection"
-              description="The traditional publishing model creates distance between authors and readers."
-              forAuthors="Build direct relationships with your readers. Get immediate feedback and engage in meaningful discussions."
-              forReaders="Connect directly with authors you love. Share feedback and be part of the creative journey."
-            />
-          </AnimateOnScroll>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-primary/10 to-transparent">
@@ -1078,125 +1012,8 @@ const NewLandingPage = () => {
           </AnimateOnScroll>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <AnimateOnScroll type="slide-up" delay="none">
-              <div>
-                <h3 className="font-bold mb-4">For Readers</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Discover Books
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Reading Preferences
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Beta Access
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Reading Lists
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </AnimateOnScroll>
 
-            <AnimateOnScroll type="slide-up" delay="short">
-              <div>
-                <h3 className="font-bold mb-4">For Authors</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Author Dashboard
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Analytics Tools
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Book Publishing
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Marketing Resources
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </AnimateOnScroll>
 
-            <AnimateOnScroll type="slide-up" delay="medium">
-              <div>
-                <h3 className="font-bold mb-4">For Publishers</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Publisher Portal
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Catalog Management
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Author Relationships
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Integration APIs
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </AnimateOnScroll>
 
             <AnimateOnScroll type="slide-up" delay="long">
               <div>
@@ -1210,22 +1027,8 @@ const NewLandingPage = () => {
                       About Us
                     </a>
                   </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Blog
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="text-muted-foreground hover:text-primary"
-                    >
-                      Careers
-                    </a>
-                  </li>
+
+
                   <li>
                     <a
                       href="#"
@@ -1246,9 +1049,7 @@ const NewLandingPage = () => {
                 reserved.
               </p>
               <div className="mt-2 flex justify-center gap-4">
-                <a href="#" className="hover:text-primary">
-                  Terms of Service
-                </a>
+
                 <Link href="/privacy-policy" className="hover:text-primary">
                   Privacy Policy
                 </Link>
