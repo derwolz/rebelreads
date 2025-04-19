@@ -177,10 +177,25 @@ router.get("/books/:id/ratings", async (req, res) => {
 
   const bookRatings = await dbStorage.getRatings(bookId);
   
-  // Get user information for each review
+  // Get user information and replies for each review
   const ratingsWithUserInfo = await Promise.all(bookRatings.map(async (rating) => {
     // Get user information
     const user = await dbStorage.getUser(rating.userId);
+    
+    // Get replies to this review
+    const replies = await dbStorage.getReplies(rating.id);
+    
+    // Add author info to each reply
+    const repliesWithAuthor = await Promise.all(replies.map(async (reply) => {
+      const author = await dbStorage.getUser(reply.authorId);
+      return {
+        ...reply,
+        author: {
+          username: author?.username || 'Unknown',
+          profileImageUrl: author?.profileImageUrl
+        }
+      };
+    }));
     
     return {
       ...rating,
@@ -188,7 +203,8 @@ router.get("/books/:id/ratings", async (req, res) => {
         username: user?.username || 'Anonymous',
         displayName: user?.displayName || user?.username || 'Anonymous',
         profileImageUrl: user?.profileImageUrl
-      }
+      },
+      replies: repliesWithAuthor
     };
   }));
   

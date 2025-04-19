@@ -4,7 +4,20 @@ import { StarRating } from "./star-rating";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface Reply {
+  id: number;
+  reviewId: number;
+  authorId: number;
+  content: string;
+  createdAt: string;
+  author: {
+    username: string;
+    profileImageUrl: string | null;
+  };
+}
 
 interface ReviewCardProps {
   review: Rating & {
@@ -18,6 +31,7 @@ interface ReviewCardProps {
       title: string;
       coverImageUrl?: string;
     };
+    replies?: Reply[];
   };
 }
 
@@ -26,6 +40,7 @@ const REVIEW_PREVIEW_LENGTH = 200;
 export function ReviewCard({ review }: ReviewCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const hasLongReview = review.review && review.review.length > REVIEW_PREVIEW_LENGTH;
+  const hasReplies = review.replies && review.replies.length > 0;
 
   const userDisplayName = review.user?.displayName || review.user?.username || "Anonymous";
   const userInitial = userDisplayName.charAt(0).toUpperCase();
@@ -99,6 +114,33 @@ export function ReviewCard({ review }: ReviewCardProps) {
                   {isOpen ? "Show Less" : "Read More"}
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Author Replies Section */}
+          {hasReplies && (
+            <div className="mt-4 border-t pt-2">
+              <p className="text-sm font-medium mb-2">Author Replies:</p>
+              <ScrollArea className="max-h-48">
+                {review.replies?.map((reply) => (
+                  <div key={reply.id} className="flex items-start gap-2 mb-2 pl-3 border-l-2 border-primary/20">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={reply.author.profileImageUrl || undefined} />
+                      <AvatarFallback>{reply.author.username.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-1">
+                        <p className="text-xs font-medium">{reply.author.username}</p>
+                        <Badge variant="outline" className="text-xs ml-1 py-0 px-1 h-4">Author</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm">{reply.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </ScrollArea>
             </div>
           )}
 
