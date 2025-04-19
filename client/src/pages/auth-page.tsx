@@ -22,6 +22,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocation, Redirect } from "wouter";
 import { SiGoogle } from "react-icons/si";
 import { GoogleBetaAuthDialog } from "@/components/google-beta-auth-dialog";
+import { BetaKeyInput } from "@/components/beta-key-input";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
