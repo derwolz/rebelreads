@@ -178,7 +178,7 @@ function App() {
             <OnboardingProvider>
               <Router />
               {showFeedbackButton && <FeedbackButton />}
-              <AuthModal isOpen={true} onOpenChange={setIsOpen} />
+              <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
               <ReviewInviteDialog />
               <RatingCriteriaWizard />
               <ImpressionSync />

@@ -153,7 +153,7 @@ export const LoginVerificationDialog = ({
               className="text-primary hover:underline focus:outline-none"
               disabled={isResending}
             >
-              {isResending ? (
+              {isResending ? (0D811D
                 <>
                   <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
                   Resending...
@@ -164,9 +164,8 @@ export const LoginVerificationDialog = ({
             </button>
           </div>
         </div>
-      </DialogContent>
-      <DialogFooter>
-        <Button variant="ghost" onClick={onClose} disabled={isSubmitting}>
+        <div className="flex flex-row justify-between items-center">
+        <Button variant="ghost" onClick={()=>{onClose()}} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button onClick={handleVerifyCode} disabled={isSubmitting}>
@@ -179,7 +178,8 @@ export const LoginVerificationDialog = ({
             "Verify"
           )}
         </Button>
-      </DialogFooter>
+          </div>
+      </DialogContent>
     </Dialog>
   );
 };
