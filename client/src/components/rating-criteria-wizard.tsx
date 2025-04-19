@@ -52,7 +52,8 @@ export function RatingCriteriaWizard() {
         <DialogHeader>
           <DialogTitle>Customize Your Rating Experience</DialogTitle>
           <DialogDescription>
-
+            Drag and reorder the criteria below to match what's most important to you when rating books.
+            The order determines how much weight each criterion has in the overall rating.
           </DialogDescription>
         </DialogHeader>
         
