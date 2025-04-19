@@ -44,7 +44,8 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
 
   // Whenever parts change, combine them and call the onChange handler
   useEffect(() => {
-    const combinedValue = parts.join("-").replace(/-+$/, ""); // Remove trailing hyphens
+    // Combine the parts into a single string with hyphens and uppercase everything
+    const combinedValue = parts.join("-").replace(/-+$/, "").toUpperCase(); // Remove trailing hyphens
     if (combinedValue !== value) {
       onChange(combinedValue || "");
     }

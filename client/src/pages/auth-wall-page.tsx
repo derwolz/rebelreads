@@ -22,6 +22,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SiGoogle } from "react-icons/si";
+import { BetaKeyInput } from "@/components/beta-key-input";
 
 export default function AuthWallPage() {
   const { user, loginMutation, registerMutation } = useAuth();
