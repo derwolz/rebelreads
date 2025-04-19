@@ -275,11 +275,17 @@ export function setupAuth(app: Express) {
           return res.status(401).json({ error: "Invalid email/username or password" });
         }
 
-        // Check if verification is needed for this device/IP
+        // Check if verification is needed
+        // This function now:
+        // 1. Checks if the device is already trusted for this user
+        // 2. Checks if the user is using Google auth (which doesn't need verification)
+        // 3. Will automatically trust the device for Google auth users
         const verificationNeeded = await securityService.isVerificationNeeded(user.id, req);
         
         // If verification is needed, don't log in yet - return a response indicating verification is needed
         if (verificationNeeded) {
+          console.log(`Verification needed for user ${user.id}, sending verification email`);
+          
           // Send verification code via email
           const verificationSent = await securityService.sendLoginVerification(
             user.id, 
@@ -301,6 +307,8 @@ export function setupAuth(app: Express) {
             email: user.email.replace(/(.{2})(.*)(?=@)/, (_: string, start: string, rest: string) => 
               start + '*'.repeat(rest.length))  // Mask email address
           });
+        } else {
+          console.log(`No verification needed for user ${user.id} - device already trusted or Google auth`);
         }
 
         // Check if beta is active
@@ -417,6 +425,15 @@ export function setupAuth(app: Express) {
       
       if (!user) {
         return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Mark this device as trusted for future logins
+      try {
+        await securityService.trustDeviceForUser(userId, req);
+        console.log(`Device trusted for user ${userId} after successful verification`);
+      } catch (trustError) {
+        console.error("Error trusting device after verification:", trustError);
+        // Continue with the flow even if device trust fails
       }
       
       // Check if beta is active and if user has beta access - similar logic to login endpoint
