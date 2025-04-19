@@ -85,34 +85,138 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
     queryKey: ["/api/rating-preferences"],
   });
 
-  // Calculate individual unweighted ratings per vector
-  const unweightedRatings = ratings?.length
-    ? {
-        enjoyment:
-          ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-        writing:
-          ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
-        themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-        characters:
-          ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-        worldbuilding:
-          ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
+  // Simple direct calculation of average rating
+  const calculateSimpleAverageRating = () => {
+    if (!ratings || ratings.length === 0) {
+      return 0;
+    }
+    
+    // First compute total and count across all dimensions
+    let totalSum = 0;
+    let totalCount = 0;
+    
+    // For each rating, add up all dimensions
+    for (const rating of ratings) {
+      // Sum all non-null rating values
+      if (rating.enjoyment) {
+        totalSum += rating.enjoyment;
+        totalCount++;
       }
-    : null;
+      if (rating.writing) {
+        totalSum += rating.writing;
+        totalCount++;
+      }
+      if (rating.themes) {
+        totalSum += rating.themes;
+        totalCount++;
+      }
+      if (rating.characters) {
+        totalSum += rating.characters;
+        totalCount++;
+      }
+      if (rating.worldbuilding) {
+        totalSum += rating.worldbuilding;
+        totalCount++;
+      }
+    }
+    
+    // Calculate simple average
+    return totalCount > 0 ? totalSum / totalCount : 0;
+  };
+  
+  // Get simple average rating (fallback mechanism)
+  const simpleAverage = calculateSimpleAverageRating();
 
-  // Calculate overall weighted rating using user preferences
-  const averageRating = unweightedRatings
-    ? calculateWeightedRating(
-        {
-          enjoyment: unweightedRatings.enjoyment,
-          writing: unweightedRatings.writing,
-          themes: unweightedRatings.themes,
-          characters: unweightedRatings.characters,
-          worldbuilding: unweightedRatings.worldbuilding,
-        } as Rating,
-        ratingPreferences,
-      )
-    : 0;
+  // Weighted calculation with fallback to simple average
+  const calculateWeightedAverage = () => {
+    if (!ratings || ratings.length === 0 || !ratingPreferences) {
+      return simpleAverage;
+    }
+    
+    // Calculate individual dimension averages
+    const dimensionAverages = {
+      enjoyment: 0,
+      writing: 0,
+      themes: 0,
+      characters: 0,
+      worldbuilding: 0
+    };
+    
+    const dimensionCounts = {
+      enjoyment: 0,
+      writing: 0,
+      themes: 0,
+      characters: 0,
+      worldbuilding: 0
+    };
+    
+    // Get sum for each dimension
+    for (const rating of ratings) {
+      if (rating.enjoyment) {
+        dimensionAverages.enjoyment += rating.enjoyment;
+        dimensionCounts.enjoyment++;
+      }
+      if (rating.writing) {
+        dimensionAverages.writing += rating.writing;
+        dimensionCounts.writing++;
+      }
+      if (rating.themes) {
+        dimensionAverages.themes += rating.themes;
+        dimensionCounts.themes++;
+      }
+      if (rating.characters) {
+        dimensionAverages.characters += rating.characters;
+        dimensionCounts.characters++;
+      }
+      if (rating.worldbuilding) {
+        dimensionAverages.worldbuilding += rating.worldbuilding;
+        dimensionCounts.worldbuilding++;
+      }
+    }
+    
+    // Calculate averages
+    dimensionAverages.enjoyment = dimensionCounts.enjoyment > 0 ? 
+      dimensionAverages.enjoyment / dimensionCounts.enjoyment : 0;
+    dimensionAverages.writing = dimensionCounts.writing > 0 ? 
+      dimensionAverages.writing / dimensionCounts.writing : 0;
+    dimensionAverages.themes = dimensionCounts.themes > 0 ? 
+      dimensionAverages.themes / dimensionCounts.themes : 0;
+    dimensionAverages.characters = dimensionCounts.characters > 0 ? 
+      dimensionAverages.characters / dimensionCounts.characters : 0;
+    dimensionAverages.worldbuilding = dimensionCounts.worldbuilding > 0 ? 
+      dimensionAverages.worldbuilding / dimensionCounts.worldbuilding : 0;
+    
+    // Apply weights from preferences
+    let weightedSum = 0;
+    let totalWeight = 0;
+    
+    if (ratingPreferences.enjoyment && dimensionCounts.enjoyment > 0) {
+      weightedSum += dimensionAverages.enjoyment * parseFloat(ratingPreferences.enjoyment);
+      totalWeight += parseFloat(ratingPreferences.enjoyment);
+    }
+    if (ratingPreferences.writing && dimensionCounts.writing > 0) {
+      weightedSum += dimensionAverages.writing * parseFloat(ratingPreferences.writing);
+      totalWeight += parseFloat(ratingPreferences.writing);
+    }
+    if (ratingPreferences.themes && dimensionCounts.themes > 0) {
+      weightedSum += dimensionAverages.themes * parseFloat(ratingPreferences.themes);
+      totalWeight += parseFloat(ratingPreferences.themes);
+    }
+    if (ratingPreferences.characters && dimensionCounts.characters > 0) {
+      weightedSum += dimensionAverages.characters * parseFloat(ratingPreferences.characters);
+      totalWeight += parseFloat(ratingPreferences.characters);
+    }
+    if (ratingPreferences.worldbuilding && dimensionCounts.worldbuilding > 0) {
+      weightedSum += dimensionAverages.worldbuilding * parseFloat(ratingPreferences.worldbuilding);
+      totalWeight += parseFloat(ratingPreferences.worldbuilding);
+    }
+    
+    // Return weighted average or simple average if no weights applied
+    return totalWeight > 0 ? weightedSum / totalWeight : simpleAverage;
+  };
+  
+  // Final average rating calculation
+  const averageRating = calculateWeightedAverage();
 
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
@@ -188,12 +292,19 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
          
         </div>
         <div className="flex items-center text-accent gap-1 mt-1">
-          <StarRating 
-            rating={averageRating} 
-            readOnly 
-            size="sm"
-            variant="muted"
-          />
+          {/* Direct inline implementation of stars for maximum control */}
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((starNum) => (
+              <Star
+                key={starNum}
+                className="w-3.5 h-3.5 text-gray-400"
+                style={{ 
+                  fill: starNum <= Math.round(averageRating) ? '#8b5cf6' : 'none',
+                  color: starNum <= Math.round(averageRating) ? '#8b5cf6' : '#9ca3af' 
+                }}
+              />
+            ))}
+          </div>
           <span className="text-[10px] text-muted-foreground ml-1">
             {ratings?.length ? `(${averageRating.toFixed(1)})` : "No ratings"}
           </span>
