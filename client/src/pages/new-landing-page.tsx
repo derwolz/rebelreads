@@ -82,11 +82,11 @@ const SirenedLogoAcutal = () => {
 const HeroImage = () => {
   const { theme } = useTheme();
   return (
-    <div className="relative">
+    <div className="relative w-full h-full">
       <img
         src={theme === "light" ? hero : antiHero}
         alt="Hero Image"
-        className="w-full h-auto"
+        className="w-full h-full object-cover"
       />
     </div>
   );
@@ -331,8 +331,16 @@ const NewLandingPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
+        {/* Hero Image with Opacity Gradient */}
+        <div className="absolute inset-0 w-full h-full -z-10">
+          <div className="absolute inset-0 w-full h-full">
+            <HeroImage />
+          </div>
+          {/* Opacity gradient overlay: 100% -> 20% -> 20% -> 20% -> 100% */}
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-background from-0% via-background/20 via-20% via-background/20 via-50% via-background/20 via-80% to-background to-100%"></div>
+        </div>
         
-        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 -z-10"></div>
+        {/* Additional decorative elements */}
         <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-none bg-primary/10 blur-3xl -z-10"></div>
         <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-none bg-primary/5 blur-3xl -z-10"></div>
 
