@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
@@ -150,8 +150,60 @@ export default function ProDashboard() {
     }
   };
 
-  // The API now returns data already in the format Recharts needs
-  const chartData = performanceData;
+  // Transform the API response data into the format Recharts expects
+  const chartData = useMemo(() => {
+    if (!performanceData || performanceData.length === 0) return [];
+    
+    // Get all dates from all books and metrics
+    const allDates = new Set<string>();
+    
+    // Collect all dates from all books and metrics
+    performanceData.forEach(book => {
+      if (book.metrics.impressions) {
+        book.metrics.impressions.forEach(item => allDates.add(item.date));
+      }
+      if (book.metrics.clicks) {
+        book.metrics.clicks.forEach(item => allDates.add(item.date));
+      }
+      if (book.metrics.referrals) {
+        book.metrics.referrals.forEach(item => allDates.add(item.date));
+      }
+    });
+    
+    // Sort dates chronologically
+    const sortedDates = Array.from(allDates).sort();
+    
+    // Create a map of dates to data points
+    return sortedDates.map(date => {
+      // Start with the date
+      const dataPoint: any = { date };
+      
+      // Add data for each book and metric
+      performanceData.forEach(book => {
+        const { bookId, title } = book;
+        
+        // Add impressions data
+        if (book.metrics.impressions && selectedMetrics.includes('impressions')) {
+          const impression = book.metrics.impressions.find(item => item.date === date);
+          dataPoint[`Book ${bookId} (impressions)`] = impression ? Number(impression.count) : 0;
+        }
+        
+        // Add clicks data
+        if (book.metrics.clicks && selectedMetrics.includes('clicks')) {
+          const click = book.metrics.clicks.find(item => item.date === date);
+          dataPoint[`Book ${bookId} (clicks)`] = click ? Number(click.count) : 0;
+        }
+        
+        // Add referrals/CTR data
+        if (book.metrics.referrals && selectedMetrics.includes('ctr')) {
+          const referral = book.metrics.referrals.find(item => item.date === date);
+          dataPoint[`Book ${bookId} (ctr)`] = referral ? Number(referral.count) : 0;
+        }
+      });
+      
+      return dataPoint;
+    });
+  }, [performanceData, selectedMetrics]);
 
   const followerChartData = (() => {
     if (!followerData || !followerData.trending) return [];
