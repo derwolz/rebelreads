@@ -140,15 +140,7 @@ export const LoginVerificationDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        if (typeof onClose === 'function') {
-          onClose();
-        } else {
-          // Fallback if onClose is not properly provided
-          window.location.reload();
-        }
-      }
-    }}>
+      if (!open) {onClose()}>
       <DialogContent>
         <DialogTitle>Verify Your Login</DialogTitle>
         <DialogDescription>

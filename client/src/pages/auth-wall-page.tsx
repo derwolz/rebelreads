@@ -32,7 +32,7 @@ export default function AuthWallPage() {
   const [showAuthForm, setShowAuthForm] = useState(false);
   
   // List of paths that are always allowed
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner"];
   const isAllowedPath = allowedPaths.some(path => location.startsWith(path));
   const isApiPath = location.startsWith("/api");
 
@@ -94,7 +94,7 @@ export default function AuthWallPage() {
   }
 
   // If the user clicked to show the auth form, render it
-  if (showAuthForm) {
+
     return (
       <>
         <GoogleBetaAuthDialog 
@@ -113,11 +113,11 @@ export default function AuthWallPage() {
             <CardContent>
               <div className="space-y-4 mb-6">
                 <Button
-                  variant="outline"
+                  variant="default"
                   className="w-full"
                   onClick={() => handleSSOLogin('google')}
                 >
-                  <SiGoogle className="mr-2" />
+                  <SiGoogle className="mr-2 " />
                   Continue with Google
                 </Button>
 
@@ -184,10 +184,7 @@ export default function AuthWallPage() {
                               <FormControl>
                                 <Input placeholder="Enter your beta key" {...field} />
                               </FormControl>
-                              <FormDescription>
-                                Required for first-time login during beta testing phase.
-                                Returning users who have already used a beta key don't need to enter it again.
-                              </FormDescription>
+   
                               <FormMessage />
                             </FormItem>
                           )}
@@ -324,10 +321,7 @@ export default function AuthWallPage() {
                               <FormControl>
                                 <Input placeholder="Enter your beta key" {...field} />
                               </FormControl>
-                              <FormDescription>
-                                Required during beta testing phase
-                              </FormDescription>
-                              <FormMessage />
+
                             </FormItem>
                           )}
                         />
@@ -354,41 +348,5 @@ export default function AuthWallPage() {
         </div>
       </>
     );
-  }
 
-  // Initial screen that prompts the user to access the auth form
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
-      <div className="max-w-md w-full space-y-8 text-center">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold">Private Beta</h1>
-          <p className="text-lg text-muted-foreground">
-            This site is currently in private beta. Please log in with your beta access credentials.
-          </p>
-          <Button 
-            size="lg" 
-            className="mt-4"
-            onClick={() => setShowAuthForm(true)}
-          >
-            Login to Access
-          </Button>
-          <p className="text-sm text-muted-foreground mt-8">
-            Don&apos;t have an account? <br />
-            <Button variant="link" onClick={() => setShowAuthForm(true)}>
-              Register with your beta key
-            </Button>
-          </p>
-        </div>
-        
-        <div className="mt-8 pt-8 border-t border-border">
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = "/landing"}
-          >
-            Learn more about our platform
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
 }

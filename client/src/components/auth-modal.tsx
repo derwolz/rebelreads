@@ -121,8 +121,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
             queryClient.invalidateQueries({ queryKey: ["/api/user"] });
             queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
             
-            // Close modals by resetting app state (parent component will be updated)
-            setTimeout(() => window.location.reload(), 100);
+
           }}
           onSuccess={(user: any) => handleSuccess(user, false)}
         />
