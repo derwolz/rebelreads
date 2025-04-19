@@ -2,7 +2,10 @@ import sgMail from '@sendgrid/mail';
 import { 
   welcomeEmailTemplate, 
   signupInterestEmailTemplate, 
-  betaKeyRequiredEmailTemplate 
+  betaKeyRequiredEmailTemplate,
+  emailVerificationTemplate,
+  loginVerificationTemplate,
+  passwordResetTemplate
 } from './templates';
 
 /**
@@ -96,6 +99,30 @@ export class EmailService {
    */
   public async sendBetaKeyRequiredEmail(email: string): Promise<boolean> {
     const template = betaKeyRequiredEmailTemplate(email);
+    return this.sendEmail(email, template.subject, template.html, template.text);
+  }
+
+  /**
+   * Sends an email verification code
+   */
+  public async sendEmailVerificationCode(email: string, username: string, verificationCode: string): Promise<boolean> {
+    const template = emailVerificationTemplate(username, verificationCode);
+    return this.sendEmail(email, template.subject, template.html, template.text);
+  }
+
+  /**
+   * Sends a login verification code when detected from a new device/location
+   */
+  public async sendLoginVerificationCode(email: string, username: string, verificationCode: string, ipAddress: string, userAgent: string): Promise<boolean> {
+    const template = loginVerificationTemplate(username, verificationCode, ipAddress, userAgent);
+    return this.sendEmail(email, template.subject, template.html, template.text);
+  }
+
+  /**
+   * Sends a password reset code
+   */
+  public async sendPasswordResetCode(email: string, username: string, verificationCode: string): Promise<boolean> {
+    const template = passwordResetTemplate(username, verificationCode);
     return this.sendEmail(email, template.subject, template.html, template.text);
   }
 }

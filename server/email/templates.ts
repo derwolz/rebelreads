@@ -3,6 +3,162 @@
  */
 
 /**
+ * Email verification template
+ */
+export const emailVerificationTemplate = (username: string, verificationCode: string) => {
+  return {
+    subject: "Verify Your Email Address",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #102B3F; border-radius: 8px; overflow: hidden;">
+        <!-- Header with logo -->
+        <div style="text-align: center; background-color: #102B3F; padding: 30px 20px 15px 20px;">
+          <h2 style="color: #F6F0FB; font-size: 24px; margin-bottom: 0;">Verify Your Email Address</h2>
+        </div>
+        
+        <!-- Content section -->
+        <div style="padding: 25px; color: #F6F0FB;">
+          <p>Hello ${username},</p>
+          <p>Please use the verification code below to verify your email address:</p>
+          <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold;">
+            ${verificationCode}
+          </div>
+          <p>This code will expire in 30 minutes. If you didn't request this verification, please ignore this email.</p>
+          <p>Thank you,</p>
+          <p>The Sirened Team</p>
+        </div>
+        
+        <!-- Footer section -->
+        <div style="margin-top: 10px; font-size: 12px; color: #A06CD5; text-align: center; background-color: #0A1C2C; border-top: 1px solid #1E3C54; padding: 15px;">
+          <p>If you did not request this verification, please ignore this email.</p>
+        </div>
+      </div>
+    `,
+    text: `
+      Verify Your Email Address
+      
+      Hello ${username},
+      
+      Please use the verification code below to verify your email address:
+      
+      ${verificationCode}
+      
+      This code will expire in 30 minutes. If you didn't request this verification, please ignore this email.
+      
+      Thank you,
+      The Sirened Team
+      
+      If you did not request this verification, please ignore this email.
+    `
+  }
+};
+
+/**
+ * Login verification template when detected from a new device/location
+ */
+export const loginVerificationTemplate = (username: string, verificationCode: string, ipAddress: string, userAgent: string) => {
+  return {
+    subject: "Verify Your Login Attempt",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #102B3F; border-radius: 8px; overflow: hidden;">
+        <div style="text-align: center; background-color: #102B3F; padding: 30px 20px 15px 20px;">
+          <h2 style="color: #F6F0FB; font-size: 24px; margin-bottom: 0;">Verify Your Login Attempt</h2>
+        </div>
+        
+        <div style="padding: 25px; color: #F6F0FB;">
+          <p>Hello ${username},</p>
+          <p>We detected a login attempt from a new location or device:</p>
+          <div style="background-color: #183A56; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>IP Address:</strong> ${ipAddress}</p>
+            <p><strong>Device:</strong> ${userAgent}</p>
+            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+          <p>To verify this was you, please use the following code when prompted:</p>
+          <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold;">
+            ${verificationCode}
+          </div>
+          <p>This code will expire in 15 minutes. If you didn't attempt to log in, please change your password immediately.</p>
+          <p>Thank you,</p>
+          <p>The Sirened Team</p>
+        </div>
+        
+        <div style="margin-top: 10px; font-size: 12px; color: #A06CD5; text-align: center; background-color: #0A1C2C; border-top: 1px solid #1E3C54; padding: 15px;">
+          <p>If you did not attempt to login, please secure your account immediately.</p>
+        </div>
+      </div>
+    `,
+    text: `
+      Verify Your Login Attempt
+      
+      Hello ${username},
+      
+      We detected a login attempt from a new location or device:
+      
+      IP Address: ${ipAddress}
+      Device: ${userAgent}
+      Time: ${new Date().toLocaleString()}
+      
+      To verify this was you, please use the following code when prompted:
+      
+      ${verificationCode}
+      
+      This code will expire in 15 minutes. If you didn't attempt to log in, please change your password immediately.
+      
+      Thank you,
+      The Sirened Team
+      
+      If you did not attempt to login, please secure your account immediately.
+    `
+  }
+};
+
+/**
+ * Password reset email template
+ */
+export const passwordResetTemplate = (username: string, verificationCode: string) => {
+  return {
+    subject: "Reset Your Password",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #102B3F; border-radius: 8px; overflow: hidden;">
+        <div style="text-align: center; background-color: #102B3F; padding: 30px 20px 15px 20px;">
+          <h2 style="color: #F6F0FB; font-size: 24px; margin-bottom: 0;">Reset Your Password</h2>
+        </div>
+        
+        <div style="padding: 25px; color: #F6F0FB;">
+          <p>Hello ${username},</p>
+          <p>We received a request to reset your password. Please use the verification code below:</p>
+          <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold;">
+            ${verificationCode}
+          </div>
+          <p>This code will expire in 30 minutes. If you didn't request a password reset, please ignore this email.</p>
+          <p>Thank you,</p>
+          <p>The Sirened Team</p>
+        </div>
+        
+        <div style="margin-top: 10px; font-size: 12px; color: #A06CD5; text-align: center; background-color: #0A1C2C; border-top: 1px solid #1E3C54; padding: 15px;">
+          <p>If you did not request this password reset, please ignore this email.</p>
+        </div>
+      </div>
+    `,
+    text: `
+      Reset Your Password
+      
+      Hello ${username},
+      
+      We received a request to reset your password. Please use the verification code below:
+      
+      ${verificationCode}
+      
+      This code will expire in 30 minutes. If you didn't request a password reset, please ignore this email.
+      
+      Thank you,
+      The Sirened Team
+      
+      If you did not request this password reset, please ignore this email.
+    `
+  }
+};
+
+/**
  * Welcome email template sent to users after signup
  */
 export const welcomeEmailTemplate = (username: string) => {

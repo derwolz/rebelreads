@@ -1347,6 +1347,31 @@ export const insertNoteSchema = createInsertSchema(notes).omit({
   path: ["type"]
 });
 
+// Verification codes table for email verification, password resets, and security checks
+export const verificationCodes = pgTable("verification_codes", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  code: text("code").notNull(),
+  type: text("type").notNull(), // "email_verification", "password_reset", "login_verification"
+  email: text("email"), // Store the email being verified (if different from current)
+  ipAddress: text("ip_address"), // IP address when code was created
+  userAgent: text("user_agent"), // Browser/device identifier
+  expiresAt: timestamp("expires_at").notNull(), // When the code expires
+  isUsed: boolean("is_used").notNull().default(false),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertVerificationCodeSchema = createInsertSchema(verificationCodes).omit({
+  id: true,
+  isUsed: true,
+  usedAt: true,
+  createdAt: true,
+});
+
+export type VerificationCode = typeof verificationCodes.$inferSelect;
+export type InsertVerificationCode = z.infer<typeof insertVerificationCodeSchema>;
+
 export type BookShelf = typeof bookShelves.$inferSelect;
 export type InsertBookShelf = z.infer<typeof insertBookShelfSchema>;
 export type ShelfBook = typeof shelfBooks.$inferSelect;
