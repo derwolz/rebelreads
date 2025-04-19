@@ -153,22 +153,7 @@ router.get("/recommendations", async (req, res) => {
   }
 });
 
-router.get("/books/:id", async (req, res) => {
-  const bookId = parseInt(req.params.id);
-  if (isNaN(bookId)) {
-    return res.status(400).json({ error: "Invalid book ID" });
-  }
-
-  const book = await dbStorage.getBook(bookId);
-  if (!book) return res.sendStatus(404);
-  
-  // Add debugging to check if images are attached to the book
-  console.log(`Book ID ${bookId} has ${book.images?.length || 0} images:`, 
-    book.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
-  
-  res.json(book);
-});
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.get("/books/:id/ratings", async (req, res) => {
   const bookId = parseInt(req.params.id);
   if (isNaN(bookId)) {
@@ -213,7 +198,7 @@ router.get("/books/:id/ratings", async (req, res) => {
   
   res.json(ratingsWithUserInfo);
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.get("/books/:id/taxonomies", async (req, res) => {
   // Public endpoint - no authentication required
   const bookId = parseInt(req.params.id);
@@ -241,6 +226,7 @@ router.get("/books/:id/taxonomies", async (req, res) => {
  * Get author details for a specific book
  * Public endpoint - no authentication required
  */
+
 router.get("/books/:id/author", async (req, res) => {
   const bookId = parseInt(req.params.id);
   if (isNaN(bookId)) {
@@ -301,7 +287,7 @@ router.get("/authors/:id/publisher", async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch author publisher" });
   }
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.post("/books/:id/ratings", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -586,7 +572,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
     res.status(500).json({ error: "Failed to create book" });
   }
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.patch("/books/:id", multipleImageUpload, async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
   
@@ -825,7 +811,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
     res.status(500).json({ error: "Failed to update book" });
   }
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 // Record an impression for a book
 router.post("/books/:id/impression", async (req, res) => {
   try {
@@ -878,7 +864,7 @@ router.post("/books/:id/impression", async (req, res) => {
     res.status(500).json({ error: "Failed to record book impression" });
   }
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 // Record a click-through for a book
 router.post("/books/:id/click-through", async (req, res) => {
   try {
@@ -906,7 +892,7 @@ router.post("/books/:id/click-through", async (req, res) => {
     res.status(500).json({ error: "Failed to record book click-through" });
   }
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 // Add DELETE endpoint for books
 router.delete("/books/:id", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -945,7 +931,7 @@ router.delete("/books/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete book" });
   }
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.get("/books/:id/reading-status", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -957,7 +943,7 @@ router.get("/books/:id/reading-status", async (req, res) => {
   const status = await dbStorage.getReadingStatus(req.user!.id, bookId);
   res.json(status || {});
 });
-
+// This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.post("/books/:id/wishlist", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -969,7 +955,7 @@ router.post("/books/:id/wishlist", async (req, res) => {
   const status = await dbStorage.toggleWishlist(req.user!.id, bookId);
   res.json(status);
 });
-
+//This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.delete("/books/:id/wishlist", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -993,7 +979,7 @@ router.get("/wishlist/books", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch wishlisted books" });
   }
 });
-
+//This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 // Get the current user's rating for a specific book
 router.get("/books/:id/user-rating", async (req, res) => {
   if (!req.isAuthenticated()) return res.sendStatus(401);
