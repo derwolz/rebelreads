@@ -155,6 +155,12 @@ function Router() {
 
 function App() {
   const { isOpen, setIsOpen } = useAuthModal();
+  const [location] = useLocation();
+  
+  // Pages where feedback button should not be displayed
+  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy"];
+  const currentPath = location.split("#")[0]; // Remove hash from path
+  const showFeedbackButton = !noFeedbackPaths.includes(currentPath);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -163,7 +169,7 @@ function App() {
           <AuthProvider>
             <OnboardingProvider>
               <Router />
-              <FeedbackButton />
+              {showFeedbackButton && <FeedbackButton />}
               <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
               <ReviewInviteDialog />
               <RatingCriteriaWizard />
