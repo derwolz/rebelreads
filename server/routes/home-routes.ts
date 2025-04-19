@@ -175,8 +175,24 @@ router.get("/books/:id/ratings", async (req, res) => {
     return res.status(400).json({ error: "Invalid book ID" });
   }
 
-  const ratings = await dbStorage.getRatings(bookId);
-  res.json(ratings);
+  const bookRatings = await dbStorage.getRatings(bookId);
+  
+  // Get user information for each review
+  const ratingsWithUserInfo = await Promise.all(bookRatings.map(async (rating) => {
+    // Get user information
+    const user = await dbStorage.getUser(rating.userId);
+    
+    return {
+      ...rating,
+      user: {
+        username: user?.username || 'Anonymous',
+        displayName: user?.displayName || user?.username || 'Anonymous',
+        profileImageUrl: user?.profileImageUrl
+      }
+    };
+  }));
+  
+  res.json(ratingsWithUserInfo);
 });
 
 router.get("/books/:id/taxonomies", async (req, res) => {
