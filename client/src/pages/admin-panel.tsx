@@ -87,8 +87,21 @@ export default function AdminPanel() {
             
             <TabsContent value="users" className="py-4">
               <h3 className="text-lg font-semibold mb-4">User Management</h3>
-              <div className="text-center text-muted-foreground py-10">
-                User management functionality coming soon.
+              <div className="grid gap-4">
+                <Card className="p-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <UsersRound className="h-12 w-12 text-primary" />
+                    <h4 className="text-lg font-medium">User Search and Management</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Search for users, view details, and manage user accounts in the system
+                    </p>
+                    <Link href="/admin/users">
+                      <Button className="w-full">
+                        Manage Users
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
               </div>
             </TabsContent>
             
