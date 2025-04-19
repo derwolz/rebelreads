@@ -133,7 +133,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
                     </TooltipTrigger>
                     <TooltipContent side="right">
                       <div className="max-w-[200px]">
-                        <p className="text-sm">Weighted as 30% of the overall rating</p>
+           
                         <p className="text-xs text-muted-foreground mt-1">How much you enjoyed the book overall</p>
                       </div>
                     </TooltipContent>
@@ -163,7 +163,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
                     </TooltipTrigger>
                     <TooltipContent side="right">
                       <div className="max-w-[200px]">
-                        <p className="text-sm">Weighted as 30% of the overall rating</p>
+        
                         <p className="text-xs text-muted-foreground mt-1">A measurement of wordchoice, plot, style, overall skill in presenting the book</p>
                       </div>
                     </TooltipContent>
@@ -193,7 +193,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
                     </TooltipTrigger>
                     <TooltipContent side="right">
                       <div className="max-w-[200px]">
-                        <p className="text-sm">Weighted as 20% of the overall rating</p>
+             
                         <p className="text-xs text-muted-foreground mt-1">A measurement of the ideas. Are they well developed, novel, and thought-provoking?</p>
                       </div>
                     </TooltipContent>
@@ -223,7 +223,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
                     </TooltipTrigger>
                     <TooltipContent side="right">
                       <div className="max-w-[200px]">
-                        <p className="text-sm">Weighted as 10% of the overall rating</p>
+           
                         <p className="text-xs text-muted-foreground mt-1">A measurement of how well characters are developed and portrayed</p>
                       </div>
                     </TooltipContent>
@@ -253,8 +253,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
                     </TooltipTrigger>
                     <TooltipContent side="right">
                       <div className="max-w-[200px]">
-                        <p className="text-sm">Weighted as 10% of the overall rating</p>
-                        <p className="text-xs text-muted-foreground mt-1">How rich and believable is the setting? Is it well integrated with the story?</p>
+                                        <p className="text-xs text-muted-foreground mt-1">How rich and believable is the setting? Is it well integrated with the story?</p>
                       </div>
                     </TooltipContent>
                   </Tooltip>
