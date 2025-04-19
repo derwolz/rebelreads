@@ -72,7 +72,7 @@ function SortableCriteriaItem({
     <div 
       ref={setNodeRef} 
       style={style}
-      className="flex items-center p-3 mb-2 bg-card border rounded-md shadow-sm hover:shadow-md transition-all group"
+      className="flex items-center py-2 px-3 mb-2 bg-card border rounded-md shadow-sm hover:shadow-md transition-all group"
     >
       <div 
         {...attributes}
@@ -84,7 +84,6 @@ function SortableCriteriaItem({
       
       <div className="flex-1">
         <div className="font-medium">{displayName}</div>
-        <div className="text-sm text-muted-foreground line-clamp-1 group-hover:line-clamp-none transition-all duration-300">{description}</div>
       </div>
       
       <div className="flex items-center gap-2">
