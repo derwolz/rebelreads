@@ -187,7 +187,7 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
           <p className="text-xs text-muted-foreground line-clamp-1 mr-1">{book.authorName}</p>
          
         </div>
-        <div className="flex items-center gap-1 mt-1">
+        <div className="flex items-center text-accent gap-1 mt-1">
           <StarRating 
             rating={averageRating} 
             readOnly 
@@ -209,8 +209,7 @@ export function WhatsHotSidebar() {
   
   // Fetch popular books from our new API endpoint
   const { data: popularBooks, isLoading } = useQuery<PopularBook[]>({
-    queryKey: ["/api/popular-books", periodFilter],
-    staleTime: 1000 * 60 * 60, // 1 hour - since these are calculated daily
+    queryKey: ["/api/popular-books"],
   });
 
   // Toggle the minimized state
