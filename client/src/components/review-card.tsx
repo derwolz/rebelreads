@@ -14,7 +14,7 @@ interface Reply {
   content: string;
   createdAt: string;
   author: {
-    username: string;
+    name: string;
     profileImageUrl: string | null;
   };
 }
@@ -126,11 +126,11 @@ export function ReviewCard({ review }: ReviewCardProps) {
                   <div key={reply.id} className="flex items-start gap-2 mb-2 pl-3 border-l-2 border-primary/20">
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={reply.author.profileImageUrl || undefined} />
-                      <AvatarFallback>{reply.author.username.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback>{reply.author.name.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="flex items-center gap-1">
-                        <p className="text-xs font-medium">{reply.author.username}</p>
+                        <p className="text-xs font-medium">{reply.author.name}</p>
                         <Badge variant="outline" className="text-xs ml-1 py-0 px-1 h-4">Author</Badge>
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}

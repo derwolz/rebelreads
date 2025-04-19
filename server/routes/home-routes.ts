@@ -187,12 +187,15 @@ router.get("/books/:id/ratings", async (req, res) => {
     
     // Add author info to each reply
     const repliesWithAuthor = await Promise.all(replies.map(async (reply) => {
-      const author = await dbStorage.getUser(reply.authorId);
+      // Get the author information - for author replies, we need to get the author record, not just user
+      const user = await dbStorage.getUser(reply.authorId);
+      const author = await dbStorage.getAuthorByUserId(reply.authorId);
+      
       return {
         ...reply,
         author: {
-          username: author?.username || 'Unknown',
-          profileImageUrl: author?.profileImageUrl
+          name: author?.author_name || user?.displayName || user?.username || 'Unknown',
+          profileImageUrl: author?.author_image_url || user?.profileImageUrl
         }
       };
     }));
