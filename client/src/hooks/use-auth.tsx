@@ -31,7 +31,9 @@ type AuthContextType = {
   isAuthor: boolean;
   authorDetails: Author | null;
   verificationNeeded: boolean;
+  setVerificationNeeded: React.Dispatch<React.SetStateAction<boolean>>;
   verificationUserId: number | null;
+  setVerificationUserId: React.Dispatch<React.SetStateAction<number | null>>;
   loginMutation: UseMutationResult<any, Error, any>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
@@ -367,7 +369,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthor,
         authorDetails,
         verificationNeeded,
+        setVerificationNeeded,
         verificationUserId,
+        setVerificationUserId,
         loginMutation,
         logoutMutation,
         registerMutation,

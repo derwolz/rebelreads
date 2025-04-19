@@ -114,11 +114,8 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           isOpen={verificationNeeded}
           maskedEmail="your.email@example.com"
           onClose={() => {
-            // Reset verification state when dialog is closed manually
-            loginMutation.reset();
-            // This is needed to handle the manual cancellation case
-            queryClient.setQueryData(["/api/user"], null);
-            verifyLoginMutation.reset();
+            // Force a reload to reset the verification state
+            window.location.reload();
           }}
           onSuccess={(user: any) => handleSuccess(user, false)}
         />

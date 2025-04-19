@@ -126,9 +126,18 @@ export const LoginVerificationDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogTitle>Verify Your Login</DialogTitle>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        if (typeof onClose === 'function') {
+          onClose();
+        } else {
+          // Fallback if onClose is not properly provided
+          window.location.reload();
+        }
+      }
+    }}>
       <DialogContent>
+        <DialogTitle>Verify Your Login</DialogTitle>
         <DialogDescription>
           For your security, we've sent a verification code to {maskedEmail}.
           Please enter the code below to complete your login.
@@ -164,21 +173,37 @@ export const LoginVerificationDialog = ({
             </button>
           </div>
         </div>
-        <div className="flex flex-row justify-between items-center">
-        <Button variant="ghost" onClick={()=>{onClose()}} disabled={isSubmitting}>
-          Cancel
-        </Button>
-        <Button onClick={handleVerifyCode} disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Verifying...
-            </>
-          ) : (
-            "Verify"
-          )}
-        </Button>
-          </div>
+        <DialogFooter className="flex flex-row justify-between items-center sm:justify-between">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (typeof onClose === 'function') {
+                onClose();
+              } else {
+                // Fallback - just reload the page
+                window.location.reload();
+              }
+            }} 
+            disabled={isSubmitting}
+            type="button"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleVerifyCode} 
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Verifying...
+              </>
+            ) : (
+              "Verify"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
