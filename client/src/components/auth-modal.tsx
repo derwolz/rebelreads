@@ -93,7 +93,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
 
     // For normal login/registration success, close the auth modal
     onOpenChange(false);
-    
+
     // Only redirect to /pro if this is a new author registration
     if (isRegistration && user.isAuthor) {
       setLocation("/pro");
@@ -106,7 +106,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
         isOpen={isGoogleBetaDialogOpen} 
         onOpenChange={setIsGoogleBetaDialogOpen} 
       />
-      
+
       {/* Verification Dialog - shown when login requires verification */}
       {verificationUserId !== null && verificationNeeded && (
         <LoginVerificationDialog 
@@ -115,18 +115,19 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           maskedEmail="your.email@example.com"
           onClose={() => {
 
-            
+
             // Use useAuth's global mutation to invalidate queries
             queryClient.invalidateQueries({ queryKey: ["/api/user"] });
             queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
-            // Force a reload to reset the verification state
+            // Reset verification state
             loginMutation.reset();
-   
+            queryClient.setQueryData(["/api/user"], null);
+
           }}
           onSuccess={(user: any) => handleSuccess(user, false)}
         />
       )}
-      
+
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
