@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LoginVerificationDialogProps {
   isOpen: boolean;
@@ -32,7 +33,26 @@ export const LoginVerificationDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const { toast } = useToast();
-
+  const { verifyLoginMutation } = useAuth();
+  
+  // CRITICAL: Force-close this dialog if verification was successful in the past
+  // This is our nuclear option to ensure the dialog never gets stuck
+  useEffect(() => {
+    const isVerified = !!(queryClient.getQueryData(["/api/user"]));
+    
+    if (isVerified && isOpen) {
+      // Force close the dialog if we're verified but it's still open
+      try {
+        if (typeof onClose === 'function') {
+          onClose();
+        }
+      } catch (err) {
+        // If all else fails, hard reload
+        window.location.reload();
+      }
+    }
+  }, [isOpen, onClose]);
+  
   const handleVerifyCode = async () => {
     if (!code || code.length < 6) {
       toast({
@@ -46,50 +66,38 @@ export const LoginVerificationDialog = ({
     setIsSubmitting(true);
 
     try {
-      const response = await apiRequest("POST", "/api/verify-login", {
+      // Use the mutation directly - it will update global state for us
+      await verifyLoginMutation.mutateAsync({
         userId,
         code,
       });
 
-      if (response.status === 200) {
-        const user = await response.json();
-        
-        // Update authentication state
-        queryClient.setQueryData(["/api/user"], user);
-        queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
-        
-        toast({
-          title: "Success",
-          description: "You have been successfully logged in",
-        });
-        
-        // Call success handler
-        if (typeof onSuccess === 'function') {
-          onSuccess(user);
-        }
-        
-        // Guarantee closure after a small delay (just in case onSuccess doesn't close it)
-        setTimeout(() => {
-          if (typeof onClose === 'function') {
-            onClose();
-          } else {
-            // Ultimate fallback - force reload
-            window.location.reload();
-          }
-        }, 500);
-      } else {
-        const data = await response.json();
-        toast({
-          title: "Verification failed",
-          description: data.error || "Invalid verification code",
-          variant: "destructive",
-        });
+      // If we get here, verification was successful
+      // The mutation's onSuccess handler already:
+      // 1. Updated the user in the queryClient
+      // 2. Reset the verification state in useAuth
+      
+      // Get the user from the cache
+      const user = queryClient.getQueryData(["/api/user"]);
+      
+      // Call the parent's success handler
+      if (typeof onSuccess === 'function') {
+        onSuccess(user);
       }
+      
+      // FORCE CLOSE THE DIALOG
+      if (typeof onClose === 'function') {
+        onClose();
+      }
+      
+      // As an absolute last resort, if the dialog somehow doesn't close
+      setTimeout(() => window.location.reload(), 1000);
+      
     } catch (error) {
       console.error("Verification error:", error);
       toast({
-        title: "Verification error",
-        description: "An error occurred during verification",
+        title: "Verification failed",
+        description: "Invalid or expired verification code. Please try again.",
         variant: "destructive",
       });
     } finally {

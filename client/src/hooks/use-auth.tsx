@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (userData: SelectUser) => {
-      // Reset verification state
+      // IMMEDIATELY FORCEFULLY RESET ALL VERIFICATION STATE
       setVerificationNeeded(false);
       setVerificationUserId(null);
       
