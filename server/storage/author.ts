@@ -17,6 +17,7 @@ export interface IAuthorStorage {
   getAuthors(): Promise<Author[]>;
   getAuthor(id: number): Promise<Author | undefined>;
   getAuthorByUserId(userId: number): Promise<Author | undefined>;
+  getAuthorByName(authorName: string): Promise<Author | undefined>;
   createAuthor(author: InsertAuthor): Promise<Author>;
   isUserAuthor(userId: number): Promise<boolean>;
   updateAuthor(id: number, author: Partial<InsertAuthor>): Promise<Author>;
@@ -50,6 +51,14 @@ export class AuthorStorage implements IAuthorStorage {
       .select()
       .from(authors)
       .where(eq(authors.userId, userId));
+    return author;
+  }
+
+  async getAuthorByName(authorName: string): Promise<Author | undefined> {
+    const [author] = await db
+      .select()
+      .from(authors)
+      .where(eq(authors.author_name, authorName));
     return author;
   }
 
