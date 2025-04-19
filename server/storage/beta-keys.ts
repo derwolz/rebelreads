@@ -141,7 +141,23 @@ export class BetaKeyStorage implements IBetaKeyStorage {
   }
 
   async isBetaActive(): Promise<boolean> {
-    // Check if BETA_ACTIVE environment variable is set to "true"
-    return process.env.BETA_ACTIVE === "true";
+    // First check if BETA_ACTIVE environment variable is set to "true"
+    if (process.env.BETA_ACTIVE !== "true") {
+      return false;
+    }
+    
+    // Then check if we're still before the end date
+    if (process.env.BETA_END_DATE) {
+      try {
+        const betaEndDate = new Date(process.env.BETA_END_DATE);
+        const now = new Date();
+        return now < betaEndDate;
+      } catch (error) {
+        console.error("Error parsing BETA_END_DATE:", error);
+      }
+    }
+    
+    // Default to true if BETA_ACTIVE is "true" and no end date is specified or there was an error
+    return true;
   }
 }

@@ -72,6 +72,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = Boolean(user);
   const isAuthor = authorStatus?.isAuthor || false;
   const authorDetails = authorStatus?.authorDetails || null;
+  
+  // Check if the user is an author with Pro status from a beta promotion
+  // that hasn't seen the notification yet
+  useEffect(() => {
+    // Only run this check when we have both the user and author details loaded
+    if (!isLoading && isAuthor && user?.is_pro) {
+      // Check if we've already shown the notification for this user
+      const hasShownBetaNotification = localStorage.getItem('author_beta_notification_shown');
+      if (!hasShownBetaNotification) {
+        // Show notification after a slight delay
+        setTimeout(() => {
+          setShowAuthorBetaNotification(true);
+        }, 1000);
+      }
+    }
+  }, [isLoading, isAuthor, user]);
 
   // Create extended user with author information for compatibility
   const extendedUser: ExtendedUser | null = user ? {
@@ -295,6 +311,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         revokeAuthorMutation,
       }}
     >
+      {/* Show the beta notification when an author is created during beta */}
+      <AuthorBetaNotification 
+        isOpen={showAuthorBetaNotification} 
+        onClose={() => {
+          // Close the dialog
+          setShowAuthorBetaNotification(false);
+          
+          // Remember that we've shown this notification to the user
+          localStorage.setItem('author_beta_notification_shown', 'true');
+        }} 
+      />
       {children}
     </AuthContext.Provider>
   );
