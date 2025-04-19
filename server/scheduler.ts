@@ -33,7 +33,11 @@ export class Scheduler {
 
   /**
    * Schedule the popular books calculation to run daily at midnight GMT
-   * Uses weighted interaction algorithm with hover (0.25), card click (0.5), referral click (1.0)
+   * Uses weighted engagement algorithm:
+   * - Detail-expand (hover): 0.25
+   * - Card click: 0.5
+   * - Referral click: 1.0
+   * - Regular 'view' impressions: 0.0 (not counted)
    */
   public schedulePopularBooksCalculation(): void {
     // First, calculate the time until midnight GMT
@@ -64,10 +68,12 @@ export class Scheduler {
   }
 
   /**
-   * Run the popular books calculation with weighted interactions
-   * Hover (detail-expand): 0.25
-   * Card click: 0.5
-   * Referral link click: 1.0
+   * Run the popular books calculation with weighted engagements only
+   * Only considers:
+   * - Detail-expand (hover): 0.25
+   * - Card click: 0.5
+   * - Referral link click: 1.0
+   * Regular 'view' impressions have a weight of 0 (explicitly excluded)
    */
   private async runPopularBooksCalculation(): Promise<void> {
     try {

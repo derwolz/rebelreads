@@ -293,7 +293,11 @@ export class AnalyticsStorage implements IAnalyticsStorage {
   /**
    * Calculate popular books using a sigmoid function with a threshold of 14 days
    * This function should be run daily at 00:00:00 GMT
-   * Uses weighted interactions: hover (0.25), card click (0.5), referral click (1.0)
+   * Uses weighted engagements only:
+   * - detail-expand (hover): 0.25
+   * - card-click: 0.5
+   * - referral-click: 1.0
+   * - view impressions: 0.0 (explicitly excluded from calculation)
    */
   async calculatePopularBooks(): Promise<void> {
     try {
@@ -321,12 +325,18 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         return;
       }
       
-      // Get weighted impressions for each book
+      // Get weighted impressions for each book, but only count engagement types (detail-expand, card-click)
+      // Exclude 'view' type impressions (weight = 0) as they are not engagements
       const weightedImpressions = await db
         .select({
           bookId: bookImpressions.bookId,
-          // Sum the weight values for impressions
-          totalWeightedImpressions: sql<string>`SUM(${bookImpressions.weight})`,
+          // Sum the weight values for impressions, only for engagement types
+          totalWeightedImpressions: sql<string>`SUM(
+            CASE 
+              WHEN ${bookImpressions.type} = 'view' THEN 0
+              ELSE ${bookImpressions.weight}
+            END
+          )`,
         })
         .from(bookImpressions)
         .where(inArray(bookImpressions.bookId, bookIds))
@@ -386,12 +396,13 @@ export class AnalyticsStorage implements IAnalyticsStorage {
       
       // Calculate sigmoid values for each book
       const scoreData = bookData.map(book => {
-        // Get weighted impressions and referral clicks
+        // Get weighted impressions (only engagement types, not 'view') and referral clicks
         const weightedImpressionValue = impressionWeightMap.get(book.id) || 0;
         const referralClicks = clicksMap.get(book.id) || 0;
         
-        // Combined weighted interaction score (impressions + referral clicks)
-        // Referral clicks are already factored in with weight 1.0 by default
+        // Combined weighted interaction score (engagement impressions + referral clicks)
+        // Only counts detail-expand (0.25), card-click (0.5), and referral clicks (1.0)
+        // Regular 'view' impressions have a weight of 0
         const totalWeightedInteractions = weightedImpressionValue + referralClicks;
         
         const existingPopular = existingPopularBooksMap.get(book.id);
