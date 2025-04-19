@@ -191,7 +191,8 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
           <StarRating 
             rating={averageRating} 
             readOnly 
-            size="sm" 
+            size="sm"
+            variant="muted"
           />
           <span className="text-[10px] text-muted-foreground ml-1">
             {ratings?.length ? `(${averageRating.toFixed(1)})` : "No ratings"}
