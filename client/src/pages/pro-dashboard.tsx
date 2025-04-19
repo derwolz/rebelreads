@@ -33,9 +33,14 @@ import { BarChart3, AreaChart, Star, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import type { Book } from "@shared/schema";
 
-interface MetricsResponse {
-  date: string;
-  [key: string]: number | string;
+interface BookPerformance {
+  bookId: number;
+  title: string;
+  metrics: {
+    impressions?: Array<{ date: string; count: number }>;
+    clicks?: Array<{ date: string; count: number }>;
+    referrals?: Array<{ date: string; count: number }>;
+  };
 }
 
 const METRICS = [
@@ -101,7 +106,7 @@ export default function ProDashboard() {
     }
   }, [searchQuery]);
 
-  const { data: performanceData } = useQuery<MetricsResponse[]>({
+  const { data: performanceData } = useQuery<BookPerformance[]>({
     queryKey: ["/api/pro/metrics", selectedBookIds, timeRange, selectedMetrics],
     queryFn: async () => {
       const response = await fetch("/api/pro/metrics", {
