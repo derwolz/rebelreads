@@ -1,0 +1,84 @@
+# Sirened Privacy Policy
+
+<div style="float: right; width: 30%; padding: 20px; background-color: #f5f5f5; border-radius: 10px; margin-left: 20px;">
+  <h3>TL;DR: How Sirened Works</h3>
+  <ul>
+    <li><strong>Sirened is a discovery platform</strong> - we connect you with authors, not sell you books directly</li>
+    <li><strong>You pay nothing</strong> to use our platform - authors fund the service</li>
+    <li><strong>We share your reading interests</strong> (never your personal info) with authors</li>
+    <li><strong>This helps authors</strong> create better marketing and connect with ideal readers</li>
+    <li><strong>If you don't want to share data,</strong> Sirened isn't the right platform for you</li>
+  </ul>
+</div>
+
+## Introduction
+Welcome to Sirened, a book discovery platform that connects readers and authors through shared interests. This Privacy Policy explains our unique approach to facilitating these connections. Sirened is free for readers to use because authors fund the platform through their marketing investments.
+
+## How Sirened Works
+Sirened serves as a discovery bridge between readers and authors through a simple process:
+
+1. You browse recommendations on our homepage
+2. You explore books that catch your interest 
+3. You view book detail pages created by authors
+4. If interested, you click through to the author's external sales page
+
+At no point do you make purchases on Sirened itself. We simply facilitate discovery and connections, with transactions happening on the author's own platforms.
+
+## Our Data-Driven Business Model
+Authors pay Sirened to connect with readers who have expressed interest in their type of work. This author funding is what allows us to offer the platform completely free to readers. In exchange for free access, readers share their anonymized interest data, which helps authors better understand their audience.
+
+## Required Data Sharing
+**Important: By using Sirened, you consent to the sharing of your de-identified interest data with authors and publishers.** If you do not wish to have your anonymized interest data shared, you will not be able to use Sirened's services.
+
+## Information We Collect
+When you use Sirened, we collect:
+
+- **Account information**: Basic details like email address and username when you register
+- **Reading preferences**: Information about the genres, topics, and types of books you're interested in
+- **Browsing behavior**: How you interact with different book listings, which books you view, and what content catches your attention
+- **Click-through activity**: When you click to visit an author's external sales page
+
+What we DON'T collect:
+- Purchase information (since purchases happen off our platform)
+- IP addresses
+- Precise geographic location
+- Demographic information unless voluntarily provided
+
+## How We Use and Share Your Information
+We use and share (in de-identified form) the information we collect to:
+
+- Build our interest taxonomy system that helps match readers with relevant authors
+- Create segmented newsletters based on reading interests
+- Allow authors to target their marketing to readers who are most likely to enjoy their work
+- Improve the organization and discoverability of books on our platform
+- Track the effectiveness of different book listings and presentations
+
+## What We Share:
+- **De-identified interest data**: Anonymous information about reading preferences and browsing patterns
+- **Aggregated statistics**: Overall trends about what types of books are popular with different interest groups
+- **Engagement metrics**: Non-personalized data about how users interact with different book listings
+
+## What We DON'T Share:
+- Email addresses
+- Usernames
+- Account credentials
+- Individual browsing histories tied to identifiable users
+- Personal contact information
+
+## Legal Jurisdiction
+Sirened is headquartered in Wyoming, USA, with servers located in the Philippines. By using Sirened, you agree that any disputes regarding this privacy policy will be governed by the laws of Wyoming, USA.
+
+## Data Sharing Requirement
+Our business model is built on the sharing of de-identified interest data. To use Sirened, you must consent to this data sharing. If you do not agree to these terms, you will not be able to use our services.
+
+## Data Security
+Sirened implements reasonable security measures to protect the data we collect. While no method is 100% secure, we strive to use appropriate measures to protect your information.
+
+## Changes to This Policy
+We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on this page.
+
+## Contact Us
+If you have questions about this Privacy Policy or our data practices, please contact us at:
+[privacy@sirened.com]
+
+**Effective Date:** April 15, 2025
