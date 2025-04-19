@@ -127,7 +127,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
         />
       )}
       
-      <Dialog open={isOpen && !verificationNeeded} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Welcome Back</DialogTitle>

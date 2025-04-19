@@ -139,9 +139,14 @@ export const LoginVerificationDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-  }}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={() => {
+        if (typeof onClose === 'function') {
+          onClose();
+        }
+      }}
+    >
       <DialogContent>
         <DialogTitle>Verify Your Login</DialogTitle>
         <DialogDescription>
