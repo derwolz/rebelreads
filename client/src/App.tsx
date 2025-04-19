@@ -45,6 +45,7 @@ import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
 import BookShelfPage from "@/pages/book-shelf-page";
 import FeedbackButton from "@/components/feedback-button";
+import BrandingPage from "@/pages/branding-page";
 
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
@@ -61,7 +62,7 @@ function Router() {
   const { isBetaActive, isLoading: isBetaLoading } = useBeta();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding"];
   const isApiPath = location.startsWith("/api");
   const isAuthWallPath = location === "/auth";
   const [path, hash] = location.split("#");
@@ -118,6 +119,7 @@ function Router() {
         <Route path="/test-images" component={TestImages} />
         <Route path="/image-guide" component={ImageGuidePage} />
         <Route path="/book-rack-test" component={BookRackTestPage} />
+        <Route path="/branding" component={BrandingPage} />
         
         {/* Discover routes - new taxonomy-based search pages */}
         <Route path="/discover" component={DiscoverPage} />
@@ -168,7 +170,7 @@ function App() {
   const [location] = useLocation();
   
   // Pages where feedback button should not be displayed
-  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us"];
+  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding"];
   const currentPath = location.split("#")[0]; // Remove hash from path
   const showFeedbackButton = !noFeedbackPaths.includes(currentPath);
 
