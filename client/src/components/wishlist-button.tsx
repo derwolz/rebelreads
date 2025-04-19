@@ -13,7 +13,7 @@ interface WishlistButtonProps {
 
 export function WishlistButton({
   bookId,
-  variant = "outline",
+
   size = "default",
   className,
 }: WishlistButtonProps) {
@@ -42,7 +42,7 @@ export function WishlistButton({
 
   return (
     <Button
-      variant={variant}
+      
       size={size}
       onClick={(e) => {
         e.stopPropagation();
@@ -51,13 +51,14 @@ export function WishlistButton({
       disabled={isPending}
       className={className}
       data-wishlisted={readingStatus?.isWishlisted}
+      
     >
       {readingStatus?.isWishlisted ? (
         size === "icon" ? (
-          <Heart className="h-4 w-4" fill="#f00" stroke="#f00" />
+          <Heart className="" fill="#f00" stroke="#f00" />
         ) : (
           <>
-            <Heart className="h-4 w-4 mr-2" fill="#f00" />
+            <Heart className="mr-2" fill="#f00" />
           </>
         )
       ) : size === "icon" ? (

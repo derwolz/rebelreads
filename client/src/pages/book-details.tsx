@@ -62,7 +62,7 @@ import { ShelveItDialog } from "@/components/shelve-it-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
 import { ContentReportDialog } from "@/components/content-report-dialog";
-
+import { useTheme } from "@/hooks/use-theme";
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
 
@@ -100,7 +100,7 @@ export default function BookDetails() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  
+  const {theme} = useTheme();
   // Parse query parameters if we're using the secure URL format
   const urlSearchParams = new URLSearchParams(window.location.search);
   const authorName = urlSearchParams.get('authorName');
@@ -277,8 +277,8 @@ export default function BookDetails() {
       <div
         className="fixed inset-0 w-full h-full z-[-1]"
         style={{
-          background:
-            "linear-gradient(to right, rgb(var(--background-rgb)), rgba(var(--background-rgb), 0.9), rgba(var(--background-rgb), 0.9), rgba(var(--background-rgb), 0.9), rgb(var(--background-rgb)))",
+          background: (theme === "dark") ?
+            "linear-gradient(to right, rgb(var(--background-rgb)), rgba(var(--background-rgb), 0.95), rgba(var(--background-rgb), 0.95), rgba(var(--background-rgb), 0.95), rgb(var(--background-rgb)))" : "linear-gradient(to right, rgb(var(--background-rgb)), rgba(var(--background-rgb), 0.92), rgba(var(--background-rgb), 0.90), rgba(var(--background-rgb), 0.92), rgb(var(--background-rgb)))",
         }}
       />
       <main className="container mx-auto px-4 py-8 relative z-10">

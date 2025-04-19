@@ -212,7 +212,7 @@ export function BookCard({
                 </div>
               )}
               <div className="absolute bg-black/20 rounded-full top-2 left-2  z-10">
-                <WishlistButton bookId={book.id} variant="ghost" size="icon" />
+                <WishlistButton bookId={book.id} className="rounded-full bg-transparent" size="icon" />
               </div>
 
               <img
