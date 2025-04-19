@@ -76,7 +76,7 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
 
   // Fetch ratings for this specific book
-  const { data: ratings } = useQuery<Rating[]>({
+  const { data: ratings = [] } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
   });
 
@@ -100,17 +100,21 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
       }
     : null;
 
-  // Calculate overall weighted rating using user preferences
+  // Calculate overall weighted rating using user preferences or default weights
   const averageRating = unweightedRatings
     ? calculateWeightedRating(
         {
+          id: 0, // Placeholder id
+          userId: 0, // Placeholder userId
+          bookId: book.id,
           enjoyment: unweightedRatings.enjoyment,
           writing: unweightedRatings.writing,
           themes: unweightedRatings.themes,
           characters: unweightedRatings.characters,
           worldbuilding: unweightedRatings.worldbuilding,
+          createdAt: new Date(),
         } as Rating,
-        ratingPreferences,
+        ratingPreferences || DEFAULT_RATING_WEIGHTS,
       )
     : 0;
 
@@ -185,17 +189,22 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
         <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">{book.title}</h3>
         <div className="flex items-center gap-1 mt-0.5">
           <p className="text-xs text-muted-foreground line-clamp-1 mr-1">{book.authorName}</p>
-         
         </div>
         <div className="flex items-center text-accent gap-1 mt-1">
-          <StarRating 
-            rating={averageRating} 
-            readOnly 
-            size="sm" 
-          />
-          <span className="text-[10px] text-muted-foreground ml-1">
-            {ratings?.length ? `(${averageRating.toFixed(1)})` : "No ratings"}
-          </span>
+          {ratings && ratings.length > 0 ? (
+            <>
+              <StarRating 
+                rating={averageRating} 
+                readOnly 
+                size="xs" 
+              />
+              <span className="text-[10px] text-muted-foreground ml-1">
+                ({averageRating.toFixed(1)})
+              </span>
+            </>
+          ) : (
+            <span className="text-[10px] text-muted-foreground">No ratings yet</span>
+          )}
         </div>
       </div>
     </div>
