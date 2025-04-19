@@ -69,17 +69,17 @@ function Router() {
   if (isBetaLoading || isAuthLoading) {
     return null;
   }
-
   // If beta mode is active and user is not logged in, redirect to auth wall
   // unless it's an allowed path or already on the auth wall
   if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath && !isAuthWallPath) {
-    return <Redirect to="/auth" />;
+    return <Redirect to="/landing" />;
   }
+
   
   // If landing page is configured to show, honor that setting
   // but only if not in beta mode (beta mode takes precedence)
-  if (!isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
-    return <Redirect to={`/landing${hash ? '#' + hash : ''}`} />;
+  if (isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
+    return <Redirect to={`/landing`} />;
   }
 
   // Component selection based on landing page setting
