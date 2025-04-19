@@ -35,6 +35,7 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 import SalesPanel from "@/pages/sales-panel";
 import HowItWorks from "@/pages/how-it-works";
+import PrivacyPolicy from "@/pages/privacy-policy";
 import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
@@ -57,7 +58,7 @@ function Router() {
   const { isBetaActive, isLoading: isBetaLoading } = useBeta();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy"];
   const isApiPath = location.startsWith("/api");
   const isAuthWallPath = location === "/auth";
   const [path, hash] = location.split("#");
