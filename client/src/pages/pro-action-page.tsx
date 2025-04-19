@@ -27,6 +27,15 @@ export default function ProActionPage() {
   const { user } = useAuth();
   
   const isPro = user?.is_pro;
+  
+  // Function to show "coming soon" toast message
+  const showComingSoonToast = (featureName: string) => {
+    toast({
+      title: "Coming Soon",
+      description: `We're still working on the ${featureName} feature. Stay tuned!`,
+      duration: 3000,
+    });
+  };
 
   const { data: books } = useQuery<Book[]>({
     queryKey: ["/api/my-books"],
@@ -58,7 +67,11 @@ export default function ProActionPage() {
               <li>• Optimize your reach</li>
             </ul>
             {isPro ? (
-              <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full text-sm">
+              <Button 
+                onClick={() => showComingSoonToast("Ad Management")} 
+                className="w-full text-sm"
+                disabled
+              >
                 Manage Ads
               </Button>
             ) : (
@@ -92,7 +105,11 @@ export default function ProActionPage() {
               <li>• Build social proof</li>
             </ul>
             {isPro ? (
-              <Button onClick={() => setIsReviewBoostOpen(true)} className="w-full text-sm">
+              <Button 
+                onClick={() => showComingSoonToast("Review Boost")} 
+                className="w-full text-sm"
+                disabled
+              >
                 Start Boost
               </Button>
             ) : (
@@ -126,7 +143,11 @@ export default function ProActionPage() {
               <li>• Make data-driven decisions</li>
             </ul>
             {isPro ? (
-              <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full text-sm">
+              <Button 
+                onClick={() => showComingSoonToast("Survey Creation")} 
+                className="w-full text-sm"
+                disabled
+              >
                 Create Survey
               </Button>
             ) : (
