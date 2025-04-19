@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowLeft, ChevronUpIcon } from "lucide-react";
+import { ArrowLeft, ChevronUp } from "lucide-react";
 import iconWhite from "@/public/images/iconwhite.svg";
 import icon from "@/public/images/icon.svg";
 import { useTheme } from "@/hooks/use-theme";
@@ -189,7 +189,25 @@ export default function TermsOfService() {
             </p>
           </section>
         </div>
+        
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-4 right-4 rounded-full p-3 h-10 w-10"
+          variant="outline"
+          size="icon"
+          aria-label="Scroll to top"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </Button>
       </div>
+      
+      <footer className="bg-muted/30 border-t py-8">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} Sirened Publishing. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -940,9 +940,9 @@ const NewLandingPage = () => {
             <AnimateOnScroll type="fade-in" delay="medium">
               <div className="text-sm text-muted-foreground">
                 By signing up, you agree to our{" "}
-                <a href="#" className="text-primary underline">
+                <Link href="/terms-of-service" className="text-primary underline">
                   Terms of Service
-                </a>{" "}
+                </Link>{" "}
                 and{" "}
                 <Link href="/privacy-policy" className="text-primary underline">
                   Privacy Policy
@@ -1053,9 +1053,12 @@ const NewLandingPage = () => {
                 <Link href="/privacy-policy" className="hover:text-primary">
                   Privacy Policy
                 </Link>
-                <a href="#" className="hover:text-primary">
+                <Link href="/cookie-policy" className="hover:text-primary">
                   Cookie Policy
-                </a>
+                </Link>
+                <Link href="/terms-of-service" className="hover:text-primary">
+                  Terms of Service
+                </Link>
               </div>
             </div>
           </AnimateOnScroll>

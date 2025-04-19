@@ -58,7 +58,7 @@ function Router() {
   const { isBetaActive, isLoading: isBetaLoading } = useBeta();
   const { user, isLoading: isAuthLoading } = useAuth();
 
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service"];
   const isApiPath = location.startsWith("/api");
   const isAuthWallPath = location === "/auth";
   const [path, hash] = location.split("#");
@@ -94,6 +94,7 @@ function Router() {
 
         <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route path="/cookie-policy" component={CookiePolicy} />
+        <Route path="/terms-of-service" component={TermsOfService} />
         
         {/* Auth wall */}
         <Route path="/auth" component={AuthWallPage} />
@@ -161,7 +162,7 @@ function App() {
   const [location] = useLocation();
   
   // Pages where feedback button should not be displayed
-  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy"];
+  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy", "/terms-of-service"];
   const currentPath = location.split("#")[0]; // Remove hash from path
   const showFeedbackButton = !noFeedbackPaths.includes(currentPath);
 
