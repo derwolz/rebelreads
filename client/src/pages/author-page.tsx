@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { BookCard } from "@/components/book-card";
 import { BookGridCard } from "@/components/book-grid-card";
+import { BookRack } from "@/components/book-rack";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
@@ -450,15 +451,14 @@ export default function AuthorPage() {
                       </div>
                     </div>
                     
-                    {/* Books grid on the right */}
-                    <div className="flex-1">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {shelfWithBooks.books.map((book) => (
-                          <div key={book.id} className="h-full">
-                            <BookGridCard book={book} />
-                          </div>
-                        ))}
-                      </div>
+                    {/* Book rack display on the right */}
+                    <div className="flex-1 overflow-hidden">
+                      <BookRack 
+                        title="" 
+                        books={shelfWithBooks.books} 
+                        isLoading={false}
+                        className="m-0 mb-0"
+                      />
                     </div>
                   </div>
                 ) : (
