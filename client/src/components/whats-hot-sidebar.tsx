@@ -209,7 +209,7 @@ export function WhatsHotSidebar() {
   
   // Fetch popular books from our new API endpoint
   const { data: popularBooks, isLoading } = useQuery<PopularBook[]>({
-    queryKey: ["/api/popular-books"],
+    queryKey: ["/api/popular-books", periodFilter],
   });
 
   // Toggle the minimized state

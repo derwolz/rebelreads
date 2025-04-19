@@ -13,14 +13,17 @@ router.get("/", async (req, res) => {
     // Optional limit parameter, default to 10
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
     
+    // Optional period parameter (day, week, month), default to day
+    const period = req.query.period ? String(req.query.period) : "day";
+    
     // Get popular books with book details
-    const popularBooks = await dbStorage.getPopularBooks(limit);
+    const popularBooks = await dbStorage.getPopularBooks(limit, period);
     
     if (!popularBooks || popularBooks.length === 0) {
       // If no popular books are found, trigger a calculation
       await dbStorage.calculatePopularBooks();
       // Fetch newly calculated popular books
-      const freshPopularBooks = await dbStorage.getPopularBooks(limit);
+      const freshPopularBooks = await dbStorage.getPopularBooks(limit, period);
       
       if (!freshPopularBooks || freshPopularBooks.length === 0) {
         // Still no popular books, return empty array

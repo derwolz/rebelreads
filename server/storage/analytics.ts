@@ -477,9 +477,15 @@ export class AnalyticsStorage implements IAnalyticsStorage {
   /**
    * Retrieves the current active popular books
    * @param limit Maximum number of books to return, defaults to 10
+   * @param period Time period for popularity (day, week, month), defaults to day
    */
-  async getPopularBooks(limit: number = 10): Promise<PopularBook[]> {
+  async getPopularBooks(limit: number = 10, period: string = "day"): Promise<PopularBook[]> {
     try {
+      // For now, we'll just use the existing active popular books
+      // regardless of period, as our data structure doesn't yet support
+      // separate rankings for different time periods
+      console.log(`Fetching popular books for period: ${period}`);
+      
       return db
         .select()
         .from(popularBooks)
@@ -487,7 +493,7 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         .orderBy(asc(popularBooks.rank))
         .limit(limit);
     } catch (error) {
-      console.error("Error getting popular books:", error);
+      console.error(`Error getting popular books for period ${period}:`, error);
       return [];
     }
   }
