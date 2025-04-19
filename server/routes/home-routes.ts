@@ -121,6 +121,16 @@ router.get("/book-details", async (req, res) => {
     console.log(`Book with title "${bookTitle}" by "${authorName}" has ${book.images?.length || 0} images:`, 
       book.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
     
+    // Record an impression if the book is found and user is authenticated
+    if (req.isAuthenticated() && req.user && book.id) {
+      try {
+        await dbStorage.recordBookImpression(book.id, req.user.id, "query-parameters");
+      } catch (impressionError) {
+        console.error("Error recording impression:", impressionError);
+        // Non-critical error, continue with the response
+      }
+    }
+    
     res.json(book);
   } catch (error) {
     console.error(`Error fetching book with authorName: ${authorName}, title: ${bookTitle}:`, error);
