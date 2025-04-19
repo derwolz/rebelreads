@@ -111,6 +111,10 @@ export default {
             opacity: "0",
           },
         },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -120,6 +124,7 @@ export default {
         "float-reverse": "float 13.5s ease-in-out infinite reverse",
         "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
         "ping-slower": "ping-slower 2.5s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "fade-in": "fade-in 0.5s ease-in forwards",
       },
     },
   },
