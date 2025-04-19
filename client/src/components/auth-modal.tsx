@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
 import { useBeta } from "@/hooks/use-beta";
+import { queryClient } from "@/lib/queryClient";
 import { insertUserSchema, loginSchema, LoginData } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +43,8 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
     loginMutation, 
     registerMutation, 
     verificationNeeded, 
-    verificationUserId 
+    verificationUserId,
+    verifyLoginMutation
   } = useAuth();
   const { isBetaActive } = useBeta();
   const [, setLocation] = useLocation();
@@ -112,10 +114,11 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           isOpen={verificationNeeded}
           maskedEmail="your.email@example.com"
           onClose={() => {
-            // If the dialog is being closed without successful verification,
-            // we need to reset the verification process state
-            // This would be handled by the verifyLoginMutation's onSuccess
-            // So only need to handle the cancel case here
+            // Reset verification state when dialog is closed manually
+            loginMutation.reset();
+            // This is needed to handle the manual cancellation case
+            queryClient.setQueryData(["/api/user"], null);
+            verifyLoginMutation.reset();
           }}
           onSuccess={(user: any) => handleSuccess(user, false)}
         />
