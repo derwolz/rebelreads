@@ -14,6 +14,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface RatingDialogProps {
   bookId: number;
@@ -112,35 +118,80 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
         <div className="grid gap-4 py-4">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Enjoyment (30%)</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="text-sm font-medium hover:cursor-help">Enjoyment</label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Weighted as 30% of the overall rating</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <StarRating
                 rating={ratings.enjoyment}
                 onChange={(value) => setRatings({ ...ratings, enjoyment: value })}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Writing Style (30%)</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="text-sm font-medium hover:cursor-help">Writing Style</label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Weighted as 30% of the overall rating</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <StarRating
                 rating={ratings.writing}
                 onChange={(value) => setRatings({ ...ratings, writing: value })}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Themes (20%)</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="text-sm font-medium hover:cursor-help">Themes</label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Weighted as 20% of the overall rating</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <StarRating
                 rating={ratings.themes}
                 onChange={(value) => setRatings({ ...ratings, themes: value })}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Characters (10%)</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="text-sm font-medium hover:cursor-help">Characters</label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Weighted as 10% of the overall rating</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <StarRating
                 rating={ratings.characters}
                 onChange={(value) => setRatings({ ...ratings, characters: value })}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">World Building (10%)</label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label className="text-sm font-medium hover:cursor-help">World Building</label>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Weighted as 10% of the overall rating</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <StarRating
                 rating={ratings.worldbuilding}
                 onChange={(value) => setRatings({ ...ratings, worldbuilding: value })}
