@@ -679,4 +679,185 @@ router.post("/reviews/:reviewId/reply", async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to get book performance metrics
+router.post("/metrics", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+  
+  // Check if the user is a Pro user
+  if (!req.user.isPro) {
+    return res.status(403).json({ error: "Pro membership required" });
+  }
+
+  try {
+    const { bookIds, days, metrics } = req.body;
+    
+    if (!bookIds || !Array.isArray(bookIds) || bookIds.length === 0) {
+      return res.status(400).json({ error: "Book IDs are required and must be an array" });
+    }
+    
+    // First get the author information to verify book ownership
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
+    
+    if (!author) {
+      console.log(`No author record found for user ${req.user.id}`);
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
+    // Get all books by this author
+    const authorBooks = await dbStorage.getBooksByAuthor(author.id);
+    console.log(`Author book IDs for author ID ${author.id}:`, authorBooks.map((b: any) => b.id));
+    
+    // Get the book metrics data
+    const metricsData = await dbStorage.getBooksMetrics(
+      bookIds,
+      days || 30,
+      metrics || ["impressions", "clicks", "ctr"]
+    );
+    
+    // Format the response to match what the frontend expects
+    const bookTitles = new Map<number, string>();
+    
+    // Get book titles
+    for (const bookId of bookIds) {
+      const book = await dbStorage.getBook(bookId);
+      if (book) {
+        bookTitles.set(bookId, book.title);
+      }
+    }
+    
+    // Transform the metrics data format
+    const formattedMetrics = bookIds.map(bookId => {
+      // Initialize the response object
+      const bookPerformance = {
+        bookId,
+        title: bookTitles.get(bookId) || `Book ${bookId}`,
+        metrics: {
+          impressions: [] as Array<{ date: string; count: number }>,
+          clicks: [] as Array<{ date: string; count: number }>,
+          referrals: [] as Array<{ date: string; count: number }>
+        }
+      };
+      
+      // Fill in the metrics data
+      metricsData.forEach(dateMetrics => {
+        const date = dateMetrics.date;
+        
+        // Process impressions
+        if (metrics?.includes("impressions")) {
+          const impressionCount = dateMetrics.metrics[`Book ${bookId}_impressions`] || 0;
+          bookPerformance.metrics.impressions.push({ date, count: impressionCount });
+        }
+        
+        // Process clicks
+        if (metrics?.includes("clicks")) {
+          const clickCount = dateMetrics.metrics[`Book ${bookId}_clicks`] || 0;
+          bookPerformance.metrics.clicks.push({ date, count: clickCount });
+        }
+        
+        // Process referrals (we'll use CTR as a proxy for referrals)
+        if (metrics?.includes("ctr")) {
+          const ctrValue = dateMetrics.metrics[`Book ${bookId}_ctr`] || 0;
+          bookPerformance.metrics.referrals.push({ date, count: ctrValue });
+        }
+      });
+      
+      return bookPerformance;
+    });
+    
+    return res.json(formattedMetrics);
+  } catch (error) {
+    console.error("Error fetching book metrics:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get follower metrics for the author
+router.get("/follower-metrics", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  if (!req.user.isAuthor) {
+    return res.status(403).json({ error: "Author access required" });
+  }
+  
+  // Check if the user is a Pro user
+  if (!req.user.isPro) {
+    return res.status(403).json({ error: "Pro membership required" });
+  }
+
+  try {
+    const days = parseInt(req.query.days as string) || 30;
+    
+    // First get the author information
+    const author = await dbStorage.getAuthorByUserId(req.user.id);
+    
+    if (!author) {
+      console.log(`No author record found for user ${req.user.id}`);
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    // Get total follower count
+    const followerCount = await dbStorage.getFollowerCount(author.id);
+    
+    // Get follower metrics for trending data
+    const followerMetrics = await dbStorage.getFollowerMetrics(author.id, days);
+    
+    // Format the trending data
+    const trendingData = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Create a map of dates in the range
+    const dateMap = new Map<string, { follows: number; unfollows: number }>();
+    const currentDate = new Date(startDate);
+    const endDate = new Date();
+
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      dateMap.set(dateStr, { follows: 0, unfollows: 0 });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Fill in the metrics data
+    followerMetrics.follows.forEach(item => {
+      const data = dateMap.get(item.date);
+      if (data) {
+        data.follows = item.count;
+      }
+    });
+    
+    followerMetrics.unfollows.forEach(item => {
+      const data = dateMap.get(item.date);
+      if (data) {
+        data.unfollows = item.count;
+      }
+    });
+    
+    // Convert map to array and calculate net change
+    const trending = Array.from(dateMap.entries()).map(([date, data]) => ({
+      date,
+      followers: data.follows,
+      unfollows: data.unfollows,
+      netChange: data.follows - data.unfollows
+    }));
+    
+    return res.json({
+      total: followerCount,
+      trending
+    });
+  } catch (error) {
+    console.error("Error fetching follower metrics:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
