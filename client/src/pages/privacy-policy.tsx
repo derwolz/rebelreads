@@ -104,11 +104,10 @@ export default function PrivacyPolicy() {
             <Button 
               className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] font-bold" 
               onClick={() => {
-                setEmail("");
-                setIsTypeDialogOpen(true);
+                window.location.href = '/';
               }}
             >
-              Get Beta Access
+              Back to Home
             </Button>
           </div>
         </div>
