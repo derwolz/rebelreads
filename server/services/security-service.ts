@@ -50,6 +50,23 @@ class SecurityService {
   }
   
   /**
+   * Verifies a login verification code
+   */
+  public async verifyLoginCode(userId: number, code: string): Promise<boolean> {
+    try {
+      // Use the verification service to check the code
+      return await verificationService.verifyCode(
+        userId,
+        code,
+        VERIFICATION_TYPES.LOGIN_VERIFICATION
+      );
+    } catch (error) {
+      console.error("Error verifying login code:", error);
+      return false;
+    }
+  }
+  
+  /**
    * Send a login verification code via email
    */
   public async sendLoginVerification(
@@ -90,6 +107,7 @@ class SecurityService {
       
       // Store the trusted device in the database
       await dbStorage.addTrustedDevice(userId, {
+        userId,
         ipAddress,
         userAgent,
         fingerprint: deviceFingerprint,
