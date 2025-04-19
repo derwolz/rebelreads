@@ -13,6 +13,7 @@ export function HomepageSettingsPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Redirect to login if not logged in
   useEffect(() => {
@@ -49,7 +50,11 @@ export function HomepageSettingsPage() {
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <SettingsSidebar isMobile={false} />
+          <SettingsSidebar 
+            isMobile={false} 
+            collapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
         </div>
 
         {/* Mobile Sidebar with framer motion drag */}
@@ -60,7 +65,10 @@ export function HomepageSettingsPage() {
         />
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0">
+        <div className={cn(
+          "flex-1 min-w-0",
+          isSidebarCollapsed && "md:pl-4" // Add a bit more space when sidebar is collapsed
+        )}>
           <HomepageSettings />
         </div>
       </div>
