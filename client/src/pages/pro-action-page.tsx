@@ -69,10 +69,13 @@ export default function ProActionPage() {
             {isPro ? (
               <Button 
                 onClick={() => showComingSoonToast("Ad Management")} 
-                className="w-full text-sm"
+                className="w-full text-sm relative bg-muted text-muted-foreground"
                 disabled
               >
-                Manage Ads
+                <span className="relative z-10">Manage Ads</span>
+                <div className="absolute inset-0 flex items-center justify-center z-0">
+                  <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-md">Coming Soon</span>
+                </div>
               </Button>
             ) : (
               <Button 
@@ -107,10 +110,13 @@ export default function ProActionPage() {
             {isPro ? (
               <Button 
                 onClick={() => showComingSoonToast("Review Boost")} 
-                className="w-full text-sm"
+                className="w-full text-sm relative bg-muted text-muted-foreground"
                 disabled
               >
-                Start Boost
+                <span className="relative z-10">Start Boost</span>
+                <div className="absolute inset-0 flex items-center justify-center z-0">
+                  <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-md">Coming Soon</span>
+                </div>
               </Button>
             ) : (
               <Button 
@@ -145,10 +151,13 @@ export default function ProActionPage() {
             {isPro ? (
               <Button 
                 onClick={() => showComingSoonToast("Survey Creation")} 
-                className="w-full text-sm"
+                className="w-full text-sm relative bg-muted text-muted-foreground"
                 disabled
               >
-                Create Survey
+                <span className="relative z-10">Create Survey</span>
+                <div className="absolute inset-0 flex items-center justify-center z-0">
+                  <span className="px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded-md">Coming Soon</span>
+                </div>
               </Button>
             ) : (
               <Button 
