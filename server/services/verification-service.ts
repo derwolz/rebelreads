@@ -174,8 +174,9 @@ class VerificationService {
         code,
         type,
         expiresAt,
-        isUsed: false,
-        metadata: JSON.stringify(metadata)
+        email: metadata?.email,
+        ipAddress: metadata?.ipAddress,
+        userAgent: metadata?.userAgent
       });
       
       if (!savedCode) {
