@@ -596,6 +596,40 @@ router.post("/become-author", async (req: Request, res: Response) => {
     // Create a new author record
     const author = await dbStorage.createAuthor(authorData);
     
+    // Check if beta mode is active to grant free Pro access to new authors
+    const isBetaActive = await dbStorage.isBetaActive();
+    
+    if (isBetaActive) {
+      // Import the beta end date
+      const { getBetaEndDate } = await import("@shared/beta-constants");
+      
+      // Update the user to have Pro access until beta end date
+      await db
+        .update(users)
+        .set({
+          is_pro: true,
+          pro_expires_at: getBetaEndDate(),
+        })
+        .where(eq(users.id, req.user.id));
+      
+      console.log(`Beta mode active: Granted Pro access to new author (userId: ${req.user.id}) until ${getBetaEndDate().toISOString()}`);
+      
+      // Get the updated user to include in the response
+      const updatedUser = await dbStorage.getUser(req.user.id);
+      if (updatedUser) {
+        // Update the session user object to reflect Pro status
+        req.user.isPro = true;
+      }
+      
+      // Return both the author record and updated pro status
+      return res.status(201).json({
+        ...author,
+        is_pro: true,
+        pro_expires_at: getBetaEndDate(),
+        beta_promotion: true
+      });
+    }
+    
     res.status(201).json(author);
   } catch (error) {
     console.error("Error creating author:", error);
