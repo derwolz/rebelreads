@@ -9,10 +9,8 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { OnboardingProvider } from "@/hooks/use-onboarding";
 import EmailCollectionPage from "@/pages/admin/email-collection";
 import { MainNav } from "@/components/main-nav";
-import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
 import { RatingCriteriaWizard } from "@/components/rating-criteria-wizard";
-import { FloatingSignup } from "@/components/floating-signup";
 import { ImpressionSync } from "@/components/impression-sync";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
@@ -46,6 +44,7 @@ import BookShelfPage from "@/pages/book-shelf-page";
 import FeedbackButton from "@/components/feedback-button";
 
 import AuthWallPage from "@/pages/auth-wall-page";
+import AuthPage from "@/pages/auth-page";
 import { Redirect, useLocation } from "wouter";
 import { useBeta } from "@/hooks/use-beta";
 import { useAuth } from "@/hooks/use-auth";
@@ -101,7 +100,8 @@ function Router() {
         <Route path="/contact-us" component={ContactUs} />
         
         {/* Auth wall */}
-        <Route path="/auth" component={AuthWallPage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/auth-wall" component={AuthWallPage} />
         <Route path="/auth-check" component={AuthCheckPage} />
 
         {/* Public routes that require authentication in beta mode */}
@@ -178,7 +178,6 @@ function App() {
             <OnboardingProvider>
               <Router />
               {showFeedbackButton && <FeedbackButton />}
-              <AuthModal isOpen={isOpen} onOpenChange={setIsOpen} />
               <ReviewInviteDialog />
               <RatingCriteriaWizard />
               <ImpressionSync />

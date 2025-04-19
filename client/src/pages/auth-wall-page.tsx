@@ -1,27 +1,18 @@
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBeta } from "@/hooks/use-beta";
 import { Redirect, useLocation } from "wouter";
-import { AuthModal } from "@/components/auth-modal";
 import { Button } from "@/components/ui/button";
-import { useAuthModal } from "@/hooks/use-auth-modal";
 
 export default function AuthWallPage() {
   const { user } = useAuth();
   const { isBetaActive } = useBeta();
-  const { setIsOpen } = useAuthModal();
+  const [, setLocation] = useLocation();
   const [location] = useLocation();
   
   // List of paths that are always allowed
   const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo"];
   const isAllowedPath = allowedPaths.some(path => location.startsWith(path));
   const isApiPath = location.startsWith("/api");
-
-  // Immediately open auth modal
-  useEffect(() => {
-    setIsOpen(true);
-    return () => setIsOpen(false);
-  }, [setIsOpen]);
 
   // Redirect cases
   if (!isBetaActive) {
@@ -50,13 +41,13 @@ export default function AuthWallPage() {
           <Button 
             size="lg" 
             className="mt-4"
-            onClick={() => setIsOpen(true)}
+            onClick={() => setLocation("/auth")}
           >
             Login to Access
           </Button>
           <p className="text-sm text-muted-foreground mt-8">
             Don&apos;t have an account? <br />
-            <Button variant="link" onClick={() => setIsOpen(true)}>
+            <Button variant="link" onClick={() => setLocation("/auth")}>
               Register with your beta key
             </Button>
           </p>
@@ -71,8 +62,6 @@ export default function AuthWallPage() {
           </Button>
         </div>
       </div>
-      
-      {/* AuthModal will be shown based on the isOpen state */}
     </div>
   );
 }
