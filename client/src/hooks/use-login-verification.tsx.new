@@ -46,7 +46,7 @@ export function useLoginVerification({ onLoginSuccess }: UseLoginVerificationPro
     setVerificationDialogOpen(false);
   };
 
-  const VerificationDialogComponent = userId ? (
+  const VerificationDialogComponent = userId !== null ? (
     <LoginVerificationDialog
       isOpen={verificationDialogOpen}
       userId={userId}

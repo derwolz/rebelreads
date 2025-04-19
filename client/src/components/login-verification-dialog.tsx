@@ -83,6 +83,14 @@ export const LoginVerificationDialog = ({
       setIsSubmitting(false);
     }
   };
+  
+  // Handle form submission when user presses Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleVerifyCode();
+    }
+  };
 
   const handleResendCode = async () => {
     setIsResending(true);
@@ -133,6 +141,7 @@ export const LoginVerificationDialog = ({
               placeholder="Enter your code"
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              onKeyDown={handleKeyDown}
               maxLength={8}
               autoComplete="off"
             />
