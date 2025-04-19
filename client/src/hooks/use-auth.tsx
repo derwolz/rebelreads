@@ -30,11 +30,14 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isAuthor: boolean;
   authorDetails: Author | null;
-  loginMutation: UseMutationResult<SelectUser, Error, any>;
+  verificationNeeded: boolean;
+  verificationUserId: number | null;
+  loginMutation: UseMutationResult<any, Error, any>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
   becomeAuthorMutation: UseMutationResult<Author, Error, any>;
   revokeAuthorMutation: UseMutationResult<any, Error, { confirmUsername: string }>;
+  verifyLoginMutation: UseMutationResult<SelectUser, Error, { userId: number, code: string }>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -96,18 +99,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authorDetails: authorDetails,
   } : null;
 
+  // State for verification process
+  const [verificationNeeded, setVerificationNeeded] = useState(false);
+  const [verificationUserId, setVerificationUserId] = useState<number | null>(null);
+  
+  // Login verification mutation
+  const verifyLoginMutation = useMutation({
+    mutationFn: async ({ userId, code }: { userId: number, code: string }) => {
+      const res = await apiRequest("POST", "/api/verify-login", { userId, code });
+      return await res.json();
+    },
+    onSuccess: (userData: SelectUser) => {
+      // Reset verification state
+      setVerificationNeeded(false);
+      setVerificationUserId(null);
+      
+      // Update user data and invalidate queries
+      queryClient.setQueryData(["/api/user"], userData);
+      queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
+      
+      toast({
+        title: "Verification successful",
+        description: "Your identity has been verified successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Verification failed",
+        description: error.message || "Invalid or expired verification code. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: any) => {
       const res = await apiRequest("POST", "/api/login", credentials);
+      
       if (res.status === 403) {
         // 403 indicates no beta access
         const data = await res.json();
         throw new Error(data.message || "You don't have beta access yet.");
       }
+      
+      // Handle 202 status (verification required)
+      if (res.status === 202) {
+        const data = await res.json();
+        if (data.verificationNeeded && data.userId) {
+          // Set state for verification UI
+          setVerificationNeeded(true);
+          setVerificationUserId(data.userId);
+          
+          // Return a special object indicating verification is needed
+          return { verificationNeeded: true, userId: data.userId, message: data.message };
+        }
+      }
+      
       return await res.json();
     },
-    onSuccess: (userData: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], userData);
+    onSuccess: (response: any) => {
+      // Skip updating user data if verification is needed
+      if (response.verificationNeeded) {
+        toast({
+          title: "Verification required",
+          description: "We've sent a verification code to your email. Please check your inbox.",
+        });
+        return;
+      }
+      
+      // Normal login success - update user data
+      queryClient.setQueryData(["/api/user"], response);
       // After login, force a refetch of author status
       queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
     },
@@ -304,11 +366,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         isAuthor,
         authorDetails,
+        verificationNeeded,
+        verificationUserId,
         loginMutation,
         logoutMutation,
         registerMutation,
         becomeAuthorMutation,
         revokeAuthorMutation,
+        verifyLoginMutation,
       }}
     >
       {/* Show the beta notification when an author is created during beta */}
