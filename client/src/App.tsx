@@ -36,6 +36,7 @@ import AdminPanel from "@/pages/admin-panel";
 import SalesPanel from "@/pages/sales-panel";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import CookiePolicy from "@/pages/cookie-policy";
+import TermsOfService from "@/pages/terms-of-service";
 import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
