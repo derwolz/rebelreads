@@ -2,7 +2,7 @@ import { randomBytes } from 'crypto';
 import { db } from '../db';
 import { EmailService } from '../email/email-service';
 import { verificationCodes, users, type VerificationCode, type InsertVerificationCode } from '@shared/schema';
-import { eq, and, lt, gt, sql } from 'drizzle-orm';
+import { eq, and, lt, gt } from 'drizzle-orm';
 
 // Verification types
 export const VERIFICATION_TYPES = {
@@ -180,7 +180,7 @@ export class VerificationService {
             eq(verificationCodes.code, code),
             eq(verificationCodes.type, type),
             eq(verificationCodes.isUsed, false),
-            gt(verificationCodes.expiresAt, sql`NOW()`)
+            gt(verificationCodes.expiresAt, now)
           )
         )
         .orderBy(verificationCodes.createdAt, 'desc')
@@ -229,7 +229,7 @@ export class VerificationService {
             eq(verificationCodes.userId, userId),
             eq(verificationCodes.type, type),
             eq(verificationCodes.isUsed, false),
-            gt(verificationCodes.expiresAt, sql`NOW()`)
+            gt(verificationCodes.expiresAt, now)
           )
         )
         .orderBy(verificationCodes.createdAt, 'desc')
@@ -265,7 +265,7 @@ export class VerificationService {
             eq(verificationCodes.userId, userId),
             eq(verificationCodes.type, type),
             eq(verificationCodes.isUsed, false),
-            gt(verificationCodes.expiresAt, sql`NOW()`)
+            gt(verificationCodes.expiresAt, now)
           )
         );
     } catch (error) {
