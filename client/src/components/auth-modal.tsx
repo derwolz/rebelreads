@@ -114,14 +114,14 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           isOpen={verificationNeeded}
           maskedEmail="your.email@example.com"
           onClose={() => {
-            // Force a reload to reset the verification state
-            loginMutation.reset();
+
             
             // Use useAuth's global mutation to invalidate queries
             queryClient.invalidateQueries({ queryKey: ["/api/user"] });
             queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
-            
-
+            // Force a reload to reset the verification state
+            loginMutation.reset();
+   
           }}
           onSuccess={(user: any) => handleSuccess(user, false)}
         />
