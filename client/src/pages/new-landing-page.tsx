@@ -299,7 +299,7 @@ const NewLandingPage = () => {
           <SirenedLogo />
           <div className="flex items-center gap-4">
             <Button
-              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] font-bold"
+              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] rounded-none font-bold"
               onClick={() => {
                 setEmail("");
                 setIsTypeDialogOpen(true);
@@ -313,6 +313,7 @@ const NewLandingPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
+        
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 -z-10"></div>
         <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-none bg-primary/10 blur-3xl -z-10"></div>
         <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-none bg-primary/5 blur-3xl -z-10"></div>
@@ -445,15 +446,7 @@ const NewLandingPage = () => {
               </div>
             </AnimateOnScroll>
 
-            <AnimateOnScroll type="slide-right">
-              <div className="bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
-                <img
-                  src="/images/author-reader-connection.svg"
-                  alt="Author and reader connecting directly"
-                  className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </AnimateOnScroll>
+
           </div>
 
           <div className="my-24 relative overflow-hidden py-10 px-8 rounded-none bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5">
@@ -462,23 +455,16 @@ const NewLandingPage = () => {
 
             <div className="text-center max-w-3xl mx-auto relative z-10">
               <h3 className="text-2xl md:text-3xl font-bold mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white to-primary-foreground">
-                "Storytelling is a conversation between author and reader. We're
-                just removing the noise in between."
+                A better way to read and write
               </h3>
               <p className="text-lg text-primary/80 italic">
-                — Sirened Founder
+               — poopy buttenfarten 2025
               </p>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mt-20">
-            <div className="order-2 md:order-1 bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
-              <img
-                src="/images/author-store.svg"
-                alt="Author-owned bookstore"
-                className="w-full max-w-sm hover:scale-105 transition-transform duration-300"
-              />
-            </div>
+            <div></div>
             <div className="order-1 md:order-2">
               <h3 className="text-2xl font-bold mb-4 text-primary">
                 Any Bookstore Anywhere
