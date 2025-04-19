@@ -7,6 +7,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { dbStorage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { securityService } from "./services/security-service";
 
 declare global {
   namespace Express {
@@ -274,6 +275,34 @@ export function setupAuth(app: Express) {
           return res.status(401).json({ error: "Invalid email/username or password" });
         }
 
+        // Check if verification is needed for this device/IP
+        const verificationNeeded = await securityService.isVerificationNeeded(user.id, req);
+        
+        // If verification is needed, don't log in yet - return a response indicating verification is needed
+        if (verificationNeeded) {
+          // Send verification code via email
+          const verificationSent = await securityService.sendLoginVerification(
+            user.id, 
+            user.email, 
+            req
+          );
+          
+          if (!verificationSent) {
+            return res.status(500).json({ 
+              error: "Failed to send verification code. Please try again." 
+            });
+          }
+          
+          // Return status 202 Accepted to indicate additional verification is needed
+          return res.status(202).json({ 
+            message: "Verification required", 
+            userId: user.id,
+            verificationNeeded: true,
+            email: user.email.replace(/(.{2})(.*)(?=@)/, (_, start, rest) => 
+              start + '*'.repeat(rest.length))  // Mask email address
+          });
+        }
+
         // Check if beta is active
         const isBetaActive = await dbStorage.isBetaActive();
         
@@ -316,7 +345,7 @@ export function setupAuth(app: Express) {
           // If they have used a beta key before, no need to validate again, just log them in normally
         }
         
-        // Login the user
+        // No verification needed and beta check passed, log in the user
         req.login(user, (err) => {
           if (err) {
             return next(err);
@@ -327,6 +356,97 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Login failed" });
+    }
+  });
+  
+  // Endpoint to resend verification code
+  app.post("/api/resend-verification", async (req, res, next) => {
+    try {
+      const { userId, email } = req.body;
+      
+      if (!userId || !email) {
+        return res.status(400).json({ error: "User ID and email are required" });
+      }
+      
+      // Verify the user exists and the email matches
+      const user = await dbStorage.getUser(userId);
+      if (!user || user.email !== email) {
+        return res.status(400).json({ error: "Invalid user or email" });
+      }
+      
+      // Send a new verification code
+      const verificationSent = await securityService.sendLoginVerification(
+        userId,
+        email,
+        req
+      );
+      
+      if (!verificationSent) {
+        return res.status(500).json({ error: "Failed to send verification code" });
+      }
+      
+      return res.status(200).json({ 
+        message: "Verification code sent", 
+        email: email.replace(/(.{2})(.*)(?=@)/, (_, start, rest) => 
+          start + '*'.repeat(rest.length)) // Mask email address
+      });
+    } catch (error) {
+      console.error("Error resending verification code:", error);
+      return res.status(500).json({ error: "Failed to resend verification code" });
+    }
+  });
+  
+  // New endpoint to verify login code
+  app.post("/api/verify-login", async (req, res, next) => {
+    try {
+      const { userId, code } = req.body;
+      
+      if (!userId || !code) {
+        return res.status(400).json({ error: "User ID and verification code are required" });
+      }
+      
+      // Verify the code
+      const isVerified = await securityService.verifyLoginCode(userId, code);
+      
+      if (!isVerified) {
+        return res.status(400).json({ error: "Invalid or expired verification code" });
+      }
+      
+      // Get the user
+      const user = await dbStorage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Check if beta is active and if user has beta access - similar logic to login endpoint
+      const isBetaActive = await dbStorage.isBetaActive();
+      if (isBetaActive) {
+        const hasUsedBetaKey = await dbStorage.hasUserUsedBetaKey(user.id);
+        if (!hasUsedBetaKey) {
+          // User doesn't have beta access, return 403
+          req.login(user, (err) => {
+            if (err) {
+              return next(err);
+            }
+            return res.status(403).json({
+              message: "Thank you for your interest in Sirened! We'll notify you when beta access is available for your account."
+            });
+          });
+          return;
+        }
+      }
+      
+      // Log in the user
+      req.login(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        return res.status(200).json(user);
+      });
+    } catch (error) {
+      console.error("Verification error:", error);
+      res.status(500).json({ error: "Verification failed" });
     }
   });
 
