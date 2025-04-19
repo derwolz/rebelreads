@@ -1024,22 +1024,20 @@ const NewLandingPage = () => {
                 <h3 className="font-bold mb-4">Company</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a
-                      href="#"
+                    <Link
+                      href="/about-us"
                       className="text-muted-foreground hover:text-primary"
                     >
                       About Us
-                    </a>
+                    </Link>
                   </li>
-
-
                   <li>
-                    <a
-                      href="#"
+                    <Link
+                      href="/contact-us"
                       className="text-muted-foreground hover:text-primary"
                     >
                       Contact Us
-                    </a>
+                    </Link>
                   </li>
                 </ul>
               </div>
