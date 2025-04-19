@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { GoogleBetaAuthDialog } from "./google-beta-auth-dialog";
+import { LoginVerificationDialog } from "./login-verification-dialog";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,7 +37,13 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { 
+    user, 
+    loginMutation, 
+    registerMutation, 
+    verificationNeeded, 
+    verificationUserId 
+  } = useAuth();
   const { isBetaActive } = useBeta();
   const [, setLocation] = useLocation();
   const [isGoogleBetaDialogOpen, setIsGoogleBetaDialogOpen] = useState(false);
@@ -74,7 +81,17 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
   };
 
   const handleSuccess = (user: any, isRegistration: boolean) => {
+    // If verification is needed, the auth dialog should stay open
+    // but the verification dialog will appear (controlled by the verificationNeeded state)
+    if (user.verificationNeeded) {
+      // The login mutation handler in useAuth.tsx already sets verificationNeeded and verificationUserId
+      // So we don't need to do anything here, just prevent the auth modal from closing
+      return;
+    }
+
+    // For normal login/registration success, close the auth modal
     onOpenChange(false);
+    
     // Only redirect to /pro if this is a new author registration
     if (isRegistration && user.isAuthor) {
       setLocation("/pro");
@@ -88,7 +105,21 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
         onOpenChange={setIsGoogleBetaDialogOpen} 
       />
       
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      {/* Verification Dialog - shown when login requires verification */}
+      <LoginVerificationDialog 
+        userId={verificationUserId}
+        isOpen={verificationNeeded}
+        onOpenChange={(open) => {
+          // If the dialog is being closed without successful verification,
+          // we need to reset the verification process state
+          if (!open) {
+            // This would be handled by the verifyLoginMutation's onSuccess
+            // So only need to handle the cancel case here
+          }
+        }}
+      />
+      
+      <Dialog open={isOpen && !verificationNeeded} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Welcome Back</DialogTitle>
