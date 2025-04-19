@@ -4,22 +4,22 @@ import { dbStorage } from "../storage";
 import { db } from "../db";
 import { eq, and, inArray } from "drizzle-orm";
 import { 
-  users, 
-  ratings, 
-  reading_status, 
-  rating_preferences, 
-  userBlocks,
+  users,
   bookShelves,
   notes,
-  userGenreViews,
-  viewGenres,
-  verificationCodes,
-  trustedDevices,
-  contentReports,
-  sellers,
+  userBlocks,
   publishers,
-  feedbackTickets
-} from "@shared/schema";
+  sellers,
+  contentReports,
+  feedbackTickets,
+  trustedDevices,
+  verificationCodes,
+  userGenreViews,
+  viewGenres
+} from "../../shared/schema";
+import { ratings } from "../../shared/schema";
+import { reading_status } from "../../shared/schema";
+import { rating_preferences } from "../../shared/schema";
 
 const router = Router();
 
