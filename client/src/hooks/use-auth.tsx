@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useState, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -7,6 +7,7 @@ import {
 import { insertUserSchema, User as SelectUser, InsertUser, LoginData, Author } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { AuthorBetaNotification } from "@/components/author-beta-notification";
 
 // Define types for author status response
 interface AuthorStatus {
@@ -39,6 +40,9 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  
+  // State for the author beta notification
+  const [showAuthorBetaNotification, setShowAuthorBetaNotification] = useState(false);
   
   // Fetch basic user data
   const {
@@ -197,8 +201,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return await res.json();
     },
-    onSuccess: (authorData: Author) => {
-      // Update author status cache and notify the user
+    onSuccess: (response: any) => {
+      // The response may include additional info like beta_promotion status
+      const authorData: Author = response;
+      const betaPromotion = response.beta_promotion === true;
+      
+      // Update author status cache
       queryClient.setQueryData(["/api/author-status"], { 
         isAuthor: true, 
         authorDetails: authorData 
@@ -208,6 +216,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Success!",
         description: "You are now registered as an author.",
       });
+      
+      // Show beta notification if promotion was applied
+      if (betaPromotion) {
+        // Show the beta notification dialog after a brief delay
+        setTimeout(() => {
+          setShowAuthorBetaNotification(true);
+        }, 500);
+      }
       
       // Also invalidate user data to make sure UI updates properly
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
