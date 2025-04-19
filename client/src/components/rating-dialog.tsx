@@ -117,86 +117,155 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-4">
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <label className="text-sm font-medium hover:cursor-help">Enjoyment</label>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Weighted as 30% of the overall rating</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <StarRating
-                rating={ratings.enjoyment}
-                onChange={(value) => setRatings({ ...ratings, enjoyment: value })}
-              />
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center">
+                <label className="text-sm font-medium">Enjoyment</label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="ml-1 text-muted-foreground cursor-help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <div className="max-w-[200px]">
+                        <p className="text-sm">Weighted as 30% of the overall rating</p>
+                        <p className="text-xs text-muted-foreground mt-1">How much you enjoyed the book overall</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <span className="text-sm text-primary font-medium">30%</span>
             </div>
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <label className="text-sm font-medium hover:cursor-help">Writing Style</label>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Weighted as 30% of the overall rating</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <StarRating
-                rating={ratings.writing}
-                onChange={(value) => setRatings({ ...ratings, writing: value })}
-              />
+            <StarRating
+              rating={ratings.enjoyment}
+              onChange={(value) => setRatings({ ...ratings, enjoyment: value })}
+            />
+            
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center">
+                <label className="text-sm font-medium">Writing Style</label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="ml-1 text-muted-foreground cursor-help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <div className="max-w-[200px]">
+                        <p className="text-sm">Weighted as 30% of the overall rating</p>
+                        <p className="text-xs text-muted-foreground mt-1">A measurement of wordchoice, plot, style, overall skill in presenting the book</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <span className="text-sm text-primary font-medium">30%</span>
             </div>
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <label className="text-sm font-medium hover:cursor-help">Themes</label>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Weighted as 20% of the overall rating</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <StarRating
-                rating={ratings.themes}
-                onChange={(value) => setRatings({ ...ratings, themes: value })}
-              />
+            <StarRating
+              rating={ratings.writing}
+              onChange={(value) => setRatings({ ...ratings, writing: value })}
+            />
+            
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center">
+                <label className="text-sm font-medium">Themes</label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="ml-1 text-muted-foreground cursor-help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <div className="max-w-[200px]">
+                        <p className="text-sm">Weighted as 20% of the overall rating</p>
+                        <p className="text-xs text-muted-foreground mt-1">A measurement of the ideas. Are they well developed, novel, and thought-provoking?</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <span className="text-sm text-primary font-medium">20%</span>
             </div>
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <label className="text-sm font-medium hover:cursor-help">Characters</label>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Weighted as 10% of the overall rating</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <StarRating
-                rating={ratings.characters}
-                onChange={(value) => setRatings({ ...ratings, characters: value })}
-              />
+            <StarRating
+              rating={ratings.themes}
+              onChange={(value) => setRatings({ ...ratings, themes: value })}
+            />
+            
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center">
+                <label className="text-sm font-medium">Characters</label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="ml-1 text-muted-foreground cursor-help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <div className="max-w-[200px]">
+                        <p className="text-sm">Weighted as 10% of the overall rating</p>
+                        <p className="text-xs text-muted-foreground mt-1">A measurement of how well characters are developed and portrayed</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <span className="text-sm text-primary font-medium">10%</span>
             </div>
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <label className="text-sm font-medium hover:cursor-help">World Building</label>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Weighted as 10% of the overall rating</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <StarRating
-                rating={ratings.worldbuilding}
-                onChange={(value) => setRatings({ ...ratings, worldbuilding: value })}
-              />
+            <StarRating
+              rating={ratings.characters}
+              onChange={(value) => setRatings({ ...ratings, characters: value })}
+            />
+            
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center">
+                <label className="text-sm font-medium">World Building</label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="ml-1 text-muted-foreground cursor-help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <div className="max-w-[200px]">
+                        <p className="text-sm">Weighted as 10% of the overall rating</p>
+                        <p className="text-xs text-muted-foreground mt-1">How rich and believable is the setting? Is it well integrated with the story?</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <span className="text-sm text-primary font-medium">10%</span>
             </div>
+            <StarRating
+              rating={ratings.worldbuilding}
+              onChange={(value) => setRatings({ ...ratings, worldbuilding: value })}
+            />
           </div>
           <div>
             <div className="flex justify-between">
