@@ -1,21 +1,8 @@
-import { Router } from "express";
-import { z } from "zod";
-import { securityService } from "../services/security-service";
-import { verificationService, VERIFICATION_TYPES } from "../services/verification-service";
+import { Router, Request, Response } from "express";
 import { dbStorage } from "../storage";
+import { securityService } from "../services/security-service";
 
 const router = Router();
-
-// Schema for verification request
-const verifyLoginSchema = z.object({
-  userId: z.number().int().positive(),
-  code: z.string().min(6).max(8)
-});
-
-// Schema for resend code request
-const resendVerificationSchema = z.object({
-  userId: z.number().int().positive()
-});
 
 /**
  * Endpoint to verify a login using a verification code
@@ -36,53 +23,41 @@ const resendVerificationSchema = z.object({
  * 404 - User not found
  * 500 - Server error
  */
-router.post("/verify-login", async (req, res) => {
+router.post("/verify-login", async (req: Request, res: Response) => {
   try {
-    // Validate request
-    const validation = verifyLoginSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ 
-        error: "Invalid request",
-        details: validation.error.format()
-      });
+    const { userId, code } = req.body;
+
+    if (!userId || !code) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const { userId, code } = validation.data;
-
-    // Get user
+    // Get the user
     const user = await dbStorage.getUser(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
     // Verify the code
-    const isValid = await verificationService.verifyCode(
-      userId,
-      code,
-      VERIFICATION_TYPES.LOGIN_VERIFICATION
-    );
-
+    const isValid = await securityService.verifyLoginCode(userId, code);
     if (!isValid) {
       return res.status(401).json({ error: "Invalid verification code" });
     }
 
-    // Add this device as trusted
+    // Mark this device as trusted
     await securityService.trustDeviceForUser(userId, req);
 
-    // Login user
+    // Log the user in
     req.login(user, (err) => {
       if (err) {
         console.error("Login error:", err);
-        return res.status(500).json({ error: "Login failed" });
+        return res.status(500).json({ error: "Failed to log in" });
       }
       
-      // Return user info (without password)
-      const { password, ...userInfo } = user;
-      return res.status(200).json(userInfo);
+      return res.status(200).json(user);
     });
   } catch (error) {
-    console.error("Error verifying login:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Verification error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -103,46 +78,35 @@ router.post("/verify-login", async (req, res) => {
  * 404 - User not found
  * 500 - Server error
  */
-router.post("/resend-verification", async (req, res) => {
+router.post("/resend-verification", async (req: Request, res: Response) => {
   try {
-    // Validate request
-    const validation = resendVerificationSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ 
-        error: "Invalid request",
-        details: validation.error.format()
-      });
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
     }
 
-    const { userId } = validation.data;
-
-    // Get user
+    // Get the user
     const user = await dbStorage.getUser(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Invalidate any existing verification codes
-    await verificationService.invalidateActiveVerificationCodes(
-      userId,
-      VERIFICATION_TYPES.LOGIN_VERIFICATION
-    );
-
-    // Send new verification code
+    // Send a new verification code
     const sent = await securityService.sendLoginVerification(
       userId,
       user.email,
       req
     );
 
-    if (!sent) {
+    if (sent) {
+      return res.status(200).json({ success: true });
+    } else {
       return res.status(500).json({ error: "Failed to send verification code" });
     }
-
-    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Error resending verification code:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Resend verification error:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
