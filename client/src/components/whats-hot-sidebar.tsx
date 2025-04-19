@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { recordLocalImpression, recordLocalClickThrough } from "@/lib/impressionStorage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Star } from "lucide-react";
 
 // Extended interface to include popularity data
 interface PopularBook extends Book {
