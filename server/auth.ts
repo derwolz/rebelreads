@@ -298,7 +298,7 @@ export function setupAuth(app: Express) {
             message: "Verification required", 
             userId: user.id,
             verificationNeeded: true,
-            email: user.email.replace(/(.{2})(.*)(?=@)/, (_, start, rest) => 
+            email: user.email.replace(/(.{2})(.*)(?=@)/, (_: string, start: string, rest: string) => 
               start + '*'.repeat(rest.length))  // Mask email address
           });
         }
@@ -387,7 +387,7 @@ export function setupAuth(app: Express) {
       
       return res.status(200).json({ 
         message: "Verification code sent", 
-        email: email.replace(/(.{2})(.*)(?=@)/, (_, start, rest) => 
+        email: email.replace(/(.{2})(.*)(?=@)/, (_: string, start: string, rest: string) => 
           start + '*'.repeat(rest.length)) // Mask email address
       });
     } catch (error) {
