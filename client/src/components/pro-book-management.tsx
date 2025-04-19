@@ -24,7 +24,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { BookCsvUploadWizard } from "@/components/book-csv-upload-wizard";
 import {
   Tooltip,
   TooltipContent,
@@ -71,7 +70,7 @@ export function ProBookManagement() {
 
   const handleCardClick = (e: React.MouseEvent, bookId: number) => {
     // Don't navigate if clicking on buttons
-    if ((e.target as HTMLElement).closest('button')) {
+    if ((e.target as HTMLElement).closest("button")) {
       return;
     }
     navigate(`/books/${bookId}`);
@@ -79,7 +78,7 @@ export function ProBookManagement() {
 
   // Process ratings data
   const bookRatings = new Map<number, Rating[]>();
-  allRatings?.forEach(rating => {
+  allRatings?.forEach((rating) => {
     const ratings = bookRatings.get(rating.bookId) || [];
     ratings.push(rating);
     bookRatings.set(rating.bookId, ratings);
@@ -96,21 +95,36 @@ export function ProBookManagement() {
       <CardContent>
         <div className="space-y-2">
           <BookUploadDialog />
-          <BookCsvUploadWizard />
         </div>
         <div className="mt-8 grid gap-6">
           {authorBooks?.map((book) => {
             const ratings = bookRatings.get(book.id) || [];
 
-            const averageRatings = ratings.length ? {
-              // Using straight average calculation for Pro Book Management
-              overall: ratings.reduce((acc, r) => acc + calculateStraightAverageRating(r), 0) / ratings.length,
-              enjoyment: ratings.reduce((acc, r) => acc + r.enjoyment, 0) / ratings.length,
-              writing: ratings.reduce((acc, r) => acc + r.writing, 0) / ratings.length,
-              themes: ratings.reduce((acc, r) => acc + r.themes, 0) / ratings.length,
-              characters: ratings.reduce((acc, r) => acc + r.characters, 0) / ratings.length,
-              worldbuilding: ratings.reduce((acc, r) => acc + r.worldbuilding, 0) / ratings.length,
-            } : null;
+            const averageRatings = ratings.length
+              ? {
+                  // Using straight average calculation for Pro Book Management
+                  overall:
+                    ratings.reduce(
+                      (acc, r) => acc + calculateStraightAverageRating(r),
+                      0,
+                    ) / ratings.length,
+                  enjoyment:
+                    ratings.reduce((acc, r) => acc + r.enjoyment, 0) /
+                    ratings.length,
+                  writing:
+                    ratings.reduce((acc, r) => acc + r.writing, 0) /
+                    ratings.length,
+                  themes:
+                    ratings.reduce((acc, r) => acc + r.themes, 0) /
+                    ratings.length,
+                  characters:
+                    ratings.reduce((acc, r) => acc + r.characters, 0) /
+                    ratings.length,
+                  worldbuilding:
+                    ratings.reduce((acc, r) => acc + r.worldbuilding, 0) /
+                    ratings.length,
+                }
+              : null;
 
             return (
               <div
@@ -120,18 +134,26 @@ export function ProBookManagement() {
               >
                 <div className="flex items-center space-x-4 mb-3 sm:mb-0">
                   <img
-                    src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
+                    src={
+                      book.images?.find((img) => img.imageType === "mini")
+                        ?.imageUrl || "/images/placeholder-book.png"
+                    }
                     alt={book.title}
                     className="w-12 h-18 sm:w-16 sm:h-24 object-cover rounded"
                   />
                   <div className="space-y-1 sm:space-y-2">
-                    <h3 className="font-semibold text-sm sm:text-base">{book.title}</h3>
+                    <h3 className="font-semibold text-sm sm:text-base">
+                      {book.title}
+                    </h3>
                     <div className="flex items-center gap-1 sm:gap-2">
                       {averageRatings ? (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                              <div
+                                className="flex items-center gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <StarRating
                                   rating={averageRatings.overall}
                                   readOnly
@@ -144,11 +166,18 @@ export function ProBookManagement() {
                             </TooltipTrigger>
                             <TooltipContent className="w-[200px]">
                               <div className="space-y-2">
-                                <p className="text-xs text-muted-foreground mb-2">Showing straight average (not preference-weighted)</p>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Showing straight average (not
+                                  preference-weighted)
+                                </p>
                                 <div className="flex justify-between items-center">
                                   <span className="text-sm">Enjoyment</span>
                                   <div className="flex items-center gap-2">
-                                    <StarRating rating={averageRatings.enjoyment} readOnly size="sm" />
+                                    <StarRating
+                                      rating={averageRatings.enjoyment}
+                                      readOnly
+                                      size="sm"
+                                    />
                                     <span className="text-xs text-muted-foreground">
                                       ({averageRatings.enjoyment.toFixed(2)})
                                     </span>
@@ -157,7 +186,11 @@ export function ProBookManagement() {
                                 <div className="flex justify-between items-center">
                                   <span className="text-sm">Writing</span>
                                   <div className="flex items-center gap-2">
-                                    <StarRating rating={averageRatings.writing} readOnly size="sm" />
+                                    <StarRating
+                                      rating={averageRatings.writing}
+                                      readOnly
+                                      size="sm"
+                                    />
                                     <span className="text-xs text-muted-foreground">
                                       ({averageRatings.writing.toFixed(2)})
                                     </span>
@@ -166,7 +199,11 @@ export function ProBookManagement() {
                                 <div className="flex justify-between items-center">
                                   <span className="text-sm">Themes</span>
                                   <div className="flex items-center gap-2">
-                                    <StarRating rating={averageRatings.themes} readOnly size="sm" />
+                                    <StarRating
+                                      rating={averageRatings.themes}
+                                      readOnly
+                                      size="sm"
+                                    />
                                     <span className="text-xs text-muted-foreground">
                                       ({averageRatings.themes.toFixed(2)})
                                     </span>
@@ -175,18 +212,29 @@ export function ProBookManagement() {
                                 <div className="flex justify-between items-center">
                                   <span className="text-sm">Characters</span>
                                   <div className="flex items-center gap-2">
-                                    <StarRating rating={averageRatings.characters} readOnly size="sm" />
+                                    <StarRating
+                                      rating={averageRatings.characters}
+                                      readOnly
+                                      size="sm"
+                                    />
                                     <span className="text-xs text-muted-foreground">
                                       ({averageRatings.characters.toFixed(2)})
                                     </span>
                                   </div>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm">World Building</span>
+                                  <span className="text-sm">
+                                    World Building
+                                  </span>
                                   <div className="flex items-center gap-2">
-                                    <StarRating rating={averageRatings.worldbuilding} readOnly size="sm" />
+                                    <StarRating
+                                      rating={averageRatings.worldbuilding}
+                                      readOnly
+                                      size="sm"
+                                    />
                                     <span className="text-xs text-muted-foreground">
-                                      ({averageRatings.worldbuilding.toFixed(2)})
+                                      ({averageRatings.worldbuilding.toFixed(2)}
+                                      )
                                     </span>
                                   </div>
                                 </div>
@@ -195,16 +243,23 @@ export function ProBookManagement() {
                           </Tooltip>
                         </TooltipProvider>
                       ) : (
-                        <span className="text-sm text-muted-foreground">No ratings yet</span>
+                        <span className="text-sm text-muted-foreground">
+                          No ratings yet
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 mt-2 sm:mt-0" onClick={e => e.stopPropagation()}>
+                <div
+                  className="flex justify-end gap-2 mt-2 sm:mt-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <BookUploadDialog book={book} />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="h-9">Delete</Button>
+                      <Button variant="destructive" size="sm" className="h-9">
+                        Delete
+                      </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-md">
                       <AlertDialogHeader>
@@ -215,7 +270,9 @@ export function ProBookManagement() {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                        <AlertDialogCancel className="mt-2 sm:mt-0">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="mt-2 sm:mt-0">
+                          Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteBookMutation.mutate(book.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
