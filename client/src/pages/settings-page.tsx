@@ -32,7 +32,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, PanelLeft, Menu } from "lucide-react";
+import { GripVertical, Trash2, PanelLeft, Menu, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -61,6 +61,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { AppearanceSettings } from "@/components/appearance-settings";
 import { ContentFiltersSettings } from "@/components/content-filters-settings";
 import { BookShelfSettings } from "@/components/book-shelf-settings";
@@ -136,7 +137,23 @@ export default function SettingsPage() {
   const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Initialize with localStorage value or default to false
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    // Get value from localStorage if available
+    const savedState = localStorage.getItem('settings-sidebar-collapsed');
+    return savedState ? savedState === 'true' : false;
+  });
+  
+  // Save collapsed state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('settings-sidebar-collapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+  
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location]);
 
 
 
@@ -731,40 +748,54 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)]">
+      {/* Mobile Sidebar */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetContent side="left" className="w-[240px] p-0">
+          <div className="h-full pt-8">
+            <SettingsSidebar />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <PanelLeft className="h-6 w-6" />
-        </Button>
       </div>
-      <div className="flex gap-8">
+      
+      <div className="flex gap-4 md:gap-6 min-h-[calc(100vh-8rem)]">
         {/* Desktop Sidebar */}
-        <div className="hidden md:block">
-          <SettingsSidebar 
-            isMobile={false} 
-            collapsed={isSidebarCollapsed}
-            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          />
+        <div 
+          className={`hidden md:block ${isSidebarCollapsed ? 'w-[90px]' : 'w-64'} transition-all duration-300 ease-in-out relative`}
+        >
+          <div className="absolute right-0 top-0 z-10 transform translate-x-1/2 mt-4">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full h-7 w-7 bg-background border-r shadow-sm"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+          <div className="border-r bg-background/60 h-full px-4 py-6 border-border">
+            <SettingsSidebar collapsed={isSidebarCollapsed} />
+          </div>
         </div>
-
-        {/* Mobile Sidebar with framer motion drag */}
-        <SettingsSidebar 
-          isMobile={true} 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)} 
-        />
-
-        {/* Main Content */}
-        <div className={cn(
-          "flex-1 min-w-0",
-          isSidebarCollapsed && "md:pl-4" // Add a bit more space when sidebar is collapsed
-        )}>
+        
+        <div className="flex-1 min-w-0">
+          {/* Mobile menu button - only visible on mobile */}
+          <div className="md:hidden mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-4 w-4" />
+              <span>Menu</span>
+            </Button>
+          </div>
+          
           {content}
         </div>
       </div>

@@ -13,7 +13,23 @@ export function HomepageSettingsPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // Initialize with localStorage value or default to false
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    // Get value from localStorage if available
+    const savedState = localStorage.getItem('settings-sidebar-collapsed');
+    return savedState ? savedState === 'true' : false;
+  });
+  
+  // Save collapsed state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('settings-sidebar-collapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+  
+  // Close mobile sidebar when route changes
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [_]);
 
   // Redirect to login if not logged in
   useEffect(() => {

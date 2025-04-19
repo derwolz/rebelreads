@@ -74,7 +74,6 @@ interface SettingsSidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
 }
 
 export function SettingsSidebar({
@@ -82,12 +81,11 @@ export function SettingsSidebar({
   isOpen,
   onClose,
   collapsed = false,
-  onToggleCollapse,
 }: SettingsSidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
 
-  // Handle drag end event
+  // Handle drag end event for mobile (not used with Sheet component)
   const handleDragEnd = (_: any, info: PanInfo) => {
     // If dragged to the left (negative x value), close the sidebar
     if (info.offset.x < -50) {
@@ -95,13 +93,13 @@ export function SettingsSidebar({
     }
   };
 
-  const renderNavItems = (isCollapsed: boolean) => (
-    <>
+  return (
+    <nav className={cn("space-y-3", collapsed ? "w-full" : "w-full")}>
       <NavItem
         href="/settings"
         active={location === "/settings"}
         icon={<User className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Profile
       </NavItem>
@@ -109,7 +107,7 @@ export function SettingsSidebar({
         href="/settings/account"
         active={location === "/settings/account"}
         icon={<Settings className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Account
       </NavItem>
@@ -117,7 +115,7 @@ export function SettingsSidebar({
         href="/settings/appearance"
         active={location === "/settings/appearance"}
         icon={<Monitor className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Appearance
       </NavItem>
@@ -125,7 +123,7 @@ export function SettingsSidebar({
         href="/settings/rating-preferences"
         active={location === "/settings/rating-preferences"}
         icon={<Star className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Rating Preferences
       </NavItem>
@@ -133,7 +131,7 @@ export function SettingsSidebar({
         href="/settings/genre-preferences"
         active={location === "/settings/genre-preferences"}
         icon={<BookOpen className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Genre Preferences
       </NavItem>
@@ -141,7 +139,7 @@ export function SettingsSidebar({
         href="/settings/homepage"
         active={location === "/settings/homepage"}
         icon={<LayoutGrid className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Homepage Layout
       </NavItem>
@@ -149,7 +147,7 @@ export function SettingsSidebar({
         href="/settings/filters"
         active={location === "/settings/filters"}
         icon={<Filter className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Content Filters
       </NavItem>
@@ -157,80 +155,10 @@ export function SettingsSidebar({
         href="/settings/book-shelf"
         active={location === "/settings/book-shelf"}
         icon={<BookOpenCheck className="h-4 w-4" />}
-        collapsed={isCollapsed}
+        collapsed={collapsed}
       >
         Book Shelves
       </NavItem>
-    </>
-  );
-
-  // For desktop, render a collapsible nav
-  if (!isMobile) {
-    return (
-      <div className={cn(
-        "border-r border-border h-full flex flex-col", 
-        collapsed ? "w-12" : "w-60"
-      )}>
-        <div className="p-2 flex justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className="h-8 w-8"
-          >
-            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </Button>
-        </div>
-        <nav className="space-y-2 flex-1 px-1">
-          {renderNavItems(collapsed)}
-        </nav>
-      </div>
-    );
-  }
-
-  // For mobile, render a sidebar with animations and drag-to-close functionality
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop overlay */}
-          <motion.div
-            className="fixed inset-0 bg-black/20 z-40 md:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-
-          {/* Sidebar container with drag functionality */}
-          <motion.div
-            className="fixed inset-y-0 left-0 w-64 bg-background border-r z-50 md:hidden"
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.1}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="h-full  overflow-y-auto pt-16 px-4">
-              <div className="mb-4 flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onClose}
-                  className="mb-2"
-                >
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              </div>
-              <nav className="space-y-2">{renderNavItems(false)}</nav>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </nav>
   );
 }
