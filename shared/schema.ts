@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -1371,6 +1371,25 @@ export const insertVerificationCodeSchema = createInsertSchema(verificationCodes
 
 export type VerificationCode = typeof verificationCodes.$inferSelect;
 export type InsertVerificationCode = z.infer<typeof insertVerificationCodeSchema>;
+
+// Trusted devices table for login verification
+export const trustedDevices = pgTable("trusted_devices", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  ipAddress: text("ip_address").notNull(), // IP address of the device
+  userAgent: text("user_agent").notNull(), // User agent of the device
+  fingerprint: text("fingerprint").notNull(), // Hash of IP+UserAgent
+  lastUsed: timestamp("last_used").notNull().defaultNow(), // When the device was last used
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertTrustedDeviceSchema = createInsertSchema(trustedDevices).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type TrustedDevice = typeof trustedDevices.$inferSelect;
+export type InsertTrustedDevice = z.infer<typeof insertTrustedDeviceSchema>;
 
 export type BookShelf = typeof bookShelves.$inferSelect;
 export type InsertBookShelf = z.infer<typeof insertBookShelfSchema>;

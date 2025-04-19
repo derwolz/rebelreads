@@ -1,19 +1,19 @@
-import { Request } from 'express';
-import { db } from '../db';
-import { users, verificationCodes } from '@shared/schema';
-import { verificationService, VERIFICATION_TYPES } from './verification-service';
-import { eq, and } from 'drizzle-orm';
+import { dbStorage } from "../storage";
+import { verificationService, VERIFICATION_TYPES } from "./verification-service";
+import { Request } from "express";
+import crypto from "crypto";
 
 /**
- * Service for handling security operations like browser fingerprinting
+ * SecurityService - Handles device verification and security-related tasks
  */
-export class SecurityService {
+class SecurityService {
   private static instance: SecurityService;
-
+  
+  // Private constructor to enforce the singleton pattern
   private constructor() {}
-
+  
   /**
-   * Gets the singleton instance of SecurityService
+   * Get the singleton instance of SecurityService
    */
   public static getInstance(): SecurityService {
     if (!SecurityService.instance) {
@@ -21,144 +21,207 @@ export class SecurityService {
     }
     return SecurityService.instance;
   }
-
+  
   /**
-   * Get the IP address from the request object
-   * @param req Express request object
-   * @returns IP address string
-   */
-  public getIpAddress(req: Request): string {
-    // Get IP from X-Forwarded-For header or from connection
-    const forwarded = req.headers['x-forwarded-for'] as string;
-    const ip = forwarded 
-      ? forwarded.split(',')[0] 
-      : req.socket.remoteAddress || 'unknown';
-    return ip;
-  }
-
-  /**
-   * Get user agent string from request
-   * @param req Express request object
-   * @returns User agent string
-   */
-  public getUserAgent(req: Request): string {
-    return req.headers['user-agent'] || 'unknown';
-  }
-
-  /**
-   * Create a fingerprint for the client
-   * @param req Express request object
-   * @returns Fingerprint object
-   */
-  public createFingerprint(req: Request): { ipAddress: string; userAgent: string } {
-    return {
-      ipAddress: this.getIpAddress(req),
-      userAgent: this.getUserAgent(req)
-    };
-  }
-
-  /**
-   * Check if verification is needed based on the client fingerprint
-   * @param userId User ID
-   * @param req Express request object
-   * @returns True if verification needed, false otherwise
+   * Checks if verification is needed for a login request
+   * by comparing the current device/IP against trusted devices
    */
   public async isVerificationNeeded(userId: number, req: Request): Promise<boolean> {
     try {
-      // Get user record
-      const userResults = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      if (!userResults.length) {
-        console.error('User not found:', userId);
-        return true; // Require verification if user not found for safety
+      // Get the IP address and user agent from the request
+      const ipAddress = this.getIpAddress(req);
+      const userAgent = req.headers['user-agent'] || '';
+      
+      // Check if this device is already trusted for this user
+      const isTrustedDevice = await this.isDeviceTrusted(userId, ipAddress, userAgent);
+      
+      // If the device is trusted, no verification is needed
+      if (isTrustedDevice) {
+        return false;
       }
       
-      // Get finger print info
-      const fingerprint = this.createFingerprint(req);
+      // For new devices/IPs, verification is needed
+      return true;
+    } catch (error) {
+      console.error("Error checking if verification is needed:", error);
+      // Default to requiring verification if we can't determine trust status
+      return true;
+    }
+  }
+  
+  /**
+   * Send a login verification code via email
+   */
+  public async sendLoginVerification(
+    userId: number, 
+    userEmail: string, 
+    req: Request
+  ): Promise<boolean> {
+    try {
+      // Get IP and user agent
+      const ipAddress = this.getIpAddress(req);
+      const userAgent = req.headers['user-agent'] || '';
       
-      // Get most recent successful verification codes for this user
-      const successfulVerifications = await db
-        .select()
-        .from(verificationCodes)
-        .where(
-          and(
-            eq(verificationCodes.userId, userId),
-            eq(verificationCodes.type, VERIFICATION_TYPES.LOGIN_VERIFICATION),
-            eq(verificationCodes.isUsed, true),
-            eq(verificationCodes.ipAddress, fingerprint.ipAddress),
-            eq(verificationCodes.userAgent, fingerprint.userAgent)
-          )
-        )
-        .orderBy(verificationCodes.usedAt, 'desc')
-        .limit(1);
+      // Create and send a verification code
+      const codeCreated = await verificationService.createAndSendVerificationCode(
+        userId,
+        userEmail,
+        VERIFICATION_TYPES.LOGIN_VERIFICATION,
+        { ipAddress, userAgent }
+      );
       
-      // If we found a matching verification from this device/location, no need to verify again
-      if (successfulVerifications.length > 0) {
-        // If the verification is recent (within last 30 days), no need to verify again
-        const lastVerification = successfulVerifications[0];
-        const lastVerifiedDate = lastVerification.usedAt;
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return codeCreated ? true : false;
+    } catch (error) {
+      console.error("Error sending login verification:", error);
+      return false;
+    }
+  }
+  
+  /**
+   * Adds a trusted device for a user
+   */
+  public async trustDeviceForUser(userId: number, req: Request): Promise<boolean> {
+    try {
+      const ipAddress = this.getIpAddress(req);
+      const userAgent = req.headers['user-agent'] || '';
+      
+      // Generate a fingerprint for this device/IP combination
+      const deviceFingerprint = this.generateDeviceFingerprint(ipAddress, userAgent);
+      
+      // Store the trusted device in the database
+      await dbStorage.addTrustedDevice(userId, {
+        ipAddress,
+        userAgent,
+        fingerprint: deviceFingerprint,
+        lastUsed: new Date()
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error adding trusted device:", error);
+      return false;
+    }
+  }
+  
+  /**
+   * Checks if a device is trusted for a user
+   */
+  private async isDeviceTrusted(
+    userId: number, 
+    ipAddress: string, 
+    userAgent: string
+  ): Promise<boolean> {
+    try {
+      // Get trusted devices for this user
+      const trustedDevices = await dbStorage.getTrustedDevicesForUser(userId);
+      
+      if (!trustedDevices || trustedDevices.length === 0) {
+        return false;
+      }
+      
+      // Generate fingerprint for current device
+      const deviceFingerprint = this.generateDeviceFingerprint(ipAddress, userAgent);
+      
+      // Check if the current fingerprint matches any trusted device
+      const isTrusted = trustedDevices.some(device => {
+        // Check for exact fingerprint match
+        if (device.fingerprint === deviceFingerprint) {
+          return true;
+        }
         
-        if (lastVerifiedDate && lastVerifiedDate > thirtyDaysAgo) {
-          return false; // No verification needed if verified within last 30 days
+        // If not an exact match, check for IP match within the same subnet
+        // This helps when IP addresses change slightly but are in the same network
+        if (this.isSameSubnet(device.ipAddress, ipAddress) && 
+            this.isSimilarUserAgent(device.userAgent, userAgent)) {
+          return true;
+        }
+        
+        return false;
+      });
+      
+      return isTrusted;
+    } catch (error) {
+      console.error("Error checking if device is trusted:", error);
+      // Default to untrusted if there's an error
+      return false;
+    }
+  }
+  
+  /**
+   * Generate a fingerprint for a device based on IP and User-Agent
+   */
+  private generateDeviceFingerprint(ipAddress: string, userAgent: string): string {
+    const data = `${ipAddress}|${userAgent}`;
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+  
+  /**
+   * Check if two IPs are in the same subnet (simplified)
+   */
+  private isSameSubnet(ip1: string, ip2: string): boolean {
+    // Simple check for first three octets matching
+    // This is a simplification; real implementation would be more sophisticated
+    const parts1 = ip1.split('.');
+    const parts2 = ip2.split('.');
+    
+    if (parts1.length !== 4 || parts2.length !== 4) {
+      return false;
+    }
+    
+    // Check if first two parts match (Class B network)
+    return parts1[0] === parts2[0] && parts1[1] === parts2[1];
+  }
+  
+  /**
+   * Check if two user agents are similar
+   */
+  private isSimilarUserAgent(ua1: string, ua2: string): boolean {
+    // Get the browser and OS info from user agents
+    const getBrowserInfo = (ua: string) => {
+      // Very simple extraction of major browser and OS identifiers
+      const browserIdentifiers = ['Chrome', 'Firefox', 'Safari', 'Edge', 'MSIE', 'Opera'];
+      const osIdentifiers = ['Windows', 'Mac', 'iPhone', 'iPad', 'Android', 'Linux'];
+      
+      let browser = '';
+      let os = '';
+      
+      for (const id of browserIdentifiers) {
+        if (ua.includes(id)) {
+          browser = id;
+          break;
         }
       }
       
-      // In all other cases, verification is needed
-      return true;
-    } catch (error) {
-      console.error('Error checking if verification needed:', error);
-      return true; // Default to requiring verification on error
-    }
+      for (const id of osIdentifiers) {
+        if (ua.includes(id)) {
+          os = id;
+          break;
+        }
+      }
+      
+      return { browser, os };
+    };
+    
+    const info1 = getBrowserInfo(ua1);
+    const info2 = getBrowserInfo(ua2);
+    
+    // Consider similar if browser and OS match
+    return info1.browser === info2.browser && info1.os === info2.os;
   }
-
+  
   /**
-   * Send a verification code for login from new device/location
-   * @param userId User ID
-   * @param email User email
-   * @param req Express request object
-   * @returns True if successfully sent, false otherwise
+   * Gets the client IP address from a request
    */
-  public async sendLoginVerification(userId: number, email: string, req: Request): Promise<boolean> {
-    try {
-      const fingerprint = this.createFingerprint(req);
-      
-      const verificationCode = await verificationService.createAndSendVerificationCode(
-        userId,
-        email,
-        VERIFICATION_TYPES.LOGIN_VERIFICATION,
-        fingerprint.ipAddress,
-        fingerprint.userAgent
-      );
-      
-      return !!verificationCode;
-    } catch (error) {
-      console.error('Error sending login verification:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Verify a login verification code
-   * @param userId User ID
-   * @param code Verification code
-   * @returns True if verified, false otherwise
-   */
-  public async verifyLoginCode(userId: number, code: string): Promise<boolean> {
-    try {
-      const verificationCode = await verificationService.verifyCode(
-        userId,
-        code,
-        VERIFICATION_TYPES.LOGIN_VERIFICATION
-      );
-      
-      return !!verificationCode;
-    } catch (error) {
-      console.error('Error verifying login code:', error);
-      return false;
-    }
+  private getIpAddress(req: Request): string {
+    // Check various headers for the IP
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = forwarded ? 
+      (typeof forwarded === 'string' ? forwarded.split(',')[0] : forwarded[0]) : 
+      req.socket.remoteAddress;
+    
+    return ip || '0.0.0.0';
   }
 }
 
-// Export singleton instance
+// Export the singleton instance
 export const securityService = SecurityService.getInstance();

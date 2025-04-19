@@ -12,6 +12,7 @@ import { FeedbackStorage } from "./storage/feedback";
 import { SellerStorage } from "./storage/seller";
 import { FilterStorage } from "./storage/filters";
 import { ContentReportStorage } from "./storage/content-reports";
+import { SecurityStorage } from "./storage/security";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -28,6 +29,7 @@ const feedbackStorage = new FeedbackStorage();
 const sellerStorage = new SellerStorage();
 const filterStorage = new FilterStorage();
 const contentReportStorage = new ContentReportStorage();
+const securityStorage = new SecurityStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -260,6 +262,16 @@ export const dbStorage = {
   createContentReport: contentReportStorage.createContentReport.bind(contentReportStorage),
   updateContentReportStatus: contentReportStorage.updateContentReportStatus.bind(contentReportStorage),
   deleteContentReport: contentReportStorage.deleteContentReport.bind(contentReportStorage),
+  
+  // Security and verification
+  createVerificationCode: securityStorage.createVerificationCode.bind(securityStorage),
+  getActiveVerificationCode: securityStorage.getActiveVerificationCode.bind(securityStorage),
+  markVerificationCodeAsUsed: securityStorage.markVerificationCodeAsUsed.bind(securityStorage),
+  invalidateVerificationCodes: securityStorage.invalidateVerificationCodes.bind(securityStorage),
+  addTrustedDevice: securityStorage.addTrustedDevice.bind(securityStorage),
+  getTrustedDevicesForUser: securityStorage.getTrustedDevicesForUser.bind(securityStorage),
+  removeTrustedDevice: securityStorage.removeTrustedDevice.bind(securityStorage),
+  updateTrustedDeviceLastUsed: securityStorage.updateTrustedDeviceLastUsed.bind(securityStorage),
 };
 
 // Export interfaces from their respective modules
@@ -276,6 +288,7 @@ export type { IHomepageLayoutStorage } from "./storage/homepage-layout";
 export type { IFeedbackStorage } from "./storage/feedback";
 export type { ISellerStorage } from "./storage/seller";
 export type { IContentReportStorage } from "./storage/content-reports";
+export type { ISecurityStorage } from "./storage/security";
 
 // Re-export storage classes
 export {
