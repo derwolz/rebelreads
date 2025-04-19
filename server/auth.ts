@@ -173,6 +173,9 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      // Import the email validation utilities
+      const { normalizeEmail, isDisposableEmail, isSuspiciousLocalPart } = await import("@shared/utils/email-validator");
+      
       // Check if beta is active
       const isBetaActive = await dbStorage.isBetaActive();
       
@@ -195,8 +198,27 @@ export function setupAuth(app: Express) {
         }
       }
       
-      // Check for existing email
-      const existingEmail = await dbStorage.getUserByEmail(req.body.email);
+      // Server-side email validation for added security
+      const email = req.body.email;
+      if (!email) {
+        return res.status(400).send("Email is required");
+      }
+      
+      // Normalize the email to catch different aliases
+      const normalizedEmail = normalizeEmail(email.toLowerCase());
+      
+      // Check for disposable/temporary emails
+      if (isDisposableEmail(normalizedEmail)) {
+        return res.status(400).send("Disposable or temporary email addresses are not allowed");
+      }
+      
+      // Check for suspicious email patterns
+      if (isSuspiciousLocalPart(normalizedEmail)) {
+        return res.status(400).send("This email address appears to be auto-generated");
+      }
+      
+      // Check for existing email using normalized version
+      const existingEmail = await dbStorage.getUserByEmail(normalizedEmail);
       if (existingEmail) {
         return res.status(400).send("Email already exists");
       }

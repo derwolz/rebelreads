@@ -129,10 +129,15 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    // Ensure email and username are stored in lowercase
+    // Import the normalizeEmail function to handle aliases
+    const { normalizeEmail } = await import("@shared/utils/email-validator");
+    
+    // Normalize email to handle aliases (gmail dots, plus addressing, etc.)
+    // This helps prevent multiple accounts with the same effective email
+    // Also ensure email and username are stored in lowercase
     const normalizedUser = {
       ...insertUser,
-      email: insertUser.email?.toLowerCase(),
+      email: normalizeEmail(insertUser.email?.toLowerCase() || ""),
       username: insertUser.username?.toLowerCase()
     };
     
@@ -141,10 +146,14 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async updateUser(id: number, data: Partial<UpdateProfile>): Promise<User> {
-    // Ensure email and username are stored in lowercase if they're being updated
+    // Import the normalizeEmail function to handle aliases
+    const { normalizeEmail } = await import("@shared/utils/email-validator");
+    
+    // Normalize email address to handle aliases when updating
+    // Also ensure email and username are stored in lowercase if they're being updated
     const normalizedData = {
       ...data,
-      email: data.email ? data.email.toLowerCase() : undefined,
+      email: data.email ? normalizeEmail(data.email.toLowerCase()) : undefined,
       username: data.username ? data.username.toLowerCase() : undefined
     };
     

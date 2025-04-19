@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { validateEmail, isDisposableEmail, isSuspiciousLocalPart } from './utils/email-validator';
 
 export const SOCIAL_MEDIA_PLATFORMS = [
   "Twitter",
@@ -464,7 +465,20 @@ export const insertUserSchema = createInsertSchema(users).pick({
   provider: true,
   providerId: true,
 }).extend({
-  email: z.string().email("Invalid email format"),
+  email: z.string()
+    .email("Invalid email format")
+    .refine((email) => {
+      // Prevent disposable/temporary emails
+      return !isDisposableEmail(email);
+    }, {
+      message: "Disposable or temporary email addresses are not allowed"
+    })
+    .refine((email) => {
+      // Check for suspicious auto-generated emails
+      return !isSuspiciousLocalPart(email);
+    }, {
+      message: "This email address appears to be auto-generated"
+    }),
   password: z.string().min(8, "Password must be at least 8 characters").nullable(),
   provider: z.string().nullable().optional(),
   providerId: z.string().nullable().optional(),
@@ -493,7 +507,20 @@ export const updateProfileSchema = createInsertSchema(users).pick({
   providerId: true,
 }).extend({
   username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Invalid email format"),
+  email: z.string()
+    .email("Invalid email format")
+    .refine((email) => {
+      // Prevent disposable/temporary emails
+      return !isDisposableEmail(email);
+    }, {
+      message: "Disposable or temporary email addresses are not allowed"
+    })
+    .refine((email) => {
+      // Check for suspicious auto-generated emails
+      return !isSuspiciousLocalPart(email);
+    }, {
+      message: "This email address appears to be auto-generated"
+    }),
   currentPassword: z.string().optional(),
   newPassword: z.string()
     .min(8, "Password must be at least 8 characters")
