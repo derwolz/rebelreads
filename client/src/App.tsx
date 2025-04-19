@@ -101,6 +101,7 @@ function Router() {
         {/* Public routes that require authentication in beta mode */}
         <Route path="/" component={HomeComponent} />
         <Route path="/books/:id" component={BookDetails} />
+        <Route path="/book-details" component={BookDetails} />
         <Route path="/search/books" component={SearchBooksPage} />
         <Route path="/search/authors" component={SearchAuthorsPage} />
         <Route path="/authors/:id" component={AuthorPage} />

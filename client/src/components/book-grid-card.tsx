@@ -168,7 +168,17 @@ export function BookGridCard({ book }: { book: Book }) {
     // Record click-through in local storage before navigation
     // This will also trigger an immediate sync with the server
     recordLocalClickThrough(book.id, "grid", window.location.pathname);
-    navigate(`/books/${book.id}`);
+    
+    // Use anti-scraping link format when navigating to book details
+    if (book.authorName) {
+      // Encode both authorName and bookTitle for the URL
+      const encodedAuthor = encodeURIComponent(book.authorName);
+      const encodedTitle = encodeURIComponent(book.title);
+      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
+    } else {
+      // Fallback to traditional ID-based URL if authorName is not available
+      navigate(`/books/${book.id}`);
+    }
   };
 
   return (
