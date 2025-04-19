@@ -73,10 +73,6 @@ export const LoginVerificationDialog = ({
       });
 
       // If we get here, verification was successful
-      // The mutation's onSuccess handler already:
-      // 1. Updated the user in the queryClient
-      // 2. Reset the verification state in useAuth
-      
       // Get the user from the cache
       const user = queryClient.getQueryData(["/api/user"]);
       
@@ -85,13 +81,10 @@ export const LoginVerificationDialog = ({
         onSuccess(user);
       }
       
-      // FORCE CLOSE THE DIALOG
+      // Close the dialog normally
       if (typeof onClose === 'function') {
         onClose();
       }
-      
-      // As an absolute last resort, if the dialog somehow doesn't close
-      setTimeout(() => window.location.reload(), 1000);
       
     } catch (error) {
       console.error("Verification error:", error);

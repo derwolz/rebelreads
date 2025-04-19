@@ -43,7 +43,9 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
     loginMutation, 
     registerMutation, 
     verificationNeeded, 
+    setVerificationNeeded,
     verificationUserId,
+    setVerificationUserId,
     verifyLoginMutation
   } = useAuth();
   const { isBetaActive } = useBeta();
@@ -114,22 +116,12 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           isOpen={verificationNeeded}
           maskedEmail="your.email@example.com"
           onClose={() => {
-            // RESET VERIFICATION STATE IMMEDIATELY
+            // Simply reset the verification state
             setVerificationNeeded(false);
             setVerificationUserId(null);
-            
-            // Reset request state
-            loginMutation.reset();
-            
-            // Clean up auth state by invalidating all queries
-            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
-            
-            // NUCLEAR OPTION: Force full page reload as last resort
-            setTimeout(() => window.location.reload(), 300);
           }}
           onSuccess={(user: any) => {
-            // On success we MUST forcefully close the dialog
+            // On success, reset verification state and call the success handler
             setVerificationNeeded(false);
             setVerificationUserId(null);
             handleSuccess(user, false);
