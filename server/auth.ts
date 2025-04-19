@@ -624,6 +624,17 @@ export function setupAuth(app: Express) {
         // Successful authentication, redirect to appropriate page
         console.log("Authentication successful, user is author:", req.user?.isAuthor);
         
+        // Always trust the device for Google auth users since they're already verified by Google
+        if (req.user) {
+          try {
+            await securityService.trustDeviceForUser(req.user.id, req);
+            console.log(`Device trusted automatically for Google auth user: ${req.user.id}`);
+          } catch (trustError) {
+            console.error("Error trusting device for Google auth user:", trustError);
+            // Continue with the flow even if device trust fails
+          }
+        }
+        
         // For beta users, we'll redirect to a special page that will check localStorage
         if (isBetaActive && shouldVerifyLocalKey) {
           res.redirect("/auth-check");

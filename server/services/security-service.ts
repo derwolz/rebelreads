@@ -23,12 +23,20 @@ class SecurityService {
   }
   
   /**
+   * Determines if it's a Google auth login
+   * Google auth users are already verified through Google, so we don't need additional verification
+   */
+  public isGoogleAuthLogin(user: any): boolean {
+    return user && user.provider === 'google';
+  }
+  
+  /**
    * Checks if verification is needed for a login request
    * by comparing the current device/IP against trusted devices
    */
   public async isVerificationNeeded(userId: number, req: Request): Promise<boolean> {
     try {
-      // Get the IP address and user agent from the request
+      // First, check if this is a trusted device
       const ipAddress = this.getIpAddress(req);
       const userAgent = req.headers['user-agent'] || '';
       
@@ -40,7 +48,15 @@ class SecurityService {
         return false;
       }
       
-      // For new devices/IPs, verification is needed
+      // Get the user to check if they're using Google auth
+      const user = await dbStorage.getUser(userId);
+      if (user && this.isGoogleAuthLogin(user)) {
+        // Google auth users skip verification, but we'll add their device as trusted
+        await this.trustDeviceForUser(userId, req);
+        return false;
+      }
+      
+      // For new devices/IPs with regular auth, verification is needed
       return true;
     } catch (error) {
       console.error("Error checking if verification is needed:", error);
