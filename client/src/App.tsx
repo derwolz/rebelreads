@@ -34,9 +34,7 @@ import { HomepageSettingsPage } from "@/pages/homepage-settings-page";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 import SalesPanel from "@/pages/sales-panel";
-import HowItWorks from "@/pages/how-it-works";
 import PrivacyPolicy from "@/pages/privacy-policy";
-import PartnerWithUs from "@/pages/partner";
 import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
@@ -92,8 +90,6 @@ function Router() {
         <Route path="/landing" component={NewLandingPage} />
         <Route path="/new-landing" component={NewLandingPage} />
 
-        <Route path="/how-it-works" component={HowItWorks} />
-        <Route path="/partner" component={PartnerWithUs} />
         <Route path="/privacy-policy" component={PrivacyPolicy} />
         
         {/* Auth wall */}

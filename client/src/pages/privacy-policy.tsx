@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { BrandedNav } from "@/components/branded-nav";
+import iconWhite from "@/public/images/iconwhite.svg";
+import icon from "@/public/images/icon.svg";
 import { ChevronUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function PrivacyPolicy() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const [activeSection, setActiveSection] = useState<string | null>(null);
-
+  const { theme } = useTheme();
   // Scroll to section handler
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -91,7 +93,26 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen bg-background">
-      <BrandedNav />
+      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/80 border-b border-muted">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <img
+            src={theme === "light" ? icon : iconWhite}
+            alt="Sirened Logo"
+            className="h-14 w-14"
+          />
+          <div className="flex items-center gap-4">
+            <Button 
+              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] font-bold" 
+              onClick={() => {
+                setEmail("");
+                setIsTypeDialogOpen(true);
+              }}
+            >
+              Get Beta Access
+            </Button>
+          </div>
+        </div>
+      </header>
 
       <main className="container mx-auto px-4 py-24 relative">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-16">

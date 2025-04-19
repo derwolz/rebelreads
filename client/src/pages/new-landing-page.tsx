@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CountUp } from "@/components/count-up";
 import { AnimateOnScroll, AnimatedChart } from "@/components/scroll-animations";
+import hero from "@/public/images/antihero.webp";
+import antiHero from "@/public/images/antihero.webp";
 import {
   Dialog,
   DialogContent,
@@ -59,7 +61,18 @@ const SirenedLogo = () => {
     </div>
   );
 };
-
+const HeroImage = () => {
+  const { theme } = useTheme();
+  return (
+    <div className="relative">
+      <img
+        src={theme === "light" ? hero : antiHero}
+        alt="Hero Image"
+        className="w-full h-auto"
+      />
+    </div>
+  );
+};
 // Feature Box Component
 interface FeatureBoxProps {
   title: string;
@@ -74,7 +87,6 @@ const FeatureBox = ({ title, description, icon }: FeatureBoxProps) => (
     <p className="text-muted-foreground">{description}</p>
   </div>
 );
-
 
 // Value Proposition Component
 interface ValuePropProps {
@@ -146,27 +158,30 @@ const NewLandingPage = () => {
   useEffect(() => {
     // Check if the URL has nobeta=true parameter and user is logged in
     const searchParams = new URLSearchParams(window.location.search);
-    const noBeta = searchParams.get('nobeta');
-    
-    if (noBeta === 'true' && user) {
+    const noBeta = searchParams.get("nobeta");
+
+    if (noBeta === "true" && user) {
       // User doesn't have beta access but is logged in - log them out
       logoutMutation.mutate();
-      
+
       toast({
         title: "Thank you for your interest!",
-        description: "We'll notify you when beta access is available for your account.",
+        description:
+          "We'll notify you when beta access is available for your account.",
       });
-      
+
       // Remove the nobeta parameter from the URL to prevent repeated logouts
-      searchParams.delete('nobeta');
-      const newUrl = window.location.pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-      window.history.replaceState({}, '', newUrl);
+      searchParams.delete("nobeta");
+      const newUrl =
+        window.location.pathname +
+        (searchParams.toString() ? `?${searchParams.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
     }
   }, [user, logoutMutation, toast]);
 
   // Set theme
   useEffect(() => {
-    setTheme("dark");
+    setTheme("system");
   }, [setTheme]);
 
   // Submit the form after user selects their type
@@ -175,11 +190,11 @@ const NewLandingPage = () => {
       const response = await fetch("/api/signup-interest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email, 
+        body: JSON.stringify({
+          email,
           isAuthorInterest: isAuthor,
           isPublisher: isPublisher,
-          sessionId
+          sessionId,
         }),
       });
 
@@ -213,7 +228,7 @@ const NewLandingPage = () => {
       });
       return;
     }
-    
+
     // Open dialog for user type selection
     setIsTypeDialogOpen(true);
   };
@@ -258,14 +273,15 @@ const NewLandingPage = () => {
           <DialogHeader>
             <DialogTitle>Tell us about yourself</DialogTitle>
             <DialogDescription>
-              Select which best describes you to help us personalize your experience
+              Select which best describes you to help us personalize your
+              experience
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <Button
               variant={isAuthor ? "default" : "outline"}
-              className={`flex flex-col items-center justify-center h-32 ${isAuthor ? 'bg-primary text-primary-foreground' : ''}`}
+              className={`flex flex-col items-center justify-center h-32 ${isAuthor ? "bg-primary text-primary-foreground" : ""}`}
               onClick={() => {
                 setIsAuthor(true);
                 setIsPublisher(false);
@@ -274,10 +290,10 @@ const NewLandingPage = () => {
               <PenTool className="h-8 w-8 mb-2" />
               <span className="font-medium">I'm an Author</span>
             </Button>
-            
+
             <Button
               variant={!isAuthor && !isPublisher ? "default" : "outline"}
-              className={`flex flex-col items-center justify-center h-32 ${!isAuthor && !isPublisher ? 'bg-primary text-primary-foreground' : ''}`}
+              className={`flex flex-col items-center justify-center h-32 ${!isAuthor && !isPublisher ? "bg-primary text-primary-foreground" : ""}`}
               onClick={() => {
                 setIsAuthor(false);
                 setIsPublisher(false);
@@ -286,10 +302,10 @@ const NewLandingPage = () => {
               <BookOpen className="h-8 w-8 mb-2" />
               <span className="font-medium">I'm a Reader</span>
             </Button>
-            
+
             <Button
               variant={isPublisher ? "default" : "outline"}
-              className={`flex flex-col items-center justify-center h-32 md:col-span-2 ${isPublisher ? 'bg-primary text-primary-foreground' : ''}`}
+              className={`flex flex-col items-center justify-center h-32 md:col-span-2 ${isPublisher ? "bg-primary text-primary-foreground" : ""}`}
               onClick={() => {
                 setIsAuthor(false);
                 setIsPublisher(true);
@@ -299,12 +315,9 @@ const NewLandingPage = () => {
               <span className="font-medium">I'm a Publisher</span>
             </Button>
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              onClick={submitEmailSignup} 
-              className="w-full"
-            >
+            <Button onClick={submitEmailSignup} className="w-full">
               Continue
             </Button>
           </DialogFooter>
@@ -315,8 +328,8 @@ const NewLandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <SirenedLogo />
           <div className="flex items-center gap-4">
-            <Button 
-              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] font-bold" 
+            <Button
+              className="bg-[#EFA738] hover:bg-[#EFA738]/90 text-[#102b3F] font-bold"
               onClick={() => {
                 setEmail("");
                 setIsTypeDialogOpen(true);
@@ -341,14 +354,14 @@ const NewLandingPage = () => {
                 Find Gems<br></br> Get Discovered
               </h1>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="short">
               <p className="text-xl md:text-2xl mb-16 md:mb-24 text-muted-foreground">
                 Bold, original, yours — A storytelling platform for authors and
                 readers.
               </p>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="medium">
               <div className="max-w-md mx-auto w-full mb-8">
                 <form
@@ -397,7 +410,7 @@ const NewLandingPage = () => {
                 </div>
               </div>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="short">
               <div>
                 <div className="text-4xl font-bold text-primary mb-2">0%</div>
@@ -406,7 +419,7 @@ const NewLandingPage = () => {
                 </div>
               </div>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="medium">
               <div>
                 <div className="text-4xl font-bold text-primary mb-2">24/7</div>
@@ -461,7 +474,7 @@ const NewLandingPage = () => {
                 </ul>
               </div>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-right">
               <div className="bg-white/5 backdrop-blur-sm p-8 rounded-none border border-primary/20 flex justify-center items-center">
                 <img
@@ -507,7 +520,11 @@ const NewLandingPage = () => {
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Authors keep <CountUp end={100} duration={1000} suffix="%" /> of their sales revenue</span>
+                  <span>
+                    Authors keep{" "}
+                    <CountUp end={100} duration={1000} suffix="%" /> of their
+                    sales revenue
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <CheckCircle className="h-6 w-6 text-primary mr-2 flex-shrink-0 mt-0.5" />
@@ -714,7 +731,8 @@ const NewLandingPage = () => {
                   Reader Analytics
                 </h3>
                 <p className="text-lg text-muted-foreground mb-6">
-                  Understand how readers interact with your content and make informed decisions:
+                  Understand how readers interact with your content and make
+                  informed decisions:
                 </p>
 
                 <AnimatedChart>
@@ -724,18 +742,50 @@ const NewLandingPage = () => {
                       margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                     >
                       <defs>
-                        <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#A06CD5" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#A06CD5" stopOpacity={0.1} />
+                        <linearGradient
+                          id="colorImpressions"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#A06CD5"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#A06CD5"
+                            stopOpacity={0.1}
+                          />
                         </linearGradient>
-                        <linearGradient id="colorReferrals" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#EFA738" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#EFA738" stopOpacity={0.1} />
+                        <linearGradient
+                          id="colorReferrals"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#EFA738"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#EFA738"
+                            stopOpacity={0.1}
+                          />
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="name" stroke="#888888" />
                       <YAxis stroke="#888888" />
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#333"
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#1a1a1a",
@@ -772,7 +822,8 @@ const NewLandingPage = () => {
                     Audience Intelligence
                   </h3>
                   <p className="text-lg text-muted-foreground mb-6">
-                    Make data-informed decisions with comprehensive analytics that are easy to understand.
+                    Make data-informed decisions with comprehensive analytics
+                    that are easy to understand.
                   </p>
                   <ul className="space-y-4">
                     <AnimateOnScroll type="slide-right" delay="short">
@@ -781,9 +832,12 @@ const NewLandingPage = () => {
                           <TrendingUp className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-semibold mb-1">Engagement Insights</h4>
+                          <h4 className="font-semibold mb-1">
+                            Engagement Insights
+                          </h4>
                           <p className="text-muted-foreground">
-                            See which chapters keep readers engaged and where they drop off.
+                            See which chapters keep readers engaged and where
+                            they drop off.
                           </p>
                         </div>
                       </li>
@@ -794,9 +848,12 @@ const NewLandingPage = () => {
                           <Filter className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-semibold mb-1">Demographic Filters</h4>
+                          <h4 className="font-semibold mb-1">
+                            Demographic Filters
+                          </h4>
                           <p className="text-muted-foreground">
-                            Understand your audience with detailed demographic and interest data.
+                            Understand your audience with detailed demographic
+                            and interest data.
                           </p>
                         </div>
                       </li>
@@ -807,9 +864,12 @@ const NewLandingPage = () => {
                           <Layers className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-semibold mb-1">Conversion Tracking</h4>
+                          <h4 className="font-semibold mb-1">
+                            Conversion Tracking
+                          </h4>
                           <p className="text-muted-foreground">
-                            Follow the journey from discovery to purchase with detailed conversion analytics.
+                            Follow the journey from discovery to purchase with
+                            detailed conversion analytics.
                           </p>
                         </div>
                       </li>
@@ -1023,106 +1083,154 @@ const NewLandingPage = () => {
                 <h3 className="font-bold mb-4">For Readers</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Discover Books
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Reading Preferences
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Beta Access
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Reading Lists
                     </a>
                   </li>
                 </ul>
               </div>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="short">
               <div>
                 <h3 className="font-bold mb-4">For Authors</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Author Dashboard
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Analytics Tools
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Book Publishing
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Marketing Resources
                     </a>
                   </li>
                 </ul>
               </div>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="medium">
               <div>
                 <h3 className="font-bold mb-4">For Publishers</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Publisher Portal
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Catalog Management
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Author Relationships
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Integration APIs
                     </a>
                   </li>
                 </ul>
               </div>
             </AnimateOnScroll>
-            
+
             <AnimateOnScroll type="slide-up" delay="long">
               <div>
                 <h3 className="font-bold mb-4">Company</h3>
                 <ul className="space-y-2">
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       About Us
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Blog
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Careers
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="text-muted-foreground hover:text-primary">
+                    <a
+                      href="#"
+                      className="text-muted-foreground hover:text-primary"
+                    >
                       Contact Us
                     </a>
                   </li>
@@ -1133,7 +1241,10 @@ const NewLandingPage = () => {
 
           <AnimateOnScroll type="fade-in" delay="long">
             <div className="border-t border-white/10 pt-8 mt-8 text-center text-muted-foreground text-sm">
-              <p>&copy; {new Date().getFullYear()} Sirened Publishing. All rights reserved.</p>
+              <p>
+                &copy; {new Date().getFullYear()} Sirened Publishing. All rights
+                reserved.
+              </p>
               <div className="mt-2 flex justify-center gap-4">
                 <a href="#" className="hover:text-primary">
                   Terms of Service
