@@ -142,6 +142,11 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
           className="w-full h-full object-cover"
           style={{ maxWidth: `${SPINE_WIDTH}px` }}
         />
+        {/* Shadow overlay */}
+        <div 
+          className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black opacity-70 pointer-events-none"
+          style={{ maxWidth: `${SPINE_WIDTH}px`}}
+        />
       </div>
       
       {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
