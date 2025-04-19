@@ -153,7 +153,7 @@ export const LoginVerificationDialog = ({
               className="text-primary hover:underline focus:outline-none"
               disabled={isResending}
             >
-              {isResending ? (0D811D
+              {isResending ? (
                 <>
                   <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
                   Resending...

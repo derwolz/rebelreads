@@ -106,18 +106,20 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
       />
       
       {/* Verification Dialog - shown when login requires verification */}
-      <LoginVerificationDialog 
-        userId={verificationUserId}
-        isOpen={verificationNeeded}
-        onOpenChange={(open) => {
-          // If the dialog is being closed without successful verification,
-          // we need to reset the verification process state
-          if (!open) {
+      {verificationUserId !== null && verificationNeeded && (
+        <LoginVerificationDialog 
+          userId={verificationUserId as number}
+          isOpen={verificationNeeded}
+          maskedEmail="your.email@example.com"
+          onClose={() => {
+            // If the dialog is being closed without successful verification,
+            // we need to reset the verification process state
             // This would be handled by the verifyLoginMutation's onSuccess
             // So only need to handle the cancel case here
-          }
-        }}
-      />
+          }}
+          onSuccess={(user: any) => handleSuccess(user, false)}
+        />
+      )}
       
       <Dialog open={isOpen && !verificationNeeded} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
