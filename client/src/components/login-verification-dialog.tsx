@@ -56,14 +56,27 @@ export const LoginVerificationDialog = ({
         
         // Update authentication state
         queryClient.setQueryData(["/api/user"], user);
-        
-        // Call success handler
-        onSuccess(user);
+        queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
         
         toast({
           title: "Success",
           description: "You have been successfully logged in",
         });
+        
+        // Call success handler
+        if (typeof onSuccess === 'function') {
+          onSuccess(user);
+        }
+        
+        // Guarantee closure after a small delay (just in case onSuccess doesn't close it)
+        setTimeout(() => {
+          if (typeof onClose === 'function') {
+            onClose();
+          } else {
+            // Ultimate fallback - force reload
+            window.location.reload();
+          }
+        }, 500);
       } else {
         const data = await response.json();
         toast({

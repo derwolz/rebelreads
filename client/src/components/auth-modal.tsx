@@ -115,7 +115,14 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           maskedEmail="your.email@example.com"
           onClose={() => {
             // Force a reload to reset the verification state
-            window.location.reload();
+            loginMutation.reset();
+            
+            // Use useAuth's global mutation to invalidate queries
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/author-status"] });
+            
+            // Close modals by resetting app state (parent component will be updated)
+            setTimeout(() => window.location.reload(), 100);
           }}
           onSuccess={(user: any) => handleSuccess(user, false)}
         />
