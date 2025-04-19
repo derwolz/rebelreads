@@ -136,6 +136,7 @@ export default function SettingsPage() {
   const [editedReferralLinks, setEditedReferralLinks] = useState<{ [bookId: number]: ReferralLink[] }>({});
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 
 
@@ -745,7 +746,11 @@ export default function SettingsPage() {
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <SettingsSidebar isMobile={false} />
+          <SettingsSidebar 
+            isMobile={false} 
+            collapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
         </div>
 
         {/* Mobile Sidebar with framer motion drag */}
@@ -756,7 +761,10 @@ export default function SettingsPage() {
         />
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0">
+        <div className={cn(
+          "flex-1 min-w-0",
+          isSidebarCollapsed && "md:pl-4" // Add a bit more space when sidebar is collapsed
+        )}>
           {content}
         </div>
       </div>

@@ -12,18 +12,50 @@ import {
   ChevronRight,
   Filter,
   BookOpenCheck,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItemProps {
   href: string;
   active: boolean;
   children: React.ReactNode;
   icon: React.ReactNode;
+  collapsed?: boolean;
 }
 
-function NavItem({ href, active, children, icon }: NavItemProps) {
+function NavItem({ href, active, children, icon, collapsed }: NavItemProps) {
+  if (collapsed) {
+    return (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href={href}>
+              <Button
+                variant={active ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-center h-10",
+                  active && "bg-secondary"
+                )}
+                size="icon"
+              >
+                {icon}
+                <span className="sr-only">{children}</span>
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>{children}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   return (
     <Link href={href}>
       <Button
@@ -41,12 +73,16 @@ interface SettingsSidebarProps {
   isMobile?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function SettingsSidebar({
   isMobile,
   isOpen,
   onClose,
+  collapsed = false,
+  onToggleCollapse,
 }: SettingsSidebarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
@@ -59,12 +95,13 @@ export function SettingsSidebar({
     }
   };
 
-  const navItems = (
+  const renderNavItems = (isCollapsed: boolean) => (
     <>
       <NavItem
         href="/settings"
         active={location === "/settings"}
         icon={<User className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Profile
       </NavItem>
@@ -72,6 +109,7 @@ export function SettingsSidebar({
         href="/settings/account"
         active={location === "/settings/account"}
         icon={<Settings className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Account
       </NavItem>
@@ -79,6 +117,7 @@ export function SettingsSidebar({
         href="/settings/appearance"
         active={location === "/settings/appearance"}
         icon={<Monitor className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Appearance
       </NavItem>
@@ -86,6 +125,7 @@ export function SettingsSidebar({
         href="/settings/rating-preferences"
         active={location === "/settings/rating-preferences"}
         icon={<Star className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Rating Preferences
       </NavItem>
@@ -93,6 +133,7 @@ export function SettingsSidebar({
         href="/settings/genre-preferences"
         active={location === "/settings/genre-preferences"}
         icon={<BookOpen className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Genre Preferences
       </NavItem>
@@ -100,6 +141,7 @@ export function SettingsSidebar({
         href="/settings/homepage"
         active={location === "/settings/homepage"}
         icon={<LayoutGrid className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Homepage Layout
       </NavItem>
@@ -107,6 +149,7 @@ export function SettingsSidebar({
         href="/settings/filters"
         active={location === "/settings/filters"}
         icon={<Filter className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Content Filters
       </NavItem>
@@ -114,15 +157,35 @@ export function SettingsSidebar({
         href="/settings/book-shelf"
         active={location === "/settings/book-shelf"}
         icon={<BookOpenCheck className="h-4 w-4" />}
+        collapsed={isCollapsed}
       >
         Book Shelves
       </NavItem>
     </>
   );
 
-  // For desktop, render a simple nav
+  // For desktop, render a collapsible nav
   if (!isMobile) {
-    return <nav className="border-r border-border h-full space-y-2 w-60">{navItems}</nav>;
+    return (
+      <div className={cn(
+        "border-r border-border h-full flex flex-col", 
+        collapsed ? "w-12" : "w-60"
+      )}>
+        <div className="p-2 flex justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="h-8 w-8"
+          >
+            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </Button>
+        </div>
+        <nav className="space-y-2 flex-1 px-1">
+          {renderNavItems(collapsed)}
+        </nav>
+      </div>
+    );
   }
 
   // For mobile, render a sidebar with animations and drag-to-close functionality
@@ -163,7 +226,7 @@ export function SettingsSidebar({
                   Back
                 </Button>
               </div>
-              <nav className="space-y-2">{navItems}</nav>
+              <nav className="space-y-2">{renderNavItems(false)}</nav>
             </div>
           </motion.div>
         </>
