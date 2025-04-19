@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useLocation } from "wouter";
 import {
   Book,
   Rating,
@@ -89,7 +89,9 @@ function getWeightPercentage(
 }
 
 export default function BookDetails() {
-  const [, params] = useRoute("/books/:id");
+  const [matchBooksId, paramsById] = useRoute("/books/:id");
+  const [matchBookDetails] = useRoute("/book-details");
+  const [location] = useLocation();
   const { user } = useAuth();
   const { setIsOpen: setAuthModalOpen } = useAuthModal();
   const { toast } = useToast();
@@ -98,13 +100,34 @@ export default function BookDetails() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-
+  
+  // Parse query parameters if we're using the secure URL format
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const authorName = urlSearchParams.get('authorName');
+  const bookTitle = urlSearchParams.get('bookTitle');
+  const isUsingSecureFormat = matchBookDetails && authorName && bookTitle;
+  
+  // For debugging
+  useEffect(() => {
+    if (isUsingSecureFormat) {
+      console.log(`Using secure book details format with authorName: ${authorName}, bookTitle: ${bookTitle}`);
+    } else if (paramsById) {
+      console.log(`Using traditional book ID format with ID: ${paramsById.id}`);
+    }
+  }, [isUsingSecureFormat, authorName, bookTitle, paramsById]);
+  
+  // Query book data based on URL format
   const { data: book } = useQuery<Book>({
-    queryKey: [`/api/books/${params?.id}`],
+    queryKey: isUsingSecureFormat 
+      ? [`/api/public/book-details?authorName=${encodeURIComponent(authorName!)}&bookTitle=${encodeURIComponent(bookTitle!)}`]
+      : [`/api/books/${paramsById?.id}`],
+    enabled: !!(isUsingSecureFormat || !!paramsById?.id),
   });
 
+  // Ratings still use book ID
   const { data: ratings } = useQuery<Rating[]>({
-    queryKey: [`/api/books/${params?.id}/ratings`],
+    queryKey: [`/api/books/${book?.id}/ratings`],
+    enabled: !!book?.id,
   });
 
   const { data: author } = useQuery<Author>({
@@ -128,7 +151,7 @@ export default function BookDetails() {
       description?: string;
     }[]
   >({
-    queryKey: [`/api/books/${params?.id}/taxonomies`],
+    queryKey: [`/api/books/${book?.id}/taxonomies`],
     // This endpoint might return 401 if not authenticated, so we'll handle empty results
     enabled: !!book?.id,
   });
