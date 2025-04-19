@@ -49,13 +49,13 @@ export function ProLayout({ children }: ProLayoutProps) {
             <Button 
               variant="outline" 
               size="icon" 
-              className="rounded-full h-7 w-7 bg-background border shadow-sm"
+              className=" rounded-full h-7 w-7 bg-background border-r shadow-sm"
               onClick={() => setCollapsed(!collapsed)}
             >
               {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </Button>
           </div>
-          <div className="border rounded-lg bg-background/60 h-full px-4 py-6 border-border">
+          <div className="border-r  bg-background/60 h-full px-4 py-6 border-border">
             <ProDashboardSidebar collapsed={collapsed} />
           </div>
         </div>

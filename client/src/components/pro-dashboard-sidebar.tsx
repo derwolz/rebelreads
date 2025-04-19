@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LineChart, Flag, MessageSquare, User, Settings } from "lucide-react";
+import { LineChart, Flag, MessageSquare, User, Feather } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface NavItemProps {
@@ -92,7 +92,7 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
       <NavItem
         href="/pro/book-management"
         active={location === "/pro/book-management"}
-        icon={<User className="h-5 w-5" />}
+        icon={<Feather className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Book Management
@@ -100,7 +100,7 @@ export function ProDashboardSidebar({ collapsed = false }: ProDashboardSidebarPr
       <NavItem
         href="/pro/author"
         active={location === "/pro/author"}
-        icon={<Settings className="h-5 w-5" />}
+        icon={<User className="h-5 w-5" />}
         collapsed={collapsed}
       >
         Author Profile

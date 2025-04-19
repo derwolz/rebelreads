@@ -122,7 +122,7 @@ export function SettingsSidebar({
 
   // For desktop, render a simple nav
   if (!isMobile) {
-    return <nav className="space-y-2 w-60">{navItems}</nav>;
+    return <nav className="border-r border-border h-full space-y-2 w-60">{navItems}</nav>;
   }
 
   // For mobile, render a sidebar with animations and drag-to-close functionality
@@ -151,7 +151,7 @@ export function SettingsSidebar({
             dragElastic={0.1}
             onDragEnd={handleDragEnd}
           >
-            <div className="h-full overflow-y-auto pt-16 px-4">
+            <div className="h-full  overflow-y-auto pt-16 px-4">
               <div className="mb-4 flex items-center">
                 <Button
                   variant="ghost"
