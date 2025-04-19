@@ -9,6 +9,9 @@ import { CountUp } from "@/components/count-up";
 import { AnimateOnScroll, AnimatedChart } from "@/components/scroll-animations";
 import hero from "@/public/images/antihero.webp";
 import antiHero from "@/public/images/antihero.webp";
+import LogoActual from "@/public/images/logowhite.svg";
+import AntiLogoActual from "@/public/images/logo.svg";
+
 import {
   Dialog,
   DialogContent,
@@ -53,6 +56,21 @@ const SirenedLogo = () => {
     <div className="flex items-center">
       <img
         src={theme === "light" ? icon : iconWhite}
+        height="64px"
+        width={"64px"}
+        alt="Sirened Logo"
+      />
+      <span className="text-xl font-bold text-foreground">Sirened</span>
+    </div>
+  );
+};
+const SirenedLogoAcutal = () => {
+  const { theme } = useTheme();
+
+  return (
+    <div className="flex items-center">
+      <img
+        src={theme === "light" ? AntiLogoActual : LogoActual}
         height="64px"
         width={"64px"}
         alt="Sirened Logo"
@@ -313,19 +331,6 @@ const NewLandingPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
-        {/* Hero image with opacity gradient overlay */}
-        <div className="absolute top-0 left-0 w-full h-full -z-20">
-          <img 
-            src={hero} 
-            alt="Hero Background" 
-            className="w-full h-full object-cover"
-          />
-          {/* Opacity gradient overlay: 100% -> 20% -> 20% -> 20% -> 100% */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/20 to-background -z-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-background -z-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/20 to-background -z-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-l from-background via-background/20 to-background -z-10"></div>
-        </div>
         
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 -z-10"></div>
         <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-none bg-primary/10 blur-3xl -z-10"></div>
@@ -957,7 +962,7 @@ const NewLandingPage = () => {
         <div className="container mx-auto px-4">
           <AnimateOnScroll type="fade-in">
             <div className="flex flex-col md:flex-row justify-between items-center mb-12">
-              <SirenedLogo />
+              <SirenedLogoAcutal />
               <div className="mt-6 md:mt-0 flex gap-4">
                 <Button variant="outline" size="icon">
                   <svg
