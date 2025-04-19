@@ -56,10 +56,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 // Inline utility function for date formatting
-function formatDate(date: Date): string {
+const formatDate = (date: Date): string => {
   return date.toISOString().split('T')[0];
-}
+};
 
 interface BookSearchResponse {
   books: (Book & { authorName?: string; authorImageUrl?: string })[];
@@ -399,5 +400,3 @@ export function AdminBookManager() {
     </div>
   );
 }
-
-// Helper function is defined at the top of the file

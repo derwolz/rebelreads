@@ -98,9 +98,29 @@ export default function AdminPanel() {
             
             <TabsContent value="books" className="py-4">
               <h3 className="text-lg font-semibold mb-4">Book Management</h3>
-              <div className="text-center text-muted-foreground py-10">
-                <p>The bulk upload functionality has been removed.</p>
-                <p className="mt-2">Please use the external client for batch processing of books.</p>
+              <div className="grid gap-4">
+                <Card className="p-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <BookCopy className="h-12 w-12 text-primary" />
+                    <h4 className="text-lg font-medium">Book Search and Management</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Search for books, view details, and manage book entries in the system
+                    </p>
+                    <Link href="/admin/books">
+                      <Button className="w-full">
+                        Manage Books
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+                <Card className="p-6 bg-muted/50">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      The bulk upload functionality has been removed.
+                      Please use the external client for batch processing of books.
+                    </p>
+                  </div>
+                </Card>
               </div>
             </TabsContent>
             
