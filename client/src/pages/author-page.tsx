@@ -26,7 +26,7 @@ import {
 import type { Book, SocialMediaLink, BookShelf } from "@shared/schema";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
-import { BookOpen, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Interface representing a taxonomy with its usage weight
@@ -424,16 +424,14 @@ export default function AuthorPage() {
           <div className="space-y-10">
             <h2 className="text-2xl font-bold mb-6">Bookshelves</h2>
             {bookshelves.map((shelfWithBooks) => (
-              <div key={shelfWithBooks.shelf.id} className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
-                  <BookOpen className="h-5 w-5 text-muted-foreground" />
-                </div>
-                
+              <div key={shelfWithBooks.shelf.id} className="text-2xl space-y-4">
+                {shelfWithBooks.shelf.title}
                 {shelfWithBooks.books.length > 0 ? (
-                  <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex flex-col md:flex-row items-center gap-6">
                     {/* Bookshelf cover on the left */}
+                    
                     <div className="w-full md:w-48 flex-shrink-0">
+                      
                       <div className="aspect-[2/3] relative rounded-lg overflow-hidden border shadow">
                         <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-muted/60">
                           <img 
@@ -445,12 +443,10 @@ export default function AuthorPage() {
                             }}
                           />
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <BookOpen className="h-12 w-12 text-background/90" />
-                        </div>
+                        
                       </div>
+                      
                     </div>
-                    
                     {/* Book rack display on the right */}
                     <div className="flex-1 overflow-hidden">
                       <BookRack 

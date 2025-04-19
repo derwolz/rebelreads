@@ -164,19 +164,7 @@ export default function HomePage() {
             <div className="sticky top-20">
               <WhatsHotSidebar />
               
-              {/* Vertical Banner Ad in Sidebar */}
-              {books && books.length > 1 && (
-                <div className="mt-8">
-                  <VerticalBannerAd
-                    campaignId={1}
-                    bookId={books[1].id}
-                    imageSrc={books[1].images?.find(img => img.imageType === "book-card")?.imageUrl || "/images/placeholder-book.png"}
-                    title={books[1].title}
-                    description={books[1].description?.substring(0, 80) + '...'}
-                    source="home-sidebar"
-                  />
-                </div>
-              )}
+             
             </div>
           </div>
         </div>

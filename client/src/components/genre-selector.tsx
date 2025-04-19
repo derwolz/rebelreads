@@ -369,7 +369,7 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
         background: `linear-gradient(to bottom, rgba(var(--background-rgb),.5), rgba(var(--foreground-rgb), ${Math.min(0,100- 100 * parseFloat(calculateImportance(taxonomy.rank)))}%))`,
       }}
       className={cn(
-        "flex items-center justify-between p-2 border rounded-md text-tertiary",
+        "flex items-center justify-between p-2 border rounded-md text-primary",
         isDragging && "opacity-80 shadow-lg"
       )}
       title={`Rank: ${taxonomy.rank}, Importance: ${calculateImportance(taxonomy.rank)}`}
