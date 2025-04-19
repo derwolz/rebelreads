@@ -12,6 +12,13 @@ export enum VERIFICATION_TYPES {
   LOGIN_VERIFICATION = "login_verification"
 }
 
+// Metadata for verification codes
+export interface VerificationMetadata {
+  email?: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 // Code expiration times in milliseconds
 const EXPIRATION_TIMES = {
   [VERIFICATION_TYPES.EMAIL_VERIFICATION]: 24 * 60 * 60 * 1000, // 24 hours
@@ -119,12 +126,7 @@ const EMAIL_TEMPLATES = {
   }
 };
 
-// Additional metadata for verification codes
-interface VerificationMetadata {
-  ipAddress?: string;
-  userAgent?: string;
-  [key: string]: any;
-}
+// We're using the VerificationMetadata interface defined above
 
 /**
  * VerificationService - Handles creating, sending, and verifying verification codes
