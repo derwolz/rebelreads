@@ -19,6 +19,7 @@ import { applyContentFilters } from "../utils/content-filters";
 export interface IBookStorage {
   getBooks(): Promise<Book[]>;
   getBook(id: number): Promise<Book | undefined>;
+  getBookByAuthorAndTitle(authorName: string, title: string): Promise<Book | undefined>;
   getBooksByAuthor(authorId: number): Promise<Book[]>;
   createBook(book: Omit<Book, "id">): Promise<Book>;
   promoteBook(id: number): Promise<Book>;
@@ -690,6 +691,75 @@ export class BookStorage implements IBookStorage {
       .where(eq(books.id, id))
       .returning();
     return book;
+  }
+
+  async getBookByAuthorAndTitle(authorName: string, title: string): Promise<Book | undefined> {
+    console.log(`getBookByAuthorAndTitle called with authorName: ${authorName}, title: ${title}`);
+    
+    // Get the book data with author information, joining the authors table
+    const [book] = await db
+      .select({
+        id: books.id,
+        title: books.title,
+        authorId: books.authorId,
+        description: books.description,
+        promoted: books.promoted,
+        pageCount: books.pageCount,
+        formats: books.formats,
+        publishedDate: books.publishedDate,
+        awards: books.awards,
+        originalTitle: books.originalTitle,
+        series: books.series,
+        setting: books.setting,
+        characters: books.characters,
+        isbn: books.isbn,
+        asin: books.asin,
+        language: books.language,
+        referralLinks: books.referralLinks,
+        impressionCount: books.impressionCount,
+        clickThroughCount: books.clickThroughCount,
+        lastImpressionAt: books.lastImpressionAt,
+        lastClickThroughAt: books.lastClickThroughAt,
+        internal_details: books.internal_details,
+        // Join author information
+        authorName: authors.author_name,
+        authorImageUrl: authors.author_image_url
+      })
+      .from(books)
+      .leftJoin(authors, eq(books.authorId, authors.id))
+      .where(
+        and(
+          eq(authors.author_name, authorName),
+          eq(books.title, title)
+        )
+      );
+    
+    if (!book) {
+      console.log(`Book with authorName "${authorName}" and title "${title}" not found`);
+      return undefined;
+    }
+    
+    console.log(`Book data found:`, JSON.stringify(book, null, 2));
+    
+    // Get the book images
+    const images = await db
+      .select()
+      .from(bookImages)
+      .where(eq(bookImages.bookId, book.id));
+    
+    console.log(`getBookByAuthorAndTitle: Found ${images.length} images:`, 
+      images.map(img => `${img.imageType}: ${img.imageUrl}`));
+    
+    // Attach the images to the book object
+    const result = {
+      ...book,
+      images: images
+    } as Book;
+    
+    console.log(`Returning book with ${images.length} images`, 
+      images.length > 0 ? `First image: ${images[0].imageType}` : 'No images');
+    
+    return result;
   }
 
   async getRecommendations(userId: number, limit: number = 40): Promise<Book[]> {

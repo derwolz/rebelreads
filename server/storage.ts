@@ -81,6 +81,7 @@ export const dbStorage = {
   // Book management
   getBooks: bookStorage.getBooks.bind(bookStorage),
   getBook: bookStorage.getBook.bind(bookStorage),
+  getBookByAuthorAndTitle: bookStorage.getBookByAuthorAndTitle.bind(bookStorage),
   getBooksByAuthor: bookStorage.getBooksByAuthor.bind(bookStorage),
   createBook: bookStorage.createBook.bind(bookStorage),
   promoteBook: bookStorage.promoteBook.bind(bookStorage),
