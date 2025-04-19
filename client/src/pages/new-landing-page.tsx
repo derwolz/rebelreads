@@ -313,6 +313,19 @@ const NewLandingPage = () => {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
+        {/* Hero image with opacity gradient overlay */}
+        <div className="absolute top-0 left-0 w-full h-full -z-20">
+          <img 
+            src={hero} 
+            alt="Hero Background" 
+            className="w-full h-full object-cover"
+          />
+          {/* Opacity gradient overlay: 100% -> 20% -> 20% -> 20% -> 100% */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/20 to-background -z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-background -z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/20 to-background -z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-l from-background via-background/20 to-background -z-10"></div>
+        </div>
         
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 -z-10"></div>
         <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-none bg-primary/10 blur-3xl -z-10"></div>
