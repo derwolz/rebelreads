@@ -12,6 +12,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 // Extended interface to include popularity data
 interface PopularBook extends Book {
+  bookId?: number; // ID of the actual book in the books table
   sigmoidValue: string;
   popularRank: number;
   firstRankedAt: string;
@@ -75,9 +76,12 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
 
+  // Get the correct book ID for API calls (from bookId field or fallback to id)
+  const bookId = book.bookId || book.id;
+
   // Fetch ratings for this specific book
   const { data: ratings } = useQuery<Rating[]>({
-    queryKey: [`/api/books/${book.id}/ratings`],
+    queryKey: [`/api/books/${bookId}/ratings`],
   });
 
   // Fetch user's rating preferences
@@ -123,26 +127,26 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
       { threshold: 0.5 }, // Card must be 50% visible to count
     );
 
-    const element = document.getElementById(`mini-book-${book.id}`);
+    const element = document.getElementById(`mini-book-${bookId}`);
     if (element) {
       observer.observe(element);
     }
 
     return () => observer.disconnect();
-  }, [book.id]);
+  }, [bookId]);
 
   // Record impression when card becomes visible
   useEffect(() => {
     if (isVisible && !hasRecordedImpression) {
       // Use local storage for impression tracking
       recordLocalImpression(
-        book.id,
+        bookId,
         "mini",
         window.location.pathname
       );
       setHasRecordedImpression(true);
     }
-  }, [isVisible, hasRecordedImpression, book.id]);
+  }, [isVisible, hasRecordedImpression, bookId]);
 
   const handleClick = () => {
     // Record impression with card-click type (weighted at 0.5)
