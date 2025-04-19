@@ -6,8 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Star, LockIcon } from "lucide-react";
+import { Megaphone, Star, LineChart, Wallet, Plus, LockIcon } from "lucide-react";
 import { CampaignTable } from "@/components/campaign-table";
+import { AdBiddingWizard } from "@/components/ad-bidding-wizard";
+import { SurveyBuilderWizard } from "@/components/survey-builder-wizard";
 import { PurchaseCreditsModal } from "@/components/purchase-credits-modal";
 import { ProActionWrapper } from "@/components/pro-action-wrapper";
 import { ProPaywall } from "@/components/pro-paywall";
@@ -16,6 +18,8 @@ import { ProLayout } from "@/components/pro-layout";
 
 export default function ProActionPage() {
   const [isReviewBoostOpen, setIsReviewBoostOpen] = useState(false);
+  const [isAdBiddingOpen, setIsAdBiddingOpen] = useState(false);
+  const [isSurveyBuilderOpen, setIsSurveyBuilderOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [showProPaywall, setShowProPaywall] = useState(false);
@@ -36,7 +40,41 @@ export default function ProActionPage() {
   const actionContent = (
     <div>
       {/* Action Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-1 gap-4 sm:gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+        {/* Ad Management */}
+        <Card className="h-full">
+          <CardHeader className="p-4 sm:p-6">
+            <Megaphone className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+            <CardTitle className="text-lg sm:text-xl">Ad Management</CardTitle>
+            <CardDescription className="text-sm">
+              Create and manage advertising campaigns for your books
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ul className="space-y-2 mb-4 sm:mb-6 text-xs sm:text-sm">
+              <li>• Target specific reader demographics</li>
+              <li>• Set custom budgets and schedules</li>
+              <li>• Track campaign performance</li>
+              <li>• Optimize your reach</li>
+            </ul>
+            {isPro ? (
+              <Button onClick={() => setIsAdBiddingOpen(true)} className="w-full text-sm">
+                Manage Ads
+              </Button>
+            ) : (
+              <Button 
+                className="w-full opacity-70 cursor-not-allowed text-sm" 
+                variant="outline"
+                disabled
+                onClick={() => setShowProPaywall(true)}
+              >
+                <LockIcon className="h-3 w-3 mr-1" />
+                Upgrade to Access
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Review Boost */}
         <Card className="h-full">
           <CardHeader className="p-4 sm:p-6">
@@ -56,6 +94,40 @@ export default function ProActionPage() {
             {isPro ? (
               <Button onClick={() => setIsReviewBoostOpen(true)} className="w-full text-sm">
                 Start Boost
+              </Button>
+            ) : (
+              <Button 
+                className="w-full opacity-70 cursor-not-allowed text-sm" 
+                variant="outline"
+                disabled
+                onClick={() => setShowProPaywall(true)}
+              >
+                <LockIcon className="h-3 w-3 mr-1" />
+                Upgrade to Access
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Create Survey */}
+        <Card className="h-full">
+          <CardHeader className="p-4 sm:p-6">
+            <LineChart className="w-6 h-6 sm:w-8 sm:h-8 text-primary mb-2" />
+            <CardTitle className="text-lg sm:text-xl">Create Survey</CardTitle>
+            <CardDescription className="text-sm">
+              Gather valuable insights from your readers
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ul className="space-y-2 mb-4 sm:mb-6 text-xs sm:text-sm">
+              <li>• Create custom questionnaires</li>
+              <li>• Collect reader feedback</li>
+              <li>• Analyze responses</li>
+              <li>• Make data-driven decisions</li>
+            </ul>
+            {isPro ? (
+              <Button onClick={() => setIsSurveyBuilderOpen(true)} className="w-full text-sm">
+                Create Survey
               </Button>
             ) : (
               <Button 
@@ -120,6 +192,17 @@ export default function ProActionPage() {
         open={isReviewBoostOpen}
         onClose={() => setIsReviewBoostOpen(false)}
         books={books || []}
+      />
+
+      <AdBiddingWizard
+        open={isAdBiddingOpen}
+        onClose={() => setIsAdBiddingOpen(false)}
+        books={books || []}
+      />
+
+      <SurveyBuilderWizard
+        open={isSurveyBuilderOpen}
+        onClose={() => setIsSurveyBuilderOpen(false)}
       />
 
       <PurchaseCreditsModal
