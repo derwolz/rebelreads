@@ -10,6 +10,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Book, BookOpen } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface BookshelfCarouselProps {
   bookshelves?: BookShelf[];
@@ -67,8 +68,15 @@ interface BookshelfCardProps {
 }
 
 function BookshelfCard({ shelf }: BookshelfCardProps) {
+  // Get the username from useAuth hook
+  const { user } = useAuth();
+  const username = user?.username || "";
+  
+  // Create the new URL with query parameters
+  const shelfUrl = `/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`;
+  
   return (
-    <Link href={`/book-shelf/${shelf.id}`}>
+    <Link href={shelfUrl}>
       <Card className="h-full overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer">
         <div className="aspect-[3/4] relative">
           <img

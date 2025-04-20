@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -113,6 +113,15 @@ export default function BookShelfPage() {
   const [activeNoteType, setActiveNoteType] = useState<"book" | "shelf" | null>(null);
   const [activeBookId, setActiveBookId] = useState<number | null>(null);
   const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
+  
+  // Extract query parameters from URL
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const username = searchParams.get('username');
+  const shelfname = searchParams.get('shelfname');
+  
+  // Determine if we're using id or query parameters
+  const useQueryParams = !!username && !!shelfname;
 
   // Form for adding/editing notes
   const form = useForm<NoteFormValues>({
@@ -124,8 +133,10 @@ export default function BookShelfPage() {
 
   // Fetch bookshelf data
   const { data, isLoading, error } = useQuery<BookShelfData>({
-    queryKey: [`/api/book-shelf/${id}`],
-    enabled: !!user && !!id,
+    queryKey: useQueryParams 
+      ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
+      : [`/api/book-shelf/${id}`],
+    enabled: !!user && (!!id || useQueryParams),
   });
 
   // Find active note
@@ -164,7 +175,10 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = useQueryParams 
+        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
+        : [`/api/book-shelf/${id}`];
+      queryClient.invalidateQueries({ queryKey });
       setIsAddNoteDialogOpen(false);
       form.reset();
       toast({
@@ -197,7 +211,10 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = useQueryParams 
+        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
+        : [`/api/book-shelf/${id}`];
+      queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Note updated",
         description: "Your note has been updated successfully.",
