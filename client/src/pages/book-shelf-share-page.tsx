@@ -122,7 +122,7 @@ export default function BookShelfSharePage() {
     }
   }, [search]);
 
-  // Fetch the bookshelf data
+  // Fetch the bookshelf data with exact query parameter names as expected by the server
   const { data: shelfData, isLoading: isShelfLoading } = useQuery<ShelfData>({
     queryKey: [`/api/book-shelf?username=${encodeURIComponent(pageParams.username)}&shelfname=${encodeURIComponent(pageParams.shelfname)}`],
     enabled: !!pageParams.username && !!pageParams.shelfname,

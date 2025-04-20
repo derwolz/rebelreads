@@ -5,27 +5,7 @@ import { Note } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock book data to use when API fails
-const mockBook: Book = {
-  id: 26,
-  title: "Valkyrie X Truck",
-  authorId: 14,
-  authorName: "King Stanky",
-  description: "Truck struck and gunshot, Max finds himself enraptured by a mysterious woman, pursued by even more mysterious assailants. Her goal: retrieve her missing gun at any cost. His goal: survive, as his mundane world descends into madness.",
-  images: [{ 
-    imageType: "book-detail", 
-    imageUrl: "/uploads/covers/1744986075767-678392506.webp" 
-  }]
-};
-
-// Mock genres data
-const mockTaxonomies = [
-  { id: 1, name: "Science Fiction", type: "genre", rank: 1 },
-  { id: 2, name: "Action", type: "genre", rank: 2 },
-  { id: 3, name: "Thriller", type: "subgenre", rank: 3 },
-  { id: 4, name: "Mystery", type: "subgenre", rank: 4 },
-  { id: 5, name: "Coming of Age", type: "theme", rank: 5 }
-];
+// No mock data - we'll show empty states instead
 
 interface BookShelfShareProps {
   username: string;
@@ -53,6 +33,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   }
 
   // Fetch the shelf and its books with robust parameter encoding
+  // IMPORTANT: The server expects 'shelfname' (all lowercase) as the parameter name
   const { data: shelfData, isLoading: isShelfLoading } = useQuery<ShelfData>({
     queryKey: [`/api/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`],
   });
@@ -72,8 +53,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         encodedShelfName: encodeURIComponent(shelfName)
       });
       
-      // Use mock data if no real data is available
-      setSelectedBook(mockBook);
+      // Do not use mock data - display empty state instead
     }
   }, [isShelfLoading, shelfData, username, shelfName]);
 
