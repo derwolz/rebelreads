@@ -48,23 +48,10 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { BookOpen, Plus, X, Edit, Trash, GripVertical } from "lucide-react";
+import { BookOpen, Plus, X, Edit, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  DndContext, 
-  DragEndEvent,
-  PointerSensor, 
-  useSensor, 
-  useSensors,
-  closestCenter
-} from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-
-// Import types from your project
-import { Book, BookImage } from "../types";
 
 // Define types based on schema
 type BookShelf = {
@@ -76,6 +63,8 @@ type BookShelf = {
   createdAt: string;
   updatedAt: string;
 };
+
+import { Book, BookImage } from "../types";
 
 type ShelfBook = {
   id: number;
@@ -113,164 +102,6 @@ const noteFormSchema = z.object({
 });
 
 type NoteFormValues = z.infer<typeof noteFormSchema>;
-
-// Sortable Book Item Component
-interface SortableBookItemProps {
-  id: string;
-  shelfBook: ShelfBook;
-  bookNotes: Note[];
-  onAddNote: (type: "book" | "shelf", bookId?: number) => void;
-  onSelectNote: (note: Note) => void;
-  onRemoveFromShelf: () => void;
-}
-
-function SortableBookItem({ 
-  id, 
-  shelfBook, 
-  bookNotes, 
-  onAddNote, 
-  onSelectNote, 
-  onRemoveFromShelf 
-}: SortableBookItemProps) {
-  const { toast } = useToast();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id });
-  
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : 1,
-    position: 'relative' as const,
-    opacity: isDragging ? 0.8 : 1,
-  };
-  
-  const bookId = shelfBook.bookId;
-  const bookNotesList = bookNotes.filter(note => note.bookId === bookId);
-  
-  return (
-    <div ref={setNodeRef} style={style} className="p-1 relative">
-      <div className="absolute top-2 left-2 z-30 cursor-move touch-none" {...attributes} {...listeners}>
-        <GripVertical className="h-5 w-5 text-white bg-black/40 rounded-full p-1" />
-      </div>
-      <div className="relative group">
-        {/* Convert shelf book to the format expected by BookCard */}
-        <BookShelfCard
-          book={{
-            ...shelfBook.book,
-            authorId: shelfBook.book.authorId || 0,
-            authorName: shelfBook.book.authorName || "Unknown Author",
-            description: shelfBook.book.description || "",
-            promoted: shelfBook.book.promoted ?? null,
-            pageCount: shelfBook.book.pageCount ?? null,
-            formats: shelfBook.book.formats ?? [],
-            publishedDate: shelfBook.book.publishedDate ?? null,
-            awards: shelfBook.book.awards ?? null,
-            originalTitle: shelfBook.book.originalTitle ?? null,
-            series: shelfBook.book.series ?? null,
-            setting: shelfBook.book.setting ?? null,
-            characters: shelfBook.book.characters ?? null,
-            isbn: shelfBook.book.isbn ?? null,
-            asin: shelfBook.book.asin ?? null,
-            language: shelfBook.book.language ?? "en",
-            referralLinks: shelfBook.book.referralLinks ?? [],
-            impressionCount: shelfBook.book.impressionCount ?? 0,
-            clickThroughCount: shelfBook.book.clickThroughCount ?? 0,
-            lastImpressionAt: shelfBook.book.lastImpressionAt ?? null,
-            lastClickThroughAt: shelfBook.book.lastClickThroughAt ?? null,
-            internal_details: shelfBook.book.internal_details ?? null,
-            images: (shelfBook.book.images && Array.isArray(shelfBook.book.images)) ? 
-              shelfBook.book.images : 
-              [
-                {
-                  id: 0,
-                  bookId: shelfBook.book.id,
-                  imageType: "book-card",
-                  imageUrl: shelfBook.book.coverUrl || "/images/placeholder-book.png",
-                  width: 0,
-                  height: 0,
-                  sizeKb: null,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
-                }
-              ]
-          } as Book}
-        bookNotes={bookNotesList}
-        onAddNote={onAddNote}
-        onSelectNote={onSelectNote}
-        onViewNotes={() => onAddNote("book", shelfBook.bookId)}
-        onRemoveFromShelf={onRemoveFromShelf}
-        />
-        
-        {/* Notes badge */}
-        {bookNotesList.length > 0 && (
-          <div className="absolute top-2 left-8 z-20">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="secondary" className="bg-background/50 text-foreground">
-                    {bookNotesList.length} {bookNotesList.length === 1 ? 'Note' : 'Notes'}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Click to view notes for this book</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
-        
-        {/* More options menu */}
-        <div className="absolute top-2 right-2 z-20">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 rounded-full">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                  <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-                </svg>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Future enhancement: Add move to shelf functionality
-                  toast({
-                    title: "Move to Shelf",
-                    description: "This functionality will be added soon.",
-                  });
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4">
-                  <path d="M7.5 1C7.66148 1 7.81301 1.07798 7.90687 1.20577L12.9069 8.20577C13.0157 8.35709 13.0303 8.55037 12.9446 8.71595C12.8589 8.88153 12.6872 8.98861 12.5 8.98861H2.5C2.31284 8.98861 2.14708 8.88153 2.06136 8.71595C1.97564 8.55037 1.99033 8.35709 2.09909 8.20577L7.09909 1.20577C7.19295 1.07798 7.34148 1 7.5 1ZM7.5 2.18L3.25458 8H11.7454L7.5 2.18ZM2 10.0114C1.44772 10.0114 1 10.4591 1 11.0114V13.0114C1 13.5637 1.44772 14.0114 2 14.0114H13C13.5523 14.0114 14 13.5637 14 13.0114V11.0114C14 10.4591 13.5523 10.0114 13 10.0114H2ZM2 11.0114H13V13.0114H2V11.0114Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-                </svg>
-                Move to Another Shelf
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-red-500 focus:text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (confirm(`Remove "${shelfBook.book.title}" from this shelf?`)) {
-                    onRemoveFromShelf();
-                  }
-                }}
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                Remove from Shelf
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // BookShelf page component
 export default function BookShelfPage() {
@@ -442,70 +273,6 @@ export default function BookShelfPage() {
       });
     },
   });
-  
-  // Update Book Ranks Mutation
-  const updateBookRanksMutation = useMutation({
-    mutationFn: async (bookRanks: { id: number; rank: number }[]) => {
-      const res = await fetch(`/api/bookshelves/${id}/books/rank`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookRanks),
-      });
-      
-      if (!res.ok) {
-        throw new Error("Failed to update book order");
-      }
-      
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
-      toast({
-        title: "Book order updated",
-        description: "The order of books has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-  
-  // Set up sensors for drag and drop
-  const sensors = useSensors(
-    useSensor(PointerSensor)
-  );
-  
-  // Handle drag end for reordering books
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id || !data?.books) {
-      return;
-    }
-    
-    const oldIndex = data.books.findIndex((book) => book.id.toString() === active.id);
-    const newIndex = data.books.findIndex((book) => book.id.toString() === over.id);
-    
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
-    
-    // Create a new array with the updated order
-    const newBooks = arrayMove(data.books, oldIndex, newIndex);
-    
-    // Prepare data for API
-    const updatedRanks = newBooks.map((book, index) => ({
-      id: book.id,
-      rank: index,
-    }));
-    
-    // Update in the database
-    updateBookRanksMutation.mutate(updatedRanks);
-  };
 
   // Handle note submission
   const onSubmit = (values: NoteFormValues) => {
@@ -524,6 +291,8 @@ export default function BookShelfPage() {
     form.reset({ content: "" });
     setIsAddNoteDialogOpen(true);
   };
+
+
 
   // Handle selecting a note
   const handleSelectNote = (note: Note) => {
@@ -725,54 +494,181 @@ export default function BookShelfPage() {
 
       {/* Bottom Section - Books Carousel */}
       <div className="mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Books in this Shelf</h2>
-          {books.length > 0 && (
-            <div className="flex items-center">
-              <span className="text-sm text-muted-foreground mr-2">
-                Tip: Drag books to rearrange them
-              </span>
-            </div>
-          )}
-        </div>
+        <h2 className="text-lg font-semibold mb-4">Books in this Shelf</h2>
         {books.length > 0 ? (
           <div className="relative">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext 
-                items={books.map(book => book.id.toString())}
-                strategy={horizontalListSortingStrategy}
-              >
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {books.map((shelfBook) => (
-                      <CarouselItem key={shelfBook.id} className="md:basis-1/4 lg:basis-1/5">
-                        <SortableBookItem
-                          id={shelfBook.id.toString()}
-                          shelfBook={shelfBook}
-                          bookNotes={bookNotes}
-                          onAddNote={handleAddNote}
-                          onSelectNote={handleSelectNote}
-                          onRemoveFromShelf={() => {
-                            if (confirm("Are you sure you want to remove this book from the shelf?")) {
-                              removeBookFromShelfMutation.mutate({
-                                shelfId: parseInt(id),
-                                bookId: shelfBook.bookId
-                              });
-                            }
-                          }}
-                        />
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-1" />
-                  <CarouselNext className="right-1" />
-                </Carousel>
-              </SortableContext>
-            </DndContext>
+            <Carousel className="w-full">
+              <CarouselContent>
+                {books.map((shelfBook) => {
+                  const bookId = shelfBook.bookId;
+                  const bookNotesList = bookNotes.filter(note => note.bookId === bookId);
+                  
+                  // Get the book-card image or fallback to coverUrl
+                  const coverImage = shelfBook.book.images?.find(img => img.imageType === "book-card")?.imageUrl 
+                    || shelfBook.book.coverUrl 
+                    || "/images/placeholder-book.png";
+
+                  return (
+                    <CarouselItem key={shelfBook.id} className="md:basis-1/4 lg:basis-1/5">
+                      <div className="group relative p-1">
+                        <div className="relative group">
+                          {/* Convert shelf book to the format expected by BookCard */}
+                          <BookShelfCard
+                            book={{
+                                ...shelfBook.book,
+                                authorId: shelfBook.book.authorId || 0,
+                                authorName: shelfBook.book.authorName || "Unknown Author",
+                                description: shelfBook.book.description || "",
+                                promoted: shelfBook.book.promoted ?? null,
+                                pageCount: shelfBook.book.pageCount ?? null,
+                                formats: shelfBook.book.formats ?? [],
+                                publishedDate: shelfBook.book.publishedDate ?? null,
+                                awards: shelfBook.book.awards ?? null,
+                                originalTitle: shelfBook.book.originalTitle ?? null,
+                                series: shelfBook.book.series ?? null,
+                                setting: shelfBook.book.setting ?? null,
+                                characters: shelfBook.book.characters ?? null,
+                                isbn: shelfBook.book.isbn ?? null,
+                                asin: shelfBook.book.asin ?? null,
+                                language: shelfBook.book.language ?? "en",
+                                referralLinks: shelfBook.book.referralLinks ?? [],
+                                impressionCount: shelfBook.book.impressionCount ?? 0,
+                                clickThroughCount: shelfBook.book.clickThroughCount ?? 0,
+                                lastImpressionAt: shelfBook.book.lastImpressionAt ?? null,
+                                lastClickThroughAt: shelfBook.book.lastClickThroughAt ?? null,
+                                internal_details: shelfBook.book.internal_details ?? null,
+                                images: (shelfBook.book.images && Array.isArray(shelfBook.book.images)) ? 
+                                  shelfBook.book.images : 
+                                  [
+                                    {
+                                      id: 0,
+                                      bookId: shelfBook.book.id,
+                                      imageType: "book-card",
+                                      imageUrl: shelfBook.book.coverUrl || "/images/placeholder-book.png",
+                                      width: 0,
+                                      height: 0,
+                                      sizeKb: null,
+                                      createdAt: new Date().toISOString(),
+                                      updatedAt: new Date().toISOString()
+                                    }
+                                  ]
+                              } as Book}
+                            bookNotes={bookNotesList}
+                            onAddNote={handleAddNote}
+                            onSelectNote={handleSelectNote}
+                            onViewNotes={() => handleAddNote("book", shelfBook.bookId)}
+                            onRemoveFromShelf={() => {
+                              if (confirm("Are you sure you want to remove this book from the shelf?")) {
+                                removeBookFromShelfMutation.mutate({
+                                  shelfId: parseInt(id),
+                                  bookId: shelfBook.bookId
+                                });
+                              }
+                            }}
+                          />
+                          
+                          {/* Notes badge */}
+                          {bookNotesList.length > 0 && (
+                            <div className="absolute top-2 left-2 z-20">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge variant="secondary" className="bg-background/50 text-foreground">
+                                      {bookNotesList.length} {bookNotesList.length === 1 ? 'Note' : 'Notes'}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Click to view notes for this book</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
+                          )}
+                          
+                          {/* More options menu */}
+                          <div className="absolute top-2 right-2 z-20">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 rounded-full">
+                                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                                    <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                  </svg>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: Add move to shelf functionality
+                                    toast({
+                                      title: "Move to Shelf",
+                                      description: "This functionality will be added soon.",
+                                    });
+                                  }}
+                                >
+                                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4">
+                                    <path d="M7.5 1C7.66148 1 7.81301 1.07798 7.90687 1.20577L12.9069 8.20577C13.0157 8.35709 13.0303 8.55037 12.9446 8.71595C12.8589 8.88153 12.6872 8.98861 12.5 8.98861H2.5C2.31284 8.98861 2.14708 8.88153 2.06136 8.71595C1.97564 8.55037 1.99033 8.35709 2.09909 8.20577L7.09909 1.20577C7.19295 1.07798 7.34148 1 7.5 1ZM7.5 2.18L3.25458 8H11.7454L7.5 2.18ZM2 10.0114C1.44772 10.0114 1 10.4591 1 11.0114V13.0114C1 13.5637 1.44772 14.0114 2 14.0114H13C13.5523 14.0114 14 13.5637 14 13.0114V11.0114C14 10.4591 13.5523 10.0114 13 10.0114H2ZM2 11.0114H13V13.0114H2V11.0114Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                  </svg>
+                                  Move to Another Shelf
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-red-500 focus:text-red-500"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // TODO: Add remove from shelf functionality
+                                    if (confirm(`Remove "${shelfBook.book.title}" from this shelf?`)) {
+                                      toast({
+                                        title: "Book Removed",
+                                        description: "The book has been removed from this shelf.",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  Remove from Shelf
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          
+
+                          
+                          {/* Old buttons (hidden) but keeping the functionality until we're sure the new UI works */}
+                          <div className="hidden">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-background/80 text-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddNote("book", bookId);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-2" /> Add Note
+                            </Button>
+                            
+                            {bookNotesList.length > 0 && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-xs text-muted-foreground"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectNote(bookNotesList[0]);
+                                }}
+                              >
+                                View {bookNotesList.length} {bookNotesList.length === 1 ? 'note' : 'notes'}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  );
+                })}
+              </CarouselContent>
+            </Carousel>
           </div>
         ) : (
           <div className="flex items-center justify-center h-[200px] bg-muted/20 ">
@@ -808,7 +704,7 @@ export default function BookShelfPage() {
                     <FormControl>
                       <Textarea
                         placeholder="Write your note here..."
-                        className="min-h-[200px]"
+                        className="min-h-[150px]"
                         {...field}
                       />
                     </FormControl>
@@ -816,12 +712,26 @@ export default function BookShelfPage() {
                   </FormItem>
                 )}
               />
+
               <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setIsAddNoteDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddNoteDialogOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {activeNote ? "Update" : "Save"}
+                <Button
+                  type="submit"
+                  disabled={addNoteMutation.isPending || editNoteMutation.isPending}
+                >
+                  {addNoteMutation.isPending || editNoteMutation.isPending ? (
+                    "Saving..."
+                  ) : activeNote ? (
+                    "Save Changes"
+                  ) : (
+                    "Add Note"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
