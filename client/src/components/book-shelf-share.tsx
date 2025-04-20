@@ -202,10 +202,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
               {/* Book details */}
               <div className="w-full md:w-2/3 p-4">
                 
-                {/* Animated Note Overlay */}
+                {/* Animated Note Overlay - Only covers the details section */}
                 {selectedNote && (
                   <div 
-                    className={`absolute inset-0 z-10 transition-all duration-500 transform ${
+                    className={`absolute top-0 right-0 bottom-0 left-0 md:left-auto md:w-2/3 z-10 transition-all duration-500 transform ${
                       noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
                     }`}
                     style={{
