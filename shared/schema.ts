@@ -256,6 +256,21 @@ export const NOTE_TYPES = [
   "shelf"
 ] as const;
 
+// Table for shelf comments
+export const shelfComments = pgTable("shelf_comments", {
+  id: serial("id").primaryKey(),
+  shelfId: integer("shelf_id").notNull().references(() => bookShelves.id),
+  userId: integer("user_id").references(() => users.id), // Optional for anonymous comments
+  username: text("username"), // For anonymous users
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertShelfCommentSchema = createInsertSchema(shelfComments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const contentReports = pgTable("content_reports", {
   id: serial("id").primaryKey(),
   bookId: integer("book_id").notNull().references(() => books.id),
@@ -1425,3 +1440,5 @@ export type ShelfBook = typeof shelfBooks.$inferSelect;
 export type InsertShelfBook = z.infer<typeof insertShelfBookSchema>;
 export type Note = typeof notes.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type ShelfComment = typeof shelfComments.$inferSelect;
+export type InsertShelfComment = z.infer<typeof insertShelfCommentSchema>;
