@@ -10,6 +10,7 @@ import logo from "@/public/images/logo.svg";
 import logoWhite from "@/public/images/logowhite.svg";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CommentSection } from "./comment-section";
 
 
 
@@ -329,9 +330,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         
         {/* Right column: Comment section */}
         <div className="w-full lg:w-1/3">
-          <div className="rounded-lg bg-black borderr border-l border-gray-800 p-4">
-           
-           
+          <div className="rounded-lg bg-black border border-l border-gray-800 p-4">
+            {shelfData?.shelf && (
+              <CommentSection shelfId={shelfData.shelf.id} />
+            )}
           </div>
         </div>
       </div>

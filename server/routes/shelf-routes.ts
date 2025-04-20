@@ -957,4 +957,126 @@ router.post("/api/bookshelves/:id/cover", bookshelfCoverUpload.single("coverImag
   }
 });
 
+// Get comments for a shared bookshelf
+router.get("/api/bookshelves/:id/comments", async (req: Request, res: Response) => {
+  const shelfId = parseInt(req.params.id);
+  
+  if (isNaN(shelfId)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+  
+  try {
+    // Check if the shelf exists and is shared
+    const shelf = await db.query.bookShelves.findFirst({
+      where: eq(bookShelves.id, shelfId)
+    });
+    
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+    
+    if (!shelf.isShared) {
+      return res.status(403).send("This bookshelf is not shared");
+    }
+    
+    // Get comments with user info if available
+    const comments = await db
+      .select({
+        id: shelfComments.id,
+        shelfId: shelfComments.shelfId,
+        userId: shelfComments.userId,
+        username: shelfComments.username,
+        content: shelfComments.content,
+        createdAt: shelfComments.createdAt,
+        userProfileImage: users.profileImageUrl
+      })
+      .from(shelfComments)
+      .leftJoin(users, eq(shelfComments.userId, users.id))
+      .where(eq(shelfComments.shelfId, shelfId))
+      .orderBy(desc(shelfComments.createdAt));
+    
+    return res.status(200).json(comments);
+  } catch (error) {
+    console.error("Error fetching bookshelf comments:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
+// Add a comment to a shared bookshelf
+router.post("/api/bookshelves/:id/comments", async (req: Request, res: Response) => {
+  const shelfId = parseInt(req.params.id);
+  
+  if (isNaN(shelfId)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+  
+  try {
+    // Check if the shelf exists and is shared
+    const shelf = await db.query.bookShelves.findFirst({
+      where: eq(bookShelves.id, shelfId)
+    });
+    
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+    
+    if (!shelf.isShared) {
+      return res.status(403).send("This bookshelf is not shared");
+    }
+    
+    // Prepare comment data based on authentication status
+    let commentData: any = {
+      shelfId,
+      content: req.body.content
+    };
+    
+    // If user is logged in, associate comment with user
+    if (req.user) {
+      commentData.userId = req.user.id;
+    } else if (req.body.username) {
+      // For anonymous users with a provided username
+      commentData.username = req.body.username;
+    } else {
+      // Default anonymous username
+      commentData.username = "Anonymous";
+    }
+    
+    // Validate the data
+    const validatedData = insertShelfCommentSchema.parse(commentData);
+    
+    // Insert the comment
+    const [newComment] = await db
+      .insert(shelfComments)
+      .values(validatedData)
+      .returning();
+    
+    // If user is logged in, get their profile image
+    let userProfileImage = null;
+    if (req.user) {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+        columns: {
+          profileImageUrl: true
+        }
+      });
+      
+      if (user) {
+        userProfileImage = user.profileImageUrl;
+      }
+    }
+    
+    // Return the comment with user profile image if available
+    return res.status(201).json({
+      ...newComment,
+      userProfileImage
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(error.errors);
+    }
+    console.error("Error adding bookshelf comment:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
 export default router;
