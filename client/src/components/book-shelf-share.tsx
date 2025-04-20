@@ -27,9 +27,14 @@ import {
   Pen, 
   X,
   Plus,
-  StickyNote
+  StickyNote,
+  ExternalLink
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Link } from "wouter";
+import { formatDate } from "@/lib/utils";
 
 interface BookShelfShareProps {
   username: string;
@@ -302,40 +307,38 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         )}
       </div>
       
-      {/* Add Note Section (only visible to owner) */}
-      {user?.username === username && (
-        <div className="flex justify-end">
-          <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <Plus className="h-4 w-4" />
-                Add Note
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Note for {selectedBook?.title}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <Textarea 
-                  placeholder="Write your note here..." 
-                  value={newNoteContent}
-                  onChange={(e) => setNewNoteContent(e.target.value)}
-                  className="min-h-32"
-                />
-                <div className="flex justify-end gap-2">
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button onClick={handleAddNote} disabled={!newNoteContent.trim()}>
-                    Save Note
-                  </Button>
-                </div>
+      {/* Add Note Button - We will conditionally show it based on the parent component's user data */}
+      <div className="flex justify-end">
+        <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              Add Note
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Note for {selectedBook?.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <Textarea 
+                placeholder="Write your note here..." 
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                className="min-h-32"
+              />
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleAddNote} disabled={!newNoteContent.trim()}>
+                  Save Note
+                </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
       
       {/* Selected Note Dialog */}
       {selectedNote && (
