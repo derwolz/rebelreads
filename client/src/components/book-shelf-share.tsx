@@ -97,10 +97,25 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
   // Handle book selection
   const handleSelectBook = (book: Book, index: number) => {
-    setSelectedBookIndex(index);
-    setSelectedBook(book);
-    // Reset selected note when changing books
-    setSelectedNote(null);
+    // If a note is currently visible, animate it away first
+    if (noteVisible) {
+      setIsRotating(true);
+      setTimeout(() => {
+        setNoteVisible(false);
+        setIsRotating(false);
+        // Then change the book
+        setSelectedBookIndex(index);
+        setSelectedBook(book);
+        // Reset selected note when changing books
+        setSelectedNote(null);
+      }, 500);
+    } else {
+      // If no note is visible, just change the book directly
+      setSelectedBookIndex(index);
+      setSelectedBook(book);
+      // Reset selected note when changing books
+      setSelectedNote(null);
+    }
   };
 
   // Select the first book by default when data loads
@@ -184,15 +199,25 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 className="absolute inset-0 bg-black border border-gray-800 rounded-lg shadow-lg p-4"
                 style={{
                   transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
-                  transition: 'transform 0.5s ease-in-out',
+                  transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                  boxShadow: noteVisible ? '0 10px 30px -15px rgba(255, 255, 255, 0.2)' : 'none',
                 }}
               >
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-white">Note</h3>
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                      <StickyNote className="h-4 w-4" />
+                      Note
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      {selectedNote.type === 'book' ? 'Book note' : 'Shelf note'} • 
+                      Last updated: {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-gray-400"
+                    className="text-gray-400 hover:bg-gray-800 hover:text-white"
                     onClick={() => {
                       setIsRotating(true);
                       setTimeout(() => {
@@ -204,7 +229,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="bg-white/5 p-1 rounded-lg">
+                <div className="bg-white/5 p-2 rounded-lg">
                   <PaperNoteCard note={selectedNote} />
                 </div>
               </div>
