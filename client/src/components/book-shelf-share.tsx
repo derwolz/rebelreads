@@ -45,21 +45,35 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
 
-  // Fetch the shelf and its books with robust parameter encoding
-  const { data: shelfData, isLoading: isShelfLoading, refetch: refetchShelf } = useQuery<{
+  // Define the correct response type
+  interface ShelfData {
     shelf: any;
-    books: Book[];
-    notes: Note[];
-  }>({
-    queryKey: [`/api/shelves?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`],
+    books: Array<{
+      id: number;
+      bookId: number;
+      shelfId: number;
+      rank: number;
+      addedAt: string;
+      book: Book;
+    }>;
+    bookNotes: Note[];
+    shelfNotes: Note[];
+  }
+
+  // Fetch the shelf and its books with robust parameter encoding - using the correct API endpoint
+  const { data: shelfData, isLoading: isShelfLoading, refetch: refetchShelf } = useQuery<ShelfData>({
+    queryKey: [`/api/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`],
   });
 
   // Get the books from the shelf data with safety check for undefined
-  const books = shelfData?.books || [];
+  // Map the nested book objects to a simple array of Book objects
+  const books = shelfData?.books 
+    ? shelfData.books.map(item => item.book) 
+    : [];
   
   // Get the notes for the currently selected book
-  const bookNotes = (selectedBook && shelfData?.notes) 
-    ? shelfData.notes.filter(note => note.bookId === selectedBook.id) 
+  const bookNotes = (selectedBook && shelfData?.bookNotes) 
+    ? shelfData.bookNotes.filter((note: Note) => note.bookId === selectedBook.id) 
     : [];
     
   // Log error if shelfData is undefined but username and shelfName are provided
