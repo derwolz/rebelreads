@@ -34,8 +34,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
-import logo from "@/public/images/logo.svg";
-import logoWhite from "@/public/images/logowhite.svg";
 
 interface BookShelfShareProps {
   username: string;
@@ -144,16 +142,13 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
   const { theme } = useTheme();
 
-  // Load the appropriate logo based on theme
-  const logoSrc = theme === "light" ? logo : logoWhite;
-
   return (
     <div className={`${className} bg-black text-white min-h-screen`}>
       {/* Header with Logo */}
       <div className="flex items-center justify-between p-4 mb-2">
         <div className="flex items-center">
           <img
-            src={logoSrc} 
+            src={theme === "light" ? "/images/logo.svg" : "/images/logowhite.svg"}
             alt="Sirened Logo"
             className="h-10 w-auto mr-2"
           />
