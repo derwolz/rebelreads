@@ -13,9 +13,26 @@ export default function BookShelfSharePage() {
   const { toast } = useToast();
   
   // Extract username and shelfname from query parameters
-  const params = new URLSearchParams(search);
-  const username = params.get("username") || "";
-  const shelfname = params.get("shelfname") || "";
+  // In the URL the query params might look like ?username=user&shelfname=shelf
+  // Or it might be ?username=user?shelfname=shelf (note the second ? instead of &)
+  // We need to handle both cases
+  let username = "";
+  let shelfname = "";
+
+  // Extract from regular format ?username=X&shelfname=Y
+  const standardParams = new URLSearchParams(search);
+  username = standardParams.get("username") || "";
+  shelfname = standardParams.get("shelfname") || "";
+
+  // If username exists but not shelfname, try to extract from ?username=X?shelfname=Y format
+  if (username && !shelfname) {
+    const questionMarkIndex = search.indexOf('?', 1); // Skip the first ? in the search
+    if (questionMarkIndex !== -1) {
+      const secondPart = search.substring(questionMarkIndex + 1);
+      const secondParams = new URLSearchParams(secondPart);
+      shelfname = secondParams.get("shelfname") || "";
+    }
+  }
   
   useEffect(() => {
     // If username or shelfname is not provided, redirect to the user's shelves
@@ -28,7 +45,7 @@ export default function BookShelfSharePage() {
   const handleShare = async () => {
     try {
       // Create the shareable URL
-      const shareUrl = `${window.location.origin}/book-shelf-share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfname)}`;
+      const shareUrl = `${window.location.origin}/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfname)}`;
       
       // Try to use the Web Share API if available
       if (navigator.share) {

@@ -384,7 +384,7 @@ export default function BookShelfPage() {
                 variant="outline"
                 onClick={() => {
                   // Navigate to dedicated bookshelf view
-                  window.location.href = `/book-shelf-share?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelf.title)}`;
+                  window.location.href = `/book-shelf/share?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelf.title)}`;
                 }}
               >
                 <ExternalLink className="mr-2 h-4 w-4" /> Dedicated View
