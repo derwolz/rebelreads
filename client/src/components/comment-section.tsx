@@ -17,6 +17,7 @@ interface Comment {
   shelfId: number;
   userId: number | null;
   username: string | null;
+  displayName: string | null;
   content: string;
   createdAt: string;
   userProfileImage: string | null;
@@ -189,7 +190,7 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-medium text-gray-200">
-                        {comment.username || (comment.userId ? "User" : "Anonymous")}
+                        {comment.displayName || comment.username || (comment.userId ? "User" : "Anonymous")}
                       </p>
                       <time className="text-xs text-gray-400">
                         {formatCommentDate(comment.createdAt)}

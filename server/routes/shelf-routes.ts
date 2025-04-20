@@ -988,7 +988,8 @@ router.get("/api/bookshelves/:id/comments", async (req: Request, res: Response) 
         username: shelfComments.username,
         content: shelfComments.content,
         createdAt: shelfComments.createdAt,
-        userProfileImage: users.profileImageUrl
+        userProfileImage: users.profileImageUrl,
+        displayName: users.displayName
       })
       .from(shelfComments)
       .leftJoin(users, eq(shelfComments.userId, users.id))
@@ -1050,25 +1051,29 @@ router.post("/api/bookshelves/:id/comments", async (req: Request, res: Response)
       .values(validatedData)
       .returning();
     
-    // If user is logged in, get their profile image
+    // If user is logged in, get their profile image and display name
     let userProfileImage = null;
+    let displayName = null;
     if (req.user) {
       const user = await db.query.users.findFirst({
         where: eq(users.id, req.user.id),
         columns: {
-          profileImageUrl: true
+          profileImageUrl: true,
+          displayName: true
         }
       });
       
       if (user) {
         userProfileImage = user.profileImageUrl;
+        displayName = user.displayName;
       }
     }
     
-    // Return the comment with user profile image if available
+    // Return the comment with user profile image and display name if available
     return res.status(201).json({
       ...newComment,
-      userProfileImage
+      userProfileImage,
+      displayName
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
