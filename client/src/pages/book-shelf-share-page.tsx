@@ -12,26 +12,40 @@ export default function BookShelfSharePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Extract username and shelfname from query parameters
-  // In the URL the query params might look like ?username=user&shelfname=shelf
-  // Or it might be ?username=user?shelfname=shelf (note the second ? instead of &)
-  // We need to handle both cases
+  // Extract username and shelfname from query parameters with robust handling of special characters
   let username = "";
   let shelfname = "";
-
-  // Extract from regular format ?username=X&shelfname=Y
-  const standardParams = new URLSearchParams(search);
-  username = standardParams.get("username") || "";
-  shelfname = standardParams.get("shelfname") || "";
-
-  // If username exists but not shelfname, try to extract from ?username=X?shelfname=Y format
-  if (username && !shelfname) {
-    const questionMarkIndex = search.indexOf('?', 1); // Skip the first ? in the search
-    if (questionMarkIndex !== -1) {
-      const secondPart = search.substring(questionMarkIndex + 1);
-      const secondParams = new URLSearchParams(secondPart);
-      shelfname = secondParams.get("shelfname") || "";
+  
+  try {
+    // Parse search parameters with proper decoding
+    const searchParams = new URLSearchParams(search);
+    
+    // Get username parameter with special character handling
+    const rawUsername = searchParams.get("username");
+    username = rawUsername ? decodeURIComponent(rawUsername) : "";
+    
+    // Get shelfname parameter with special character handling
+    const rawShelfname = searchParams.get("shelfname");
+    shelfname = rawShelfname ? decodeURIComponent(rawShelfname) : "";
+    
+    // Edge case: If the URL has malformed parameters like ?username=X?shelfname=Y
+    if (username && !shelfname) {
+      const questionMarkIndex = search.indexOf('?', 1); // Skip the first ? in the search
+      if (questionMarkIndex !== -1) {
+        const secondPart = search.substring(questionMarkIndex + 1);
+        const secondParams = new URLSearchParams(secondPart);
+        const rawSecondShelfname = secondParams.get("shelfname");
+        shelfname = rawSecondShelfname ? decodeURIComponent(rawSecondShelfname) : "";
+      }
     }
+    
+    // Handle any other special cases like '+' being converted to spaces
+    username = username.replace(/\+/g, ' ');
+    shelfname = shelfname.replace(/\+/g, ' ');
+    
+  } catch (error) {
+    console.error("Error parsing URL parameters:", error);
+    // Fallback to empty values, which will trigger the redirect in useEffect
   }
   
   useEffect(() => {

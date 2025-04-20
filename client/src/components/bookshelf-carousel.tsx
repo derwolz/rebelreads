@@ -77,8 +77,9 @@ function BookshelfCard({ shelf }: BookshelfCardProps) {
   const username = user?.username || "";
   const [showShareButton, setShowShareButton] = useState(false);
   
-  // Create the regular and dedicated view URLs
+  // Create the regular and dedicated view URLs with properly encoded parameters
   const shelfUrl = `/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`;
+  // For the share URL, we need to be extra careful with encoding to handle all special characters
   const shareUrl = `${window.location.origin}/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`;
   
   // Handle copying the share URL
@@ -140,20 +141,18 @@ function BookshelfCard({ shelf }: BookshelfCardProps) {
             
             {/* Dedicated view button */}
             <div className={`absolute top-2 left-2 transition-opacity duration-200 ${showShareButton ? 'opacity-100' : 'opacity-0'}`}>
-              <a 
-                href={`/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`}
-                onClick={(e) => e.stopPropagation()}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Button 
+                size="icon" 
+                variant="secondary" 
+                className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(`/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`, '_blank', 'noopener,noreferrer');
+                }}
               >
-                <Button 
-                  size="icon" 
-                  variant="secondary" 
-                  className="h-8 w-8 bg-background/80 backdrop-blur-sm"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              </a>
+                <ExternalLink className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <CardContent className="p-3 flex items-center gap-2">

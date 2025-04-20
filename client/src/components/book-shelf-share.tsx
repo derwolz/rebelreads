@@ -45,7 +45,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
 
-  // Fetch the shelf and its books
+  // Fetch the shelf and its books with robust parameter encoding
   const { data: shelfData, isLoading: isShelfLoading, refetch: refetchShelf } = useQuery<{
     shelf: any;
     books: Book[];
@@ -54,13 +54,25 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     queryKey: [`/api/shelves?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`],
   });
 
-  // Get the books from the shelf data
+  // Get the books from the shelf data with safety check for undefined
   const books = shelfData?.books || [];
   
   // Get the notes for the currently selected book
-  const bookNotes = selectedBook 
-    ? shelfData?.notes.filter(note => note.bookId === selectedBook.id) 
+  const bookNotes = (selectedBook && shelfData?.notes) 
+    ? shelfData.notes.filter(note => note.bookId === selectedBook.id) 
     : [];
+    
+  // Log error if shelfData is undefined but username and shelfName are provided
+  useEffect(() => {
+    if (!isShelfLoading && !shelfData && username && shelfName) {
+      console.error("Failed to load shelf data for:", {
+        username,
+        shelfName,
+        encodedUsername: encodeURIComponent(username),
+        encodedShelfName: encodeURIComponent(shelfName)
+      });
+    }
+  }, [isShelfLoading, shelfData, username, shelfName]);
 
   // Handle book selection
   const handleSelectBook = (book: Book, index: number) => {
