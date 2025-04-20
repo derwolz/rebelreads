@@ -321,8 +321,26 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
             {shelfData?.shelfNotes && shelfData.shelfNotes.length > 0 ? (
               <div className="space-y-6">
                 {shelfData.shelfNotes.map((note) => (
-                  <div key={note.id} className="overflow-hidden hover:scale-[1.02] transition-transform duration-300 cursor-pointer" onClick={() => setSelectedNote(note)}>
+                  <div 
+                    key={note.id} 
+                    className="overflow-hidden hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
+                    onClick={() => {
+                      // Create URL for the dedicated note view
+                      const noteUrl = `/note-card?id=${note.id}&username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`;
+                      
+                      // Check if user is holding the Ctrl/Cmd key to open in new tab
+                      if (window.event && (window.event as MouseEvent).ctrlKey) {
+                        window.open(noteUrl, '_blank', 'noopener,noreferrer');
+                      } else {
+                        // Normal click - preview in modal
+                        setSelectedNote(note);
+                      }
+                    }}
+                  >
                     <PaperNoteCard note={note} />
+                    <div className="mt-2 text-center text-xs text-gray-400">
+                      Click to preview • Ctrl+Click to open in new page
+                    </div>
                   </div>
                 ))}
               </div>
@@ -368,7 +386,18 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 <PaperNoteCard note={selectedNote} />
               </div>
             </ScrollArea>
-            <div className="flex justify-end">
+            <div className="flex justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  // Create URL for the dedicated note view
+                  const noteUrl = `/note-card?id=${selectedNote.id}&username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`;
+                  window.open(noteUrl, '_blank', 'noopener,noreferrer');
+                }}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open in Full Page
+              </Button>
               <DialogClose asChild>
                 <Button variant="outline">Close</Button>
               </DialogClose>
