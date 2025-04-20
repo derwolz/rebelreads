@@ -207,7 +207,7 @@ export function BookRackShelf({
         <EmptyState />
       ) : (
         <ScrollArea className="w-full" type="scroll">
-          <div className="flex space-x-1 pt-4 pb-8 items-end">
+          <div className="flex space-x-1 pt-4 pb-8 justify-center items-center">
             <AnimatePresence>
               {displayedBooks.map((book, index) => {
                 // Get this book's angle

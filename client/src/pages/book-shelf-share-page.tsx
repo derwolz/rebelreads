@@ -83,7 +83,7 @@ export default function BookShelfSharePage() {
   };
 
   return (
-    <main className="w-full min-h-screen bg-black text-white p-0 m-0">
+    <main className="w-full flex justify-center min-h-screen bg-black text-white p-0 m-0">
       <BookShelfShare username={username} shelfName={shelfname} />
     </main>
   );
