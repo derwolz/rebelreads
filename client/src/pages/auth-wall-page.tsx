@@ -182,10 +182,14 @@ export default function AuthWallPage() {
                           render={({ field }) => (
                             <FormItem className="mt-4">
                               <FormLabel>Beta Key</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter your beta key" {...field} />
-                              </FormControl>
-   
+                              <BetaKeyInput 
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Enter beta key"
+                              />
+                              <FormDescription>
+                                Required for first-time login during beta testing phase.
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -319,10 +323,15 @@ export default function AuthWallPage() {
                           render={({ field }) => (
                             <FormItem className="mt-4">
                               <FormLabel>Beta Key</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter your beta key" {...field} />
-                              </FormControl>
-
+                              <BetaKeyInput 
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Enter beta key"
+                              />
+                              <FormDescription>
+                                Required during beta testing phase
+                              </FormDescription>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />

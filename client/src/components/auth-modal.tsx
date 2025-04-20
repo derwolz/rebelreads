@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { GoogleBetaAuthDialog } from "./google-beta-auth-dialog";
 import { LoginVerificationDialog } from "./login-verification-dialog";
+import { BetaKeyInput } from "@/components/beta-key-input";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -208,9 +209,11 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                       render={({ field }) => (
                         <FormItem className="mt-4">
                           <FormLabel>Beta Key</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your beta key" {...field} />
-                          </FormControl>
+                          <BetaKeyInput 
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Enter beta key"
+                          />
                           <FormDescription>
                             Required for first-time login during beta testing phase.
                             Returning users who have already used a beta key don't need to enter it again.
@@ -338,9 +341,11 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                       render={({ field }) => (
                         <FormItem className="mt-4">
                           <FormLabel>Beta Key</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your beta key" {...field} />
-                          </FormControl>
+                          <BetaKeyInput 
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Enter beta key"
+                          />
                           <FormDescription>
                             Required during beta testing phase
                           </FormDescription>
