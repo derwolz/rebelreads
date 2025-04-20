@@ -48,7 +48,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { BookOpen, Plus, X, Edit, Trash } from "lucide-react";
+import { BookOpen, Plus, X, Edit, Trash, ExternalLink, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -379,7 +379,16 @@ export default function BookShelfPage() {
                 Created on {formatDate(shelf.createdAt)}
               </CardDescription>
             </div>
-            <div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  // Navigate to dedicated bookshelf view
+                  window.location.href = `/book-shelf-share?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelf.title)}`;
+                }}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" /> Dedicated View
+              </Button>
               <Button onClick={() => handleAddNote("shelf")}>
                 <Plus className="mr-2 h-4 w-4" /> Add Shelf Note
               </Button>
