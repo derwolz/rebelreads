@@ -63,6 +63,7 @@ export interface Author {
   death_date: string | null;
   website: string | null;
   bio: string | null;
+  socialMediaLinks?: any[]; // Social media links for the author
 }
 
 export interface Publisher {
