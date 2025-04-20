@@ -56,6 +56,75 @@ export function DragDropImage({
     }
   };
 
+  const processImageForUpload = (img: HTMLImageElement, file: File, objectUrl: string) => {
+    try {
+      // Create canvas for the cropped and scaled image
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+      
+      // Calculate scaling and positioning
+      const imgRatio = img.width / img.height;
+      const targetRatio = width / height;
+      
+      let sx = 0;  // source x
+      let sy = 0;  // source y
+      let sw = img.width;  // source width
+      let sh = img.height;  // source height
+      
+      // Scale to the largest dimension while maintaining aspect ratio
+      if (imgRatio > targetRatio) {
+        // Image is wider than target ratio - scale to height and crop width
+        sw = img.height * targetRatio;
+        sx = (img.width - sw) / 2;  // Center horizontally
+      } else {
+        // Image is taller than target ratio - scale to width and crop height
+        sh = img.width / targetRatio;
+        sy = (img.height - sh) / 2;  // Center vertically
+      }
+      
+      // Draw the image with the calculated dimensions
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+      
+      // Convert canvas to blob
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            const errorMessage = "Failed to process image";
+            setError(errorMessage);
+            onChange(file, true, errorMessage);
+            return;
+          }
+          
+          // Create a file from the blob
+          const processedFile = new File([blob], file.name, {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+          
+          // Create preview
+          const processedUrl = URL.createObjectURL(processedFile);
+          setPreview(processedUrl);
+          
+          // Pass the processed file
+          onChange(processedFile, false);
+        },
+        "image/jpeg",
+        0.95
+      );
+    } catch (error) {
+      console.error("Error processing image:", error);
+      const errorMessage = "Failed to process image";
+      setError(errorMessage);
+      onChange(file, true, errorMessage);
+    }
+  };
+
   const handleImageSelected = (file: File) => {
     setError(null);
     
@@ -77,36 +146,8 @@ export function DragDropImage({
     const objectUrl = URL.createObjectURL(file);
     
     img.onload = () => {
-      // Allow a small tolerance (±10 pixels) for image dimensions
-      const tolerance = 10;
-      const widthMatches = Math.abs(img.width - width) <= tolerance;
-      const heightMatches = Math.abs(img.height - height) <= tolerance;
-      
-      if (!widthMatches || !heightMatches) {
-        const errorMessage = `Image must be ${width}×${height} pixels`;
-        setError(errorMessage);
-        toast({
-          title: "Wrong image dimensions",
-          description: `The image must be ${width}×${height} pixels, but got ${img.width}×${img.height}`,
-          variant: "destructive"
-        });
-        
-        // Pass the file but with error information
-        onChange(file, true, errorMessage);
-        URL.revokeObjectURL(objectUrl);
-        return;
-      }
-      
-      // Image is valid, proceed
-      onChange(file, false);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-      
+      // Process the image to the required dimensions
+      processImageForUpload(img, file, objectUrl);
       URL.revokeObjectURL(objectUrl);
     };
     
@@ -187,7 +228,7 @@ export function DragDropImage({
             </Button>
           </div>
           <div className="mt-1 sm:mt-2 text-center text-xs text-muted-foreground">
-            Required size: {width}×{height}
+            Output size: {width}×{height}
           </div>
         </div>
       ) : (
@@ -211,7 +252,10 @@ export function DragDropImage({
             Tap to select image
           </p>
           <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1">
-            Required size: {width}×{height}
+            Will be resized to {width}×{height}
+          </p>
+          <p className="text-[10px] text-center text-muted-foreground mt-0.5">
+            Images will be automatically cropped and centered
           </p>
           {error && (
             <p className="text-[10px] sm:text-xs text-center text-destructive mt-1 sm:mt-2">
