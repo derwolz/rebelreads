@@ -24,6 +24,11 @@ interface Comment {
   createdAt: string;
 }
 
+interface ShelfBook {
+  id: number;
+  title: string;
+}
+
 // Mock comments data for display purposes
 const mockComments: Comment[] = [
   {
@@ -46,6 +51,16 @@ const mockComments: Comment[] = [
   }
 ];
 
+// Mock book data for the shelf
+const mockShelfBooks: ShelfBook[] = [
+  { id: 1, title: "Valkyrie X Truck" },
+  { id: 2, title: "Forever Dust" },
+  { id: 3, title: "Moonlight Whispers" },
+  { id: 4, title: "Steel Heart" },
+  { id: 5, title: "Shadow Walker" },
+  { id: 6, title: "Future's Edge" }
+];
+
 export default function BookShelfSharePage() {
   const [location, navigate] = useLocation();
   const search = useSearch();
@@ -54,6 +69,7 @@ export default function BookShelfSharePage() {
   const [commentText, setCommentText] = useState("");
   const [showCommentForm, setShowCommentForm] = useState(false);
   const [comments, setComments] = useState<Comment[]>(mockComments);
+  const [books, setBooks] = useState<ShelfBook[]>(mockShelfBooks);
   
   // Extract username and shelfname from query parameters with robust handling of special characters
   let username = "";
@@ -168,15 +184,30 @@ export default function BookShelfSharePage() {
           
           {/* Main content container */}
           <div className="flex flex-row">
-            {/* Left sidebar with action buttons */}
+            {/* Left sidebar with author's call-to-action buttons */}
             <div className="w-10 space-y-4 mr-2">
-              <Button variant="ghost" size="icon" className="p-1 bg-zinc-900 rounded-md">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="p-1 bg-zinc-900 rounded-md"
+                onClick={() => window.open('https://valkyriextruck.com/book', '_blank')}
+              >
                 <BookOpen className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="p-1 bg-zinc-900 rounded-md">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="p-1 bg-zinc-900 rounded-md"
+                onClick={() => window.open('https://valkyriextruck.com', '_blank')}
+              >
                 <User className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="p-1 bg-zinc-900 rounded-md">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="p-1 bg-zinc-900 rounded-md"
+                onClick={() => window.open('https://x.com/thekingofstank', '_blank')}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -233,6 +264,42 @@ export default function BookShelfSharePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Bookshelf display at the bottom */}
+      <div className="mt-8 px-2">
+        <h3 className="text-lg font-semibold text-white mb-2">{shelfname}</h3>
+        <div className="h-24 bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-md flex items-end">
+          <div className="flex space-x-1 px-2 pb-1 overflow-x-auto">
+            {/* Generate book spines - either from real data or placeholders */}
+            {books && books.length > 0 ? (
+              books.map((book, index) => (
+                <div 
+                  key={book.id || index}
+                  className={`h-20 w-8 rounded-t-sm flex-shrink-0 flex items-end justify-center 
+                    ${['bg-purple-700', 'bg-blue-700', 'bg-green-700', 'bg-red-700', 'bg-orange-700'][index % 5]}`}
+                  title={book.title}
+                >
+                  <span className="text-[8px] text-white font-bold px-1 rotate-90 origin-center whitespace-nowrap overflow-hidden mb-6">
+                    {book.title}
+                  </span>
+                </div>
+              ))
+            ) : (
+              // Placeholder book spines when no data
+              Array(8).fill(0).map((_, index) => {
+                const heights = ["h-12", "h-16", "h-18", "h-20"];
+                return (
+                  <div 
+                    key={`spine-${index}`}
+                    className={`${heights[index % 4]} w-8 rounded-t-sm flex-shrink-0
+                      ${['bg-purple-700', 'bg-blue-700', 'bg-green-700', 'bg-red-700', 'bg-orange-700'][index % 5]}`}
+                  />
+                );
+              })
+            )}
           </div>
         </div>
       </div>
