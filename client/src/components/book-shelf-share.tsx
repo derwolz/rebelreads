@@ -46,6 +46,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [selectedBookIndex, setSelectedBookIndex] = useState<number | null>(null);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [noteVisible, setNoteVisible] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
@@ -165,9 +167,56 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       {/* Main content area */}
       <div className="flex flex-col lg:flex-row gap-6 p-4">
         {/* Left column: Book details and comments */}
-        <div className="w-full lg:w-2/3">
+        <div className="w-full lg:w-2/3 relative">
+          {/* Animated Note Overlay */}
+          {selectedNote && (
+            <div 
+              className={`absolute inset-0 z-10 transition-all duration-500 transform ${
+                noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+              }`}
+              style={{
+                perspective: '1000px',
+                transformStyle: 'preserve-3d',
+                backfaceVisibility: 'hidden',
+              }}
+            >
+              <div 
+                className="absolute inset-0 bg-black border border-gray-800 rounded-lg shadow-lg p-4"
+                style={{
+                  transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
+                  transition: 'transform 0.5s ease-in-out',
+                }}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium text-white">Note</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-gray-400"
+                    onClick={() => {
+                      setIsRotating(true);
+                      setTimeout(() => {
+                        setNoteVisible(false);
+                        setIsRotating(false);
+                      }, 500);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="bg-white/5 p-1 rounded-lg">
+                  <PaperNoteCard note={selectedNote} />
+                </div>
+              </div>
+            </div>
+          )}
+            
           {/* Book Details Card that shows the selected book */}
-          <div className="rounded-lg overflow-hidden bg-black border border-gray-800 mb-6">
+          <div 
+            className={`rounded-lg overflow-hidden bg-black border border-gray-800 mb-6 transition-all duration-500 ${
+              noteVisible ? 'opacity-0 scale-95 transform' : 'opacity-100 scale-100 transform'
+            }`}
+          >
             <div className="flex flex-col md:flex-row">
               {/* Book cover */}
               <div className="w-full md:w-1/3 flex items-center justify-center p-4 bg-gradient-to-b from-gray-900 to-black">
@@ -276,7 +325,38 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   <div 
                     key={note.id} 
                     className="p-3 rounded-lg bg-purple-900/40 border-l-4 border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors"
-                    onClick={() => setSelectedNote(note)}
+                    onClick={() => {
+                      // Use the same animation logic for book notes
+                      if (selectedNote && selectedNote.id === note.id && noteVisible) {
+                        // If the same note is clicked while visible, hide it
+                        setIsRotating(true);
+                        setTimeout(() => {
+                          setNoteVisible(false);
+                          setIsRotating(false);
+                        }, 500);
+                      } else {
+                        // If no note is currently visible or a different note is clicked
+                        if (noteVisible) {
+                          // If a note is already visible, hide it first with animation
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setSelectedNote(note);
+                            setTimeout(() => {
+                              setNoteVisible(true);
+                              setIsRotating(false);
+                            }, 100);
+                          }, 500);
+                        } else {
+                          // No note is visible, show the selected one directly
+                          setSelectedNote(note);
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setNoteVisible(true);
+                            setIsRotating(false);
+                          }, 100);
+                        }
+                      }
+                    }}
                   >
                     <div className="flex items-start gap-2">
                       <div className="flex-1">
@@ -325,21 +405,41 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     key={note.id} 
                     className="overflow-hidden hover:scale-[1.02] transition-transform duration-300 cursor-pointer"
                     onClick={() => {
-                      // Create URL for the dedicated note view
-                      const noteUrl = `/note-card?id=${note.id}&username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`;
-                      
-                      // Check if user is holding the Ctrl/Cmd key to open in new tab
-                      if (window.event && (window.event as MouseEvent).ctrlKey) {
-                        window.open(noteUrl, '_blank', 'noopener,noreferrer');
+                      // Handle note selection with animation
+                      if (selectedNote && selectedNote.id === note.id && noteVisible) {
+                        // If the same note is clicked while visible, hide it
+                        setIsRotating(true);
+                        setTimeout(() => {
+                          setNoteVisible(false);
+                          setIsRotating(false);
+                        }, 500); // Half a second for the rotation animation
                       } else {
-                        // Normal click - preview in modal
-                        setSelectedNote(note);
+                        // If no note is currently visible or a different note is clicked
+                        if (noteVisible) {
+                          // If a note is already visible, hide it first with animation
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setSelectedNote(note);
+                            setTimeout(() => {
+                              setNoteVisible(true);
+                              setIsRotating(false);
+                            }, 100);
+                          }, 500);
+                        } else {
+                          // No note is visible, show the selected one directly
+                          setSelectedNote(note);
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setNoteVisible(true);
+                            setIsRotating(false);
+                          }, 100);
+                        }
                       }
                     }}
                   >
                     <PaperNoteCard note={note} />
                     <div className="mt-2 text-center text-xs text-gray-400">
-                      Click to preview • Ctrl+Click to open in new page
+                      Click to view
                     </div>
                   </div>
                 ))}
@@ -374,37 +474,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         </div>
       </div>
       
-      {/* Selected Note Dialog */}
-      {selectedNote && (
-        <Dialog open={!!selectedNote} onOpenChange={(open) => !open && setSelectedNote(null)}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Note</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-72">
-              <div className="pt-2">
-                <PaperNoteCard note={selectedNote} />
-              </div>
-            </ScrollArea>
-            <div className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  // Create URL for the dedicated note view
-                  const noteUrl = `/note-card?id=${selectedNote.id}&username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`;
-                  window.open(noteUrl, '_blank', 'noopener,noreferrer');
-                }}
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Open in Full Page
-              </Button>
-              <DialogClose asChild>
-                <Button variant="outline">Close</Button>
-              </DialogClose>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* No dialog needed anymore */}
       
       {/* Separator */}
       <div className="w-full border-t border-gray-800 my-8"></div>
