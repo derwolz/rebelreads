@@ -138,6 +138,7 @@ function Router() {
         <ProtectedRoute path="/settings/homepage" component={() => <HomepageSettingsPage />} />
         <ProtectedRoute path="/settings/author" component={SettingsPage} />
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
+        <ProtectedRoute path="/book-shelf" component={BookShelfPage} />
         <ProtectedRoute path="/book-shelf/:id" component={BookShelfPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
