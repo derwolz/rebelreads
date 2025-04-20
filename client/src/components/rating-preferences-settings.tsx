@@ -161,7 +161,7 @@ export function RatingPreferencesSettings({
       console.log("Criteria reordered:", newOrder);
       
       // Generate new weights based on position
-      const newWeights = generateCriteriaWeights(newOrder);
+      const newWeights = updateWeightsForNewOrder(newOrder, currentWeights);
       console.log("New weights after reordering:", newWeights);
       
       // Update the weights state
@@ -188,10 +188,10 @@ export function RatingPreferencesSettings({
     enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });
 
-  // Calculate criteria order from weights when data is received
+  // Load criteria order and weights from preferences data only once on initial load
   useEffect(() => {
-    if (preferencesData && !initialCriteriaOrder) {
-      // Derive criteria order from the weights
+    if (preferencesData && !initialCriteriaOrder && Object.keys(currentWeights).length === 0) {
+      // Derive criteria order from the weights - only on initial load
       const weights = {
         enjoyment: preferencesData.enjoyment,
         writing: preferencesData.writing,
@@ -206,15 +206,16 @@ export function RatingPreferencesSettings({
         .map(([criterion]) => criterion);
         
       setCriteriaOrder(derivedOrder);
-      setCurrentWeights(weights); // Initialize current weights
+      setCurrentWeights(weights); // Initialize current weights only once
       console.log("Derived criteria order from weights:", derivedOrder);
       console.log("Loaded weights from DB:", weights);
-    } else if (!preferencesData) {
+    } else if (!preferencesData && Object.keys(currentWeights).length === 0) {
       // If no saved preferences, initialize with default weights based on initial order
+      // Only do this once when the component mounts
       const defaultWeights = generateCriteriaWeights(criteriaOrder);
       setCurrentWeights(defaultWeights);
     }
-  }, [preferencesData, initialCriteriaOrder, criteriaOrder]);
+  }, [preferencesData, initialCriteriaOrder]);
   
   // Helper function to generate criteria weights from order
   const generateCriteriaWeights = (order: string[]): Record<string, number> => {
@@ -229,15 +230,16 @@ export function RatingPreferencesSettings({
     return weights;
   };
   
-  // Helper function to update weights for a new order while preserving the weight values
+  // Helper function to update weights for a new order
   const updateWeightsForNewOrder = (
     newOrder: string[], 
     existingWeights: Record<string, number>
   ): Record<string, number> => {
     const updatedWeights: Record<string, number> = {};
     
-    // For a completely new ordering, we'll use position-based weights
-    // This preserves the relationship between position and weight
+    // Always assign weights based on position in the list
+    // This ensures that dragging an item to a new position 
+    // always gives it the weight appropriate for that position
     newOrder.forEach((criterion, index) => {
       updatedWeights[criterion] = POSITION_WEIGHTS[index];
     });
@@ -248,6 +250,9 @@ export function RatingPreferencesSettings({
   };
   
   // Mutation to save preferences
+  // Note: This is the ONLY place where data is saved to the database.
+  // There is NO autosave - changes are only persisted when the user
+  // explicitly clicks the Save button to trigger this mutation.
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
       // Use current weights state instead of regenerating from order
@@ -280,6 +285,8 @@ export function RatingPreferencesSettings({
   });
   
   const handleSave = () => {
+    console.log("Saving preferences with current weights:", currentWeights);
+    console.log("Current criteria order:", criteriaOrder);
     savePreferences();
   };
   
