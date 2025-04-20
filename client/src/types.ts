@@ -40,6 +40,7 @@ export interface Book {
   taxonomicScore?: number;
   matchingTaxonomies?: number;
   coverUrl?: string | null; // Used in discover page
+  genres?: string[]; // For displaying genres in UI
 }
 
 export interface BookImage {

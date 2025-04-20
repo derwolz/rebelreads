@@ -83,29 +83,8 @@ export default function BookShelfSharePage() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/profile?tab=bookshelves")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">{shelfname}</h1>
-          <span className="text-muted-foreground">by {username}</span>
-        </div>
-        
-        {/* Show share button if the user is the owner */}
-        {user?.username === username && (
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
-        )}
-      </div>
-      
-      {/* Main content with the BookShelfShare component */}
-      <div className="mb-12">
-        <BookShelfShare username={username} shelfName={shelfname} />
-      </div>
+    <main className="w-full min-h-screen bg-black text-white p-0 m-0">
+      <BookShelfShare username={username} shelfName={shelfname} />
     </main>
   );
 }

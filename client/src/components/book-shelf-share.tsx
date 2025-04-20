@@ -22,14 +22,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { 
   BookOpen, 
   Pen, 
   X,
   Plus,
-  StickyNote
+  StickyNote,
+  Share2,
+  ExternalLink
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/hooks/use-theme";
+import logo from "@/public/images/logo.svg";
+import logoWhite from "@/public/images/logowhite.svg";
 
 interface BookShelfShareProps {
   username: string;
@@ -136,85 +142,199 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     }
   };
 
+  const { theme } = useTheme();
+
+  // Load the appropriate logo based on theme
+  const logoSrc = theme === "light" ? logo : logoWhite;
+
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Book Details Card that shows the selected book */}
-      <BookDetailsCard book={selectedBook} />
-      
-      {/* Notes Section - Floating tooltips */}
-      <div className="relative">
-        {bookNotes && bookNotes.length > 0 && (
-          <div className="absolute inset-0 pointer-events-none">
-            {bookNotes.map((note, idx) => {
-              // Position notes at random locations
-              const randomTop = `${20 + (idx * 15) % 80}%`;
-              const randomLeft = `${10 + (idx * 23) % 80}%`;
-              
-              return (
-                <TooltipProvider key={note.id}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div 
-                        className="absolute bg-accent/80 text-accent-foreground p-2 rounded-lg shadow-lg cursor-pointer pointer-events-auto transform hover:scale-105 transition-transform"
-                        style={{ 
-                          top: randomTop, 
-                          left: randomLeft,
-                          maxWidth: '200px',
-                          zIndex: selectedNote?.id === note.id ? 50 : 30
-                        }}
-                        onClick={() => setSelectedNote(note)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <StickyNote className="h-4 w-4 flex-shrink-0 mt-1" />
-                          <p className="text-xs line-clamp-2">{note.content.substring(0, 50)}{note.content.length > 50 ? '...' : ''}</p>
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-md">
-                      <p className="text-sm">{note.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(note.createdAt).toLocaleDateString()}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              );
-            })}
-          </div>
-        )}
+    <div className={`${className} bg-black text-white min-h-screen`}>
+      {/* Header with Logo */}
+      <div className="flex items-center justify-between p-4 mb-2">
+        <div className="flex items-center">
+          <img
+            src={logoSrc} 
+            alt="Sirened Logo"
+            className="h-10 w-auto mr-2"
+          />
+          <span className="text-xl font-bold text-white">Sirened</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" className="text-white">
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
-      {/* Add Note Button */}
-      <div className="flex justify-end">
-        <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Plus className="h-4 w-4" />
-              Add Note
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Note for {selectedBook?.title}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <Textarea 
-                placeholder="Write your note here..." 
-                value={newNoteContent}
-                onChange={(e) => setNewNoteContent(e.target.value)}
-                className="min-h-32"
-              />
-              <div className="flex justify-end gap-2">
-                <DialogClose asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleAddNote} disabled={!newNoteContent.trim()}>
-                  Save Note
-                </Button>
+      {/* Main content area */}
+      <div className="flex flex-col lg:flex-row gap-6 p-4">
+        {/* Left column: Book details and comments */}
+        <div className="w-full lg:w-2/3">
+          {/* Book Details Card that shows the selected book */}
+          <div className="rounded-lg overflow-hidden bg-black border border-gray-800 mb-6">
+            <div className="flex flex-col md:flex-row">
+              {/* Book cover */}
+              <div className="w-full md:w-1/3 flex items-center justify-center p-4 bg-gradient-to-b from-gray-900 to-black">
+                <img 
+                  src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                  alt={selectedBook?.title} 
+                  className="w-40 h-auto object-cover shadow-lg rounded-md" 
+                />
+              </div>
+              
+              {/* Book details */}
+              <div className="w-full md:w-2/3 p-4">
+                <h2 className="text-2xl font-bold mb-1 text-white">{selectedBook?.title}</h2>
+                <p className="text-gray-400 mb-2">by {selectedBook?.authorName}</p>
+                
+                <div className="mb-4">
+                  <ScrollArea className="h-28 pr-4">
+                    <p className="text-sm text-gray-300">{selectedBook?.description}</p>
+                  </ScrollArea>
+                </div>
+                
+                {/* Genres & Themes */}
+                <div className="mb-4">
+                  <div className="flex flex-wrap gap-1">
+                    {selectedBook?.genres?.map((genre: string, idx: number) => (
+                      <Badge 
+                        key={idx} 
+                        className="bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      >
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Referral links */}
+                {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2 text-gray-300">Where to Buy</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedBook.referralLinks.map((link: any, idx: number) => (
+                        <a 
+                          key={idx}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-xs bg-gray-800 hover:bg-gray-700 rounded-md px-3 py-1 transition-colors text-white"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            // Record click-through on referral link
+                            await apiRequest("POST", `/api/books/${selectedBook.id}/click-through`, {
+                              source: "referral-link",
+                              referrer: window.location.pathname,
+                            });
+                          }}
+                        >
+                          <span className="mr-1">{link.customName || link.retailer}</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+          
+          {/* Comments/Notes section */}
+          <div className="rounded-lg bg-black border border-gray-800 p-4 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-white">Reader Notes</h3>
+              <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1 border-gray-600 text-white hover:bg-gray-800">
+                    <Plus className="h-4 w-4" />
+                    Add Note
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Note for {selectedBook?.title}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <Textarea 
+                      placeholder="Write your note here..." 
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      className="min-h-32"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button onClick={handleAddNote} disabled={!newNoteContent.trim()}>
+                        Save Note
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            
+            {bookNotes && bookNotes.length > 0 ? (
+              <div className="space-y-3">
+                {bookNotes.map((note, idx) => (
+                  <div 
+                    key={note.id} 
+                    className="p-3 rounded-lg bg-purple-900/40 border-l-4 border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors"
+                    onClick={() => setSelectedNote(note)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="text-xs text-gray-400">
+                            User {idx + 1} - {new Date(note.createdAt).toLocaleDateString()} - {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </p>
+                        </div>
+                        <p className="text-sm text-white line-clamp-2">{note.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <StickyNote className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No notes yet</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Comment input form */}
+          <div className="flex items-center gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              className="border-gray-600 text-white hover:bg-gray-800 w-full flex items-center justify-center gap-2"
+              onClick={() => setIsAddingNote(true)}
+            >
+              <Pen className="h-4 w-4" />
+              <span>Add Comment</span>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Right column: List of other shelves or complementary content */}
+        <div className="w-full lg:w-1/3 rounded-lg bg-black border border-gray-800 p-4">
+          <h3 className="text-lg font-medium mb-4 text-white">You might also like</h3>
+          <div className="space-y-3">
+            {/* Example shelf recommendation - this would normally come from data */}
+            <div className="flex items-center gap-3 border-b border-gray-800 pb-3">
+              <div className="w-14 h-14 bg-gray-800 rounded overflow-hidden">
+                <img src="/images/placeholder-book.png" alt="Shelf thumbnail" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium text-white">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
+                <p className="text-xs text-gray-400">shelf</p>
+              </div>
+              <Button variant="ghost" size="sm" className="text-gray-400">
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
       
       {/* Selected Note Dialog */}
@@ -243,14 +363,17 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         </Dialog>
       )}
       
+      {/* Separator */}
+      <div className="w-full border-t border-gray-800 my-8"></div>
+      
       {/* Book Rack at the bottom */}
-      <div className="mt-8 pt-4 border-t">
-        <h3 className="text-lg font-medium mb-4">Books on this Shelf</h3>
+      <div className="px-4 pb-10">
         <BookRackShelf 
           books={books}
           isLoading={isShelfLoading}
           onSelectBook={handleSelectBook}
           selectedBookIndex={selectedBookIndex}
+          className="mx-auto max-w-4xl"
         />
       </div>
     </div>
