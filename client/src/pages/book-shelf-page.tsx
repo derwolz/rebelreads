@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -105,7 +105,6 @@ type NoteFormValues = z.infer<typeof noteFormSchema>;
 
 // BookShelf page component
 export default function BookShelfPage() {
-  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -119,8 +118,6 @@ export default function BookShelfPage() {
   const searchParams = new URLSearchParams(window.location.search);
   const username = searchParams.get('username');
   const shelfname = searchParams.get('shelfname');
-  
-  // We only use query parameters for bookshelf access
 
   // Form for adding/editing notes
   const form = useForm<NoteFormValues>({
@@ -150,8 +147,10 @@ export default function BookShelfPage() {
   // Add Note Mutation
   const addNoteMutation = useMutation({
     mutationFn: async (values: NoteFormValues) => {
+      if (!data) throw new Error("No shelf data available");
+      
       const endpoint = activeNoteType === "shelf" 
-        ? `/api/bookshelves/${id}/notes` 
+        ? `/api/bookshelves/${data.shelf.id}/notes` 
         : `/api/books/${activeBookId}/notes`;
 
       const res = await fetch(endpoint, {
@@ -160,7 +159,7 @@ export default function BookShelfPage() {
         body: JSON.stringify({
           ...values,
           type: activeNoteType,
-          shelfId: activeNoteType === "shelf" ? parseInt(id) : undefined,
+          shelfId: activeNoteType === "shelf" ? data.shelf.id : undefined,
           bookId: activeNoteType === "book" ? activeBookId : undefined,
         }),
       });
@@ -236,9 +235,7 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      const queryKey = useQueryParams 
-        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
-        : [`/api/book-shelf/${id}`];
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
       queryClient.invalidateQueries({ queryKey });
       if (activeNoteId === deleteNoteMutation.variables) {
         setActiveNoteId(null);
@@ -272,9 +269,7 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      const queryKey = useQueryParams 
-        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
-        : [`/api/book-shelf/${id}`];
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
       queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Book removed",
@@ -576,7 +571,7 @@ export default function BookShelfPage() {
                             onRemoveFromShelf={() => {
                               if (confirm("Are you sure you want to remove this book from the shelf?")) {
                                 removeBookFromShelfMutation.mutate({
-                                  shelfId: parseInt(id),
+                                  shelfId: data.shelf.id,
                                   bookId: shelfBook.bookId
                                 });
                               }
