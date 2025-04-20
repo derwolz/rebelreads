@@ -183,64 +183,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       <div className="flex flex-col lg:flex-row gap-6 p-4">
         {/* Left column: Book details and comments */}
         <div className="w-full lg:w-2/3 relative">
-          {/* Animated Note Overlay */}
-          {selectedNote && (
-            <div 
-              className={`absolute inset-0 z-10 transition-all duration-500 transform ${
-                noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-              }`}
-              style={{
-                perspective: '1000px',
-                transformStyle: 'preserve-3d',
-                backfaceVisibility: 'hidden',
-              }}
-            >
-              <div 
-                className="absolute inset-0 bg-black border border-gray-800 rounded-lg shadow-lg p-4"
-                style={{
-                  transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
-                  transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                  boxShadow: noteVisible ? '0 10px 30px -15px rgba(255, 255, 255, 0.2)' : 'none',
-                }}
-              >
-                <div className="flex justify-between items-center mb-3">
-                  <div>
-                    <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                      <StickyNote className="h-4 w-4" />
-                      Note
-                    </h3>
-                    <p className="text-xs text-gray-400">
-                      {selectedNote.type === 'book' ? 'Book note' : 'Shelf note'} • 
-                      Last updated: {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-gray-400 hover:bg-gray-800 hover:text-white"
-                    onClick={() => {
-                      setIsRotating(true);
-                      setTimeout(() => {
-                        setNoteVisible(false);
-                        setIsRotating(false);
-                      }, 500);
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="bg-white/5 p-2 rounded-lg">
-                  <PaperNoteCard note={selectedNote} />
-                </div>
-              </div>
-            </div>
-          )}
+        
             
           {/* Book Details Card that shows the selected book */}
           <div 
-            className={`rounded-lg overflow-hidden bg-black border border-gray-800 mb-6 transition-all duration-500 ${
-              noteVisible ? 'opacity-0 scale-95 transform' : 'opacity-100 scale-100 transform'
-            }`}
+            className={`rounded-lg overflow-hidden bg-black border border-gray-800 mb-6 transition-all duration-500 `}
           >
             <div className="flex flex-col md:flex-row">
               {/* Book cover */}
@@ -254,6 +201,59 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
               
               {/* Book details */}
               <div className="w-full md:w-2/3 p-4">
+                
+                {/* Animated Note Overlay */}
+                {selectedNote && (
+                  <div 
+                    className={`absolute inset-0 z-10 transition-all duration-500 transform ${
+                      noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                    }`}
+                    style={{
+                      perspective: '1000px',
+                      transformStyle: 'preserve-3d',
+                      backfaceVisibility: 'hidden',
+                    }}
+                  >
+                    <div 
+                      className="absolute inset-0 bg-black border border-gray-800 rounded-lg shadow-lg p-4"
+                      style={{
+                        transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
+                        transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        boxShadow: noteVisible ? '0 10px 30px -15px rgba(255, 255, 255, 0.2)' : 'none',
+                      }}
+                    >
+                      <div className="flex justify-between items-center mb-3">
+                        <div>
+                          <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                            <StickyNote className="h-4 w-4" />
+                            Note
+                          </h3>
+                          <p className="text-xs text-gray-400">
+                            {selectedNote.type === 'book' ? 'Book note' : 'Shelf note'} • 
+                            Last updated: {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:bg-gray-800 hover:text-white"
+                          onClick={() => {
+                            setIsRotating(true);
+                            setTimeout(() => {
+                              setNoteVisible(false);
+                              setIsRotating(false);
+                            }, 500);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="bg-white/5 p-2 rounded-lg">
+                        <PaperNoteCard note={selectedNote} />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <h2 className="text-2xl font-bold mb-1 text-white">{selectedBook?.title}</h2>
                 <p className="text-gray-400 mb-2">by {selectedBook?.authorName}</p>
                 
