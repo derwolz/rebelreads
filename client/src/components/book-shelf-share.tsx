@@ -67,23 +67,35 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   // Fetch taxonomies (genres, themes) for the selected book
   const { data: taxonomies } = useQuery<any[]>({
     queryKey: selectedBook ? [`/api/books/${selectedBook.id}/taxonomies`] : ["null-taxonomies"],
-    enabled: !!selectedBook && selectedBook.id !== mockBook.id,
+    enabled: !!selectedBook,
   });
 
-  // Get taxonomies to display (use mock if API fails)
-  const displayTaxonomies = taxonomies || mockTaxonomies;
+  // Get taxonomies to display (will be empty if API fails)
+  const displayTaxonomies = taxonomies || [];
 
   return (
     <div className={className}>
-      {selectedBook && (
+      {isShelfLoading ? (
+        // Loading state
+        <div className="flex items-center justify-center h-60 bg-zinc-800 rounded">
+          <div className="animate-pulse text-zinc-500">Loading...</div>
+        </div>
+      ) : selectedBook ? (
+        // Book details view when there's data
         <div className="flex flex-col md:flex-row gap-4">
           {/* Left: Book Cover */}
           <div className="w-full md:w-1/3">
-            <img 
-              src={selectedBook.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/uploads/covers/1744986075767-678392506.webp"} 
-              alt={selectedBook.title} 
-              className="w-full h-auto rounded" 
-            />
+            {selectedBook.images?.find(img => img.imageType === "book-detail")?.imageUrl ? (
+              <img 
+                src={selectedBook.images.find(img => img.imageType === "book-detail")?.imageUrl} 
+                alt={selectedBook.title} 
+                className="w-full h-auto rounded" 
+              />
+            ) : (
+              <div className="w-full h-full aspect-[2/3] bg-zinc-800 rounded flex items-center justify-center">
+                <span className="text-zinc-500">No image available</span>
+              </div>
+            )}
           </div>
           
           {/* Right: Book details */}
@@ -116,6 +128,12 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
               </div>
             </div>
           </div>
+        </div>
+      ) : (
+        // Empty state when no books are found
+        <div className="flex flex-col items-center justify-center p-8 h-60 bg-zinc-800 rounded">
+          <p className="text-zinc-400 mb-2">No books found in this shelf</p>
+          <p className="text-zinc-500 text-sm">Either the shelf is empty or you don't have permission to view this content</p>
         </div>
       )}
     </div>

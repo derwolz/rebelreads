@@ -128,12 +128,14 @@ export default function BookShelfSharePage() {
     enabled: !!pageParams.username && !!pageParams.shelfname,
   });
   
-  // Redirect if username or shelfname is missing
+  // Only redirect if BOTH username and shelfname are missing
+  // This ensures we don't redirect prematurely when parameters are being loaded
   useEffect(() => {
-    if (!pageParams.username || !pageParams.shelfname) {
+    if (search && !pageParams.username && !pageParams.shelfname) {
+      console.log('Missing both username and shelfname parameters, redirecting to profile');
       navigate("/profile?tab=bookshelves");
     }
-  }, [pageParams, navigate]);
+  }, [pageParams, navigate, search]);
 
   // Function to handle sharing the bookshelf
   const handleShare = async () => {
