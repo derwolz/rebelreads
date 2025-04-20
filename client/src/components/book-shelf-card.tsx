@@ -254,6 +254,7 @@ export function BookShelfCard({
             </Button>
           </div>
         </div>
+
         
         {/* Scrollable notes list */}
         <ScrollArea className="h-[130px] pr-2">
