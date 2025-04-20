@@ -1,11 +1,35 @@
 import { useState, useEffect } from "react";
-import { Book } from "../types";
+import { Book, Author } from "../types";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { BookRackShelf } from "./book-rack-shelf";
+import { BookDetailsCard } from "./book-details-card";
 import { Note } from "@shared/schema";
-import { Badge } from "@/components/ui/badge";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea";
+import { 
+  BookOpen, 
+  Pen, 
+  X,
+  Plus,
+  StickyNote
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// No mock data - we'll show empty states instead
 
 interface BookShelfShareProps {
   username: string;
@@ -14,7 +38,11 @@ interface BookShelfShareProps {
 }
 
 export function BookShelfShare({ username, shelfName, className }: BookShelfShareProps) {
+  const [selectedBookIndex, setSelectedBookIndex] = useState<number | null>(null);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [newNoteContent, setNewNoteContent] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
 
   // Define the correct response type
@@ -32,15 +60,20 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     shelfNotes: Note[];
   }
 
-  // Fetch the shelf and its books with robust parameter encoding
-  // IMPORTANT: The server expects 'shelfname' (all lowercase) as the parameter name
-  const { data: shelfData, isLoading: isShelfLoading } = useQuery<ShelfData>({
+  // Fetch the shelf and its books with robust parameter encoding - using the correct API endpoint
+  const { data: shelfData, isLoading: isShelfLoading, refetch: refetchShelf } = useQuery<ShelfData>({
     queryKey: [`/api/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`],
   });
 
   // Get the books from the shelf data with safety check for undefined
+  // Map the nested book objects to a simple array of Book objects
   const books = shelfData?.books 
     ? shelfData.books.map(item => item.book) 
+    : [];
+  
+  // Get the notes for the currently selected book
+  const bookNotes = (selectedBook && shelfData?.bookNotes) 
+    ? shelfData.bookNotes.filter((note: Note) => note.bookId === selectedBook.id) 
     : [];
     
   // Log error if shelfData is undefined but username and shelfName are provided
@@ -52,90 +85,174 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         encodedUsername: encodeURIComponent(username),
         encodedShelfName: encodeURIComponent(shelfName)
       });
-      
-      // Do not use mock data - display empty state instead
     }
   }, [isShelfLoading, shelfData, username, shelfName]);
 
+  // Handle book selection
+  const handleSelectBook = (book: Book, index: number) => {
+    setSelectedBookIndex(index);
+    setSelectedBook(book);
+    // Reset selected note when changing books
+    setSelectedNote(null);
+  };
+
   // Select the first book by default when data loads
   useEffect(() => {
-    if (books.length > 0 && !selectedBook) {
+    if (books.length > 0 && selectedBookIndex === null) {
+      setSelectedBookIndex(0);
       setSelectedBook(books[0]);
     }
-  }, [books, selectedBook]);
+  }, [books, selectedBookIndex]);
 
-  // Fetch taxonomies (genres, themes) for the selected book
-  const { data: taxonomies } = useQuery<any[]>({
-    queryKey: selectedBook ? [`/api/books/${selectedBook.id}/taxonomies`] : ["null-taxonomies"],
-    enabled: !!selectedBook,
-  });
-
-  // Get taxonomies to display (will be empty if API fails)
-  const displayTaxonomies = taxonomies || [];
+  // Handle adding a new note
+  const handleAddNote = async () => {
+    if (!selectedBook) return;
+    
+    try {
+      // Make API request to add note
+      await apiRequest("POST", "/api/notes", {
+        type: "book",
+        bookId: selectedBook.id,
+        content: newNoteContent,
+      });
+      
+      // Clear the form and close the dialog
+      setNewNoteContent("");
+      setIsAddingNote(false);
+      
+      // Refresh the shelf data to show the new note
+      refetchShelf();
+      
+      toast({
+        title: "Note Added",
+        description: "Your note has been added successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add note. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <div className={className}>
-      {isShelfLoading ? (
-        // Loading state
-        <div className="flex items-center justify-center h-60 bg-zinc-800 rounded">
-          <div className="animate-pulse text-zinc-500">Loading...</div>
-        </div>
-      ) : selectedBook ? (
-        // Book details view when there's data
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Left: Book Cover */}
-          <div className="w-full md:w-1/3">
-            {selectedBook.images?.find(img => img.imageType === "book-detail")?.imageUrl ? (
-              <img 
-                src={selectedBook.images.find(img => img.imageType === "book-detail")?.imageUrl} 
-                alt={selectedBook.title} 
-                className="w-full h-auto rounded" 
-              />
-            ) : (
-              <div className="w-full h-full aspect-[2/3] bg-zinc-800 rounded flex items-center justify-center">
-                <span className="text-zinc-500">No image available</span>
-              </div>
-            )}
+    <div className={`space-y-6 ${className}`}>
+      {/* Book Details Card that shows the selected book */}
+      <BookDetailsCard book={selectedBook} />
+      
+      {/* Notes Section - Floating tooltips */}
+      <div className="relative">
+        {bookNotes && bookNotes.length > 0 && (
+          <div className="absolute inset-0 pointer-events-none">
+            {bookNotes.map((note, idx) => {
+              // Position notes at random locations
+              const randomTop = `${20 + (idx * 15) % 80}%`;
+              const randomLeft = `${10 + (idx * 23) % 80}%`;
+              
+              return (
+                <TooltipProvider key={note.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="absolute bg-accent/80 text-accent-foreground p-2 rounded-lg shadow-lg cursor-pointer pointer-events-auto transform hover:scale-105 transition-transform"
+                        style={{ 
+                          top: randomTop, 
+                          left: randomLeft,
+                          maxWidth: '200px',
+                          zIndex: selectedNote?.id === note.id ? 50 : 30
+                        }}
+                        onClick={() => setSelectedNote(note)}
+                      >
+                        <div className="flex items-start gap-2">
+                          <StickyNote className="h-4 w-4 flex-shrink-0 mt-1" />
+                          <p className="text-xs line-clamp-2">{note.content.substring(0, 50)}{note.content.length > 50 ? '...' : ''}</p>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-md">
+                      <p className="text-sm">{note.content}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(note.createdAt).toLocaleDateString()}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })}
           </div>
-          
-          {/* Right: Book details */}
-          <div className="w-full md:w-2/3">
-            {/* Title and author */}
-            <h2 className="text-xl font-bold text-white mb-1">{selectedBook.title}</h2>
-            <p className="text-zinc-300 mb-4">by {selectedBook.authorName}</p>
-            
-            {/* Description */}
-            <p className="text-sm text-zinc-300 mb-4">{selectedBook.description}</p>
-            
-            {/* Genres & Themes */}
-            <div className="mb-4">
-              <p className="text-xs mb-2 text-zinc-400">Genres & Themes</p>
-              <div className="flex flex-wrap gap-1">
-                {displayTaxonomies.map((taxonomy, idx) => (
-                  <Badge 
-                    key={idx} 
-                    className={`
-                      text-xs py-1 px-3 rounded-full
-                      ${taxonomy.type === 'genre' ? 'bg-purple-600 text-white' : ''}
-                      ${taxonomy.type === 'subgenre' ? 'bg-blue-600 text-white' : ''}
-                      ${taxonomy.type === 'theme' ? 'bg-zinc-800 text-white border border-zinc-600' : ''}
-                      ${taxonomy.type === 'trope' ? 'bg-zinc-800 text-white border border-zinc-600' : ''}
-                    `}
-                  >
-                    {taxonomy.name}
-                  </Badge>
-                ))}
+        )}
+      </div>
+      
+      {/* Add Note Button */}
+      <div className="flex justify-end">
+        <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1">
+              <Plus className="h-4 w-4" />
+              Add Note
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Note for {selectedBook?.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <Textarea 
+                placeholder="Write your note here..." 
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                className="min-h-32"
+              />
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleAddNote} disabled={!newNoteContent.trim()}>
+                  Save Note
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
-      ) : (
-        // Empty state when no books are found
-        <div className="flex flex-col items-center justify-center p-8 h-60 bg-zinc-800 rounded">
-          <p className="text-zinc-400 mb-2">No books found in this shelf</p>
-          <p className="text-zinc-500 text-sm">Either the shelf is empty or you don't have permission to view this content</p>
-        </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+      
+      {/* Selected Note Dialog */}
+      {selectedNote && (
+        <Dialog open={!!selectedNote} onOpenChange={(open) => !open && setSelectedNote(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Note</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-72">
+              <div className="space-y-4 pt-2">
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {selectedNote.content}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Created on {new Date(selectedNote.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+            </ScrollArea>
+            <div className="flex justify-end">
+              <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+              </DialogClose>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
+      
+      {/* Book Rack at the bottom */}
+      <div className="mt-8 pt-4 border-t">
+        <h3 className="text-lg font-medium mb-4">Books on this Shelf</h3>
+        <BookRackShelf 
+          books={books}
+          isLoading={isShelfLoading}
+          onSelectBook={handleSelectBook}
+          selectedBookIndex={selectedBookIndex}
+        />
+      </div>
     </div>
   );
 }
