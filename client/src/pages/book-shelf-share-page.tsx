@@ -140,7 +140,7 @@ export default function BookShelfSharePage() {
   // Function to handle sharing the bookshelf
   const handleShare = async () => {
     try {
-      // Create the shareable URL
+      // Create the shareable URL - ensure we're using the correct route format
       const shareUrl = `${window.location.origin}/book-shelf/share?username=${encodeURIComponent(pageParams.username)}&shelfname=${encodeURIComponent(pageParams.shelfname)}`;
       
       // Try to use the Web Share API if available

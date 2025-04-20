@@ -122,6 +122,8 @@ function Router() {
         <Route path="/image-guide" component={ImageGuidePage} />
         <Route path="/book-rack-test" component={BookRackTestPage} />
         <Route path="/book-shelf/share" component={BookShelfSharePage} />
+        <Route path="/book-shelf-share" component={BookShelfSharePage} />
+        <Route path="/bookshelf/share" component={BookShelfSharePage} />
         <Route path="/branding" component={BrandingPage} />
         
         {/* Discover routes - new taxonomy-based search pages */}
