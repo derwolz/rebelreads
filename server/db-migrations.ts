@@ -1712,6 +1712,9 @@ async function addIsSharedColumnToBookShelves() {
   }
 }
 
+// Import the social media links migration
+import { addSocialMediaLinksToAuthors } from "./migrations/social-media-links";
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   // Remove has_beta_access column from users table
@@ -1722,6 +1725,7 @@ export async function runMigrations() {
   await addReportStatusColumnToRatings();
   await createAdImpressionsTable();
   await createAuthorAnalyticsTables();
+  await addSocialMediaLinksToAuthors();
   await createBetaKeysTables();
   await addCriteriaWeightsColumnToRatingPreferences();
   await addRatingMetricsColumnsToRatingPreferences();

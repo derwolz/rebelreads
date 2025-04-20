@@ -113,6 +113,7 @@ export const authors = pgTable("authors", {
   death_date: date("death_date"),
   website: text("website"),
   bio: text("bio"), // Author-specific bio
+  socialMediaLinks: jsonb("social_media_links").default([]), // Author social media links
 });
 
 // Publisher-specific information is contained in the publishers table already defined below
