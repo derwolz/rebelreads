@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { BookRackShelf } from "./book-rack-shelf";
 import { BookDetailsCard } from "./book-details-card";
 import { Note } from "@shared/schema";
+import { PaperNoteCard } from "./paper-note-card";
 import { 
   Dialog, 
   DialogContent, 
@@ -311,22 +312,45 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
         </div>
         
-        {/* Right column: List of other shelves or complementary content */}
-        <div className="w-full lg:w-1/3 rounded-lg bg-black border border-gray-800 p-4">
-          <h3 className="text-lg font-medium mb-4 text-white">You might also like</h3>
-          <div className="space-y-3">
-            {/* Example shelf recommendation - this would normally come from data */}
-            <div className="flex items-center gap-3 border-b border-gray-800 pb-3">
-              <div className="w-14 h-14 bg-gray-800 rounded overflow-hidden">
-                <img src="/images/placeholder-book.png" alt="Shelf thumbnail" className="w-full h-full object-cover" />
+        {/* Right column: Shelf notes section */}
+        <div className="w-full lg:w-1/3">
+          {/* Shelf Notes Section */}
+          <div className="rounded-lg bg-black border border-gray-800 p-4 mb-6">
+            <h3 className="text-lg font-medium mb-4 text-white">Shelf Notes</h3>
+            
+            {shelfData?.shelfNotes && shelfData.shelfNotes.length > 0 ? (
+              <div className="space-y-6">
+                {shelfData.shelfNotes.map((note) => (
+                  <div key={note.id} className="overflow-hidden hover:scale-[1.02] transition-transform duration-300 cursor-pointer" onClick={() => setSelectedNote(note)}>
+                    <PaperNoteCard note={note} />
+                  </div>
+                ))}
               </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-white">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
-                <p className="text-xs text-gray-400">shelf</p>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <StickyNote className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No shelf notes yet</p>
               </div>
-              <Button variant="ghost" size="sm" className="text-gray-400">
-                <ExternalLink className="h-4 w-4" />
-              </Button>
+            )}
+          </div>
+          
+          {/* Recommendations Section */}
+          <div className="rounded-lg bg-black border border-gray-800 p-4">
+            <h3 className="text-lg font-medium mb-4 text-white">You might also like</h3>
+            <div className="space-y-3">
+              {/* Example shelf recommendation - this would normally come from data */}
+              <div className="flex items-center gap-3 border-b border-gray-800 pb-3">
+                <div className="w-14 h-14 bg-gray-800 rounded overflow-hidden">
+                  <img src="/images/placeholder-book.png" alt="Shelf thumbnail" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-white">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
+                  <p className="text-xs text-gray-400">shelf</p>
+                </div>
+                <Button variant="ghost" size="sm" className="text-gray-400">
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -335,18 +359,13 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       {/* Selected Note Dialog */}
       {selectedNote && (
         <Dialog open={!!selectedNote} onOpenChange={(open) => !open && setSelectedNote(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Note</DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-72">
-              <div className="space-y-4 pt-2">
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {selectedNote.content}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Created on {new Date(selectedNote.createdAt).toLocaleDateString()}
-                </div>
+              <div className="pt-2">
+                <PaperNoteCard note={selectedNote} />
               </div>
             </ScrollArea>
             <div className="flex justify-end">
