@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { parseMessageContent } from "@/lib/message-parser";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -196,7 +197,11 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
                         {formatCommentDate(comment.createdAt)}
                       </time>
                     </div>
-                    <p className="text-sm text-gray-300 break-words">{comment.content}</p>
+                    <div className="text-sm text-gray-300 break-words">
+                      {parseMessageContent(comment.content).map((content, i) => (
+                        <React.Fragment key={i}>{content}</React.Fragment>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
