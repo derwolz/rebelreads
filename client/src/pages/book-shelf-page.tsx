@@ -120,8 +120,7 @@ export default function BookShelfPage() {
   const username = searchParams.get('username');
   const shelfname = searchParams.get('shelfname');
   
-  // Determine if we're using id or query parameters
-  const useQueryParams = !!username && !!shelfname;
+  // We only use query parameters for bookshelf access
 
   // Form for adding/editing notes
   const form = useForm<NoteFormValues>({
@@ -131,12 +130,10 @@ export default function BookShelfPage() {
     },
   });
 
-  // Fetch bookshelf data
+  // Fetch bookshelf data (using query parameters only)
   const { data, isLoading, error } = useQuery<BookShelfData>({
-    queryKey: useQueryParams 
-      ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
-      : [`/api/book-shelf/${id}`],
-    enabled: !!user && (!!id || useQueryParams),
+    queryKey: [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`],
+    enabled: !!user && !!username && !!shelfname,
   });
 
   // Find active note
@@ -175,9 +172,7 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      const queryKey = useQueryParams 
-        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
-        : [`/api/book-shelf/${id}`];
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
       queryClient.invalidateQueries({ queryKey });
       setIsAddNoteDialogOpen(false);
       form.reset();
@@ -211,9 +206,7 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      const queryKey = useQueryParams 
-        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
-        : [`/api/book-shelf/${id}`];
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
       queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Note updated",
