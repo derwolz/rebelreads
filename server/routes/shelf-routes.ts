@@ -484,7 +484,7 @@ router.patch("/api/bookshelves/:id/books/rank", async (req: Request, res: Respon
 });
 
 // Get detailed view of a bookshelf with its books and notes
-// Get bookshelf by query params (username and shelf name)
+// Supports either ID-based or query parameter-based routing
 router.get("/api/book-shelf", async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).send("Unauthorized");
@@ -540,6 +540,123 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
 
     if (!shelfDetails) {
       return res.status(404).send("Bookshelf not found");
+    }
+
+    // Get shelf notes
+    const shelfNotes = await db.query.notes.findMany({
+      where: and(
+        eq(notes.shelfId, shelfId),
+        eq(notes.userId, req.user.id),
+        eq(notes.type, "shelf")
+      ),
+      orderBy: desc(notes.createdAt)
+    });
+
+    // First get a reference to the table outside the query to avoid TypeScript errors
+    const shelfBooksTable = shelfBooks;
+    
+    // Get books on this shelf
+    const shelfBooksRows = await db
+      .select({
+        id: shelfBooksTable.id,
+        bookId: shelfBooksTable.bookId,
+        shelfId: shelfBooksTable.shelfId,
+        rank: shelfBooksTable.rank,
+        addedAt: shelfBooksTable.addedAt
+      })
+      .from(shelfBooksTable)
+      .where(eq(shelfBooksTable.shelfId, shelfId))
+      .orderBy(asc(shelfBooksTable.rank));
+      
+    // Create an enhanced result array with full book details
+    const shelfBooksWithDetails: any[] = [];
+    
+    // Fetch detailed information for each book
+    for (const shelfBookRow of shelfBooksRows) {
+      // Get basic book information
+      const book = await db.query.books.findFirst({
+        where: eq(books.id, shelfBookRow.bookId)
+      });
+      
+      if (book) {
+        // Get book images
+        const bookImagesTable = bookImages;
+        const images = await db.query.bookImages.findMany({
+          where: eq(bookImagesTable.bookId, shelfBookRow.bookId)
+        });
+        
+        // Get author information
+        const author = await db.query.authors.findFirst({
+          where: eq(authors.id, book.authorId)
+        });
+        
+        // Create an enhanced book object with additional properties
+        const enhancedBook = {
+          ...book,
+          authorName: author?.author_name || "Unknown Author",
+          images: images
+        };
+        
+        // Compile enhanced book entry
+        shelfBooksWithDetails.push({
+          ...shelfBookRow,
+          book: enhancedBook
+        });
+      }
+    }
+
+    // Get book notes for all books in this shelf
+    const bookIds = shelfBooksWithDetails.map(sb => sb.bookId);
+    
+    // Define type for book notes array
+    let bookNotes: Array<typeof notes.$inferSelect> = [];
+    if (bookIds.length > 0) {
+      bookNotes = await db.query.notes.findMany({
+        where: and(
+          inArray(notes.bookId, bookIds),
+          eq(notes.userId, req.user.id),
+          eq(notes.type, "book")
+        )
+      });
+    }
+
+    // Return complete shelf data
+    return res.status(200).json({
+      shelf,
+      shelfNotes,
+      books: shelfBooksWithDetails,
+      bookNotes
+    });
+  } catch (error) {
+    console.error("Error fetching bookshelf details:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
+// Get bookshelf by ID (for backward compatibility)
+router.get("/api/book-shelf/:id", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const shelfId = parseInt(req.params.id);
+  if (isNaN(shelfId)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+
+  try {
+    // Verify ownership or sharing permissions
+    const shelf = await db.query.bookShelves.findFirst({
+      where: eq(bookShelves.id, shelfId)
+    });
+
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+
+    // Only allow access if it's the user's own shelf or it's shared
+    if (shelf.userId !== req.user.id && !shelf.isShared) {
+      return res.status(403).send("Forbidden");
     }
 
     // Get shelf notes

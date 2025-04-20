@@ -243,7 +243,10 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = useQueryParams 
+        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
+        : [`/api/book-shelf/${id}`];
+      queryClient.invalidateQueries({ queryKey });
       if (activeNoteId === deleteNoteMutation.variables) {
         setActiveNoteId(null);
         setActiveNoteType(null);
@@ -276,7 +279,10 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = useQueryParams 
+        ? [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`]
+        : [`/api/book-shelf/${id}`];
+      queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Book removed",
         description: "The book has been removed from this shelf.",
