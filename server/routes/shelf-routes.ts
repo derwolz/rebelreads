@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
-import { bookShelves, shelfBooks, notes, books, bookImages, authors, users } from "../../shared/schema";
+import { bookShelves, shelfBooks, notes, books, bookImages, authors, users, shelfComments } from "../../shared/schema";
 import { eq, and, desc, asc, inArray, or } from "drizzle-orm";
-import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema } from "../../shared/schema";
+import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema, insertShelfCommentSchema } from "../../shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";

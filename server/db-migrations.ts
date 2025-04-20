@@ -1715,6 +1715,40 @@ async function addIsSharedColumnToBookShelves() {
 // Import the social media links migration
 import { addSocialMediaLinksToAuthors } from "./migrations/social-media-links";
 
+/**
+ * Create shelf comments table for comment section on shared bookshelves
+ */
+async function createShelfCommentsTable() {
+  try {
+    // Check if table exists
+    const shelfCommentsResult = await db.execute(sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'shelf_comments'
+    `);
+
+    if (shelfCommentsResult.rows.length === 0) {
+      console.log("Creating shelf_comments table...");
+      await db.execute(sql`
+        CREATE TABLE shelf_comments (
+          id SERIAL PRIMARY KEY,
+          shelf_id INTEGER NOT NULL REFERENCES book_shelves(id),
+          user_id INTEGER REFERENCES users(id),
+          username TEXT,
+          content TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      console.log("shelf_comments table created successfully");
+    } else {
+      console.log("shelf_comments table already exists");
+    }
+  } catch (error) {
+    console.error("Error creating shelf comments table:", error);
+    throw error;
+  }
+}
+
 export async function runMigrations() {
   console.log("Running database migrations...");
   // Remove has_beta_access column from users table
@@ -1740,6 +1774,8 @@ export async function runMigrations() {
   await createBookShelfTables();
   // Add isShared column to bookShelves table
   await addIsSharedColumnToBookShelves();
+  // Create shelf comments table
+  await createShelfCommentsTable();
   // Create user genre preferences table
   await createUserGenrePreferencesTable();
   // Add content_views column to user_genre_preferences table
