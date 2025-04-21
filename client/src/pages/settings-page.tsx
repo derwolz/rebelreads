@@ -576,7 +576,6 @@ export default function SettingsPage() {
                     </CardContent>
                   </Card>
                 </div>
-                <Button type="submit">Save Changes</Button>
               </div>
             </form>
           </Form>
