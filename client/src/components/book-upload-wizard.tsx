@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { AVAILABLE_GENRES, FORMAT_OPTIONS, IMAGE_TYPES, UPLOAD_IMAGE_TYPES, RETAILER_OPTIONS } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import type { ReferralLink } from "@shared/schema";
@@ -981,22 +982,19 @@ export function BookUploadWizard({ onSuccess, book }: BookUploadWizardProps) {
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Publication Information</h2>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Publication Date
-              </label>
-              <Input
-                type="date"
-                value={formData.publishedDate}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    publishedDate: e.target.value,
-                  }))
-                }
-                required
-              />
-            </div>
+            <DatePicker
+              label="Publication Date"
+              placeholder="Select publication date"
+              selected={formData.publishedDate ? new Date(formData.publishedDate) : null}
+              onSelect={(date) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  publishedDate: date ? date.toISOString().split('T')[0] : "",
+                }))
+              }
+              fromYear={1800}
+              toYear={new Date().getFullYear() + 2}
+            />
             <div>
               <label className="block text-sm font-medium mb-1">
                 Number of Pages
