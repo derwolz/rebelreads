@@ -120,40 +120,44 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       
       
       {/* Main content area */}
-      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4">
+      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 ">
        
         {/* Left column: Book details and comments */}
-        <div className="w-full lg:w-2/3 flex relative">
+        <div className="w-full lg:w-2/3 flex relative ">
 
           
           
           
           {/* Book Details Card that shows the selected book */}
           <div 
-            className={`rounded-lg z-70  overflow-hidden bg-muted border border-gray-800 mb-16 mr-16 transition-all duration-500 `}
+            className={`transition-all duration-500 `}
           >
-            <div className="flex flex-col md:flex-row">
+            <div className="">
 
              
 
 
               
-              {/* Book cover */}
-              <div className="w-full md:w-1/3 z-20 flex items-stretch justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background h-full">
-                <img 
-                  src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
-                  alt={selectedBook?.title} 
-                  className="h-full w-auto object-cover shadow-lg rounded-md" 
-                />
-              </div>
+         
               
               {/* Book details */}
-              <div className=" p-4">
+              <div className="flex h-full bg-muted border-gray-800 border flex-col  overflow-hidden  md:flex-row rounded-lg">
+
+
+                {/* Book cover */}
+                <div className="h-full z-20 flex-left flex   justify-center overflow-hidden  ">
+                  <img 
+                    src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                    alt={selectedBook?.title} 
+                    className="h-auto min-h-[350px] w-full shadow-lg object-cover rounded-md" 
+                  />
+                </div>
+
                 
                 {/* Animated Note Overlay - Only covers the details section */}
                 {selectedNote && (
                   <div 
-                    className={`absolute top-0 right-0 bottom-0 left-0 md:left-auto md:w-2/3 z-10 transition-all duration-500 transform ${
+                    className={`absolute top-0 right-0 bottom-0 left-0 z-10 transition-all duration-500 ${
                       noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
                     }`}
                     style={{
@@ -265,12 +269,12 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     </div>
                   )}
                 </div>
+                <div className="flex ml-auto p-4 flex-col min-w-0 md:w-[500px] overflow-hidden">
+                <h2 className="text-2xl  font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
+                <p className="text-foreground/90 mb-2 break-words">by {selectedBook?.authorName}</p>
                 
-                <h2 className="text-2xl font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
-                <p className="text-foreground/90 mb-2">by {selectedBook?.authorName}</p>
-                
-                <div className="mb-4">
-                  <ScrollArea className="h-full pr-4">
+                <div className="mb-4 ">
+                  <ScrollArea className="h-full min-w-0 w-full pr-4">
                     <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                   </ScrollArea>
                 </div>
@@ -288,7 +292,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     ))}
                   </div>
                 </div>
-                
+                  </div>
                 {/* Desktop-only referral links (absolute positioning) */}
                 {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
                   <div className="hidden md:block mt-4 z-20 -left-5 top-0 absolute">
@@ -326,11 +330,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           {/* Book/Notes section */}
 
           {bookNotes && bookNotes.length > 0 ? (
-            <div className="space-y-3   top-2  max-w-[18rem] right-2">
+            <div className="space-y-3  transform w-[10ch] pr-2  pt-2  ">
               {bookNotes.map((note, idx) => (
                 <div 
                   key={note.id} 
-                  className="p-3  rounded-lg bg-purple-900/40  border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
+                  className="p-3  rounded-lg bg-purple-900/40 rounded-l-none overflow-hidden h-[6ch] border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
                   onClick={() => {
                     // Use the same animation logic for book notes
                     if (selectedNote && selectedNote.id === note.id && noteVisible) {
@@ -366,12 +370,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 >
                   <div className="flex items-start gap-2">
                     <div className="flex-1">
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs text-foreground/80">
-                          User {idx + 1} - {new Date(note.createdAt).toLocaleDateString()} - {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      <div className="flex justify-center items-center mb-1">
+                        <p className="text-xs text-foreground/80 ">
+{new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </p>
                       </div>
-                      <p className="text-sm text-foregound line-clamp-3">{note.content}</p>
                     </div>
                   </div>
                 </div>
