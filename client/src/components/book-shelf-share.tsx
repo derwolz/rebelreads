@@ -6,8 +6,6 @@ import { BookRackShelf } from "./book-rack-shelf";
 import { BookDetailsCard } from "./book-details-card";
 import { Note } from "@shared/schema";
 import { PaperNoteCard } from "./paper-note-card";
-import logo from "@/public/images/logo.svg";
-import logoWhite from "@/public/images/logowhite.svg";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentSection } from "./comment-section";
@@ -118,7 +116,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const { theme } = useTheme();
 
   return (
-    <div className={`${className} bg-black max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-white min-h-screen`}>
+    <div className={`${className} bg-background max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full`}>
       
       
       {/* Main content area */}
@@ -128,17 +126,17 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         <div className="w-full lg:w-2/3 relative">
 
             {/* Share button */}
-            <Button variant="ghost" size="sm" className="text-white absolute top-0 right-0">
+            <Button variant="ghost" size="sm" className="text-foregound absolute top-0 right-0">
               <Share2 className="h-4 w-4" />
             </Button>
           {/* Book Details Card that shows the selected book */}
           <div 
-            className={`rounded-lg overflow-hidden bg-black border border-gray-800 mb-16 transition-all duration-500 `}
+            className={`rounded-lg overflow-hidden bg-muted border border-gray-800 mb-16 transition-all duration-500 `}
           >
             <div className="flex flex-col md:flex-row">
 
               {/* Comments/Notes section */}
-              <div className="rounded-lg bg-black mb-16">
+              <div className="rounded-lg bg-background mb-16">
 
 
                 {bookNotes && bookNotes.length > 0 ? (
@@ -183,18 +181,18 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
                             <div className="flex justify-between items-center mb-1">
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-foreground/80">
                                 User {idx + 1} - {new Date(note.createdAt).toLocaleDateString()} - {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </p>
                             </div>
-                            <p className="text-sm text-white line-clamp-2">{note.content}</p>
+                            <p className="text-sm text-foregound line-clamp-3">{note.content}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center absolute py-4 text-gray-500">
+                  <div className="text-center absolute py-4 text-foreground/80">
                  
                   </div>
                 )}
@@ -203,7 +201,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
               
               {/* Book cover */}
-              <div className="w-full z-10 md:w-1/3 flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-black">
+              <div className="w-full z-10 md:w-1/3 flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background">
                 <img 
                   src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                   alt={selectedBook?.title} 
@@ -227,7 +225,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     }}
                   >
                     <div 
-                      className="absolute inset-0 bg-black border border-gray-800 rounded-lg shadow-lg p-4"
+                      className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4"
                       style={{
                         transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
                         transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
@@ -236,7 +234,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     >
                       <div className="flex justify-between items-center mb-3">
                         <div>
-                          <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                          <h3 className="text-lg font-medium text-foregound flex items-center gap-2">
                             <StickyNote className="h-4 w-4" />
                             Note
                           </h3>
@@ -248,7 +246,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="text-gray-400 hover:bg-gray-800 hover:text-white"
+                          className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
                           onClick={() => {
                             setIsRotating(true);
                             setTimeout(() => {
@@ -260,18 +258,18 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
-                      <div className="bg-white/5 p-2 rounded-lg">
+                      <div className="bg-foregound/5 p-2 rounded-lg">
                         <PaperNoteCard note={selectedNote} />
                       </div>
                     </div>
                   </div>
                 )}
-                <h2 className="text-2xl font-bold mb-1 text-white">{selectedBook?.title}</h2>
-                <p className="text-gray-400 mb-2">by {selectedBook?.authorName}</p>
+                <h2 className="text-2xl font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
+                <p className="text-foreground/90 mb-2">by {selectedBook?.authorName}</p>
                 
                 <div className="mb-4">
-                  <ScrollArea className="h-28 pr-4">
-                    <p className="text-sm text-gray-300">{selectedBook?.description}</p>
+                  <ScrollArea className="h-full pr-4">
+                    <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                   </ScrollArea>
                 </div>
                 
@@ -301,8 +299,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                           target="_blank"
                           rel="noopener noreferrer"
                           className={ idx===0 ? "inline-flex items-center text-xs  rounded-md px-3 py-1 bg-foreground/80 hover:bg-foreground/90 text-foreground"
-                            : idx===1 ? "inline-flex items-center text-xs bg-gray-800 hover:bg-gray-700 rounded-md px-3 py-1   transition-colors text-white" :
-                            "inline-flex items-center text-xs bg-transparent hover:bg-gray-700 border-border border rounded-md px-3 py-1   text-white"}
+                            : idx===1 ? "inline-flex items-center text-xs bg-gray-800 hover:bg-gray-700 rounded-md px-3 py-1   transition-colors text-foregound" :
+                            "inline-flex items-center text-xs bg-transparent hover:bg-gray-700 border-border border rounded-md px-3 py-1   text-foregound"}
                           onClick={async (e) => {
                             e.stopPropagation();
                             // Record click-through on referral link
@@ -330,7 +328,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
         
         {/* Right column: Comment section */}
         <div className="w-full lg:w-1/3">
-          <div className="rounded-lg bg-black border border-l border-gray-800 p-4">
+          <div className="rounded-lg bg-background border border-l border-gray-800 p-4">
             {shelfData?.shelf && (
               <CommentSection shelfId={shelfData.shelf.id} />
             )}
@@ -340,10 +338,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
       
       {/* Separator */}
-      <div className="w-full border-t border-gray-800 my-4"></div>
+      <div className="w-full border-t border-border my-4"></div>
       {/** Place the bookshelf name here */}
-      <div className="relative flex-1 bg-gradient-to-t w-full from-black to-transparent">
-        <h4 className="font-medium absolute w-full z-20 text-white ">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
+      <div className="relative">
+        <h4 className="font-medium absolute w-full z-20 text-foregound ">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
       
     
       {/* Book Rack at the bottom */}
@@ -356,6 +354,9 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           className="mx-auto max-w-4xl"
         />  </div>
       </div>
+
+      {/* Separator */}
+      <div className="w-full border-t border-border bg-gradient-to-b from-border to-transparent pb-2"></div>
     </div>
   );
 }

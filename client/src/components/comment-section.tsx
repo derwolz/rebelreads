@@ -132,16 +132,16 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
   if (isLoadingComments) {
     return (
       <div className={cn("p-4 space-y-4", className)}>
-        <h3 className="text-lg font-medium text-white">Comments</h3>
+        <h3 className="text-lg font-medium text-foreground">Comments</h3>
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex space-x-4 animate-pulse">
-              <div className="h-10 w-10 rounded-full bg-gray-700"></div>
+              <div className="h-10 w-10 rounded-full bg-muted/80"></div>
               <div className="flex-1 space-y-2 py-1">
-                <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-muted/80 rounded w-3/4"></div>
                 <div className="space-y-2">
-                  <div className="h-4 bg-gray-700 rounded"></div>
-                  <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+                  <div className="h-4 bg-muted/80 rounded"></div>
+                  <div className="h-4 bg-muted/80 rounded w-5/6"></div>
                 </div>
               </div>
             </div>
@@ -155,7 +155,7 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
   if (commentsError) {
     return (
       <div className={cn("p-4", className)}>
-        <h3 className="text-lg font-medium text-white">Comments</h3>
+        <h3 className="text-lg font-medium text-foreground">Comments</h3>
         <div className="p-4 rounded-md bg-red-900/20 border border-red-800 text-red-100 mt-4">
           <p>Error loading comments. Please try again later.</p>
           <Button 
@@ -172,32 +172,32 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
-      <h3 className="text-lg font-medium text-white">Comments</h3>
+    <div className={cn("space-y-4 h-full ", className)}>
+      <h3 className="text-lg font-medium text-foreground">Comments</h3>
       
       {/* Comments list */}
-      <ScrollArea className="h-[400px] pr-4">
+      <ScrollArea className="h-full pr-4">
         <div className="space-y-4">
           {comments && comments.length > 0 ? (
             comments.map((comment) => (
-              <div key={comment.id} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+              <div key={comment.id} className="bg-background/70 border-b border-border rounded-none p-4">
                 <div className="flex items-start space-x-3">
-                  <Avatar className="h-10 w-10 border border-gray-600">
+                  <Avatar className="h-10 w-10 border border-border">
                     <AvatarImage src={comment.userProfileImage || undefined} />
-                    <AvatarFallback className="bg-gray-700 text-gray-300">
+                    <AvatarFallback className="bg-muted/80 text-muted">
                       <User className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-gray-200">
+                      <p className="text-sm font-medium text-foreground/80">
                         {comment.displayName || "Anonymous"}
                       </p>
-                      <time className="text-xs text-gray-400">
+                      <time className="text-xs text-foreground/50">
                         {formatCommentDate(comment.createdAt)}
                       </time>
                     </div>
-                    <div className="text-sm text-gray-300 break-words">
+                    <div className="text-sm text-foreground break-words">
                       {parseMessageContent(comment.content).map((content, i) => (
                         <React.Fragment key={i}>{content}</React.Fragment>
                       ))}
@@ -219,7 +219,7 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
         {!user && (
           <div className="flex space-x-2">
             <Avatar className="h-10 w-10 border border-gray-600">
-              <AvatarFallback className="bg-gray-700 text-gray-300">
+              <AvatarFallback className="bg-muted/80 text-gray-300">
                 <User className="h-5 w-5" />
               </AvatarFallback>
             </Avatar>
@@ -235,22 +235,22 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
           {user && (
             <Avatar className="h-10 w-10 border border-gray-600">
               <AvatarImage src={user.profileImageUrl || undefined} />
-              <AvatarFallback className="bg-gray-700 text-gray-300">
+              <AvatarFallback className="bg-muted/80 text-gray-300">
                 <User className="h-5 w-5" />
               </AvatarFallback>
             </Avatar>
           )}
-          <div className="flex-1 flex bg-gray-800/40 border-gray-800/20 border rounded">
+          <div className="flex-1 flex bg-background/20 border-border border rounded">
             <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-1 min-h-[80px] resize-none bg-transparent border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus:outline-none"
+              className="flex-1 min-h-[80px] text-foreground/80 resize-none bg-transparent border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus:outline-none"
             />
             <Button
               type="submit"
               disabled={isSubmitting || !newComment.trim()}
-              className="self-end self-center text-primary bg-transparent h-full hover:bg-gray-800/20"
+              className="self-end self-center border-l rounded-none text-primary bg-transparent h-full hover:bg-border/20"
             >
               <Send className="h-4 w-4" />
             </Button>
