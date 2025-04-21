@@ -1,9 +1,11 @@
 import React from "react";
 import { LinkedContentPreview } from "@/components/linked-content-preview";
 
-// Regex patterns to match book and bookshelf links
-const BOOK_LINK_PATTERN = /(\s|^)\/books\/([0-9]+)(\s|$)/g;
-const BOOKSHELF_LINK_PATTERN = /(\s|^)\/book-shelf\/share\?username=([^&]+)&shelfname=([^&\s]+)(\s|$)/g;
+// Regex patterns to match book and bookshelf links (paths and full URLs)
+const BOOK_LINK_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?sirened\.com)?\/books\/([0-9]+)(\s|$)/g;
+const BOOKSHELF_LINK_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?sirened\.com)?\/book-shelf\/share\?username=([^&]+)&shelfname=([^&\s]+)(\s|$)/g;
+// General URL regex that will match all URLs
+const GENERAL_URL_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?([^\/\s]+)(?:\/[^\s]*)?)+(\s|$)/g;
 
 /**
  * Parse message content to detect book and bookshelf links and replace them
@@ -31,24 +33,23 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   let lastIndex = 0;
   let placeholderIndex = 0;
   
-  // Process book links
+  // Process book links - these can be paths or full URLs with sirened.com domain
   while ((match = BOOK_LINK_PATTERN.exec(workingContent)) !== null) {
     const fullMatch = match[0];
     const leadingSpace = match[1] || "";
-    const bookId = match[2];
-    const trailingSpace = match[3] || "";
+    const domain = match[2] || ""; // This will be the domain part (optional)
+    const bookId = match[3];
+    const trailingSpace = match[4] || "";
     
     // Add text before the match
     const beforeMatchText = workingContent.slice(lastIndex, match.index);
     if (beforeMatchText) {
       contentParts.push(beforeMatchText);
-      elements.push(beforeMatchText);
     }
     
     // Add leading space if present
     if (leadingSpace) {
       contentParts.push(leadingSpace);
-      elements.push(leadingSpace);
     }
     
     // Create placeholder for the book preview
@@ -63,7 +64,6 @@ export function parseMessageContent(content: string): React.ReactNode[] {
     // Add trailing space if present
     if (trailingSpace) {
       contentParts.push(trailingSpace);
-      elements.push(trailingSpace);
     }
     
     // Update index tracking
@@ -75,7 +75,6 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   if (lastIndex < workingContent.length) {
     const remainingText = workingContent.slice(lastIndex);
     contentParts.push(remainingText);
-    elements.push(remainingText);
   }
   
   // Reset for bookshelf processing
@@ -87,9 +86,10 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   while ((match = BOOKSHELF_LINK_PATTERN.exec(workingContent)) !== null) {
     const fullMatch = match[0];
     const leadingSpace = match[1] || "";
-    const username = decodeURIComponent(match[2]);
-    const shelfName = decodeURIComponent(match[3]);
-    const trailingSpace = match[4] || "";
+    const domain = match[2] || ""; // This will be the domain part (optional)
+    const username = decodeURIComponent(match[3]);
+    const shelfName = decodeURIComponent(match[4]);
+    const trailingSpace = match[5] || "";
     
     // Add text before the match
     const beforeMatchText = workingContent.slice(lastIndex, match.index);
@@ -125,6 +125,53 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   // Add any remaining content after the last match
   if (lastIndex < workingContent.length) {
     contentParts.push(workingContent.slice(lastIndex));
+  }
+  
+  // Final content with all specific Sirened.com links replaced with placeholders
+  let filteredContent = contentParts.join('');
+  contentParts.length = 0;
+  lastIndex = 0;
+  
+  // Process all other URLs and remove them if they're not sirened.com
+  while ((match = GENERAL_URL_PATTERN.exec(filteredContent)) !== null) {
+    const fullMatch = match[0];
+    const leadingSpace = match[1] || "";
+    const url = match[2] || "";
+    const domain = match[3] || "";
+    const trailingSpace = match[4] || "";
+    
+    // Only process if NOT sirened.com - sirened.com links were already processed above
+    if (domain && !domain.includes("sirened.com")) {
+      // Add text before the match
+      const beforeMatchText = filteredContent.slice(lastIndex, match.index);
+      if (beforeMatchText) {
+        contentParts.push(beforeMatchText);
+      }
+      
+      // Add leading space if present
+      if (leadingSpace) {
+        contentParts.push(leadingSpace);
+      }
+      
+      // We strip non-sirened URLs, so we don't add anything for the URL itself
+      
+      // Add trailing space if present
+      if (trailingSpace) {
+        contentParts.push(trailingSpace);
+      }
+      
+      // Update index tracking
+      lastIndex = match.index + fullMatch.length;
+    } else if (!domain.includes("sirened.com")) {
+      // If it doesn't match our sirened.com pattern but isn't another external URL,
+      // we just continue as normal with this text
+      lastIndex = match.index + leadingSpace.length;
+    }
+  }
+  
+  // Add any remaining content after the last match
+  if (lastIndex < filteredContent.length) {
+    contentParts.push(filteredContent.slice(lastIndex));
   }
   
   // Final joined content with all placeholders

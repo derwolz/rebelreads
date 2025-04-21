@@ -97,6 +97,21 @@ export function LinkedContentPreview({
     ],
     enabled: type === "bookshelf" && !!username && !!shelfName,
   });
+  
+  // Also fetch user info to get the display name
+  const {
+    data: userData,
+    isLoading: isUserLoading,
+    error: userError,
+  } = useQuery<{
+    id: number;
+    username: string;
+    displayName: string | null;
+    profileImageUrl: string | null;
+  }>({
+    queryKey: [`/api/users/by-username/${encodeURIComponent(username || "")}`],
+    enabled: type === "bookshelf" && !!username,
+  });
 
   // Create the URL based on the content type
   const getContentUrl = () => {
@@ -111,7 +126,7 @@ export function LinkedContentPreview({
   };
 
   // Loading state
-  if ((type === "book" && isBookLoading) || (type === "bookshelf" && isShelfLoading)) {
+  if ((type === "book" && isBookLoading) || (type === "bookshelf" && (isShelfLoading || isUserLoading))) {
     return (
       <div className={cn("flex items-center h-16 bg-gray-900 rounded border border-gray-800 p-2 animate-pulse", className)}>
         <div className="h-12 w-12 bg-gray-800 rounded mr-3"></div>
@@ -124,7 +139,7 @@ export function LinkedContentPreview({
   }
 
   // Error state
-  if ((type === "book" && bookError) || (type === "bookshelf" && shelfError)) {
+  if ((type === "book" && bookError) || (type === "bookshelf" && (shelfError || userError))) {
     return (
       <div className={cn("flex items-center h-16 bg-gray-900 rounded border border-gray-800 p-2", className)}>
         <div className="w-full text-center text-gray-400 text-sm">
@@ -160,7 +175,13 @@ export function LinkedContentPreview({
   // Render bookshelf preview
   if (type === "bookshelf" && shelfData && shelfData.shelf) {
     const shelf = shelfData.shelf;
-    const ownerDisplayName = shelfData.owner?.displayName || username || "Anonymous";
+    // Use user data first, then fall back to shelf owner data, then username
+    const ownerDisplayName = 
+      (userData && userData.displayName) || 
+      shelfData.owner?.displayName || 
+      (userData && userData.username) || 
+      username || 
+      "Anonymous";
     const coverImage = shelf.coverImageUrl || "/images/default-bookshelf-cover.svg";
 
     return (
