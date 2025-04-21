@@ -59,7 +59,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
               onChange={(file, hasError, errorMessage) => 
                 handleImageChange(imageType, file, hasError, errorMessage)
               }
-              required={imageType === "book-detail" || imageType === "book-card"}
+              required={imageType === "book-detail" || imageType === "book-card" ? true : false}
             />
           );
         })}

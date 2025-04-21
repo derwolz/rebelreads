@@ -1,5 +1,2 @@
-// Import now from our new structured components
-import { BookUploadDialog, BookUploadWizard } from "./book-upload";
-
-// Export the components
-export { BookUploadDialog, BookUploadWizard };
+// Directly export the components from their implementation files
+export { BookUploadDialog, BookUploadWizard } from "./book-upload/wizard-controller";
