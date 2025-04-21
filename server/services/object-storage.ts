@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs/promises';
+import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 import { nanoid } from 'nanoid';
 
@@ -65,11 +66,11 @@ export class ObjectStorageService {
   }
 
   /**
-   * Get a file from object storage
+   * Get a file from object storage with content type detection
    * @param storageKey Storage key of the file
-   * @returns Buffer containing the file data
+   * @returns Object containing content type and readable stream, or null if file not found
    */
-  async getFile(storageKey: string): Promise<Buffer | null> {
+  async getFile(storageKey: string): Promise<{ contentType: string, stream: Readable } | null> {
     try {
       // Construct the file path
       const baseDir = './uploads/object-storage';
@@ -79,15 +80,40 @@ export class ObjectStorageService {
       try {
         await fs.access(filePath);
       } catch (err) {
-        return null; // File doesn't exist
+        console.log(`File not found: ${filePath}`);
+        throw new Error('File not found');
       }
       
-      // Read the file
-      const buffer = await fs.readFile(filePath);
-      return buffer;
+      // Detect content type based on file extension
+      const extension = path.extname(storageKey).toLowerCase();
+      let contentType = 'application/octet-stream'; // Default content type
+      
+      // Map extensions to content types
+      const contentTypeMap: Record<string, string> = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.svg': 'image/svg+xml',
+        '.pdf': 'application/pdf',
+        '.json': 'application/json',
+        '.txt': 'text/plain',
+        '.html': 'text/html',
+        '.css': 'text/css',
+        '.js': 'application/javascript'
+      };
+      
+      if (extension in contentTypeMap) {
+        contentType = contentTypeMap[extension];
+      }
+      
+      // Create a readable stream from the file
+      const stream = createReadStream(filePath);
+      return { contentType, stream };
     } catch (error) {
       console.error('Error retrieving file from storage:', error);
-      return null;
+      throw error; // Let the caller handle the error
     }
   }
 
