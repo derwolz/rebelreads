@@ -42,6 +42,7 @@ import verificationRoutes from "./routes/verification-routes";
 import verifyLoginRoutes from "./routes/verify-login-route";
 import linkPreviewRoutes from "./routes/link-preview-routes";
 import objectStorageRoutes from "./routes/object-storage-routes";
+import testUploadRoutes from "./routes/test-upload-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path

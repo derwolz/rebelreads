@@ -1,7 +1,8 @@
 import path from 'path';
 import { Readable } from 'stream';
 import { nanoid } from 'nanoid';
-import fetch from 'node-fetch';
+import fs from 'fs/promises';
+import { createReadStream } from 'fs';
 
 /**
  * Generate a unique ID suitable for filenames
@@ -13,19 +14,36 @@ function createId(length: number = 16): string {
 }
 
 /**
- * File Storage Service using Replit Object Storage
- * Handles uploading, retrieving, and managing files in storage
+ * File Storage Service for Replit
+ * Saves files to $REPL_HOME/.config/object-storage which is the Replit Object Storage mount point
  */
 export class ObjectStorageService {
-  private readonly defaultBucketId: string;
-  private readonly baseUrl: string = 'https://objects.replit.app/v1';
-  private readonly apiUrl: string;
+  private readonly bucketId: string;
+  private readonly baseDir: string;
 
   constructor() {
     // Get the bucket ID from the environment or .replit config
-    this.defaultBucketId = process.env.REPLIT_BUCKET_ID || 'replit-objstore-ac9f763f-902a-4711-b57a-2a5a71e598d3';
-    this.apiUrl = `${this.baseUrl}/buckets/${this.defaultBucketId}/objects`;
-    console.log(`Initialized ObjectStorageService with bucket ID: ${this.defaultBucketId}`);
+    this.bucketId = process.env.REPLIT_BUCKET_ID || 'replit-objstore-ac9f763f-902a-4711-b57a-2a5a71e598d3';
+    
+    // The location where Replit mounts the object storage
+    this.baseDir = process.env.REPL_HOME ? 
+      `${process.env.REPL_HOME}/.config/object-storage/${this.bucketId}` : 
+      './uploads/object-storage';
+    
+    console.log(`Initialized ObjectStorageService with bucket ID: ${this.bucketId}`);
+    console.log(`Storage base directory: ${this.baseDir}`);
+    
+    // Ensure the base directory exists
+    this.ensureBaseDir();
+  }
+  
+  private async ensureBaseDir(): Promise<void> {
+    try {
+      await fs.mkdir(this.baseDir, { recursive: true });
+      console.log(`Ensured base directory exists: ${this.baseDir}`);
+    } catch (error) {
+      console.error(`Error creating base directory: ${error}`);
+    }
   }
 
   /**
@@ -42,22 +60,18 @@ export class ObjectStorageService {
       const extension = path.extname(filename);
       const storageKey = `${directory}/${uniqueId}${extension}`;
       
-      // Upload to Replit Object Storage
-      const response = await fetch(`${this.apiUrl}/${storageKey}`, {
-        method: 'PUT',
-        body: buffer,
-        headers: {
-          'Content-Type': this.getContentTypeFromExtension(extension),
-        },
-      });
+      // Create the physical directory path
+      const fullDir = path.join(this.baseDir, directory);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Error uploading to object storage: ${response.status} ${errorText}`);
-        throw new Error(`Failed to upload file: ${response.status} ${response.statusText}`);
-      }
+      // Ensure the directory exists
+      await fs.mkdir(fullDir, { recursive: true });
+      
+      // Save the file
+      const filePath = path.join(this.baseDir, storageKey);
+      await fs.writeFile(filePath, buffer);
       
       console.log(`Successfully uploaded file to object storage: ${storageKey}`);
+      console.log(`File saved to path: ${filePath}`);
       
       // Return the path to access the file
       return storageKey;
@@ -84,25 +98,24 @@ export class ObjectStorageService {
    */
   async getFile(storageKey: string): Promise<{ contentType: string, stream: Readable } | null> {
     try {
-      // Get file from Replit Object Storage
-      const response = await fetch(`${this.apiUrl}/${storageKey}`);
+      // Construct the file path
+      const filePath = path.join(this.baseDir, storageKey);
       
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.log(`File not found in object storage: ${storageKey}`);
-          throw new Error('File not found');
-        }
-        
-        const errorText = await response.text();
-        console.error(`Error retrieving from object storage: ${response.status} ${errorText}`);
-        throw new Error(`Failed to retrieve file: ${response.status} ${response.statusText}`);
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch (err) {
+        console.log(`File not found in object storage: ${storageKey}`);
+        console.log(`Looked for file at: ${filePath}`);
+        throw new Error('File not found');
       }
       
-      // Get the content type from the response headers
-      const contentType = response.headers.get('content-type') || this.getContentTypeFromExtension(path.extname(storageKey));
+      // Detect content type based on file extension
+      const extension = path.extname(storageKey).toLowerCase();
+      const contentType = this.getContentTypeFromExtension(extension);
       
-      // Convert the response body to a readable stream
-      const stream = Readable.fromWeb(response.body as any);
+      // Create a readable stream from the file
+      const stream = createReadStream(filePath);
       
       return { contentType, stream };
     } catch (error) {
@@ -118,12 +131,14 @@ export class ObjectStorageService {
    */
   async fileExists(storageKey: string): Promise<boolean> {
     try {
-      // Use HEAD request to check if file exists
-      const response = await fetch(`${this.apiUrl}/${storageKey}`, {
-        method: 'HEAD',
-      });
+      const filePath = path.join(this.baseDir, storageKey);
       
-      return response.ok;
+      try {
+        await fs.access(filePath);
+        return true;
+      } catch {
+        return false;
+      }
     } catch (error) {
       console.error('Error checking file existence in storage:', error);
       return false;
@@ -137,12 +152,10 @@ export class ObjectStorageService {
    */
   async deleteFile(storageKey: string): Promise<boolean> {
     try {
-      // Delete file from Replit Object Storage
-      const response = await fetch(`${this.apiUrl}/${storageKey}`, {
-        method: 'DELETE',
-      });
+      const filePath = path.join(this.baseDir, storageKey);
       
-      return response.ok;
+      await fs.unlink(filePath);
+      return true;
     } catch (error) {
       console.error('Error deleting file from storage:', error);
       return false;
@@ -155,7 +168,7 @@ export class ObjectStorageService {
    * @returns Public URL for the file
    */
   getPublicUrl(storageKey: string): string {
-    // For Replit Object Storage, we use the API route to serve the files
+    // This returns the internal API route that will serve the file
     return `/api/storage/${storageKey}`;
   }
 
@@ -166,20 +179,20 @@ export class ObjectStorageService {
    */
   async listFiles(directory: string): Promise<string[]> {
     try {
-      // List files with the directory prefix from Replit Object Storage
-      // We need to use the /v1/buckets/{bucketId}/list endpoint
-      const response = await fetch(`${this.baseUrl}/buckets/${this.defaultBucketId}/list?prefix=${directory}/`);
+      const fullDir = path.join(this.baseDir, directory);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Error listing files from object storage: ${response.status} ${errorText}`);
-        return [];
+      // Ensure the directory exists
+      try {
+        await fs.access(fullDir);
+      } catch {
+        return []; // Directory doesn't exist
       }
       
-      const data = await response.json() as { objects: { name: string }[] };
+      // Get all files in the directory
+      const files = await fs.readdir(fullDir);
       
-      // Extract the full storage keys from the response
-      return data.objects.map(obj => obj.name);
+      // Format the storage keys
+      return files.map(file => `${directory}/${file}`);
     } catch (error) {
       console.error('Error listing files from storage:', error);
       return [];
