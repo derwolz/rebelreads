@@ -25,6 +25,7 @@ import { eq, and, isNull, desc, sql } from "drizzle-orm";
 export interface ICampaignStorage {
   // Campaign methods
   getCampaigns(authorId: number): Promise<Campaign[]>;
+  getAllCampaigns(): Promise<Campaign[]>; // Admin method to get all campaigns
   createCampaign(campaign: InsertCampaign): Promise<Campaign>;
   updateCampaignStatus(id: number, status: "active" | "completed" | "paused"): Promise<Campaign>;
   updateCampaignMetrics(id: number, metrics: any): Promise<Campaign>;
@@ -79,6 +80,36 @@ export class CampaignStorage implements ICampaignStorage {
     return campaignResults.map(({ campaign, books }) => ({
       ...campaign,
       books: books || [],
+    }));
+  }
+  
+  async getAllCampaigns(): Promise<Campaign[]> {
+    // Similar to getCampaigns but without the authorId filter
+    // Also include author information
+    const campaignResults = await db
+      .select({
+        campaign: campaigns,
+        books: sql<Pick<Book, "id" | "title">[]>`
+          json_agg(
+            CASE WHEN ${books.id} IS NOT NULL 
+              THEN json_build_object('id', ${books.id}, 'title', ${books.title}) 
+              ELSE NULL 
+            END
+          )
+        `.as('books'),
+      })
+      .from(campaigns)
+      .leftJoin(campaignBooks, eq(campaigns.id, campaignBooks.campaignId))
+      .leftJoin(books, eq(campaignBooks.bookId, books.id))
+      .groupBy(campaigns.id)
+      .orderBy(desc(campaigns.createdAt));
+
+    return campaignResults.map(({ campaign, books }) => ({
+      ...campaign,
+      // Filter out null values that might be in the array when there are no books
+      books: Array.isArray(books) 
+        ? books.filter(book => book !== null) 
+        : [],
     }));
   }
 

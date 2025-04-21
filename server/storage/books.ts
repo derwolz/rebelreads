@@ -18,6 +18,7 @@ import { applyContentFilters } from "../utils/content-filters";
 
 export interface IBookStorage {
   getBooks(): Promise<Book[]>;
+  getAllBooks(): Promise<(Book & { authorName?: string })[]>; // Admin method to get all books with author names
   getBook(id: number): Promise<Book | undefined>;
   getBookByAuthorAndTitle(authorName: string, title: string): Promise<Book | undefined>;
   getBooksByAuthor(authorId: number): Promise<Book[]>;
@@ -42,6 +43,46 @@ export interface IBookStorage {
 }
 
 export class BookStorage implements IBookStorage {
+  async getAllBooks(): Promise<(Book & { authorName?: string })[]> {
+    try {
+      // Get all books with author names for admin purposes
+      const allBooks = await db
+        .select({
+          id: books.id,
+          title: books.title,
+          authorId: books.authorId,
+          authorName: authors.author_name,
+          description: books.description,
+          promoted: books.promoted,
+          pageCount: books.pageCount,
+          formats: books.formats,
+          publishedDate: books.publishedDate,
+          awards: books.awards,
+          originalTitle: books.originalTitle,
+          series: books.series,
+          setting: books.setting,
+          characters: books.characters,
+          isbn: books.isbn,
+          asin: books.asin,
+          language: books.language,
+          referralLinks: books.referralLinks,
+          impressionCount: books.impressionCount,
+          clickThroughCount: books.clickThroughCount,
+          lastImpressionAt: books.lastImpressionAt,
+          lastClickThroughAt: books.lastClickThroughAt,
+          internal_details: books.internal_details
+        })
+        .from(books)
+        .leftJoin(authors, eq(books.authorId, authors.id))
+        .orderBy(desc(books.id));
+      
+      return allBooks;
+    } catch (error) {
+      console.error('Error in getAllBooks():', error);
+      return [];
+    }
+  }
+  
   async getBooks(): Promise<Book[]> {
     try {
       // Get all books with author information
