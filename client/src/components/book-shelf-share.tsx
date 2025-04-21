@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Book as BookType, Author } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -40,12 +40,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [showBookDetails, setShowBookDetails] = useState(true);
   const { toast } = useToast();
   
-  // Mobile view detection
-  const [isMobileViewActive, setIsMobileViewActive] = useState(false);
-  
-  // Track current note index for swipe in mobile view
-  const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-  
   // Track current carousel slide index
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
@@ -85,32 +79,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     loop: bookNotes.length > 1,
     align: 'center',
   });
-  
-  // Mobile swipe carousel for book description
-  const [descriptionEmblaRef, descriptionEmblaApi] = useEmblaCarousel({ 
-    loop: bookNotes.length > 1,
-    align: 'center',
-    draggable: !!bookNotes.length, // Only enable dragging if there are notes
-  });
-  
-  // Mobile detection on component mount
-  useEffect(() => {
-    const checkMobileView = () => {
-      const isMobile = window.innerWidth < 768; // Match md: breakpoint
-      setIsMobileViewActive(isMobile);
-    };
-    
-    // Check initially
-    checkMobileView();
-    
-    // Set up listener for window resize
-    window.addEventListener('resize', checkMobileView);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener('resize', checkMobileView);
-    };
-  }, []);
     
   // Log error if shelfData is undefined but username and shelfName are provided
   useEffect(() => {
