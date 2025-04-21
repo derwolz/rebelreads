@@ -207,14 +207,31 @@ router.patch("/user", async (req: Request, res: Response) => {
     
     // Only proceed with update if there's something to update
     if (Object.keys(updateData).length > 0) {
-      // Update the user
-      const updatedUser = await dbStorage.updateUser(req.user.id, updateData);
-      
-      // Update the session user object
-      const { password, ...userWithoutPassword } = updatedUser;
-      req.user = userWithoutPassword as Express.User;
-      
-      return res.json(userWithoutPassword);
+      try {
+        // Update the user
+        const updatedUser = await dbStorage.updateUser(req.user.id, updateData);
+        
+        // Update the session user object
+        const { password, ...userWithoutPassword } = updatedUser;
+        req.user = userWithoutPassword as Express.User;
+        
+        return res.json(userWithoutPassword);
+      } catch (error: any) {
+        // Check for duplicate key errors
+        if (error.code === '23505') { // PostgreSQL error code for unique violation
+          if (error.constraint === 'users_username_key') {
+            return res.status(400).json({ error: "This username is already taken. Please choose a different one." });
+          } else if (error.constraint === 'users_email_key') {
+            return res.status(400).json({ error: "This email is already registered. Please use a different email address." });
+          }
+        }
+        
+        // Log the full error for debugging
+        console.error("Error updating user:", error);
+        
+        // Return generic error for other issues
+        return res.status(500).json({ error: "Failed to update user" });
+      }
     }
     
     // If no update data provided, just return the current user
