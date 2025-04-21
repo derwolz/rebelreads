@@ -7,7 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 import { Readable } from 'stream';
-import FormData from 'form-data';
+// Using undici's FormData which is available in modern Node.js
+import { FormData } from 'undici';
 
 async function testObjectStorage() {
   try {

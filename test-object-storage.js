@@ -3,10 +3,11 @@
  * Run using: node test-object-storage.js
  */
 
-const fs = require('fs');
-const path = require('path');
-const fetch = require('node-fetch');
-const FormData = require('form-data');
+import fs from 'fs';
+import path from 'path';
+import fetch from 'node-fetch';
+// Using Node.js native FormData from undici
+import { FormData } from 'undici';
 
 // URL constants for testing
 const API_URL = 'http://localhost:3000';
