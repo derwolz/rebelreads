@@ -143,7 +143,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     };
     
     emblaApi.on("select", onSelect);
-    return () => emblaApi.off("select", onSelect);
+    
+    // Cleanup function
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
   }, [emblaApi, bookNotes, selectedBook]);
   
   // Navigation functions for mobile swipe
@@ -370,62 +374,114 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
           
           
-          {/* Book/Notes section */}
-
-          {bookNotes && bookNotes.length > 0 ? (
-            <div className="space-y-3  transform w-[10ch] pr-2  pt-2  ">
-              {bookNotes.map((note, idx) => (
-                <div 
-                  key={note.id} 
-                  className="p-3  rounded-lg bg-purple-900/40 rounded-l-none overflow-hidden h-[6ch] border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
-                  onClick={() => {
-                    // Use the same animation logic for book notes
-                    if (selectedNote && selectedNote.id === note.id && noteVisible) {
-                      // If the same note is clicked while visible, hide it
-                      setIsRotating(true);
-                      setTimeout(() => {
-                        setNoteVisible(false);
-                        setIsRotating(false);
-                      }, 500);
-                    } else {
-                      // If no note is currently visible or a different note is clicked
-                      if (noteVisible) {
-                        // If a note is already visible, hide it first with animation
+          {/* Book/Notes section - Desktop version */}
+          <div className="hidden md:block">
+            {bookNotes && bookNotes.length > 0 ? (
+              <div className="space-y-3 transform w-[10ch] pr-2 pt-2">
+                {bookNotes.map((note, idx) => (
+                  <div 
+                    key={note.id} 
+                    className="p-3 rounded-lg bg-purple-900/40 rounded-l-none overflow-hidden h-[6ch] border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors"
+                    onClick={() => {
+                      // Use the same animation logic for book notes
+                      if (selectedNote && selectedNote.id === note.id && noteVisible) {
+                        // If the same note is clicked while visible, hide it
                         setIsRotating(true);
                         setTimeout(() => {
+                          setNoteVisible(false);
+                          setIsRotating(false);
+                        }, 500);
+                      } else {
+                        // If no note is currently visible or a different note is clicked
+                        if (noteVisible) {
+                          // If a note is already visible, hide it first with animation
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setSelectedNote(note);
+                            setTimeout(() => {
+                              setNoteVisible(true);
+                              setIsRotating(false);
+                            }, 100);
+                          }, 500);
+                        } else {
+                          // No note is visible, show the selected one directly
                           setSelectedNote(note);
+                          setIsRotating(true);
                           setTimeout(() => {
                             setNoteVisible(true);
                             setIsRotating(false);
                           }, 100);
-                        }, 500);
-                      } else {
-                        // No note is visible, show the selected one directly
-                        setSelectedNote(note);
-                        setIsRotating(true);
-                        setTimeout(() => {
-                          setNoteVisible(true);
-                          setIsRotating(false);
-                        }, 100);
+                        }
                       }
-                    }
-                  }}
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <div className="flex justify-center items-center mb-1">
-                        <p className="text-xs text-foreground/80 ">
-{new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </p>
+                    }}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <div className="flex justify-center items-center mb-1">
+                          <p className="text-xs text-foreground/80">
+                            {new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center absolute py-4 text-foreground/80">
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile-only swipeable notes carousel */}
+          {bookNotes && bookNotes.length > 0 && (
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-black/80 backdrop-blur-sm">
+              <div className="container p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-1">
+                    <StickyNote className="h-3 w-3" />
+                    Book Notes ({currentNoteIndex + 1}/{bookNotes.length})
+                  </h3>
+                  
+                  {/* Navigation buttons */}
+                  <div className="flex gap-2">
+                    <Button 
+                      size="icon" 
+                      variant="outline" 
+                      className="h-7 w-7 rounded-full bg-background/20 border-gray-700"
+                      onClick={scrollPrev}
+                      disabled={currentNoteIndex === 0}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="outline" 
+                      className="h-7 w-7 rounded-full bg-background/20 border-gray-700"
+                      onClick={scrollNext}
+                      disabled={currentNoteIndex === bookNotes.length - 1}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center absolute py-4 text-foreground/80">
-
+                
+                {/* Embla carousel for swipeable notes */}
+                <div className="overflow-hidden" ref={emblaRef}>
+                  <div className="flex">
+                    {bookNotes.map((note, idx) => (
+                      <div 
+                        key={note.id}
+                        className="min-w-full"
+                      >
+                        <div className="p-3 rounded-lg bg-background/30 border border-gray-700">
+                          <PaperNoteCard note={note} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
