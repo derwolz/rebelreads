@@ -226,11 +226,17 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 
                 {/* Animated Note Overlay - Only covers the details section */}
                 {selectedNote && (
-                  <div className={`absolute z-10 top-0 left-0 w-full h-full flex items-center justify-center transition-all duration-500 ${isRotating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'} ${noteVisible ? 'pointer-events-auto' : 'pointer-events-none opacity-0'}`}>
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
-                    <div className={`transform transition-all duration-500 ${isRotating ? 'rotate-3 scale-95' : 'rotate-0 scale-100'}`}>
-                      <PaperNoteCard note={selectedNote} className="max-w-sm" />
-                    </div>
+                  <div 
+                    className={`absolute top-0 right-0 bottom-0 left-0 z-10 transition-all duration-500 ${
+                      noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                    }`}
+                    style={{
+                      perspective: '1000px',
+                      transformStyle: 'preserve-3d',
+                      backfaceVisibility: 'hidden',
+                    }}
+                  >
+                    
                   </div>
                 )}
 
