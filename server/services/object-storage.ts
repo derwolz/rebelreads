@@ -125,7 +125,9 @@ class ObjectStorageService {
    * @returns The public URL
    */
   getPublicUrl(storageKey: string): string {
-    // Return the API endpoint that will serve the file
+    // Always return a relative URL path
+    // This ensures it works across both development and production domains
+    // The browser will resolve it relative to the current domain
     return `/api/storage/${storageKey}`;
   }
 }
