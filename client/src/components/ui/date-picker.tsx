@@ -38,8 +38,15 @@ export function DatePicker({
   fromYear = 1900,
   toYear = new Date().getFullYear() + 10
 }: DatePickerProps) {
+  // Normalize the selected date with noon time to prevent timezone issues
+  const normalizeDate = (date: Date): Date => {
+    const normalized = new Date(date)
+    normalized.setHours(12, 0, 0, 0)
+    return normalized
+  }
+  
   const [date, setDate] = React.useState<Date | undefined>(
-    selected ? new Date(selected) : undefined
+    selected ? normalizeDate(new Date(selected)) : undefined
   )
   const [month, setMonth] = React.useState<number>(
     selected ? selected.getMonth() : new Date().getMonth()
@@ -51,9 +58,11 @@ export function DatePicker({
   // Update the component when the selected prop changes
   React.useEffect(() => {
     if (selected) {
-      setDate(new Date(selected))
-      setMonth(selected.getMonth())
-      setYear(selected.getFullYear())
+      // Use the normalize function to prevent timezone issues
+      const normalized = normalizeDate(new Date(selected))
+      setDate(normalized)
+      setMonth(normalized.getMonth())
+      setYear(normalized.getFullYear())
     } else {
       setDate(undefined)
     }
@@ -80,7 +89,10 @@ export function DatePicker({
     if (selectedDate) {
       setMonth(selectedDate.getMonth())
       setYear(selectedDate.getFullYear())
-      onSelect?.(selectedDate)
+      
+      // Fix timezone issue by using the normalizeDate helper
+      const normalizedDate = normalizeDate(selectedDate)
+      onSelect?.(normalizedDate)
     } else {
       onSelect?.(null)
     }
