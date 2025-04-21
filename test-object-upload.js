@@ -3,9 +3,14 @@
  * Run with: node test-object-upload.js
  */
 
-const fs = require('fs');
-const path = require('path');
-const { ObjectStorageService } = require('./server/services/object-storage');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { ObjectStorageService } from './server/services/object-storage.js';
+
+// Get current file's directory (ESM equivalent of __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function testObjectStorage() {
   try {
