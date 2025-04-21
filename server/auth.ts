@@ -513,7 +513,7 @@ export function setupAuth(app: Express) {
       (req.session as any).pending_beta_key = google_auth_beta_key;
       // Clear the temporary key
       delete (req.session as any).google_auth_beta_key;
-      any).pending_beta_key);
+      // Delete any accidentally malformed debugging code
     }
     
     // Save the session to make sure our beta key is persisted

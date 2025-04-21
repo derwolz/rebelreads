@@ -178,7 +178,8 @@ router.get("/dashboard", async (req: Request, res: Response) => {
     
     // Get all books by this author - use author.id instead of req.user.id
     const authorBooks = await dbStorage.getBooksByAuthor(author.id);
-    authorBooks.map((b: any) => b.id));
+    // Get book IDs for further processing
+    const bookIds = authorBooks.map((b: any) => b.id);
     
     if (!authorBooks || authorBooks.length === 0) {
       return res.json({
@@ -188,8 +189,6 @@ router.get("/dashboard", async (req: Request, res: Response) => {
       });
     }
     
-    // Get book IDs
-    const bookIds = authorBooks.map((book: { id: number }) => book.id);
     
     // Collect all ratings for these books
     let allRatings: any[] = [];

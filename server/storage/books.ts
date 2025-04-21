@@ -290,7 +290,6 @@ export class BookStorage implements IBookStorage {
       .where(eq(bookImages.bookId, id));
     
     
-      images.map(img => `${img.imageType}: ${img.imageUrl}`));
     
     // Attach the images to the book object
     const result = {
@@ -299,7 +298,6 @@ export class BookStorage implements IBookStorage {
     } as Book;
     
     
-      images.length > 0 ? `First image: ${images[0].imageType}` : 'No images');
     
     return result;
   }
@@ -745,8 +743,6 @@ export class BookStorage implements IBookStorage {
       .where(eq(bookImages.bookId, book.id));
     
     
-      images.map(img => `${img.imageType}: ${img.imageUrl}`));
-    
     // Attach the images to the book object
     const result = {
       ...book,
@@ -754,7 +750,6 @@ export class BookStorage implements IBookStorage {
     } as Book;
     
     
-      images.length > 0 ? `First image: ${images[0].imageType}` : 'No images');
     
     return result;
   }
