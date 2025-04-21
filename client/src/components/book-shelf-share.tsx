@@ -38,6 +38,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [newNoteContent, setNewNoteContent] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [showBookDetails, setShowBookDetails] = useState(true);
+  const [isMobileViewActive, setIsMobileViewActive] = useState(false);
   const { toast } = useToast();
   
   // Track current carousel slide index
@@ -164,6 +165,25 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   
 
   const { theme } = useTheme();
+
+  // Add a useEffect hook to detect and update mobile view status
+  useEffect(() => {
+    // Function to check if we're in mobile view
+    const checkMobileView = () => {
+      setIsMobileViewActive(window.innerWidth < 768); // Use common breakpoint for mobile (< md in Tailwind)
+    };
+    
+    // Initial check
+    checkMobileView();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkMobileView);
+    
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', checkMobileView);
+    };
+  }, []);
 
   return (
     <div className={`${className} bg-background max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full`}>
