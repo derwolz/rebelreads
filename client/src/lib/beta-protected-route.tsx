@@ -19,7 +19,7 @@ export function BetaProtectedRoute({
   const [location] = useLocation();
 
   // List of paths that are always allowed
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo"];
+  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/scroll-landing", "/wave-demo", "/book-shelf/share"];
   const isAllowedPath = allowedPaths.includes(path);
   const isApiPath = path.startsWith("/api");
 
