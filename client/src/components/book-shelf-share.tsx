@@ -78,7 +78,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   // Mobile swipe carousel for book details + notes (as one integrated swipeable card set)
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, // Don't loop - card 1 is always book details, cards 2+ are notes
-    align: 'start',
+    align: 'center',
+    containScroll: 'trimSnaps',
+    dragFree: false,
+    skipSnaps: false
   });
     
   // Log error if shelfData is undefined but username and shelfName are provided
@@ -183,11 +186,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const { theme } = useTheme();
 
   return (
-    <div className={`${className} bg-background max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full`}>
+    <div className={`${className} bg-background w-full max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full overflow-hidden`}>
       
       
       {/* Main content area */}
-      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 ">
+      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 w-full overflow-x-hidden">
        
         {/* Left column: Book details and comments */}
         <div className="w-full lg:w-2/3 flex relative ">
@@ -351,10 +354,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   {/* Mobile view - Swipeable content with Cards */}
                   <div className="md:hidden">
                     {/* Embla carousel for swipeable cards (bookDetails + notes) */}
-                    <div className="overflow-hidden border border-border rounded-lg" ref={emblaRef}>
+                    <div className="overflow-hidden border border-border rounded-lg w-full max-w-full" ref={emblaRef}>
                       <div className="flex">
                         {/* Card 1: Book details card (always the first card) */}
-                        <div className="flex-[0_0_100%] min-w-0 p-4">
+                        <div className="flex-[0_0_100%] min-w-0 p-4 w-full">
                           <ScrollArea className="h-[180px] min-w-0 w-full">
                             <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                           </ScrollArea>
@@ -377,8 +380,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         
                         {/* Cards 2+: Notes (one card per note) */}
                         {bookNotes.map((note, idx) => (
-                          <div key={note.id} className="flex-[0_0_100%] min-w-0 p-4">
-                            <div className="bg-muted/20 rounded-lg p-3 h-[180px] overflow-y-auto">
+                          <div key={note.id} className="flex-[0_0_100%] min-w-0 p-4 w-full">
+                            <div className="bg-muted/20 rounded-lg p-3 h-[180px] overflow-y-auto w-full">
                               <div className="flex justify-between items-center mb-2">
                                 <p className="text-xs text-muted-foreground">
                                   {new Date(note.createdAt).toLocaleDateString()}
