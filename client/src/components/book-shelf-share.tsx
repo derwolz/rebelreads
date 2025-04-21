@@ -135,7 +135,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
 
                 {bookNotes && bookNotes.length > 0 ? (
-                  <div className="space-y-3 absolute -rotate-90 bottom-6  left-0">
+                  <div className="space-y-3 absolute  bottom-0 max-w-[18rem] left-0">
                     {bookNotes.map((note, idx) => (
                       <div 
                         key={note.id} 
