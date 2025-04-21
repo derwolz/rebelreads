@@ -243,8 +243,18 @@ router.patch("/user", async (req: Request, res: Response) => {
     const { password, ...userWithoutPassword } = user;
     return res.json(userWithoutPassword);
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating user:", error);
+    
+    // Check for database constraint violations
+    if (error.code === '23505') { // PostgreSQL error code for unique violation
+      if (error.constraint === 'users_username_key') {
+        return res.status(400).json({ error: "This username is already taken. Please choose a different one." });
+      } else if (error.constraint === 'users_email_key') {
+        return res.status(400).json({ error: "This email is already registered. Please use a different email address." });
+      }
+    }
+    
     res.status(500).json({ error: "Failed to update user" });
   }
 });
