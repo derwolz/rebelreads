@@ -127,6 +127,7 @@ export function AccountSettings() {
       setVerificationError("");
     },
     onError: (error: Error) => {
+      // Extract clean error message
       setVerificationError(error.message || "Password verification failed");
     }
   });
