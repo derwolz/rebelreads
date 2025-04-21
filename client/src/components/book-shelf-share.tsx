@@ -124,11 +124,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
        
         {/* Left column: Book details and comments */}
         <div className="w-full lg:w-2/3 relative">
-
-            {/* Share button */}
-            <Button variant="ghost" size="sm" className="text-foregound absolute top-0 right-0">
-              <Share2 className="h-4 w-4" />
-            </Button>
           {/* Book Details Card that shows the selected book */}
           <div 
             className={`rounded-lg overflow-hidden bg-muted border border-gray-800 mb-16 transition-all duration-500 `}
@@ -264,6 +259,70 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     </div>
                   </div>
                 )}
+
+                {/* Mobile-only share button and referral links container - between cover and title */}
+                <div className="flex md:hidden items-center mb-4 gap-2">
+                  {/* Share button for mobile */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-foregound"
+                    onClick={async () => {
+                      try {
+                        // Create the shareable URL
+                        const shareUrl = `${window.location.origin}/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`;
+                        
+                        // Try to use the Web Share API if available
+                        if (navigator.share) {
+                          await navigator.share({
+                            title: `${shelfName} by ${username}`,
+                            text: `Check out this bookshelf: ${shelfName} by ${username}`,
+                            url: shareUrl,
+                          });
+                        } else {
+                          // Fallback to clipboard copy
+                          await navigator.clipboard.writeText(shareUrl);
+                          toast({
+                            title: "Link Copied!",
+                            description: "The bookshelf link has been copied to your clipboard.",
+                          });
+                        }
+                      } catch (error) {
+                        // Handle errors (user might have canceled share, or permission denied)
+                        console.error("Error sharing:", error);
+                      }
+                    }}
+                  >
+                    <Share2 className="h-4 w-4 mr-1" />
+                    Share
+                  </Button>
+                  
+                  {/* Referral links for mobile */}
+                  {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
+                    <div className="flex gap-2">
+                      {selectedBook.referralLinks.map((link: any, idx: number) => (
+                        <a 
+                          key={idx}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            // Record click-through on referral link
+                            await apiRequest("POST", `/api/books/${selectedBook.id}/click-through`, {
+                              source: "referral-link",
+                              referrer: window.location.pathname,
+                            });
+                          }}
+                        >
+                          <img src={link.faviconUrl} alt={link.retailer} className="h-6 w-6" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 <h2 className="text-2xl font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
                 <p className="text-foreground/90 mb-2">by {selectedBook?.authorName}</p>
                 
@@ -287,20 +346,19 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   </div>
                 </div>
                 
-                {/* Referral links */}
+                {/* Desktop-only referral links (absolute positioning) */}
                 {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
-                  <div className="mt-4 z-20 -left-5 top-0 absolute">
+                  <div className="hidden md:block mt-4 z-20 -left-5 top-0 absolute">
                     <div className="flex flex-wrap flex-col gap-2">
                       {selectedBook.referralLinks.map((link: any, idx: number) => (
                         <a 
                           key={idx}
                           href={link.url}
-                
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={ idx===0 ? "inline-flex items-center  text-xs  rounded-md px-3 py-1 bg-accent/90 hover:bg-accent text-foreground"
-                            : idx===1 ? "inline-flex items-center text-xs border-border border bg-muted/90 hover:bg-muted rounded-md px-3 py-1   transition-colors text-foregound" :
-                            "inline-flex items-center text-xs bg-transparent hover:bg-muted border-border border rounded-md px-3 py-1   text-foregound"}
+                          className={ idx===0 ? "inline-flex items-center text-xs rounded-md px-3 py-1 bg-accent/90 hover:bg-accent text-foreground"
+                            : idx===1 ? "inline-flex items-center text-xs border-border border bg-muted/90 hover:bg-muted rounded-md px-3 py-1 transition-colors text-foregound" :
+                            "inline-flex items-center text-xs bg-transparent hover:bg-muted border-border border rounded-md px-3 py-1 text-foregound"}
                           onClick={async (e) => {
                             e.stopPropagation();
                             // Record click-through on referral link
@@ -311,7 +369,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                           }}
                         >
                           {/* Display only the icon instead of text */}
-                          <img src={link.faviconUrl} alt={link.retailer} className="h-6 w-6 " />
+                          <img src={link.faviconUrl} alt={link.retailer} className="h-6 w-6" />
                         </a>
                       ))}
                     </div>
