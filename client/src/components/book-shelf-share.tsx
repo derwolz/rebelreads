@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Book as BookType, Author } from "../types";
+import { useState, useEffect } from "react";
+import { Book, Author } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { BookRackShelf } from "./book-rack-shelf";
@@ -9,15 +9,14 @@ import { PaperNoteCard } from "./paper-note-card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentSection } from "./comment-section";
-import useEmblaCarousel from "embla-carousel-react";
+
+
+
 import { Badge } from "@/components/ui/badge";
 import { 
   X,
   StickyNote,
-  Share2,
-  ChevronLeft,
-  ChevronRight,
-  BookOpen
+  Share2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
@@ -30,23 +29,13 @@ interface BookShelfShareProps {
 
 export function BookShelfShare({ username, shelfName, className }: BookShelfShareProps) {
   const [selectedBookIndex, setSelectedBookIndex] = useState<number | null>(null);
-  const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteVisible, setNoteVisible] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [isMobileViewActive, setIsMobileViewActive] = useState(false);
   const { toast } = useToast();
-  
-  // Mobile swipe carousel for book details and notes
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: true,
-    align: 'center',
-  });
-  
-  // Track current carousel slide index
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Define the correct response type
   interface ShelfData {
@@ -57,7 +46,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       shelfId: number;
       rank: number;
       addedAt: string;
-      book: BookType;
+      book: Book;
     }>;
     bookNotes: Note[];
     shelfNotes: Note[];
@@ -92,7 +81,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   }, [isShelfLoading, shelfData, username, shelfName]);
 
   // Handle book selection
-  const handleSelectBook = (book: BookType, index: number) => {
+  const handleSelectBook = (book: Book, index: number) => {
     // If a note is currently visible, animate it away first
     if (noteVisible) {
       setIsRotating(true);
@@ -121,38 +110,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       setSelectedBook(books[0]);
     }
   }, [books, selectedBookIndex]);
-  
-  // Handle Embla carousel initialization and scroll events
-  useEffect(() => {
-    if (!emblaApi || !selectedBook) return;
-    
-    // Reset carousel to beginning when book changes
-    emblaApi.scrollTo(0);
-    setCurrentSlideIndex(0);
-    
-    // Add scroll event listener to track current slide
-    const onSelect = () => {
-      const index = emblaApi.selectedScrollSnap();
-      setCurrentSlideIndex(index);
-    };
-    
-    emblaApi.on("select", onSelect);
-    
-    // Cleanup function
-    return () => {
-      emblaApi.off("select", onSelect);
-    };
-  }, [emblaApi, selectedBook]);
-  
-  // Navigation functions for mobile swipe
-  const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
-  
-  const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
-  
+
+
 
   const { theme } = useTheme();
 
@@ -188,7 +147,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 {/* Book cover */}
                 <div className="h-full z-20 flex-left flex   justify-center overflow-hidden  ">
                   <img 
-                    src={selectedBook?.images?.find((img: any) => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                    src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                     alt={selectedBook?.title} 
                     className="h-auto min-h-[350px] w-full shadow-lg object-cover rounded-md" 
                   />
@@ -318,21 +277,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   <ScrollArea className="h-full min-w-0 w-full pr-4">
                     <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                   </ScrollArea>
-                  
-                  {/* Mobile-only: Button to open swipe interface */}
-                  {bookNotes.length > 0 && (
-                    <div className="md:hidden mt-3">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full text-foreground border-gray-700"
-                        onClick={() => setIsMobileViewActive(true)}
-                      >
-                        <StickyNote className="h-4 w-4 mr-2" />
-                        View Book Notes ({bookNotes.length})
-                      </Button>
-                    </div>
-                  )}
                 </div>
                 
                 {/* Genres & Themes */}
@@ -383,190 +327,62 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
           
           
-          {/* Book/Notes section - Desktop version */}
-          <div className="hidden md:block">
-            {bookNotes && bookNotes.length > 0 ? (
-              <div className="space-y-3 transform w-[10ch] pr-2 pt-2">
-                {bookNotes.map((note, idx) => (
-                  <div 
-                    key={note.id} 
-                    className="p-3 rounded-lg bg-purple-900/40 rounded-l-none overflow-hidden h-[6ch] border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors"
-                    onClick={() => {
-                      // Use the same animation logic for book notes
-                      if (selectedNote && selectedNote.id === note.id && noteVisible) {
-                        // If the same note is clicked while visible, hide it
+          {/* Book/Notes section */}
+
+          {bookNotes && bookNotes.length > 0 ? (
+            <div className="space-y-3  transform w-[10ch] pr-2  pt-2  ">
+              {bookNotes.map((note, idx) => (
+                <div 
+                  key={note.id} 
+                  className="p-3  rounded-lg bg-purple-900/40 rounded-l-none overflow-hidden h-[6ch] border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
+                  onClick={() => {
+                    // Use the same animation logic for book notes
+                    if (selectedNote && selectedNote.id === note.id && noteVisible) {
+                      // If the same note is clicked while visible, hide it
+                      setIsRotating(true);
+                      setTimeout(() => {
+                        setNoteVisible(false);
+                        setIsRotating(false);
+                      }, 500);
+                    } else {
+                      // If no note is currently visible or a different note is clicked
+                      if (noteVisible) {
+                        // If a note is already visible, hide it first with animation
                         setIsRotating(true);
                         setTimeout(() => {
-                          setNoteVisible(false);
-                          setIsRotating(false);
-                        }, 500);
-                      } else {
-                        // If no note is currently visible or a different note is clicked
-                        if (noteVisible) {
-                          // If a note is already visible, hide it first with animation
-                          setIsRotating(true);
-                          setTimeout(() => {
-                            setSelectedNote(note);
-                            setTimeout(() => {
-                              setNoteVisible(true);
-                              setIsRotating(false);
-                            }, 100);
-                          }, 500);
-                        } else {
-                          // No note is visible, show the selected one directly
                           setSelectedNote(note);
-                          setIsRotating(true);
                           setTimeout(() => {
                             setNoteVisible(true);
                             setIsRotating(false);
                           }, 100);
-                        }
+                        }, 500);
+                      } else {
+                        // No note is visible, show the selected one directly
+                        setSelectedNote(note);
+                        setIsRotating(true);
+                        setTimeout(() => {
+                          setNoteVisible(true);
+                          setIsRotating(false);
+                        }, 100);
                       }
-                    }}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1">
-                        <div className="flex justify-center items-center mb-1">
-                          <p className="text-xs text-foreground/80">
-                            {new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </p>
-                        </div>
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="flex justify-center items-center mb-1">
+                        <p className="text-xs text-foreground/80 ">
+{new Date(note.createdAt).toLocaleDateString()} {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center absolute py-4 text-foreground/80">
-              </div>
-            )}
-          </div>
-          
-          {/* Mobile-only swipeable book details and notes carousel */}
-          {selectedBook && isMobileViewActive && (
-            <div className="md:hidden fixed inset-0 z-30 bg-background/95 backdrop-blur-sm">
-              <div className="container h-full p-4 pt-16 pb-20">
-                <div className="flex justify-between items-center mb-4 absolute top-4 left-4 right-4">
-                  <h3 className="text-sm font-medium text-foreground flex items-center gap-1">
-                    {currentSlideIndex === 0 ? (
-                      <>
-                        <BookOpen className="h-3 w-3" />
-                        Book Details
-                      </>
-                    ) : (
-                      <>
-                        <StickyNote className="h-3 w-3" />
-                        Note {currentSlideIndex} of {bookNotes.length}
-                      </>
-                    )}
-                  </h3>
-                  
-                  {/* Navigation buttons */}
-                  <div className="flex gap-2">
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-8 w-8 rounded-full"
-                      onClick={() => {
-                        // Close the mobile view
-                        setIsMobileViewActive(false);
-                        setCurrentSlideIndex(0);
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
-                
-                {/* Embla carousel for swipeable content */}
-                <div className="overflow-hidden h-full" ref={emblaRef}>
-                  <div className="flex h-full">
-                    {/* First slide: Book description */}
-                    <div className="min-w-full h-full flex flex-col">
-                      <div className="flex-shrink-0 mb-4">
-                        <div className="flex items-center">
-                          <img 
-                            src={selectedBook?.images?.find((img: any) => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
-                            alt={selectedBook?.title} 
-                            className="h-32 w-auto mr-4 rounded shadow-md" 
-                          />
-                          <div>
-                            <h2 className="text-xl font-bold mb-1">{selectedBook?.title}</h2>
-                            <p className="text-sm text-foreground/80">by {selectedBook?.authorName}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex-grow overflow-y-auto pb-4">
-                        <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                        
-                        {/* Genres */}
-                        <div className="mt-4">
-                          <div className="flex flex-wrap gap-1">
-                            {selectedBook?.genres?.map((genre: string, idx: number) => (
-                              <Badge 
-                                key={idx} 
-                                className="bg-gray-800 text-gray-300 hover:bg-gray-700"
-                              >
-                                {genre}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Note slides */}
-                    {bookNotes.map((note, idx) => (
-                      <div 
-                        key={note.id}
-                        className="min-w-full h-full flex flex-col"
-                      >
-                        <div className="flex-grow overflow-y-auto">
-                          <div className="p-3 rounded-lg bg-background border border-gray-800">
-                            <PaperNoteCard note={note} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Swipe indicator */}
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1 items-center">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8"
-                    onClick={scrollPrev}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  {/* Slide indicators */}
-                  <div className="flex gap-1 items-center">
-                    {[0, ...bookNotes.map((_, i) => i + 1)].map((i) => (
-                      <div 
-                        key={i}
-                        className={`h-1.5 rounded-full transition-all ${
-                          currentSlideIndex === i 
-                            ? 'w-4 bg-primary' 
-                            : 'w-1.5 bg-muted'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8"
-                    onClick={scrollNext}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center absolute py-4 text-foreground/80">
+
             </div>
           )}
 
