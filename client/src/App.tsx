@@ -56,6 +56,7 @@ import AuthCheckPage from "@/pages/auth-check";
 import { ImageGuidePage } from "@/pages/image-guide";
 import BookRackTestPage from "@/pages/book-rack-test";
 import BookShelfSharePage from "@/pages/book-shelf-share-page";
+import TestImageUpload from "@/pages/TestImageUpload";
 
 function App() {
   const { isOpen, setIsOpen } = useAuthModal();
@@ -127,6 +128,7 @@ function App() {
           <Route path="/publishers/:id" component={PublisherPage} />
           <Route path="/ad-showcase" component={AdShowcasePage} />
           <Route path="/test-images" component={TestImages} />
+          <Route path="/test-image-upload" component={TestImageUpload} />
           <Route path="/image-guide" component={ImageGuidePage} />
           <Route path="/book-rack-test" component={BookRackTestPage} />
           <Route path="/book-shelf/share" component={BookShelfSharePage} />
