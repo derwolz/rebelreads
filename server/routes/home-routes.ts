@@ -481,9 +481,13 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         const imageType = fieldName.replace('bookImage_', '');
         const file = uploadedFiles[fieldName][0]; // Get first file from array
         
+        console.log(`Processing image type: ${imageType}, original filename: ${file.originalname}`);
+        
         // Upload to object storage using SirenedImageBucket
-        const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType);
+        const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, book.id);
         const imageUrl = sirenedImageBucket.getPublicUrl(storageKey);
+        
+        console.log(`Image uploaded successfully. Storage key: ${storageKey}, URL: ${imageUrl}`);
         
         // Get dimensions from request body
         let width = 0;
@@ -526,6 +530,8 @@ router.post("/books", multipleImageUpload, async (req, res) => {
           height,
           sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
         });
+        
+        console.log(`Added image to bookImageEntries array. Total entries: ${bookImageEntries.length}`);
       }
     }
     
@@ -561,8 +567,17 @@ router.post("/books", multipleImageUpload, async (req, res) => {
 
     // Insert all book images using a single database operation
     if (bookImageEntries.length > 0) {
-      console.log("Inserting book images:", bookImageEntries);
-      await db.insert(bookImages).values(bookImageEntries);
+      console.log("Inserting book images:", JSON.stringify(bookImageEntries, null, 2));
+      try {
+        const insertedImages = await db.insert(bookImages).values(bookImageEntries).returning();
+        console.log(`Successfully inserted ${insertedImages.length} images into book_images table`);
+        console.log("Inserted image records:", JSON.stringify(insertedImages, null, 2));
+      } catch (dbError) {
+        console.error("Error inserting images into book_images table:", dbError);
+        throw dbError; // Re-throw to be caught by the outer try/catch
+      }
+    } else {
+      console.log("WARNING: No book images to insert - bookImageEntries array is empty");
     }
 
     // Now handle the taxonomies separately if present
