@@ -245,7 +245,7 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-1 min-h-[80px] resize-none bg-transparent border-none ring-0 focus:outline-none"
+              className="flex-1 min-h-[80px] resize-none bg-transparent border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus:outline-none"
             />
             <Button
               type="submit"
