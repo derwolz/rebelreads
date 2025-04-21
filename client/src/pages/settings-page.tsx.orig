@@ -286,13 +286,6 @@ export default function SettingsPage() {
     updateProfileMutation.mutate(data);
   }
 
-  // Function to handle Enter key presses in password fields
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-    }
-  };
-
   const AccountSettings = () => {
     const revokeButtonRef = React.useRef<HTMLButtonElement>(null);
     return (
@@ -351,12 +344,16 @@ export default function SettingsPage() {
                             type="password" 
                             autoComplete="current-password"
                             value={field.value || ''} 
-                            onKeyDown={handleKeyDown}
                             onChange={(e) => {
                               e.stopPropagation();
                               field.onChange(e.target.value);
                             }}
                             onBlur={field.onBlur}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -372,13 +369,47 @@ export default function SettingsPage() {
                         <FormLabel>New Password</FormLabel>
                         <FormControl>
                           <Input 
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                             type="password" 
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                             autoComplete="new-password"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                             value={field.value || ''} 
-                            onKeyDown={handleKeyDown}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                             onChange={(e) => {
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                               e.stopPropagation();
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                               field.onChange(e.target.value);
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                              }
+                            }}
                             }}
                             onBlur={field.onBlur}
                           />
@@ -402,11 +433,7 @@ export default function SettingsPage() {
                             type="password" 
                             autoComplete="new-password"
                             value={field.value || ''} 
-                            onKeyDown={handleKeyDown}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              field.onChange(e.target.value);
-                            }}
+                            onChange={(e) => field.onChange(e.target.value)}
                             onBlur={field.onBlur}
                           />
                         </FormControl>
@@ -585,7 +612,7 @@ export default function SettingsPage() {
                                         type="submit"
                                         variant="default"
                                       >
-                                        Become an Author
+                                        Confirm Registration
                                       </Button>
                                     </div>
                                   </div>
@@ -605,278 +632,240 @@ export default function SettingsPage() {
       </Card>
     );
   };
-  
-  // Add a new book for the logged-in author
-  const MyBooks = () => {
-    if (!userBooks) return <div className="animate-pulse">Loading...</div>;
-    
-    if (userBooks.length === 0) {
-      return (
-        <div className="text-center py-10">
-          <h3 className="text-lg font-medium mb-2">You haven't published any books yet</h3>
-          <p className="text-muted-foreground mb-4">Start sharing your work with readers worldwide</p>
+
+
+  let content;
+  if (location === "/settings/account") {
+    content = (
+      <AccountSettings />
+    );
+  } else if (location === "/settings/appearance") {
+    content = <AppearanceSettings />;
+  } else if (location === "/settings/rating-preferences") {
+    content = <RatingPreferencesSettings isWizard={false} />;
+  } else if (location === "/settings/genre-preferences") {
+    content = <GenrePreferencesSettings />;
+  } else if (location === "/settings/homepage") {
+    content = <HomepageSettings />;
+  } else if (location === "/settings/filters") {
+    content = <ContentFiltersSettings />;
+  } else if (location === "/settings/book-shelf") {
+    content = <BookShelfSettings />;
+  } else if (location === "/settings/author" && isAuthor) {
+    content = (
+      <Card>
+        <CardHeader>
+          <CardTitle>Author Settings</CardTitle>
+          <CardDescription>
+            Manage your published books and upload new ones
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <BookUploadDialog />
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Your Published Books</h3>
-          <BookUploadDialog />
-        </div>
-        
-        <div className="space-y-4">
-          {userBooks.map((book) => {
-            // Initialize referral links for this book if not already done
-            initializeBookReferralLinks(book.id, book.referralLinks || []);
-            
-            return (
-              <Card key={book.id} className="relative overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl">{book.title}</CardTitle>
-                  <CardDescription>
-                    {book.description && book.description.length > 150 
-                      ? `${book.description.substring(0, 150)}...` 
-                      : book.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+          <div className="mt-8 grid gap-6">
+            {userBooks?.map((book) => {
+              if (!editedReferralLinks[book.id]) {
+                initializeBookReferralLinks(book.id, book.referralLinks as ReferralLink[]);
+              }
+
+              return (
+                <div
+                  key={book.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={book.images?.find(img => img.imageType === "mini")?.imageUrl || "/images/placeholder-book.png"}
+                      alt={book.title}
+                      className="w-16 h-24 object-cover rounded"
+                    />
                     <div>
-                      <h4 className="font-medium text-sm mb-2">Referral Links</h4>
-                      <div className="space-y-2">
-                        <DndContext 
+                      <h3 className="font-semibold">{book.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {book.promoted ? "Promoted" : "Not promoted"}
+                      </p>
+                      <div className="mt-4 space-y-2">
+                        <h4 className="text-sm font-medium">Referral Links</h4>
+                        <DndContext
                           sensors={sensors}
                           collisionDetection={closestCenter}
                           onDragEnd={(event) => {
-                            const {active, over} = event;
-                            
+                            const { active, over } = event;
                             if (over && active.id !== over.id) {
-                              const links = [...(editedReferralLinks[book.id] || [])];
                               const oldIndex = Number(active.id);
                               const newIndex = Number(over.id);
-                              
-                              updateBookReferralLinks(
-                                book.id,
-                                arrayMove(links, oldIndex, newIndex)
-                              );
+                              const newLinks = arrayMove(editedReferralLinks[book.id], oldIndex, newIndex);
+                              updateBookReferralLinks(book.id, newLinks);
                             }
                           }}
                         >
-                          <SortableContext 
+                          <SortableContext
                             items={editedReferralLinks[book.id]?.map((_, i) => i) || []}
                             strategy={verticalListSortingStrategy}
                           >
-                            <div className="space-y-2">
-                              {editedReferralLinks[book.id]?.map((link, index) => (
-                                <SortableReferralLink 
-                                  key={index}
-                                  link={link}
-                                  index={index}
-                                  onChange={(value) => {
-                                    const newLinks = [...editedReferralLinks[book.id]];
-                                    newLinks[index] = { ...newLinks[index], url: value };
-                                    updateBookReferralLinks(book.id, newLinks);
-                                  }}
-                                  onRemove={() => {
-                                    const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
-                                    updateBookReferralLinks(book.id, newLinks);
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </DndContext>
-                        
-                        <div className="flex flex-wrap gap-2">
-                          {RETAILER_OPTIONS.map((retailer) => {
-                            // Check if this retailer is already added
-                            const isAlreadyAdded = editedReferralLinks[book.id]?.some(
-                              link => link.retailer === retailer
-                            );
-                            
-                            if (isAlreadyAdded) return null;
-                            
-                            return (
-                              <Button 
-                                key={retailer}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const newLinks = [
-                                    ...(editedReferralLinks[book.id] || []),
-                                    { retailer, url: "" }
-                                  ];
+                            {editedReferralLinks[book.id]?.map((link, index) => (
+                              <SortableReferralLink
+                                key={index}
+                                link={link}
+                                index={index}
+                                onChange={(newUrl) => {
+                                  const newLinks = [...editedReferralLinks[book.id]];
+                                  newLinks[index] = { ...link, url: newUrl };
                                   updateBookReferralLinks(book.id, newLinks);
                                 }}
-                              >
-                                + {retailer}
-                              </Button>
-                            );
-                          })}
-                          
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const newLinks = [
+                                onRemove={() => {
+                                  const newLinks = editedReferralLinks[book.id].filter((_, i) => i !== index);
+                                  updateBookReferralLinks(book.id, newLinks);
+                                }}
+                              />
+                            ))}
+                          </SortableContext>
+                        </DndContext>
+                        <div className="flex gap-2">
+                          <Select
+                            onValueChange={(value) => {
+                              const newLink: ReferralLink = {
+                                retailer: value as (typeof RETAILER_OPTIONS)[number],
+                                url: "",
+                                customName: value === "Custom" ? "" : undefined,
+                              };
+                              updateBookReferralLinks(book.id, [
                                 ...(editedReferralLinks[book.id] || []),
-                                { retailer: "Custom", url: "", customName: "Custom" }
-                              ];
-                              updateBookReferralLinks(book.id, newLinks);
+                                newLink,
+                              ]);
                             }}
                           >
-                            + Custom
-                          </Button>
-                        </div>
-                        
-                        <div className="flex justify-end mt-4">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              updateBookMutation.mutate({
-                                id: book.id,
-                                referralLinks: editedReferralLinks[book.id] || []
-                              });
-                            }}
-                            disabled={updateBookMutation.isPending}
-                          >
-                            {updateBookMutation.isPending ? "Saving..." : "Save Changes"}
-                          </Button>
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="Add retailer..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {RETAILER_OPTIONS.map((retailer) => (
+                                <SelectItem key={retailer} value={retailer}>
+                                  {retailer}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {editedReferralLinks[book.id]?.length > 0 && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateBookReferralLinks(book.id, [])}
+                              >
+                                Clear All
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() =>
+                                  updateBookMutation.mutate({
+                                    id: book.id,
+                                    referralLinks: editedReferralLinks[book.id],
+                                  })
+                                }
+                              >
+                                Save Changes
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="border-t pt-4 mt-4 flex justify-between">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => promoteBookMutation.mutate(book.id)}
-                        disabled={promoteBookMutation.isPending}
-                      >
-                        {promoteBookMutation.isPending ? "Requesting..." : "Request Promotion"}
-                      </Button>
-                      
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete Book
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete "{book.title}"</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. The book and all associated data will be permanently removed.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteBookMutation.mutate(book.id)}
-                              disabled={deleteBookMutation.isPending}
-                            >
-                              {deleteBookMutation.isPending ? "Deleting..." : "Delete"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => promoteBookMutation.mutate(book.id)}
+                      disabled={book.promoted || false}
+                    >
+                      Promote Book
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive">Delete</Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <div className="mb-4">
+                            This action cannot be undone. This will permanently delete your book
+                            and remove it from our servers.
+                          </div>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteBookMutation.mutate(book.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     );
-  };
+  } else {
+    content = <ReaderSettings />;
+  }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 px-4 sm:py-8 md:py-10">
-        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:space-x-6">
-          <div className="w-full md:w-64 lg:w-72 shrink-0">
-            {/* Mobile sidebar trigger */}
-            <div className="flex justify-between items-center md:hidden mb-4">
-              <Button 
-                variant="outline" 
-                className="flex items-center h-9 gap-1"
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Menu className="h-4 w-4" />
-                <span>Menu</span>
-              </Button>
-              
-              {location.startsWith('/settings') && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-9 px-2"
-                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                >
-                  {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                </Button>
-              )}
-            </div>
-            
-            {/* Mobile sidebar */}
-            <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-              <SheetContent side="left" className="w-full max-w-[300px] p-0">
-                <div className="p-6">
-                  <SettingsSidebar />
-                </div>
-              </SheetContent>
-            </Sheet>
-            
-            {/* Desktop sidebar */}
-            <div className={cn(
-              "hidden md:block transition-all ease-in-out duration-300",
-              isSidebarCollapsed ? "md:w-12" : "md:w-64 lg:w-72"
-            )}>
-              {isSidebarCollapsed ? (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full h-9 px-0"
-                  onClick={() => setIsSidebarCollapsed(false)}
-                >
-                  <PanelLeft className="h-4 w-4" />
-                </Button>
-              ) : (
-                <div className="pr-2 flex flex-col">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="self-end h-9 px-2 mb-4"
-                    onClick={() => setIsSidebarCollapsed(true)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <SettingsSidebar />
-                </div>
-              )}
-            </div>
+    <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)]">
+      {/* Mobile Sidebar */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetContent side="left" className="w-[240px] p-0">
+          <div className="h-full pt-8">
+            <SettingsSidebar />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
+      </div>
+      
+      <div className="flex gap-4 md:gap-6 min-h-[calc(100vh-8rem)]">
+        {/* Desktop Sidebar */}
+        <div 
+          className={`hidden md:block ${isSidebarCollapsed ? 'w-[90px]' : 'w-64'} transition-all duration-300 ease-in-out relative`}
+        >
+          <div className="absolute right-0 top-0 z-10 transform translate-x-1/2 mt-4">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full h-7 w-7 bg-background border-r shadow-sm"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            >
+              {isSidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            </Button>
+          </div>
+          <div className="border-r bg-background/60 h-full px-4 py-6 border-border">
+            <SettingsSidebar collapsed={isSidebarCollapsed} />
+          </div>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          {/* Mobile menu button - only visible on mobile */}
+          <div className="md:hidden mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-4 w-4" />
+              <span>Menu</span>
+            </Button>
           </div>
           
-          <div className="flex-1 max-w-4xl">
-            {location === '/settings/account' && <AccountSettings />}
-            {location === '/settings/reader' && <ReaderSettings />}
-            {location === '/settings/books' && isAuthor && <MyBooks />}
-            {location === '/settings/ratings' && <RatingPreferencesSettings />}
-            {location === '/settings/genres' && <GenrePreferencesSettings />}
-            {location === '/settings/homepage' && <HomepageSettings />}
-            {location === '/settings/appearance' && <AppearanceSettings />}
-            {location === '/settings/content-filters' && <ContentFiltersSettings />}
-            {location === '/settings/bookshelves' && <BookShelfSettings />}
-          </div>
-          
-          <div className="hidden xl:block w-72 shrink-0">
-            <RecommendationsSidebar />
-          </div>
+          {content}
         </div>
       </div>
     </main>
@@ -894,3 +883,5 @@ async function apiRequest(method: string, url: string, data?: any) {
   });
   return res;
 }
+
+// RETAILER_OPTIONS is already imported at the top of the file
