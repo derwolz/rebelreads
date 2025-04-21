@@ -56,12 +56,37 @@ export function AccountSettings() {
 
   const [verificationError, setVerificationError] = useState("");
   
-  // Profile update form
-  const form = useForm<UpdateProfile>({
-    resolver: zodResolver(updateProfileSchema),
+  // Profile update form (email and username only)
+  const profileForm = useForm({
+    resolver: zodResolver(
+      z.object({
+        email: z.string().email("Invalid email format"),
+        username: z.string().min(3, "Username must be at least 3 characters"),
+      })
+    ),
     defaultValues: {
       email: user?.email || "",
       username: user?.username || "",
+    },
+  });
+  
+  // Password update form
+  const passwordForm = useForm({
+    resolver: zodResolver(
+      z.object({
+        currentPassword: z.string().min(1, "Current password is required"),
+        newPassword: z.string()
+          .min(8, "Password must be at least 8 characters")
+          .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+          .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+          .regex(/[0-9]/, "Password must contain at least one number"),
+        confirmPassword: z.string().min(1, "Please confirm your password"),
+      }).refine((data) => data.newPassword === data.confirmPassword, {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      })
+    ),
+    defaultValues: {
       currentPassword: "",
       newPassword: "",
       confirmPassword: ""
@@ -71,15 +96,12 @@ export function AccountSettings() {
   // Reset the forms when user data changes
   useEffect(() => {
     if (user) {
-      form.reset({
+      profileForm.reset({
         email: user.email || "",
         username: user.username || "",
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: ""
       });
     }
-  }, [user, form]);
+  }, [user, profileForm]);
   
   // Verify password mutation
   const verifyPasswordMutation = useMutation({
@@ -106,9 +128,9 @@ export function AccountSettings() {
     verifyPasswordMutation.mutate(data.verificationPassword);
   };
   
-  // Update profile mutation
+  // Update profile mutation (for email and username)
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: UpdateProfile) => {
+    mutationFn: async (data: { email: string, username: string }) => {
       const res = await apiRequest("PATCH", "/api/user", data);
       if (!res.ok) {
         const error = await res.text();
@@ -120,13 +142,8 @@ export function AccountSettings() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+        description: "Your profile information has been updated successfully.",
       });
-      
-      // Clear password fields after successful update
-      form.setValue("currentPassword", "");
-      form.setValue("newPassword", "");
-      form.setValue("confirmPassword", "");
     },
     onError: (error: Error) => {
       toast({
@@ -137,9 +154,54 @@ export function AccountSettings() {
     },
   });
   
-  const onSubmit = (data: UpdateProfile) => {
+  // Update password mutation
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (data: { 
+      currentPassword: string, 
+      newPassword: string, 
+      confirmPassword: string 
+    }) => {
+      const res = await apiRequest("PATCH", "/api/user", data);
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+      
+      // Clear password fields after successful update
+      passwordForm.reset({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Password update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const onSubmitProfile = (data: { email: string, username: string }) => {
     updateProfileMutation.mutate(data);
-  }
+  };
+  
+  const onSubmitPassword = (data: { 
+    currentPassword: string, 
+    newPassword: string, 
+    confirmPassword: string 
+  }) => {
+    updatePasswordMutation.mutate(data);
+  };
   
   // If verification is required and not yet verified, show verification dialog
   if (showVerification && !isVerified) {
@@ -197,114 +259,45 @@ export function AccountSettings() {
   return (
     <Card>
       <CardContent className="pt-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" value={field.value || ''} />
-                  </FormControl>
-                  <FormDescription>
-                    Your email address for notifications and account recovery
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input {...field} value={field.value || ''} />
-                  </FormControl>
-                  <FormDescription>
-                    Your unique username for logging in
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="mt-6">
-              <Button 
-                type="submit"
-                disabled={updateProfileMutation.isPending}
-              >
-                {updateProfileMutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        {/* Profile Information Form */}
+        <div className="mb-8">
+          <h3 className="text-lg font-medium mb-4">Profile Information</h3>
+          <Form {...profileForm}>
+            <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
+              <FormField
+                control={profileForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" />
+                    </FormControl>
+                    <FormDescription>
+                      Your email address for notifications and account recovery
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                Save Profile Changes
-              </Button>
-            </div>
+              />
 
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-lg font-medium mb-4">Change Password</h3>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          autoComplete="current-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Must be at least 8 characters long
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={profileForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Your unique username for logging in
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <div className="mt-6">
                 <Button 
                   type="submit"
@@ -313,98 +306,176 @@ export function AccountSettings() {
                   {updateProfileMutation.isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  Save Changes
+                  Save Profile Changes
                 </Button>
               </div>
-            </div>
+            </form>
+          </Form>
+        </div>
 
-            <div className="border-t pt-4 mt-4">
-              <div>
-                <Card className="mb-4">
-                  <CardContent className="pt-6">
-                    <h3 className="text-lg font-medium mb-2">Author Account Management</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Manage your author status</p>
+        {/* Password Change Form */}
+        <div className="border-t pt-4 mt-4">
+          <h3 className="text-lg font-medium mb-4">Change Password</h3>
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} className="space-y-4">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        autoComplete="current-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Must be at least 8 characters long
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        autoComplete="new-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="mt-6">
+                <Button 
+                  type="submit"
+                  disabled={updatePasswordMutation.isPending}
+                >
+                  {updatePasswordMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Change Password
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+
+        {/* Author Account Management Section */}
+        <div className="border-t pt-4 mt-4">
+          <div>
+            <Card className="mb-4">
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-medium mb-2">Author Account Management</h3>
+                <p className="text-sm text-muted-foreground mb-4">Manage your author status</p>
+                
+                {isAuthor ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
+                      <span className="text-sm font-medium">You are registered as an author</span>
+                    </div>
                     
-                    {isAuthor ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Active</div>
-                          <span className="text-sm font-medium">You are registered as an author</span>
-                        </div>
-                        
-                        <p className="text-sm">
-                          As an author, you can publish books, manage your portfolio, and access analytics.
-                        </p>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              variant="destructive" 
-                              className="w-full"
-                            >
-                              Revoke Author Status
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Revoke Author Status</AlertDialogTitle>
-                              
-                              {/* Use regular div instead of AlertDialogDescription to avoid nesting issues */}
-                              <div className="space-y-4 py-2">
-                                <div className="bg-destructive/10 text-destructive p-3 rounded-md border border-destructive/30">
-                                  <strong>Warning: This action cannot be undone!</strong>
-                                </div>
-                                
-                                <p>Revoking your author status will:</p>
-                                <div className="ml-5 space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span>•</span> Delete all books you've published
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span>•</span> Remove your author profile and analytics
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span>•</span> Remove access to author-specific features
-                                  </div>
-                                </div>
-                                
-                                <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
-                                  <p className="text-amber-800 text-sm font-medium">
-                                    Consider carefully before proceeding, as this will delete all your published content.
-                                  </p>
-                                </div>
-                              </div>
-                            </AlertDialogHeader>
-                            <AlertDialogAction
-                              ref={revokeButtonRef}
-                              onClick={() => revokeAuthorMutation.mutate({ confirmUsername: user?.username || '' })}
-                              className="bg-destructive text-destructive-foreground"
-                            >
-                              I understand, revoke my author status
-                            </AlertDialogAction>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-sm">
-                          Become an author to publish books, sell directly to readers, and build your online presence.
-                        </p>
+                    <p className="text-sm">
+                      As an author, you can publish books, manage your portfolio, and access analytics.
+                    </p>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
                         <Button 
-                          onClick={() => becomeAuthorMutation.mutate({})}
+                          variant="destructive" 
                           className="w-full"
                         >
-                          Register as Author
+                          Revoke Author Status
                         </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </form>
-        </Form>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Revoke Author Status</AlertDialogTitle>
+                          
+                          {/* Use regular div instead of AlertDialogDescription to avoid nesting issues */}
+                          <div className="space-y-4 py-2">
+                            <div className="bg-destructive/10 text-destructive p-3 rounded-md border border-destructive/30">
+                              <strong>Warning: This action cannot be undone!</strong>
+                            </div>
+                            
+                            <p>Revoking your author status will:</p>
+                            <div className="ml-5 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span>•</span> Delete all books you've published
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span>•</span> Remove your author profile and analytics
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span>•</span> Remove access to author-specific features
+                              </div>
+                            </div>
+                            
+                            <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                              <p className="text-amber-800 text-sm font-medium">
+                                Consider carefully before proceeding, as this will delete all your published content.
+                              </p>
+                            </div>
+                          </div>
+                        </AlertDialogHeader>
+                        <AlertDialogAction
+                          ref={revokeButtonRef}
+                          onClick={() => revokeAuthorMutation.mutate({ confirmUsername: user?.username || '' })}
+                          className="bg-destructive text-destructive-foreground"
+                        >
+                          I understand, revoke my author status
+                        </AlertDialogAction>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      Become an author to publish books, sell directly to readers, and build your online presence.
+                    </p>
+                    <Button 
+                      onClick={() => becomeAuthorMutation.mutate({})}
+                      className="w-full"
+                    >
+                      Register as Author
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
