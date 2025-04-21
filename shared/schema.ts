@@ -40,6 +40,7 @@ export const referralLinkSchema = z.object({
 export type ReferralLink = z.infer<typeof referralLinkSchema>;
 
 export const FORMAT_OPTIONS = ["softback", "hardback", "digital", "audiobook"] as const;
+export type BookFormatType = typeof FORMAT_OPTIONS[number];
 
 export const AVAILABLE_GENRES = [
   "Fantasy",
@@ -201,6 +202,37 @@ export const imageUploadSchema = z.object({
 // Define the book image types
 export type BookImage = typeof bookImages.$inferSelect;
 export type InsertBookImage = typeof bookImages.$inferInsert;
+
+// Book files table to store different file formats for each book
+export const bookFiles = pgTable("book_files", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  fileUrl: text("file_url").notNull(),
+  formatType: text("format_type").notNull(), // One of FORMAT_OPTIONS
+  fileSize: integer("file_size"), // Size of file in bytes
+  fileName: text("file_name").notNull(), // Original filename
+  mimeType: text("mime_type"), // MIME type of the file
+  storageKey: text("storage_key").notNull(), // Key in object storage
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Schema for inserting book files
+export const insertBookFileSchema = createInsertSchema(bookFiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Schema for file data in book upload
+export const fileUploadSchema = z.object({
+  file: z.any(), // File object (will be handled by multer)
+  formatType: z.enum(FORMAT_OPTIONS),
+});
+
+// Define the book file types
+export type BookFile = typeof bookFiles.$inferSelect;
+export type InsertBookFile = typeof bookFiles.$inferInsert;
 
 export interface ReviewAnalysis {
   sentiment: {
