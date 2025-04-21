@@ -46,7 +46,7 @@ interface CsvBook {
   hero: string;
   'book-detail': string;
   'book-card': string;
-  'grid-item': string;
+  spine: string;
   mini: string;
   pages: string;
   isbn: string;
@@ -75,12 +75,12 @@ export function AdminBookCsvUploadWizard() {
     'background': null,
     'hero': null,
     'book-card': null,
-    'grid-item': null,
+    'spine': null,
     'mini': null,
   });
   
   // Define refs with type safety
-  type ImageTypes = 'book-detail' | 'background' | 'hero' | 'book-card' | 'spine' | 'grid-item' | 'mini';
+  type ImageTypes = 'book-detail' | 'background' | 'hero' | 'book-card' | 'spine' | 'mini';
   
   const fileInputRefs: Record<ImageTypes, React.RefObject<HTMLInputElement>> = {
     'book-detail': useRef<HTMLInputElement>(null),
@@ -88,7 +88,6 @@ export function AdminBookCsvUploadWizard() {
     'hero': useRef<HTMLInputElement>(null),
     'book-card': useRef<HTMLInputElement>(null),
     'spine': useRef<HTMLInputElement>(null),
-    'grid-item': useRef<HTMLInputElement>(null),
     'mini': useRef<HTMLInputElement>(null),
   };
   
@@ -212,7 +211,7 @@ export function AdminBookCsvUploadWizard() {
         'background': null,
         'hero': null,
         'book-card': null,
-        'grid-item': null,
+        'spine': null,
         'mini': null,
       });
       setOpen(false);

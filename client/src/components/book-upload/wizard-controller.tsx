@@ -169,10 +169,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           width = 56;
           height = 212;
           break;
-        case "grid-item": // Keep for backward compatibility
-          width = 56;
-          height = 212;
-          break;
         case "mini":
           width = 48;
           height = 64;
