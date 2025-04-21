@@ -8,6 +8,7 @@ import { eq, and, inArray, isNull } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { objectStorage } from "../services/object-storage";
 
 const router = Router();
 

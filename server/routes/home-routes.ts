@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+import { objectStorage } from "../services/object-storage";
 import { db } from "../db";
 import { 
   ratings, 
@@ -466,7 +467,9 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         // Store the book-detail file for potential auto-generation
         if (imageType === 'book-detail') {
           bookDetailFile = file;
-          bookDetailUrl = `/uploads/covers/${file.filename}`;
+          // Upload to object storage
+          const storageKey = await objectStorage.uploadFile(file, 'covers');
+          bookDetailUrl = objectStorage.getPublicUrl(storageKey);
         }
       }
     }
@@ -476,7 +479,10 @@ router.post("/books", multipleImageUpload, async (req, res) => {
       if (fieldName.startsWith('bookImage_')) {
         const imageType = fieldName.replace('bookImage_', '');
         const file = uploadedFiles[fieldName][0]; // Get first file from array
-        const imageUrl = `/uploads/covers/${file.filename}`;
+        
+        // Upload to object storage
+        const storageKey = await objectStorage.uploadFile(file, 'covers');
+        const imageUrl = objectStorage.getPublicUrl(storageKey);
         
         // Get dimensions from request body
         let width = 0;
@@ -654,7 +660,9 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
         if (fieldName === 'bookImage_book-detail') {
           const file = uploadedFiles[fieldName][0]; // Get first file from array
           updatedBookDetailFile = file;
-          updatedBookDetailUrl = `/uploads/covers/${file.filename}`;
+          // Upload to object storage
+          const storageKey = await objectStorage.uploadFile(file, 'covers');
+          updatedBookDetailUrl = objectStorage.getPublicUrl(storageKey);
           console.log("Found updated book-detail image:", updatedBookDetailUrl);
           break;
         }
@@ -665,7 +673,9 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
         if (fieldName.startsWith('bookImage_')) {
           const imageType = fieldName.replace('bookImage_', '');
           const file = uploadedFiles[fieldName][0]; // Get first file from array
-          const imageUrl = `/uploads/covers/${file.filename}`;
+          // Upload to object storage
+          const storageKey = await objectStorage.uploadFile(file, 'covers');
+          const imageUrl = objectStorage.getPublicUrl(storageKey);
           
           // Set dimensions based on image type
           let width = 0;
