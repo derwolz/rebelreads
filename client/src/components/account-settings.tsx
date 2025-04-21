@@ -108,8 +108,16 @@ export function AccountSettings() {
     mutationFn: async (password: string) => {
       const res = await apiRequest("POST", "/api/verify-password", { password });
       if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
+        // Try to parse as JSON first
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Password verification failed");
+        } else {
+          // Fallback to text if not JSON
+          const error = await res.text();
+          throw new Error(error);
+        }
       }
       return res.json();
     },
@@ -133,8 +141,16 @@ export function AccountSettings() {
     mutationFn: async (data: { email: string, username: string }) => {
       const res = await apiRequest("PATCH", "/api/user", data);
       if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
+        // Try to parse as JSON first
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to update profile");
+        } else {
+          // Fallback to text if not JSON
+          const error = await res.text();
+          throw new Error(error);
+        }
       }
       return res.json();
     },
@@ -163,8 +179,16 @@ export function AccountSettings() {
     }) => {
       const res = await apiRequest("PATCH", "/api/user", data);
       if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error);
+        // Try to parse as JSON first
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Failed to update password");
+        } else {
+          // Fallback to text if not JSON
+          const error = await res.text();
+          throw new Error(error);
+        }
       }
       return res.json();
     },
