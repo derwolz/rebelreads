@@ -159,7 +159,7 @@ export const books = pgTable("books", {
 export const UPLOAD_IMAGE_TYPES = [
   "book-detail",    // 480x600 - Used on book details page
   "background",     // 1300x1500 - Used as background on book details page
-  "grid-item",      // 56x212 - Used in grid layouts
+  "spine",          // 56x212 - Used in grid layouts (renamed from grid-item)
   "hero"            // 1500x600 - Used in hero sections
 ] as const;
 
