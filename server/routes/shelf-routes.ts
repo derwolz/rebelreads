@@ -7,31 +7,11 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { objectStorage } from "../services/object-storage";
 
-// Configure directories for bookshelf cover image uploads
-const uploadsDir = "./uploads";
-const bookshelfCoversDir = path.join(uploadsDir, "bookshelf-covers");
-
-// Create directories if they don't exist
-[uploadsDir, bookshelfCoversDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-// Configure multer for bookshelf cover image uploads
-const bookshelfCoverStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, bookshelfCoversDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+// Configure multer for in-memory storage (for use with object storage)
 const bookshelfCoverUpload = multer({
-  storage: bookshelfCoverStorage,
+  storage: multer.memoryStorage(), // Store in memory so we can upload to object storage
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB size limit
   },
@@ -934,8 +914,11 @@ router.post("/api/bookshelves/:id/cover", bookshelfCoverUpload.single("coverImag
       return res.status(400).send("No image uploaded");
     }
 
-    // Generate URL path for the cover image
-    const coverImageUrl = `/uploads/bookshelf-covers/${req.file.filename}`;
+    // Upload the file to object storage in the 'bookshelf-covers' directory
+    const storageKey = await objectStorage.uploadFile(req.file, 'bookshelf-covers');
+    
+    // Get the public URL for accessing the file
+    const coverImageUrl = objectStorage.getPublicUrl(storageKey);
 
     // Update the bookshelf with the new cover image URL
     const [updatedShelf] = await db
