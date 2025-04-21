@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import express from "express";
+import path from "path";
 import { setupAuth } from "./auth";
 import { dbStorage } from "./storage";
 
