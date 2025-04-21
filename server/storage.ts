@@ -82,6 +82,7 @@ export const dbStorage = {
 
   // Book management
   getBooks: bookStorage.getBooks.bind(bookStorage),
+  getAllBooks: bookStorage.getAllBooks.bind(bookStorage), // Admin method to get all books
   getBook: bookStorage.getBook.bind(bookStorage),
   getBookByAuthorAndTitle: bookStorage.getBookByAuthorAndTitle.bind(bookStorage),
   getBooksByAuthor: bookStorage.getBooksByAuthor.bind(bookStorage),
@@ -131,6 +132,7 @@ export const dbStorage = {
 
   // Campaigns
   getCampaigns: campaignStorage.getCampaigns.bind(campaignStorage),
+  getAllCampaigns: campaignStorage.getAllCampaigns.bind(campaignStorage), // Admin method to get all campaigns
   createCampaign: campaignStorage.createCampaign.bind(campaignStorage),
   updateCampaignStatus:
     campaignStorage.updateCampaignStatus.bind(campaignStorage),

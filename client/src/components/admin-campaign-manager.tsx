@@ -1,179 +1,209 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
-  Dialog, 
-  DialogTrigger, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
   Card, 
-  CardContent 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Search, 
-  CalendarIcon, 
-  Plus, 
-  Loader2, 
-  PenSquare, 
-  PlayCircle, 
-  PauseCircle,
-  CheckCircle,
-  ChevronDown, 
-  ChevronUp
-} from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Loader2, CalendarIcon, Plus, Edit2, BarChart2, BookCopy, Filter, Search, X, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-// Define the campaign types
-const campaignTypeLabels = {
-  ad: "Advertisement",
-  survey: "Reader Survey",
-  review_boost: "Review Boost",
-};
+// Define campaign creation schema
+const campaignSchema = z.object({
+  name: z.string().min(3, "Campaign name must be at least 3 characters"),
+  type: z.enum(["ad", "promotion", "survey", "review_boost"]),
+  status: z.enum(["active", "paused", "completed"]),
+  startDate: z.date(),
+  endDate: z.date(),
+  budget: z.string().optional(),
+  books: z.array(z.number()).min(1, "Select at least one book"),
+});
 
-// Define Book type
-type Book = {
-  id: number;
-  title: string;
-  authorId: number;
-  authorName?: string;
-};
+type CampaignFormValues = z.infer<typeof campaignSchema>;
 
-// Define Campaign Type
-type Campaign = {
-  id: number;
-  name: string;
-  type: "ad" | "survey" | "review_boost";
-  status: "active" | "completed" | "paused";
-  startDate: string;
-  endDate: string;
-  spent: string;
-  budget: string;
-  keywords?: string[];
-  adType?: "banner" | "feature" | "keyword";
-  authorId: number;
-  metrics?: {
-    impressions?: number;
-    clicks?: number;
-    responses?: number;
-    reviews?: number;
-  };
-  createdAt: string;
-  books?: Book[];
-};
+// Campaign status badge component
+function CampaignStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "active":
+      return <Badge className="bg-green-500">Active</Badge>;
+    case "paused":
+      return <Badge className="bg-yellow-500">Paused</Badge>;
+    case "completed":
+      return <Badge className="bg-gray-500">Completed</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
+}
 
-// New Campaign Form type
-type NewCampaignForm = {
-  name: string;
-  type: "ad" | "survey" | "review_boost";
-  status: "active" | "paused";
-  startDate: Date;
-  endDate: Date;
-  budget: string;
-  adType?: "banner" | "feature" | "keyword";
-  books: number[];
-  keywords?: string[];
-  authorId?: number; // For admin campaigns this might be optional or a system ID
-};
+// Format date function
+function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return "N/A";
+  return format(new Date(date), "MMM d, yyyy");
+}
 
+// Main component
 export function AdminCampaignManager() {
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  const [campaignDetailsOpen, setCampaignDetailsOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
-  const [newCampaign, setNewCampaign] = useState<NewCampaignForm>({
-    name: "",
-    type: "ad",
-    status: "active",
-    startDate: new Date(),
-    endDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default to 30 days
-    budget: "100",
-    books: [],
-    keywords: [],
+
+  // Set up form for campaign creation
+  const form = useForm<CampaignFormValues>({
+    resolver: zodResolver(campaignSchema),
+    defaultValues: {
+      name: "",
+      type: "promotion",
+      status: "active",
+      budget: "0",
+      books: [],
+    },
   });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [expandedCardIds, setExpandedCardIds] = useState<Record<number, boolean>>({});
-  
-  // Fetch all campaigns (admin view)
-  const { data: campaigns, isLoading: loadingCampaigns } = useQuery<Campaign[]>({
+
+  // Query to fetch all campaigns for admin view
+  const { 
+    data: campaigns, 
+    isLoading: loadingCampaigns 
+  } = useQuery({
     queryKey: ['/api/admin/campaigns'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/campaigns');
+      if (!res.ok) throw new Error('Failed to fetch campaigns');
+      return res.json();
+    }
   });
-  
-  // Fetch all books for selection
-  const { data: allBooks, isLoading: loadingBooks } = useQuery<Book[]>({
-    queryKey: ['/api/admin/books/list'],
+
+  // Query to fetch all books for campaign creation
+  const { 
+    data: books, 
+    isLoading: loadingBooks 
+  } = useQuery({
+    queryKey: ['/api/admin/campaigns/books/list'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/campaigns/books/list');
+      if (!res.ok) throw new Error('Failed to fetch books');
+      return res.json();
+    }
   });
-  
-  // Create campaign mutation
+
+  // Mutation to create a new campaign
   const createCampaign = useMutation({
-    mutationFn: (campaignData: NewCampaignForm) => 
-      apiRequest('/api/admin/campaigns', 'POST', campaignData),
+    mutationFn: async (formData: CampaignFormValues) => {
+      const res = await fetch('/api/admin/campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to create campaign');
+      }
+      
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
-      setIsCreatingCampaign(false);
+      setCreateDialogOpen(false);
+      form.reset();
       toast({
         title: "Campaign created",
         description: "The campaign has been created successfully.",
       });
-      // Reset form
-      setNewCampaign({
-        name: "",
-        type: "ad",
-        status: "active",
-        startDate: new Date(),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 30)),
-        budget: "100",
-        books: [],
-        keywords: [],
-      });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Error creating campaign",
-        description: error.message || "There was an error creating the campaign.",
+        description: error.message,
         variant: "destructive",
       });
     }
   });
-  
-  // Update campaign status mutation
+
+  // Mutation to update campaign status
   const updateCampaignStatus = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: "active" | "paused" | "completed" }) => 
-      apiRequest(`/api/admin/campaigns/${id}/status`, 'PATCH', { status }),
+    mutationFn: async ({ id, status }: { id: number, status: string }) => {
+      const res = await fetch(`/api/admin/campaigns/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update campaign status');
+      }
+      
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
       toast({
@@ -181,632 +211,584 @@ export function AdminCampaignManager() {
         description: "The campaign status has been updated.",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Error updating status",
-        description: error.message || "There was an error updating the campaign status.",
+        description: error.message,
         variant: "destructive",
       });
     }
   });
-  
-  // Handle campaign form submission
-  const handleCreateCampaign = () => {
-    if (!newCampaign.name || !newCampaign.books.length) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields and select at least one book.",
-        variant: "destructive",
-      });
-      return;
+
+  // Handle form submission
+  const onSubmit = (values: CampaignFormValues) => {
+    createCampaign.mutate(values);
+  };
+
+  // Filtered campaigns
+  const filteredCampaigns = campaigns?.filter((campaign: any) => {
+    let matchesSearch = true;
+    let matchesFilter = true;
+    
+    // Apply search query filter if set
+    if (searchQuery) {
+      matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
     }
     
-    createCampaign.mutate(newCampaign);
-  };
-  
-  // Toggle book selection
-  const toggleBookSelection = (bookId: number) => {
-    setNewCampaign(prev => {
-      const bookIndex = prev.books.indexOf(bookId);
-      if (bookIndex > -1) {
-        // Remove book if already selected
-        return {
-          ...prev,
-          books: prev.books.filter(id => id !== bookId)
-        };
-      } else {
-        // Add book if not selected
-        return {
-          ...prev,
-          books: [...prev.books, bookId]
-        };
-      }
-    });
-  };
-  
-  // Toggle card expansion
-  const toggleCardExpansion = (campaignId: number) => {
-    setExpandedCardIds(prev => ({
-      ...prev,
-      [campaignId]: !prev[campaignId]
-    }));
-  };
-  
-  // Filter campaigns by search term
-  const filteredCampaigns = campaigns?.filter(campaign => 
-    campaign.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (campaign.books && campaign.books.some(book => 
-      book.title.toLowerCase().includes(searchTerm.toLowerCase())
-    ))
-  );
-  
-  // Filter books by search in creation form
-  const filteredBooks = allBooks?.filter(book => 
-    book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (book.authorName && book.authorName.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    // Apply status filter if set
+    if (filterStatus) {
+      matchesFilter = campaign.status === filterStatus;
+    }
+    
+    return matchesSearch && matchesFilter;
+  });
 
-  if (loadingCampaigns || loadingBooks) {
-    return (
-      <div className="flex justify-center items-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  // Mobile campaign card view
-  const campaignCards = (
-    <div className="space-y-4 md:hidden">
-      {filteredCampaigns?.map((campaign) => (
-        <Card key={campaign.id} className="overflow-hidden">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">{campaign.name}</h3>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <Badge variant="outline">
-                    {campaignTypeLabels[campaign.type as keyof typeof campaignTypeLabels]}
-                    {campaign.type === "ad" && ` (${campaign.adType})`}
-                  </Badge>
-                  <Badge
-                    variant={
-                      campaign.status === "active"
-                        ? "default"
-                        : campaign.status === "completed"
-                        ? "secondary"
-                        : "destructive"
-                    }
-                  >
-                    {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-              <button 
-                onClick={() => toggleCardExpansion(campaign.id)}
-                className="p-2 rounded-full hover:bg-secondary"
-              >
-                {expandedCardIds[campaign.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-            </div>
-            
-            {expandedCardIds[campaign.id] && (
-              <div className="mt-4 space-y-4 pt-4 border-t">
-                <div>
-                  <div className="text-sm font-medium">Timeline</div>
-                  <div className="text-sm mt-1">
-                    <div>
-                      Started: {format(new Date(campaign.startDate), 'MMM d, yyyy')}
-                    </div>
-                    <div className="text-muted-foreground">
-                      Ends: {format(new Date(campaign.endDate), 'MMM d, yyyy')}
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="text-sm font-medium">Books</div>
-                  <div className="space-y-1 mt-1">
-                    {campaign.books?.map((book) => (
-                      <div key={book.id} className="text-sm">
-                        {book.title}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="text-sm font-medium">Budget</div>
-                  <div className="space-y-1 mt-1">
-                    <div className="text-sm">
-                      ${Number(campaign.spent).toFixed(2)} spent of ${Number(campaign.budget).toFixed(2)}
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{
-                          width: `${(Number(campaign.spent) / Number(campaign.budget)) * 100}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="text-sm font-medium">Performance</div>
-                  <div className="space-y-1 text-sm mt-1">
-                    {campaign.type === "ad" && campaign.metrics && (
-                      <>
-                        <div>{campaign.metrics.impressions || 0} impressions</div>
-                        <div>{campaign.metrics.clicks || 0} clicks</div>
-                        <div>
-                          CTR:{" "}
-                          {campaign.metrics.clicks && campaign.metrics.impressions
-                            ? ((campaign.metrics.clicks / campaign.metrics.impressions) * 100).toFixed(1)
-                            : 0}
-                          %
-                        </div>
-                      </>
-                    )}
-                    {campaign.type === "survey" && campaign.metrics && (
-                      <div>{campaign.metrics.responses || 0} responses</div>
-                    )}
-                    {campaign.type === "review_boost" && campaign.metrics && (
-                      <div>{campaign.metrics.reviews || 0} new reviews</div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 justify-end pt-2">
-                  {campaign.status === "active" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateCampaignStatus.mutate({ id: campaign.id, status: "paused" })}
-                    >
-                      <PauseCircle className="h-4 w-4 mr-2" />
-                      Pause
-                    </Button>
-                  )}
-                  {campaign.status === "paused" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateCampaignStatus.mutate({ id: campaign.id, status: "active" })}
-                    >
-                      <PlayCircle className="h-4 w-4 mr-2" />
-                      Activate
-                    </Button>
-                  )}
-                  {(campaign.status === "active" || campaign.status === "paused") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateCampaignStatus.mutate({ id: campaign.id, status: "completed" })}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Complete
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-
-  // Desktop campaign table view
-  const campaignTable = (
-    <div className="rounded-md border hidden md:block">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Campaign</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Timeline</TableHead>
-            <TableHead>Books</TableHead>
-            <TableHead>Budget</TableHead>
-            <TableHead>Performance</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredCampaigns?.map((campaign) => (
-            <TableRow key={campaign.id}>
-              <TableCell className="font-medium">{campaign.name}</TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {campaignTypeLabels[campaign.type as keyof typeof campaignTypeLabels]}
-                  {campaign.type === "ad" && ` (${campaign.adType})`}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={
-                    campaign.status === "active"
-                      ? "default"
-                      : campaign.status === "completed"
-                      ? "secondary"
-                      : "destructive"
-                  }
-                >
-                  {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  <div>
-                    Started: {format(new Date(campaign.startDate), 'MMM d, yyyy')}
-                  </div>
-                  <div className="text-muted-foreground">
-                    Ends: {format(new Date(campaign.endDate), 'MMM d, yyyy')}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm max-w-[200px] truncate">
-                  {campaign.books?.map(book => book.title).join(", ")}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  ${Number(campaign.spent).toFixed(2)} of ${Number(campaign.budget).toFixed(2)}
-                </div>
-                <div className="h-2 w-full max-w-[100px] rounded-full bg-secondary mt-1">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{
-                      width: `${(Number(campaign.spent) / Number(campaign.budget)) * 100}%`,
-                    }}
-                  />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1 text-sm">
-                  {campaign.type === "ad" && campaign.metrics && (
-                    <>
-                      <div>{campaign.metrics.impressions || 0} impressions</div>
-                      <div>{campaign.metrics.clicks || 0} clicks</div>
-                      <div>
-                        CTR:{" "}
-                        {campaign.metrics.clicks && campaign.metrics.impressions
-                          ? ((campaign.metrics.clicks / campaign.metrics.impressions) * 100).toFixed(1)
-                          : 0}
-                        %
-                      </div>
-                    </>
-                  )}
-                  {campaign.type === "survey" && campaign.metrics && (
-                    <div>{campaign.metrics.responses || 0} responses</div>
-                  )}
-                  {campaign.type === "review_boost" && campaign.metrics && (
-                    <div>{campaign.metrics.reviews || 0} new reviews</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  {campaign.status === "active" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateCampaignStatus.mutate({ id: campaign.id, status: "paused" })}
-                    >
-                      <PauseCircle className="h-4 w-4 mr-2" />
-                      Pause
-                    </Button>
-                  )}
-                  {campaign.status === "paused" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateCampaignStatus.mutate({ id: campaign.id, status: "active" })}
-                    >
-                      <PlayCircle className="h-4 w-4 mr-2" />
-                      Activate
-                    </Button>
-                  )}
-                  {(campaign.status === "active" || campaign.status === "paused") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => updateCampaignStatus.mutate({ id: campaign.id, status: "completed" })}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Complete
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
+  // View campaign details
+  const viewCampaignDetails = (campaign: any) => {
+    setSelectedCampaign(campaign);
+    setCampaignDetailsOpen(true);
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search campaigns or books..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Campaign Management</h1>
+          <p className="text-muted-foreground">
+            Create and manage promotional campaigns across the platform
+          </p>
         </div>
         
-        <Dialog open={isCreatingCampaign} onOpenChange={setIsCreatingCampaign}>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full md:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Campaign
+            <Button className="ml-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Campaign
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Campaign</DialogTitle>
               <DialogDescription>
-                Set up a new promotional campaign across the platform
+                Set up a new promotional campaign to highlight books across the platform
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid gap-6 py-4">
-              <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="details">Campaign Details</TabsTrigger>
-                  <TabsTrigger value="books">Select Books</TabsTrigger>
-                  <TabsTrigger value="settings">Advanced Settings</TabsTrigger>
-                </TabsList>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campaign Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter campaign name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
-                <TabsContent value="details" className="space-y-4 pt-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Campaign Name</Label>
-                      <Input 
-                        id="name" 
-                        placeholder="Enter campaign name" 
-                        value={newCampaign.name}
-                        onChange={(e) => setNewCampaign({...newCampaign, name: e.target.value})}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="type">Campaign Type</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Campaign Type</FormLabel>
                         <Select 
-                          value={newCampaign.type} 
-                          onValueChange={(value: "ad" | "survey" | "review_boost") => 
-                            setNewCampaign({...newCampaign, type: value})
-                          }
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select campaign type" />
+                            </SelectTrigger>
+                          </FormControl>
                           <SelectContent>
+                            <SelectItem value="promotion">Promotion</SelectItem>
                             <SelectItem value="ad">Advertisement</SelectItem>
-                            <SelectItem value="survey">Reader Survey</SelectItem>
+                            <SelectItem value="survey">Survey</SelectItem>
                             <SelectItem value="review_boost">Review Boost</SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
-                      
-                      {newCampaign.type === "ad" && (
-                        <div className="space-y-2">
-                          <Label htmlFor="adType">Ad Type</Label>
-                          <Select 
-                            value={newCampaign.adType} 
-                            onValueChange={(value: "banner" | "feature" | "keyword") => 
-                              setNewCampaign({...newCampaign, adType: value})
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select ad type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="banner">Banner</SelectItem>
-                              <SelectItem value="feature">Featured</SelectItem>
-                              <SelectItem value="keyword">Keyword</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Start Date</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {newCampaign.startDate ? (
-                                format(newCampaign.startDate, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={newCampaign.startDate}
-                              onSelect={(date) => date && setNewCampaign({...newCampaign, startDate: date})}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>End Date</Label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {newCampaign.endDate ? (
-                                format(newCampaign.endDate, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={newCampaign.endDate}
-                              onSelect={(date) => date && setNewCampaign({...newCampaign, endDate: date})}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="budget">Budget ($)</Label>
-                      <Input 
-                        id="budget" 
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Enter budget amount" 
-                        value={newCampaign.budget}
-                        onChange={(e) => setNewCampaign({...newCampaign, budget: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="books" className="space-y-4 pt-4">
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search books..."
-                        className="pl-8"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Selected books: {newCampaign.books.length}
-                    </div>
-                    
-                    <ScrollArea className="h-[300px] rounded-md border p-4">
-                      <div className="space-y-2">
-                        {filteredBooks?.map((book) => (
-                          <div
-                            key={book.id}
-                            className="flex items-center space-x-2 p-2 hover:bg-secondary/50 rounded-md"
-                          >
-                            <Checkbox
-                              id={`book-${book.id}`}
-                              checked={newCampaign.books.includes(book.id)}
-                              onCheckedChange={() => toggleBookSelection(book.id)}
-                            />
-                            <Label
-                              htmlFor={`book-${book.id}`}
-                              className="flex-grow cursor-pointer"
-                            >
-                              {book.title}
-                              {book.authorName && (
-                                <span className="text-sm text-muted-foreground block">
-                                  by {book.authorName}
-                                </span>
-                              )}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="settings" className="space-y-4 pt-4">
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Initial Status</Label>
-                      <Select 
-                        value={newCampaign.status} 
-                        onValueChange={(value: "active" | "paused") => 
-                          setNewCampaign({...newCampaign, status: value})
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="paused">Paused</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {newCampaign.type === "ad" && newCampaign.adType === "keyword" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="keywords">Keywords (comma separated)</Label>
-                        <Textarea 
-                          id="keywords" 
-                          placeholder="Enter keywords separated by commas"
-                          value={newCampaign.keywords?.join(", ") || ""}
-                          onChange={(e) => {
-                            const keywords = e.target.value
-                              .split(",")
-                              .map(keyword => keyword.trim())
-                              .filter(keyword => keyword.length > 0);
-                            setNewCampaign({...newCampaign, keywords});
-                          }}
-                        />
-                        <p className="text-sm text-muted-foreground">
-                          These keywords will be used to target your ads
-                        </p>
-                      </div>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreatingCampaign(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCreateCampaign}
-                disabled={createCampaign.isPending}
-              >
-                {createCampaign.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Create Campaign
-              </Button>
-            </DialogFooter>
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="paused">Paused</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Start Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>End Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="budget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Budget (optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="0.01" 
+                          placeholder="0.00" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Budget for this campaign (in credits)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="books"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Books</FormLabel>
+                      <div className="border rounded-md p-4 space-y-3 max-h-[200px] overflow-y-auto">
+                        {loadingBooks ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          </div>
+                        ) : books?.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-4">No books available</p>
+                        ) : (
+                          books?.map((book: any) => (
+                            <div key={book.id} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`book-${book.id}`} 
+                                checked={field.value?.includes(book.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    field.onChange([...field.value, book.id]);
+                                  } else {
+                                    field.onChange(
+                                      field.value?.filter((id) => id !== book.id)
+                                    );
+                                  }
+                                }}
+                              />
+                              <Label
+                                htmlFor={`book-${book.id}`}
+                                className="text-sm font-medium leading-none cursor-pointer"
+                              >
+                                {book.title}
+                                {book.authorName && <span className="text-muted-foreground ml-1">by {book.authorName}</span>}
+                              </Label>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter>
+                  <Button 
+                    type="submit"
+                    disabled={createCampaign.isPending}
+                  >
+                    {createCampaign.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Create Campaign
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
       
-      {filteredCampaigns?.length === 0 ? (
-        <div className="text-center py-10">
-          <p className="text-muted-foreground">No campaigns found</p>
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+        <div className="relative w-full md:w-[300px]">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search campaigns..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <X
+              className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={() => setSearchQuery("")}
+            />
+          )}
         </div>
-      ) : (
-        <>
-          {campaignTable}
-          {campaignCards}
-        </>
-      )}
+        
+        <Select
+          value={filterStatus || ""}
+          onValueChange={(value) => setFilterStatus(value || null)}
+        >
+          <SelectTrigger className="w-full md:w-[200px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="paused">Paused</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaigns</CardTitle>
+          <CardDescription>
+            Manage promotional campaigns across the platform
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingCampaigns ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
+          ) : campaigns?.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No campaigns found</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create your first campaign
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Books</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCampaigns?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        No campaigns match your filter criteria
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredCampaigns?.map((campaign: any) => (
+                      <TableRow key={campaign.id}>
+                        <TableCell className="font-medium">{campaign.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {campaign.type === "ad" ? "Advertisement" : 
+                             campaign.type === "promotion" ? "Promotion" :
+                             campaign.type === "survey" ? "Survey" :
+                             campaign.type === "review_boost" ? "Review Boost" :
+                             campaign.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <CampaignStatusBadge status={campaign.status} />
+                        </TableCell>
+                        <TableCell>{formatDate(campaign.startDate)}</TableCell>
+                        <TableCell>{formatDate(campaign.endDate)}</TableCell>
+                        <TableCell>{campaign.books?.length || 0} books</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => viewCampaignDetails(campaign)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Campaign Details Sheet */}
+      <Sheet open={campaignDetailsOpen} onOpenChange={setCampaignDetailsOpen}>
+        <SheetContent className="sm:max-w-[600px] overflow-y-auto">
+          {selectedCampaign && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Campaign Details</SheetTitle>
+                <SheetDescription>
+                  View and manage campaign information
+                </SheetDescription>
+              </SheetHeader>
+              
+              <div className="py-6">
+                <Tabs defaultValue="details">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="books">Books</TabsTrigger>
+                    <TabsTrigger value="metrics">Metrics</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="details" className="space-y-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">Name</h4>
+                        <p className="text-base">{selectedCampaign.name}</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">Type</h4>
+                        <p className="text-base">
+                          {selectedCampaign.type === "ad" ? "Advertisement" : 
+                           selectedCampaign.type === "promotion" ? "Promotion" :
+                           selectedCampaign.type === "survey" ? "Survey" :
+                           selectedCampaign.type === "review_boost" ? "Review Boost" :
+                           selectedCampaign.type}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
+                        <div className="mt-1">
+                          <CampaignStatusBadge status={selectedCampaign.status} />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">Budget</h4>
+                        <p className="text-base">{selectedCampaign.budget || "0"} credits</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">Start Date</h4>
+                        <p className="text-base">{formatDate(selectedCampaign.startDate)}</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-muted-foreground">End Date</h4>
+                        <p className="text-base">{formatDate(selectedCampaign.endDate)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-4 mt-4">
+                      <h4 className="text-sm font-medium mb-3">Update Status</h4>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant={selectedCampaign.status === "active" ? "default" : "outline"}
+                          onClick={() => updateCampaignStatus.mutate({ 
+                            id: selectedCampaign.id, 
+                            status: "active" 
+                          })}
+                          disabled={selectedCampaign.status === "active" || updateCampaignStatus.isPending}
+                        >
+                          <CheckCircle className="mr-1 h-4 w-4" />
+                          Active
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={selectedCampaign.status === "paused" ? "default" : "outline"}
+                          onClick={() => updateCampaignStatus.mutate({ 
+                            id: selectedCampaign.id, 
+                            status: "paused" 
+                          })}
+                          disabled={selectedCampaign.status === "paused" || updateCampaignStatus.isPending}
+                        >
+                          <AlertCircle className="mr-1 h-4 w-4" />
+                          Paused
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={selectedCampaign.status === "completed" ? "default" : "outline"}
+                          onClick={() => updateCampaignStatus.mutate({ 
+                            id: selectedCampaign.id, 
+                            status: "completed" 
+                          })}
+                          disabled={selectedCampaign.status === "completed" || updateCampaignStatus.isPending}
+                        >
+                          <XCircle className="mr-1 h-4 w-4" />
+                          Completed
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="books" className="mt-4">
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Book Title</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedCampaign.books?.length === 0 ? (
+                            <TableRow>
+                              <TableCell className="h-24 text-center">
+                                No books in this campaign
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            selectedCampaign.books?.map((book: any) => (
+                              <TableRow key={book.id}>
+                                <TableCell>{book.title}</TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="metrics" className="mt-4">
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <BarChart2 className="h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Campaign Metrics</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Detailed metrics for this campaign will be shown here. 
+                        This feature is still in development.
+                      </p>
+                      
+                      <div className="w-full grid grid-cols-2 gap-4">
+                        <div className="border rounded-md p-4">
+                          <h4 className="text-sm font-medium text-muted-foreground mb-1">Impressions</h4>
+                          <p className="text-2xl font-bold">
+                            {selectedCampaign.metrics?.totalImpressions || 0}
+                          </p>
+                        </div>
+                        
+                        <div className="border rounded-md p-4">
+                          <h4 className="text-sm font-medium text-muted-foreground mb-1">Clicks</h4>
+                          <p className="text-2xl font-bold">
+                            {selectedCampaign.metrics?.totalClicks || 0}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              
+              <SheetFooter>
+                <SheetClose asChild>
+                  <Button variant="outline">Close</Button>
+                </SheetClose>
+              </SheetFooter>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

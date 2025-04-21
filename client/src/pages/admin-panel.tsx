@@ -45,7 +45,7 @@ export default function AdminPanel() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="analytics">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
@@ -61,6 +61,10 @@ export default function AdminPanel() {
               <TabsTrigger value="books" className="flex items-center gap-2">
                 <BookCopy className="h-4 w-4" />
                 <span>Books</span>
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4" />
+                <span>Campaigns</span>
               </TabsTrigger>
               <TabsTrigger value="genres" className="flex items-center gap-2">
                 <BookMarked className="h-4 w-4" />
