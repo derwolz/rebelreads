@@ -343,6 +343,11 @@ export default function SettingsPage() {
                             value={field.value || ''} 
                             onChange={(e) => field.onChange(e.target.value)}
                             onBlur={field.onBlur}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
