@@ -378,7 +378,7 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-7 w-7 cursor-grab touch-none text-white hover:bg-white/10"
+          className="h-7 w-7 cursor-grab touch-none  "
           {...attributes}
           {...listeners}
         >
@@ -392,13 +392,13 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
         }>
           {taxonomy.type}
         </Badge>
-        <span className="font-medium">{taxonomy.name}</span>
+        <span className="font-medium text-foreground">{taxonomy.name}</span>
       </div>
       <div className="flex items-center space-x-2">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-7 w-7 text-white hover:bg-white/10"
+          className="h-7 w-7  hover:bg-white/10"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
@@ -703,7 +703,7 @@ function TaxonomyGenreSelector({
                           key={genre.id}
                           variant="outline"
                           size="sm"
-                          className=" text-white rounded-full hover:text-white"
+                          className=" rounded-full "
                           onClick={() => addTaxonomy(genre)}
                           disabled={isMaxReached("genre")}
                           title={genre.description || genre.name}
@@ -729,7 +729,7 @@ function TaxonomyGenreSelector({
                           key={subgenre.id}
                           variant="outline"
                           size="sm"
-                          className="text-white rounded-full hover:text-white"
+                          className="rounded-full"
                           onClick={() => addTaxonomy(subgenre)}
                           disabled={isMaxReached("subgenre")}
                           title={subgenre.description || subgenre.name}
@@ -755,7 +755,7 @@ function TaxonomyGenreSelector({
                           key={theme.id}
                           variant="outline"
                           size="sm"
-                          className="text-white rounded-full hover:text-white"
+                          className=" rounded-full "
                           onClick={() => addTaxonomy(theme)}
                           disabled={isMaxReached("theme")}
                           title={theme.description || theme.name}
@@ -781,7 +781,7 @@ function TaxonomyGenreSelector({
                           key={trope.id}
                           variant="outline"
                           size="sm"
-                          className=" text-white rounded-full  hover:text-white"
+                          className=" rounded-full "
                           onClick={() => addTaxonomy(trope)}
                           disabled={isMaxReached("trope")}
                           title={trope.description || trope.name}
