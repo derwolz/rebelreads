@@ -79,20 +79,21 @@ function App() {
     const isApiPath = location.startsWith("/api");
     const isAuthWallPath = location === "/auth";
     const [path, hash] = location.split("#");
+    const isSharedBookshelfPath = path.startsWith("/book-shelf/share");
 
     // Show loading state while checking auth and beta status
     if (isBetaLoading || isAuthLoading) {
       return null;
     }
     // If beta mode is active and user is not logged in, redirect to auth wall
-    // unless it's an allowed path or already on the auth wall
-    if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath && !isAuthWallPath) {
+    // unless it's an allowed path, a shared bookshelf path, or already on the auth wall
+    if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath && !isAuthWallPath && !isSharedBookshelfPath) {
       return <Redirect to="/landing" />;
     }
     
     // If landing page is configured to show, honor that setting
     // but only if not in beta mode (beta mode takes precedence)
-    if (isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
+    if (isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath && !isSharedBookshelfPath) {
       return <Redirect to={`/landing`} />;
     }
 
@@ -101,7 +102,7 @@ function App() {
 
     return (
       <>
-        {!allowedPaths.includes(path) && path !== "/auth" && <MainNav />}
+        {(!allowedPaths.includes(path) && path !== "/auth") && <MainNav />}
 
         <Switch>
           {/* Always accessible routes */}
