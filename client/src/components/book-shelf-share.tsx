@@ -31,12 +31,13 @@ interface BookShelfShareProps {
 
 export function BookShelfShare({ username, shelfName, className }: BookShelfShareProps) {
   const [selectedBookIndex, setSelectedBookIndex] = useState<number | null>(null);
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteVisible, setNoteVisible] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [isMobileViewActive, setIsMobileViewActive] = useState(false);
   const { toast } = useToast();
   
   // Mobile swipe carousel for book details and notes
@@ -57,7 +58,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       shelfId: number;
       rank: number;
       addedAt: string;
-      book: Book;
+      book: BookType;
     }>;
     bookNotes: Note[];
     shelfNotes: Note[];
@@ -92,7 +93,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   }, [isShelfLoading, shelfData, username, shelfName]);
 
   // Handle book selection
-  const handleSelectBook = (book: Book, index: number) => {
+  const handleSelectBook = (book: BookType, index: number) => {
     // If a note is currently visible, animate it away first
     if (noteVisible) {
       setIsRotating(true);
@@ -190,7 +191,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 {/* Book cover */}
                 <div className="h-full z-20 flex-left flex   justify-center overflow-hidden  ">
                   <img 
-                    src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                    src={selectedBook?.images?.find((img: any) => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                     alt={selectedBook?.title} 
                     className="h-auto min-h-[350px] w-full shadow-lg object-cover rounded-md" 
                   />
@@ -320,6 +321,19 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   <ScrollArea className="h-full min-w-0 w-full pr-4">
                     <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                   </ScrollArea>
+                  
+                  {/* Mobile-only: Button to open swipe interface */}
+                  <div className="md:hidden mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-foreground border-gray-700"
+                      onClick={() => setIsMobileViewActive(true)}
+                    >
+                      <StickyNote className="h-4 w-4 mr-2" />
+                      View Book Notes ({bookNotes.length})
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Genres & Themes */}
@@ -430,14 +444,14 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
           
           {/* Mobile-only swipeable book details and notes carousel */}
-          {selectedBook && (
+          {selectedBook && isMobileViewActive && (
             <div className="md:hidden fixed inset-0 z-30 bg-background/95 backdrop-blur-sm">
               <div className="container h-full p-4 pt-16 pb-20">
                 <div className="flex justify-between items-center mb-4 absolute top-4 left-4 right-4">
                   <h3 className="text-sm font-medium text-foreground flex items-center gap-1">
                     {currentSlideIndex === 0 ? (
                       <>
-                        <Book className="h-3 w-3" />
+                        <BookIcon className="h-3 w-3" />
                         Book Details
                       </>
                     ) : (
@@ -456,8 +470,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       className="h-8 w-8 rounded-full"
                       onClick={() => {
                         // Close the mobile view
-                        setSelectedNote(null);
-                        setNoteVisible(false);
+                        setIsMobileViewActive(false);
+                        setCurrentSlideIndex(0);
                       }}
                     >
                       <X className="h-4 w-4" />
@@ -473,7 +487,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       <div className="flex-shrink-0 mb-4">
                         <div className="flex items-center">
                           <img 
-                            src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                            src={selectedBook?.images?.find((img: any) => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                             alt={selectedBook?.title} 
                             className="h-32 w-auto mr-4 rounded shadow-md" 
                           />
