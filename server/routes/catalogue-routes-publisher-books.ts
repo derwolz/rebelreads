@@ -197,7 +197,9 @@ router.post("/", requirePublisher, bookImagesUpload, async (req: Request, res: R
             if (fieldName.startsWith(prefix)) {
               // We found a matching image for this book
               for (const file of fieldFiles) {
-                const imageUrl = `/uploads/covers/${file.filename}`;
+                // Upload to object storage
+                const storageKey = await objectStorage.uploadFile(file, 'covers');
+                const imageUrl = objectStorage.getPublicUrl(storageKey);
                 
                 // Save the image record
                 const imageResult = await db

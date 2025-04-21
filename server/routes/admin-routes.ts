@@ -23,6 +23,7 @@ import path from "path";
 import fs from "fs";
 import AdmZip from "adm-zip";
 import sanitizeFilename from "sanitize-filename";
+import { objectStorage } from "../services/object-storage";
 
 // Configure dirs
 const uploadsDir = "./uploads";
@@ -341,17 +342,16 @@ router.get("/search", adminAuthMiddleware, async (req: Request, res: Response) =
 
 // Helper function to extract CSV from a ZIP file [REMOVED]
 
-// Helper function to save image from buffer to disk
-const saveImageFromBuffer = (buffer: Buffer, imageType: string): string => {
+// Helper function to save image from buffer to object storage
+const saveImageFromBuffer = async (buffer: Buffer, imageType: string): Promise<string> => {
   // Create a unique filename with a timestamp
   const filename = Date.now() + "-" + Math.round(Math.random() * 1e9) + ".png";
-  const filePath = path.join(coversDir, filename);
   
-  // Write the buffer to file
-  fs.writeFileSync(filePath, buffer);
+  // Upload to object storage
+  const storageKey = await objectStorage.uploadBuffer(buffer, filename, 'covers');
   
-  // Return the relative URL
-  return '/uploads/covers/' + filename;
+  // Return the public URL
+  return objectStorage.getPublicUrl(storageKey);
 };
 
 // Utility function to calculate taxonomy importance based on rank
