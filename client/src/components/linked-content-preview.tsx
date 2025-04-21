@@ -85,6 +85,12 @@ export function LinkedContentPreview({
   });
 
   // For bookshelves, fetch the shelf details using username and shelf name
+  // If shelfName is already encoded (contains %20), don't encode it again
+  const isShelfNameEncoded = shelfName?.includes('%20');
+  const formattedShelfName = isShelfNameEncoded
+    ? shelfName
+    : shelfName && encodeURIComponent(shelfName);
+    
   const {
     data: shelfData,
     isLoading: isShelfLoading,
@@ -93,7 +99,7 @@ export function LinkedContentPreview({
     queryKey: [
       `/api/book-shelf?username=${encodeURIComponent(
         username || ""
-      )}&shelfname=${encodeURIComponent(shelfName || "")}`,
+      )}&shelfname=${formattedShelfName || ""}`,
     ],
     enabled: type === "bookshelf" && !!username && !!shelfName,
   });
@@ -125,6 +131,20 @@ export function LinkedContentPreview({
     return "#";
   };
 
+  // Add some console logging to debug what's happening
+  console.log(`Rendering LinkedContentPreview for type: ${type}`, { 
+    id, username, shelfName,
+    bookLoading: isBookLoading,
+    bookError,
+    bookData,
+    shelfLoading: isShelfLoading,
+    shelfError,
+    shelfData,
+    userLoading: isUserLoading,
+    userError,
+    userData
+  });
+
   // Loading state
   if ((type === "book" && isBookLoading) || (type === "bookshelf" && (isShelfLoading || isUserLoading))) {
     return (
@@ -138,12 +158,23 @@ export function LinkedContentPreview({
     );
   }
 
-  // Error state
+  // Error state with detailed information
   if ((type === "book" && bookError) || (type === "bookshelf" && (shelfError || userError))) {
+    const apiUrl = type === 'book' 
+      ? `/api/books/${id}` 
+      : `/api/book-shelf?username=${encodeURIComponent(username || "")}&shelfname=${formattedShelfName || ""}`;
+      
+    console.error('LinkedContentPreview error:', { 
+      type, bookError, shelfError, userError, 
+      url: apiUrl,
+      shelfName,
+      formattedShelfName
+    });
+    
     return (
       <div className={cn("flex items-center h-16 bg-gray-900 rounded border border-gray-800 p-2", className)}>
         <div className="w-full text-center text-gray-400 text-sm">
-          Error loading content preview
+          Error loading content preview: {apiUrl}
         </div>
       </div>
     );

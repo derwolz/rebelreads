@@ -9,10 +9,10 @@ import { LinkedContentPreview } from "@/components/linked-content-preview";
 // - https://sirened.com/books/123
 // - http://www.sirened.com/books/123
 // - https://www.sirened.com/books/123
-const BOOK_LINK_PATTERN = /(\s|^)(?:https?:\/\/(?:www\.)?sirened\.com|sirened\.com)?\/books\/([0-9]+)(\s|$)/g;
+const BOOK_LINK_PATTERN = /(\s|^)(?:(?:https?:\/\/)?(?:www\.)?sirened\.com)?\/books\/([0-9]+)(\s|$)/g;
 
 // Similar pattern for bookshelf links
-const BOOKSHELF_LINK_PATTERN = /(\s|^)(?:https?:\/\/(?:www\.)?sirened\.com|sirened\.com)?\/book-shelf\/share\?username=([^&]+)&shelfname=([^&\s]+)(\s|$)/g;
+const BOOKSHELF_LINK_PATTERN = /(\s|^)(?:(?:https?:\/\/)?(?:www\.)?sirened\.com)?\/book-shelf\/share\?username=([^&]+)&shelfname=([^&\s]+)(\s|$)/g;
 
 // Leave bare domain alone pattern
 const BARE_DOMAIN_PATTERN = /(\s|^)(sirened\.com)(\s|$)/g;
@@ -98,8 +98,20 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   while ((match = BOOKSHELF_LINK_PATTERN.exec(workingContent)) !== null) {
     const fullMatch = match[0];
     const leadingSpace = match[1] || "";
-    const username = decodeURIComponent(match[2]);
-    const shelfName = decodeURIComponent(match[3]);
+    
+    // Decode the username and shelfName safely
+    let username = "";
+    let shelfName = "";
+    
+    try {
+      username = decodeURIComponent(match[2]);
+      shelfName = decodeURIComponent(match[3]);
+    } catch (e) {
+      console.error("Error decoding URL components:", e);
+      username = match[2];
+      shelfName = match[3];
+    }
+    
     const trailingSpace = match[4] || "";
     
     // Add text before the match
@@ -252,6 +264,8 @@ export function parseMessageContent(content: string): React.ReactNode[] {
       const replacement = replacements.find(r => r.index === placeholderIndex);
       
       if (replacement) {
+        console.log('Replacement:', replacement);
+        
         if (replacement.type === "book") {
           result.push(
             <LinkedContentPreview 
@@ -262,13 +276,18 @@ export function parseMessageContent(content: string): React.ReactNode[] {
             />
           );
         } else if (replacement.type === "bookshelf") {
+          // Make sure we handle the username and shelfName properly, especially with spaces
+          const encodedShelfName = replacement.shelfName?.includes(' ') 
+            ? replacement.shelfName.replace(/ /g, "%20")
+            : replacement.shelfName;
+            
           result.push(
             <LinkedContentPreview 
-              key={`shelf-${replacement.username}-${replacement.shelfName}`}
+              key={`shelf-${replacement.username}-${encodedShelfName}`}
               type="bookshelf" 
-              id={`${replacement.username}-${replacement.shelfName}`}
+              id={`${replacement.username}-${encodedShelfName}`}
               username={replacement.username} 
-              shelfName={replacement.shelfName}
+              shelfName={encodedShelfName}
               className="my-2"
             />
           );
