@@ -6,10 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Author, SOCIAL_MEDIA_PLATFORMS, type SocialMediaLink } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
@@ -195,65 +193,23 @@ export default function ProAuthorProfilePage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="birth_date">Birth Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !formData.birth_date && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.birth_date ? (
-                            format(formData.birth_date, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={formData.birth_date || undefined}
-                          onSelect={(date) => setFormData(prev => ({...prev, birth_date: date || null}))}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <DatePicker
+                    label="Birth Date"
+                    selected={formData.birth_date}
+                    onSelect={(date) => setFormData(prev => ({...prev, birth_date: date}))}
+                    placeholder="Select birth date"
+                    fromYear={1800}
+                    toYear={new Date().getFullYear()}
+                  />
 
-                  <div className="space-y-2">
-                    <Label htmlFor="death_date">Death Date (if applicable)</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !formData.death_date && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.death_date ? (
-                            format(formData.death_date, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={formData.death_date || undefined}
-                          onSelect={(date) => setFormData(prev => ({...prev, death_date: date || null}))}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <DatePicker
+                    label="Death Date (if applicable)"
+                    selected={formData.death_date}
+                    onSelect={(date) => setFormData(prev => ({...prev, death_date: date}))}
+                    placeholder="Select death date (if applicable)"
+                    fromYear={1800}
+                    toYear={new Date().getFullYear() + 1}
+                  />
                 </div>
                 
                 <div className="space-y-4">
