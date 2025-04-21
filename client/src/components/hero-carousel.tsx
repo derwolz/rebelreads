@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -53,14 +53,61 @@ function PaginationDots({
   );
 }
 
+// Function to randomly select books for the hero carousel
+function getRandomBooks(books: Book[], count: number): Book[] {
+  if (!books || books.length <= count) {
+    return books || [];
+  }
+  
+  // Make a copy of the books array to avoid modifying the original
+  const booksCopy = [...books];
+  const result: Book[] = [];
+  
+  // Select 'count' random books
+  for (let i = 0; i < count; i++) {
+    const randomIndex = Math.floor(Math.random() * booksCopy.length);
+    result.push(booksCopy[randomIndex]);
+    // Remove the selected book to avoid duplicates
+    booksCopy.splice(randomIndex, 1);
+  }
+  
+  return result;
+}
+
 export function HeroCarousel() {
   const [, navigate] = useLocation();
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Maximum number of books to display in the carousel
+  const MAX_CAROUSEL_BOOKS = 5;
 
-  const { data: books, isLoading } = useQuery<Book[]>({
+  // Use a query that gets all books
+  const { data: allBooks, isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
-    select: (data) => data.filter((book) => book.promoted).slice(0, 5),
   });
+  
+  // Use useMemo to randomly select books when allBooks changes
+  const displayBooks = useMemo(() => {
+    if (!allBooks || allBooks.length === 0) return [];
+    
+    // Prioritize promoted books if available
+    const promotedBooks = allBooks.filter((book) => book.promoted);
+    
+    if (promotedBooks.length >= MAX_CAROUSEL_BOOKS) {
+      // If we have enough promoted books, use those
+      return promotedBooks.slice(0, MAX_CAROUSEL_BOOKS);
+    } else if (promotedBooks.length > 0) {
+      // If we have some promoted books but not enough, add random books to fill
+      const randomBooks = getRandomBooks(
+        allBooks.filter((book) => !book.promoted),
+        MAX_CAROUSEL_BOOKS - promotedBooks.length
+      );
+      return [...promotedBooks, ...randomBooks];
+    } else {
+      // If no promoted books, just use random books
+      return getRandomBooks(allBooks, MAX_CAROUSEL_BOOKS);
+    }
+  }, [allBooks]);
 
   const handleDotClick = (index: number) => {
     setCurrentSlide(index);
@@ -83,8 +130,8 @@ export function HeroCarousel() {
             <CarouselItem>
               <HeroSkeleton />
             </CarouselItem>
-          ) : books && books.length > 0 ? (
-            books.map((book) => (
+          ) : displayBooks && displayBooks.length > 0 ? (
+            displayBooks.map((book) => (
               <CarouselItem key={book.id}>
                 <div className="relative w-[95vw] overflow-hidden">
                   {/* Background Image - 33vh height and full-width */}
@@ -101,7 +148,7 @@ export function HeroCarousel() {
                   {/* Content positioned absolutely over the image */}
                   <div className="absolute inset-0 flex flex-col justify-between p-6 text-white">
                     <div className="space-y-2 w-1/2">
-                      <h3 className="text-3xl font-bold">{book.title} X</h3>
+                      <h3 className="text-3xl font-bold">{book.title}</h3>
                       <div className="flex space-x-2">
                         {/* Rating indicators - small squares */}
                         <div className="flex space-x-0.5">
@@ -134,7 +181,7 @@ export function HeroCarousel() {
             <CarouselItem>
               <div className="w-[95vw] h-[50vh] bg-muted flex items-center justify-center">
                 <p className="text-lg text-muted-foreground">
-                  No promoted books available
+                  No books available
                 </p>
               </div>
             </CarouselItem>
@@ -142,10 +189,10 @@ export function HeroCarousel() {
         </CarouselContent>
 
         {/* Small pagination dots */}
-        {books && books.length > 1 && (
+        {displayBooks && displayBooks.length > 1 && (
           <div className="mt-2">
             <PaginationDots
-              total={books.length}
+              total={displayBooks.length}
               current={currentSlide}
               onClick={handleDotClick}
             />
