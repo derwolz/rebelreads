@@ -231,7 +231,7 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
             />
           </div>
         )}
-        <div className="flex space-x-2">
+        <div className="flex relative space-x-2">
           {user && (
             <Avatar className="h-10 w-10 border border-gray-600">
               <AvatarImage src={user.profileImageUrl || undefined} />
@@ -240,20 +240,19 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
               </AvatarFallback>
             </Avatar>
           )}
-          <div className="flex-1 flex space-x-2">
+          <div className="flex-1 flex bg-gray-800/40 border-gray-800/20 border rounded">
             <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-1 min-h-[80px] bg-gray-800/50 border-gray-700 resize-none"
+              className="flex-1 min-h-[80px] resize-none bg-transparent border-none ring-0 focus:outline-none"
             />
             <Button
               type="submit"
               disabled={isSubmitting || !newComment.trim()}
-              className="self-end"
+              className="self-end self-center text-primary bg-transparent h-full hover:bg-gray-800/20"
             >
-              <Send className="h-4 w-4 mr-2" />
-              Send
+              <Send className="h-4 w-4" />
             </Button>
           </div>
         </div>
