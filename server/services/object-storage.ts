@@ -4,7 +4,7 @@
  * This service provides a wrapper around @replit/object-storage
  * for file storage and retrieval.
  */
-import { Client } from '@replit/object-storage';
+import { Client, type ClientOptions, type StorageObject } from '@replit/object-storage';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { nanoid } from 'nanoid';
@@ -46,8 +46,12 @@ class ObjectStorageService {
       // Construct the storage key (path)
       const storageKey = directory ? `${directory}/${filename}` : filename;
       
-      // Upload the file to object storage
-      await this.client.put(storageKey, file.buffer);
+      // Upload the file to object storage using the correct method
+      const result = await this.client.uploadFromBytes(storageKey, file.buffer);
+      
+      if (!result.ok) {
+        throw new Error(`Upload failed: ${result.error.message}`);
+      }
       
       return storageKey;
     } catch (error) {
@@ -63,14 +67,14 @@ class ObjectStorageService {
    */
   async getFile(storageKey: string): Promise<Buffer | null> {
     try {
-      // Get the file from object storage
-      const result = await this.client.get(storageKey);
+      // Get the file from object storage using the correct method
+      const result = await this.client.downloadAsBytes(storageKey);
       
       if (!result.ok) {
         return null;
       }
       
-      return result.value;
+      return result.value[0]; // downloadAsBytes returns an array with a single Buffer
     } catch (error) {
       console.error('Error retrieving file from object storage:', error);
       return null;
@@ -107,7 +111,8 @@ class ObjectStorageService {
         return [];
       }
       
-      return result.value;
+      // Map StorageObject array to array of keys (strings)
+      return result.value.map(obj => obj.key);
     } catch (error) {
       console.error('Error listing files from object storage:', error);
       return [];
