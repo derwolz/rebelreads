@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { UpdateProfile, updateProfileSchema } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,10 +23,13 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogDescription,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
 export function AccountSettings() {
   const { user, isAuthor, becomeAuthorMutation, revokeAuthorMutation } = useAuth();
@@ -34,6 +37,25 @@ export function AccountSettings() {
   const queryClient = useQueryClient();
   const revokeButtonRef = React.useRef<HTMLButtonElement>(null);
   
+  // Initial verification state
+  const [isVerified, setIsVerified] = useState(false);
+  const [showVerification, setShowVerification] = useState(true);
+  
+  // Separate form for initial password verification
+  const verificationForm = useForm({
+    defaultValues: {
+      verificationPassword: ""
+    },
+    resolver: zodResolver(
+      updateProfileSchema.pick({}).extend({
+        verificationPassword: updateProfileSchema.shape.currentPassword
+      })
+    )
+  });
+
+  const [verificationError, setVerificationError] = useState("");
+  
+  // Profile update form
   const form = useForm<UpdateProfile>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -45,6 +67,45 @@ export function AccountSettings() {
     },
   });
   
+  // Reset the forms when user data changes
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        email: user.email || "",
+        username: user.username || "",
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    }
+  }, [user, form]);
+  
+  // Verify password mutation
+  const verifyPasswordMutation = useMutation({
+    mutationFn: async (password: string) => {
+      const res = await apiRequest("POST", "/api/verify-password", { password });
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsVerified(true);
+      setShowVerification(false);
+      setVerificationError("");
+    },
+    onError: (error: Error) => {
+      setVerificationError(error.message || "Password verification failed");
+    }
+  });
+  
+  // Handle verification form submission
+  const onVerify = (data: { verificationPassword: string }) => {
+    verifyPasswordMutation.mutate(data.verificationPassword);
+  };
+  
+  // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfile) => {
       const res = await apiRequest("PATCH", "/api/user", data);
@@ -60,6 +121,11 @@ export function AccountSettings() {
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      
+      // Clear password fields after successful update
+      form.setValue("currentPassword", "");
+      form.setValue("newPassword", "");
+      form.setValue("confirmPassword", "");
     },
     onError: (error: Error) => {
       toast({
@@ -72,6 +138,59 @@ export function AccountSettings() {
   
   const onSubmit = (data: UpdateProfile) => {
     updateProfileMutation.mutate(data);
+  }
+  
+  // If verification is required and not yet verified, show verification dialog
+  if (showVerification && !isVerified) {
+    return (
+      <AlertDialog open={true}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Verify Your Identity</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please enter your current password to access account settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <Form {...verificationForm}>
+            <form onSubmit={verificationForm.handleSubmit(onVerify)} className="space-y-4 py-2">
+              <FormField
+                control={verificationForm.control}
+                name="verificationPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        autoComplete="current-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    {verificationError && (
+                      <p className="text-sm font-medium text-destructive">{verificationError}</p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <AlertDialogFooter>
+                <Button
+                  type="submit"
+                  disabled={verifyPasswordMutation.isPending}
+                >
+                  {verifyPasswordMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Verify
+                </Button>
+              </AlertDialogFooter>
+            </form>
+          </Form>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
   }
   
   return (
@@ -180,7 +299,15 @@ export function AccountSettings() {
                 />
               </div>
               <div className="mt-6">
-                <Button type="submit">Save Changes</Button>
+                <Button 
+                  type="submit"
+                  disabled={updateProfileMutation.isPending}
+                >
+                  {updateProfileMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Save Changes
+                </Button>
               </div>
             </div>
 

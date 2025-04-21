@@ -1178,6 +1178,40 @@ router.patch("/publisher-profile", async (req: Request, res: Response) => {
   }
 });
 
+// Verify password without changing anything
+router.post("/verify-password", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    // Validate the request body
+    const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ error: "Password is required" });
+    }
+    
+    // Get the current user with password
+    const user = await dbStorage.getUser(req.user.id);
+    if (!user || !user.password) {
+      return res.status(404).json({ error: "User not found or no password set" });
+    }
+    
+    // Verify the password
+    const isPasswordValid = await comparePasswords(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: "Incorrect password" });
+    }
+    
+    // If we get here, password is valid
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("Error verifying password:", error);
+    res.status(500).json({ error: "Failed to verify password" });
+  }
+});
+
 // Upload profile image
 router.post("/user/profile-image", profileImageUpload.single('profileImage'), async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
