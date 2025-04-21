@@ -19,8 +19,9 @@ import { comparePasswords, hashPassword } from "../auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { objectStorage } from "../services/object-storage";
 
-// Configure directories for profile image uploads
+// Configure directories for profile image uploads (legacy method kept for backward compatibility)
 const uploadsDir = "./uploads";
 const profileImagesDir = path.join(uploadsDir, "profile-images");
 
@@ -31,19 +32,9 @@ const profileImagesDir = path.join(uploadsDir, "profile-images");
   }
 });
 
-// Configure multer for profile image uploads
-const profileImageStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, profileImagesDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+// Configure multer for memory storage (for use with object storage)
 const profileImageUpload = multer({
-  storage: profileImageStorage,
+  storage: multer.memoryStorage(), // Store in memory so we can upload to object storage
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB size limit
   },
