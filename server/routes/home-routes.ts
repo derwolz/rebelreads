@@ -4,9 +4,11 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from "express";
+import { db } from "../db";
+
+// Import services
 import { objectStorage } from "../services/object-storage";
 import { sirenedImageBucket } from "../services/sirened-image-bucket";
-import { db } from "../db";
 import { 
   ratings, 
   books, 
@@ -21,37 +23,35 @@ import {
 import { enhanceReferralLinks } from "../utils/favicon-utils";
 import { eq, and, inArray, notInArray, desc, avg, count, sql, asc } from "drizzle-orm";
 
-// Configure multer for file uploads
-const uploadsDir = "./uploads";
-const coversDir = path.join(uploadsDir, "covers");
-
-[uploadsDir, coversDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-const fileStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, coversDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// Configure multer for in-memory uploads (for use with object storage)
+// No need for filesystem directories since we're using object storage
 
 // Create a field name filter that accepts form fields matching bookImage_ pattern
 const bookImageFieldFilter = (fieldname: string) => {
   return fieldname.startsWith('bookImage_');
 };
 
-// Multer for single cover upload (legacy)
-const upload = multer({ storage: fileStorage });
+// Multer for single file upload
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB size limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'));
+  }
+});
 
 // Multer for multiple book images with dynamic field names
 const multipleImageUpload = multer({
-  storage: fileStorage,
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB size limit
+  },
   fileFilter: (req, file, cb) => {
     // Only allow image files
     if (file.mimetype.startsWith('image/')) {
@@ -70,15 +70,6 @@ const multipleImageUpload = multer({
 ]);
 
 const router = Router();
-
-// Serve uploaded files
-router.use("/uploads", express.static("uploads"));
-
-// Ensure the profile-images directory exists
-const profileImagesDir = path.join(uploadsDir, "profile-images");
-if (!fs.existsSync(profileImagesDir)) {
-  fs.mkdirSync(profileImagesDir, { recursive: true });
-}
 
 router.get("/books", async (_req, res) => {
   const books = await dbStorage.getBooks();

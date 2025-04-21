@@ -20,15 +20,26 @@ interface UploadedFile {
   size: number;
 }
 
+// Import types from schema
+import { IMAGE_TYPES } from '@shared/schema';
+
 // Supported image types
-type BookImageType = 'book-detail' | 'book-thumbnail' | 'book-banner' | 'author-avatar' | 'custom';
+type BookImageType = typeof IMAGE_TYPES[number] | 'book-thumbnail' | 'book-banner' | 'author-avatar' | 'custom';
 
 class SirenedImageBucket {
   // Directory structure for different image types
-  private directories = {
+  private directories: Record<string, string> = {
+    // Main image types
     'book-detail': 'covers/detail',
+    'background': 'covers/background',
+    'spine': 'covers/spine',
+    'hero': 'covers/hero',
+    // Auto-generated types
+    'book-card': 'covers/card',
+    'mini': 'covers/mini',
+    // Other types
     'book-thumbnail': 'covers/thumbnail',
-    'book-banner': 'covers/banner',
+    'book-banner': 'covers/banner', 
     'author-avatar': 'authors/avatars',
     'custom': 'custom',
   };
