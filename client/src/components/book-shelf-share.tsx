@@ -116,35 +116,34 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const { theme } = useTheme();
 
   return (
-    <div className={`${className} bg-background max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full`}>
+    <div className={`${className} bg-background max-w-[95vw] md:max-w-[90vw] flex flex-col text-foregound h-[calc(100vh-5rem)]`}>
       
-      
-      {/* Main content area */}
-      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4">
+      {/* Main content area - with flex-grow to fill available space */}
+      <div className="flex flex-col lg:flex-row gap-6 p-4 flex-grow overflow-hidden">
        
         {/* Left column: Book details and comments */}
         <div className="w-full lg:w-2/3 relative">
 
             {/* Share button */}
-            <Button variant="ghost" size="sm" className="text-foregound absolute top-0 right-0">
+            <Button variant="ghost" size="sm" className="text-foregound absolute top-0 right-0 z-10">
               <Share2 className="h-4 w-4" />
             </Button>
           {/* Book Details Card that shows the selected book */}
           <div 
-            className={`rounded-lg overflow-hidden bg-muted border border-gray-800 mb-16 transition-all duration-500 `}
+            className={`rounded-lg overflow-hidden bg-muted border border-gray-800 transition-all duration-500`}
           >
             <div className="flex flex-col md:flex-row">
 
               {/* Comments/Notes section */}
-              <div className="rounded-lg bg-background mb-16">
+              <div className="rounded-lg bg-background">
 
 
                 {bookNotes && bookNotes.length > 0 ? (
-                  <div className="space-y-3 absolute -rotate-90 bottom-6  left-0">
+                  <div className="space-y-3 absolute -rotate-90 bottom-6 left-0">
                     {bookNotes.map((note, idx) => (
                       <div 
                         key={note.id} 
-                        className="p-3  rounded-lg bg-purple-900/40 border-l-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
+                        className="p-3 rounded-lg bg-purple-900/40 border-l-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors"
                         onClick={() => {
                           // Use the same animation logic for book notes
                           if (selectedNote && selectedNote.id === note.id && noteVisible) {
@@ -320,43 +319,42 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
               </div>
             </div>
           </div>
-          
-          
-          
-
         </div>
         
-        {/* Right column: Comment section */}
-        <div className="w-full lg:w-1/3">
-          <div className="rounded-lg bg-background border border-l border-gray-800 p-4">
+        {/* Right column: Comment section - with flex-grow to expand vertically */}
+        <div className="w-full lg:w-1/3 flex flex-col h-full overflow-hidden">
+          <div className="rounded-lg bg-background border border-l border-gray-800 p-4 flex-grow flex flex-col h-full">
             {shelfData?.shelf && (
-              <CommentSection shelfId={shelfData.shelf.id} />
+              <CommentSection shelfId={shelfData.shelf.id} className="flex-grow flex flex-col h-full" />
             )}
           </div>
         </div>
       </div>
 
-      
-      {/* Separator */}
-      <div className="w-full border-t border-border my-4"></div>
-      {/** Place the bookshelf name here */}
-      <div className="relative">
-        <h4 className="font-medium absolute w-full z-20 text-foregound ">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
-      
-    
-      {/* Book Rack at the bottom */}
-      <div className="px-4 ">
-        <BookRackShelf 
-          books={books}
-          isLoading={isShelfLoading}
-          onSelectBook={handleSelectBook}
-          selectedBookIndex={selectedBookIndex}
-          className="mx-auto max-w-4xl"
-        />  </div>
+      {/* Bookshelf section at bottom with fixed position */}
+      <div className="w-full mt-auto">
+        {/* Separator */}
+        <div className="w-full border-t border-border"></div>
+        
+        {/* Bookshelf title */}
+        <div className="relative text-center py-2">
+          <h4 className="font-medium text-foregound">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
+        </div>
+        
+        {/* Book Rack */}
+        <div className="px-4">
+          <BookRackShelf 
+            books={books}
+            isLoading={isShelfLoading}
+            onSelectBook={handleSelectBook}
+            selectedBookIndex={selectedBookIndex}
+            className="mx-auto max-w-4xl"
+          />
+        </div>
+        
+        {/* Bottom gradient separator */}
+        <div className="w-full border-t border-border bg-gradient-to-b from-border to-transparent"></div>
       </div>
-
-      {/* Separator */}
-      <div className="w-full border-t border-border bg-gradient-to-b from-border to-transparent pb-2"></div>
     </div>
   );
 }

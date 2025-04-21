@@ -172,11 +172,11 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
   }
 
   return (
-    <div className={cn("space-y-4 h-full ", className)}>
-      <h3 className="text-lg font-medium text-foreground">Comments</h3>
+    <div className={cn("flex flex-col h-full", className)}>
+      <h3 className="text-lg font-medium text-foreground mb-4">Comments</h3>
       
-      {/* Comments list */}
-      <ScrollArea className="h-full pr-4">
+      {/* Comments list - using flex-grow to expand and fill available space */}
+      <ScrollArea className="flex-grow pr-4 mb-4 min-h-0">
         <div className="space-y-4">
           {comments && comments.length > 0 ? (
             comments.map((comment) => (
@@ -214,10 +214,10 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
         </div>
       </ScrollArea>
       
-      {/* Add comment form */}
-      <form onSubmit={handleSubmitComment} className="space-y-3">
+      {/* Add comment form - using mt-auto to push to bottom if needed */}
+      <form onSubmit={handleSubmitComment} className="mt-auto">
         {!user && (
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 mb-3">
             <Avatar className="h-10 w-10 border border-gray-600">
               <AvatarFallback className="bg-muted/80 text-gray-300">
                 <User className="h-5 w-5" />
