@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Book, Author } from "../types";
+import { Book as BookType, Author } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { BookRackShelf } from "./book-rack-shelf";
@@ -17,7 +17,8 @@ import {
   StickyNote,
   Share2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  BookOpen as BookIcon
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
@@ -38,14 +39,14 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
   
-  // Mobile swipe carousel for notes
+  // Mobile swipe carousel for book details and notes
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: false,
+    loop: true,
     align: 'center',
   });
   
-  // Track current note index for mobile swipe
-  const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
+  // Track current carousel slide index
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Define the correct response type
   interface ShelfData {
@@ -123,23 +124,18 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   
   // Handle Embla carousel initialization and scroll events
   useEffect(() => {
-    if (!emblaApi || bookNotes.length === 0) return;
+    if (!emblaApi || !selectedBook) return;
     
     // Reset carousel to beginning when book changes
     emblaApi.scrollTo(0);
-    setCurrentNoteIndex(0);
+    setCurrentSlideIndex(0);
     
     // Add scroll event listener to track current slide
     const onSelect = () => {
       const index = emblaApi.selectedScrollSnap();
-      setCurrentNoteIndex(index);
+      setCurrentSlideIndex(index);
       
-      // Show the currently visible note
-      const note = bookNotes[index];
-      if (note) {
-        setSelectedNote(note);
-        setNoteVisible(true);
-      }
+      // We don't need to show notes automatically as the carousel will handle that
     };
     
     emblaApi.on("select", onSelect);
@@ -148,7 +144,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     return () => {
       emblaApi.off("select", onSelect);
     };
-  }, [emblaApi, bookNotes, selectedBook]);
+  }, [emblaApi, selectedBook]);
   
   // Navigation functions for mobile swipe
   const scrollPrev = useCallback(() => {
@@ -433,53 +429,129 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
             )}
           </div>
           
-          {/* Mobile-only swipeable notes carousel */}
-          {bookNotes && bookNotes.length > 0 && (
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-black/80 backdrop-blur-sm">
-              <div className="container p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-1">
-                    <StickyNote className="h-3 w-3" />
-                    Book Notes ({currentNoteIndex + 1}/{bookNotes.length})
+          {/* Mobile-only swipeable book details and notes carousel */}
+          {selectedBook && (
+            <div className="md:hidden fixed inset-0 z-30 bg-background/95 backdrop-blur-sm">
+              <div className="container h-full p-4 pt-16 pb-20">
+                <div className="flex justify-between items-center mb-4 absolute top-4 left-4 right-4">
+                  <h3 className="text-sm font-medium text-foreground flex items-center gap-1">
+                    {currentSlideIndex === 0 ? (
+                      <>
+                        <Book className="h-3 w-3" />
+                        Book Details
+                      </>
+                    ) : (
+                      <>
+                        <StickyNote className="h-3 w-3" />
+                        Note {currentSlideIndex} of {bookNotes.length + 1}
+                      </>
+                    )}
                   </h3>
                   
                   {/* Navigation buttons */}
                   <div className="flex gap-2">
                     <Button 
                       size="icon" 
-                      variant="outline" 
-                      className="h-7 w-7 rounded-full bg-background/20 border-gray-700"
-                      onClick={scrollPrev}
-                      disabled={currentNoteIndex === 0}
+                      variant="ghost" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => {
+                        // Close the mobile view
+                        setSelectedNote(null);
+                        setNoteVisible(false);
+                      }}
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      size="icon" 
-                      variant="outline" 
-                      className="h-7 w-7 rounded-full bg-background/20 border-gray-700"
-                      onClick={scrollNext}
-                      disabled={currentNoteIndex === bookNotes.length - 1}
-                    >
-                      <ChevronRight className="h-4 w-4" />
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 
-                {/* Embla carousel for swipeable notes */}
-                <div className="overflow-hidden" ref={emblaRef}>
-                  <div className="flex">
+                {/* Embla carousel for swipeable content */}
+                <div className="overflow-hidden h-full" ref={emblaRef}>
+                  <div className="flex h-full">
+                    {/* First slide: Book description */}
+                    <div className="min-w-full h-full flex flex-col">
+                      <div className="flex-shrink-0 mb-4">
+                        <div className="flex items-center">
+                          <img 
+                            src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                            alt={selectedBook?.title} 
+                            className="h-32 w-auto mr-4 rounded shadow-md" 
+                          />
+                          <div>
+                            <h2 className="text-xl font-bold mb-1">{selectedBook?.title}</h2>
+                            <p className="text-sm text-foreground/80">by {selectedBook?.authorName}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex-grow overflow-y-auto pb-4">
+                        <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                        
+                        {/* Genres */}
+                        <div className="mt-4">
+                          <div className="flex flex-wrap gap-1">
+                            {selectedBook?.genres?.map((genre: string, idx: number) => (
+                              <Badge 
+                                key={idx} 
+                                className="bg-gray-800 text-gray-300 hover:bg-gray-700"
+                              >
+                                {genre}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Note slides */}
                     {bookNotes.map((note, idx) => (
                       <div 
                         key={note.id}
-                        className="min-w-full"
+                        className="min-w-full h-full flex flex-col"
                       >
-                        <div className="p-3 rounded-lg bg-background/30 border border-gray-700">
-                          <PaperNoteCard note={note} />
+                        <div className="flex-grow overflow-y-auto">
+                          <div className="p-3 rounded-lg bg-background border border-gray-800">
+                            <PaperNoteCard note={note} />
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
+                
+                {/* Swipe indicator */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1 items-center">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    onClick={scrollPrev}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Slide indicators */}
+                  <div className="flex gap-1 items-center">
+                    {[0, ...bookNotes.map((_, i) => i + 1)].map((i) => (
+                      <div 
+                        key={i}
+                        className={`h-1.5 rounded-full transition-all ${
+                          currentSlideIndex === i 
+                            ? 'w-4 bg-primary' 
+                            : 'w-1.5 bg-muted'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    onClick={scrollNext}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
