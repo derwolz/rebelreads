@@ -83,7 +83,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     slidesToScroll: 1,
     dragFree: false,
     watchDrag: true,
-    skipSnaps: false
+    skipSnaps: true
   });
     
   // Log error if shelfData is undefined but username and shelfName are provided
@@ -141,9 +141,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   useEffect(() => {
     if (!emblaApi) return;
     
-    // Reset carousel to beginning when book or notes change
-    emblaApi.scrollTo(0);
-    setCurrentSlideIndex(0);
+
     
     // Add scroll event listener to track current slide
     const onSelect = () => {
@@ -280,12 +278,12 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 )}
 
                 {/* Mobile-only share button and referral links container - between cover and title */}
-                <div className="flex md:hidden items-center mb-4 gap-2">
+                <div className="flex md:hidden items-center mt-3 mb-4 gap-4">
                   {/* Share button for mobile */}
                   <Button 
-                    variant="ghost" 
+ 
                     size="sm" 
-                    className="text-foregound"
+                    className="text-foregound bg-background/20 border-border border rounded-md"
                     onClick={async () => {
                       try {
                         // Create the shareable URL
@@ -318,7 +316,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   
                   {/* Referral links for mobile */}
                   {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-4">
                       {selectedBook.referralLinks.map((link: any, idx: number) => (
                         <a 
                           key={idx}
@@ -354,12 +352,12 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   </div>
                   
                   {/* Mobile view - Swipeable content with Cards */}
-                  <div className="md:hidden">
+                  <div className="md:hidden w-[90vw]">
                     {/* Embla carousel for swipeable cards (bookDetails + notes) */}
-                    <div className="overflow-hidden border border-border rounded-lg w-full" ref={emblaRef}>
+                    <div className="overflow-hidden  border border-border rounded-lg w-[90vw]" ref={emblaRef}>
                       <div className="flex touch-pan-y">
                         {/* Card 1: Book details card (always the first card) */}
-                        <div className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
+                        <div className="flex-[0_0_100%] pr-4 min-w-0 max-w-full">
                           <ScrollArea className="h-[180px] w-full">
                             <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                           </ScrollArea>
@@ -383,7 +381,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         {/* Cards 2+: Notes (one card per note) */}
                         {bookNotes.map((note, idx) => (
                           <div key={note.id} className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
-                            <div className="bg-muted/20 rounded-lg p-3 h-[180px] overflow-y-auto w-full">
+                            <div className="bg-muted/20 rounded-lg  h-full overflow-y-auto w-full">
                               <div className="flex justify-between items-center mb-2">
                                 <p className="text-xs text-muted-foreground">
                                   {new Date(note.createdAt).toLocaleDateString()}
@@ -412,35 +410,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       </div>
                     </div>
                     
-                    {/* Pagination dots */}
-                    {bookNotes.length > 0 && (
-                      <div className="flex justify-center gap-1 mt-2">
-                        {/* First dot is for book details */}
-                        <button
-                          className={`w-2 h-2 rounded-full transition-all ${
-                            currentSlideIndex === 0 
-                              ? 'bg-foreground/80 scale-110' 
-                              : 'bg-muted-foreground/30'
-                          }`}
-                          onClick={() => emblaApi?.scrollTo(0)}
-                          aria-label="Go to book details"
-                        />
-                        
-                        {/* Remaining dots are for notes */}
-                        {bookNotes.map((_, idx) => (
-                          <button
-                            key={idx}
-                            className={`w-2 h-2 rounded-full transition-all ${
-                              currentSlideIndex === idx + 1
-                                ? 'bg-foreground/80 scale-110' 
-                                : 'bg-muted-foreground/30'
-                            }`}
-                            onClick={() => emblaApi?.scrollTo(idx + 1)}
-                            aria-label={`Go to note ${idx + 1}`}
-                          />
-                        ))}
-                      </div>
-                    )}
+                  
                     
                     {/* Book navigation indicators */}
                     {selectedBookIndex !== null && (
