@@ -165,7 +165,11 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           width = 256;
           height = 440;
           break;
-        case "grid-item":
+        case "spine":
+          width = 56;
+          height = 212;
+          break;
+        case "grid-item": // Keep for backward compatibility
           width = 56;
           height = 212;
           break;
@@ -539,7 +543,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         if (!formData.description) errors.push("Description is required");
         break;
       case 1: // Images
-        const requiredImageTypes = ["book-detail", "book-card"];
+        const requiredImageTypes = ["book-detail", "background", "hero", "spine"];
         requiredImageTypes.forEach((type) => {
           if (
             !formData.bookImages[type]?.file &&

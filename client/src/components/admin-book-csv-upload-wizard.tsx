@@ -80,13 +80,14 @@ export function AdminBookCsvUploadWizard() {
   });
   
   // Define refs with type safety
-  type ImageTypes = 'book-detail' | 'background' | 'hero' | 'book-card' | 'grid-item' | 'mini';
+  type ImageTypes = 'book-detail' | 'background' | 'hero' | 'book-card' | 'spine' | 'grid-item' | 'mini';
   
   const fileInputRefs: Record<ImageTypes, React.RefObject<HTMLInputElement>> = {
     'book-detail': useRef<HTMLInputElement>(null),
     'background': useRef<HTMLInputElement>(null), 
     'hero': useRef<HTMLInputElement>(null),
     'book-card': useRef<HTMLInputElement>(null),
+    'spine': useRef<HTMLInputElement>(null),
     'grid-item': useRef<HTMLInputElement>(null),
     'mini': useRef<HTMLInputElement>(null),
   };

@@ -18,7 +18,8 @@ export const IMAGE_TYPES = [
   "book-detail",    // 480x600 - Used on book details page
   "background",     // 1300x1500 - Used as background on book details page
   "book-card",      // 256x440 - Used in recommendations
-  "grid-item",      // 56x212 - Used in grid layouts
+  "spine",          // 56x212 - Used in grid layouts (renamed from grid-item)
+  "grid-item",      // 56x212 - Legacy name (now called spine)
   "mini",           // 48x64 - Used in reviews and what's hot sections
   "hero"            // 1500x600 - Used in hero sections
 ] as const;
