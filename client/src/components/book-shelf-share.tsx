@@ -79,8 +79,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, // Don't loop - card 1 is always book details, cards 2+ are notes
     align: 'center',
-    containScroll: 'trimSnaps',
+    containScroll: 'keepSnaps',
+    slidesToScroll: 1,
     dragFree: false,
+    watchDrag: true,
     skipSnaps: false
   });
     
@@ -211,15 +213,15 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
          
               
               {/* Book details */}
-              <div className="flex h-full bg-muted border-gray-800 border flex-col  overflow-hidden  md:flex-row rounded-lg">
+              <div className="flex h-full bg-muted border-gray-800 border flex-col overflow-hidden md:flex-row rounded-lg max-w-full">
 
 
                 {/* Book cover */}
-                <div className="h-full z-20 flex-left flex   justify-center overflow-hidden  ">
+                <div className="h-full z-20 flex-left flex justify-center overflow-hidden md:max-w-[200px]">
                   <img 
                     src={selectedBook?.images?.find((img: any) => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                     alt={selectedBook?.title} 
-                    className="h-auto min-h-[350px] w-full shadow-lg object-cover rounded-md" 
+                    className="h-auto max-h-[350px] w-full shadow-lg object-cover rounded-md" 
                   />
                 </div>
 
@@ -354,11 +356,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   {/* Mobile view - Swipeable content with Cards */}
                   <div className="md:hidden">
                     {/* Embla carousel for swipeable cards (bookDetails + notes) */}
-                    <div className="overflow-hidden border border-border rounded-lg w-full max-w-full" ref={emblaRef}>
-                      <div className="flex">
+                    <div className="overflow-hidden border border-border rounded-lg w-full" ref={emblaRef}>
+                      <div className="flex touch-pan-y">
                         {/* Card 1: Book details card (always the first card) */}
-                        <div className="flex-[0_0_100%] min-w-0 p-4 w-full">
-                          <ScrollArea className="h-[180px] min-w-0 w-full">
+                        <div className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
+                          <ScrollArea className="h-[180px] w-full">
                             <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                           </ScrollArea>
                           
@@ -380,7 +382,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         
                         {/* Cards 2+: Notes (one card per note) */}
                         {bookNotes.map((note, idx) => (
-                          <div key={note.id} className="flex-[0_0_100%] min-w-0 p-4 w-full">
+                          <div key={note.id} className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
                             <div className="bg-muted/20 rounded-lg p-3 h-[180px] overflow-y-auto w-full">
                               <div className="flex justify-between items-center mb-2">
                                 <p className="text-xs text-muted-foreground">
