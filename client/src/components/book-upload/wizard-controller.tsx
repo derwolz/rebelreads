@@ -15,6 +15,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { BookFormData, WizardControllerProps } from "./types";
 import { 
   BookText, 
@@ -701,7 +708,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   );
 }
 
-// Make sure to import Edit from lucide-react at the top of the file
+// Import the Edit icon and BookImageFile type
 import { Edit } from "lucide-react";
-// Make sure to import BookImageFile from the types file
 import { BookImageFile } from "./types";
