@@ -43,6 +43,7 @@ import verifyLoginRoutes from "./routes/verify-login-route";
 import linkPreviewRoutes from "./routes/link-preview-routes";
 import objectStorageRoutes from "./routes/object-storage-routes";
 import testUploadRoutes from "./routes/test-upload-routes";
+import testBookImageRoutes from "./routes/test-book-image-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -53,6 +54,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register test upload routes (for development and testing)
   app.use("/api/test-upload", testUploadRoutes);
+  
+  // Register test book image upload routes (for testing book image uploads)
+  app.use("/api/test-book-image", testBookImageRoutes);
   
   // Serve legacy test upload page (for development only)
   app.get("/test-upload", (req, res) => {
