@@ -761,6 +761,8 @@ export function setupAuth(app: Express) {
         !req.path.startsWith('/api/landing/') && // Allow unauthenticated access to landing page
         !req.path.startsWith('/api/signup-interest') && // Allow unauthenticated signup interest
         !req.path.startsWith('/api/debug/') && // Allow unauthenticated access to debug endpoints
+        !req.path.startsWith('/api/book-shelf') && // Allow unauthenticated access to shared bookshelves
+        !req.path.match(/^\/api\/bookshelves\/\d+\/comments.*$/) && // Allow unauthenticated access to bookshelf comments
         !req.path.match(/^\/api\/books(\/\d+)?(\/ratings|\/reading-status|\/taxonomies)?$/) && 
         !req.path.match(/^\/api\/genres.*$/) && // Allow unauthenticated access to genres for the landing page
         req.method !== 'OPTIONS') {
