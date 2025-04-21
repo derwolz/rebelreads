@@ -23,18 +23,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { BookFormData, WizardControllerProps } from "./types";
-import { 
-  BookText, 
-  Images, 
-  Award, 
-  BookOpen, 
-  Calendar, 
-  Tags, 
-  FileText, 
-  Link as LinkIcon, 
+import {
+  BookText,
+  Images,
+  Award,
+  BookOpen,
+  Calendar,
+  Tags,
+  FileText,
+  Link as LinkIcon,
   Eye,
   Info,
-  Loader2
+  Loader2,
 } from "lucide-react";
 
 // Import step components
@@ -50,50 +50,50 @@ import { PreviewStep } from "./preview";
 import { TaxonomyItem } from "@/components/genre-selector";
 
 const STEPS = [
-  { 
+  {
     title: "Basic Information",
     component: BasicInfoStep,
-    icon: <BookText aria-hidden="true" className="h-4 w-4" />
+    icon: <BookText aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Images",
     component: ImagesStep,
-    icon: <Images aria-hidden="true" className="h-4 w-4" />
+    icon: <Images aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Awards",
     component: AwardsStep,
-    icon: <Award aria-hidden="true" className="h-4 w-4" />
+    icon: <Award aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Formats",
     component: FormatsStep,
-    icon: <BookOpen aria-hidden="true" className="h-4 w-4" />
+    icon: <BookOpen aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Publication",
     component: PublicationStep,
-    icon: <Calendar aria-hidden="true" className="h-4 w-4" />
+    icon: <Calendar aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Genres",
     component: GenresStep,
-    icon: <Tags aria-hidden="true" className="h-4 w-4" />
+    icon: <Tags aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Book Details",
     component: BookDetailsStep,
-    icon: <FileText aria-hidden="true" className="h-4 w-4" />
+    icon: <FileText aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Referral Links",
     component: ReferralLinksStep,
-    icon: <LinkIcon aria-hidden="true" className="h-4 w-4" />
+    icon: <LinkIcon aria-hidden="true" className="h-4 w-4" />,
   },
-  { 
+  {
     title: "Preview",
     component: PreviewStep,
-    icon: <Eye aria-hidden="true" className="h-4 w-4" />
+    icon: <Eye aria-hidden="true" className="h-4 w-4" />,
   },
 ];
 
@@ -126,10 +126,10 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  
+
   // Local storage key for storing form data
   const LOCAL_STORAGE_KEY = "book_upload_form_data";
-  
+
   // Fetch book taxonomies when editing a book
   const { data: bookTaxonomies } = useQuery<TaxonomyItem[]>({
     queryKey: ["/api/books", book?.id, "taxonomies"],
@@ -141,16 +141,16 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
     },
     enabled: !!book?.id, // Only run this query if we have a book ID
   });
-  
+
   // Helper function to create empty book images structure
   const createEmptyBookImages = (): Record<string, BookImageFile> => {
     const images: Partial<Record<string, BookImageFile>> = {};
-    
+
     // Initialize each image type with empty values
-    IMAGE_TYPES.forEach(type => {
+    IMAGE_TYPES.forEach((type) => {
       let width = 0;
       let height = 0;
-      
+
       // Set dimensions based on image type
       switch (type) {
         case "book-detail":
@@ -178,31 +178,34 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           height = 600;
           break;
       }
-      
+
       images[type] = {
         type,
         file: null,
         width,
-        height
+        height,
       };
     });
-    
+
     return images as Record<string, BookImageFile>;
   };
-  
+
   // Initialize form data from local storage or defaults
   const [formData, setFormData] = useState<BookFormData>(() => {
     // If editing an existing book, don't use local storage
     if (book) {
       // Create book images structure with existing images if available
       const bookImages = createEmptyBookImages();
-      
+
       // If the book has images, populate the URLs
       if (book.images && book.images.length > 0) {
-        console.log("Book has images:", book.images.map(img => `${img.imageType}: ${img.imageUrl}`));
-        
+        console.log(
+          "Book has images:",
+          book.images.map((img) => `${img.imageType}: ${img.imageUrl}`),
+        );
+
         // Initialize existing image URLs
-        book.images.forEach(image => {
+        book.images.forEach((image) => {
           const imageType = image.imageType;
           if (bookImages[imageType]) {
             // Store the image URL in the existing structure
@@ -211,7 +214,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           }
         });
       }
-      
+
       return {
         title: book.title,
         description: book.description,
@@ -226,31 +229,32 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         isbn: book.isbn || "",
         asin: book.asin || "",
         language: book.language,
-        genreTaxonomies: ((book as any).genreTaxonomies as TaxonomyItem[]) || [],
+        genreTaxonomies:
+          ((book as any).genreTaxonomies as TaxonomyItem[]) || [],
         originalTitle: book.originalTitle || "",
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "",
         bookImages: bookImages,
       };
     }
-    
+
     // Check if we have saved form data in local storage for a new book
     try {
       const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        
+
         // Reconstruct the formData object from saved data
         // Note: Files cannot be stored in localStorage, so bookImages will still have null files
         return {
           ...parsedData,
-          bookImages: createEmptyBookImages() // Files can't be saved, so always create empty image containers
+          bookImages: createEmptyBookImages(), // Files can't be saved, so always create empty image containers
         };
       }
     } catch (error) {
       console.error("Error loading form data from local storage:", error);
     }
-    
+
     // Return default empty form if no local storage data exists
     return {
       title: "",
@@ -273,7 +277,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       bookImages: createEmptyBookImages(),
     };
   });
-  
+
   // Save form data to local storage whenever it changes
   useEffect(() => {
     // Only save to local storage if not editing an existing book
@@ -286,25 +290,25 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           bookImages: Object.fromEntries(
             Object.entries(formData.bookImages).map(([key, value]) => [
               key,
-              { ...value, file: null }
-            ])
+              { ...value, file: null },
+            ]),
           ),
         };
-        
+
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
       } catch (error) {
         console.error("Error saving form data to local storage:", error);
       }
     }
   }, [formData, book]);
-  
+
   // Update form data when book taxonomies are loaded
   useEffect(() => {
     if (bookTaxonomies && bookTaxonomies.length > 0) {
       console.log("Loaded book taxonomies:", bookTaxonomies);
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        genreTaxonomies: bookTaxonomies
+        genreTaxonomies: bookTaxonomies,
       }));
     }
   }, [bookTaxonomies]);
@@ -385,14 +389,19 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         } else if (key === "bookImages" && typeof value === "object") {
           // Handle book images
           console.log("Processing bookImages in formData:", value);
-          Object.entries(value as Record<string, BookImageFile>).forEach(([imageType, imageData]) => {
-            console.log(`Processing image type: ${imageType}, has file:`, !!imageData.file);
-            if (imageData.file) {
-              formData.append(`bookImage_${imageType}`, imageData.file);
-              formData.append(`bookImageType_${imageType}`, imageType);
-              console.log(`Added image file for ${imageType} to formData`);
-            }
-          });
+          Object.entries(value as Record<string, BookImageFile>).forEach(
+            ([imageType, imageData]) => {
+              console.log(
+                `Processing image type: ${imageType}, has file:`,
+                !!imageData.file,
+              );
+              if (imageData.file) {
+                formData.append(`bookImage_${imageType}`, imageData.file);
+                formData.append(`bookImageType_${imageType}`, imageType);
+                console.log(`Added image file for ${imageType} to formData`);
+              }
+            },
+          );
         } else if (Array.isArray(value)) {
           formData.append(key, JSON.stringify(value));
         } else if (value !== null && value !== undefined && value !== "") {
@@ -417,7 +426,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           ? "Book updated successfully."
           : "Book uploaded successfully.",
       });
-      
+
       // Clear form data from local storage after successful submission
       if (!book) {
         try {
@@ -426,7 +435,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           console.error("Error removing form data from local storage:", error);
         }
       }
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -450,7 +459,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
     for (let i = 0; i < stepIndex; i++) {
       if (!canProceedFromStep(i)) return false;
     }
-    
+
     return true;
   };
 
@@ -461,10 +470,17 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         return !!formData.title && !!formData.description;
       case 1: // Images
         // Require at least book-detail and book-card images
-        const requiredImageTypes = ["book-detail", "book-card"];
-        return requiredImageTypes.every(type => 
-          (formData.bookImages[type]?.file || formData.bookImages[type]?.previewUrl) && 
-          !formData.bookImages[type]?.error
+        const requiredImageTypes = [
+          "book-detail",
+          "background",
+          "hero",
+          "spine",
+        ];
+        return requiredImageTypes.every(
+          (type) =>
+            (formData.bookImages[type]?.file ||
+              formData.bookImages[type]?.previewUrl) &&
+            !formData.bookImages[type]?.error,
         );
       case 2: // Awards
         return !formData.hasAwards || formData.awards.length > 0;
@@ -477,7 +493,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       case 6: // Book Details
         return true; // No required fields in this step
       case 7: // Referral Links
-        return formData.referralLinks.every(link => !!link.url);
+        return formData.referralLinks.every((link) => !!link.url);
       case 8: // Preview
         return true; // Preview step is always valid
       default:
@@ -486,22 +502,29 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   };
 
   // Handle image change - used by the ImagesStep component
-  const handleImageChange = (imageType: string, file: File | null, hasError: boolean, errorMessage?: string) => {
-    console.log(`Image change: ${imageType}, File: ${file?.name}, Error: ${hasError ? errorMessage : 'none'}`);
-    
+  const handleImageChange = (
+    imageType: string,
+    file: File | null,
+    hasError: boolean,
+    errorMessage?: string,
+  ) => {
+    console.log(
+      `Image change: ${imageType}, File: ${file?.name}, Error: ${hasError ? errorMessage : "none"}`,
+    );
+
     setFormData((prev) => {
       const newImages = {
         ...prev.bookImages,
         [imageType]: {
           ...prev.bookImages[imageType],
           file,
-          error: hasError ? errorMessage : undefined
-        }
+          error: hasError ? errorMessage : undefined,
+        },
       };
-      
+
       return {
         ...prev,
-        bookImages: newImages
+        bookImages: newImages,
       };
     });
   };
@@ -509,7 +532,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   // Get validation errors for the current step
   const getCurrentStepErrors = (): string[] => {
     const errors: string[] = [];
-    
+
     switch (currentStep) {
       case 0: // Basic Information
         if (!formData.title) errors.push("Title is required");
@@ -517,14 +540,19 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         break;
       case 1: // Images
         const requiredImageTypes = ["book-detail", "book-card"];
-        requiredImageTypes.forEach(type => {
-          if (!formData.bookImages[type]?.file && !formData.bookImages[type]?.previewUrl) {
+        requiredImageTypes.forEach((type) => {
+          if (
+            !formData.bookImages[type]?.file &&
+            !formData.bookImages[type]?.previewUrl
+          ) {
             errors.push(`${type} image is required`);
           } else if (formData.bookImages[type]?.error) {
-            errors.push(formData.bookImages[type].error || `${type} image has an error`);
+            errors.push(
+              formData.bookImages[type].error || `${type} image has an error`,
+            );
           }
         });
-        
+
         // Also check for errors in optional images that have been uploaded
         Object.entries(formData.bookImages)
           .filter(([type]) => !requiredImageTypes.includes(type))
@@ -536,7 +564,9 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         break;
       case 2: // Awards
         if (formData.hasAwards && formData.awards.length === 0) {
-          errors.push("Please add at least one award or uncheck the awards checkbox");
+          errors.push(
+            "Please add at least one award or uncheck the awards checkbox",
+          );
         }
         break;
       case 3: // Formats
@@ -545,7 +575,8 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         }
         break;
       case 4: // Publication
-        if (!formData.publishedDate) errors.push("Publication date is required");
+        if (!formData.publishedDate)
+          errors.push("Publication date is required");
         break;
       case 5: // Genres
         if (formData.genreTaxonomies.length === 0) {
@@ -556,20 +587,22 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         formData.referralLinks.forEach((link, index) => {
           if (!link.url) {
             errors.push(`URL for link #${index + 1} is required`);
-          } else if (!link.url.startsWith('http')) {
-            errors.push(`URL for link #${index + 1} must start with http:// or https://`);
+          } else if (!link.url.startsWith("http")) {
+            errors.push(
+              `URL for link #${index + 1} must start with http:// or https://`,
+            );
           }
         });
         break;
     }
-    
+
     return errors;
   };
 
   // Handle navigation to the next step
   const handleNext = () => {
     const errors = getCurrentStepErrors();
-    
+
     if (errors.length > 0) {
       toast({
         title: "Validation Error",
@@ -584,7 +617,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       });
       return;
     }
-    
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -600,7 +633,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Final validation check
     for (let i = 0; i < STEPS.length - 1; i++) {
       if (!canProceedFromStep(i)) {
@@ -613,7 +646,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         return;
       }
     }
-    
+
     uploadMutation.mutate(formData);
   };
 
@@ -635,7 +668,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
             disabled={!canSkipToStep(index)}
           >
             {step.icon}
-           
+
             <span className="inline sm:hidden">{index + 1}</span>
           </Button>
         ))}
@@ -655,9 +688,9 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
             </Button>
           )}
           {currentStep === 0 && (
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setShowCancelConfirm(true)}
             >
               Cancel
@@ -670,10 +703,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
               Next
             </Button>
           ) : (
-            <Button 
-              type="submit" 
-              disabled={uploadMutation.isPending}
-            >
+            <Button type="submit" disabled={uploadMutation.isPending}>
               {uploadMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
@@ -689,7 +719,8 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Your progress will be lost if you cancel now. Do you want to continue?
+              Your progress will be lost if you cancel now. Do you want to
+              continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
