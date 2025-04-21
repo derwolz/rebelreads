@@ -14,18 +14,6 @@ export interface BookImageFile {
 }
 
 /**
- * Interface for storing book format files with their metadata
- */
-export interface BookFormatFile {
-  formatType: string;
-  file: File | null;
-  fileUrl?: string; // URL for existing files when editing
-  fileName?: string; // Original filename
-  fileSize?: number; // Size in bytes
-  error?: string; // Track validation errors
-}
-
-/**
  * Form data structure for the book upload wizard
  */
 export interface BookFormData {
@@ -36,7 +24,7 @@ export interface BookFormData {
   characters: string[];
   hasAwards: boolean;
   awards: string[];
-  formats: string[];
+  formats: string[]; // We just track which formats are available, not the files themselves
   pageCount: number;
   publishedDate: string;
   isbn: string;
@@ -48,8 +36,6 @@ export interface BookFormData {
   genreTaxonomies: TaxonomyItem[];
   // Book images
   bookImages: Record<string, BookImageFile>;
-  // Book files
-  bookFiles: Record<string, BookFormatFile>;
 }
 
 /**

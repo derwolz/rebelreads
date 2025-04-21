@@ -28,7 +28,6 @@ import publisherRoutes from "./routes/publisher-routes";
 import catalogueAuthorsRoutes from "./routes/catalogue-routes-authors";
 import cataloguePublisherRoutes from "./routes/catalogue-routes-publisher";
 import cataloguePublisherAuthorsRoutes from "./routes/catalogue-routes-publisher-authors";
-import testBookFileRoutes from "./routes/test-book-file-routes";
 import cataloguePublisherBooksRoutes from "./routes/catalogue-routes-publisher-books";
 import filterRoutes from "./routes/filter-routes";
 import simpleApiRoutes from "./routes/simple-api";
@@ -62,9 +61,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register test Sirened Image Bucket routes (for testing the object storage integration)
   app.use("/api/test-sirened-bucket", testSirenedBucketRoutes);
-  
-  // Register test Book File routes (for testing book file uploads)
-  app.use("/api/test-book-file", testBookFileRoutes);
   
   // Serve legacy test upload page (for development only)
   app.get("/test-upload", (req, res) => {
