@@ -56,10 +56,15 @@ export class SirenedBookBucket {
       const path = this.getBookFilePath(bookId, formatType, file.originalname);
       
       // Upload the file to object storage
-      await this.storage.put(path, file.buffer, {
+      const result = await this.storage.putObject({
+        key: path,
+        body: file.buffer,
         contentType: file.mimetype,
-        contentLength: file.size,
       });
+      
+      if (result.error) {
+        throw new Error(`Failed to upload file: ${result.error.message}`);
+      }
 
       // Return the path which is the identifier for the file in the storage
       return path;
@@ -77,17 +82,29 @@ export class SirenedBookBucket {
   async getBookFile(path: string): Promise<{ data: Buffer; contentType: string }> {
     try {
       // Get the file from object storage
-      const data = await this.storage.get(path);
+      const result = await this.storage.getObject({ key: path });
       
-      if (!data) {
+      if (result.error) {
+        throw new Error(`Failed to get file: ${result.error.message}`);
+      }
+
+      if (!result.value) {
         throw new Error('File not found');
       }
 
       // Get the file metadata
-      const meta = await this.storage.head(path);
-      const contentType = meta?.contentType || 'application/octet-stream';
+      const headResult = await this.storage.headObject({ key: path });
+      
+      if (headResult.error) {
+        throw new Error(`Failed to get file metadata: ${headResult.error.message}`);
+      }
 
-      return { data, contentType };
+      const contentType = headResult.value?.contentType || 'application/octet-stream';
+
+      return { 
+        data: result.value, 
+        contentType 
+      };
     } catch (error) {
       console.error('Error getting book file:', error);
       throw new Error(`Failed to get book file: ${(error as Error).message}`);
@@ -101,7 +118,11 @@ export class SirenedBookBucket {
   async deleteBookFile(path: string): Promise<void> {
     try {
       // Delete the file from object storage
-      await this.storage.delete(path);
+      const result = await this.storage.deleteObject({ key: path });
+      
+      if (result.error) {
+        throw new Error(`Failed to delete file: ${result.error.message}`);
+      }
     } catch (error) {
       console.error('Error deleting book file:', error);
       throw new Error(`Failed to delete book file: ${(error as Error).message}`);
@@ -116,8 +137,17 @@ export class SirenedBookBucket {
   async listBookFiles(bookId: number): Promise<string[]> {
     try {
       const prefix = `${this.bucketName}/book_${bookId}/`;
-      const files = await this.storage.list(prefix);
-      return files;
+      
+      const result = await this.storage.listObjects({ 
+        prefix 
+      });
+      
+      if (result.error) {
+        throw new Error(`Failed to list files: ${result.error.message}`);
+      }
+
+      // Extract the keys from the objects
+      return result.value ? result.value.map(obj => obj.key) : [];
     } catch (error) {
       console.error('Error listing book files:', error);
       throw new Error(`Failed to list book files: ${(error as Error).message}`);

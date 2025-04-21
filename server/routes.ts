@@ -63,6 +63,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register test Sirened Image Bucket routes (for testing the object storage integration)
   app.use("/api/test-sirened-bucket", testSirenedBucketRoutes);
   
+  // Register test Book File routes (for testing book file uploads)
+  app.use("/api/test-book-file", testBookFileRoutes);
+  
   // Serve legacy test upload page (for development only)
   app.get("/test-upload", (req, res) => {
     res.sendFile(path.join(process.cwd(), "test-upload.html"));
