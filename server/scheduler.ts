@@ -43,7 +43,7 @@ export class Scheduler {
     // First, calculate the time until midnight GMT
     const timeUntilMidnight = this.getTimeUntilMidnightGMT();
     
-    console.log(`Scheduling weighted popular books calculation in ${Math.floor(timeUntilMidnight / 1000 / 60)} minutes`);
+    
     
     // Clear any existing timer
     if (this.timer) {
@@ -51,17 +51,17 @@ export class Scheduler {
     }
     
     // Run once at startup to ensure we have data
-    console.log("Running initial weighted popular books calculation at startup");
+    
     this.runPopularBooksCalculation();
     
     // Schedule the next run at midnight
     this.timer = setTimeout(async () => {
-      console.log("Running scheduled weighted popular books calculation at midnight GMT");
+      
       await this.runPopularBooksCalculation();
       
       // Then schedule to run daily (every 24 hours)
       setInterval(async () => {
-        console.log("Running daily weighted popular books calculation");
+        
         await this.runPopularBooksCalculation();
       }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
     }, timeUntilMidnight);
@@ -77,9 +77,9 @@ export class Scheduler {
    */
   private async runPopularBooksCalculation(): Promise<void> {
     try {
-      console.log(`Running weighted popular books calculation - ${new Date().toISOString()}`);
+      
       await dbStorage.calculatePopularBooks();
-      console.log(`Weighted popular books calculation completed - ${new Date().toISOString()}`);
+      
     } catch (error) {
       console.error("Error in scheduled weighted popular books calculation:", error);
     }

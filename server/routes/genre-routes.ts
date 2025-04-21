@@ -195,7 +195,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid view ID" });
     }
     
-    console.log(`Fetching books for genre view ID: ${viewId}`);
+    
     
     // 1. Get all genre taxonomy IDs from this view
     const viewGenresResult = await db
@@ -204,12 +204,12 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       .where(eq(viewGenres.viewId, viewId));
     
     if (!viewGenresResult || viewGenresResult.length === 0) {
-      console.log(`No genres found for view ID: ${viewId}`);
+      
       return res.json([]);
     }
     
     const taxonomyIds = viewGenresResult.map(g => g.taxonomyId);
-    console.log(`Found taxonomy IDs for view: ${taxonomyIds.join(', ')}`);
+    
     
     // 2. Get all books that have these taxonomies
     const bookGenresResult = await db
@@ -218,14 +218,14 @@ router.get("/view/:id", async (req: Request, res: Response) => {
       .where(inArray(bookGenreTaxonomies.taxonomyId, taxonomyIds));
     
     if (!bookGenresResult || bookGenresResult.length === 0) {
-      console.log(`No books found for view taxonomies`);
+      
       return res.json([]);
     }
     
     // Use a simple array with filter to get unique book IDs
     let bookIds = bookGenresResult.map(bg => bg.bookId)
       .filter((id, index, self) => self.indexOf(id) === index);
-    console.log(`Found book IDs: ${bookIds.join(', ')}`);
+    
     
     // If user is authenticated, apply filtering based on blocked content
     if (userId) {
@@ -252,23 +252,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
         const blockedTaxonomies = userBlocksResult
           .filter(block => block.blockType === 'taxonomy')
           .map(block => block.blockId);
-        
-        // Log block counts
-        if (blockedAuthors.length > 0) {
-          console.log(`User has ${blockedAuthors.length} blocked authors`);
-        }
-        
-        if (blockedBooks.length > 0) {
-          console.log(`User has ${blockedBooks.length} blocked books`);
-        }
-        
-        if (blockedPublishers.length > 0) {
-          console.log(`User has ${blockedPublishers.length} blocked publishers`);
-        }
-        
-        if (blockedTaxonomies.length > 0) {
-          console.log(`User has ${blockedTaxonomies.length} blocked taxonomies`);
-        }
+
         
         // Filter out books that match blocked taxonomies
         if (blockedTaxonomies.length > 0) {
@@ -284,7 +268,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
           const booksWithBlockedTaxonomies = booksWithBlockedTaxonomiesResult.map(b => b.bookId);
           
           if (booksWithBlockedTaxonomies.length > 0) {
-            console.log(`Filtering out ${booksWithBlockedTaxonomies.length} books with blocked taxonomies`);
+            
             // Remove books with blocked taxonomies from our list
             bookIds = bookIds.filter(id => !booksWithBlockedTaxonomies.includes(id));
           }
@@ -294,7 +278,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
         if (blockedBooks.length > 0) {
           const initialBookCount = bookIds.length;
           bookIds = bookIds.filter(id => !blockedBooks.includes(id));
-          console.log(`Filtered out ${initialBookCount - bookIds.length} directly blocked books`);
+          
         }
         
         // Apply author filtering
@@ -311,7 +295,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
           const booksFromBlockedAuthors = booksFromBlockedAuthorsResult.map(b => b.id);
           
           if (booksFromBlockedAuthors.length > 0) {
-            console.log(`Filtering out ${booksFromBlockedAuthors.length} books by blocked authors`);
+            
             // Remove books by blocked authors from our list
             bookIds = bookIds.filter(id => !booksFromBlockedAuthors.includes(id));
           }
@@ -332,7 +316,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
           const booksFromBlockedPublishers = booksFromBlockedPublishersResult.map(b => b.bookId);
           
           if (booksFromBlockedPublishers.length > 0) {
-            console.log(`Filtering out ${booksFromBlockedPublishers.length} books from blocked publishers`);
+            
             // Remove these books from our list
             bookIds = bookIds.filter(id => !booksFromBlockedPublishers.includes(id));
           }
@@ -340,7 +324,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
         
         // Check if we have enough books after filtering
         if (bookIds.length < count) {
-          console.log(`Only ${bookIds.length} books remain after filtering, need at least ${count}`);
+          
           
           // Find additional books that match the view's genres but aren't in our blocked categories
           // Start by getting all books with the view's taxonomies that aren't already included
@@ -361,7 +345,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
             additionalBookIdsArray.indexOf(id) === index);
           
           if (potentialAdditionalBookIds.length > 0) {
-            console.log(`Found ${potentialAdditionalBookIds.length} potential additional books`);
+            
             
             // Filter out books with blocked taxonomies
             let filteredAdditionalBookIds = potentialAdditionalBookIds;
@@ -434,7 +418,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
             const additionalBookIdsToAdd = filteredAdditionalBookIds.slice(0, neededBooks);
             
             if (additionalBookIdsToAdd.length > 0) {
-              console.log(`Adding ${additionalBookIdsToAdd.length} additional books after filtering`);
+              
               bookIds = [...bookIds, ...additionalBookIdsToAdd];
             }
           }
@@ -444,7 +428,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
 
     // If we still don't have enough books, log a warning
     if (bookIds.length < count) {
-      console.log(`Warning: Only ${bookIds.length} books available after all filtering, requested ${count}`);
+      
     }
     
     // 3. Get the complete book data with author information
@@ -506,7 +490,7 @@ router.get("/view/:id", async (req: Request, res: Response) => {
     }));
     
     // Log and return results
-    console.log(`Returning ${booksWithImages.length} books for genre view ID: ${viewId}`);
+    
     res.json(booksWithImages);
   } catch (error) {
     console.error("Error fetching books for genre view:", error);

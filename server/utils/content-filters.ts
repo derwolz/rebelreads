@@ -51,19 +51,19 @@ export async function applyContentFilters(userId: number, bookIds: number[]): Pr
     
     // Log block counts
     if (blockedAuthors.length > 0) {
-      console.log(`User has ${blockedAuthors.length} blocked authors`);
+      
     }
     
     if (blockedBooks.length > 0) {
-      console.log(`User has ${blockedBooks.length} blocked books`);
+      
     }
     
     if (blockedPublishers.length > 0) {
-      console.log(`User has ${blockedPublishers.length} blocked publishers`);
+      
     }
     
     if (blockedTaxonomies.length > 0) {
-      console.log(`User has ${blockedTaxonomies.length} blocked taxonomies`);
+      
     }
     
     // Filter out books that match blocked taxonomies
@@ -80,7 +80,7 @@ export async function applyContentFilters(userId: number, bookIds: number[]): Pr
       const booksWithBlockedTaxonomies = booksWithBlockedTaxonomiesResult.map(b => b.bookId);
       
       if (booksWithBlockedTaxonomies.length > 0) {
-        console.log(`Filtering out ${booksWithBlockedTaxonomies.length} books with blocked taxonomies`);
+        
         // Remove books with blocked taxonomies from our list
         filteredBookIds = filteredBookIds.filter(id => !booksWithBlockedTaxonomies.includes(id));
       }
@@ -90,7 +90,7 @@ export async function applyContentFilters(userId: number, bookIds: number[]): Pr
     if (blockedBooks.length > 0) {
       const initialBookCount = filteredBookIds.length;
       filteredBookIds = filteredBookIds.filter(id => !blockedBooks.includes(id));
-      console.log(`Filtered out ${initialBookCount - filteredBookIds.length} directly blocked books`);
+      
     }
     
     // Apply author filtering
@@ -107,7 +107,7 @@ export async function applyContentFilters(userId: number, bookIds: number[]): Pr
       const booksFromBlockedAuthors = booksFromBlockedAuthorsResult.map(b => b.id);
       
       if (booksFromBlockedAuthors.length > 0) {
-        console.log(`Filtering out ${booksFromBlockedAuthors.length} books by blocked authors`);
+        
         // Remove books by blocked authors from our list
         filteredBookIds = filteredBookIds.filter(id => !booksFromBlockedAuthors.includes(id));
       }
@@ -128,7 +128,7 @@ export async function applyContentFilters(userId: number, bookIds: number[]): Pr
       const booksFromBlockedPublishers = booksFromBlockedPublishersResult.map(b => b.bookId);
       
       if (booksFromBlockedPublishers.length > 0) {
-        console.log(`Filtering out ${booksFromBlockedPublishers.length} books from blocked publishers`);
+        
         // Remove these books from our list
         filteredBookIds = filteredBookIds.filter(id => !booksFromBlockedPublishers.includes(id));
       }

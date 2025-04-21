@@ -53,21 +53,21 @@ async function populateTaxonomies() {
   const client = await pool.connect();
   
   try {
-    console.log("Starting taxonomy population...");
+    
     
     // Check if we already have taxonomies
     const checkResult = await client.query('SELECT COUNT(*) FROM genre_taxonomies');
     const count = parseInt(checkResult.rows[0].count);
     
-    console.log(`Found ${count} existing taxonomies`);
+    
     
     if (count > 0) {
-      console.log("Taxonomies already exist. Skipping population.");
+      
       return;
     }
     
     // Insert all taxonomies
-    console.log(`Inserting ${SAMPLE_TAXONOMIES.length} taxonomies...`);
+    
     
     // Begin transaction
     await client.query('BEGIN');
@@ -83,7 +83,7 @@ async function populateTaxonomies() {
     // Commit transaction
     await client.query('COMMIT');
     
-    console.log("Taxonomy population complete!");
+    
   } catch (error) {
     await client.query('ROLLBACK');
     console.error("Error populating taxonomies:", error);

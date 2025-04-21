@@ -95,7 +95,7 @@ router.get("/rating-preferences", async (req: Request, res: Response) => {
     }
     
     // Log what we're sending back
-    console.log("Returning preferences:", JSON.stringify(preferences));
+    
     
     res.json(preferences);
   } catch (error) {
@@ -107,7 +107,7 @@ router.get("/rating-preferences", async (req: Request, res: Response) => {
 // Save user's rating preferences
 router.post("/rating-preferences", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
-    console.log("Rating preferences POST - User not authenticated");
+    
     return res.status(401).json({ error: "Not authenticated" });
   }
   
@@ -124,14 +124,14 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
   });
   
   try {
-    console.log("Rating preferences POST - Request body:", req.body);
-    console.log("Rating preferences POST - User ID:", req.user.id);
+    
+    
     
     const weights = schema.parse(req.body);
     
     const preferences = await dbStorage.saveRatingPreferences(req.user.id, weights);
     
-    console.log("Rating preferences POST - Successfully saved:", JSON.stringify(preferences));
+    
     res.json(preferences);
   } catch (error) {
     console.error("Error saving rating preferences:", error);
@@ -295,7 +295,7 @@ router.get("/genre-preferences", async (req: Request, res: Response) => {
       })
     );
     
-    console.log("Returning genre views:", JSON.stringify(viewsWithGenres));
+    
     
     res.json({ 
       views: viewsWithGenres,
@@ -339,7 +339,7 @@ router.post("/genre-views", async (req: Request, res: Response) => {
       data.isDefault
     );
     
-    console.log("Genre view created:", JSON.stringify(view));
+    
     res.status(201).json(view);
   } catch (error) {
     console.error("Error creating genre view:", error);
@@ -377,7 +377,7 @@ router.patch("/genre-views/:id", async (req: Request, res: Response) => {
     // Update the view
     const updatedView = await dbStorage.updateGenreView(viewId, data);
     
-    console.log("Genre view updated:", JSON.stringify(updatedView));
+    
     res.json(updatedView);
   } catch (error) {
     console.error("Error updating genre view:", error);
@@ -402,7 +402,7 @@ router.delete("/genre-views/:id", async (req: Request, res: Response) => {
   try {
     await dbStorage.deleteGenreView(viewId);
     
-    console.log("Genre view deleted:", viewId);
+    
     res.status(204).end();
   } catch (error) {
     console.error("Error deleting genre view:", error);
@@ -442,7 +442,7 @@ router.post("/genre-views/:id/genres", async (req: Request, res: Response) => {
       data.rank
     );
     
-    console.log("Genre added to view:", JSON.stringify(genre));
+    
     res.status(201).json(genre);
   } catch (error) {
     console.error("Error adding genre to view:", error);
@@ -467,7 +467,7 @@ router.delete("/view-genres/:id", async (req: Request, res: Response) => {
   try {
     await dbStorage.removeGenreFromView(genreId);
     
-    console.log("Genre removed from view:", genreId);
+    
     res.status(204).end();
   } catch (error) {
     console.error("Error removing genre from view:", error);
@@ -500,7 +500,7 @@ router.patch("/view-genres/:id/rank", async (req: Request, res: Response) => {
     // Update the genre rank
     const updatedGenre = await dbStorage.updateGenreRank(genreId, data.rank);
     
-    console.log("Genre rank updated:", JSON.stringify(updatedGenre));
+    
     res.json(updatedGenre);
   } catch (error) {
     console.error("Error updating genre rank:", error);
@@ -553,7 +553,7 @@ router.get("/publisher-status", async (req: Request, res: Response) => {
       publisherDetails = await dbStorage.getPublisherByUserId(req.user.id);
     }
     
-    console.log(`Publisher status check for user ${req.user.id}:`, { isPublisher, publisherDetails });
+    
     
     // Ensure we're sending JSON response
     return res.json({ isPublisher, publisherDetails });
@@ -603,7 +603,7 @@ router.post("/become-author", async (req: Request, res: Response) => {
         })
         .where(eq(users.id, req.user.id));
       
-      console.log(`Beta mode active: Granted Pro access to new author (userId: ${req.user.id}) until ${getBetaEndDate().toISOString()}`);
+      
       
       // Get the updated user to include in the response
       const updatedUser = await dbStorage.getUser(req.user.id);
@@ -992,22 +992,22 @@ router.post("/generate-verification-code", async (req: Request, res: Response) =
   }
   
   try {
-    console.log("Generating verification code for user:", req.user.id);
+    
     
     // Check if the user is a seller
     const seller = await dbStorage.getSellerByUserId(req.user.id);
     
     if (!seller) {
-      console.log("Seller profile not found for user:", req.user.id);
+      
       return res.status(404).json({ error: "Seller profile not found" });
     }
     
-    console.log("Found seller profile:", seller.id);
+    
     
     // Generate a new verification code
     const code = await dbStorage.createPublisherSellerVerificationCode(seller.id);
     
-    console.log("Generated verification code:", code);
+    
     
     if (!code) {
       return res.status(500).json({ error: "Failed to generate verification code" });
@@ -1211,7 +1211,7 @@ router.post("/user/profile-image", profileImageUpload.single('profileImage'), as
     // Update the session user object with new profile image URL
     req.user.profileImageUrl = profileImageUrl;
     
-    console.log(`Profile image updated for user ${req.user.id}: ${profileImageUrl}`);
+    
     
     // Return success response with new profile image URL
     res.json({ profileImageUrl });

@@ -33,14 +33,14 @@ env.useBrowserCache = true;
 env.backends.onnx.wasm.numThreads = 1;
 
 async function loadModel(task: 'sentiment-analysis' | 'zero-shot-classification', model: string) {
-  console.log(`Loading ${task} model: ${model}`);
+  
   try {
     // Use pipeline with specific configuration
     const pipe = await pipeline(task, model, {
       quantized: false, // Disable quantization for better compatibility
-      progress_callback: (x: any) => console.log('Model loading progress:', x)
+      progress_callback: (x: any) => {}
     });
-    console.log(`Successfully loaded ${task} model`);
+    
     return pipe;
   } catch (error) {
     console.error(`Error loading ${task} model:`, error);
@@ -63,7 +63,7 @@ export async function initializeModels() {
         'Xenova/all-MiniLM-L6-v2'
       );
     }
-    console.log('Models initialized successfully');
+    
   } catch (error) {
     console.error('Error initializing models:', error);
     throw new Error(`Failed to initialize models: ${error instanceof Error ? error.message : String(error)}`);
@@ -71,7 +71,7 @@ export async function initializeModels() {
 }
 
 export async function analyzeReview(text: string): Promise<ReviewAnalysis> {
-  console.log('Starting review analysis...');
+  
 
   try {
     await initializeModels();
@@ -80,15 +80,15 @@ export async function analyzeReview(text: string): Promise<ReviewAnalysis> {
       throw new Error('Models not properly initialized');
     }
 
-    console.log('Analyzing sentiment...');
+    
     const sentimentResult = await classifier(text);
-    console.log('Sentiment result:', sentimentResult);
+    
 
-    console.log('Analyzing themes...');
+    
     const themeResult = await zeroShotClassifier(text, themes, {
       multi_label: true,
     });
-    console.log('Theme result:', themeResult);
+    
 
     // Format themes to only include those with significant confidence
     const significantThemes = themeResult.labels
@@ -107,7 +107,7 @@ export async function analyzeReview(text: string): Promise<ReviewAnalysis> {
       themes: significantThemes
     };
 
-    console.log('Final analysis:', analysis);
+    
     return analysis;
   } catch (error) {
     console.error('Analysis error:', error);

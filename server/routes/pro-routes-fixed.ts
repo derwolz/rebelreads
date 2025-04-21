@@ -253,14 +253,14 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    console.log("Fetching real reviews for author:", req.user.id);
+    
     
     // Get all books by this author
     const authorBooks = await dbStorage.getBooksByAuthor(req.user.id);
-    console.log("Author books found:", authorBooks.length, authorBooks.map((b: any) => b.id));
+    
     
     if (!authorBooks || authorBooks.length === 0) {
-      console.log("No author books found, returning empty result");
+      
       return res.json({
         reviews: [],
         hasMore: false,
@@ -270,20 +270,20 @@ router.get("/reviews", async (req: Request, res: Response) => {
 
     // Get book IDs
     const bookIds = authorBooks.map((book: { id: number }) => book.id);
-    console.log("Book IDs to fetch ratings for:", bookIds);
+    
     
     // Collect all ratings for these books
     let allRatings: any[] = [];
     for (const bookId of bookIds) {
-      console.log(`Fetching ratings for book ID ${bookId}`);
+      
       const bookRatings = await dbStorage.getRatings(bookId);
-      console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
+      
       allRatings = [...allRatings, ...bookRatings];
     }
-    console.log(`Total ratings found: ${allRatings.length}`);
+    
     
     if (allRatings.length > 0) {
-      console.log("First rating sample:", allRatings[0]);
+      
     }
     
     // Sort reviews by creation date (most recent first)
@@ -431,7 +431,7 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    console.log("Fetching demo reviews for testing");
+    
     
     // Get some sample books
     const sampleBooks = await db.query.books.findMany({
@@ -439,7 +439,7 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
     });
     
     if (!sampleBooks || sampleBooks.length === 0) {
-      console.log("No sample books found, returning empty result");
+      
       return res.json({
         reviews: [],
         hasMore: false,
@@ -449,20 +449,20 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
 
     // Get book IDs
     const bookIds = sampleBooks.map(book => book.id);
-    console.log("Book IDs to fetch ratings for:", bookIds);
+    
     
     // Collect all ratings for these books
     let allRatings: any[] = [];
     for (const bookId of bookIds) {
-      console.log(`Fetching ratings for book ID ${bookId}`);
+      
       const bookRatings = await dbStorage.getRatings(bookId);
-      console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
+      
       allRatings = [...allRatings, ...bookRatings];
     }
-    console.log(`Total ratings found: ${allRatings.length}`);
+    
     
     if (allRatings.length > 0) {
-      console.log("First rating sample:", allRatings[0]);
+      
     }
     
     // Sort reviews by creation date (most recent first)

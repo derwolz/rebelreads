@@ -83,42 +83,42 @@ router.delete("/:id", adminAuthMiddleware, async (req: Request, res: Response) =
 
     // Start a transaction to delete the user and all related data
     await db.transaction(async (tx) => {
-      console.log(`Starting deletion process for user ${userId} (${user.email})`);
+      
       
       // 1. Delete author data if user is an author
       const authorData = await dbStorage.getAuthorByUserId(userId);
       if (authorData) {
-        console.log(`Deleting author data for user ${userId}`);
+        
         await dbStorage.deleteAuthor(authorData.id);
         
         // Delete the user's books if they are an author
-        console.log(`Deleting books for author ${authorData.id}`);
+        
         await dbStorage.deleteAllAuthorBooks(authorData.id);
       }
       
       // 2. Delete ratings made by this user
-      console.log(`Deleting ratings for user ${userId}`);
+      
       await tx.delete(ratings).where(eq(ratings.userId, userId));
       
       // 3. Delete reading status entries
-      console.log(`Deleting reading status entries for user ${userId}`);
+      
       await tx.delete(reading_status).where(eq(reading_status.userId, userId));
       
       // 4. Delete rating preferences
-      console.log(`Deleting rating preferences for user ${userId}`);
+      
       await tx.delete(rating_preferences).where(eq(rating_preferences.userId, userId));
       
       // 5. Delete user blocks
-      console.log(`Deleting user blocks for user ${userId}`);
+      
       await tx.delete(userBlocks).where(eq(userBlocks.userId, userId));
       
       // 6. Delete book shelves and notes
-      console.log(`Deleting book shelves for user ${userId}`);
+      
       await tx.delete(bookShelves).where(eq(bookShelves.userId, userId));
       await tx.delete(notes).where(eq(notes.userId, userId));
       
       // 7. Delete user genre views
-      console.log(`Deleting genre views for user ${userId}`);
+      
       
       // First get all view IDs for this user
       const views = await tx.select({ id: userGenreViews.id })
@@ -137,43 +137,43 @@ router.delete("/:id", adminAuthMiddleware, async (req: Request, res: Response) =
         .where(eq(userGenreViews.userId, userId));
       
       // 8. Delete verification codes
-      console.log(`Deleting verification codes for user ${userId}`);
+      
       await tx.delete(verificationCodes)
         .where(eq(verificationCodes.userId, userId));
       
       // 9. Delete trusted devices
-      console.log(`Deleting trusted devices for user ${userId}`);
+      
       await tx.delete(trustedDevices)
         .where(eq(trustedDevices.userId, userId));
       
       // 10. Delete content reports
-      console.log(`Deleting content reports for user ${userId}`);
+      
       await tx.delete(contentReports)
         .where(eq(contentReports.userId, userId));
       
       // 11. Delete seller data if user is a seller
-      console.log(`Checking for seller data for user ${userId}`);
+      
       await tx.delete(sellers)
         .where(eq(sellers.userId, userId));
       
       // 12. Delete publisher data if user is a publisher
-      console.log(`Checking for publisher data for user ${userId}`);
+      
       await tx.delete(publishers)
         .where(eq(publishers.userId, userId));
       
       // 13. Delete feedback tickets
-      console.log(`Deleting feedback tickets for user ${userId}`);
+      
       await tx.delete(feedbackTickets)
         .where(eq(feedbackTickets.userId, userId));
       
       // 14. Delete the user
-      console.log(`Deleting user ${userId}`);
+      
       await tx.delete(users)
         .where(eq(users.id, userId));
     });
     
     // Log the deletion event
-    console.log(`User deleted by admin: ID=${userId}, Email=${user.email}, Username=${user.username}`);
+    
     
     return res.status(200).json({ success: true });
   } catch (error) {

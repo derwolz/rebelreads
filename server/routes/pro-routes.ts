@@ -166,7 +166,7 @@ router.get("/dashboard", async (req: Request, res: Response) => {
     const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
-      console.log(`No author record found for user ${req.user.id}`);
+      
       return res.json({
         totalReviews: 0,
         averageRating: 0,
@@ -174,11 +174,11 @@ router.get("/dashboard", async (req: Request, res: Response) => {
       });
     }
     
-    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
     
     // Get all books by this author - use author.id instead of req.user.id
     const authorBooks = await dbStorage.getBooksByAuthor(author.id);
-    console.log(`Author books found for author ID ${author.id}:`, authorBooks.length, authorBooks.map((b: any) => b.id));
+    authorBooks.map((b: any) => b.id));
     
     if (!authorBooks || authorBooks.length === 0) {
       return res.json({
@@ -268,14 +268,14 @@ router.get("/reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    console.log("Fetching real reviews for user ID:", req.user.id);
+    
     
     // First get the author information since author.id may not be the same as user.id
     // We need to use getAuthorByUserId since we have the user ID, not the author ID
     const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
-      console.log(`No author record found for user ${req.user.id}`);
+      
       return res.json({
         reviews: [],
         hasMore: false,
@@ -283,14 +283,14 @@ router.get("/reviews", async (req: Request, res: Response) => {
       });
     }
     
-    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
     
     // Get all books by this author - use author.id instead of req.user.id
     const authorBooks = await dbStorage.getBooksByAuthor(author.id);
-    console.log(`Author books found for author ID ${author.id}:`, authorBooks.length, authorBooks.map((b: any) => b.id));
+    
     
     if (!authorBooks || authorBooks.length === 0) {
-      console.log("No author books found, returning empty result");
+      
       return res.json({
         reviews: [],
         hasMore: false,
@@ -300,20 +300,20 @@ router.get("/reviews", async (req: Request, res: Response) => {
 
     // Get book IDs
     const bookIds = authorBooks.map((book: { id: number }) => book.id);
-    console.log("Book IDs to fetch ratings for:", bookIds);
+    
     
     // Collect all ratings for these books
     let allRatings: any[] = [];
     for (const bookId of bookIds) {
-      console.log(`Fetching ratings for book ID ${bookId}`);
+      
       const bookRatings = await dbStorage.getRatings(bookId);
-      console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
+      
       allRatings = [...allRatings, ...bookRatings];
     }
-    console.log(`Total ratings found: ${allRatings.length}`);
+    
     
     if (allRatings.length > 0) {
-      console.log("First rating sample:", allRatings[0]);
+      
     }
     
     // Sort reviews by creation date (most recent first)
@@ -394,23 +394,23 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
     
-    console.log(`Fetching reviews for book ID: ${bookId}, page: ${page}`);
+    
     
     // Get the actual author ID first by looking up the user ID
     const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
-      console.log(`No author record found for user ${req.user.id}`);
+      
       return res.status(404).json({ error: "Author not found" });
     }
     
-    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
     
     // Verify that this book belongs to the author
     const authorBooks = await dbStorage.getBooksByAuthor(author.id);
     const bookIds = authorBooks.map((book: { id: number }) => book.id);
     
-    console.log(`Author book IDs for author ID ${author.id}:`, bookIds);
+    
     
     // For development purposes, allow access to all books 
     // Remove this in production and uncomment the check below
@@ -423,7 +423,7 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     // Get all ratings for this book
     const bookRatings = await dbStorage.getRatings(bookId);
     
-    console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
+    
     
     // Sort reviews by creation date (most recent first)
     bookRatings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -463,7 +463,7 @@ router.get("/book-reviews/:bookId", async (req: Request, res: Response) => {
     
     const totalPages = Math.ceil(bookRatings.length / limit);
     
-    console.log(`Returning ${reviewsWithDetails.length} reviews, hasMore: ${page < totalPages}, totalPages: ${totalPages}`);
+    
     
     return res.json({
       reviews: reviewsWithDetails,
@@ -483,7 +483,7 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    console.log("Fetching demo reviews for testing");
+    
     
     // Get some sample books
     const sampleBooks = await db.query.books.findMany({
@@ -491,7 +491,7 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
     });
     
     if (!sampleBooks || sampleBooks.length === 0) {
-      console.log("No sample books found, returning empty result");
+      
       return res.json({
         reviews: [],
         hasMore: false,
@@ -501,20 +501,20 @@ router.get("/demo-reviews", async (req: Request, res: Response) => {
 
     // Get book IDs
     const bookIds = sampleBooks.map(book => book.id);
-    console.log("Book IDs to fetch ratings for:", bookIds);
+    
     
     // Collect all ratings for these books
     let allRatings: any[] = [];
     for (const bookId of bookIds) {
-      console.log(`Fetching ratings for book ID ${bookId}`);
+      
       const bookRatings = await dbStorage.getRatings(bookId);
-      console.log(`Found ${bookRatings.length} ratings for book ID ${bookId}`);
+      
       allRatings = [...allRatings, ...bookRatings];
     }
-    console.log(`Total ratings found: ${allRatings.length}`);
+    
     
     if (allRatings.length > 0) {
-      console.log("First rating sample:", allRatings[0]);
+      
     }
     
     // Sort reviews by creation date (most recent first)
@@ -638,7 +638,7 @@ router.post("/reviews/:reviewId/reply", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Reply content cannot be empty" });
     }
 
-    console.log(`Creating reply to review ${reviewId} from author ${req.user.id}`);
+    
 
     // Verify the review exists
     const ratingExists = await db.query.ratings.findFirst({
@@ -705,15 +705,15 @@ router.post("/metrics", async (req: Request, res: Response) => {
     const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
-      console.log(`No author record found for user ${req.user.id}`);
+      
       return res.status(404).json({ error: "Author not found" });
     }
     
-    console.log(`Found author with ID ${author.id} for user ${req.user.id}`);
+    
     
     // Get all books by this author
     const authorBooks = await dbStorage.getBooksByAuthor(author.id);
-    console.log(`Author book IDs for author ID ${author.id}:`, authorBooks.map((b: any) => b.id));
+    
     
     // Get the book metrics data
     const metricsData = await dbStorage.getBooksMetrics(
@@ -801,7 +801,7 @@ router.get("/follower-metrics", async (req: Request, res: Response) => {
     const author = await dbStorage.getAuthorByUserId(req.user.id);
     
     if (!author) {
-      console.log(`No author record found for user ${req.user.id}`);
+      
       return res.status(404).json({ error: "Author not found" });
     }
     

@@ -12,14 +12,14 @@ async function addFeaturedColumnToRatings() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding 'featured' column to ratings table...");
+      
       await db.execute(sql`
         ALTER TABLE ratings 
         ADD COLUMN featured boolean DEFAULT false
       `);
-      console.log("Column 'featured' added successfully");
+      
     } else {
-      console.log("Column 'featured' already exists");
+      
     }
   } catch (error) {
     console.error("Error adding 'featured' column:", error);
@@ -37,14 +37,14 @@ async function addReportStatusColumnToRatings() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding 'report_status' column to ratings table...");
+      
       await db.execute(sql`
         ALTER TABLE ratings 
         ADD COLUMN report_status text DEFAULT 'none'
       `);
-      console.log("Column 'report_status' added successfully");
+      
     } else {
-      console.log("Column 'report_status' already exists");
+      
     }
   } catch (error) {
     console.error("Error adding 'report_status' column:", error);
@@ -62,7 +62,7 @@ async function createAdImpressionsTable() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Creating 'ad_impressions' table...");
+      
       await db.execute(sql`
         CREATE TABLE ad_impressions (
           id SERIAL PRIMARY KEY,
@@ -77,9 +77,9 @@ async function createAdImpressionsTable() {
           source TEXT NOT NULL
         )
       `);
-      console.log("Table 'ad_impressions' created successfully");
+      
     } else {
-      console.log("Table 'ad_impressions' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating 'ad_impressions' table:", error);
@@ -97,7 +97,7 @@ async function createAuthorAnalyticsTables() {
     `);
     
     if (checkAnalyticsResult.rows.length === 0) {
-      console.log("Creating 'author_analytics' table...");
+      
       await db.execute(sql`
         CREATE TABLE author_analytics (
           id SERIAL PRIMARY KEY,
@@ -111,9 +111,9 @@ async function createAuthorAnalyticsTables() {
           device_info JSONB DEFAULT '{}'
         )
       `);
-      console.log("Table 'author_analytics' created successfully");
+      
     } else {
-      console.log("Table 'author_analytics' already exists");
+      
     }
 
     // Create author_page_views table
@@ -124,7 +124,7 @@ async function createAuthorAnalyticsTables() {
     `);
     
     if (checkPageViewsResult.rows.length === 0) {
-      console.log("Creating 'author_page_views' table...");
+      
       await db.execute(sql`
         CREATE TABLE author_page_views (
           id SERIAL PRIMARY KEY,
@@ -138,9 +138,9 @@ async function createAuthorAnalyticsTables() {
           duration INTEGER
         )
       `);
-      console.log("Table 'author_page_views' created successfully");
+      
     } else {
-      console.log("Table 'author_page_views' already exists");
+      
     }
 
     // Create author_form_analytics table
@@ -151,7 +151,7 @@ async function createAuthorAnalyticsTables() {
     `);
     
     if (checkFormAnalyticsResult.rows.length === 0) {
-      console.log("Creating 'author_form_analytics' table...");
+      
       await db.execute(sql`
         CREATE TABLE author_form_analytics (
           id SERIAL PRIMARY KEY,
@@ -169,9 +169,9 @@ async function createAuthorAnalyticsTables() {
           duration INTEGER
         )
       `);
-      console.log("Table 'author_form_analytics' created successfully");
+      
     } else {
-      console.log("Table 'author_form_analytics' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating author analytics tables:", error);
@@ -189,7 +189,7 @@ async function createBetaKeysTables() {
     `);
     
     if (checkBetaKeysResult.rows.length === 0) {
-      console.log("Creating 'beta_keys' table...");
+      
       await db.execute(sql`
         CREATE TABLE beta_keys (
           id SERIAL PRIMARY KEY,
@@ -203,9 +203,9 @@ async function createBetaKeysTables() {
           expires_at TIMESTAMP
         )
       `);
-      console.log("Table 'beta_keys' created successfully");
+      
     } else {
-      console.log("Table 'beta_keys' already exists");
+      
     }
 
     // Check if beta_key_usage table exists
@@ -216,7 +216,7 @@ async function createBetaKeysTables() {
     `);
     
     if (checkBetaKeyUsageResult.rows.length === 0) {
-      console.log("Creating 'beta_key_usage' table...");
+      
       await db.execute(sql`
         CREATE TABLE beta_key_usage (
           id SERIAL PRIMARY KEY,
@@ -225,9 +225,9 @@ async function createBetaKeysTables() {
           used_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'beta_key_usage' created successfully");
+      
     } else {
-      console.log("Table 'beta_key_usage' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating beta keys tables:", error);
@@ -245,14 +245,14 @@ async function addCriteriaWeightsColumnToRatingPreferences() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding 'criteria_weights' column to rating_preferences table...");
+      
       await db.execute(sql`
         ALTER TABLE rating_preferences 
         ADD COLUMN criteria_weights jsonb DEFAULT '{}'::jsonb NOT NULL
       `);
-      console.log("Column 'criteria_weights' added successfully");
+      
     } else {
-      console.log("Column 'criteria_weights' already exists");
+      
     }
   } catch (error) {
     console.error("Error adding 'criteria_weights' column:", error);
@@ -270,7 +270,7 @@ async function addRatingMetricsColumnsToRatingPreferences() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding individual rating metrics columns to rating_preferences table...");
+      
       
       // Add individual columns for each rating metric
       await db.execute(sql`
@@ -294,9 +294,9 @@ async function addRatingMetricsColumnsToRatingPreferences() {
         WHERE criteria_weights IS NOT NULL
       `);
       
-      console.log("Individual rating metrics columns added successfully");
+      
     } else {
-      console.log("Individual rating metrics columns already exist");
+      
     }
   } catch (error) {
     console.error("Error adding individual rating metrics columns:", error);
@@ -325,26 +325,26 @@ async function removeOldRatingPreferencesColumns() {
     
     // Remove criteria_weights if it exists
     if (hasCriteriaWeights) {
-      console.log("Removing criteria_weights column...");
+      
       await db.execute(sql`
         ALTER TABLE rating_preferences 
         DROP COLUMN criteria_weights
       `);
-      console.log("criteria_weights column removed successfully");
+      
     } else {
-      console.log("criteria_weights column has already been removed");
+      
     }
     
     // Remove criteria_order if it exists
     if (hasCriteriaOrder) {
-      console.log("Removing criteria_order column...");
+      
       await db.execute(sql`
         ALTER TABLE rating_preferences 
         DROP COLUMN criteria_order
       `);
-      console.log("criteria_order column removed successfully");
+      
     } else {
-      console.log("criteria_order column has already been removed");
+      
     }
   } catch (error) {
     console.error("Error removing old rating preferences columns:", error);
@@ -362,7 +362,7 @@ async function createTaxonomyTables() {
     `);
     
     if (genreTaxonomiesResult.rows.length === 0) {
-      console.log("Creating 'genre_taxonomies' table...");
+      
       await db.execute(sql`
         CREATE TABLE genre_taxonomies (
           id SERIAL PRIMARY KEY,
@@ -375,9 +375,9 @@ async function createTaxonomyTables() {
           deleted_at TIMESTAMP
         )
       `);
-      console.log("Table 'genre_taxonomies' created successfully");
+      
     } else {
-      console.log("Table 'genre_taxonomies' already exists");
+      
     }
     
     // Check if book_genre_taxonomies table exists
@@ -388,7 +388,7 @@ async function createTaxonomyTables() {
     `);
     
     if (bookGenreTaxonomiesResult.rows.length === 0) {
-      console.log("Creating 'book_genre_taxonomies' table...");
+      
       await db.execute(sql`
         CREATE TABLE book_genre_taxonomies (
           id SERIAL PRIMARY KEY,
@@ -399,9 +399,9 @@ async function createTaxonomyTables() {
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'book_genre_taxonomies' created successfully");
+      
     } else {
-      console.log("Table 'book_genre_taxonomies' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating taxonomy tables:", error);
@@ -419,14 +419,14 @@ async function removeFavoriteGenresFromUsers() {
     `);
 
     if (checkColumnResult.rows.length > 0) {
-      console.log("Removing 'favorite_genres' column from users table...");
+      
       await db.execute(sql`
         ALTER TABLE users 
         DROP COLUMN favorite_genres
       `);
-      console.log("Column 'favorite_genres' removed successfully");
+      
     } else {
-      console.log("Column 'favorite_genres' doesn't exist or has already been removed");
+      
     }
   } catch (error) {
     console.error("Error removing favorite_genres column:", error);
@@ -447,11 +447,11 @@ async function removeUserTaxonomyTables() {
       `);
 
       if (checkTableResult.rows.length > 0) {
-        console.log(`Dropping '${table}' table...`);
+        
         await db.execute(sql`DROP TABLE ${sql.raw(table)}`);
-        console.log(`Table '${table}' dropped successfully`);
+        
       } else {
-        console.log(`Table '${table}' doesn't exist or has already been removed`);
+        
       }
     }
   } catch (error) {
@@ -470,7 +470,7 @@ async function createUserGenrePreferencesTable() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Creating 'user_genre_preferences' table...");
+      
       await db.execute(sql`
         CREATE TABLE user_genre_preferences (
           id SERIAL PRIMARY KEY,
@@ -481,9 +481,9 @@ async function createUserGenrePreferencesTable() {
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'user_genre_preferences' created successfully");
+      
     } else {
-      console.log("Table 'user_genre_preferences' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating 'user_genre_preferences' table:", error);
@@ -501,7 +501,7 @@ async function addContentViewsColumnToUserGenrePreferences() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding 'content_views' column to user_genre_preferences table...");
+      
       await db.execute(sql`
         ALTER TABLE user_genre_preferences 
         ADD COLUMN content_views jsonb NOT NULL DEFAULT '[]'::jsonb
@@ -533,9 +533,9 @@ async function addContentViewsColumnToUserGenrePreferences() {
         WHERE preferred_genres::text <> '[]' OR additional_genres::text <> '[]'
       `);
       
-      console.log("Column 'content_views' added successfully and data migrated");
+      
     } else {
-      console.log("Column 'content_views' already exists");
+      
     }
   } catch (error) {
     console.error("Error adding 'content_views' column:", error);
@@ -567,7 +567,7 @@ async function createGenreViewsTables() {
     
     // If the new tables don't exist, create them
     if (userGenreViewsExists.rows.length === 0) {
-      console.log("Creating 'user_genre_views' table...");
+      
       await db.execute(sql`
         CREATE TABLE user_genre_views (
           id SERIAL PRIMARY KEY,
@@ -579,13 +579,13 @@ async function createGenreViewsTables() {
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'user_genre_views' created successfully");
+      
     } else {
-      console.log("Table 'user_genre_views' already exists");
+      
     }
     
     if (viewGenresExists.rows.length === 0) {
-      console.log("Creating 'view_genres' table...");
+      
       await db.execute(sql`
         CREATE TABLE view_genres (
           id SERIAL PRIMARY KEY,
@@ -596,14 +596,14 @@ async function createGenreViewsTables() {
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'view_genres' created successfully");
+      
     } else {
-      console.log("Table 'view_genres' already exists");
+      
     }
     
     // If the old table exists, migrate the data
     if (oldTableExists.rows.length > 0) {
-      console.log("Migrating data from 'user_genre_preferences' to new tables...");
+      
       
       // Get all data from the old table
       const oldData = await db.execute(sql`
@@ -643,12 +643,12 @@ async function createGenreViewsTables() {
         }
       }
       
-      console.log("Data migration completed");
+      
       
       // Drop the old table
-      console.log("Dropping 'user_genre_preferences' table...");
+      
       await db.execute(sql`DROP TABLE user_genre_preferences`);
-      console.log("Table 'user_genre_preferences' dropped successfully");
+      
     }
   } catch (error) {
     console.error("Error creating genre views tables:", error);
@@ -666,7 +666,7 @@ async function createHomepageLayoutsTable() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Creating 'homepage_layouts' table...");
+      
       await db.execute(sql`
         CREATE TABLE homepage_layouts (
           id SERIAL PRIMARY KEY,
@@ -676,9 +676,9 @@ async function createHomepageLayoutsTable() {
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'homepage_layouts' created successfully");
+      
     } else {
-      console.log("Table 'homepage_layouts' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating 'homepage_layouts' table:", error);
@@ -688,7 +688,7 @@ async function createHomepageLayoutsTable() {
 
 async function createBookImagesTable() {
   try {
-    console.log("Checking for book_images table...");
+    
     
     // Check if book_images table exists
     const tableResult = await db.execute(sql`
@@ -698,7 +698,7 @@ async function createBookImagesTable() {
     `);
     
     if (tableResult.rows.length === 0) {
-      console.log("Creating 'book_images' table...");
+      
       await db.execute(sql`
         CREATE TABLE book_images (
           id SERIAL PRIMARY KEY,
@@ -712,9 +712,9 @@ async function createBookImagesTable() {
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("Table 'book_images' created successfully");
+      
     } else {
-      console.log("Table 'book_images' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating book_images table:", error);
@@ -724,7 +724,7 @@ async function createBookImagesTable() {
 
 async function migrateCoverUrlToBookImages() {
   try {
-    console.log("Migrating cover_url data to book_images table...");
+    
     
     // Check if cover_url column exists in books table
     const columnResult = await db.execute(sql`
@@ -734,14 +734,14 @@ async function migrateCoverUrlToBookImages() {
     `);
     
     if (columnResult.rows.length > 0) {
-      console.log("cover_url column exists, migrating data...");
+      
       
       // Get all books with cover_url
       const books = await db.execute(sql`
         SELECT id, cover_url FROM books WHERE cover_url IS NOT NULL
       `);
       
-      console.log(`Found ${books.rows.length} books with cover URLs to migrate`);
+      
       
       // Insert each book's cover into book_images as book-detail type
       for (const book of books.rows) {
@@ -770,15 +770,15 @@ async function migrateCoverUrlToBookImages() {
             (${bookId}, ${coverUrl}, 'mini', 48, 64, NOW(), NOW())
           `);
           
-          console.log(`Migrated cover_url for book ${bookId}`);
+          
         } else {
-          console.log(`Book ${bookId} already has images, skipping`);
+          
         }
       }
       
-      console.log("Cover URL migration completed");
+      
     } else {
-      console.log("cover_url column no longer exists, skipping migration");
+      
     }
   } catch (error) {
     console.error("Error migrating cover_url data:", error);
@@ -788,7 +788,7 @@ async function migrateCoverUrlToBookImages() {
 
 async function removeCoverUrlColumn() {
   try {
-    console.log("Checking for cover_url column in books table...");
+    
     
     // Check if cover_url column exists in books table
     const columnResult = await db.execute(sql`
@@ -798,7 +798,7 @@ async function removeCoverUrlColumn() {
     `);
     
     if (columnResult.rows.length > 0) {
-      console.log("cover_url column exists, removing it...");
+      
       
       // Remove the cover_url column from the books table
       await db.execute(sql`
@@ -806,9 +806,9 @@ async function removeCoverUrlColumn() {
         DROP COLUMN cover_url
       `);
       
-      console.log("cover_url column removed successfully");
+      
     } else {
-      console.log("cover_url column does not exist, skipping removal");
+      
     }
   } catch (error) {
     console.error("Error removing cover_url column:", error);
@@ -818,7 +818,7 @@ async function removeCoverUrlColumn() {
 
 async function splitUserTable() {
   try {
-    console.log("Starting splitUserTable migration function...");
+    
     
     // Check if authors table exists
     const checkAuthorsTable = await db.execute(sql`
@@ -827,10 +827,10 @@ async function splitUserTable() {
       WHERE table_name = 'authors'
     `);
     
-    console.log(`Authors table check result: ${JSON.stringify(checkAuthorsTable.rows)}`);
+    
     
     if (checkAuthorsTable.rows.length === 0) {
-      console.log("Creating 'authors' table and migrating author data...");
+      
       
       try {
         // Create the authors table
@@ -849,13 +849,13 @@ async function splitUserTable() {
             credits DECIMAL NOT NULL DEFAULT '0'
           )
         `);
-        console.log("Authors table structure created successfully");
+        
         
         // Check if there are any users with is_author = true
         const checkAuthors = await db.execute(sql`
           SELECT COUNT(*) as author_count FROM users WHERE is_author = true
         `);
-        console.log(`Found ${checkAuthors.rows[0]?.author_count || 0} users who are authors`);
+        
         
         // Migrate data from users table to authors table for users who are authors
         await db.execute(sql`
@@ -886,13 +886,13 @@ async function splitUserTable() {
           WHERE is_author = true
         `);
         
-        console.log("Authors data migrated successfully");
+        
       } catch (err) {
         console.error("Error during authors table creation or data migration:", err);
         throw err;
       }
     } else {
-      console.log("Authors table already exists, skipping creation");
+      
     }
     
     // Check if publishers table exists
@@ -902,10 +902,10 @@ async function splitUserTable() {
       WHERE table_name = 'publishers'
     `);
     
-    console.log(`Publishers table check result: ${JSON.stringify(checkPublishersTable.rows)}`);
+    
     
     if (checkPublishersTable.rows.length === 0) {
-      console.log("Creating 'publishers' table...");
+      
       
       try {
         // Create the publishers table
@@ -925,7 +925,7 @@ async function splitUserTable() {
           )
         `);
         
-        console.log("Publishers table created successfully");
+        
       } catch (err) {
         console.error("Error during publishers table creation:", err);
         throw err;
@@ -938,10 +938,10 @@ async function splitUserTable() {
         WHERE table_name = 'publishers' AND column_name = 'publisher_name'
       `);
       
-      console.log(`Publishers fields check result: ${JSON.stringify(checkPublishersFields.rows)}`);
+      
       
       if (checkPublishersFields.rows.length === 0) {
-        console.log("Updating publishers table with new fields...");
+        
         
         try {
           // Add new columns to publishers table
@@ -962,13 +962,13 @@ async function splitUserTable() {
             WHERE publisher_name = ''
           `);
           
-          console.log("Publishers table updated successfully");
+          
         } catch (err) {
           console.error("Error during publishers table update:", err);
           throw err;
         }
       } else {
-        console.log("Publishers table already has the new columns, skipping update");
+        
       }
     }
     
@@ -979,10 +979,10 @@ async function splitUserTable() {
       WHERE table_name = 'publishers_authors'
     `);
     
-    console.log(`Publishers_authors table check result: ${JSON.stringify(checkPublishersAuthorsTable.rows)}`);
+    
     
     if (checkPublishersAuthorsTable.rows.length === 0) {
-      console.log("Creating 'publishers_authors' table...");
+      
       
       try {
         // Create the publishers_authors table
@@ -997,13 +997,13 @@ async function splitUserTable() {
           )
         `);
         
-        console.log("Publishers_authors table created successfully");
+        
       } catch (err) {
         console.error("Error during publishers_authors table creation:", err);
         throw err;
       }
     } else {
-      console.log("Publishers_authors table exists, checking if it needs updates...");
+      
       
       // Check if there are any foreign key constraints on publishers_authors.author_id
       const checkPublishersAuthorsFk = await db.execute(sql`
@@ -1015,11 +1015,11 @@ async function splitUserTable() {
         AND ccu.column_name = 'author_id'
       `);
       
-      console.log(`Publishers_authors foreign key check result: ${JSON.stringify(checkPublishersAuthorsFk.rows)}`);
+      
       
       // If there's no foreign key constraint, add it to reference the authors table
       if (checkPublishersAuthorsFk.rows.length === 0) {
-        console.log("Updating publishers_authors table to reference the authors table...");
+        
         
         try {
           // Add foreign key constraint to authors table
@@ -1030,18 +1030,18 @@ async function splitUserTable() {
             REFERENCES authors (id)
           `);
           
-          console.log("Publishers_authors table updated successfully");
+          
         } catch (err) {
           console.error("Error during publishers_authors table update:", err);
           // Not throwing an error here as this is not critical for the application to function
-          console.log("Continuing with other migrations...");
+          
         }
       } else {
-        console.log("Publishers_authors table already has the correct references");
+        
       }
     }
     
-    console.log("splitUserTable migration completed successfully");
+    
     
   } catch (error) {
     console.error("Error splitting users table:", error);
@@ -1052,7 +1052,7 @@ async function splitUserTable() {
 // Function to remove isAuthor field from users
 async function removeIsAuthorFromUsers() {
   try {
-    console.log("Checking for isAuthor column in users table...");
+    
     
     // Check if isAuthor column exists in users table
     const checkIsAuthorColumn = await db.execute(sql`
@@ -1063,7 +1063,7 @@ async function removeIsAuthorFromUsers() {
     `);
     
     if (checkIsAuthorColumn.rows.length > 0) {
-      console.log("isAuthor column exists in users table, removing it...");
+      
       
       try {
         // Remove isAuthor column from users table
@@ -1072,26 +1072,26 @@ async function removeIsAuthorFromUsers() {
           DROP COLUMN IF EXISTS is_author
         `);
         
-        console.log("isAuthor column successfully removed from users table");
+        
       } catch (err) {
         console.error("Error removing isAuthor column from users:", err);
         // Not throwing an error here as this is not critical for the application to function
-        console.log("Continuing with other migrations...");
+        
       }
     } else {
-      console.log("isAuthor column doesn't exist or has already been removed");
+      
     }
   } catch (error) {
     console.error("Error in removeIsAuthorFromUsers:", error);
     // Not throwing an error here as this is not critical for the application to function
-    console.log("Continuing with other migrations...");
+    
   }
 }
 
 // Function to remove remaining author and publisher fields from users table
 async function removeAuthorPublisherFieldsFromUsers() {
   try {
-    console.log("Starting removal of author and publisher fields from users table...");
+    
     
     // Fields to check and remove
     const authorPublisherFields = [
@@ -1119,7 +1119,7 @@ async function removeAuthorPublisherFieldsFromUsers() {
       `);
       
       if (checkColumnResult.rows.length > 0) {
-        console.log(`Removing '${field}' column from users table...`);
+        
         
         try {
           await db.execute(sql`
@@ -1127,22 +1127,22 @@ async function removeAuthorPublisherFieldsFromUsers() {
             DROP COLUMN IF EXISTS ${sql.raw(field)}
           `);
           
-          console.log(`Column '${field}' successfully removed from users table`);
+          
         } catch (err) {
           console.error(`Error removing ${field} column:`, err);
           // Not throwing an error here as this is not critical for the application to function
-          console.log("Continuing with other migrations...");
+          
         }
       } else {
-        console.log(`Column '${field}' doesn't exist or has already been removed`);
+        
       }
     }
     
-    console.log("All author and publisher fields have been removed from users table");
+    
   } catch (error) {
     console.error("Error during author/publisher fields removal:", error);
     // Not throwing an error here as this is not critical for the application to function
-    console.log("Continuing with other migrations...");
+    
   }
 }
 
@@ -1169,38 +1169,38 @@ async function removeProColumnsFromAuthors() {
     
     // If is_pro exists, remove it
     if (checkIsProResult.rows.length > 0) {
-      console.log("Removing 'is_pro' column from authors table...");
+      
       await db.execute(sql`
         ALTER TABLE authors 
         DROP COLUMN is_pro
       `);
-      console.log("Column 'is_pro' removed successfully from authors table");
+      
     } else {
-      console.log("Column 'is_pro' doesn't exist or has already been removed from authors table");
+      
     }
     
     // If pro_expires_at exists, remove it
     if (checkProExpiresAtResult.rows.length > 0) {
-      console.log("Removing 'pro_expires_at' column from authors table...");
+      
       await db.execute(sql`
         ALTER TABLE authors 
         DROP COLUMN pro_expires_at
       `);
-      console.log("Column 'pro_expires_at' removed successfully from authors table");
+      
     } else {
-      console.log("Column 'pro_expires_at' doesn't exist or has already been removed from authors table");
+      
     }
     
     // If credits exists, remove it
     if (checkCreditsResult.rows.length > 0) {
-      console.log("Removing 'credits' column from authors table...");
+      
       await db.execute(sql`
         ALTER TABLE authors 
         DROP COLUMN credits
       `);
-      console.log("Column 'credits' removed successfully from authors table");
+      
     } else {
-      console.log("Column 'credits' doesn't exist or has already been removed from authors table");
+      
     }
   } catch (error) {
     console.error("Error removing columns from authors table:", error);
@@ -1221,7 +1221,7 @@ async function createFeedbackTicketsTable() {
     const tableExists = checkResult.rows[0].exists;
     
     if (!tableExists) {
-      console.log("Creating feedback_tickets table...");
+      
       await db.execute(sql`
         CREATE TABLE feedback_tickets (
           id SERIAL PRIMARY KEY,
@@ -1239,9 +1239,9 @@ async function createFeedbackTicketsTable() {
           resolved_at TIMESTAMP
         )
       `);
-      console.log("feedback_tickets table created successfully");
+      
     } else {
-      console.log("feedback_tickets table already exists");
+      
     }
   } catch (error) {
     console.error("Error creating feedback_tickets table:", error);
@@ -1262,14 +1262,14 @@ async function addAdminNotesToFeedbackTickets() {
     const columnExists = checkResult.rows[0].exists;
     
     if (!columnExists) {
-      console.log("Adding admin_notes column to feedback_tickets table...");
+      
       await db.execute(sql`
         ALTER TABLE feedback_tickets 
         ADD COLUMN admin_notes TEXT
       `);
-      console.log("admin_notes column added successfully");
+      
     } else {
-      console.log("admin_notes column already exists in feedback_tickets table");
+      
     }
   } catch (error) {
     console.error("Error adding admin_notes column:", error);
@@ -1290,14 +1290,14 @@ async function addAdminNotesDataToFeedbackTickets() {
     const columnExists = checkResult.rows[0].exists;
     
     if (!columnExists) {
-      console.log("Adding admin_notes_data column to feedback_tickets table...");
+      
       await db.execute(sql`
         ALTER TABLE feedback_tickets 
         ADD COLUMN admin_notes_data JSONB DEFAULT '[]'::jsonb
       `);
       
       // Migrate existing admin_notes to the new structured format
-      console.log("Migrating existing admin notes to structured format...");
+      
       const existingTickets = await db.execute(sql`
         SELECT id, admin_notes, updated_at
         FROM feedback_tickets
@@ -1321,9 +1321,9 @@ async function addAdminNotesDataToFeedbackTickets() {
         }
       }
       
-      console.log("admin_notes_data column added and migration completed successfully");
+      
     } else {
-      console.log("admin_notes_data column already exists in feedback_tickets table");
+      
     }
   } catch (error) {
     console.error("Error adding admin_notes_data column to feedback_tickets:", error);
@@ -1334,7 +1334,7 @@ async function addAdminNotesDataToFeedbackTickets() {
 // Create publisher_sellers table for authenticating salesmen
 async function createPublisherSellersTable() {
   try {
-    console.log("Checking for publisher_sellers table...");
+    
     
     // Check if the table already exists
     const checkResult = await db.execute(sql`
@@ -1344,7 +1344,7 @@ async function createPublisherSellersTable() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Creating publisher_sellers table...");
+      
       
       await db.execute(sql`
         CREATE TABLE publisher_sellers (
@@ -1361,9 +1361,9 @@ async function createPublisherSellersTable() {
         )
       `);
       
-      console.log("publisher_sellers table created successfully");
+      
     } else {
-      console.log("publisher_sellers table already exists");
+      
     }
   } catch (error) {
     console.error("Error creating publisher_sellers table:", error);
@@ -1372,7 +1372,7 @@ async function createPublisherSellersTable() {
 }
 
 async function removeGenresColumnFromBooks() {
-  console.log("Starting removal of genres column from books table...");
+  
   
   try {
     // Check if genres column exists
@@ -1383,11 +1383,11 @@ async function removeGenresColumnFromBooks() {
     `);
     
     if (genresColumnCheck.rowCount > 0) {
-      console.log("Removing genres column from books table");
+      
       await db.execute(sql`ALTER TABLE books DROP COLUMN IF EXISTS genres;`);
-      console.log("Genres column has been removed from books table");
+      
     } else {
-      console.log("Column 'genres' doesn't exist or has already been removed");
+      
     }
   } catch (error) {
     console.error("Error removing genres column from books table:", error);
@@ -1395,7 +1395,7 @@ async function removeGenresColumnFromBooks() {
 }
 
 async function removeAuthorColumnsFromBooks() {
-  console.log("Starting removal of author and authorImageUrl columns from books table...");
+  
   
   try {
     // Check if author column exists
@@ -1406,10 +1406,10 @@ async function removeAuthorColumnsFromBooks() {
     `);
     
     if (authorColumnCheck.rowCount > 0) {
-      console.log("Removing author column from books table");
+      
       await db.execute(sql`ALTER TABLE books DROP COLUMN IF EXISTS author;`);
     } else {
-      console.log("Column 'author' doesn't exist or has already been removed");
+      
     }
     
     // Check if authorImageUrl column exists
@@ -1420,13 +1420,13 @@ async function removeAuthorColumnsFromBooks() {
     `);
     
     if (authorImageColumnCheck.rowCount > 0) {
-      console.log("Removing authorImageUrl column from books table");
+      
       await db.execute(sql`ALTER TABLE books DROP COLUMN IF EXISTS author_image_url;`);
     } else {
-      console.log("Column 'author_image_url' doesn't exist or has already been removed");
+      
     }
     
-    console.log("Author columns have been removed from books table");
+    
   } catch (error) {
     console.error("Error removing author columns from books table:", error);
   }
@@ -1442,14 +1442,14 @@ async function removeHasBetaAccessFromUsers() {
     `);
     
     if (checkResult.rows.length > 0) {
-      console.log("Removing 'has_beta_access' column from users table...");
+      
       await db.execute(sql`
         ALTER TABLE users 
         DROP COLUMN has_beta_access
       `);
-      console.log("Column 'has_beta_access' removed successfully");
+      
     } else {
-      console.log("Column 'has_beta_access' doesn't exist or has already been removed");
+      
     }
   } catch (error) {
     console.error("Error removing has_beta_access column:", error);
@@ -1470,7 +1470,7 @@ async function createUserBlocksTable() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Creating 'user_blocks' table...");
+      
       await db.execute(sql`
         CREATE TABLE user_blocks (
           id SERIAL PRIMARY KEY,
@@ -1497,9 +1497,9 @@ async function createUserBlocksTable() {
         CREATE UNIQUE INDEX user_blocks_unique_idx ON user_blocks(user_id, block_type, block_id)
       `);
       
-      console.log("Table 'user_blocks' created successfully");
+      
     } else {
-      console.log("Table 'user_blocks' already exists");
+      
     }
   } catch (error) {
     console.error("Error creating user_blocks table:", error);
@@ -1513,7 +1513,7 @@ async function createUserBlocksTable() {
  */
 async function addDatabaseIndexes() {
   try {
-    console.log("Adding database indexes for improved performance...");
+    
     
     // Check for existing indexes to avoid errors
     const indexesResult = await db.execute(sql`
@@ -1587,15 +1587,15 @@ async function addDatabaseIndexes() {
     // Create each index if it doesn't already exist
     for (const [indexName, createSql] of Object.entries(indexesToCreate)) {
       if (!existingIndexes.includes(indexName.toLowerCase())) {
-        console.log(`Creating index: ${indexName}`);
+        
         await db.execute(createSql);
-        console.log(`Index ${indexName} created successfully`);
+        
       } else {
-        console.log(`Index ${indexName} already exists, skipping`);
+        
       }
     }
     
-    console.log("Database indexing completed");
+    
   } catch (error) {
     console.error("Error adding database indexes:", error);
     throw error;
@@ -1615,7 +1615,7 @@ async function createBookShelfTables() {
     `);
 
     if (bookshelvesResult.rows.length === 0) {
-      console.log("Creating book_shelves table...");
+      
       await db.execute(sql`
         CREATE TABLE book_shelves (
           id SERIAL PRIMARY KEY,
@@ -1627,9 +1627,9 @@ async function createBookShelfTables() {
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("book_shelves table created successfully");
+      
     } else {
-      console.log("book_shelves table already exists");
+      
     }
 
     const shelfBooksResult = await db.execute(sql`
@@ -1639,7 +1639,7 @@ async function createBookShelfTables() {
     `);
 
     if (shelfBooksResult.rows.length === 0) {
-      console.log("Creating shelf_books table...");
+      
       await db.execute(sql`
         CREATE TABLE shelf_books (
           id SERIAL PRIMARY KEY,
@@ -1649,9 +1649,9 @@ async function createBookShelfTables() {
           added_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("shelf_books table created successfully");
+      
     } else {
-      console.log("shelf_books table already exists");
+      
     }
 
     const notesResult = await db.execute(sql`
@@ -1661,7 +1661,7 @@ async function createBookShelfTables() {
     `);
 
     if (notesResult.rows.length === 0) {
-      console.log("Creating notes table...");
+      
       await db.execute(sql`
         CREATE TABLE notes (
           id SERIAL PRIMARY KEY,
@@ -1674,9 +1674,9 @@ async function createBookShelfTables() {
           updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("notes table created successfully");
+      
     } else {
-      console.log("notes table already exists");
+      
     }
   } catch (error) {
     console.error("Error creating bookshelf tables:", error);
@@ -1697,14 +1697,14 @@ async function addIsSharedColumnToBookShelves() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding 'is_shared' column to book_shelves table...");
+      
       await db.execute(sql`
         ALTER TABLE book_shelves 
         ADD COLUMN is_shared boolean NOT NULL DEFAULT false
       `);
-      console.log("Column 'is_shared' added successfully");
+      
     } else {
-      console.log("Column 'is_shared' already exists in book_shelves table");
+      
     }
   } catch (error) {
     console.error("Error adding 'is_shared' column to book_shelves table:", error);
@@ -1728,7 +1728,7 @@ async function createShelfCommentsTable() {
     `);
 
     if (shelfCommentsResult.rows.length === 0) {
-      console.log("Creating shelf_comments table...");
+      
       await db.execute(sql`
         CREATE TABLE shelf_comments (
           id SERIAL PRIMARY KEY,
@@ -1739,9 +1739,9 @@ async function createShelfCommentsTable() {
           created_at TIMESTAMP NOT NULL DEFAULT NOW()
         )
       `);
-      console.log("shelf_comments table created successfully");
+      
     } else {
-      console.log("shelf_comments table already exists");
+      
     }
   } catch (error) {
     console.error("Error creating shelf comments table:", error);
@@ -1750,7 +1750,7 @@ async function createShelfCommentsTable() {
 }
 
 export async function runMigrations() {
-  console.log("Running database migrations...");
+  
   // Remove has_beta_access column from users table
   await removeHasBetaAccessFromUsers();
   await removeGenresColumnFromBooks();
@@ -1814,12 +1814,12 @@ export async function runMigrations() {
   // Add performance optimization indexes
   await addDatabaseIndexes();
   
-  console.log("Migrations completed");
+  
 }
 
 async function createSellersTableAndUpdatePublisherSellers() {
   try {
-    console.log("Checking for sellers table...");
+    
     
     // Check if the table already exists
     const checkResult = await db.execute(sql`
@@ -1829,7 +1829,7 @@ async function createSellersTableAndUpdatePublisherSellers() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Creating sellers table and modifying publisher_sellers table...");
+      
       
       // First, create the sellers table
       await db.execute(sql`
@@ -1854,7 +1854,7 @@ async function createSellersTableAndUpdatePublisherSellers() {
       `);
       
       if (publisherSellersCheckResult.rows.length > 0) {
-        console.log("Migrating data from publisher_sellers to sellers table...");
+        
         
         // Check if user_id column exists in publisher_sellers
         const userIdCheckResult = await db.execute(sql`
@@ -1911,15 +1911,15 @@ async function createSellersTableAndUpdatePublisherSellers() {
           await db.execute(sql`DROP TABLE seller_mapping`);
           await db.execute(sql`DROP TABLE publisher_sellers_backup`);
           
-          console.log("Successfully migrated publisher_sellers table to use seller_id");
+          
         } else {
-          console.log("publisher_sellers table already has the updated schema with seller_id");
+          
         }
       }
       
-      console.log("sellers table created successfully");
+      
     } else {
-      console.log("sellers table already exists");
+      
       
       // Check if publisher_sellers has seller_id instead of user_id
       const sellerIdCheckResult = await db.execute(sql`
@@ -1929,9 +1929,9 @@ async function createSellersTableAndUpdatePublisherSellers() {
       `);
       
       if (sellerIdCheckResult.rows.length > 0) {
-        console.log("publisher_sellers table already has the updated schema with seller_id");
+        
       } else {
-        console.log("publisher_sellers table needs to be updated but sellers table exists - skipping to avoid conflicts");
+        
       }
     }
   } catch (error) {
@@ -1942,7 +1942,7 @@ async function createSellersTableAndUpdatePublisherSellers() {
 // Add user_id column to publishers table with a foreign key reference to users
 async function addUserIdToPublishers() {
   try {
-    console.log("Checking if user_id column exists in publishers table...");
+    
     
     // Check if the column already exists
     const checkResult = await db.execute(sql`
@@ -1952,7 +1952,7 @@ async function addUserIdToPublishers() {
     `);
     
     if (checkResult.rows.length === 0) {
-      console.log("Adding user_id column to publishers table...");
+      
       
       // First add the column
       await db.execute(sql`
@@ -1974,9 +1974,9 @@ async function addUserIdToPublishers() {
         ADD CONSTRAINT unique_user_publisher UNIQUE (user_id)
       `);
       
-      console.log("user_id column added to publishers table with foreign key constraint");
+      
     } else {
-      console.log("user_id column already exists in publishers table");
+      
     }
   } catch (error) {
     console.error("Error adding user_id column to publishers table:", error);

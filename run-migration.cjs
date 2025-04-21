@@ -19,26 +19,26 @@ async function removeProColumnsFromAuthors() {
     
     // If is_pro exists, remove it
     if (checkIsProResult.rows.length > 0) {
-      console.log("Removing 'is_pro' column from authors table...");
+      
       await db.execute(sql`
         ALTER TABLE authors 
         DROP COLUMN is_pro
       `);
-      console.log("Column 'is_pro' removed successfully from authors table");
+      
     } else {
-      console.log("Column 'is_pro' doesn't exist or has already been removed from authors table");
+      table");
     }
     
     // If pro_expires_at exists, remove it
     if (checkProExpiresAtResult.rows.length > 0) {
-      console.log("Removing 'pro_expires_at' column from authors table...");
+      
       await db.execute(sql`
         ALTER TABLE authors 
         DROP COLUMN pro_expires_at
       `);
-      console.log("Column 'pro_expires_at' removed successfully from authors table");
+      
     } else {
-      console.log("Column 'pro_expires_at' doesn't exist or has already been removed from authors table");
+      authors table");
     }
   } catch (error) {
     console.error("Error removing pro columns from authors table:", error);
@@ -49,7 +49,7 @@ async function removeProColumnsFromAuthors() {
 // Run the migration
 removeProColumnsFromAuthors()
   .then(() => {
-    console.log("Migration completed successfully");
+    
     process.exit(0);
   })
   .catch((error) => {

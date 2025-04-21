@@ -14,7 +14,7 @@ async function createBetaKeys() {
       });
       keys.push(betaKey);
     }
-    console.log("Created beta keys:", keys.map(k => k.key).join('\n'));
+    
   } catch (error) {
     console.error("Error creating beta keys:", error);
   }

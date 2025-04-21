@@ -83,12 +83,7 @@ if (!fs.existsSync(profileImagesDir)) {
 router.get("/books", async (_req, res) => {
   const books = await dbStorage.getBooks();
   
-  // Add debugging
-  console.log(`Returning ${books.length} books`);
-  if (books.length > 0) {
-    console.log(`First book has ${books[0]?.images?.length || 0} images:`, 
-      books[0]?.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
-  }
+
   
   res.json(books);
 });
@@ -109,7 +104,7 @@ router.get("/book-details", async (req, res) => {
     return res.status(400).json({ error: "Both authorName and bookTitle query parameters are required" });
   }
   
-  console.log(`Searching for book with authorName: ${authorName}, title: ${bookTitle}`);
+  
   
   try {
     // Get book by author name and title
@@ -119,9 +114,7 @@ router.get("/book-details", async (req, res) => {
       return res.status(404).json({ error: "Book not found" });
     }
     
-    // Add debugging to check if images are attached to the book
-    console.log(`Book with title "${bookTitle}" by "${authorName}" has ${book.images?.length || 0} images:`, 
-      book.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
+
     
     // Record an impression if the book is found and user is authenticated
     if (req.isAuthenticated() && req.user && book.id) {
@@ -277,7 +270,7 @@ router.get("/authors/:id/publisher", async (req, res) => {
     const publisher = await dbStorage.getAuthorPublisher(authorId);
     
     // For debugging
-    console.log(`Publisher for author ${authorId}:`, publisher);
+    
     
     if (!publisher) {
       return res.json(null); // No publisher associated with this author
@@ -393,9 +386,9 @@ router.post("/books", multipleImageUpload, async (req, res) => {
 
   try {
     // Log the request body and files for debugging
-    console.log("Book creation request:", JSON.stringify(req.body, null, 2));
-    console.log("Uploaded files:", JSON.stringify(req.files, null, 2));
-    console.log("Fields starting with bookImage_:", Object.keys(req.files || {}).filter(key => key.startsWith('bookImage_')));
+    
+    
+    
     
     // Check if we have at least one image
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -418,7 +411,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         const parsedLinks = JSON.parse(req.body.referralLinks);
         // Enhance with domain and favicon information
         referralLinks = await enhanceReferralLinks(parsedLinks);
-        console.log("Enhanced referral links for new book:", JSON.stringify(referralLinks, null, 2));
+        
       } catch (error) {
         console.error("Error processing referral links:", error);
       }
@@ -481,13 +474,13 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         const imageType = fieldName.replace('bookImage_', '');
         const file = uploadedFiles[fieldName][0]; // Get first file from array
         
-        console.log(`Processing image type: ${imageType}, original filename: ${file.originalname}`);
+        
         
         // Upload to object storage using SirenedImageBucket
         const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, book.id);
         const imageUrl = sirenedImageBucket.getPublicUrl(storageKey);
         
-        console.log(`Image uploaded successfully. Storage key: ${storageKey}, URL: ${imageUrl}`);
+        
         
         // Get dimensions from request body
         let width = 0;
@@ -531,7 +524,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
           sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
         });
         
-        console.log(`Added image to bookImageEntries array. Total entries: ${bookImageEntries.length}`);
+        
       }
     }
     
@@ -540,7 +533,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
     if (bookDetailFile && bookDetailUrl) {
       // Check if we don't already have book-card in our entries
       if (!bookImageEntries.some(entry => entry.imageType === 'book-card')) {
-        console.log("Auto-generating book-card image from book-detail");
+        
         bookImageEntries.push({
           bookId: book.id,
           imageUrl: bookDetailUrl, // Use same image file - would be scaled on client side
@@ -553,7 +546,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
       
       // Check if we don't already have mini in our entries
       if (!bookImageEntries.some(entry => entry.imageType === 'mini')) {
-        console.log("Auto-generating mini image from book-detail");
+        
         bookImageEntries.push({
           bookId: book.id,
           imageUrl: bookDetailUrl, // Use same image file - would be scaled on client side
@@ -567,22 +560,22 @@ router.post("/books", multipleImageUpload, async (req, res) => {
 
     // Insert all book images using a single database operation
     if (bookImageEntries.length > 0) {
-      console.log("Inserting book images:", JSON.stringify(bookImageEntries, null, 2));
+      
       try {
         const insertedImages = await db.insert(bookImages).values(bookImageEntries).returning();
-        console.log(`Successfully inserted ${insertedImages.length} images into book_images table`);
-        console.log("Inserted image records:", JSON.stringify(insertedImages, null, 2));
+        
+        
       } catch (dbError) {
         console.error("Error inserting images into book_images table:", dbError);
         throw dbError; // Re-throw to be caught by the outer try/catch
       }
     } else {
-      console.log("WARNING: No book images to insert - bookImageEntries array is empty");
+      
     }
 
     // Now handle the taxonomies separately if present
     if (genreTaxonomies && genreTaxonomies.length > 0) {
-      console.log("Adding taxonomies for new book:", genreTaxonomies);
+      
       await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
     }
 
@@ -612,9 +605,9 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
 
   try {
     // Add debugging to see what's in the request
-    console.log("Book update request body:", JSON.stringify(req.body, null, 2));
-    console.log("Uploaded files:", JSON.stringify(req.files, null, 2));
-    console.log("Fields starting with bookImage_:", Object.keys(req.files || {}).filter(key => key.startsWith('bookImage_')));
+    
+    
+    
     
     // Extract genreTaxonomies from request body to handle separately
     const { genreTaxonomies, ...bookData } = req.body;
@@ -639,12 +632,12 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
     
     // Process referral links to add domain and favicon information
     if (bookData.referralLinks) {
-      console.log("Processing referral links for favicon enhancement");
+      
       try {
         // Enhance referral links with domain and favicon information
         const enhancedLinks = await enhanceReferralLinks(bookData.referralLinks);
         safeBookData.referralLinks = enhancedLinks;
-        console.log("Enhanced referral links:", JSON.stringify(enhancedLinks, null, 2));
+        
       } catch (error) {
         console.error("Error enhancing referral links:", error);
         // If enhancement fails, still update with original links
@@ -654,7 +647,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
     
     if (bookData.internal_details) safeBookData.internal_details = bookData.internal_details;
     
-    console.log("Safe book data:", JSON.stringify(safeBookData, null, 2));
+    
     
     // Update main book data first (only if we have data to update)
     let updatedBook = book;
@@ -679,7 +672,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
           // Upload to object storage using SirenedImageBucket
           const storageKey = await sirenedImageBucket.uploadBookImage(file, 'book-detail', book.id);
           updatedBookDetailUrl = sirenedImageBucket.getPublicUrl(storageKey);
-          console.log("Found updated book-detail image:", updatedBookDetailUrl);
+          
           break;
         }
       }
@@ -756,7 +749,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
       // If book-detail was updated, auto-generate book-card and mini if not explicitly uploaded
       if (updatedBookDetailFile && updatedBookDetailUrl) {
         const uploadedImageTypes = Object.keys(uploadedFiles).map(key => key.replace('bookImage_', ''));
-        console.log("Uploaded image types:", uploadedImageTypes);
+        
         
         // Check if book-card isn't being updated explicitly
         if (!uploadedImageTypes.includes('book-card')) {
@@ -765,7 +758,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
           
           if (existingBookCard) {
             // Update the existing book-card with the new book-detail image
-            console.log("Auto-updating book-card with new book-detail image");
+            
             await db.update(bookImages)
               .set({
                 imageUrl: updatedBookDetailUrl,
@@ -775,7 +768,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
               .where(eq(bookImages.id, existingBookCard.id));
           } else {
             // Create a new book-card image
-            console.log("Auto-generating new book-card from book-detail");
+            
             bookImageEntries.push({
               bookId: book.id,
               imageUrl: updatedBookDetailUrl,
@@ -794,7 +787,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
           
           if (existingMini) {
             // Update the existing mini with the new book-detail image
-            console.log("Auto-updating mini with new book-detail image");
+            
             await db.update(bookImages)
               .set({
                 imageUrl: updatedBookDetailUrl,
@@ -804,7 +797,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
               .where(eq(bookImages.id, existingMini.id));
           } else {
             // Create a new mini image
-            console.log("Auto-generating new mini from book-detail");
+            
             bookImageEntries.push({
               bookId: book.id,
               imageUrl: updatedBookDetailUrl,
@@ -819,7 +812,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
       
       // Insert any new book images
       if (bookImageEntries.length > 0) {
-        console.log("Inserting new book images:", bookImageEntries);
+        
         await db.insert(bookImages).values(bookImageEntries);
       }
     }
@@ -950,7 +943,7 @@ router.delete("/books/:id", async (req, res) => {
     // Delete the book
     await dbStorage.deleteBook(bookId, author.id);
     
-    console.log(`Book ID ${bookId} deleted by user ID ${req.user!.id}`);
+    
     res.sendStatus(200);
   } catch (error) {
     console.error("Error deleting book:", error);
@@ -1137,7 +1130,7 @@ router.get("/author", async (req, res) => {
       return res.status(400).json({ error: "Author name is required as a query parameter" });
     }
     
-    console.log(`Searching for author with name: ${authorName}`);
+    
 
     // Get author details from storage by name
     const author = await dbStorage.getAuthorByName(authorName);
@@ -1296,7 +1289,7 @@ router.get("/authors/:id/following", async (req, res) => {
 router.get("/dashboard", async (req: Request, res: Response) => {
   // Check if user is authenticated, return empty structure if not
   if (!req.isAuthenticated()) {
-    console.log("Dashboard accessed without authentication");
+    
     return res.json({
       user: {
         username: "Guest",

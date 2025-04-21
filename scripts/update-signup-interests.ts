@@ -5,7 +5,7 @@ import { db } from "../server/db";
 // Add isPublisher and isAuthorInterest columns to signup_interests table
 async function updateSignupInterestsTable() {
   try {
-    console.log("Checking if is_publisher and is_author_interest columns exist in signup_interests table...");
+    signup_interests table...");
     
     // Check if columns exist before adding them
     const result = await db.execute(sql`
@@ -19,27 +19,27 @@ async function updateSignupInterestsTable() {
     
     // Add is_publisher column if it doesn't exist
     if (!existingColumns.includes('is_publisher')) {
-      console.log("Adding is_publisher column to signup_interests table");
+      
       await db.execute(sql`
         ALTER TABLE signup_interests
         ADD COLUMN is_publisher BOOLEAN DEFAULT false
       `);
     } else {
-      console.log("is_publisher column already exists in signup_interests table");
+      
     }
     
     // Add is_author_interest column if it doesn't exist
     if (!existingColumns.includes('is_author_interest')) {
-      console.log("Adding is_author_interest column to signup_interests table");
+      
       await db.execute(sql`
         ALTER TABLE signup_interests
         ADD COLUMN is_author_interest BOOLEAN DEFAULT false
       `);
     } else {
-      console.log("is_author_interest column already exists in signup_interests table");
+      
     }
     
-    console.log("Signup interests table updated successfully");
+    
   } catch (error) {
     console.error("Error updating signup_interests table:", error);
     throw error;
@@ -50,7 +50,7 @@ async function updateSignupInterestsTable() {
 async function run() {
   try {
     await updateSignupInterestsTable();
-    console.log("Migration completed successfully");
+    
   } catch (error) {
     console.error("Migration failed:", error);
     process.exit(1);

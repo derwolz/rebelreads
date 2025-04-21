@@ -104,8 +104,8 @@ router.get("/check", adminAuthMiddleware, (req: Request, res: Response) => {
 
 // Temporary debug route without auth middleware for troubleshooting
 router.get("/debug-auth", (req: Request, res: Response) => {
-  console.log('Debug auth route - User object:', req.user);
-  console.log('Debug auth route - isAuthenticated:', req.isAuthenticated());
+  
+  
   res.json({ 
     authenticated: req.isAuthenticated(),
     userId: req.user?.id,

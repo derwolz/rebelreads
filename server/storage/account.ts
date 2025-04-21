@@ -227,7 +227,7 @@ export class AccountStorage implements IAccountStorage {
     const startDate = subDays(new Date(), days);
 
     // Log the time range we're using
-    console.log(`Getting follower metrics from ${startDate.toISOString()} to ${new Date().toISOString()}`);
+    
 
     // Get all followers regardless of creation date
     const allFollowers = await db
@@ -262,11 +262,11 @@ export class AccountStorage implements IAccountStorage {
       )
       .groupBy(sql`DATE(${followers.createdAt})`);
     
-    console.log("March followers:", JSON.stringify(marchFollowers));
+    
       
-    console.log(`Total followers found: ${allFollowers.length}`);
+    
     if (allFollowers.length > 0) {
-      console.log(`First follower date: ${allFollowers[0].date}, last follower date: ${allFollowers[allFollowers.length - 1].date}`);
+      
     }
 
     // Get all unfollows within the date range
@@ -286,7 +286,7 @@ export class AccountStorage implements IAccountStorage {
       )
       .orderBy(followers.deletedAt);
     
-    console.log(`Total unfollows in range: ${allUnfollows.length}`);
+    
 
     // Generate all dates in range
     const dateRange = [];
@@ -532,7 +532,7 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences> {
-    console.log(`Storage: saveRatingPreferences called for user ${userId} with weights:`, weights);
+    
     
     // Ensure all weights are provided or use defaults
     const criteriaWeights = {
@@ -543,15 +543,15 @@ export class AccountStorage implements IAccountStorage {
       worldbuilding: weights.worldbuilding ?? 0.08
     };
     
-    console.log(`Storage: Using criteria weights:`, criteriaWeights);
+    
     
     // Check if preferences already exist
     const existing = await this.getRatingPreferences(userId);
-    console.log("Storage: existing preferences:", existing);
+    
     
     try {
       if (existing) {
-        console.log("Storage: updating existing preferences");
+        
         // Update existing
         
         // Explicitly create the data object to update with individual columns
@@ -564,7 +564,7 @@ export class AccountStorage implements IAccountStorage {
           characters: String(criteriaWeights.characters),
           updatedAt: new Date()
         };
-        console.log("Storage: data to update:", JSON.stringify(dataToUpdate));
+        
         
         const [updated] = await db
           .update(rating_preferences)
@@ -572,7 +572,7 @@ export class AccountStorage implements IAccountStorage {
           .where(eq(rating_preferences.userId, userId))
           .returning();
         
-        console.log("Storage: updated preferences returned from DB:", updated ? JSON.stringify(updated) : "null");
+        
         
         if (!updated) {
           console.error("Storage: update didn't return any data");
@@ -583,10 +583,10 @@ export class AccountStorage implements IAccountStorage {
             .from(rating_preferences)
             .where(eq(rating_preferences.userId, userId));
           
-          console.log("Storage: check if row exists after update:", checkResult.length > 0 ? "Yes" : "No");
+          
           
           if (checkResult.length > 0) {
-            console.log("Storage: row data after update:", JSON.stringify(checkResult[0]));
+            
             return checkResult[0];
           }
         }
@@ -602,7 +602,7 @@ export class AccountStorage implements IAccountStorage {
         
         return updated;
       } else {
-        console.log("Storage: creating new preferences");
+        
         // Create new
         
         // Explicitly create the data object to insert with individual columns
@@ -615,14 +615,14 @@ export class AccountStorage implements IAccountStorage {
           enjoyment: String(criteriaWeights.enjoyment),
           characters: String(criteriaWeights.characters)
         };
-        console.log("Storage: data to insert:", JSON.stringify(dataToInsert));
+        
         
         const [created] = await db
           .insert(rating_preferences)
           .values(dataToInsert)
           .returning();
         
-        console.log("Storage: created preferences returned from DB:", created ? JSON.stringify(created) : "null");
+        
         
         if (!created) {
           console.error("Storage: insert didn't return any data");
@@ -633,10 +633,10 @@ export class AccountStorage implements IAccountStorage {
             .from(rating_preferences)
             .where(eq(rating_preferences.userId, userId));
           
-          console.log("Storage: check if row exists after insert:", checkResult.length > 0 ? "Yes" : "No");
+          
           
           if (checkResult.length > 0) {
-            console.log("Storage: row data after insert:", JSON.stringify(checkResult[0]));
+            
             return checkResult[0];
           }
         }
@@ -656,7 +656,7 @@ export class AccountStorage implements IAccountStorage {
       
       // If there's an error, let's try a direct query as a fallback
       try {
-        console.log("Storage: trying fallback direct SQL query");
+        
         
         if (existing) {
           // Update using SQL with individual columns
@@ -673,7 +673,7 @@ export class AccountStorage implements IAccountStorage {
             RETURNING *
           `);
           
-          console.log("Storage: SQL update result:", result.rows.length > 0 ? "Success" : "No rows updated");
+          
           
           if (result.rows.length > 0) {
             return result.rows[0] as RatingPreferences;
@@ -704,7 +704,7 @@ export class AccountStorage implements IAccountStorage {
             RETURNING *
           `);
           
-          console.log("Storage: SQL insert result:", result.rows.length > 0 ? "Success" : "No rows inserted");
+          
           
           if (result.rows.length > 0) {
             return result.rows[0] as RatingPreferences;

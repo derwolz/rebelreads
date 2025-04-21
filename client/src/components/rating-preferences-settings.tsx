@@ -158,11 +158,11 @@ export function RatingPreferencesSettings({
       newOrder.splice(oldIndex, 1);
       newOrder.splice(newIndex, 0, active.id as string);
       
-      console.log("Criteria reordered:", newOrder);
+      
       
       // Generate new weights based on position
       const newWeights = updateWeightsForNewOrder(newOrder, currentWeights);
-      console.log("New weights after reordering:", newWeights);
+      
       
       // Update the weights state
       setCurrentWeights(newWeights);
@@ -207,8 +207,8 @@ export function RatingPreferencesSettings({
         
       setCriteriaOrder(derivedOrder);
       setCurrentWeights(weights); // Initialize current weights only once
-      console.log("Derived criteria order from weights:", derivedOrder);
-      console.log("Loaded weights from DB:", weights);
+      
+      
     } else if (!preferencesData && Object.keys(currentWeights).length === 0) {
       // If no saved preferences, initialize with default weights based on initial order
       // Only do this once when the component mounts
@@ -226,7 +226,7 @@ export function RatingPreferencesSettings({
       weights[criterion] = POSITION_WEIGHTS[index];
     });
     
-    console.log("Generated criteria weights:", weights);
+    
     return weights;
   };
   
@@ -244,8 +244,8 @@ export function RatingPreferencesSettings({
       updatedWeights[criterion] = POSITION_WEIGHTS[index];
     });
     
-    console.log("Using existing weights as reference:", existingWeights);
-    console.log("Updated weights for new order:", updatedWeights);
+    
+    
     return updatedWeights;
   };
   
@@ -257,7 +257,7 @@ export function RatingPreferencesSettings({
     mutationFn: async () => {
       // Use current weights state instead of regenerating from order
       // This ensures we use the weights that reflect the most recent user changes
-      console.log("Saving preferences with weights:", currentWeights);
+      
       
       // Send just the weights (individual columns, not nested objects)
       return apiRequest('POST', '/api/rating-preferences', currentWeights);
@@ -285,8 +285,8 @@ export function RatingPreferencesSettings({
   });
   
   const handleSave = () => {
-    console.log("Saving preferences with current weights:", currentWeights);
-    console.log("Current criteria order:", criteriaOrder);
+    
+    
     savePreferences();
   };
   

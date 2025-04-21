@@ -81,19 +81,16 @@ export class BookStorage implements IBookStorage {
       // Get all books IDs
       const bookIds = allBooks.map(book => book.id);
       
-      console.log(`getBooks: Found ${allBooks.length} books with IDs:`, bookIds);
+      
       
       // Fetch all images for these books
       const allImages = await db.select()
         .from(bookImages)
         .where(inArray(bookImages.bookId, bookIds));
       
-      console.log(`getBooks: Found ${allImages.length} total book images`);
-      console.log('Book image details:', allImages.map(img => ({
-        bookId: img.bookId,
-        imageType: img.imageType,
-        imageUrl: img.imageUrl
-      })));
+      
+      
+        
       
       // Group images by book ID for easy lookup
       const imagesByBookId = new Map<number, BookImage[]>();
@@ -108,7 +105,7 @@ export class BookStorage implements IBookStorage {
       // Log each book's image count
       bookIds.forEach(bookId => {
         const images = imagesByBookId.get(bookId) || [];
-        console.log(`getBooks: Book ID ${bookId} has ${images.length} images`);
+        
       });
       
       // Add images to books and log all book objects for debugging
@@ -119,7 +116,7 @@ export class BookStorage implements IBookStorage {
       
       // Log one book with its complete data for debugging
       if (result.length > 0) {
-        console.log('First book complete data:', JSON.stringify(result[0], null, 2));
+        
       }
       
       return result;
@@ -244,7 +241,7 @@ export class BookStorage implements IBookStorage {
   }
 
   async getBook(id: number): Promise<Book | undefined> {
-    console.log(`getBook called with ID: ${id}`);
+    
     
     // Get the book data with author information
     const [book] = await db
@@ -280,11 +277,11 @@ export class BookStorage implements IBookStorage {
       .where(eq(books.id, id));
     
     if (!book) {
-      console.log(`Book with ID ${id} not found`);
+      
       return undefined;
     }
     
-    console.log(`Book data found:`, JSON.stringify(book, null, 2));
+    
     
     // Get the book images
     const images = await db
@@ -292,7 +289,7 @@ export class BookStorage implements IBookStorage {
       .from(bookImages)
       .where(eq(bookImages.bookId, id));
     
-    console.log(`getBook(${id}): Found ${images.length} images:`, 
+    
       images.map(img => `${img.imageType}: ${img.imageUrl}`));
     
     // Attach the images to the book object
@@ -301,7 +298,7 @@ export class BookStorage implements IBookStorage {
       images: images
     } as Book;
     
-    console.log(`Returning book with ${images.length} images`, 
+    
       images.length > 0 ? `First image: ${images[0].imageType}` : 'No images');
     
     return result;
@@ -510,12 +507,12 @@ export class BookStorage implements IBookStorage {
         .where(eq(authors.userId, userId));
         
       if (!author) {
-        console.log(`No author found with user ID ${userId}, no books to delete`);
+        
         return;
       }
       
       const authorId = author.id;
-      console.log(`Found author with ID ${authorId} for user ${userId}, deleting all their books`);
+      
       
       // Get all books by this author
       const authorBooks = await db
@@ -524,7 +521,7 @@ export class BookStorage implements IBookStorage {
         .where(eq(books.authorId, authorId));
         
       const bookIds = authorBooks.map(book => book.id);
-      console.log(`Found ${bookIds.length} books to delete for author ${authorId}:`, bookIds);
+      
       
       if (bookIds.length === 0) {
         return; // No books to delete
@@ -534,32 +531,32 @@ export class BookStorage implements IBookStorage {
       await db
         .delete(bookImages)
         .where(inArray(bookImages.bookId, bookIds));
-      console.log(`Deleted images for ${bookIds.length} books`);
+      
       
       // Delete all book genre taxonomies
       await db
         .delete(bookGenreTaxonomies)
         .where(inArray(bookGenreTaxonomies.bookId, bookIds));
-      console.log(`Deleted genre taxonomies for ${bookIds.length} books`);
+      
       
       // Delete all reading statuses
       await db
         .delete(reading_status)
         .where(inArray(reading_status.bookId, bookIds));
-      console.log(`Deleted reading statuses for ${bookIds.length} books`);
+      
       
       // Delete all ratings
       await db
         .delete(ratings)
         .where(inArray(ratings.bookId, bookIds));
-      console.log(`Deleted ratings for ${bookIds.length} books`);
+      
       
       // Delete all content reports for these books - important to handle before deleting books due to FK constraint
       try {
         // Import contentReports from schema and use it to delete related content reports
         const { contentReports } = await import('../../shared/schema');
         await db.delete(contentReports).where(inArray(contentReports.bookId, bookIds));
-        console.log(`Deleted content reports for ${bookIds.length} books`);
+        
       } catch (error) {
         console.error(`Error deleting content reports for books:`, error);
         throw error;
@@ -569,7 +566,7 @@ export class BookStorage implements IBookStorage {
       try {
         const { bookImpressions } = await import('../../shared/schema');
         await db.delete(bookImpressions).where(inArray(bookImpressions.bookId, bookIds));
-        console.log(`Deleted impressions for ${bookIds.length} books`);
+        
       } catch (error) {
         console.error(`Error deleting book impressions:`, error);
         // Continue with deletion even if this fails
@@ -579,7 +576,7 @@ export class BookStorage implements IBookStorage {
       try {
         const { bookClickThroughs } = await import('../../shared/schema');
         await db.delete(bookClickThroughs).where(inArray(bookClickThroughs.bookId, bookIds));
-        console.log(`Deleted click-throughs for ${bookIds.length} books`);
+        
       } catch (error) {
         console.error(`Error deleting book click-throughs:`, error);
         // Continue with deletion even if this fails
@@ -589,7 +586,7 @@ export class BookStorage implements IBookStorage {
       try {
         const { shelfBooks } = await import('../../shared/schema');
         await db.delete(shelfBooks).where(inArray(shelfBooks.bookId, bookIds));
-        console.log(`Deleted shelf book entries for ${bookIds.length} books`);
+        
       } catch (error) {
         console.error(`Error deleting shelf book entries:`, error);
         throw error;
@@ -599,7 +596,7 @@ export class BookStorage implements IBookStorage {
       try {
         const { notes } = await import('../../shared/schema');
         await db.delete(notes).where(inArray(notes.bookId, bookIds));
-        console.log(`Deleted notes for ${bookIds.length} books`);
+        
       } catch (error) {
         console.error(`Error deleting notes:`, error);
         // Continue with deletion even if this fails
@@ -609,7 +606,7 @@ export class BookStorage implements IBookStorage {
       await db
         .delete(books)
         .where(eq(books.authorId, authorId));
-      console.log(`Deleted all ${bookIds.length} books for author ${authorId}`);
+      
     } catch (error) {
       console.error(`Error deleting books for author with user ID ${userId}:`, error);
       throw error;
@@ -694,7 +691,7 @@ export class BookStorage implements IBookStorage {
   }
 
   async getBookByAuthorAndTitle(authorName: string, title: string): Promise<Book | undefined> {
-    console.log(`getBookByAuthorAndTitle called with authorName: ${authorName}, title: ${title}`);
+    
     
     // Get the book data with author information, joining the authors table
     const [book] = await db
@@ -735,11 +732,11 @@ export class BookStorage implements IBookStorage {
       );
     
     if (!book) {
-      console.log(`Book with authorName "${authorName}" and title "${title}" not found`);
+      
       return undefined;
     }
     
-    console.log(`Book data found:`, JSON.stringify(book, null, 2));
+    
     
     // Get the book images
     const images = await db
@@ -747,7 +744,7 @@ export class BookStorage implements IBookStorage {
       .from(bookImages)
       .where(eq(bookImages.bookId, book.id));
     
-    console.log(`getBookByAuthorAndTitle: Found ${images.length} images:`, 
+    
       images.map(img => `${img.imageType}: ${img.imageUrl}`));
     
     // Attach the images to the book object
@@ -756,7 +753,7 @@ export class BookStorage implements IBookStorage {
       images: images
     } as Book;
     
-    console.log(`Returning book with ${images.length} images`, 
+    
       images.length > 0 ? `First image: ${images[0].imageType}` : 'No images');
     
     return result;
@@ -1008,9 +1005,9 @@ export class BookStorage implements IBookStorage {
       if (bookIds.length === 0) return [];
       
       // Apply content filtering to book IDs
-      console.log(`Found ${bookIds.length} recommended books, applying content filters`);
+      
       bookIds = await applyContentFilters(userId, bookIds);
-      console.log(`After content filtering: ${bookIds.length} recommended books remain`);
+      
       
       if (bookIds.length === 0) return [];
       
@@ -1106,9 +1103,9 @@ export class BookStorage implements IBookStorage {
       if (bookIds.length === 0) return [];
       
       // Apply content filtering to book IDs
-      console.log(`Found ${bookIds.length} popular fallback books, applying content filters`);
+      
       bookIds = await applyContentFilters(userId, bookIds);
-      console.log(`After content filtering: ${bookIds.length} popular fallback books remain`);
+      
       
       if (bookIds.length === 0) return [];
       

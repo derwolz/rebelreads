@@ -120,9 +120,9 @@ router.get("/followed-authors", async (req: Request, res: Response) => {
     if (bookIds.length === 0) return res.json([]);
     
     // Apply content filtering to book IDs
-    console.log(`Found ${bookIds.length} books from authors user follows, applying content filters`);
+    
     bookIds = await applyContentFilters(userId, bookIds);
-    console.log(`After content filtering: ${bookIds.length} books remain`);
+    
     
     if (bookIds.length === 0) return res.json([]);
     
@@ -226,9 +226,9 @@ router.get("/wishlist", async (req: Request, res: Response) => {
     if (bookIds.length === 0) return res.json([]);
     
     // Apply content filtering to book IDs
-    console.log(`Found ${bookIds.length} wishlisted books, applying content filters`);
+    
     bookIds = await applyContentFilters(userId, bookIds);
-    console.log(`After content filtering: ${bookIds.length} wishlisted books remain`);
+    
     
     if (bookIds.length === 0) return res.json([]);
     
@@ -333,9 +333,9 @@ router.get("/reviewed", async (req: Request, res: Response) => {
     if (bookIds.length === 0) return res.json([]);
     
     // Apply content filtering to book IDs
-    console.log(`Found ${bookIds.length} reviewed books, applying content filters`);
+    
     bookIds = await applyContentFilters(userId, bookIds);
-    console.log(`After content filtering: ${bookIds.length} reviewed books remain`);
+    
     
     if (bookIds.length === 0) return res.json([]);
     
@@ -440,9 +440,9 @@ router.get("/completed", async (req: Request, res: Response) => {
     if (bookIds.length === 0) return res.json([]);
     
     // Apply content filtering to book IDs
-    console.log(`Found ${bookIds.length} completed books, applying content filters`);
+    
     bookIds = await applyContentFilters(userId, bookIds);
-    console.log(`After content filtering: ${bookIds.length} completed books remain`);
+    
     
     if (bookIds.length === 0) return res.json([]);
     
