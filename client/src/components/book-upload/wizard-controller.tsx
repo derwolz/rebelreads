@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { BookFormData, WizardControllerProps, BookFormatFile, BookImageFile } from "./types";
+import { BookFormData, WizardControllerProps, BookImageFile } from "./types";
 import {
   BookText,
   Images,
@@ -190,20 +190,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
     return images as Record<string, BookImageFile>;
   };
   
-  // Helper function to create empty book files structure
-  const createEmptyBookFiles = (): Record<string, BookFormatFile> => {
-    const files: Partial<Record<string, BookFormatFile>> = {};
-    
-    // Initialize each format type with empty values
-    FORMAT_OPTIONS.forEach((formatType) => {
-      files[formatType] = {
-        formatType,
-        file: null,
-      };
-    });
-    
-    return files as Record<string, BookFormatFile>;
-  };
+  // We don't need book files structure anymore as we're only tracking format availability
 
   // Initialize form data from local storage or defaults
   const [formData, setFormData] = useState<BookFormData>(() => {
@@ -238,7 +225,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         characters: book.characters || [],
         hasAwards: (book.awards || []).length > 0,
         awards: book.awards || [],
-        formats: book.formats,
+        formats: book.formats || [],
         pageCount: book.pageCount ?? 0,
         publishedDate: book.publishedDate ?? "",
         isbn: book.isbn || "",
@@ -250,7 +237,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "",
         bookImages: bookImages,
-        bookFiles: createEmptyBookFiles(), // Initialize empty book files
       };
     }
 
@@ -291,7 +277,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       internal_details: "",
       genreTaxonomies: [],
       bookImages: createEmptyBookImages(),
-      bookFiles: createEmptyBookFiles(),
     };
   });
 
@@ -306,12 +291,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           // Remove file objects which can't be stored in localStorage
           bookImages: Object.fromEntries(
             Object.entries(formData.bookImages).map(([key, value]) => [
-              key,
-              { ...value, file: null },
-            ]),
-          ),
-          bookFiles: Object.fromEntries(
-            Object.entries(formData.bookFiles || {}).map(([key, value]) => [
               key,
               { ...value, file: null },
             ]),
@@ -363,11 +342,8 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           }
         });
 
-        // If we have a new cover or any book files, use FormData
-        const hasFileUploads = changedFields.cover instanceof File || 
-                             (changedFields.bookFiles && 
-                              Object.values(changedFields.bookFiles as Record<string, BookFormatFile>)
-                                .some(file => file.file instanceof File));
+        // If we have image files to upload, use FormData
+        const hasFileUploads = changedFields.cover instanceof File;
         
         if (hasFileUploads) {
           const formData = new FormData();
@@ -375,19 +351,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           // Add the cover file if exists
           if (changedFields.cover instanceof File) {
             formData.append("cover", changedFields.cover);
-          }
-          
-          // Add book files if they exist
-          if (changedFields.bookFiles) {
-            Object.entries(changedFields.bookFiles as Record<string, BookFormatFile>).forEach(
-              ([formatType, fileData]) => {
-                if (fileData.file instanceof File) {
-                  formData.append(`bookFile_${formatType}`, fileData.file);
-                  formData.append(`bookFileType_${formatType}`, formatType);
-                  console.log(`Added book file for ${formatType} to formData for update`);
-                }
-              }
-            );
           }
 
           // Add other changed fields
@@ -445,22 +408,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
               }
             },
           );
-        } else if (key === "bookFiles" && typeof value === "object") {
-          // Handle book files
-          console.log("Processing bookFiles in formData:", value);
-          Object.entries(value as Record<string, BookFormatFile>).forEach(
-            ([formatType, fileData]) => {
-              console.log(
-                `Processing format type: ${formatType}, has file:`,
-                !!fileData.file,
-              );
-              if (fileData.file) {
-                formData.append(`bookFile_${formatType}`, fileData.file);
-                formData.append(`bookFileType_${formatType}`, formatType);
-                console.log(`Added book file for ${formatType} to formData`);
-              }
-            },
-          );
+        // We no longer need to handle book files since we only track format availability
         } else if (Array.isArray(value)) {
           formData.append(key, JSON.stringify(value));
         } else if (value !== null && value !== undefined && value !== "") {
