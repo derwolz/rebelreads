@@ -185,7 +185,7 @@ router.post("/", requirePublisher, bookImagesUpload, async (req: Request, res: R
           [`${filePrefix}book_detail`]: "book-detail",
           [`${filePrefix}background`]: "background",
           [`${filePrefix}book_card`]: "book-card",
-          [`${filePrefix}grid_item`]: "grid-item",
+          [`${filePrefix}grid_item`]: "spine",
           [`${filePrefix}mini`]: "mini",
           [`${filePrefix}hero`]: "hero"
         };

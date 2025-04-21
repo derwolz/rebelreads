@@ -90,7 +90,7 @@ const multipleImageUpload = multer({
   { name: 'bookImage_book-detail', maxCount: 1 },
   { name: 'bookImage_background', maxCount: 1 },
   { name: 'bookImage_book-card', maxCount: 1 },
-  { name: 'bookImage_grid-item', maxCount: 1 },
+  { name: 'bookImage_spine', maxCount: 1 },
   { name: 'bookImage_mini', maxCount: 1 },
   { name: 'bookImage_hero', maxCount: 1 }
 ]);

@@ -636,7 +636,7 @@ export function AdminBookCsvUploadWizard() {
                         'background': null,
                         'hero': null,
                         'book-card': null,
-
+                        'spine': null,
                         'mini': null,
                       });
                     }}

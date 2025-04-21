@@ -62,7 +62,7 @@ const multipleImageUpload = multer({
 }).fields([
   { name: 'bookImage_book-detail', maxCount: 1 },
   { name: 'bookImage_background', maxCount: 1 },
-  { name: 'bookImage_grid-item', maxCount: 1 },
+  { name: 'bookImage_spine', maxCount: 1 },
   { name: 'bookImage_hero', maxCount: 1 },
   // We still accept these but they're optional now as they'll be auto-generated
   { name: 'bookImage_book-card', maxCount: 1 },
@@ -503,7 +503,7 @@ router.post("/books", multipleImageUpload, async (req, res) => {
             width = 256;
             height = 440;
             break;
-          case "grid-item":
+          case "spine":
             width = 56;
             height = 212;
             break;
