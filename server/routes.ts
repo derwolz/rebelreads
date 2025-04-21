@@ -44,6 +44,7 @@ import linkPreviewRoutes from "./routes/link-preview-routes";
 import objectStorageRoutes from "./routes/object-storage-routes";
 import testUploadRoutes from "./routes/test-upload-routes";
 import testBookImageRoutes from "./routes/test-book-image-routes";
+import testSirenedBucketRoutes from "./routes/test-sirened-bucket-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -57,6 +58,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register test book image upload routes (for testing book image uploads)
   app.use("/api/test-book-image", testBookImageRoutes);
+  
+  // Register test Sirened Image Bucket routes (for testing the object storage integration)
+  app.use("/api/test-sirened-bucket", testSirenedBucketRoutes);
   
   // Serve legacy test upload page (for development only)
   app.get("/test-upload", (req, res) => {

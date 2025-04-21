@@ -112,7 +112,7 @@ class ObjectStorageService {
       }
       
       // Map StorageObject array to array of keys (strings)
-      return result.value.map(obj => obj.key);
+      return result.value.map(obj => obj.name);
     } catch (error) {
       console.error('Error listing files from object storage:', error);
       return [];
