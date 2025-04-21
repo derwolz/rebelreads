@@ -81,8 +81,11 @@ async function uploadBookImage(imagePath, imageType, bookId) {
   
   // Create a FormData instance
   const formData = new FormData();
-  formData.append(`bookImage_${imageType}`, fs.createReadStream(imagePath));
-  formData.append('bookId', bookId);
+  // Read the file and create a Blob from it
+  const fileBuffer = fs.readFileSync(imagePath);
+  const blob = new Blob([fileBuffer], { type: 'image/svg+xml' });
+  formData.append(`bookImage_${imageType}`, blob, path.basename(imagePath));
+  formData.append('bookId', bookId.toString());
   
   // Send the request
   const response = await fetch(BOOK_IMAGE_UPLOAD_URL, {

@@ -24,7 +24,8 @@ async function testObjectStorage() {
     const formData = new FormData();
     // Convert Buffer to Blob for FormData
     const blob = new Blob([fileBuffer], { type: 'image/svg+xml' });
-    formData.append('profileImage', blob, 'test-profile.svg');
+    // Fix TypeScript error by asserting blob as any
+    formData.append('profileImage', blob as any, 'test-profile.svg');
     
     // Upload the image using the user profile image endpoint
     const uploadResponse = await fetch('http://localhost:3000/api/user/profile-image', {
