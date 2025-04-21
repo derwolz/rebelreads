@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentSection } from "./comment-section";
 import useEmblaCarousel from "embla-carousel-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -162,6 +163,22 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
   
+  // Check if we're on a mobile device
+  const isMobileViewActive = useIsMobile();
+
+  // Navigate to previous book if available
+  const goToPrevBook = useCallback(() => {
+    if (selectedBookIndex !== null && selectedBookIndex > 0) {
+      handleSelectBook(books[selectedBookIndex - 1], selectedBookIndex - 1);
+    }
+  }, [selectedBookIndex, books]);
+
+  // Navigate to next book if available
+  const goToNextBook = useCallback(() => {
+    if (selectedBookIndex !== null && selectedBookIndex < books.length - 1) {
+      handleSelectBook(books[selectedBookIndex + 1], selectedBookIndex + 1);
+    }
+  }, [selectedBookIndex, books]);
 
   const { theme } = useTheme();
 
@@ -333,13 +350,74 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   
                   {/* Mobile view - Swipeable content */}
                   <div className="md:hidden">
-
-                      </div>
-                    ) : (
-                      <div>
-
-                      </div>
-                    )
+                    <div 
+                      className="relative touch-pan-y"
+                      onTouchStart={(e) => {
+                        if (!isMobileViewActive) return;
+                        
+                        // Store the starting position
+                        const startX = e.touches[0].clientX;
+                        
+                        // Define the touch move handler
+                        const handleTouchMove = (moveEvent: TouchEvent) => {
+                          const currentX = moveEvent.touches[0].clientX;
+                          const diffX = currentX - startX;
+                          
+                          // If significant horizontal swipe detected
+                          if (Math.abs(diffX) > 50) {
+                            // Prevent default behavior to avoid page scrolling
+                            moveEvent.preventDefault();
+                          }
+                        };
+                        
+                        // Define the touch end handler
+                        const handleTouchEnd = (endEvent: TouchEvent) => {
+                          const endX = endEvent.changedTouches[0].clientX;
+                          const diffX = endX - startX;
+                          
+                          // If significant horizontal swipe detected
+                          if (Math.abs(diffX) > 75) {
+                            if (diffX > 0) {
+                              // Swipe right - go to previous book
+                              goToPrevBook();
+                            } else {
+                              // Swipe left - go to next book
+                              goToNextBook();
+                            }
+                          }
+                          
+                          // Clean up
+                          document.removeEventListener('touchmove', handleTouchMove);
+                          document.removeEventListener('touchend', handleTouchEnd);
+                        };
+                        
+                        // Add the event listeners
+                        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                        document.addEventListener('touchend', handleTouchEnd);
+                      }}
+                    >
+                      <ScrollArea className="h-[200px] min-w-0 w-full">
+                        <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                      </ScrollArea>
+                      
+                      {/* Subtle indicators for swipe on mobile */}
+                      {selectedBookIndex !== null && (
+                        <div className="flex justify-between mt-2 text-muted-foreground/30">
+                          {selectedBookIndex > 0 && (
+                            <div className="text-xs flex items-center">
+                              <ChevronLeft className="h-3 w-3" /> 
+                              <span className="ml-1">Swipe right for prev</span>
+                            </div>
+                          )}
+                          {selectedBookIndex < books.length - 1 && (
+                            <div className="text-xs flex items-center ml-auto">
+                              <span className="mr-1">Swipe left for next</span>
+                              <ChevronRight className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -450,7 +528,58 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
             )}
           </div>
           
-          {/* Removed old mobile swipeable interface */}
+          {/* Mobile-only swipeable book notes */}
+          <div className="md:hidden mt-4">
+            {bookNotes && bookNotes.length > 0 ? (
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2 flex items-center">
+                  <StickyNote className="w-4 h-4 mr-1" />
+                  Notes for this book ({bookNotes.length})
+                </h3>
+                
+                {/* Swipeable embla carousel */}
+                <div className="overflow-hidden" ref={emblaRef}>
+                  <div className="flex">
+                    {bookNotes.map((note) => (
+                      <div 
+                        key={note.id}
+                        className="flex-[0_0_100%] min-w-0 pl-1 pr-4"
+                      >
+                        <div className="border border-border bg-muted/30 rounded-lg p-3">
+                          <p className="text-xs text-muted-foreground mb-1">
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </p>
+                          <PaperNoteCard note={note} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Pagination dots */}
+                {bookNotes.length > 1 && (
+                  <div className="flex justify-center gap-1 mt-2">
+                    {bookNotes.map((_, idx) => (
+                      <button
+                        key={idx}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          currentSlideIndex === idx 
+                            ? 'bg-foreground/80 scale-110' 
+                            : 'bg-muted-foreground/30'
+                        }`}
+                        onClick={() => emblaApi?.scrollTo(idx)}
+                        aria-label={`Go to note ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground mt-4 italic">
+                No notes for this book
+              </div>
+            )}
+          </div>
 
         </div>
         
@@ -469,18 +598,17 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       <div className="w-full border-t border-border my-4"></div>
       {/** Place the bookshelf name here */}
       <div className="relative">
-        <h4 className="font-medium absolute w-full z-20 text-foregound ">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
+        <h4 className="font-medium absolute w-full z-20 text-foregound">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
       
-    
-      {/* Book Rack at the bottom */}
-      <div className="px-4 ">
-        <BookRackShelf 
-          books={books}
-          isLoading={isShelfLoading}
-          onSelectBook={handleSelectBook}
-          selectedBookIndex={selectedBookIndex}
-          className="mx-auto max-w-4xl"
-        />
+        {/* Book Rack at the bottom */}
+        <div className="px-4">
+          <BookRackShelf 
+            books={books}
+            isLoading={isShelfLoading}
+            onSelectBook={handleSelectBook}
+            selectedBookIndex={selectedBookIndex}
+            className="mx-auto max-w-4xl"
+          />
         </div>
       </div>
     </div>
