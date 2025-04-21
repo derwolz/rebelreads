@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentSection } from "./comment-section";
 import useEmblaCarousel from "embla-carousel-react";
-
 import { Badge } from "@/components/ui/badge";
 import { 
   X,
@@ -18,7 +17,7 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
-  BookOpen as BookIcon
+  BookOpen
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
@@ -135,8 +134,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     const onSelect = () => {
       const index = emblaApi.selectedScrollSnap();
       setCurrentSlideIndex(index);
-      
-      // We don't need to show notes automatically as the carousel will handle that
     };
     
     emblaApi.on("select", onSelect);
@@ -323,17 +320,19 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   </ScrollArea>
                   
                   {/* Mobile-only: Button to open swipe interface */}
-                  <div className="md:hidden mt-3">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full text-foreground border-gray-700"
-                      onClick={() => setIsMobileViewActive(true)}
-                    >
-                      <StickyNote className="h-4 w-4 mr-2" />
-                      View Book Notes ({bookNotes.length})
-                    </Button>
-                  </div>
+                  {bookNotes.length > 0 && (
+                    <div className="md:hidden mt-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full text-foreground border-gray-700"
+                        onClick={() => setIsMobileViewActive(true)}
+                      >
+                        <StickyNote className="h-4 w-4 mr-2" />
+                        View Book Notes ({bookNotes.length})
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Genres & Themes */}
@@ -451,13 +450,13 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   <h3 className="text-sm font-medium text-foreground flex items-center gap-1">
                     {currentSlideIndex === 0 ? (
                       <>
-                        <BookIcon className="h-3 w-3" />
+                        <BookOpen className="h-3 w-3" />
                         Book Details
                       </>
                     ) : (
                       <>
                         <StickyNote className="h-3 w-3" />
-                        Note {currentSlideIndex} of {bookNotes.length + 1}
+                        Note {currentSlideIndex} of {bookNotes.length}
                       </>
                     )}
                   </h3>
