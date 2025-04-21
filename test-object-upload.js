@@ -6,7 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { ObjectStorageService } from './server/services/object-storage.js';
+import { ObjectStorageService } from './server/services/object-storage';
 
 // Get current file's directory (ESM equivalent of __dirname)
 const __filename = fileURLToPath(import.meta.url);
