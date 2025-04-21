@@ -69,7 +69,7 @@ function CompletedBookItem({ book }: { book: Book }) {
       >
         <div className="relative h-40 w-full overflow-hidden">
           <img
-            src={book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png"}
+            src={book.images?.find(img => img.imageType === "spine")?.imageUrl || "/images/placeholder-book.png"}
             alt={book.title}
             className="w-full h-full object-cover"
           />

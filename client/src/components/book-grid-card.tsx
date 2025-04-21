@@ -225,7 +225,7 @@ export function BookGridCard({ book }: { book: Book }) {
               <div className="flex h-full">
                 <img
                   src={
-                    book.images?.find((img) => img.imageType === "grid-item")
+                    book.images?.find((img) => img.imageType === "spine")
                       ?.imageUrl || "/images/placeholder-book.png"
                   }
                   alt={book.title}

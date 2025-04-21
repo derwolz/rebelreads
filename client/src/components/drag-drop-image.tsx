@@ -194,8 +194,6 @@ export function DragDropImage({
         return 'Book Card (256×440)';
       case 'spine':
         return 'Spine (56×212)';
-      case 'grid-item': // Keep for backward compatibility
-        return 'Spine (56×212)';
       case 'mini':
         return 'Mini (48×64)';
       case 'hero':

@@ -69,7 +69,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
   }, [angle]);
   
   // Get the book images
-  const spineImageUrl = book.images?.find(img => img.imageType === "grid-item")?.imageUrl || "/images/placeholder-book.png";
+  const spineImageUrl = book.images?.find(img => img.imageType === "spine")?.imageUrl || "/images/placeholder-book.png";
   
   // Determine if this book is being hovered
   const isHovered = hoveredIndex === index;

@@ -126,7 +126,7 @@ export function BookRackShelf({
   // Book spine component
   const BookSpine = ({ book, index, angle }: { book: Book; index: number; angle: number }) => {
     // Get the appropriate book spine image
-    const spineImageUrl = book.images?.find(img => img.imageType === "grid-item")?.imageUrl 
+    const spineImageUrl = book.images?.find(img => img.imageType === "spine")?.imageUrl 
       || "/images/placeholder-book.png";
 
     // Calculate geometric properties for this book spine

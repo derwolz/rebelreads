@@ -636,7 +636,7 @@ export function AdminBookCsvUploadWizard() {
                         'background': null,
                         'hero': null,
                         'book-card': null,
-                        'grid-item': null,
+
                         'mini': null,
                       });
                     }}
@@ -651,7 +651,7 @@ export function AdminBookCsvUploadWizard() {
                              !bookImages['background'] || // Required image
                              !bookImages['hero'] || // Required image
                              !bookImages['book-card'] || // Required image
-                             !bookImages['grid-item'] || // Required image
+                             !bookImages['spine'] || // Required image
                              !bookImages['mini']} // Required image
                   >
                     {(uploadMutation.isPending || isProcessing) && (
