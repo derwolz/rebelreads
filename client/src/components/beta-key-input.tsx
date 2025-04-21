@@ -1,4 +1,11 @@
-import { useRef, useState, useEffect, ChangeEvent, ClipboardEvent, KeyboardEvent } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  ChangeEvent,
+  ClipboardEvent,
+  KeyboardEvent,
+} from "react";
 import { Input } from "@/components/ui/input";
 import { FormControl } from "@/components/ui/form";
 
@@ -15,7 +22,11 @@ interface BetaKeyInputProps {
  * - Converts input to uppercase
  * - Strips special characters, allowing only letters and numbers
  */
-export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }: BetaKeyInputProps) {
+export function BetaKeyInput({
+  value,
+  onChange,
+  placeholder = "Enter beta key",
+}: BetaKeyInputProps) {
   const [parts, setParts] = useState<string[]>(["", "", "", ""]);
   const inputRefs = [
     useRef<HTMLInputElement>(null),
@@ -56,7 +67,10 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
     return input.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   };
 
-  const handleInputChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    index: number,
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
     const cleaned = cleanInput(e.target.value);
     const maxLength = index === 0 ? 5 : 4; // First segment can have 5 chars, others 4
 
@@ -78,11 +92,15 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
 
     // Distribute pasted characters across inputs
     const newParts = [...parts];
-    
+
     // Identify segments based on hyphens if present
     if (pasteData.includes("-")) {
       const segments = pasteData.split("-");
-      for (let i = 0; i < segments.length && i + index < inputRefs.length; i++) {
+      for (
+        let i = 0;
+        i < segments.length && i + index < inputRefs.length;
+        i++
+      ) {
         const maxLength = i + index === 0 ? 5 : 4;
         newParts[i + index] = cleanInput(segments[i]).slice(0, maxLength);
       }
@@ -94,19 +112,19 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
         const remaining = cleaned.slice(charIndex, charIndex + maxLength);
         newParts[i] = remaining;
         charIndex += maxLength;
-        
+
         if (charIndex >= cleaned.length) break;
       }
     }
-    
+
     setParts(newParts);
-    
+
     // Focus the next empty input or the last input if all are filled
     const nextEmptyIndex = newParts.findIndex((part, idx) => {
       const maxLength = idx === 0 ? 5 : 4;
       return idx >= index && part.length < maxLength;
     });
-    
+
     if (nextEmptyIndex !== -1) {
       inputRefs[nextEmptyIndex].current?.focus();
     } else {
@@ -119,24 +137,28 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
     if (e.key === "Backspace" && parts[index] === "" && index > 0) {
       inputRefs[index - 1].current?.focus();
     }
-    
+
     // Handle right arrow to advance to next input at end of text
-    if (e.key === "ArrowRight" && 
-        index < inputRefs.length - 1 && 
-        e.currentTarget.selectionStart === parts[index].length) {
+    if (
+      e.key === "ArrowRight" &&
+      index < inputRefs.length - 1 &&
+      e.currentTarget.selectionStart === parts[index].length
+    ) {
       inputRefs[index + 1].current?.focus();
     }
-    
+
     // Handle left arrow to go to previous input at beginning of text
-    if (e.key === "ArrowLeft" && 
-        index > 0 && 
-        e.currentTarget.selectionStart === 0) {
+    if (
+      e.key === "ArrowLeft" &&
+      index > 0 &&
+      e.currentTarget.selectionStart === 0
+    ) {
       inputRefs[index - 1].current?.focus();
     }
   };
-  
+
   return (
-    <div className="flex space-x-2">
+    <div className="flex flex-wrap flex-row space-x-2">
       <FormControl>
         <Input
           ref={inputRefs[0]}
@@ -145,7 +167,7 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
           onPaste={(e) => handlePaste(0, e)}
           onKeyDown={(e) => handleKeyDown(0, e)}
           placeholder="XXXXX"
-          className="text-center font-mono uppercase"
+          className="text-center w-[9ch] font-mono uppercase"
           maxLength={5}
         />
       </FormControl>
@@ -157,7 +179,7 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
           onPaste={(e) => handlePaste(1, e)}
           onKeyDown={(e) => handleKeyDown(1, e)}
           placeholder="XXXX"
-          className="text-center font-mono uppercase"
+          className="text-center w-[7ch] font-mono uppercase"
           maxLength={4}
         />
       </FormControl>
@@ -169,7 +191,7 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
           onPaste={(e) => handlePaste(2, e)}
           onKeyDown={(e) => handleKeyDown(2, e)}
           placeholder="XXXX"
-          className="text-center font-mono uppercase"
+          className="text-center w-[7ch] font-mono uppercase"
           maxLength={4}
         />
       </FormControl>
@@ -181,7 +203,7 @@ export function BetaKeyInput({ value, onChange, placeholder = "Enter beta key" }
           onPaste={(e) => handlePaste(3, e)}
           onKeyDown={(e) => handleKeyDown(3, e)}
           placeholder="XXXX"
-          className="text-center font-mono uppercase"
+          className="text-center w-[7ch] font-mono uppercase"
           maxLength={4}
         />
       </FormControl>

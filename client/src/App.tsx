@@ -56,6 +56,7 @@ import { TestImages } from "@/pages/test-images";
 import AuthCheckPage from "@/pages/auth-check";
 import { ImageGuidePage } from "@/pages/image-guide";
 import BookRackTestPage from "@/pages/book-rack-test";
+import BookShelfSharePage from "@/pages/book-shelf-share-page";
 
 function Router() {
   const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
@@ -120,6 +121,7 @@ function Router() {
         <Route path="/test-images" component={TestImages} />
         <Route path="/image-guide" component={ImageGuidePage} />
         <Route path="/book-rack-test" component={BookRackTestPage} />
+        <Route path="/book-shelf/share" component={BookShelfSharePage} />
         <Route path="/branding" component={BrandingPage} />
         
         {/* Discover routes - new taxonomy-based search pages */}
@@ -138,7 +140,7 @@ function Router() {
         <ProtectedRoute path="/settings/homepage" component={() => <HomepageSettingsPage />} />
         <ProtectedRoute path="/settings/author" component={SettingsPage} />
         <ProtectedRoute path="/dashboard" component={DashboardPage} />
-        <ProtectedRoute path="/book-shelf/:id" component={BookShelfPage} />
+        <ProtectedRoute path="/book-shelf" component={BookShelfPage} />
         <ProtectedRoute path="/pro" component={ProDashboard} />
         <ProtectedRoute path="/pro/action" component={ProActionPage} />
         <ProtectedRoute path="/pro/reviews" component={ProReviewsPage} />

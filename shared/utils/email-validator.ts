@@ -121,14 +121,6 @@ export function isSuspiciousLocalPart(email: string): boolean {
   const numberCount = (localPart.match(/\d/g) || []).length;
   if (numberCount > 4 && numberCount / localPart.length > 0.4) return true;
 
-  // Modified vowel check - less strict
-  const vowelCount = (localPart.match(/[aeiou]/gi) || []).length;
-  if (localPart.length > 8 && vowelCount / localPart.length < 0.15) return true;
-
-  // Modified consecutive consonants check - allow more consonants in a row
-  const consecutiveConsonants = localPart.match(/[^aeiou]{6,}/gi);
-  if (consecutiveConsonants && consecutiveConsonants.length > 0) return true;
-
   return false;
 }
 /**

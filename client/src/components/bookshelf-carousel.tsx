@@ -9,7 +9,11 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Book, BookOpen } from "lucide-react";
+import { Book, BookOpen, Share2, ExternalLink } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookshelfCarouselProps {
   bookshelves?: BookShelf[];
@@ -67,26 +71,97 @@ interface BookshelfCardProps {
 }
 
 function BookshelfCard({ shelf }: BookshelfCardProps) {
+  // Get the username from useAuth hook
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const username = user?.username || "";
+  const [showShareButton, setShowShareButton] = useState(false);
+  
+  // Create the regular and dedicated view URLs with properly encoded parameters
+  const shelfUrl = `/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`;
+  // For the share URL, we need to be extra careful with encoding to handle all special characters
+  const shareUrl = `${window.location.origin}/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`;
+  
+  // Handle copying the share URL
+  const handleShareClick = async (e: React.MouseEvent) => {
+    e.preventDefault();  // Prevent navigation
+    e.stopPropagation(); // Stop event from bubbling to parent link
+
+    try {
+      // Try to use Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: `${shelf.title} Bookshelf by ${username}`,
+          text: `Check out my bookshelf: ${shelf.title}`,
+          url: shareUrl
+        });
+      } else {
+        // Fallback to clipboard copy
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Share link copied!",
+          description: "The link to your bookshelf has been copied to clipboard.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
   return (
-    <Link href={`/book-shelf/${shelf.id}`}>
-      <Card className="h-full overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer">
-        <div className="aspect-[3/4] relative">
-          <img
-            src={shelf.coverImageUrl || "/images/default-bookshelf-cover.svg"}
-            alt={shelf.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-medium text-lg line-clamp-2">{shelf.title}</h3>
+    <div 
+      className="relative group"
+      onMouseEnter={() => setShowShareButton(true)}
+      onMouseLeave={() => setShowShareButton(false)}
+    >
+      <Link href={shelfUrl}>
+        <Card className="h-full overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer">
+          <div className="aspect-[3/4] relative">
+            <img
+              src={shelf.coverImageUrl || "/images/default-bookshelf-cover.svg"}
+              alt={shelf.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <h3 className="text-white font-medium text-lg line-clamp-2">{shelf.title}</h3>
+            </div>
+            
+            {/* Share button - shown on hover */}
+            <div className={`absolute top-2 right-2 transition-opacity duration-200 ${showShareButton ? 'opacity-100' : 'opacity-0'}`}>
+              <Button 
+                size="icon" 
+                variant="secondary" 
+                className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                onClick={handleShareClick}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Dedicated view button */}
+            <div className={`absolute top-2 left-2 transition-opacity duration-200 ${showShareButton ? 'opacity-100' : 'opacity-0'}`}>
+              <Button 
+                size="icon" 
+                variant="secondary" 
+                className="h-8 w-8 bg-background/80 backdrop-blur-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(`/book-shelf/share?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`, '_blank', 'noopener,noreferrer');
+                }}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-        <CardContent className="p-3 flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">View Shelf</span>
-        </CardContent>
-      </Card>
-    </Link>
+          <CardContent className="p-3 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">View Shelf</span>
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
   );
 }
 

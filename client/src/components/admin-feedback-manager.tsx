@@ -116,23 +116,23 @@ const KanbanColumn: React.FC<{
   const getHeaderStyle = () => {
     switch (status) {
       case "new":
-        return "bg-blue-50 border-blue-200";
+        return "bg-blue-500 border-blue-200";
       case "in_progress":
-        return "bg-amber-50 border-amber-200";
+        return "bg-amber-600 border-amber-200";
       case "resolved":
-        return "bg-green-50 border-green-200";
+        return "bg-green-500 border-green-200";
       case "closed":
-        return "bg-gray-50 border-gray-200";
+        return "bg-gray-500 border-gray-200";
       default:
-        return "bg-slate-50 border-slate-200";
+        return "bg-slate-500 border-slate-200";
     }
   };
 
   // Add highlight style when a draggable is over the droppable area
   const getDroppableStyle = () => {
     return isOver 
-      ? "flex-1 overflow-y-auto bg-slate-100 p-2 rounded-b-md border-2 border-primary" 
-      : "flex-1 overflow-y-auto bg-slate-50 p-2 rounded-b-md border border-slate-200";
+      ? "flex-1 overflow-y-auto bg-foreground/20 p-2 rounded-b-md border-2 border-border" 
+      : "flex-1 overflow-y-auto bg-foreground/10 p-2 rounded-b-md border border-border";
   };
 
   return (

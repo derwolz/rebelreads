@@ -9,13 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Author } from "@shared/schema";
+import { Author, SOCIAL_MEDIA_PLATFORMS, type SocialMediaLink } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { ProLayout } from "@/components/pro-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropperDialog } from "@/components/image-cropper-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ProAuthorProfilePage() {
   const { user, isAuthor } = useAuth();
@@ -32,6 +33,7 @@ export default function ProAuthorProfilePage() {
     birth_date: null as Date | null,
     death_date: null as Date | null,
     author_image_url: "",
+    socialMediaLinks: [] as SocialMediaLink[],
   });
   
   // Fetch author data
@@ -50,6 +52,7 @@ export default function ProAuthorProfilePage() {
         birth_date: author.birth_date ? new Date(author.birth_date) : null,
         death_date: author.death_date ? new Date(author.death_date) : null,
         author_image_url: author.author_image_url || "",
+        socialMediaLinks: Array.isArray(author.socialMediaLinks) ? author.socialMediaLinks : [],
       });
     }
   }, [author]);
@@ -282,6 +285,102 @@ export default function ProAuthorProfilePage() {
                     onOpenChange={setCropperOpen}
                     onCropComplete={handleCroppedImage}
                   />
+                </div>
+                
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-lg font-medium mb-4">Social Media Links</h3>
+                  <div className="space-y-4">
+                    {formData.socialMediaLinks?.map((link, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Select
+                          value={link.platform}
+                          onValueChange={(value: (typeof SOCIAL_MEDIA_PLATFORMS)[number]) => {
+                            const newLinks = [...formData.socialMediaLinks];
+                            newLinks[index] = {
+                              ...newLinks[index],
+                              platform: value,
+                              customName: value === "Custom" ? "" : undefined,
+                            };
+                            setFormData(prev => ({...prev, socialMediaLinks: newLinks}));
+                          }}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Select platform" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
+                              <SelectItem key={platform} value={platform}>
+                                {platform}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        {link.platform === "Custom" && (
+                          <Input
+                            placeholder="Platform name"
+                            value={link.customName || ""}
+                            onChange={(e) => {
+                              const newLinks = [...formData.socialMediaLinks];
+                              newLinks[index] = {
+                                ...newLinks[index],
+                                customName: e.target.value,
+                              };
+                              setFormData(prev => ({...prev, socialMediaLinks: newLinks}));
+                            }}
+                            className="w-[150px]"
+                          />
+                        )}
+                        
+                        <Input
+                          placeholder="https://example.com"
+                          value={link.url}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            // If there's input and it doesn't start with http:// or https://, prepend https://
+                            if (value && !value.match(/^https?:\/\//)) {
+                              value = `https://${value}`;
+                            }
+                            const newLinks = [...formData.socialMediaLinks];
+                            newLinks[index] = {
+                              ...newLinks[index],
+                              url: value,
+                            };
+                            setFormData(prev => ({...prev, socialMediaLinks: newLinks}));
+                          }}
+                          className="flex-1"
+                        />
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          onClick={() => {
+                            const newLinks = formData.socialMediaLinks.filter((_, i) => i !== index);
+                            setFormData(prev => ({...prev, socialMediaLinks: newLinks}));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {(!formData.socialMediaLinks || formData.socialMediaLinks.length < 4) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          const newLinks = [...(formData.socialMediaLinks || [])];
+                          newLinks.push({ platform: "Twitter" as const, url: "" });
+                          setFormData(prev => ({...prev, socialMediaLinks: newLinks}));
+                        }}
+                      >
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Add Social Media Link
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="pt-4">

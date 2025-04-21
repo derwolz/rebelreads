@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
-import { bookShelves, shelfBooks, notes, books, bookImages, authors } from "../../shared/schema";
-import { eq, and, desc, asc, inArray } from "drizzle-orm";
-import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema } from "../../shared/schema";
+import { bookShelves, shelfBooks, notes, books, bookImages, authors, users, shelfComments } from "../../shared/schema";
+import { eq, and, desc, asc, inArray, or } from "drizzle-orm";
+import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema, insertShelfCommentSchema } from "../../shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -484,32 +484,61 @@ router.patch("/api/bookshelves/:id/books/rank", async (req: Request, res: Respon
 });
 
 // Get detailed view of a bookshelf with its books and notes
-router.get("/api/book-shelf/:id", async (req: Request, res: Response) => {
+// Supports either ID-based or query parameter-based routing
+router.get("/api/book-shelf", async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).send("Unauthorized");
   }
 
-  const shelfId = parseInt(req.params.id);
-  if (isNaN(shelfId)) {
-    return res.status(400).send("Invalid shelf ID");
+  const username = req.query.username as string;
+  const shelfName = req.query.shelfname as string;
+
+  if (!username || !shelfName) {
+    return res.status(400).send("Missing username or shelf name");
   }
 
   try {
-    // Verify ownership
-    const isOwner = await verifyShelfOwnership(shelfId, req.user.id);
-    if (!isOwner) {
-      return res.status(403).send("Forbidden");
+    // Find the user by username
+    const targetUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
+
+    if (!targetUser) {
+      return res.status(404).send("User not found");
     }
 
     // Get the shelf details
     const shelf = await db.query.bookShelves.findFirst({
       where: and(
-        eq(bookShelves.id, shelfId),
-        eq(bookShelves.userId, req.user.id)
+        eq(bookShelves.userId, targetUser.id),
+        eq(bookShelves.title, shelfName),
+        // Only allow viewing if owned by the user or if it's shared
+        or(
+          eq(bookShelves.userId, req.user.id),
+          eq(bookShelves.isShared, true)
+        )
       )
     });
 
     if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+
+    // Only the owner can access a non-shared shelf
+    if (!shelf.isShared && shelf.userId !== req.user.id) {
+      return res.status(403).send("Forbidden");
+    }
+  
+    // Continue with rest of function...
+    
+    const shelfId = shelf.id;
+
+    // Get the shelf details (for backward compatibility with existing code)
+    const shelfDetails = await db.query.bookShelves.findFirst({
+      where: eq(bookShelves.id, shelfId)
+    });
+
+    if (!shelfDetails) {
       return res.status(404).send("Bookshelf not found");
     }
 
@@ -603,6 +632,8 @@ router.get("/api/book-shelf/:id", async (req: Request, res: Response) => {
     return res.status(500).send("Internal server error");
   }
 });
+
+// Removed the ID-based bookshelf endpoint to only use query parameters
 
 // Get all notes for a shelf
 router.get("/api/bookshelves/:id/notes", async (req: Request, res: Response) => {
@@ -922,6 +953,133 @@ router.post("/api/bookshelves/:id/cover", bookshelfCoverUpload.single("coverImag
     return res.status(200).json(updatedShelf);
   } catch (error) {
     console.error("Error uploading cover image:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
+// Get comments for a shared bookshelf
+router.get("/api/bookshelves/:id/comments", async (req: Request, res: Response) => {
+  const shelfId = parseInt(req.params.id);
+  
+  if (isNaN(shelfId)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+  
+  try {
+    // Check if the shelf exists and is shared
+    const shelf = await db.query.bookShelves.findFirst({
+      where: eq(bookShelves.id, shelfId)
+    });
+    
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+    
+    if (!shelf.isShared) {
+      return res.status(403).send("This bookshelf is not shared");
+    }
+    
+    // Get comments with user info if available
+    const comments = await db
+      .select({
+        id: shelfComments.id,
+        shelfId: shelfComments.shelfId,
+        userId: shelfComments.userId,
+        username: shelfComments.username,
+        content: shelfComments.content,
+        createdAt: shelfComments.createdAt,
+        userProfileImage: users.profileImageUrl,
+        displayName: users.displayName
+      })
+      .from(shelfComments)
+      .leftJoin(users, eq(shelfComments.userId, users.id))
+      .where(eq(shelfComments.shelfId, shelfId))
+      .orderBy(desc(shelfComments.createdAt));
+    
+    return res.status(200).json(comments);
+  } catch (error) {
+    console.error("Error fetching bookshelf comments:", error);
+    return res.status(500).send("Internal server error");
+  }
+});
+
+// Add a comment to a shared bookshelf
+router.post("/api/bookshelves/:id/comments", async (req: Request, res: Response) => {
+  const shelfId = parseInt(req.params.id);
+  
+  if (isNaN(shelfId)) {
+    return res.status(400).send("Invalid shelf ID");
+  }
+  
+  try {
+    // Check if the shelf exists and is shared
+    const shelf = await db.query.bookShelves.findFirst({
+      where: eq(bookShelves.id, shelfId)
+    });
+    
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found");
+    }
+    
+    if (!shelf.isShared) {
+      return res.status(403).send("This bookshelf is not shared");
+    }
+    
+    // Prepare comment data based on authentication status
+    let commentData: any = {
+      shelfId,
+      content: req.body.content
+    };
+    
+    // If user is logged in, associate comment with user
+    if (req.user) {
+      commentData.userId = req.user.id;
+    } else if (req.body.username) {
+      // For anonymous users with a provided username
+      commentData.username = req.body.username;
+    } else {
+      // Default anonymous username
+      commentData.username = "Anonymous";
+    }
+    
+    // Validate the data
+    const validatedData = insertShelfCommentSchema.parse(commentData);
+    
+    // Insert the comment
+    const [newComment] = await db
+      .insert(shelfComments)
+      .values(validatedData)
+      .returning();
+    
+    // If user is logged in, get their profile image and display name
+    let userProfileImage = null;
+    let displayName = null;
+    if (req.user) {
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, req.user.id),
+        columns: {
+          profileImageUrl: true,
+          displayName: true
+        }
+      });
+      
+      if (user) {
+        userProfileImage = user.profileImageUrl;
+        displayName = user.displayName;
+      }
+    }
+    
+    // Return the comment with user profile image and display name if available
+    return res.status(201).json({
+      ...newComment,
+      userProfileImage,
+      displayName
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json(error.errors);
+    }
+    console.error("Error adding bookshelf comment:", error);
     return res.status(500).send("Internal server error");
   }
 });

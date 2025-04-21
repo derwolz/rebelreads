@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -48,7 +48,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
-import { BookOpen, Plus, X, Edit, Trash } from "lucide-react";
+import { BookOpen, Plus, X, Edit, Trash, ExternalLink, Share2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -105,7 +105,6 @@ type NoteFormValues = z.infer<typeof noteFormSchema>;
 
 // BookShelf page component
 export default function BookShelfPage() {
-  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -113,6 +112,12 @@ export default function BookShelfPage() {
   const [activeNoteType, setActiveNoteType] = useState<"book" | "shelf" | null>(null);
   const [activeBookId, setActiveBookId] = useState<number | null>(null);
   const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
+  
+  // Extract query parameters from URL
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const username = searchParams.get('username');
+  const shelfname = searchParams.get('shelfname');
 
   // Form for adding/editing notes
   const form = useForm<NoteFormValues>({
@@ -122,10 +127,10 @@ export default function BookShelfPage() {
     },
   });
 
-  // Fetch bookshelf data
+  // Fetch bookshelf data (using query parameters only)
   const { data, isLoading, error } = useQuery<BookShelfData>({
-    queryKey: [`/api/book-shelf/${id}`],
-    enabled: !!user && !!id,
+    queryKey: [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`],
+    enabled: !!user && !!username && !!shelfname,
   });
 
   // Find active note
@@ -142,8 +147,10 @@ export default function BookShelfPage() {
   // Add Note Mutation
   const addNoteMutation = useMutation({
     mutationFn: async (values: NoteFormValues) => {
+      if (!data) throw new Error("No shelf data available");
+      
       const endpoint = activeNoteType === "shelf" 
-        ? `/api/bookshelves/${id}/notes` 
+        ? `/api/bookshelves/${data.shelf.id}/notes` 
         : `/api/books/${activeBookId}/notes`;
 
       const res = await fetch(endpoint, {
@@ -152,7 +159,7 @@ export default function BookShelfPage() {
         body: JSON.stringify({
           ...values,
           type: activeNoteType,
-          shelfId: activeNoteType === "shelf" ? parseInt(id) : undefined,
+          shelfId: activeNoteType === "shelf" ? data.shelf.id : undefined,
           bookId: activeNoteType === "book" ? activeBookId : undefined,
         }),
       });
@@ -164,7 +171,8 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
+      queryClient.invalidateQueries({ queryKey });
       setIsAddNoteDialogOpen(false);
       form.reset();
       toast({
@@ -197,7 +205,8 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
+      queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Note updated",
         description: "Your note has been updated successfully.",
@@ -226,7 +235,8 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
+      queryClient.invalidateQueries({ queryKey });
       if (activeNoteId === deleteNoteMutation.variables) {
         setActiveNoteId(null);
         setActiveNoteType(null);
@@ -259,7 +269,8 @@ export default function BookShelfPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/book-shelf/${id}`] });
+      const queryKey = [`/api/book-shelf?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelfname || '')}`];
+      queryClient.invalidateQueries({ queryKey });
       toast({
         title: "Book removed",
         description: "The book has been removed from this shelf.",
@@ -368,7 +379,16 @@ export default function BookShelfPage() {
                 Created on {formatDate(shelf.createdAt)}
               </CardDescription>
             </div>
-            <div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  // Navigate to dedicated bookshelf view
+                  window.location.href = `/book-shelf/share?username=${encodeURIComponent(username || '')}&shelfname=${encodeURIComponent(shelf.title)}`;
+                }}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" /> Dedicated View
+              </Button>
               <Button onClick={() => handleAddNote("shelf")}>
                 <Plus className="mr-2 h-4 w-4" /> Add Shelf Note
               </Button>
@@ -560,7 +580,7 @@ export default function BookShelfPage() {
                             onRemoveFromShelf={() => {
                               if (confirm("Are you sure you want to remove this book from the shelf?")) {
                                 removeBookFromShelfMutation.mutate({
-                                  shelfId: parseInt(id),
+                                  shelfId: data.shelf.id,
                                   bookId: shelfBook.bookId
                                 });
                               }
@@ -586,10 +606,10 @@ export default function BookShelfPage() {
                           )}
                           
                           {/* More options menu */}
-                          <div className="absolute top-2 right-2 z-20">
+                          <div className="absolute top-0 right-9 z-20">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 rounded-full">
+                                <Button variant="ghost" size="icon" className="h-12 w-12 bg-background/50 rounded-bl-full">
                                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
                                     <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
                                   </svg>

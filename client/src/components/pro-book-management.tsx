@@ -68,12 +68,21 @@ export function ProBookManagement() {
     },
   });
 
-  const handleCardClick = (e: React.MouseEvent, bookId: number) => {
+  const handleCardClick = (e: React.MouseEvent, book: Book) => {
     // Don't navigate if clicking on buttons
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    navigate(`/books/${bookId}`);
+    // Use anti-scraping link format with query parameters
+    if (book.authorName) {
+      // Encode both authorName and bookTitle for the URL
+      const encodedAuthor = encodeURIComponent(book.authorName);
+      const encodedTitle = encodeURIComponent(book.title);
+      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
+    } else {
+      // Fallback to traditional ID-based URL if authorName is not available
+      navigate(`/book-details?authorName=${encodeURIComponent("Unknown")}&bookTitle=${encodeURIComponent(book.title)}`);
+    }
   };
 
   // Process ratings data
@@ -130,7 +139,7 @@ export function ProBookManagement() {
               <div
                 key={book.id}
                 className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={(e) => handleCardClick(e, book.id)}
+                onClick={(e) => handleCardClick(e, book)}
               >
                 <div className="flex items-center space-x-4 mb-3 sm:mb-0">
                   <img

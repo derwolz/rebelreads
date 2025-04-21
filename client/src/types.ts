@@ -40,6 +40,7 @@ export interface Book {
   taxonomicScore?: number;
   matchingTaxonomies?: number;
   coverUrl?: string | null; // Used in discover page
+  genres?: string[]; // For displaying genres in UI
 }
 
 export interface BookImage {
@@ -63,6 +64,7 @@ export interface Author {
   death_date: string | null;
   website: string | null;
   bio: string | null;
+  socialMediaLinks?: any[]; // Social media links for the author
 }
 
 export interface Publisher {
