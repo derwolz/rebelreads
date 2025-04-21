@@ -2,10 +2,23 @@ import React from "react";
 import { LinkedContentPreview } from "@/components/linked-content-preview";
 
 // Regex patterns to match book and bookshelf links (paths and full URLs)
-const BOOK_LINK_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?sirened\.com)?\/books\/([0-9]+)(\s|$)/g;
-const BOOKSHELF_LINK_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?sirened\.com)?\/book-shelf\/share\?username=([^&]+)&shelfname=([^&\s]+)(\s|$)/g;
-// General URL regex that will match all URLs
-const GENERAL_URL_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?([^\/\s]+)(?:\/[^\s]*)?)+(\s|$)/g;
+// Match any of these formats:
+// - /books/123
+// - sirened.com/books/123
+// - http://sirened.com/books/123
+// - https://sirened.com/books/123
+// - http://www.sirened.com/books/123
+// - https://www.sirened.com/books/123
+const BOOK_LINK_PATTERN = /(\s|^)(?:https?:\/\/(?:www\.)?sirened\.com|sirened\.com)?\/books\/([0-9]+)(\s|$)/g;
+
+// Similar pattern for bookshelf links
+const BOOKSHELF_LINK_PATTERN = /(\s|^)(?:https?:\/\/(?:www\.)?sirened\.com|sirened\.com)?\/book-shelf\/share\?username=([^&]+)&shelfname=([^&\s]+)(\s|$)/g;
+
+// Leave bare domain alone pattern
+const BARE_DOMAIN_PATTERN = /(\s|^)(sirened\.com)(\s|$)/g;
+
+// General URL regex that will match all URLs (excluding bare sirened.com which we want to preserve)
+const GENERAL_URL_PATTERN = /(\s|^)(https?:\/\/(?:www\.)?(?!sirened\.com$)([^\/\s]+)(?:\/[^\s]*)?)+(\s|$)/g;
 
 /**
  * Parse message content to detect book and bookshelf links and replace them
@@ -37,9 +50,8 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   while ((match = BOOK_LINK_PATTERN.exec(workingContent)) !== null) {
     const fullMatch = match[0];
     const leadingSpace = match[1] || "";
-    const domain = match[2] || ""; // This will be the domain part (optional)
-    const bookId = match[3];
-    const trailingSpace = match[4] || "";
+    const bookId = match[2]; // Book ID is now in position 2
+    const trailingSpace = match[3] || "";
     
     // Add text before the match
     const beforeMatchText = workingContent.slice(lastIndex, match.index);
@@ -86,10 +98,9 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   while ((match = BOOKSHELF_LINK_PATTERN.exec(workingContent)) !== null) {
     const fullMatch = match[0];
     const leadingSpace = match[1] || "";
-    const domain = match[2] || ""; // This will be the domain part (optional)
-    const username = decodeURIComponent(match[3]);
-    const shelfName = decodeURIComponent(match[4]);
-    const trailingSpace = match[5] || "";
+    const username = decodeURIComponent(match[2]);
+    const shelfName = decodeURIComponent(match[3]);
+    const trailingSpace = match[4] || "";
     
     // Add text before the match
     const beforeMatchText = workingContent.slice(lastIndex, match.index);
@@ -132,6 +143,51 @@ export function parseMessageContent(content: string): React.ReactNode[] {
   contentParts.length = 0;
   lastIndex = 0;
   
+  // Process bare sirened.com domain (preserve it)
+  contentParts.length = 0;
+  lastIndex = 0;
+  const processedContent = filteredContent;
+  
+  // First handle bare sirened.com domain
+  while ((match = BARE_DOMAIN_PATTERN.exec(processedContent)) !== null) {
+    const fullMatch = match[0];
+    const leadingSpace = match[1] || "";
+    const domain = match[2]; // This will be "sirened.com"
+    const trailingSpace = match[3] || "";
+    
+    // Add text before the match
+    const beforeMatchText = processedContent.slice(lastIndex, match.index);
+    if (beforeMatchText) {
+      contentParts.push(beforeMatchText);
+    }
+    
+    // Add leading space if present
+    if (leadingSpace) {
+      contentParts.push(leadingSpace);
+    }
+    
+    // Add bare domain as-is
+    contentParts.push(domain);
+    
+    // Add trailing space if present
+    if (trailingSpace) {
+      contentParts.push(trailingSpace);
+    }
+    
+    // Update index tracking
+    lastIndex = match.index + fullMatch.length;
+  }
+  
+  // Add any remaining content after the last match
+  if (lastIndex < processedContent.length) {
+    contentParts.push(processedContent.slice(lastIndex));
+  }
+  
+  // Reset for processing other URLs
+  filteredContent = contentParts.join('');
+  contentParts.length = 0;
+  lastIndex = 0;
+  
   // Process all other URLs and remove them if they're not sirened.com
   while ((match = GENERAL_URL_PATTERN.exec(filteredContent)) !== null) {
     const fullMatch = match[0];
@@ -162,9 +218,12 @@ export function parseMessageContent(content: string): React.ReactNode[] {
       
       // Update index tracking
       lastIndex = match.index + fullMatch.length;
-    } else if (!domain.includes("sirened.com")) {
-      // If it doesn't match our sirened.com pattern but isn't another external URL,
-      // we just continue as normal with this text
+    } else {
+      // We already processed the known sirened.com patterns, so we should preserve any other text
+      const beforeMatchText = filteredContent.slice(lastIndex, match.index + leadingSpace.length);
+      if (beforeMatchText) {
+        contentParts.push(beforeMatchText);
+      }
       lastIndex = match.index + leadingSpace.length;
     }
   }
