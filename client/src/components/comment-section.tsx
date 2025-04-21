@@ -176,7 +176,7 @@ export function CommentSection({ shelfId, className }: CommentSectionProps) {
       <h3 className="text-lg font-medium text-foreground mb-4">Comments</h3>
       
       {/* Comments list - using flex-grow to expand and fill available space */}
-      <ScrollArea className="flex-grow pr-4 mb-4 min-h-0">
+      <ScrollArea className="flex-grow pr-4 mb-4 h-[340px]">
         <div className="space-y-4">
           {comments && comments.length > 0 ? (
             comments.map((comment) => (
