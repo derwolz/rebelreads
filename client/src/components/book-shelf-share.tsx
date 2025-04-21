@@ -122,7 +122,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       
       
       {/* Main content area */}
-      <div className="flex flex-col mt-20 lg:flex-row gap-6 p-4">
+      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4">
        
         {/* Left column: Book details and comments */}
         <div className="w-full lg:w-2/3 relative">
