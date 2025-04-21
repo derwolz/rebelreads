@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Object Storage Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 100px;
+      background-color: #f9f9f9;
+    }
+    .image-preview {
+      margin-top: 20px;
+      max-width: 300px;
+      max-height: 300px;
+      border: 1px solid #ddd;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Object Storage File Upload</h1>
+  
+  <div class="form-group">
+    <label for="profileImage">Select a profile image to upload:</label>
+    <input type="file" id="profileImage" accept="image/*">
+  </div>
+  
+  <button id="uploadButton">Upload Image</button>
+  
+  <div id="result">
+    <p>Results will appear here...</p>
+  </div>
+  
+  <script>
+    document.getElementById('uploadButton').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<p>Uploading...</p>';
+      
+      const fileInput = document.getElementById('profileImage');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        resultDiv.innerHTML = '<p style="color: red;">Please select a file first</p>';
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      
+      try {
+        // Create form data
+        const formData = new FormData();
+        formData.append('profileImage', file);
+        
+        // Send the upload request
+        const response = await fetch('/api/user/profile-image', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Upload result:', result);
+        
+        // Display result
+        let html = `
+          <h3>Upload Successful!</h3>
+          <p>Image URL: ${result.profileImageUrl}</p>
+        `;
+        
+        // Add image preview
+        html += `
+          <h3>Image Preview:</h3>
+          <img src="${result.profileImageUrl}" class="image-preview" alt="Uploaded image">
+        `;
+        
+        resultDiv.innerHTML = html;
+      } catch (error) {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -43,8 +43,16 @@ import linkPreviewRoutes from "./routes/link-preview-routes";
 import objectStorageRoutes from "./routes/object-storage-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Configure file uploads path (public before auth)
+  // Configure file uploads path (public before auth) - legacy path
   app.use("/uploads", express.static("uploads"));
+  
+  // Register object storage API routes
+  app.use("/api/storage", objectStorageRoutes);
+  
+  // Serve test upload page (for development only)
+  app.get("/test-upload", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "test-upload.html"));
+  });
   
   // Special debug routes that bypass security checks for diagnostic purposes
   // These must be registered BEFORE authentication
@@ -155,9 +163,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register random book routes for the image guide page
   registerRandomBookRoutes(app);
-  
-  // Register object storage routes (public)
-  app.use("/api/storage", objectStorageRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
