@@ -635,7 +635,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
             disabled={!canSkipToStep(index)}
           >
             {step.icon}
-            <span className="hidden sm:inline">{step.title}</span>
+           
             <span className="inline sm:hidden">{index + 1}</span>
           </Button>
         ))}
