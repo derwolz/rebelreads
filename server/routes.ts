@@ -51,7 +51,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register object storage API routes
   app.use("/api/storage", objectStorageRoutes);
   
-  // Serve test upload page (for development only)
+  // Register test upload routes (for development and testing)
+  app.use("/api/test-upload", testUploadRoutes);
+  
+  // Serve legacy test upload page (for development only)
   app.get("/test-upload", (req, res) => {
     res.sendFile(path.join(process.cwd(), "test-upload.html"));
   });
