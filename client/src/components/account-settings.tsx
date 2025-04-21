@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -47,8 +48,8 @@ export function AccountSettings() {
       verificationPassword: ""
     },
     resolver: zodResolver(
-      updateProfileSchema.pick({}).extend({
-        verificationPassword: updateProfileSchema.shape.currentPassword
+      z.object({
+        verificationPassword: z.string().min(1, "Password is required")
       })
     )
   });
@@ -245,9 +246,7 @@ export function AccountSettings() {
                         <Input 
                           type="password" 
                           autoComplete="current-password"
-                          value={field.value || ''} 
-                          onChange={(e) => field.onChange(e.target.value)}
-                          onBlur={field.onBlur}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -265,9 +264,7 @@ export function AccountSettings() {
                         <Input 
                           type="password" 
                           autoComplete="new-password"
-                          value={field.value || ''} 
-                          onChange={(e) => field.onChange(e.target.value)}
-                          onBlur={field.onBlur}
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -288,9 +285,7 @@ export function AccountSettings() {
                         <Input 
                           type="password" 
                           autoComplete="new-password"
-                          value={field.value || ''} 
-                          onChange={(e) => field.onChange(e.target.value)}
-                          onBlur={field.onBlur}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -370,7 +365,7 @@ export function AccountSettings() {
                             </AlertDialogHeader>
                             <AlertDialogAction
                               ref={revokeButtonRef}
-                              onClick={() => revokeAuthorMutation.mutate()}
+                              onClick={() => revokeAuthorMutation.mutate({ confirmUsername: user?.username || '' })}
                               className="bg-destructive text-destructive-foreground"
                             >
                               I understand, revoke my author status
@@ -385,7 +380,7 @@ export function AccountSettings() {
                           Become an author to publish books, sell directly to readers, and build your online presence.
                         </p>
                         <Button 
-                          onClick={() => becomeAuthorMutation.mutate()}
+                          onClick={() => becomeAuthorMutation.mutate({})}
                           className="w-full"
                         >
                           Register as Author
