@@ -95,7 +95,12 @@ export function LinkedContentPreview({
     data: shelfData,
     isLoading: isShelfLoading,
     error: shelfError,
-  } = useQuery<ShelfResponse>({
+  } = useQuery<ShelfResponse & {
+    owner?: {
+      displayName?: string;
+      username?: string;
+    }
+  }>({
     queryKey: [
       `/api/link-preview/book-shelf?username=${encodeURIComponent(
         username || ""
@@ -104,20 +109,11 @@ export function LinkedContentPreview({
     enabled: type === "bookshelf" && !!username && !!shelfName,
   });
   
-  // Also fetch user info to get the display name
-  const {
-    data: userData,
-    isLoading: isUserLoading,
-    error: userError,
-  } = useQuery<{
-    id: number;
-    username: string;
-    displayName: string | null;
-    profileImageUrl: string | null;
-  }>({
-    queryKey: [`/api/users/by-username/${encodeURIComponent(username || "")}`],
-    enabled: type === "bookshelf" && !!username,
-  });
+  // We don't need to separately fetch user data anymore as our link preview API provides it
+  // This is just a placeholder to keep the existing variable references working
+  const isUserLoading = false;
+  const userError = null;
+  const userData = null;
 
   // Create the URL based on the content type
   const getContentUrl = () => {
@@ -208,9 +204,7 @@ export function LinkedContentPreview({
     const shelf = shelfData.shelf;
     // Use user data first, then fall back to shelf owner data, then username
     const ownerDisplayName = 
-      (userData && userData.displayName) || 
       shelfData.owner?.displayName || 
-      (userData && userData.username) || 
       username || 
       "Anonymous";
     const coverImage = shelf.coverImageUrl || "/images/default-bookshelf-cover.svg";
@@ -221,7 +215,7 @@ export function LinkedContentPreview({
           <img 
             src={coverImage} 
             alt={shelf.title} 
-            className="h-12 w-12 object-cover mr-3 rounded"
+            className="h-14 w-14 object-cover mr-3 rounded"
           />
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm text-white truncate">{shelf.title}</div>
