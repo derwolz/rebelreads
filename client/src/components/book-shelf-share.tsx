@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentSection } from "./comment-section";
 import useEmblaCarousel from "embla-carousel-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -40,7 +39,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [showBookDetails, setShowBookDetails] = useState(true);
   const { toast } = useToast();
-  const isMobileViewActive = useIsMobile();
   
   // Track current carousel slide index
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
