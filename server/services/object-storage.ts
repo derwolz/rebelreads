@@ -1,12 +1,7 @@
 import path from 'path';
-import fs from 'fs/promises';
-import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 import { nanoid } from 'nanoid';
-
-// Since we're having issues with the Replit Object Storage package,
-// we'll implement a file-system based alternative for now
-// This can be replaced with the actual Replit Object Storage implementation later
+import fetch from 'node-fetch';
 
 /**
  * Generate a unique ID suitable for filenames
@@ -22,6 +17,17 @@ function createId(length: number = 16): string {
  * Handles uploading, retrieving, and managing files in storage
  */
 export class ObjectStorageService {
+  private readonly defaultBucketId: string;
+  private readonly baseUrl: string = 'https://objects.replit.app/v1';
+  private readonly apiUrl: string;
+
+  constructor() {
+    // Get the bucket ID from the environment or .replit config
+    this.defaultBucketId = process.env.REPLIT_BUCKET_ID || 'replit-objstore-ac9f763f-902a-4711-b57a-2a5a71e598d3';
+    this.apiUrl = `${this.baseUrl}/buckets/${this.defaultBucketId}/objects`;
+    console.log(`Initialized ObjectStorageService with bucket ID: ${this.defaultBucketId}`);
+  }
+
   /**
    * Upload a file buffer to object storage
    * @param buffer File buffer to upload
@@ -36,16 +42,22 @@ export class ObjectStorageService {
       const extension = path.extname(filename);
       const storageKey = `${directory}/${uniqueId}${extension}`;
       
-      // Create the physical directory path
-      const baseDir = './uploads/object-storage';
-      const fullDir = path.join(baseDir, directory);
+      // Upload to Replit Object Storage
+      const response = await fetch(`${this.apiUrl}/${storageKey}`, {
+        method: 'PUT',
+        body: buffer,
+        headers: {
+          'Content-Type': this.getContentTypeFromExtension(extension),
+        },
+      });
       
-      // Ensure the directory exists
-      await fs.mkdir(fullDir, { recursive: true });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error uploading to object storage: ${response.status} ${errorText}`);
+        throw new Error(`Failed to upload file: ${response.status} ${response.statusText}`);
+      }
       
-      // Save the file
-      const filePath = path.join(baseDir, storageKey);
-      await fs.writeFile(filePath, buffer);
+      console.log(`Successfully uploaded file to object storage: ${storageKey}`);
       
       // Return the path to access the file
       return storageKey;
@@ -72,44 +84,26 @@ export class ObjectStorageService {
    */
   async getFile(storageKey: string): Promise<{ contentType: string, stream: Readable } | null> {
     try {
-      // Construct the file path
-      const baseDir = './uploads/object-storage';
-      const filePath = path.join(baseDir, storageKey);
+      // Get file from Replit Object Storage
+      const response = await fetch(`${this.apiUrl}/${storageKey}`);
       
-      // Check if file exists
-      try {
-        await fs.access(filePath);
-      } catch (err) {
-        console.log(`File not found: ${filePath}`);
-        throw new Error('File not found');
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log(`File not found in object storage: ${storageKey}`);
+          throw new Error('File not found');
+        }
+        
+        const errorText = await response.text();
+        console.error(`Error retrieving from object storage: ${response.status} ${errorText}`);
+        throw new Error(`Failed to retrieve file: ${response.status} ${response.statusText}`);
       }
       
-      // Detect content type based on file extension
-      const extension = path.extname(storageKey).toLowerCase();
-      let contentType = 'application/octet-stream'; // Default content type
+      // Get the content type from the response headers
+      const contentType = response.headers.get('content-type') || this.getContentTypeFromExtension(path.extname(storageKey));
       
-      // Map extensions to content types
-      const contentTypeMap: Record<string, string> = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp',
-        '.svg': 'image/svg+xml',
-        '.pdf': 'application/pdf',
-        '.json': 'application/json',
-        '.txt': 'text/plain',
-        '.html': 'text/html',
-        '.css': 'text/css',
-        '.js': 'application/javascript'
-      };
+      // Convert the response body to a readable stream
+      const stream = Readable.fromWeb(response.body as any);
       
-      if (extension in contentTypeMap) {
-        contentType = contentTypeMap[extension];
-      }
-      
-      // Create a readable stream from the file
-      const stream = createReadStream(filePath);
       return { contentType, stream };
     } catch (error) {
       console.error('Error retrieving file from storage:', error);
@@ -124,15 +118,12 @@ export class ObjectStorageService {
    */
   async fileExists(storageKey: string): Promise<boolean> {
     try {
-      const baseDir = './uploads/object-storage';
-      const filePath = path.join(baseDir, storageKey);
+      // Use HEAD request to check if file exists
+      const response = await fetch(`${this.apiUrl}/${storageKey}`, {
+        method: 'HEAD',
+      });
       
-      try {
-        await fs.access(filePath);
-        return true;
-      } catch {
-        return false;
-      }
+      return response.ok;
     } catch (error) {
       console.error('Error checking file existence in storage:', error);
       return false;
@@ -146,11 +137,12 @@ export class ObjectStorageService {
    */
   async deleteFile(storageKey: string): Promise<boolean> {
     try {
-      const baseDir = './uploads/object-storage';
-      const filePath = path.join(baseDir, storageKey);
+      // Delete file from Replit Object Storage
+      const response = await fetch(`${this.apiUrl}/${storageKey}`, {
+        method: 'DELETE',
+      });
       
-      await fs.unlink(filePath);
-      return true;
+      return response.ok;
     } catch (error) {
       console.error('Error deleting file from storage:', error);
       return false;
@@ -163,7 +155,7 @@ export class ObjectStorageService {
    * @returns Public URL for the file
    */
   getPublicUrl(storageKey: string): string {
-    // This returns the internal API route that will serve the file
+    // For Replit Object Storage, we use the API route to serve the files
     return `/api/storage/${storageKey}`;
   }
 
@@ -174,25 +166,48 @@ export class ObjectStorageService {
    */
   async listFiles(directory: string): Promise<string[]> {
     try {
-      const baseDir = './uploads/object-storage';
-      const fullDir = path.join(baseDir, directory);
+      // List files with the directory prefix from Replit Object Storage
+      // We need to use the /v1/buckets/{bucketId}/list endpoint
+      const response = await fetch(`${this.baseUrl}/buckets/${this.defaultBucketId}/list?prefix=${directory}/`);
       
-      // Ensure the directory exists
-      try {
-        await fs.access(fullDir);
-      } catch {
-        return []; // Directory doesn't exist
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error listing files from object storage: ${response.status} ${errorText}`);
+        return [];
       }
       
-      // Get all files in the directory
-      const files = await fs.readdir(fullDir);
+      const data = await response.json() as { objects: { name: string }[] };
       
-      // Format the storage keys
-      return files.map(file => `${directory}/${file}`);
+      // Extract the full storage keys from the response
+      return data.objects.map(obj => obj.name);
     } catch (error) {
       console.error('Error listing files from storage:', error);
       return [];
     }
+  }
+  
+  /**
+   * Get content type from file extension
+   * @param extension File extension (with dot)
+   * @returns MIME type string
+   */
+  private getContentTypeFromExtension(extension: string): string {
+    const contentTypeMap: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+      '.pdf': 'application/pdf',
+      '.json': 'application/json',
+      '.txt': 'text/plain',
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript'
+    };
+    
+    return contentTypeMap[extension.toLowerCase()] || 'application/octet-stream';
   }
 }
 
