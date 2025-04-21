@@ -123,89 +123,32 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4">
        
         {/* Left column: Book details and comments */}
-        <div className="w-full lg:w-2/3 relative">
+        <div className="w-full lg:w-2/3 flex relative">
+
+          
+          
+          
           {/* Book Details Card that shows the selected book */}
           <div 
-            className={`rounded-lg overflow-hidden bg-muted border border-gray-800 mb-16 transition-all duration-500 `}
+            className={`rounded-lg z-70  overflow-hidden bg-muted border border-gray-800 mb-16 mr-16 transition-all duration-500 `}
           >
             <div className="flex flex-col md:flex-row">
 
-              {/* Comments/Notes section */}
-              <div className="rounded-lg bg-background mb-16">
-
-
-                {bookNotes && bookNotes.length > 0 ? (
-                  <div className="space-y-3 absolute  bottom-0 max-w-[18rem] left-0">
-                    {bookNotes.map((note, idx) => (
-                      <div 
-                        key={note.id} 
-                        className="p-3  rounded-lg bg-purple-900/40 border-l-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
-                        onClick={() => {
-                          // Use the same animation logic for book notes
-                          if (selectedNote && selectedNote.id === note.id && noteVisible) {
-                            // If the same note is clicked while visible, hide it
-                            setIsRotating(true);
-                            setTimeout(() => {
-                              setNoteVisible(false);
-                              setIsRotating(false);
-                            }, 500);
-                          } else {
-                            // If no note is currently visible or a different note is clicked
-                            if (noteVisible) {
-                              // If a note is already visible, hide it first with animation
-                              setIsRotating(true);
-                              setTimeout(() => {
-                                setSelectedNote(note);
-                                setTimeout(() => {
-                                  setNoteVisible(true);
-                                  setIsRotating(false);
-                                }, 100);
-                              }, 500);
-                            } else {
-                              // No note is visible, show the selected one directly
-                              setSelectedNote(note);
-                              setIsRotating(true);
-                              setTimeout(() => {
-                                setNoteVisible(true);
-                                setIsRotating(false);
-                              }, 100);
-                            }
-                          }
-                        }}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1">
-                            <div className="flex justify-between items-center mb-1">
-                              <p className="text-xs text-foreground/80">
-                                User {idx + 1} - {new Date(note.createdAt).toLocaleDateString()} - {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                              </p>
-                            </div>
-                            <p className="text-sm text-foregound line-clamp-3">{note.content}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center absolute py-4 text-foreground/80">
-                 
-                  </div>
-                )}
-              </div>
+             
 
 
               
               {/* Book cover */}
-              <div className="w-full z-10 md:w-1/3 flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background">
+              <div className="w-full z-20 flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background">
                 <img 
                   src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                   alt={selectedBook?.title} 
-                  className="w-full h-auto object-cover shadow-lg rounded-md" 
+                  className="h-full object-cover shadow-lg rounded-md" 
                 />
               </div>
               
               {/* Book details */}
-              <div className="w-full md:w-2/3 p-4">
+              <div className=" p-4">
                 
                 {/* Animated Note Overlay - Only covers the details section */}
                 {selectedNote && (
@@ -333,7 +276,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 </div>
                 
                 {/* Genres & Themes */}
-                <div className="mb-4">
+                <div className="mb-4 ">
                   <div className="flex flex-wrap gap-1">
                     {selectedBook?.genres?.map((genre: string, idx: number) => (
                       <Badge 
@@ -380,7 +323,65 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
           
           
-          
+          {/* Book/Notes section */}
+
+          {bookNotes && bookNotes.length > 0 ? (
+            <div className="space-y-3   top-2  max-w-[18rem] right-2">
+              {bookNotes.map((note, idx) => (
+                <div 
+                  key={note.id} 
+                  className="p-3  rounded-lg bg-purple-900/40  border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
+                  onClick={() => {
+                    // Use the same animation logic for book notes
+                    if (selectedNote && selectedNote.id === note.id && noteVisible) {
+                      // If the same note is clicked while visible, hide it
+                      setIsRotating(true);
+                      setTimeout(() => {
+                        setNoteVisible(false);
+                        setIsRotating(false);
+                      }, 500);
+                    } else {
+                      // If no note is currently visible or a different note is clicked
+                      if (noteVisible) {
+                        // If a note is already visible, hide it first with animation
+                        setIsRotating(true);
+                        setTimeout(() => {
+                          setSelectedNote(note);
+                          setTimeout(() => {
+                            setNoteVisible(true);
+                            setIsRotating(false);
+                          }, 100);
+                        }, 500);
+                      } else {
+                        // No note is visible, show the selected one directly
+                        setSelectedNote(note);
+                        setIsRotating(true);
+                        setTimeout(() => {
+                          setNoteVisible(true);
+                          setIsRotating(false);
+                        }, 100);
+                      }
+                    }
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="text-xs text-foreground/80">
+                          User {idx + 1} - {new Date(note.createdAt).toLocaleDateString()} - {new Date(note.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </p>
+                      </div>
+                      <p className="text-sm text-foregound line-clamp-3">{note.content}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center absolute py-4 text-foreground/80">
+
+            </div>
+          )}
 
         </div>
         
