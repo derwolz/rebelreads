@@ -333,94 +333,13 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   
                   {/* Mobile view - Swipeable content */}
                   <div className="md:hidden">
-                    {showBookDetails ? (
-                      <div>
-                        <ScrollArea className="h-full min-w-0 w-full pr-4">
-                          <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                        </ScrollArea>
-                        
-                        {bookNotes.length > 0 && (
-                          <div className="mt-3">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full text-foreground border-gray-700"
-                              onClick={() => setShowBookDetails(false)}
-                            >
-                              <StickyNote className="h-4 w-4 mr-2" />
-                              View Book Notes ({bookNotes.length})
-                            </Button>
-                          </div>
-                        )}
+
                       </div>
                     ) : (
                       <div>
-                        {/* Swipeable notes view */}
-                        <div className="relative overflow-hidden" ref={emblaRef}>
-                          <div className="flex">
-                            {bookNotes.map((note, idx) => (
-                              <div key={note.id} className="min-w-full flex-shrink-0 pl-1 pr-4">
-                                <div className="p-3 rounded-lg bg-background/70 border border-gray-800">
-                                  <PaperNoteCard note={note} />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          
-                          {/* Navigation UI */}
-                          <div className="flex justify-between items-center mt-3 gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-foreground border-gray-700"
-                              onClick={() => setShowBookDetails(true)}
-                            >
-                              <BookIcon className="h-4 w-4 mr-2" />
-                              Back to Details
-                            </Button>
-                            
-                            {bookNotes.length > 1 && (
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={scrollPrev}
-                                  className="px-2"
-                                >
-                                  <ChevronLeft className="h-4 w-4" />
-                                </Button>
-                                
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={scrollNext}
-                                  className="px-2"
-                                >
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Swipe indicators - only show if more than one note */}
-                          {bookNotes.length > 1 && (
-                            <div className="flex justify-center gap-1 mt-2">
-                              {bookNotes.map((_, i) => (
-                                <div 
-                                  key={i}
-                                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                                    currentSlideIndex === i 
-                                      ? 'w-4 bg-primary' 
-                                      : 'w-1.5 bg-muted'
-                                  }`}
-                                  onClick={() => emblaApi?.scrollTo(i)}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
+
                       </div>
-                    )}
+                    )
                   </div>
                 </div>
                 
