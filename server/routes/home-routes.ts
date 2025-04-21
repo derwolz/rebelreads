@@ -69,8 +69,8 @@ const multipleImageUpload = multer({
 
 const router = Router();
 
-// NOTE: Uploads are now served from server/middleware/static-uploads.ts
-// to ensure consistent path resolution across environments
+// Serve uploaded files
+router.use("/uploads", express.static("uploads"));
 
 // Ensure the profile-images directory exists
 const profileImagesDir = path.join(uploadsDir, "profile-images");
