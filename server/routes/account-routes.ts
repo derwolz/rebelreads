@@ -1111,8 +1111,11 @@ router.post("/author-profile-image", profileImageUpload.single('profileImage'), 
       return res.status(404).json({ error: "Author profile not found" });
     }
     
-    // Create profile image URL path
-    const author_image_url = `/uploads/profile-images/${req.file.filename}`;
+    // Upload to object storage
+    const storageKey = await objectStorage.uploadFile(req.file, 'author-profiles');
+    
+    // Get the public URL to access the file
+    const author_image_url = objectStorage.getPublicUrl(storageKey);
     
     // Update author profile image URL in database
     await db
@@ -1187,8 +1190,11 @@ router.post("/user/profile-image", profileImageUpload.single('profileImage'), as
       return res.status(400).json({ error: "No file uploaded" });
     }
     
-    // Create profile image URL path
-    const profileImageUrl = `/uploads/profile-images/${req.file.filename}`;
+    // Upload to object storage
+    const storageKey = await objectStorage.uploadFile(req.file, 'profile-images');
+    
+    // Get the public URL to access the file
+    const profileImageUrl = objectStorage.getPublicUrl(storageKey);
     
     // Update user profile image URL in database
     await db
