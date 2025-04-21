@@ -89,8 +89,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   // Mobile swipe carousel for book description
   const [descriptionEmblaRef, descriptionEmblaApi] = useEmblaCarousel({ 
     loop: bookNotes.length > 1,
-    align: 'center',
-    draggable: !!bookNotes.length, // Only enable dragging if there are notes
+    align: 'center'
   });
   
   // Mobile detection on component mount
@@ -163,7 +162,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     }
   }, [selectedBook]);
   
-  // Handle Embla carousel initialization and scroll events
+  // Handle Embla carousel initialization and scroll events for the notes carousel
   useEffect(() => {
     if (!emblaApi) return;
     
@@ -175,6 +174,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     const onSelect = () => {
       const index = emblaApi.selectedScrollSnap();
       setCurrentSlideIndex(index);
+      // Update current note index for the description carousel synchronization
+      setCurrentNoteIndex(index);
     };
     
     emblaApi.on("select", onSelect);
@@ -185,7 +186,37 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     };
   }, [emblaApi, bookNotes, showBookDetails]);
   
-  // Navigation functions for mobile swipe
+  // Handle description carousel initialization and scroll events
+  useEffect(() => {
+    if (!descriptionEmblaApi || !bookNotes.length) return;
+    
+    // Reset carousel to beginning when book changes
+    descriptionEmblaApi.scrollTo(0);
+    
+    // Add scroll event listener to update notes
+    const onSelect = () => {
+      const index = descriptionEmblaApi.selectedScrollSnap();
+      setCurrentNoteIndex(index);
+      
+      // Show note preview indicator on mobile
+      if (isMobileViewActive && showBookDetails) {
+        toast({
+          title: `Note ${index + 1} of ${bookNotes.length}`,
+          description: bookNotes[index]?.content.substring(0, 30) + "...",
+          duration: 1500,
+        });
+      }
+    };
+    
+    descriptionEmblaApi.on("select", onSelect);
+    
+    // Cleanup function
+    return () => {
+      descriptionEmblaApi.off("select", onSelect);
+    };
+  }, [descriptionEmblaApi, bookNotes, isMobileViewActive, showBookDetails, toast]);
+  
+  // Navigation functions for notes carousel
   const scrollPrev = useCallback(() => {
     if (emblaApi) emblaApi.scrollPrev();
   }, [emblaApi]);
@@ -193,6 +224,19 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const scrollNext = useCallback(() => {
     if (emblaApi) emblaApi.scrollNext();
   }, [emblaApi]);
+  
+  // Navigation functions for description carousel
+  const scrollDescPrev = useCallback(() => {
+    if (descriptionEmblaApi && bookNotes.length > 0) {
+      descriptionEmblaApi.scrollPrev();
+    }
+  }, [descriptionEmblaApi, bookNotes.length]);
+  
+  const scrollDescNext = useCallback(() => {
+    if (descriptionEmblaApi && bookNotes.length > 0) {
+      descriptionEmblaApi.scrollNext();
+    }
+  }, [descriptionEmblaApi, bookNotes.length]);
   
 
   const { theme } = useTheme();
@@ -367,21 +411,90 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   <div className="md:hidden">
                     {showBookDetails ? (
                       <div>
-                        <ScrollArea className="h-full min-w-0 w-full pr-4">
-                          <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                        </ScrollArea>
-                        
-                        {bookNotes.length > 0 && (
-                          <div className="mt-3">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full text-foreground border-gray-700"
-                              onClick={() => setShowBookDetails(false)}
-                            >
-                              <StickyNote className="h-4 w-4 mr-2" />
-                              View Book Notes ({bookNotes.length})
-                            </Button>
+                        {/* Swipeable book description with note navigation on mobile */}
+                        {isMobileViewActive && bookNotes.length > 0 ? (
+                          <div>
+                            <div className="relative overflow-hidden" ref={descriptionEmblaRef}>
+                              <div className="flex">
+                                {/* Always show the book description as the first slide */}
+                                <div className="min-w-full flex-shrink-0 pl-1 pr-4">
+                                  <ScrollArea className="h-full min-w-0 w-full pr-4">
+                                    <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                                  </ScrollArea>
+                                </div>
+                                
+                                {/* Add placeholder slides for notes - we don't show content here, just for swiping */}
+                                {bookNotes.map((_, idx) => (
+                                  <div key={`note-placeholder-${idx}`} className="min-w-full flex-shrink-0 pl-1 pr-4">
+                                    <ScrollArea className="h-full min-w-0 w-full pr-4">
+                                      <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                                    </ScrollArea>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            {/* Show note indicators */}
+                            {currentNoteIndex > 0 && (
+                              <div className="mt-2 px-2 py-1 bg-primary/10 rounded-md flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <StickyNote className="h-4 w-4 mr-2 text-primary" />
+                                  <span className="text-xs text-primary">
+                                    Viewing Note {currentNoteIndex} of {bookNotes.length}
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => setShowBookDetails(false)}
+                                >
+                                  <StickyNote className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                            
+                            {/* Navigation dots for mobile swipe */}
+                            {bookNotes.length > 0 && (
+                              <div className="flex justify-center gap-1 mt-2">
+                                <div 
+                                  className={`h-1.5 w-6 rounded-full transition-colors ${
+                                    currentNoteIndex === 0 ? 'bg-primary' : 'bg-gray-600'
+                                  }`}
+                                  onClick={() => descriptionEmblaApi?.scrollTo(0)}
+                                />
+                                {bookNotes.map((_, idx) => (
+                                  <div 
+                                    key={`dot-${idx}`}
+                                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
+                                      currentNoteIndex === idx + 1 ? 'bg-primary' : 'bg-gray-600'
+                                    }`}
+                                    onClick={() => descriptionEmblaApi?.scrollTo(idx + 1)}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          // Regular non-swipeable view if no notes or not mobile
+                          <div>
+                            <ScrollArea className="h-full min-w-0 w-full pr-4">
+                              <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                            </ScrollArea>
+                            
+                            {bookNotes.length > 0 && (
+                              <div className="mt-3">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="w-full text-foreground border-gray-700"
+                                  onClick={() => setShowBookDetails(false)}
+                                >
+                                  <StickyNote className="h-4 w-4 mr-2" />
+                                  View Book Notes ({bookNotes.length})
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
