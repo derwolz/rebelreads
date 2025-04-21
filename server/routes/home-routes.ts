@@ -695,7 +695,7 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
               width = 256;
               height = 440;
               break;
-            case "grid-item":
+            case "spine":
               width = 56;
               height = 212;
               break;

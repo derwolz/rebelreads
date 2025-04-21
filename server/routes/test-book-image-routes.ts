@@ -63,7 +63,7 @@ router.get("/", (req: Request, res: Response) => {
             <option value="book-detail">Book Detail (480x600)</option>
             <option value="book-card">Book Card (256x440)</option>
             <option value="background">Background (1300x1500)</option>
-            <option value="grid-item">Grid Item (56x212)</option>
+            <option value="spine">Spine (56x212)</option>
             <option value="mini">Mini (48x64)</option>
             <option value="hero">Hero (1500x600)</option>
           </select>
