@@ -35,6 +35,7 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import AdminPanel from "@/pages/admin-panel";
 import AdminBooksPage from "@/pages/admin-books-page";
 import AdminUsersPage from "@/pages/admin-users-page";
+import AdminCampaignManagementPage from "@/pages/admin-campaign-management";
 import SalesPanel from "@/pages/sales-panel";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import CookiePolicy from "@/pages/cookie-policy";
@@ -165,6 +166,7 @@ function App() {
           <ProtectedRoute path="/admin/reports" component={AdminPanel} />
           <ProtectedRoute path="/admin/books" component={AdminBooksPage} />
           <ProtectedRoute path="/admin/email-collection" component={EmailCollectionPage} />
+          <ProtectedRoute path="/admin/campaign-management" component={AdminCampaignManagementPage} />
           
           {/* Sales routes */}
           <ProtectedRoute path="/sales" component={SalesPanel} />

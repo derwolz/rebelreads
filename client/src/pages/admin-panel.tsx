@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare, UserCog, Mail } from "lucide-react";
+import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare, UserCog, Mail, Megaphone } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
 import { AdminBetaKeysManager } from "@/components/admin-beta-keys-manager";
@@ -164,6 +164,21 @@ export default function AdminPanel() {
                       <Link href="/admin/email-collection">
                         <Button className="w-full">
                           Manage Email Collection
+                        </Button>
+                      </Link>
+                    </div>
+                  </Card>
+                  
+                  <Card className="p-4">
+                    <div className="flex flex-col items-center space-y-4">
+                      <Megaphone className="h-10 w-10 text-primary" />
+                      <h4 className="text-lg font-medium">Campaign Management</h4>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Create and manage promotional campaigns across the platform
+                      </p>
+                      <Link href="/admin/campaign-management">
+                        <Button className="w-full">
+                          Manage Campaigns
                         </Button>
                       </Link>
                     </div>
