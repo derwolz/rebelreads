@@ -41,6 +41,9 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [showBookDetails, setShowBookDetails] = useState(true);
   const { toast } = useToast();
   
+  // For shuffling animation - track active note index
+  const [activeNoteIndex, setActiveNoteIndex] = useState<number>(-1); // -1 means show book details
+  
   // Track current carousel slide index
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
@@ -224,58 +227,121 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 </div>
 
                 
-                {/* Animated Note Overlay - Only covers the details section */}
-                {selectedNote && (
+                {/* Card Stack with Book Description and Notes */}
+                <div className="relative h-full flex-1 overflow-hidden bg-transparent">
+                  {/* Base Card: Book Description (N=0) */}
                   <div 
-                    className={`absolute top-0 right-0 bottom-0 left-0 z-10 transition-all duration-500 ${
-                      noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-                    }`}
+                    className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4 transition-all duration-300"
                     style={{
-                      perspective: '1000px',
-                      transformStyle: 'preserve-3d',
-                      backfaceVisibility: 'hidden',
+                      transform: activeNoteIndex >= 0 ? 'translateY(5px)' : 'translateY(0)',
+                      opacity: activeNoteIndex >= 0 ? 0.7 : 1,
+                      zIndex: 0,
                     }}
                   >
+                    <div className="flex justify-between items-center mb-3">
+                      <div>
+                        <h3 className="text-lg font-medium text-foregound flex items-center gap-2">
+                          <BookIcon className="h-4 w-4" />
+                          Book Details
+                        </h3>
+                      </div>
+                      {activeNoteIndex >= 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
+                          onClick={() => {
+                            setActiveNoteIndex(-1);
+                            setSelectedNote(null);
+                            setNoteVisible(false);
+                          }}
+                        >
+                          <BookIcon className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="prose prose-sm prose-invert max-w-none">
+                      <div className="md:hidden">
+                        <ScrollArea className="h-[180px] w-full">
+                          <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                        </ScrollArea>
+                      </div>
+                      <div className="hidden md:block">
+                        <ScrollArea className="h-full min-w-0 w-full pr-4">
+                          <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                        </ScrollArea>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Note Cards (N=1..N) */}
+                  {bookNotes.map((note, idx) => (
                     <div 
-                      className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4"
+                      key={note.id}
+                      className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4 transition-all duration-300"
                       style={{
-                        transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
-                        transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        boxShadow: noteVisible ? '0 10px 30px -15px rgba(255, 255, 255, 0.2)' : 'none',
+                        transform: activeNoteIndex === idx 
+                          ? 'translateY(0) rotate(0deg)' 
+                          : activeNoteIndex > idx 
+                            ? `translateY(${(idx - activeNoteIndex) * 15}px) rotate(${(idx - activeNoteIndex) * 5}deg)` 
+                            : 'translateY(120%) rotate(5deg)',
+                        opacity: activeNoteIndex === idx ? 1 : activeNoteIndex > idx ? 0.5 : 0,
+                        zIndex: activeNoteIndex === idx ? 50 : 10 + idx,
+                        pointerEvents: activeNoteIndex === idx || activeNoteIndex === -1 ? 'auto' : 'none',
                       }}
                     >
                       <div className="flex justify-between items-center mb-3">
                         <div>
                           <h3 className="text-lg font-medium text-foregound flex items-center gap-2">
                             <StickyNote className="h-4 w-4" />
-                            Note
+                            Note {idx + 1}/{bookNotes.length}
                           </h3>
                           <p className="text-xs text-gray-400">
-                            {selectedNote.type === 'book' ? 'Book note' : 'Shelf note'} • 
-                            Last updated: {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString()}
+                            {note.type === 'book' ? 'Book note' : 'Shelf note'} • 
+                            Last updated: {new Date(note.updatedAt || note.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
-                          onClick={() => {
-                            setIsRotating(true);
-                            setTimeout(() => {
+                        <div className="flex gap-2">
+                          {idx > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
+                              onClick={() => setActiveNoteIndex(idx - 1)}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
+                            onClick={() => {
+                              setActiveNoteIndex(-1);
+                              setSelectedNote(null);
                               setNoteVisible(false);
-                              setIsRotating(false);
-                            }, 500);
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          {idx < bookNotes.length - 1 && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
+                              onClick={() => setActiveNoteIndex(idx + 1)}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="bg-foregound/5 p-2 rounded-lg">
-                        <PaperNoteCard note={selectedNote} />
+                        <PaperNoteCard note={note} />
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
 
                 {/* Mobile-only share button and referral links container - between cover and title */}
                 <div className="flex md:hidden items-center mt-3 mb-4 gap-4">
