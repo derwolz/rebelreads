@@ -1,13 +1,12 @@
 /**
  * Test script to verify object storage functionality
- * Run using: node test-object-storage.js
+ * Run using: node --experimental-fetch test-object-storage.js
  */
 
 import fs from 'fs';
 import path from 'path';
-import fetch from 'node-fetch';
-// Using Node.js native FormData from undici
-import { FormData } from 'undici';
+// Use built-in Fetch API with global FormData
+// Note: Must run with --experimental-fetch flag
 
 // URL constants for testing
 const API_URL = 'http://localhost:3000';
@@ -58,7 +57,10 @@ async function uploadProfileImage(imagePath) {
   
   // Create a FormData instance
   const formData = new FormData();
-  formData.append('profileImage', fs.createReadStream(imagePath));
+  // Read the file and create a Blob from it
+  const fileBuffer = fs.readFileSync(imagePath);
+  const blob = new Blob([fileBuffer], { type: 'image/svg+xml' });
+  formData.append('profileImage', blob, path.basename(imagePath));
   
   // Send the request
   const response = await fetch(PROFILE_IMAGE_UPLOAD_URL, {

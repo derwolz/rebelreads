@@ -1,14 +1,13 @@
 /**
  * Test script to verify object storage functionality
- * Run using: npx tsx test-object-storage.ts
+ * Run using: npx tsx --experimental-fetch test-object-storage.ts
  */
 
 import fs from 'fs';
 import path from 'path';
-import fetch from 'node-fetch';
 import { Readable } from 'stream';
-// Using undici's FormData which is available in modern Node.js
-import { FormData } from 'undici';
+// Using built-in Fetch API with global FormData
+// Must run with --experimental-fetch flag
 
 async function testObjectStorage() {
   try {
@@ -23,10 +22,9 @@ async function testObjectStorage() {
     
     // Create form data for upload
     const formData = new FormData();
-    formData.append('profileImage', fileBuffer, {
-      filename: 'test-profile.svg',
-      contentType: 'image/svg+xml'
-    });
+    // Convert Buffer to Blob for FormData
+    const blob = new Blob([fileBuffer], { type: 'image/svg+xml' });
+    formData.append('profileImage', blob, 'test-profile.svg');
     
     // Upload the image using the user profile image endpoint
     const uploadResponse = await fetch('http://localhost:3000/api/user/profile-image', {
@@ -42,7 +40,7 @@ async function testObjectStorage() {
       return;
     }
     
-    const uploadResult = await uploadResponse.json();
+    const uploadResult = await uploadResponse.json() as { profileImageUrl: string };
     console.log('Upload successful:', uploadResult);
     
     // Test retrieving the image
