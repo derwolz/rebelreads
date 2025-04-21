@@ -75,10 +75,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
     ? shelfData.bookNotes.filter((note: Note) => note.bookId === selectedBook.id) 
     : [];
   
-  // Mobile swipe carousel for book notes
+  // Mobile swipe carousel for book details + notes (as one integrated swipeable card set)
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: bookNotes.length > 1,
-    align: 'center',
+    loop: false, // Don't loop - card 1 is always book details, cards 2+ are notes
+    align: 'start',
   });
     
   // Log error if shelfData is undefined but username and shelfName are provided
@@ -348,76 +348,122 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     </ScrollArea>
                   </div>
                   
-                  {/* Mobile view - Swipeable content */}
+                  {/* Mobile view - Swipeable content with Cards */}
                   <div className="md:hidden">
-                    <div 
-                      className="relative touch-pan-y"
-                      onTouchStart={(e) => {
-                        if (!isMobileViewActive) return;
-                        
-                        // Store the starting position
-                        const startX = e.touches[0].clientX;
-                        
-                        // Define the touch move handler
-                        const handleTouchMove = (moveEvent: TouchEvent) => {
-                          const currentX = moveEvent.touches[0].clientX;
-                          const diffX = currentX - startX;
+                    {/* Embla carousel for swipeable cards (bookDetails + notes) */}
+                    <div className="overflow-hidden border border-border rounded-lg" ref={emblaRef}>
+                      <div className="flex">
+                        {/* Card 1: Book details card (always the first card) */}
+                        <div className="flex-[0_0_100%] min-w-0 p-4">
+                          <ScrollArea className="h-[180px] min-w-0 w-full">
+                            <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                          </ScrollArea>
                           
-                          // If significant horizontal swipe detected
-                          if (Math.abs(diffX) > 50) {
-                            // Prevent default behavior to avoid page scrolling
-                            moveEvent.preventDefault();
-                          }
-                        };
-                        
-                        // Define the touch end handler
-                        const handleTouchEnd = (endEvent: TouchEvent) => {
-                          const endX = endEvent.changedTouches[0].clientX;
-                          const diffX = endX - startX;
-                          
-                          // If significant horizontal swipe detected
-                          if (Math.abs(diffX) > 75) {
-                            if (diffX > 0) {
-                              // Swipe right - go to previous book
-                              goToPrevBook();
-                            } else {
-                              // Swipe left - go to next book
-                              goToNextBook();
-                            }
-                          }
-                          
-                          // Clean up
-                          document.removeEventListener('touchmove', handleTouchMove);
-                          document.removeEventListener('touchend', handleTouchEnd);
-                        };
-                        
-                        // Add the event listeners
-                        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-                        document.addEventListener('touchend', handleTouchEnd);
-                      }}
-                    >
-                      <ScrollArea className="h-[200px] min-w-0 w-full">
-                        <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                      </ScrollArea>
-                      
-                      {/* Subtle indicators for swipe on mobile */}
-                      {selectedBookIndex !== null && (
-                        <div className="flex justify-between mt-2 text-muted-foreground/30">
-                          {selectedBookIndex > 0 && (
-                            <div className="text-xs flex items-center">
-                              <ChevronLeft className="h-3 w-3" /> 
-                              <span className="ml-1">Swipe right for prev</span>
+                          {/* Card navigation indicator at bottom */}
+                          <div className="flex items-center justify-between mt-4">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-foreground/80 rounded-full" />
+                              <span className="text-xs text-muted-foreground">Details</span>
                             </div>
-                          )}
-                          {selectedBookIndex < books.length - 1 && (
-                            <div className="text-xs flex items-center ml-auto">
-                              <span className="mr-1">Swipe left for next</span>
-                              <ChevronRight className="h-3 w-3" />
-                            </div>
-                          )}
+                            
+                            {bookNotes.length > 0 && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <span>Swipe for notes</span>
+                                <ChevronRight className="h-3 w-3" />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
+                        
+                        {/* Cards 2+: Notes (one card per note) */}
+                        {bookNotes.map((note, idx) => (
+                          <div key={note.id} className="flex-[0_0_100%] min-w-0 p-4">
+                            <div className="bg-muted/20 rounded-lg p-3 h-[180px] overflow-y-auto">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(note.createdAt).toLocaleDateString()}
+                                </p>
+                                <Badge variant="outline" className="text-xs">Note {idx + 1}/{bookNotes.length}</Badge>
+                              </div>
+                              <PaperNoteCard note={note} />
+                            </div>
+                            
+                            {/* Card navigation indicators */}
+                            <div className="flex items-center justify-between mt-4">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <ChevronLeft className="h-3 w-3" />
+                                <span>{idx === 0 ? 'Back to details' : `Note ${idx}`}</span>
+                              </div>
+                              
+                              {idx < bookNotes.length - 1 && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <span>Next note</span>
+                                  <ChevronRight className="h-3 w-3" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                    
+                    {/* Pagination dots */}
+                    {bookNotes.length > 0 && (
+                      <div className="flex justify-center gap-1 mt-2">
+                        {/* First dot is for book details */}
+                        <button
+                          className={`w-2 h-2 rounded-full transition-all ${
+                            currentSlideIndex === 0 
+                              ? 'bg-foreground/80 scale-110' 
+                              : 'bg-muted-foreground/30'
+                          }`}
+                          onClick={() => emblaApi?.scrollTo(0)}
+                          aria-label="Go to book details"
+                        />
+                        
+                        {/* Remaining dots are for notes */}
+                        {bookNotes.map((_, idx) => (
+                          <button
+                            key={idx}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                              currentSlideIndex === idx + 1
+                                ? 'bg-foreground/80 scale-110' 
+                                : 'bg-muted-foreground/30'
+                            }`}
+                            onClick={() => emblaApi?.scrollTo(idx + 1)}
+                            aria-label={`Go to note ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Book navigation indicators */}
+                    {selectedBookIndex !== null && (
+                      <div className="flex justify-between mt-3 text-muted-foreground">
+                        {selectedBookIndex > 0 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex items-center text-xs p-0 h-8"
+                            onClick={goToPrevBook}
+                          >
+                            <ChevronLeft className="h-3 w-3 mr-1" /> 
+                            <span>Previous book</span>
+                          </Button>
+                        )}
+                        {selectedBookIndex < books.length - 1 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex items-center text-xs p-0 h-8 ml-auto"
+                            onClick={goToNextBook}
+                          >
+                            <span>Next book</span>
+                            <ChevronRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -528,58 +574,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
             )}
           </div>
           
-          {/* Mobile-only swipeable book notes */}
-          <div className="md:hidden mt-4">
-            {bookNotes && bookNotes.length > 0 ? (
-              <div className="mb-4">
-                <h3 className="text-sm font-medium mb-2 flex items-center">
-                  <StickyNote className="w-4 h-4 mr-1" />
-                  Notes for this book ({bookNotes.length})
-                </h3>
-                
-                {/* Swipeable embla carousel */}
-                <div className="overflow-hidden" ref={emblaRef}>
-                  <div className="flex">
-                    {bookNotes.map((note) => (
-                      <div 
-                        key={note.id}
-                        className="flex-[0_0_100%] min-w-0 pl-1 pr-4"
-                      >
-                        <div className="border border-border bg-muted/30 rounded-lg p-3">
-                          <p className="text-xs text-muted-foreground mb-1">
-                            {new Date(note.createdAt).toLocaleDateString()}
-                          </p>
-                          <PaperNoteCard note={note} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Pagination dots */}
-                {bookNotes.length > 1 && (
-                  <div className="flex justify-center gap-1 mt-2">
-                    {bookNotes.map((_, idx) => (
-                      <button
-                        key={idx}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          currentSlideIndex === idx 
-                            ? 'bg-foreground/80 scale-110' 
-                            : 'bg-muted-foreground/30'
-                        }`}
-                        onClick={() => emblaApi?.scrollTo(idx)}
-                        aria-label={`Go to note ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground mt-4 italic">
-                No notes for this book
-              </div>
-            )}
-          </div>
+          {/* No separate mobile notes section - notes are part of the main swipeable content */}
 
         </div>
         
