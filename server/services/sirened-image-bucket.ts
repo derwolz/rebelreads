@@ -1,6 +1,7 @@
 import { ObjectStorageService } from './object-storage';
 import path from 'path';
 import { nanoid } from 'nanoid';
+import fs from 'fs/promises';
 
 /**
  * SirenedImageBucket service
@@ -22,16 +23,24 @@ export class SirenedImageBucket {
    * @returns Storage key of the uploaded file
    */
   async uploadBookImage(file: Express.Multer.File, imageType: string, bookId?: number): Promise<string> {
-    // Create a folder structure: covers/{bookId or 'general'}/{imageType}
+    // Create a folder structure: covers/{bookId or 'general'}
     const folder = bookId ? `covers/${bookId}` : 'covers/general';
     
     // Generate a unique filename with type prefix for better organization
     const uniqueId = nanoid(12);
     const extension = path.extname(file.originalname);
-    const filename = `${imageType}_${uniqueId}${extension}`;
+    
+    // Manually rename the file to include the image type
+    const originalName = file.originalname;
+    file.originalname = `${imageType}_${uniqueId}${extension}`;
     
     // Use the base object storage service to upload the file
-    return this.objectStorage.uploadFile(file, folder, filename);
+    const storageKey = await this.objectStorage.uploadFile(file, folder);
+    
+    // Restore original filename
+    file.originalname = originalName;
+    
+    return storageKey;
   }
   
   /**

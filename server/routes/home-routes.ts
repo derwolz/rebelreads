@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import express from "express";
 import { objectStorage } from "../services/object-storage";
+import { sirenedImageBucket } from "../services/sirened-image-bucket";
 import { db } from "../db";
 import { 
   ratings, 
@@ -467,9 +468,9 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         // Store the book-detail file for potential auto-generation
         if (imageType === 'book-detail') {
           bookDetailFile = file;
-          // Upload to object storage
-          const storageKey = await objectStorage.uploadFile(file, 'covers');
-          bookDetailUrl = objectStorage.getPublicUrl(storageKey);
+          // Upload to object storage using SirenedImageBucket
+          const storageKey = await sirenedImageBucket.uploadBookImage(file, 'book-detail');
+          bookDetailUrl = sirenedImageBucket.getPublicUrl(storageKey);
         }
       }
     }
@@ -480,9 +481,9 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         const imageType = fieldName.replace('bookImage_', '');
         const file = uploadedFiles[fieldName][0]; // Get first file from array
         
-        // Upload to object storage
-        const storageKey = await objectStorage.uploadFile(file, 'covers');
-        const imageUrl = objectStorage.getPublicUrl(storageKey);
+        // Upload to object storage using SirenedImageBucket
+        const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType);
+        const imageUrl = sirenedImageBucket.getPublicUrl(storageKey);
         
         // Get dimensions from request body
         let width = 0;
