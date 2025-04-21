@@ -661,9 +661,9 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
         if (fieldName === 'bookImage_book-detail') {
           const file = uploadedFiles[fieldName][0]; // Get first file from array
           updatedBookDetailFile = file;
-          // Upload to object storage
-          const storageKey = await objectStorage.uploadFile(file, 'covers');
-          updatedBookDetailUrl = objectStorage.getPublicUrl(storageKey);
+          // Upload to object storage using SirenedImageBucket
+          const storageKey = await sirenedImageBucket.uploadBookImage(file, 'book-detail', book.id);
+          updatedBookDetailUrl = sirenedImageBucket.getPublicUrl(storageKey);
           console.log("Found updated book-detail image:", updatedBookDetailUrl);
           break;
         }
@@ -674,9 +674,9 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
         if (fieldName.startsWith('bookImage_')) {
           const imageType = fieldName.replace('bookImage_', '');
           const file = uploadedFiles[fieldName][0]; // Get first file from array
-          // Upload to object storage
-          const storageKey = await objectStorage.uploadFile(file, 'covers');
-          const imageUrl = objectStorage.getPublicUrl(storageKey);
+          // Upload to object storage using SirenedImageBucket
+          const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, book.id);
+          const imageUrl = sirenedImageBucket.getPublicUrl(storageKey);
           
           // Set dimensions based on image type
           let width = 0;
