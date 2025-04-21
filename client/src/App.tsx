@@ -47,7 +47,6 @@ import DiscoverPage from "@/pages/discover-page";
 import BookShelfPage from "@/pages/book-shelf-page";
 import FeedbackButton from "@/components/feedback-button";
 import BrandingPage from "@/pages/branding-page";
-
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
 import { useBeta } from "@/hooks/use-beta";
@@ -58,116 +57,6 @@ import { ImageGuidePage } from "@/pages/image-guide";
 import BookRackTestPage from "@/pages/book-rack-test";
 import BookShelfSharePage from "@/pages/book-shelf-share-page";
 
-function Router() {
-  const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
-  const [location] = useLocation();
-  const { isBetaActive, isLoading: isBetaLoading } = useBeta();
-  const { user, isLoading: isAuthLoading } = useAuth();
-
-  const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding", "/book-shelf/share"];
-  const isApiPath = location.startsWith("/api");
-  const isAuthWallPath = location === "/auth";
-  const [path, hash] = location.split("#");
-
-  // Show loading state while checking auth and beta status
-  if (isBetaLoading || isAuthLoading) {
-    return null;
-  }
-  // If beta mode is active and user is not logged in, redirect to auth wall
-  // unless it's an allowed path or already on the auth wall
-  if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath && !isAuthWallPath) {
-    return <Redirect to="/landing" />;
-  }
-
-  
-  // If landing page is configured to show, honor that setting
-  // but only if not in beta mode (beta mode takes precedence)
-  if (isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
-    return <Redirect to={`/landing`} />;
-  }
-
-  // Component selection based on landing page setting
-  const HomeComponent = showLandingPage ? NewLandingPage : HomePage;
-
-  return (
-    <>
-      {!allowedPaths.includes(path) && path !== "/auth" && <MainNav />}
-
-      <Switch>
-        {/* Always accessible routes */}
-        <Route path="/landing" component={NewLandingPage} />
-        <Route path="/new-landing" component={NewLandingPage} />
-
-        <Route path="/privacy-policy" component={PrivacyPolicy} />
-        <Route path="/cookie-policy" component={CookiePolicy} />
-        <Route path="/terms-of-service" component={TermsOfService} />
-        <Route path="/about-us" component={AboutUs} />
-        <Route path="/contact-us" component={ContactUs} />
-        
-        {/* Auth wall */}
-        <Route path="/auth" component={AuthWallPage} />
-        <Route path="/auth-check" component={AuthCheckPage} />
-
-        {/* Public routes that require authentication in beta mode */}
-        <Route path="/" component={HomeComponent} />
-        <Route path="/books/:id" component={BookDetails} />
-        <Route path="/book-details" component={BookDetails} />
-        <Route path="/search/books" component={SearchBooksPage} />
-        <Route path="/search/authors" component={SearchAuthorsPage} />
-        <Route path="/authors/:id" component={AuthorPage} />
-        <Route path="/author" component={AuthorPage} />
-        <Route path="/publishers/:id" component={PublisherPage} />
-        <Route path="/ad-showcase" component={AdShowcasePage} />
-        <Route path="/test-images" component={TestImages} />
-        <Route path="/image-guide" component={ImageGuidePage} />
-        <Route path="/book-rack-test" component={BookRackTestPage} />
-        <Route path="/book-shelf/share" component={BookShelfSharePage} />
-        <Route path="/branding" component={BrandingPage} />
-        
-        {/* Discover routes - new taxonomy-based search pages */}
-        <Route path="/discover" component={DiscoverPage} />
-        <Route path="/discover/:type" component={DiscoverPage} />
-        <Route path="/discover/:type/:id" component={DiscoverPage} />
-
-        {/* Protected routes (always require login) */}
-        <ProtectedRoute path="/settings" component={SettingsPage} />
-        <ProtectedRoute path="/settings/account" component={SettingsPage} />
-        <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
-        <ProtectedRoute path="/settings/rating-preferences" component={SettingsPage} />
-        <ProtectedRoute path="/settings/genre-preferences" component={SettingsPage} />
-        <ProtectedRoute path="/settings/filters" component={SettingsPage} />
-        <ProtectedRoute path="/settings/book-shelf" component={SettingsPage} />
-        <ProtectedRoute path="/settings/homepage" component={() => <HomepageSettingsPage />} />
-        <ProtectedRoute path="/settings/author" component={SettingsPage} />
-        <ProtectedRoute path="/dashboard" component={DashboardPage} />
-        <ProtectedRoute path="/book-shelf" component={BookShelfPage} />
-        <ProtectedRoute path="/pro" component={ProDashboard} />
-        <ProtectedRoute path="/pro/action" component={ProActionPage} />
-        <ProtectedRoute path="/pro/reviews" component={ProReviewsPage} />
-        <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
-        <ProtectedRoute path="/pro/author" component={ProAuthorProfilePage} />
-        <ProtectedRoute path="/follower-test" component={FollowerTest} />
-
-        {/* Admin routes */}
-        <ProtectedRoute path="/admin" component={AdminPanel} />
-        <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
-        <ProtectedRoute path="/admin/settings" component={AdminPanel} />
-        <ProtectedRoute path="/admin/reports" component={AdminPanel} />
-        <ProtectedRoute path="/admin/books" component={AdminBooksPage} />
-        <ProtectedRoute path="/admin/email-collection" component={EmailCollectionPage} />
-        
-        {/* Sales routes */}
-        <ProtectedRoute path="/sales" component={SalesPanel} />
-        
-        {/* Publisher routes */}
-        <ProtectedRoute path="/publisher" component={PublisherDashboard} />
-
-        <Route component={NotFound} />
-      </Switch>
-    </>
-  );
-}
-
 function App() {
   const { isOpen, setIsOpen } = useAuthModal();
   const [location] = useLocation();
@@ -176,6 +65,116 @@ function App() {
   const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding", "/book-shelf/share"];
   const currentPath = location.split("#")[0]; // Remove hash from path
   const showFeedbackButton = !noFeedbackPaths.includes(currentPath);
+
+  // Define Router inside the App component to ensure it has access to all providers
+  function Router() {
+    const showLandingPage = import.meta.env.VITE_SHOW_LANDING === "true";
+    const [location] = useLocation();
+    const { isBetaActive, isLoading: isBetaLoading } = useBeta();
+    const { user, isLoading: isAuthLoading } = useAuth();
+
+    const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding", "/book-shelf/share"];
+    const isApiPath = location.startsWith("/api");
+    const isAuthWallPath = location === "/auth";
+    const [path, hash] = location.split("#");
+
+    // Show loading state while checking auth and beta status
+    if (isBetaLoading || isAuthLoading) {
+      return null;
+    }
+    // If beta mode is active and user is not logged in, redirect to auth wall
+    // unless it's an allowed path or already on the auth wall
+    if (isBetaActive && !user && !allowedPaths.includes(path) && !isApiPath && !isAuthWallPath) {
+      return <Redirect to="/landing" />;
+    }
+    
+    // If landing page is configured to show, honor that setting
+    // but only if not in beta mode (beta mode takes precedence)
+    if (isBetaActive && showLandingPage && !allowedPaths.includes(path) && !isApiPath) {
+      return <Redirect to={`/landing`} />;
+    }
+
+    // Component selection based on landing page setting
+    const HomeComponent = showLandingPage ? NewLandingPage : HomePage;
+
+    return (
+      <>
+        {!allowedPaths.includes(path) && path !== "/auth" && <MainNav />}
+
+        <Switch>
+          {/* Always accessible routes */}
+          <Route path="/landing" component={NewLandingPage} />
+          <Route path="/new-landing" component={NewLandingPage} />
+
+          <Route path="/privacy-policy" component={PrivacyPolicy} />
+          <Route path="/cookie-policy" component={CookiePolicy} />
+          <Route path="/terms-of-service" component={TermsOfService} />
+          <Route path="/about-us" component={AboutUs} />
+          <Route path="/contact-us" component={ContactUs} />
+          
+          {/* Auth wall */}
+          <Route path="/auth" component={AuthWallPage} />
+          <Route path="/auth-check" component={AuthCheckPage} />
+
+          {/* Public routes that require authentication in beta mode */}
+          <Route path="/" component={HomeComponent} />
+          <Route path="/books/:id" component={BookDetails} />
+          <Route path="/book-details" component={BookDetails} />
+          <Route path="/search/books" component={SearchBooksPage} />
+          <Route path="/search/authors" component={SearchAuthorsPage} />
+          <Route path="/authors/:id" component={AuthorPage} />
+          <Route path="/author" component={AuthorPage} />
+          <Route path="/publishers/:id" component={PublisherPage} />
+          <Route path="/ad-showcase" component={AdShowcasePage} />
+          <Route path="/test-images" component={TestImages} />
+          <Route path="/image-guide" component={ImageGuidePage} />
+          <Route path="/book-rack-test" component={BookRackTestPage} />
+          <Route path="/book-shelf/share" component={BookShelfSharePage} />
+          <Route path="/branding" component={BrandingPage} />
+          
+          {/* Discover routes - new taxonomy-based search pages */}
+          <Route path="/discover" component={DiscoverPage} />
+          <Route path="/discover/:type" component={DiscoverPage} />
+          <Route path="/discover/:type/:id" component={DiscoverPage} />
+
+          {/* Protected routes (always require login) */}
+          <ProtectedRoute path="/settings" component={SettingsPage} />
+          <ProtectedRoute path="/settings/account" component={SettingsPage} />
+          <ProtectedRoute path="/settings/appearance" component={SettingsPage} />
+          <ProtectedRoute path="/settings/rating-preferences" component={SettingsPage} />
+          <ProtectedRoute path="/settings/genre-preferences" component={SettingsPage} />
+          <ProtectedRoute path="/settings/filters" component={SettingsPage} />
+          <ProtectedRoute path="/settings/book-shelf" component={SettingsPage} />
+          <ProtectedRoute path="/settings/homepage" component={() => <HomepageSettingsPage />} />
+          <ProtectedRoute path="/settings/author" component={SettingsPage} />
+          <ProtectedRoute path="/dashboard" component={DashboardPage} />
+          <ProtectedRoute path="/book-shelf" component={BookShelfPage} />
+          <ProtectedRoute path="/pro" component={ProDashboard} />
+          <ProtectedRoute path="/pro/action" component={ProActionPage} />
+          <ProtectedRoute path="/pro/reviews" component={ProReviewsPage} />
+          <ProtectedRoute path="/pro/book-management" component={ProDashboard} />
+          <ProtectedRoute path="/pro/author" component={ProAuthorProfilePage} />
+          <ProtectedRoute path="/follower-test" component={FollowerTest} />
+
+          {/* Admin routes */}
+          <ProtectedRoute path="/admin" component={AdminPanel} />
+          <ProtectedRoute path="/admin/users" component={AdminUsersPage} />
+          <ProtectedRoute path="/admin/settings" component={AdminPanel} />
+          <ProtectedRoute path="/admin/reports" component={AdminPanel} />
+          <ProtectedRoute path="/admin/books" component={AdminBooksPage} />
+          <ProtectedRoute path="/admin/email-collection" component={EmailCollectionPage} />
+          
+          {/* Sales routes */}
+          <ProtectedRoute path="/sales" component={SalesPanel} />
+          
+          {/* Publisher routes */}
+          <ProtectedRoute path="/publisher" component={PublisherDashboard} />
+
+          <Route component={NotFound} />
+        </Switch>
+      </>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
