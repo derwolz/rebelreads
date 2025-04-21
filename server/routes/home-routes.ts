@@ -452,78 +452,86 @@ router.post("/books", multipleImageUpload, async (req, res) => {
         // Store the book-detail file for potential auto-generation
         if (imageType === 'book-detail') {
           bookDetailFile = file;
-          // Upload to object storage using SirenedImageBucket
-          const storageKey = await sirenedImageBucket.uploadBookImage(file, 'book-detail');
-          bookDetailUrl = sirenedImageBucket.getPublicUrl(storageKey);
+          // We'll upload the file in the next pass with the book ID
         }
       }
     }
 
-    // Second pass: process all image types (including auto-generated ones)
+    // Process all image types with book ID now available
+    console.log(`Processing ${Object.keys(uploadedFiles).length} image types for book ID ${book.id}`);
+    
     for (const fieldName in uploadedFiles) {
       if (fieldName.startsWith('bookImage_')) {
-        const imageType = fieldName.replace('bookImage_', '');
+        const imageType = fieldName.replace('bookImage_', '') as any;
         const file = uploadedFiles[fieldName][0]; // Get first file from array
         
+        console.log(`Uploading ${imageType} image for book ID ${book.id}`);
         
-        
-        // Upload to object storage using SirenedImageBucket
-        const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, book.id);
-        const imageUrl = sirenedImageBucket.getPublicUrl(storageKey);
-        
-        
-        
-        // Get dimensions from request body
-        let width = 0;
-        let height = 0;
-        
-        // Set dimensions based on image type
-        switch (imageType) {
-          case "book-detail":
-            width = 480;
-            height = 600;
-            break;
-          case "background":
-            width = 1300;
-            height = 1500;
-            break;
-          case "book-card":
-            width = 256;
-            height = 440;
-            break;
-          case "spine":
-            width = 56;
-            height = 212;
-            break;
-          case "mini":
-            width = 48;
-            height = 64;
-            break;
-          case "hero":
-            width = 1500;
-            height = 600;
-            break;
+        try {
+          // Upload to object storage using SirenedImageBucket with book ID
+          const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, book.id);
+          const imageUrl = sirenedImageBucket.getPublicUrl(storageKey);
+          
+          console.log(`Successfully uploaded ${imageType} image to ${storageKey} with URL ${imageUrl}`);
+          
+          // Get dimensions based on image type
+          let width = 0;
+          let height = 0;
+          
+          // Set dimensions based on image type
+          switch (imageType) {
+            case "book-detail":
+              width = 480;
+              height = 600;
+              bookDetailUrl = imageUrl; // Save this URL for auto-generation
+              break;
+            case "background":
+              width = 1300;
+              height = 1500;
+              break;
+            case "book-card":
+              width = 256;
+              height = 440;
+              break;
+            case "spine":
+              width = 56;
+              height = 212;
+              break;
+            case "mini":
+              width = 48;
+              height = 64;
+              break;
+            case "hero":
+              width = 1500;
+              height = 600;
+              break;
+          }
+          
+          // Add to array of images to insert
+          bookImageEntries.push({
+            bookId: book.id,
+            imageUrl,
+            imageType,
+            width,
+            height,
+            sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
+          });
+          
+        } catch (error) {
+          console.error(`Error uploading ${imageType} image:`, error);
+          // Continue with other images
         }
-        
-        // Add to array of images to insert
-        bookImageEntries.push({
-          bookId: book.id,
-          imageUrl,
-          imageType,
-          width,
-          height,
-          sizeKb: Math.round(file.size / 1024) // Convert bytes to KB
-        });
-        
-        
       }
     }
     
-    // Auto-generate book-card and mini images if we have a book-detail image
+    // Auto-generate book-card and mini images if we have a book-detail URL
     // but didn't receive explicit files for these types
-    if (bookDetailFile && bookDetailUrl) {
+    if (bookDetailUrl) {
+      console.log(`Using book-detail URL ${bookDetailUrl} to generate additional image entries`);
+      
       // Check if we don't already have book-card in our entries
       if (!bookImageEntries.some(entry => entry.imageType === 'book-card')) {
+        console.log(`Auto-generating book-card entry from book-detail`);
         
         bookImageEntries.push({
           bookId: book.id,
@@ -531,12 +539,13 @@ router.post("/books", multipleImageUpload, async (req, res) => {
           imageType: 'book-card',
           width: 256,
           height: 440,
-          sizeKb: Math.round(bookDetailFile.size / 1024) // Use same file size
+          sizeKb: bookDetailFile ? Math.round(bookDetailFile.size / 1024) : 0 // Use same file size if available
         });
       }
       
       // Check if we don't already have mini in our entries
       if (!bookImageEntries.some(entry => entry.imageType === 'mini')) {
+        console.log(`Auto-generating mini entry from book-detail`);
         
         bookImageEntries.push({
           bookId: book.id,
@@ -544,24 +553,27 @@ router.post("/books", multipleImageUpload, async (req, res) => {
           imageType: 'mini',
           width: 48,
           height: 64,
-          sizeKb: Math.round(bookDetailFile.size / 1024) // Use same file size
+          sizeKb: bookDetailFile ? Math.round(bookDetailFile.size / 1024) : 0 // Use same file size if available
         });
       }
     }
 
     // Insert all book images using a single database operation
     if (bookImageEntries.length > 0) {
+      console.log(`Inserting ${bookImageEntries.length} book images into database`);
+      console.log('Image entries:', JSON.stringify(bookImageEntries));
       
       try {
         const insertedImages = await db.insert(bookImages).values(bookImageEntries).returning();
-        
+        console.log(`Successfully inserted ${insertedImages.length} book images into database`);
+        console.log('Inserted image IDs:', insertedImages.map(img => img.id).join(', '));
         
       } catch (dbError) {
         console.error("Error inserting images into book_images table:", dbError);
         throw dbError; // Re-throw to be caught by the outer try/catch
       }
     } else {
-      
+      console.warn("No book images to insert into database");
     }
 
     // Now handle the taxonomies separately if present
@@ -803,8 +815,17 @@ router.patch("/books/:id", multipleImageUpload, async (req, res) => {
       
       // Insert any new book images
       if (bookImageEntries.length > 0) {
+        console.log(`Inserting ${bookImageEntries.length} new book images into database`);
+        console.log('Image entries:', JSON.stringify(bookImageEntries));
         
-        await db.insert(bookImages).values(bookImageEntries);
+        try {
+          const insertedImages = await db.insert(bookImages).values(bookImageEntries).returning();
+          console.log(`Successfully inserted ${insertedImages.length} new book images into database`);
+          console.log('Inserted image IDs:', insertedImages.map(img => img.id).join(', '));
+        } catch (dbError) {
+          console.error("Error inserting images into book_images table:", dbError);
+          throw dbError; // Re-throw to be caught by the outer try/catch
+        }
       }
     }
     
