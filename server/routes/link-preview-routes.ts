@@ -1,5 +1,10 @@
 import express from "express";
 import { dbStorage } from "../storage";
+import { db } from "../db";
+import { bookShelves, bookImages } from "@shared/schema";
+import { and, eq, like } from "drizzle-orm";
+import { asc } from "drizzle-orm";
+
 const router = express.Router();
 
 // GET /api/link-preview/book-shelf - Public endpoint for previewing shared bookshelves
@@ -17,31 +22,23 @@ router.get("/book-shelf", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // First, get all of the user's shelves
-    const shelves = await dbStorage.getAllBookShelves(user.id);
-    
-    // Find the matching shelf by title (lowercased for easier matching)
+    // Get the shelf using direct database access
     const decodedShelfName = decodeURIComponent(shelfname as string);
-    const shelf = shelves.find(s => 
-      s.title.toLowerCase() === decodedShelfName.toLowerCase() && 
-      s.isShared === true
-    );
-
-    // If no matching shelf found, return 404
+    
+    // Find the bookshelf directly in the database by title and user ID
+    const shelf = await db.query.bookShelves.findFirst({
+      where: and(
+        eq(bookShelves.userId, user.id),
+        eq(bookShelves.isShared, true),
+        // Use case-insensitive comparison for title
+        like(bookShelves.title, decodedShelfName)
+      )
+    });
+    
     if (!shelf) {
       return res.status(404).json({ error: "Bookshelf not found or not shared" });
     }
     
-    // Get any additional shelf details needed
-    const shelfDetails = {
-      shelf: shelf,
-      owner: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName || user.username,
-      }
-    };
-
     // Get owner display info
     const owner = {
       id: user.id,
@@ -49,7 +46,7 @@ router.get("/book-shelf", async (req, res) => {
       displayName: user.displayName || user.username,
       profileImageUrl: user.profileImageUrl
     };
-
+    
     // Return the shelf data
     return res.json({
       shelf,
@@ -76,9 +73,11 @@ router.get("/books/:id", async (req, res) => {
       return res.status(404).json({ error: "Book not found" });
     }
 
-    // Get book images from the database
+    // Get book images from the database using direct DB access
     try {
-      const images = await dbStorage.getBookImages(bookId);
+      const images = await db.query.bookImages.findMany({
+        where: eq(bookImages.bookId, bookId)
+      });
       
       // Return the book data with images
       return res.json({
