@@ -232,6 +232,18 @@ export function AccountSettings() {
                 </FormItem>
               )}
             />
+            
+            <div className="mt-6">
+              <Button 
+                type="submit"
+                disabled={updateProfileMutation.isPending}
+              >
+                {updateProfileMutation.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Save Profile Changes
+              </Button>
+            </div>
 
             <div className="border-t pt-4 mt-4">
               <h3 className="text-lg font-medium mb-4">Change Password</h3>
