@@ -1,52 +1,78 @@
+/**
+ * Object Storage Routes
+ * 
+ * These routes handle serving files from the object storage
+ * and provide endpoints for managing stored files.
+ */
 import { Router, Request, Response } from "express";
 import { objectStorage } from "../services/object-storage";
+import { sirenedImageBucket } from "../services/sirened-image-bucket";
 import path from "path";
 
 const router = Router();
 
 /**
- * GET /api/storage/:key
- * Serve files from object storage
- * Public endpoint - no authentication required
+ * GET /api/storage/:key(*)
+ * Serve a file from object storage
  */
 router.get("/:key(*)", async (req: Request, res: Response) => {
   try {
-    const key = req.params.key;
+    const storageKey = req.params.key;
     
-    if (!key) {
-      return res.status(400).json({ error: "Storage key is required" });
+    if (!storageKey) {
+      return res.status(400).json({ error: "No storage key provided" });
     }
     
-    // Make sure we're not trying to access anything outside the storage directories
-    if (key.includes("../") || key.includes("..\\")) {
-      return res.status(400).json({ error: "Invalid storage key" });
-    }
+    // Get the file from object storage
+    const file = await objectStorage.getFile(storageKey);
     
-    // Serve the file based on the storage key
-    const result = await objectStorage.getFile(key);
-    
-    if (!result) {
+    if (!file) {
       return res.status(404).json({ error: "File not found" });
     }
     
-    const { contentType, stream } = result;
+    // Set content type based on file extension
+    const ext = path.extname(storageKey).toLowerCase();
+    let contentType = 'application/octet-stream'; // Default
     
-    // Set appropriate content type
-    res.setHeader("Content-Type", contentType);
+    // Set appropriate content types for common file types
+    switch (ext) {
+      case '.jpg':
+      case '.jpeg':
+        contentType = 'image/jpeg';
+        break;
+      case '.png':
+        contentType = 'image/png';
+        break;
+      case '.gif':
+        contentType = 'image/gif';
+        break;
+      case '.webp':
+        contentType = 'image/webp';
+        break;
+      case '.svg':
+        contentType = 'image/svg+xml';
+        break;
+      case '.pdf':
+        contentType = 'application/pdf';
+        break;
+      case '.json':
+        contentType = 'application/json';
+        break;
+      case '.txt':
+        contentType = 'text/plain';
+        break;
+    }
     
-    // Set cache headers for better performance
-    res.setHeader("Cache-Control", "public, max-age=31536000"); // 1 year
+    // Set Cache-Control header for efficient caching
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
     
-    // Stream the file to the response
-    stream.pipe(res);
+    // Send the file with the appropriate content type
+    res.contentType(contentType);
+    res.send(file);
+    
   } catch (error) {
     console.error("Error serving file from object storage:", error);
-    
-    if (error instanceof Error && error.message.includes("not found")) {
-      return res.status(404).json({ error: "File not found" });
-    }
-    
-    res.status(500).json({ error: "Failed to serve file from storage" });
+    res.status(500).json({ error: "Failed to serve file" });
   }
 });
 
