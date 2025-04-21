@@ -1,15 +1,12 @@
 /**
  * Test routes for book file uploads
  */
-import { Router, Request, Response } from 'express';
-import multer from 'multer';
-import { sirenedBookBucket } from '../services/sirened-book-bucket';
+import express, { Request, Response } from "express";
+import multer from "multer";
+import { sirenedBookBucket } from "../services/sirened-book-bucket";
 
-const router = Router();
-
-// Configure multer for memory storage
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 /**
  * GET /api/test-book-file
@@ -21,25 +18,24 @@ router.get("/", (req: Request, res: Response) => {
       <head>
         <title>Test Book File Upload</title>
         <style>
-          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-          form { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
-          input, select, button { margin: 10px 0; padding: 8px; }
-          button { cursor: pointer; background: #4285f4; color: white; border: none; border-radius: 4px; }
-          h3 { margin-top: 30px; }
-          ul { list-style-type: none; padding: 0; }
-          li { margin: 10px 0; padding: 10px; border: 1px solid #eee; border-radius: 4px; }
-          .actions { display: flex; gap: 10px; }
-          .delete-btn { background: #ea4335; }
+          body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+          h1 { color: #333; }
+          form { background: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+          label { display: block; margin-bottom: 5px; font-weight: bold; }
+          input, select { margin-bottom: 15px; padding: 8px; width: 100%; }
+          button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 3px; }
+          .result { background: #e0f7fa; padding: 15px; border-radius: 5px; white-space: pre-wrap; margin-top: 20px; }
+          .file-list { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 20px; }
+          .file-list li { margin-bottom: 10px; }
+          .file-list button { background: #f44336; margin-left: 10px; padding: 5px 10px; }
         </style>
       </head>
       <body>
         <h1>Test Book File Upload</h1>
-        
         <form action="/api/test-book-file/upload" method="post" enctype="multipart/form-data">
-          <h2>Upload Book File</h2>
           <div>
             <label for="bookId">Book ID:</label>
-            <input type="number" id="bookId" name="bookId" required value="1">
+            <input type="number" id="bookId" name="bookId" required min="1" value="1">
           </div>
           <div>
             <label for="formatType">Format Type:</label>
@@ -51,93 +47,77 @@ router.get("/", (req: Request, res: Response) => {
             </select>
           </div>
           <div>
-            <label for="file">File:</label>
+            <label for="file">Select File:</label>
             <input type="file" id="file" name="file" required>
           </div>
-          <button type="submit">Upload</button>
+          <button type="submit">Upload File</button>
         </form>
 
-        <h3>List Book Files</h3>
-        <form action="/api/test-book-file/list" method="get">
+        <h2>List Book Files</h2>
+        <form id="listForm">
           <div>
             <label for="listBookId">Book ID:</label>
-            <input type="number" id="listBookId" name="bookId" required value="1">
+            <input type="number" id="listBookId" name="listBookId" required min="1" value="1">
           </div>
           <button type="submit">List Files</button>
         </form>
-
-        <div id="file-list">
-          <!-- File list will be populated via AJAX -->
-        </div>
+        <div id="fileList" class="file-list"></div>
 
         <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            // Load the file list on page load
+          // JavaScript to handle the list form submission
+          document.getElementById('listForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             const bookId = document.getElementById('listBookId').value;
-            loadFileList(bookId);
-
-            // Handle list form submission via AJAX
-            document.querySelector('form[action="/api/test-book-file/list"]').addEventListener('submit', function(e) {
-              e.preventDefault();
-              const bookId = document.getElementById('listBookId').value;
-              loadFileList(bookId);
-            });
-
-            // Function to load file list
-            function loadFileList(bookId) {
-              fetch('/api/test-book-file/list?bookId=' + bookId)
-                .then(response => response.json())
-                .then(data => {
-                  const fileList = document.getElementById('file-list');
-                  fileList.innerHTML = '<h3>Files for Book ID: ' + bookId + '</h3>';
-                  
-                  if (data.length === 0) {
-                    fileList.innerHTML += '<p>No files found.</p>';
-                    return;
-                  }
-                  
-                  const ul = document.createElement('ul');
-                  data.forEach(file => {
-                    const li = document.createElement('li');
-                    li.innerHTML = \`
-                      <div><strong>Path:</strong> \${file}</div>
-                      <div class="actions">
-                        <a href="/api/test-book-file/download?path=\${encodeURIComponent(file)}" target="_blank">
-                          <button>Download</button>
-                        </a>
-                        <button class="delete-btn" onclick="deleteFile('\${file}')">Delete</button>
-                      </div>
-                    \`;
-                    ul.appendChild(li);
-                  });
-                  fileList.appendChild(ul);
-                })
-                .catch(error => {
-                  console.error('Error loading file list:', error);
-                  document.getElementById('file-list').innerHTML = '<p>Error loading file list.</p>';
+            
+            try {
+              const response = await fetch(\`/api/test-book-file/list?bookId=\${bookId}\`);
+              const data = await response.json();
+              
+              const fileListDiv = document.getElementById('fileList');
+              if (data.length === 0) {
+                fileListDiv.innerHTML = '<p>No files found for this book.</p>';
+              } else {
+                let html = '<ul>';
+                data.forEach(file => {
+                  html += \`
+                    <li>
+                      \${file}
+                      <a href="/api/test-book-file/download?path=\${encodeURIComponent(file)}" target="_blank">Download</a>
+                      <button onclick="deleteFile('\${file}')">Delete</button>
+                    </li>
+                  \`;
                 });
-            }
-
-            // Add global function for delete
-            window.deleteFile = function(path) {
-              if (confirm('Are you sure you want to delete this file?')) {
-                fetch('/api/test-book-file/delete/' + encodeURIComponent(path), {
-                  method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
-                  alert(data.message);
-                  // Reload file list after deletion
-                  const bookId = document.getElementById('listBookId').value;
-                  loadFileList(bookId);
-                })
-                .catch(error => {
-                  console.error('Error deleting file:', error);
-                  alert('Error deleting file.');
-                });
+                html += '</ul>';
+                fileListDiv.innerHTML = html;
               }
-            };
+            } catch (error) {
+              console.error('Error:', error);
+              alert('Error listing files: ' + error.message);
+            }
           });
+
+          // Function to delete a file
+          async function deleteFile(path) {
+            if (!confirm('Are you sure you want to delete this file?')) return;
+            
+            try {
+              const response = await fetch(\`/api/test-book-file/delete/\${encodeURIComponent(path)}\`, {
+                method: 'DELETE'
+              });
+              
+              if (response.ok) {
+                alert('File deleted successfully!');
+                // Refresh the file list
+                document.getElementById('listForm').dispatchEvent(new Event('submit'));
+              } else {
+                const data = await response.json();
+                alert('Error: ' + data.error);
+              }
+            } catch (error) {
+              console.error('Error:', error);
+              alert('Error deleting file: ' + error.message);
+            }
+          }
         </script>
       </body>
     </html>
@@ -153,33 +133,28 @@ router.post("/upload", upload.single('file'), async (req: Request, res: Response
     const { bookId, formatType } = req.body;
     const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    if (!bookId || !formatType || !file) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    if (!bookId || !formatType) {
-      return res.status(400).json({ error: 'Book ID and format type are required' });
-    }
-
-    // Upload file to object storage
-    const path = await sirenedBookBucket.uploadBookFile(
+    // Upload the file to object storage
+    const filePath = await sirenedBookBucket.uploadBookFile(
       parseInt(bookId),
       formatType,
-      {
-        fieldname: file.fieldname,
-        originalname: file.originalname,
-        encoding: file.encoding, 
-        mimetype: file.mimetype,
-        buffer: file.buffer,
-        size: file.size
-      }
+      file
     );
 
-    // Redirect back to the test page
-    res.redirect('/api/test-book-file');
+    res.json({
+      success: true,
+      message: "File uploaded successfully",
+      filePath
+    });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    res.status(500).json({ error: (error as Error).message });
+    console.error("Error uploading file:", error);
+    res.status(500).json({ 
+      error: "Failed to upload file", 
+      details: (error as Error).message 
+    });
   }
 });
 
@@ -189,18 +164,22 @@ router.post("/upload", upload.single('file'), async (req: Request, res: Response
  */
 router.get("/list", async (req: Request, res: Response) => {
   try {
-    const { bookId } = req.query;
+    const bookId = req.query.bookId;
 
     if (!bookId) {
-      return res.status(400).json({ error: 'Book ID is required' });
+      return res.status(400).json({ error: "Book ID is required" });
     }
 
-    // List files in object storage
+    // List files for the book
     const files = await sirenedBookBucket.listBookFiles(parseInt(bookId as string));
+
     res.json(files);
   } catch (error) {
-    console.error('Error listing files:', error);
-    res.status(500).json({ error: (error as Error).message });
+    console.error("Error listing files:", error);
+    res.status(500).json({ 
+      error: "Failed to list files", 
+      details: (error as Error).message 
+    });
   }
 });
 
@@ -210,27 +189,27 @@ router.get("/list", async (req: Request, res: Response) => {
  */
 router.get("/download", async (req: Request, res: Response) => {
   try {
-    const { path } = req.query;
+    const path = req.query.path as string;
 
     if (!path) {
-      return res.status(400).json({ error: 'Path is required' });
+      return res.status(400).json({ error: "File path is required" });
     }
 
-    // Get file from object storage
-    const { data, contentType } = await sirenedBookBucket.getBookFile(path as string);
+    // Get the file from storage
+    const { data, contentType } = await sirenedBookBucket.getBookFile(path);
 
-    // Extract the filename from the path
-    const filename = path.toString().split('/').pop() || 'download';
-
-    // Set headers for download
+    // Set content type and disposition
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${path.split('/').pop()}"`);
     
-    // Send the file data
+    // Send the file
     res.send(data);
   } catch (error) {
-    console.error('Error downloading file:', error);
-    res.status(500).json({ error: (error as Error).message });
+    console.error("Error downloading file:", error);
+    res.status(500).json({ 
+      error: "Failed to download file", 
+      details: (error as Error).message 
+    });
   }
 });
 
@@ -240,18 +219,25 @@ router.get("/download", async (req: Request, res: Response) => {
  */
 router.delete("/delete/:key(*)", async (req: Request, res: Response) => {
   try {
-    const { key } = req.params;
+    const path = req.params.key;
 
-    if (!key) {
-      return res.status(400).json({ error: 'Key is required' });
+    if (!path) {
+      return res.status(400).json({ error: "File path is required" });
     }
 
-    // Delete file from object storage
-    await sirenedBookBucket.deleteBookFile(key);
-    res.json({ message: 'File deleted successfully' });
+    // Delete the file
+    await sirenedBookBucket.deleteBookFile(path);
+
+    res.json({
+      success: true,
+      message: "File deleted successfully"
+    });
   } catch (error) {
-    console.error('Error deleting file:', error);
-    res.status(500).json({ error: (error as Error).message });
+    console.error("Error deleting file:", error);
+    res.status(500).json({ 
+      error: "Failed to delete file", 
+      details: (error as Error).message 
+    });
   }
 });
 

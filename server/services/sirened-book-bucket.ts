@@ -4,7 +4,7 @@
  * from object storage.
  */
 
-import { Client } from '@replit/object-storage';
+import { Client, Result, RequestError, StorageObject } from '@replit/object-storage';
 
 interface UploadedFile {
   fieldname: string;
@@ -56,13 +56,11 @@ export class SirenedBookBucket {
       const path = this.getBookFilePath(bookId, formatType, file.originalname);
       
       // Upload the file to object storage
-      const result = await this.storage.putObject({
-        key: path,
-        body: file.buffer,
-        contentType: file.mimetype,
+      const result = await this.storage.uploadFromBytes(path, file.buffer, {
+        compress: true
       });
       
-      if (result.error) {
+      if (!result.ok) {
         throw new Error(`Failed to upload file: ${result.error.message}`);
       }
 
@@ -82,27 +80,31 @@ export class SirenedBookBucket {
   async getBookFile(path: string): Promise<{ data: Buffer; contentType: string }> {
     try {
       // Get the file from object storage
-      const result = await this.storage.getObject({ key: path });
+      const result = await this.storage.downloadAsBytes(path);
       
-      if (result.error) {
+      if (!result.ok) {
         throw new Error(`Failed to get file: ${result.error.message}`);
       }
 
-      if (!result.value) {
+      if (!result.value || !result.value[0]) {
         throw new Error('File not found');
       }
 
-      // Get the file metadata
-      const headResult = await this.storage.headObject({ key: path });
-      
-      if (headResult.error) {
-        throw new Error(`Failed to get file metadata: ${headResult.error.message}`);
+      // For simplicity, we'll use a generic content type based on file extension
+      // In a production app, you'd want to store/retrieve proper content type metadata
+      let contentType = 'application/octet-stream';
+      if (path.endsWith('.pdf')) {
+        contentType = 'application/pdf';
+      } else if (path.endsWith('.epub')) {
+        contentType = 'application/epub+zip';
+      } else if (path.endsWith('.mobi')) {
+        contentType = 'application/x-mobipocket-ebook';
+      } else if (path.match(/\.(mp3|wav|ogg)$/i)) {
+        contentType = 'audio/' + path.split('.').pop();
       }
 
-      const contentType = headResult.value?.contentType || 'application/octet-stream';
-
       return { 
-        data: result.value, 
+        data: result.value[0], 
         contentType 
       };
     } catch (error) {
@@ -118,9 +120,9 @@ export class SirenedBookBucket {
   async deleteBookFile(path: string): Promise<void> {
     try {
       // Delete the file from object storage
-      const result = await this.storage.deleteObject({ key: path });
+      const result = await this.storage.delete(path);
       
-      if (result.error) {
+      if (!result.ok) {
         throw new Error(`Failed to delete file: ${result.error.message}`);
       }
     } catch (error) {
@@ -138,16 +140,16 @@ export class SirenedBookBucket {
     try {
       const prefix = `${this.bucketName}/book_${bookId}/`;
       
-      const result = await this.storage.listObjects({ 
+      const result = await this.storage.list({
         prefix 
       });
       
-      if (result.error) {
+      if (!result.ok) {
         throw new Error(`Failed to list files: ${result.error.message}`);
       }
 
-      // Extract the keys from the objects
-      return result.value ? result.value.map(obj => obj.key) : [];
+      // Extract the names from the objects
+      return result.value ? result.value.map((obj: StorageObject) => obj.name) : [];
     } catch (error) {
       console.error('Error listing book files:', error);
       throw new Error(`Failed to list book files: ${(error as Error).message}`);
