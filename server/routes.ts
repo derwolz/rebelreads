@@ -41,11 +41,11 @@ import verificationRoutes from "./routes/verification-routes";
 import verifyLoginRoutes from "./routes/verify-login-route";
 import linkPreviewRoutes from "./routes/link-preview-routes";
 
+import { serveUploads } from './middleware/static-uploads';
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Configure file uploads path (public before auth)
-  // Use the correct uploads path depending on environment
-  const uploadsPath = process.env.NODE_ENV === 'production' ? './dist/uploads' : './uploads';
-  app.use("/uploads", express.static(uploadsPath));
+  // Configure file uploads path with robust path resolution
+  serveUploads(app);
   
   // Special debug routes that bypass security checks for diagnostic purposes
   // These must be registered BEFORE authentication
