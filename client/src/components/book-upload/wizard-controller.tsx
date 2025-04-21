@@ -363,16 +363,36 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           }
         });
 
-        // If we have a new cover, use FormData
-        if (changedFields.cover instanceof File) {
+        // If we have a new cover or any book files, use FormData
+        const hasFileUploads = changedFields.cover instanceof File || 
+                             (changedFields.bookFiles && 
+                              Object.values(changedFields.bookFiles as Record<string, BookFormatFile>)
+                                .some(file => file.file instanceof File));
+        
+        if (hasFileUploads) {
           const formData = new FormData();
 
-          // Add the cover file
-          formData.append("cover", changedFields.cover);
+          // Add the cover file if exists
+          if (changedFields.cover instanceof File) {
+            formData.append("cover", changedFields.cover);
+          }
+          
+          // Add book files if they exist
+          if (changedFields.bookFiles) {
+            Object.entries(changedFields.bookFiles as Record<string, BookFormatFile>).forEach(
+              ([formatType, fileData]) => {
+                if (fileData.file instanceof File) {
+                  formData.append(`bookFile_${formatType}`, fileData.file);
+                  formData.append(`bookFileType_${formatType}`, formatType);
+                  console.log(`Added book file for ${formatType} to formData for update`);
+                }
+              }
+            );
+          }
 
           // Add other changed fields
           Object.entries(changedFields).forEach(([key, value]) => {
-            if (key !== "cover") {
+            if (key !== "cover" && key !== "bookFiles") {
               formData.append(
                 key,
                 Array.isArray(value) ? JSON.stringify(value) : String(value),
@@ -422,6 +442,22 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
                 formData.append(`bookImage_${imageType}`, imageData.file);
                 formData.append(`bookImageType_${imageType}`, imageType);
                 console.log(`Added image file for ${imageType} to formData`);
+              }
+            },
+          );
+        } else if (key === "bookFiles" && typeof value === "object") {
+          // Handle book files
+          console.log("Processing bookFiles in formData:", value);
+          Object.entries(value as Record<string, BookFormatFile>).forEach(
+            ([formatType, fileData]) => {
+              console.log(
+                `Processing format type: ${formatType}, has file:`,
+                !!fileData.file,
+              );
+              if (fileData.file) {
+                formData.append(`bookFile_${formatType}`, fileData.file);
+                formData.append(`bookFileType_${formatType}`, formatType);
+                console.log(`Added book file for ${formatType} to formData`);
               }
             },
           );

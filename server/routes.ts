@@ -28,6 +28,7 @@ import publisherRoutes from "./routes/publisher-routes";
 import catalogueAuthorsRoutes from "./routes/catalogue-routes-authors";
 import cataloguePublisherRoutes from "./routes/catalogue-routes-publisher";
 import cataloguePublisherAuthorsRoutes from "./routes/catalogue-routes-publisher-authors";
+import testBookFileRoutes from "./routes/test-book-file-routes";
 import cataloguePublisherBooksRoutes from "./routes/catalogue-routes-publisher-books";
 import filterRoutes from "./routes/filter-routes";
 import simpleApiRoutes from "./routes/simple-api";

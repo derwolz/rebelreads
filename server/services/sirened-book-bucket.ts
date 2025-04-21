@@ -1,140 +1,129 @@
 /**
- * Sirened Book Bucket Service
- * 
- * This service provides specialized book file handling for the Sirened platform
- * using the @replit/object-storage package. It handles different book formats
- * and maintains a consistent naming convention.
+ * Sirened book bucket service.
+ * This service provides functionality for uploading, retrieving, and deleting book files
+ * from object storage.
  */
-import { objectStorage } from './object-storage';
-import { nanoid } from 'nanoid';
-import path from 'path';
 
-// Define interface for file objects (like Express multer files)
+import { Client } from '@replit/object-storage';
+
 interface UploadedFile {
-  buffer: Buffer;
-  mimetype: string;
+  fieldname: string;
   originalname: string;
+  encoding: string;
+  mimetype: string;
+  buffer: Buffer;
   size: number;
 }
 
-// Book format types
-type BookFormatType = 'softback' | 'hardback' | 'digital' | 'audiobook';
+/**
+ * Handles book file uploads and storage
+ */
+export class SirenedBookBucket {
+  private storage: Client;
+  private bucketName: string;
 
-class SirenedBookBucket {
-  // Directory structure for different book formats
-  private directories = {
-    'softback': 'books/softback',
-    'hardback': 'books/hardback',
-    'digital': 'books/digital',
-    'audiobook': 'books/audiobook',
-  };
-  
+  constructor() {
+    // Initialize object storage
+    this.storage = new Client();
+    this.bucketName = 'sirened-book-files';
+  }
+
   /**
-   * Upload a book file
-   * @param file The uploaded file (from multer)
-   * @param formatType Type of book format (determines storage path)
-   * @param bookId Optional book ID for organization
-   * @returns The storage key (path) of the uploaded file
+   * Get a full path for a book file in the object storage
+   * Pattern: sirened-book-files/book_{bookId}/{formatType}/{filename}
    */
-  async uploadBookFile(file: UploadedFile, formatType: BookFormatType, bookId?: number): Promise<string> {
+  private getBookFilePath(bookId: number, formatType: string, filename: string): string {
+    // Sanitize filename to prevent path traversal attacks
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    
+    return `${this.bucketName}/book_${bookId}/${formatType}/${sanitizedFilename}`;
+  }
+
+  /**
+   * Upload a book file to object storage
+   * @param bookId The ID of the book
+   * @param formatType The type of book format (e.g., 'softback', 'hardback', 'digital', 'audiobook')
+   * @param file The file to upload
+   * @returns The URL of the uploaded file
+   */
+  async uploadBookFile(bookId: number, formatType: string, file: UploadedFile): Promise<string> {
+    if (!file || !file.buffer) {
+      throw new Error('No file provided for upload');
+    }
+
     try {
-      // Validate file type based on format
-      this.validateFileType(file, formatType);
+      // Create a path for the file in the format: sirened-book-files/book_{bookId}/{formatType}/{filename}
+      const path = this.getBookFilePath(bookId, formatType, file.originalname);
       
-      // Get the appropriate directory for this format type
-      const directory = this.directories[formatType];
-      
-      // Create a more specific path if bookId is provided
-      const filePath = bookId 
-        ? `${directory}/book_${bookId}` 
-        : directory;
-        
-      // Upload to object storage
-      const storageKey = await objectStorage.uploadFile(file, filePath);
-      
-      return storageKey;
+      // Upload the file to object storage
+      await this.storage.put(path, file.buffer, {
+        contentType: file.mimetype,
+        contentLength: file.size,
+      });
+
+      // Return the path which is the identifier for the file in the storage
+      return path;
     } catch (error) {
-      console.error('Error uploading book to Sirened bucket:', error);
-      throw new Error('Failed to upload book file');
+      console.error('Error uploading book file:', error);
+      throw new Error(`Failed to upload book file: ${(error as Error).message}`);
     }
   }
-  
+
   /**
-   * Validate file type based on format
-   * @param file The uploaded file
-   * @param formatType Book format type
+   * Get a book file from object storage
+   * @param path The path of the file in object storage
+   * @returns The file data and metadata
    */
-  private validateFileType(file: UploadedFile, formatType: BookFormatType): void {
-    // Check file type based on format
-    switch (formatType) {
-      case 'digital':
-        // For digital books, allow PDF, EPUB, MOBI
-        if (!['application/pdf', 'application/epub+zip', 'application/x-mobipocket-ebook'].includes(file.mimetype) &&
-            !file.originalname.endsWith('.epub') && 
-            !file.originalname.endsWith('.mobi')) {
-          throw new Error('Digital book must be a PDF, EPUB, or MOBI file');
-        }
-        break;
-        
-      case 'audiobook':
-        // For audiobooks, allow audio files
-        if (!file.mimetype.startsWith('audio/') && 
-            !['application/x-zip-compressed', 'application/zip'].includes(file.mimetype)) {
-          throw new Error('Audiobook must be an audio file or zip of audio files');
-        }
-        break;
-        
-      default:
-        // For other formats, we're more flexible, but prefer PDF
-        break;
-    }
-  }
-  
-  /**
-   * List book files by format type
-   * @param formatType The format type to list files for
-   * @param bookId Optional book ID to filter by
-   * @returns Array of file keys
-   */
-  async listBookFiles(formatType: BookFormatType, bookId?: number): Promise<string[]> {
+  async getBookFile(path: string): Promise<{ data: Buffer; contentType: string }> {
     try {
-      const directory = this.directories[formatType];
+      // Get the file from object storage
+      const data = await this.storage.get(path);
       
-      // If bookId is provided, filter to that specific book
-      const prefix = bookId 
-        ? `${directory}/book_${bookId}/` 
-        : `${directory}/`;
-      
-      return await objectStorage.listFiles(prefix);
+      if (!data) {
+        throw new Error('File not found');
+      }
+
+      // Get the file metadata
+      const meta = await this.storage.head(path);
+      const contentType = meta?.contentType || 'application/octet-stream';
+
+      return { data, contentType };
     } catch (error) {
-      console.error('Error listing book files:', error);
-      return [];
+      console.error('Error getting book file:', error);
+      throw new Error(`Failed to get book file: ${(error as Error).message}`);
     }
   }
-  
+
   /**
-   * Delete a book file
-   * @param storageKey The storage key of the file to delete
-   * @returns Whether the deletion was successful
+   * Delete a book file from object storage
+   * @param path The path of the file in object storage
    */
-  async deleteBookFile(storageKey: string): Promise<boolean> {
+  async deleteBookFile(path: string): Promise<void> {
     try {
-      return await objectStorage.deleteFile(storageKey);
+      // Delete the file from object storage
+      await this.storage.delete(path);
     } catch (error) {
       console.error('Error deleting book file:', error);
-      return false;
+      throw new Error(`Failed to delete book file: ${(error as Error).message}`);
     }
   }
-  
+
   /**
-   * Get the public URL for a file
-   * @param storageKey The key (path) to the file
-   * @returns The public URL
+   * List all book files for a specific book
+   * @param bookId The ID of the book
+   * @returns List of file paths
    */
-  getPublicUrl(storageKey: string): string {
-    return objectStorage.getPublicUrl(storageKey);
+  async listBookFiles(bookId: number): Promise<string[]> {
+    try {
+      const prefix = `${this.bucketName}/book_${bookId}/`;
+      const files = await this.storage.list(prefix);
+      return files;
+    } catch (error) {
+      console.error('Error listing book files:', error);
+      throw new Error(`Failed to list book files: ${(error as Error).message}`);
+    }
   }
 }
 
-// Create singleton instance
+// Create and export a singleton instance
 export const sirenedBookBucket = new SirenedBookBucket();
