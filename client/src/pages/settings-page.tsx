@@ -337,7 +337,13 @@ export default function SettingsPage() {
                       <FormItem>
                         <FormLabel>Current Password</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input 
+                            type="password" 
+                            autoComplete="current-password"
+                            value={field.value || ''} 
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -351,7 +357,13 @@ export default function SettingsPage() {
                       <FormItem>
                         <FormLabel>New Password</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input 
+                            type="password" 
+                            autoComplete="new-password"
+                            value={field.value || ''} 
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                          />
                         </FormControl>
                         <FormDescription>
                           Must be at least 8 characters long
@@ -368,16 +380,25 @@ export default function SettingsPage() {
                       <FormItem>
                         <FormLabel>Confirm New Password</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input 
+                            type="password" 
+                            autoComplete="new-password"
+                            value={field.value || ''} 
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+                <div className="mt-6">
+                  <Button type="submit">Save Changes</Button>
+                </div>
               </div>
 
-              <div className="flex justify-between items-center pt-4">
+              <div className="border-t pt-4 mt-4">
                 <div>
                   <Card className="mb-4">
                     <CardHeader className="pb-3">
