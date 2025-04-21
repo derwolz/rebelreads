@@ -139,11 +139,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
               
               {/* Book cover */}
-              <div className="w-full z-20 flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background">
+              <div className="w-full md:w-1/3 z-20 flex items-stretch justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background h-full">
                 <img 
                   src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                   alt={selectedBook?.title} 
-                  className="h-full object-cover shadow-lg rounded-md" 
+                  className="h-full w-auto object-cover shadow-lg rounded-md" 
                 />
               </div>
               
@@ -411,10 +411,9 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           onSelectBook={handleSelectBook}
           selectedBookIndex={selectedBookIndex}
           className="mx-auto max-w-4xl"
-        />  </div>
+        />
+        </div>
       </div>
-
-    
     </div>
   );
 }
