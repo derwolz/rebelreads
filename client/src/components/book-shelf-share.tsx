@@ -226,55 +226,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 
                 {/* Animated Note Overlay - Only covers the details section */}
                 {selectedNote && (
-                  <div 
-                    className={`absolute top-0 right-0 bottom-0 left-0 z-10 transition-all duration-500 ${
-                      noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-                    }`}
-                    style={{
-                      perspective: '1000px',
-                      transformStyle: 'preserve-3d',
-                      backfaceVisibility: 'hidden',
-                    }}
-                  >
-                    <div 
-                      className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4"
-                      style={{
-                        transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
-                        transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        boxShadow: noteVisible ? '0 10px 30px -15px rgba(255, 255, 255, 0.2)' : 'none',
-                      }}
-                    >
-                      <div className="flex justify-between items-center mb-3">
-                        <div>
-                          <h3 className="text-lg font-medium text-foregound flex items-center gap-2">
-                            <StickyNote className="h-4 w-4" />
-                            Note
-                          </h3>
-                          <p className="text-xs text-gray-400">
-                            {selectedNote.type === 'book' ? 'Book note' : 'Shelf note'} • 
-                            Last updated: {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
-                          onClick={() => {
-                            setIsRotating(true);
-                            setTimeout(() => {
-                              setNoteVisible(false);
-                              setIsRotating(false);
-                            }, 500);
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="bg-foregound/5 p-2 rounded-lg">
-                        <PaperNoteCard note={selectedNote} />
-                      </div>
-                    </div>
-                  </div>
+                  
                 )}
 
                 {/* Mobile-only share button and referral links container - between cover and title */}
