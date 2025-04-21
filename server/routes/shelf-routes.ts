@@ -197,6 +197,11 @@ router.delete("/api/bookshelves/:id", async (req: Request, res: Response) => {
         eq(notes.shelfId, id),
         eq(notes.type, "shelf")
       ));
+
+    // Remove all comments associated with the shelf
+    await db
+      .delete(shelfComments)
+      .where(eq(shelfComments.shelfId, id));
     
     // Finally delete the shelf
     const [deletedShelf] = await db
