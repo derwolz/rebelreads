@@ -41,9 +41,6 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [showBookDetails, setShowBookDetails] = useState(true);
   const { toast } = useToast();
   
-  // For shuffling animation - track active note index
-  const [activeNoteIndex, setActiveNoteIndex] = useState<number>(-1); // -1 means show book details
-  
   // Track current carousel slide index
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
@@ -144,6 +141,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   useEffect(() => {
     if (!emblaApi) return;
     
+
+    
     // Add scroll event listener to track current slide
     const onSelect = () => {
       const index = emblaApi.selectedScrollSnap();
@@ -189,18 +188,31 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   return (
     <div className={`${className} bg-background w-full max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full overflow-hidden`}>
       
+      
       {/* Main content area */}
       <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 w-full overflow-x-hidden">
        
         {/* Left column: Book details and comments */}
         <div className="w-full lg:w-2/3 flex relative ">
+
+          
+          
           
           {/* Book Details Card that shows the selected book */}
-          <div className="transition-all duration-500">
+          <div 
+            className={`transition-all duration-500 `}
+          >
             <div className="">
+
              
+
+
+              
+         
+              
               {/* Book details */}
               <div className="flex h-full bg-muted border-gray-800 border flex-col overflow-hidden md:flex-row rounded-lg max-w-full">
+
 
                 {/* Book cover */}
                 <div className="h-full z-20 flex-left flex justify-center overflow-hidden md:max-w-[200px]">
@@ -212,126 +224,64 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 </div>
 
                 
-                {/* Card Stack with Book Description and Notes */}
-                <div className="relative h-full flex-1 overflow-hidden bg-transparent">
-                  {/* Base Card: Book Description (N=0) */}
+                {/* Animated Note Overlay - Only covers the details section */}
+                {selectedNote && (
                   <div 
-                    className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4 transition-all duration-300"
+                    className={`absolute top-0 right-0 bottom-0 left-0 z-10 transition-all duration-500 ${
+                      noteVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                    }`}
                     style={{
-                      transform: activeNoteIndex >= 0 ? 'translateY(5px)' : 'translateY(0)',
-                      opacity: activeNoteIndex >= 0 ? 0.7 : 1,
-                      zIndex: 0,
+                      perspective: '1000px',
+                      transformStyle: 'preserve-3d',
+                      backfaceVisibility: 'hidden',
                     }}
                   >
-                    <div className="flex justify-between items-center mb-3">
-                      <div>
-                        <h3 className="text-lg font-medium text-foregound flex items-center gap-2">
-                          <BookIcon className="h-4 w-4" />
-                          Book Details
-                        </h3>
-                      </div>
-                      {activeNoteIndex >= 0 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
-                          onClick={() => {
-                            setActiveNoteIndex(-1);
-                            setSelectedNote(null);
-                            setNoteVisible(false);
-                          }}
-                        >
-                          <BookIcon className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="prose prose-sm prose-invert max-w-none">
-                      <div className="md:hidden">
-                        <ScrollArea className="h-[180px] w-full">
-                          <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                        </ScrollArea>
-                      </div>
-                      <div className="hidden md:block">
-                        <ScrollArea className="h-full min-w-0 w-full pr-4">
-                          <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                        </ScrollArea>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Note Cards (N=1..N) */}
-                  {bookNotes.map((note, idx) => (
                     <div 
-                      key={note.id}
-                      className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4 transition-all duration-300"
+                      className="absolute inset-0 bg-background border border-gray-800 rounded-lg shadow-lg p-4"
                       style={{
-                        transform: activeNoteIndex === idx 
-                          ? 'translateY(0) rotate(0deg)' 
-                          : activeNoteIndex > idx 
-                            ? `translateY(${(idx - activeNoteIndex) * 15}px) rotate(${(idx - activeNoteIndex) * 5}deg)` 
-                            : 'translateY(120%) rotate(5deg)',
-                        opacity: activeNoteIndex === idx ? 1 : activeNoteIndex > idx ? 0.5 : 0,
-                        zIndex: activeNoteIndex === idx ? 50 : 10 + idx,
-                        pointerEvents: activeNoteIndex === idx || activeNoteIndex === -1 ? 'auto' : 'none',
+                        transform: noteVisible ? 'rotateY(0deg)' : 'rotateY(180deg)',
+                        transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        boxShadow: noteVisible ? '0 10px 30px -15px rgba(255, 255, 255, 0.2)' : 'none',
                       }}
                     >
                       <div className="flex justify-between items-center mb-3">
                         <div>
                           <h3 className="text-lg font-medium text-foregound flex items-center gap-2">
                             <StickyNote className="h-4 w-4" />
-                            Note {idx + 1}/{bookNotes.length}
+                            Note
                           </h3>
                           <p className="text-xs text-gray-400">
-                            {note.type === 'book' ? 'Book note' : 'Shelf note'} • 
-                            Last updated: {new Date(note.updatedAt || note.createdAt).toLocaleDateString()}
+                            {selectedNote.type === 'book' ? 'Book note' : 'Shelf note'} • 
+                            Last updated: {new Date(selectedNote.updatedAt || selectedNote.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="flex gap-2">
-                          {idx > 0 && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
-                              onClick={() => setActiveNoteIndex(idx - 1)}
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
-                            onClick={() => {
-                              setActiveNoteIndex(-1);
-                              setSelectedNote(null);
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
+                          onClick={() => {
+                            setIsRotating(true);
+                            setTimeout(() => {
                               setNoteVisible(false);
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                          {idx < bookNotes.length - 1 && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-gray-400 hover:bg-gray-800 hover:text-foregound"
-                              onClick={() => setActiveNoteIndex(idx + 1)}
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
+                              setIsRotating(false);
+                            }, 500);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                       <div className="bg-foregound/5 p-2 rounded-lg">
-                        <PaperNoteCard note={note} />
+                        <PaperNoteCard note={selectedNote} />
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
 
                 {/* Mobile-only share button and referral links container - between cover and title */}
                 <div className="flex md:hidden items-center mt-3 mb-4 gap-4">
                   {/* Share button for mobile */}
                   <Button 
+ 
                     size="sm" 
                     className="text-foregound bg-background/20 border-border border rounded-md"
                     onClick={async () => {
@@ -390,116 +340,158 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                   )}
                 </div>
                 <div className="flex ml-auto p-4 flex-col min-w-0 md:w-[500px] overflow-hidden">
-                  <h2 className="text-2xl font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
-                  <p className="text-foreground/90 mb-2 break-words">by {selectedBook?.authorName}</p>
+                <h2 className="text-2xl  font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
+                <p className="text-foreground/90 mb-2 break-words">by {selectedBook?.authorName}</p>
+                
+                <div className="mb-4">
+                  {/* Desktop view */}
+                  <div className="hidden md:block">
+                    <ScrollArea className="h-full min-w-0 w-full pr-4">
+                      <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                    </ScrollArea>
+                  </div>
                   
-                  <div className="mb-4">
-                    {/* Desktop view */}
-                    <div className="hidden md:block">
-                      <ScrollArea className="h-full min-w-0 w-full pr-4">
-                        <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                      </ScrollArea>
-                    </div>
-                    
-                    {/* Mobile view - Swipeable content with Cards */}
-                    <div className="md:hidden w-[90vw]">
-                      {/* Embla carousel for swipeable cards (bookDetails + notes) */}
-                      <div className="overflow-hidden border border-border rounded-lg w-[90vw]" ref={emblaRef}>
-                        <div className="flex touch-pan-y">
-                          {/* Card 1: Book details card (always the first card) */}
-                          <div className="flex-[0_0_100%] pr-4 min-w-0 max-w-full">
-                            <ScrollArea className="h-[180px] w-full">
-                              <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
-                            </ScrollArea>
+                  {/* Mobile view - Swipeable content with Cards */}
+                  <div className="md:hidden w-[90vw]">
+                    {/* Embla carousel for swipeable cards (bookDetails + notes) */}
+                    <div className="overflow-hidden  border border-border rounded-lg w-[90vw]" ref={emblaRef}>
+                      <div className="flex touch-pan-y">
+                        {/* Card 1: Book details card (always the first card) */}
+                        <div className="flex-[0_0_100%] pr-4 min-w-0 max-w-full">
+                          <ScrollArea className="h-[180px] w-full">
+                            <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
+                          </ScrollArea>
+                          
+                          {/* Card navigation indicator at bottom */}
+                          <div className="flex items-center justify-between mt-4">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-foreground/80 rounded-full" />
+                              <span className="text-xs text-muted-foreground">Details</span>
+                            </div>
                             
-                            {/* Card navigation indicator at bottom */}
+                            {bookNotes.length > 0 && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <span>Swipe for notes</span>
+                                <ChevronRight className="h-3 w-3" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Cards 2+: Notes (one card per note) */}
+                        {bookNotes.map((note, idx) => (
+                          <div key={note.id} className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
+                            <div className="bg-muted/20 rounded-lg  h-full overflow-y-auto w-full">
+                              <div className="flex justify-between items-center mb-2">
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(note.createdAt).toLocaleDateString()}
+                                </p>
+                                <Badge variant="outline" className="text-xs">Note {idx + 1}/{bookNotes.length}</Badge>
+                              </div>
+                              <PaperNoteCard note={note} />
+                            </div>
+                            
+                            {/* Card navigation indicators */}
                             <div className="flex items-center justify-between mt-4">
-                              <div className="flex items-center gap-1">
-                                <div className="w-2 h-2 bg-foreground/80 rounded-full" />
-                                <span className="text-xs text-muted-foreground">Details</span>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <ChevronLeft className="h-3 w-3" />
+                                <span>{idx === 0 ? 'Back to details' : `Note ${idx}`}</span>
                               </div>
                               
-                              {bookNotes.length > 0 && (
+                              {idx < bookNotes.length - 1 && (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <span>Swipe for notes</span>
+                                  <span>Next note</span>
                                   <ChevronRight className="h-3 w-3" />
                                 </div>
                               )}
                             </div>
                           </div>
-                          
-                          {/* Cards 2+: Notes (one card per note) */}
-                          {bookNotes.map((note, idx) => (
-                            <div key={note.id} className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
-                              <div className="bg-muted/20 rounded-lg h-full overflow-y-auto w-full">
-                                <div className="flex justify-between items-center mb-2">
-                                  <p className="text-xs text-muted-foreground">
-                                    {new Date(note.createdAt).toLocaleDateString()}
-                                  </p>
-                                  <Badge variant="outline" className="text-xs">Note {idx + 1}/{bookNotes.length}</Badge>
-                                </div>
-                                <PaperNoteCard note={note} />
-                              </div>
-                              
-                              {/* Card navigation indicators */}
-                              <div className="flex items-center justify-between mt-4">
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <ChevronLeft className="h-3 w-3" />
-                                  <span>{idx === 0 ? 'Back to details' : `Note ${idx}`}</span>
-                                </div>
-                                
-                                {idx < bookNotes.length - 1 && (
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <span>Next note</span>
-                                    <ChevronRight className="h-3 w-3" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        ))}
                       </div>
-                      
-                      {/* Book navigation indicators */}
-                      {selectedBookIndex !== null && (
-                        <div className="flex justify-between mt-3 text-muted-foreground">
-                          {selectedBookIndex > 0 && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="flex items-center text-xs p-0 h-8"
-                              onClick={goToPrevBook}
-                            >
-                              <ChevronLeft className="h-3 w-3 mr-1" /> 
-                              <span>Previous book</span>
-                            </Button>
-                          )}
-                          {selectedBookIndex < books.length - 1 && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="flex items-center text-xs p-0 h-8 ml-auto"
-                              onClick={goToNextBook}
-                            >
-                              <span>Next book</span>
-                              <ChevronRight className="h-3 w-3 ml-1" />
-                            </Button>
-                          )}
-                        </div>
-                      )}
                     </div>
+                    
+                  
+                    
+                    {/* Book navigation indicators */}
+                    {selectedBookIndex !== null && (
+                      <div className="flex justify-between mt-3 text-muted-foreground">
+                        {selectedBookIndex > 0 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex items-center text-xs p-0 h-8"
+                            onClick={goToPrevBook}
+                          >
+                            <ChevronLeft className="h-3 w-3 mr-1" /> 
+                            <span>Previous book</span>
+                          </Button>
+                        )}
+                        {selectedBookIndex < books.length - 1 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="flex items-center text-xs p-0 h-8 ml-auto"
+                            onClick={goToNextBook}
+                          >
+                            <span>Next book</span>
+                            <ChevronRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
+                
+                {/* Genres & Themes */}
+                <div className="mb-4 ">
+                  <div className="flex flex-wrap gap-1">
+                    {selectedBook?.genres?.map((genre: string, idx: number) => (
+                      <Badge 
+                        key={idx} 
+                        className="bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      >
+                        {genre}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                  </div>
+                {/* Desktop-only referral links (absolute positioning) */}
+                {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
+                  <div className="hidden md:block mt-4 z-20 -left-5 top-0 absolute">
+                    <div className="flex flex-wrap flex-col gap-2">
+                      {selectedBook.referralLinks.map((link: any, idx: number) => (
+                        <a 
+                          key={idx}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={ idx===0 ? "inline-flex items-center text-xs rounded-md px-3 py-1 bg-accent/90 hover:bg-accent text-foreground"
+                            : idx===1 ? "inline-flex items-center text-xs border-border border bg-muted/90 hover:bg-muted rounded-md px-3 py-1 transition-colors text-foregound" :
+                            "inline-flex items-center text-xs bg-transparent hover:bg-muted border-border border rounded-md px-3 py-1 text-foregound"}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            // Record click-through on referral link
+                            await apiRequest("POST", `/api/books/${selectedBook.id}/click-through`, {
+                              source: "referral-link",
+                              referrer: window.location.pathname,
+                            });
+                          }}
+                        >
+                          {/* Display only the icon instead of text */}
+                          <img src={link.faviconUrl} alt={link.retailer} className="h-6 w-6" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
           
-          {/* Notes sidebar on the far right for notes list */}
-          <div className="hidden md:flex ml-4 flex-col min-w-[140px]">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-foregound">Notes</h3>
-            </div>
-            
+          
+          {/* Book/Notes section - Desktop version */}
+          <div className="hidden md:block">
             {bookNotes && bookNotes.length > 0 ? (
               <div className="space-y-3 transform w-[10ch] pr-2 pt-2">
                 {bookNotes.map((note, idx) => (
@@ -507,19 +499,35 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     key={note.id} 
                     className="p-3 rounded-lg bg-purple-900/40 rounded-l-none overflow-hidden h-[6ch] border-r-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors"
                     onClick={() => {
-                      // Find the index of this note in the bookNotes array
-                      const noteIndex = bookNotes.findIndex(n => n.id === note.id);
-                      
-                      if (activeNoteIndex === noteIndex) {
-                        // If the same note is clicked while active, go back to book details
-                        setActiveNoteIndex(-1); 
-                        setSelectedNote(null);
-                        setNoteVisible(false);
+                      // Use the same animation logic for book notes
+                      if (selectedNote && selectedNote.id === note.id && noteVisible) {
+                        // If the same note is clicked while visible, hide it
+                        setIsRotating(true);
+                        setTimeout(() => {
+                          setNoteVisible(false);
+                          setIsRotating(false);
+                        }, 500);
                       } else {
-                        // Activate the clicked note
-                        setSelectedNote(note);
-                        setActiveNoteIndex(noteIndex);
-                        setNoteVisible(true);
+                        // If no note is currently visible or a different note is clicked
+                        if (noteVisible) {
+                          // If a note is already visible, hide it first with animation
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setSelectedNote(note);
+                            setTimeout(() => {
+                              setNoteVisible(true);
+                              setIsRotating(false);
+                            }, 100);
+                          }, 500);
+                        } else {
+                          // No note is visible, show the selected one directly
+                          setSelectedNote(note);
+                          setIsRotating(true);
+                          setTimeout(() => {
+                            setNoteVisible(true);
+                            setIsRotating(false);
+                          }, 100);
+                        }
                       }
                     }}
                   >
@@ -540,6 +548,9 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
               </div>
             )}
           </div>
+          
+          {/* No separate mobile notes section - notes are part of the main swipeable content */}
+
         </div>
         
         {/* Right column: Comment section */}
