@@ -43,7 +43,9 @@ import linkPreviewRoutes from "./routes/link-preview-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
-  app.use("/uploads", express.static("uploads"));
+  // Use the correct uploads path depending on environment
+  const uploadsPath = process.env.NODE_ENV === 'production' ? './dist/uploads' : './uploads';
+  app.use("/uploads", express.static(uploadsPath));
   
   // Special debug routes that bypass security checks for diagnostic purposes
   // These must be registered BEFORE authentication
