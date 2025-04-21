@@ -355,7 +355,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
           // Add other changed fields
           Object.entries(changedFields).forEach(([key, value]) => {
-            if (key !== "cover" && key !== "bookFiles") {
+            if (key !== "cover") {
               formData.append(
                 key,
                 Array.isArray(value) ? JSON.stringify(value) : String(value),
