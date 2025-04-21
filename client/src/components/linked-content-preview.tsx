@@ -74,17 +74,17 @@ export function LinkedContentPreview({
   shelfName,
   className,
 }: LinkedContentPreviewProps) {
-  // For books, fetch book details using the book ID
+  // For books, fetch book details using the book ID from our public API
   const {
     data: bookData,
     isLoading: isBookLoading,
     error: bookError,
   } = useQuery<BookResponse>({
-    queryKey: [`/api/books/${id}`],
+    queryKey: [`/api/link-preview/books/${id}`],
     enabled: type === "book" && !!id,
   });
 
-  // For bookshelves, fetch the shelf details using username and shelf name
+  // For bookshelves, fetch the shelf details using username and shelf name from our public API
   // If shelfName is already encoded (contains %20), don't encode it again
   const isShelfNameEncoded = shelfName?.includes('%20');
   const formattedShelfName = isShelfNameEncoded
@@ -97,7 +97,7 @@ export function LinkedContentPreview({
     error: shelfError,
   } = useQuery<ShelfResponse>({
     queryKey: [
-      `/api/book-shelf?username=${encodeURIComponent(
+      `/api/link-preview/book-shelf?username=${encodeURIComponent(
         username || ""
       )}&shelfname=${formattedShelfName || ""}`,
     ],
@@ -161,8 +161,8 @@ export function LinkedContentPreview({
   // Error state with detailed information
   if ((type === "book" && bookError) || (type === "bookshelf" && (shelfError || userError))) {
     const apiUrl = type === 'book' 
-      ? `/api/books/${id}` 
-      : `/api/book-shelf?username=${encodeURIComponent(username || "")}&shelfname=${formattedShelfName || ""}`;
+      ? `/api/link-preview/books/${id}` 
+      : `/api/link-preview/book-shelf?username=${encodeURIComponent(username || "")}&shelfname=${formattedShelfName || ""}`;
       
     console.error('LinkedContentPreview error:', { 
       type, bookError, shelfError, userError, 
@@ -174,7 +174,7 @@ export function LinkedContentPreview({
     return (
       <div className={cn("flex items-center h-16 bg-gray-900 rounded border border-gray-800 p-2", className)}>
         <div className="w-full text-center text-gray-400 text-sm">
-          Error loading content preview: {apiUrl}
+          Error loading content preview
         </div>
       </div>
     );

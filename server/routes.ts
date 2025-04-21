@@ -39,6 +39,7 @@ import { registerRandomBookRoutes } from "./routes/random-book-routes";
 import accountVerificationRoutes from "./routes/account-verification-routes";
 import verificationRoutes from "./routes/verification-routes";
 import verifyLoginRoutes from "./routes/verify-login-route";
+import linkPreviewRoutes from "./routes/link-preview-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth)
@@ -47,6 +48,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Special debug routes that bypass security checks for diagnostic purposes
   // These must be registered BEFORE authentication
   app.use("/api/system-debug", debugRoutes);
+  
+  // Link preview routes for public content (no auth required)
+  app.use("/api/link-preview", linkPreviewRoutes);
   
   // Block all debug endpoints to prevent unauthorized data access
   app.all('/api/debug/*', (req, res, next) => {
