@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { IMAGE_TYPES, UPLOAD_IMAGE_TYPES } from "@shared/schema";
+import { IMAGE_TYPES, UPLOAD_IMAGE_TYPES, FORMAT_OPTIONS } from "@shared/schema";
 import type { Book } from "@shared/schema";
 import {
   AlertDialog,
@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { BookFormData, WizardControllerProps } from "./types";
+import { BookFormData, WizardControllerProps, BookFormatFile, BookImageFile } from "./types";
 import {
   BookText,
   Images,
@@ -189,6 +189,21 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
     return images as Record<string, BookImageFile>;
   };
+  
+  // Helper function to create empty book files structure
+  const createEmptyBookFiles = (): Record<string, BookFormatFile> => {
+    const files: Partial<Record<string, BookFormatFile>> = {};
+    
+    // Initialize each format type with empty values
+    FORMAT_OPTIONS.forEach((formatType) => {
+      files[formatType] = {
+        formatType,
+        file: null,
+      };
+    });
+    
+    return files as Record<string, BookFormatFile>;
+  };
 
   // Initialize form data from local storage or defaults
   const [formData, setFormData] = useState<BookFormData>(() => {
@@ -235,6 +250,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "",
         bookImages: bookImages,
+        bookFiles: createEmptyBookFiles(), // Initialize empty book files
       };
     }
 
@@ -275,6 +291,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       internal_details: "",
       genreTaxonomies: [],
       bookImages: createEmptyBookImages(),
+      bookFiles: createEmptyBookFiles(),
     };
   });
 
@@ -289,6 +306,12 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           // Remove file objects which can't be stored in localStorage
           bookImages: Object.fromEntries(
             Object.entries(formData.bookImages).map(([key, value]) => [
+              key,
+              { ...value, file: null },
+            ]),
+          ),
+          bookFiles: Object.fromEntries(
+            Object.entries(formData.bookFiles || {}).map(([key, value]) => [
               key,
               { ...value, file: null },
             ]),
@@ -739,6 +762,5 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   );
 }
 
-// Import the Edit icon and BookImageFile type
+// Import the Edit icon
 import { Edit } from "lucide-react";
-import { BookImageFile } from "./types";
