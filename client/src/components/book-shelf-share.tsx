@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Book, Author } from "../types";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -9,14 +9,15 @@ import { PaperNoteCard } from "./paper-note-card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentSection } from "./comment-section";
-
-
+import useEmblaCarousel from "embla-carousel-react";
 
 import { Badge } from "@/components/ui/badge";
 import { 
   X,
   StickyNote,
-  Share2
+  Share2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
@@ -36,6 +37,15 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const [newNoteContent, setNewNoteContent] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
   const { toast } = useToast();
+  
+  // Mobile swipe carousel for notes
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: false,
+    align: 'center',
+  });
+  
+  // Track current note index for mobile swipe
+  const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
 
   // Define the correct response type
   interface ShelfData {
@@ -110,8 +120,41 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       setSelectedBook(books[0]);
     }
   }, [books, selectedBookIndex]);
-
-
+  
+  // Handle Embla carousel initialization and scroll events
+  useEffect(() => {
+    if (!emblaApi || bookNotes.length === 0) return;
+    
+    // Reset carousel to beginning when book changes
+    emblaApi.scrollTo(0);
+    setCurrentNoteIndex(0);
+    
+    // Add scroll event listener to track current slide
+    const onSelect = () => {
+      const index = emblaApi.selectedScrollSnap();
+      setCurrentNoteIndex(index);
+      
+      // Show the currently visible note
+      const note = bookNotes[index];
+      if (note) {
+        setSelectedNote(note);
+        setNoteVisible(true);
+      }
+    };
+    
+    emblaApi.on("select", onSelect);
+    return () => emblaApi.off("select", onSelect);
+  }, [emblaApi, bookNotes, selectedBook]);
+  
+  // Navigation functions for mobile swipe
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
+  
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
+  
 
   const { theme } = useTheme();
 
