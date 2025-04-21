@@ -471,10 +471,6 @@ router.patch("/api/bookshelves/:id/books/rank", async (req: Request, res: Respon
 // Get detailed view of a bookshelf with its books and notes
 // Supports either ID-based or query parameter-based routing
 router.get("/api/book-shelf", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).send("Unauthorized");
-  }
-
   const username = req.query.username as string;
   const shelfName = req.query.shelfname as string;
 
@@ -492,25 +488,39 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
       return res.status(404).send("User not found");
     }
 
-    // Get the shelf details
-    const shelf = await db.query.bookShelves.findFirst({
-      where: and(
-        eq(bookShelves.userId, targetUser.id),
-        eq(bookShelves.title, shelfName),
-        // Only allow viewing if owned by the user or if it's shared
-        or(
-          eq(bookShelves.userId, req.user.id),
+    // Get the shelf details with different checks for authenticated vs unauthenticated users
+    let shelfQuery;
+    if (req.user) {
+      // Authenticated user: can see their own shelves or shared shelves
+      shelfQuery = await db.query.bookShelves.findFirst({
+        where: and(
+          eq(bookShelves.userId, targetUser.id),
+          eq(bookShelves.title, shelfName),
+          // Only allow viewing if owned by the user or if it's shared
+          or(
+            eq(bookShelves.userId, req.user.id),
+            eq(bookShelves.isShared, true)
+          )
+        )
+      });
+    } else {
+      // Unauthenticated user: can only see shared shelves
+      shelfQuery = await db.query.bookShelves.findFirst({
+        where: and(
+          eq(bookShelves.userId, targetUser.id),
+          eq(bookShelves.title, shelfName),
           eq(bookShelves.isShared, true)
         )
-      )
-    });
-
-    if (!shelf) {
-      return res.status(404).send("Bookshelf not found");
+      });
     }
 
-    // Only the owner can access a non-shared shelf
-    if (!shelf.isShared && shelf.userId !== req.user.id) {
+    const shelf = shelfQuery;
+    if (!shelf) {
+      return res.status(404).send("Bookshelf not found or not shared");
+    }
+
+    // If authenticated, check permissions for non-shared shelves
+    if (req.user && !shelf.isShared && shelf.userId !== req.user.id) {
       return res.status(403).send("Forbidden");
     }
   
@@ -527,15 +537,18 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
       return res.status(404).send("Bookshelf not found");
     }
 
-    // Get shelf notes
-    const shelfNotes = await db.query.notes.findMany({
-      where: and(
-        eq(notes.shelfId, shelfId),
-        eq(notes.userId, req.user.id),
-        eq(notes.type, "shelf")
-      ),
-      orderBy: desc(notes.createdAt)
-    });
+    // Get shelf notes (only if authenticated and viewing own shelf)
+    let shelfNotes: typeof notes.$inferSelect[] = [];
+    if (req.user) {
+      shelfNotes = await db.query.notes.findMany({
+        where: and(
+          eq(notes.shelfId, shelfId),
+          eq(notes.userId, req.user.id),
+          eq(notes.type, "shelf")
+        ),
+        orderBy: desc(notes.createdAt)
+      });
+    }
 
     // First get a reference to the table outside the query to avoid TypeScript errors
     const shelfBooksTable = shelfBooks;
@@ -590,16 +603,17 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
       }
     }
 
-    // Get book notes for all books in this shelf
+    // Get book notes for all books in this shelf (only if authenticated)
     const bookIds = shelfBooksWithDetails.map(sb => sb.bookId);
     
     // Define type for book notes array
     let bookNotes: Array<typeof notes.$inferSelect> = [];
-    if (bookIds.length > 0) {
+    if (bookIds.length > 0 && req.user) {
+      const userId = req.user.id;
       bookNotes = await db.query.notes.findMany({
         where: and(
           inArray(notes.bookId, bookIds),
-          eq(notes.userId, req.user.id),
+          eq(notes.userId, userId),
           eq(notes.type, "book")
         )
       });
