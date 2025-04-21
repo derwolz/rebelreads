@@ -128,27 +128,19 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           <div 
             className={`rounded-lg overflow-hidden bg-muted border border-gray-800 mb-16 transition-all duration-500 `}
           >
-            <div className="flex flex-col md:flex-row relative">
+            <div className="flex flex-col md:flex-row">
 
-              {/* Book cover with notes section */}
-              <div className="w-full z-10 md:w-1/3 flex flex-col items-center justify-center relative">
-                <div className="w-full flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background">
-                  <img 
-                    src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
-                    alt={selectedBook?.title} 
-                    className="w-full h-auto object-cover shadow-lg rounded-md" 
-                  />
-                </div>
+              {/* Comments/Notes section */}
+              <div className="rounded-lg bg-background mb-16">
 
-                {/* Comments/Notes section - Positioned relative to the image container */}
-                <div className="rounded-lg bg-background w-full">
-                  {bookNotes && bookNotes.length > 0 ? (
-                    <div className="space-y-3 max-w-[18rem] mt-4">
-                      {bookNotes.map((note, idx) => (
-                        <div 
-                          key={note.id} 
-                          className="p-3 rounded-lg bg-purple-900/40 border-l-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
-                          onClick={() => {
+
+                {bookNotes && bookNotes.length > 0 ? (
+                  <div className="space-y-3 absolute  bottom-0 max-w-[18rem] left-0">
+                    {bookNotes.map((note, idx) => (
+                      <div 
+                        key={note.id} 
+                        className="p-3  rounded-lg bg-purple-900/40 border-l-4 flex flex-row border-purple-600 cursor-pointer hover:bg-purple-900/50 transition-colors "
+                        onClick={() => {
                           // Use the same animation logic for book notes
                           if (selectedNote && selectedNote.id === note.id && noteVisible) {
                             // If the same note is clicked while visible, hide it
@@ -199,6 +191,17 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                  
                   </div>
                 )}
+              </div>
+
+
+              
+              {/* Book cover */}
+              <div className="w-full z-10 md:w-1/3 flex items-center justify-center overflow-hidden bg-gradient-to-b from-gray-900 to-background">
+                <img 
+                  src={selectedBook?.images?.find(img => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
+                  alt={selectedBook?.title} 
+                  className="w-full h-auto object-cover shadow-lg rounded-md" 
+                />
               </div>
               
               {/* Book details */}
