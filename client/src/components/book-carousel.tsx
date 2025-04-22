@@ -1,6 +1,9 @@
 import { Book } from "../types";
 import { BookCard } from "@/components/book-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import {
   Carousel,
   CarouselContent,
@@ -49,8 +52,16 @@ export function BookCarousel({ title, books, isLoading, showPublishedDate = fals
                 ))
               : books?.map((book) => (
                   <CarouselItem key={book.id} className="">
-                    <div className="flex justify-center relative px-1">
+                    <div className="flex flex-col justify-center relative px-1">
                       <BookCard book={book} />
+                      {showPublishedDate && book.publishedDate && (
+                        <div className="mt-2 text-center">
+                          <Badge variant="outline" className="mx-auto py-1">
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            {format(new Date(book.publishedDate), "MMM d, yyyy")}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   </CarouselItem>
                 ))}
