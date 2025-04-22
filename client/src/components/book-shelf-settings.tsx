@@ -94,7 +94,8 @@ function SortableShelfCard({
   onDelete, 
   onViewNotes,
   onToggleShare,
-  isAuthor
+  isAuthor,
+  username
 }: { 
   shelf: BookShelf; 
   onEdit: (shelf: BookShelf) => void; 
@@ -102,6 +103,7 @@ function SortableShelfCard({
   onViewNotes: (shelf: BookShelf) => void;
   onToggleShare: (id: number, isShared: boolean) => void;
   isAuthor: boolean;
+  username: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: shelf.id.toString(),
@@ -136,7 +138,7 @@ function SortableShelfCard({
             </div>
             <div className="flex space-x-2">
               {/* Link to bookshelf view (non-share view) */}
-              <Link to={`/book-shelf?username=${encodeURIComponent(user?.username || '')}&shelfname=${encodeURIComponent(shelf.title)}`} title="View bookshelf page">
+              <Link to={`/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelf.title)}`} title="View bookshelf page">
                 <Button variant="ghost" size="icon">
                   <User size={18} />
                 </Button>
@@ -849,6 +851,7 @@ export function BookShelfSettings() {
                   onViewNotes={handleViewNotes}
                   onToggleShare={handleToggleShare}
                   isAuthor={!!isAuthor}
+                  username={user?.username || ''}
                 />
               ))}
             </SortableContext>
