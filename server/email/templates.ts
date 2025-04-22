@@ -310,29 +310,29 @@ export const betaInvitationEmailTemplate = (email: string, betaKey: string) => {
         
         <!-- Content section -->
         <div style="padding: 25px; color: white;">
-          <p>Hello there,</p>
-          <p>Great news! We're excited to invite you to join the Sirened beta program. As one of our select early users, you'll help shape the future of a platform created specifically for independent authors and readers.</p>
+          <p style="color: white;">Hello there,</p>
+          <p style="color: white;">Great news! We're excited to invite you to join the Sirened beta program. As one of our select early users, you'll help shape the future of a platform created specifically for independent authors and readers.</p>
           <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0; text-align: center;">
-            <p style="font-weight: bold; margin-top: 0; font-size: 16px;">Your exclusive beta key:</p>
-            <p style="font-size: 24px; letter-spacing: 1px; font-family: monospace; background-color: #183A56; padding: 10px; border-radius: 5px; margin: 10px 0;">${betaKey}</p>
-            <p style="margin-bottom: 0; font-size: 14px;">Use this key when signing in to access your account</p>
+            <p style="font-weight: bold; margin-top: 0; font-size: 16px; color: white;">Your exclusive beta key:</p>
+            <p style="font-size: 24px; letter-spacing: 1px; font-family: monospace; background-color: #183A56; padding: 10px; border-radius: 5px; margin: 10px 0; color: white;">${betaKey}</p>
+            <p style="margin-bottom: 0; font-size: 14px; color: white;">Use this key when signing in to access your account</p>
           </div>
-          <p>At Sirened, we're building a community where:</p>
+          <p style="color: white;">At Sirened, we're building a community where:</p>
           <ul style="padding-left: 20px; color: white;">
-            <li>Readers can discover exceptional independent books</li>
-            <li>Authors maintain complete control over their work</li>
-            <li>Direct connections foster a vibrant literary ecosystem</li>
+            <li style="color: white;">Readers can discover exceptional independent books</li>
+            <li style="color: white;">Authors maintain complete control over their work</li>
+            <li style="color: white;">Direct connections foster a vibrant literary ecosystem</li>
           </ul>
-          <p>Ready to get started? Just follow these steps:</p>
+          <p style="color: white;">Ready to get started? Just follow these steps:</p>
           <ol style="padding-left: 20px; color: white;">
-            <li>Visit <a href="https://sirened.com/auth" style="color: #A06CD5;">sirened.com/auth</a></li>
-            <li>Sign in with your account</li>
-            <li>When prompted, enter your beta key</li>
-            <li>Start exploring and sharing your feedback</li>
+            <li style="color: white;">Visit <a href="https://sirened.com/auth" style="color: #A06CD5;">sirened.com/auth</a></li>
+            <li style="color: white;">Sign in with your account</li>
+            <li style="color: white;">When prompted, enter your beta key</li>
+            <li style="color: white;">Start exploring and sharing your feedback</li>
           </ol>
-          <p>Your insights during this beta period are invaluable to us. We can't wait to hear what you think!</p>
-          <p>Happy reading,</p>
-          <p>The Sirened Team</p>
+          <p style="color: white;">Your insights during this beta period are invaluable to us. We can't wait to hear what you think!</p>
+          <p style="color: white;">Happy reading,</p>
+          <p style="color: white;">The Sirened Team</p>
         </div>
         
         <!-- Footer section -->
