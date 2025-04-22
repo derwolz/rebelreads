@@ -10,6 +10,10 @@ export { useTracking } from '../hooks/use-tracking';
 // Export the tracked book card components
 export { TrackedBookCard } from './tracked-book-card';
 export { TrackedBookGridCard } from './tracked-book-grid-card';
+export { 
+  TrackedReferralLink, 
+  TrackedBuyButton 
+} from './tracked-referral-link';
 
 // Types
 export type { 
@@ -24,3 +28,7 @@ export type {
 export type { 
   TrackedBookGridCardProps 
 } from './tracked-book-grid-card';
+  
+export type {
+  TrackedReferralLinkProps
+} from './tracked-referral-link';

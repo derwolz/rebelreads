@@ -77,6 +77,49 @@ export function useTracking(containerType: string, containerId?: string) {
       metadata
     );
   }, [createContextInfo, location]);
+  
+  /**
+   * Track when a referral link is clicked (with domain capture)
+   * 
+   * @param bookId - ID of the book
+   * @param sourceComponent - Component type that was clicked
+   * @param targetUrl - The URL being linked to
+   * @param position - Position in container (optional)
+   * @param metadata - Optional additional metadata
+   */
+  const trackReferralWithDomain = useCallback((
+    bookId: number,
+    sourceComponent: string,
+    targetUrl: string,
+    position?: number,
+    metadata?: TrackingMetadata
+  ) => {
+    const containerInfo = createContextInfo(position);
+    
+    // Extract domain from the target URL
+    let domain = '';
+    try {
+      const url = new URL(targetUrl);
+      domain = url.hostname;
+    } catch (e) {
+      console.error('Invalid URL in referral tracking:', targetUrl);
+      domain = 'unknown';
+    }
+    
+    // Add domain to metadata
+    const enhancedMetadata = {
+      ...metadata,
+      referralDomain: domain
+    };
+    
+    trackBookClickThrough(
+      bookId, 
+      sourceComponent, 
+      containerInfo, 
+      location, // Current location as referrer
+      enhancedMetadata
+    );
+  }, [createContextInfo, location]);
 
   /**
    * Track when a user hovers over a book card (detail-expand)
@@ -134,6 +177,7 @@ export function useTracking(containerType: string, containerId?: string) {
     trackClickThrough,
     trackHover,
     trackCardClick,
-    trackReferralClick
+    trackReferralClick,
+    trackReferralWithDomain
   };
 }

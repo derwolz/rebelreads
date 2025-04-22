@@ -20,6 +20,14 @@ Each interaction captures the following metadata:
 - **Position** - The position/index of the item within the container
 - **Page Route** - The current page path where the interaction occurred
 
+## Referral Domain Tracking
+
+For referral links, the system also captures the destination domain:
+
+- **Referral Domain** - The hostname of the external site (e.g., 'amazon.com', 'bookshop.org')
+
+This enables analysis of which referral partners perform best and how user behavior varies by external site.
+
 ## Tracked Components
 
 We provide pre-built tracked versions of common book components:
@@ -34,19 +42,35 @@ We provide pre-built tracked versions of common book components:
 These components handle all tracking automatically:
 
 ```jsx
-import { TrackedBookCard } from '../components/tracking-components';
+import { 
+  TrackedBookCard, 
+  TrackedReferralLink 
+} from '../components/tracking-components';
 
 function BookCarousel({ books, carouselId }) {
   return (
     <div className="carousel">
       {books.map((book, index) => (
-        <TrackedBookCard
-          key={book.id}
-          book={book}
-          containerType="carousel"
-          containerId={carouselId}
-          position={index}
-        />
+        <div key={book.id}>
+          <TrackedBookCard
+            book={book}
+            containerType="carousel"
+            containerId={carouselId}
+            position={index}
+          />
+          
+          {/* For buy links with domain tracking */}
+          <TrackedReferralLink
+            bookId={book.id}
+            url={book.purchaseUrl}
+            containerType="carousel"
+            containerId={carouselId}
+            position={index}
+            className="buy-button"
+          >
+            Buy Now
+          </TrackedReferralLink>
+        </div>
       ))}
     </div>
   );
@@ -64,8 +88,8 @@ function CustomBookComponent({ book, containerType, containerId, position }) {
   const { 
     trackImpression, 
     trackHover, 
-    trackCardClick, 
-    trackReferralClick 
+    trackCardClick,
+    trackReferralWithDomain 
   } = useTracking(containerType, containerId);
 
   // Track impression when component mounts
@@ -73,9 +97,10 @@ function CustomBookComponent({ book, containerType, containerId, position }) {
     trackImpression(book.id, 'custom-component', position);
   }, []);
 
-  // Track referral click
-  const handleReferralClick = () => {
-    trackReferralClick(book.id, 'custom-component', position);
+  // Track referral click with domain capture
+  const handleReferralClick = (e) => {
+    // This will automatically extract the domain from the URL
+    trackReferralWithDomain(book.id, 'custom-component', book.referralLink, position);
   };
 
   return (
