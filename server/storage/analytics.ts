@@ -21,12 +21,20 @@ export interface IAnalyticsStorage {
     context: string,
     type?: string,
     weight?: number,
+    position?: number,
+    container_type?: string,
+    container_id?: string,
+    metadata?: Record<string, any>,
   ): Promise<BookImpression>;
   recordBookClickThrough(
     bookId: number,
     userId: number | null,
     source: string,
     referrer: string,
+    position?: number,
+    container_type?: string,
+    container_id?: string,
+    metadata?: Record<string, any>,
   ): Promise<BookClickThrough>;
   updateBookStats(bookId: number, type: "impression" | "click"): Promise<void>;
   getBookImpressions(bookId: number): Promise<BookImpression[]>;
@@ -56,7 +64,11 @@ export class AnalyticsStorage implements IAnalyticsStorage {
     source: string,
     context: string,
     type: string = "view",
-    weight: number = 1.0
+    weight: number = 1.0,
+    position?: number,
+    container_type?: string,
+    container_id?: string,
+    metadata?: Record<string, any>
   ): Promise<BookImpression> {
     // Convert weight to string for decimal column
     const weightStr = weight.toString();
@@ -69,7 +81,11 @@ export class AnalyticsStorage implements IAnalyticsStorage {
         source, 
         context,
         type,
-        weight: weightStr
+        weight: weightStr,
+        position,
+        container_type,
+        container_id,
+        metadata: metadata ? JSON.stringify(metadata) : null
       })
       .returning();
 
@@ -82,10 +98,23 @@ export class AnalyticsStorage implements IAnalyticsStorage {
     userId: number | null,
     source: string,
     referrer: string,
+    position?: number,
+    container_type?: string,
+    container_id?: string,
+    metadata?: Record<string, any>
   ): Promise<BookClickThrough> {
     const [clickThrough] = await db
       .insert(bookClickThroughs)
-      .values({ bookId, userId, source, referrer })
+      .values({ 
+        bookId, 
+        userId, 
+        source, 
+        referrer,
+        position,
+        container_type,
+        container_id,
+        metadata: metadata ? JSON.stringify(metadata) : null
+      })
       .returning();
 
     await this.updateBookStats(bookId, "click");

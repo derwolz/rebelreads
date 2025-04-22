@@ -207,7 +207,11 @@ export async function syncWithServer(): Promise<void> {
           source: impression.source,
           context: impression.context,
           type: impression.type || "view",
-          weight: weight
+          weight: weight,
+          position: impression.position,
+          container_type: impression.container_type,
+          container_id: impression.container_id,
+          metadata: impression.metadata || {}
         });
         processedImpressions.push(impression);
       } catch (error) {
@@ -221,6 +225,10 @@ export async function syncWithServer(): Promise<void> {
         await apiRequest("POST", `/api/books/${clickThrough.bookId}/click-through`, {
           source: clickThrough.source,
           referrer: clickThrough.referrer,
+          position: clickThrough.position,
+          container_type: clickThrough.container_type,
+          container_id: clickThrough.container_id,
+          metadata: clickThrough.metadata || {}
         });
         processedClickThroughs.push(clickThrough);
       } catch (error) {
