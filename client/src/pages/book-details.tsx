@@ -283,7 +283,7 @@ export default function BookDetails() {
       />
       <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Left column with book cover and action buttons - sticky */}
+          {/* Left column with book cover and action buttons - sticky on desktop, scrollable on mobile */}
           <div className="md:sticky md:top-20 self-start" style={{ maxHeight: 'calc(100vh - 120px)' }}>
             <div className="relative">
               <img
@@ -309,7 +309,8 @@ export default function BookDetails() {
                 />
               </div>
             </div>
-            <div className="mt-4 space-y-2 gap-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 500px)' }}>
+            {/* Referral links with improved mobile layout */}
+            <div className="mt-4 space-y-2 gap-2 overflow-y-auto max-h-[250px] md:max-h-[calc(100vh-500px)]">
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && (
                   <>
@@ -320,7 +321,7 @@ export default function BookDetails() {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full"
+                          className="w-full block"
                           onClick={async (e) => {
                             // Prevent default to handle the tracking
                             e.preventDefault();
@@ -773,9 +774,9 @@ export default function BookDetails() {
                 </div>
               )}
 
-              <div className="text-lg">
+              <div className="text-base md:text-lg break-words overflow-hidden">
                 {book.description.split('\n').map((paragraph, index) => (
-                  <p key={index} className="mb-4">{paragraph}</p>
+                  <p key={index} className="mb-4 max-w-full">{paragraph}</p>
                 ))}
               </div>
 
@@ -868,15 +869,15 @@ export default function BookDetails() {
                 </Collapsible>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
                     <h2 className="text-2xl font-semibold">
                       Ratings & Reviews
                     </h2>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                       <RatingDialog
                         bookId={book.id}
                         trigger={
-                          <Button onClick={handleRateClick}>
+                          <Button onClick={handleRateClick} className="w-full sm:w-auto">
                             Rate this book
                           </Button>
                         }
@@ -885,7 +886,7 @@ export default function BookDetails() {
                         value={ratingFilter}
                         onValueChange={setRatingFilter}
                       >
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                           <SelectValue placeholder="Filter by rating" />
                         </SelectTrigger>
                         <SelectContent>
