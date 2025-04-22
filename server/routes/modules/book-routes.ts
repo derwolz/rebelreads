@@ -504,13 +504,25 @@ router.post("/:id/impression", async (req, res) => {
     const type = req.body.type || "view"; // Default to 'view' if no type provided
     const weight = req.body.weight || 0; // Default to 0 if no weight provided
     const source = req.body.source || "unknown"; // Source of the impression
+    const context = req.body.context || "unknown"; // Context of the impression
+    
+    // Enhanced tracking data
+    const position = req.body.position; // Position in container (optional)
+    const container_type = req.body.container_type; // Type of container (optional)
+    const container_id = req.body.container_id; // ID of container (optional)
+    const metadata = req.body.metadata || {}; // Additional metadata (optional)
     
     const impression = await dbStorage.recordBookImpression(
       bookId, 
       req.user!.id, 
       source, 
+      context,
       type,
-      weight
+      weight,
+      position,
+      container_type,
+      container_id,
+      metadata
     );
     
     res.status(201).json(impression);
@@ -537,6 +549,13 @@ router.post("/:id/click-through", async (req, res) => {
   try {
     const referralId = req.body.referralId;
     const source = req.body.source || "unknown";
+    const referrer = req.body.referrer || "unknown";
+    
+    // Enhanced tracking data
+    const position = req.body.position; // Position in container (optional)
+    const container_type = req.body.container_type; // Type of container (optional)
+    const container_id = req.body.container_id; // ID of container (optional)
+    const metadata = req.body.metadata || {}; // Additional metadata (optional)
     
     if (!referralId) {
       return res.status(400).json({ error: "referralId is required" });
@@ -548,17 +567,26 @@ router.post("/:id/click-through", async (req, res) => {
         bookId, 
         userId, 
         source, 
+        referrer, // Use referrer as context
         "referral_click",
-        1.0
+        1.0,
+        position,
+        container_type,
+        container_id,
+        metadata
       );
     }
     
     // Record the actual click-through
-    const clickThrough = await dbStorage.recordReferralClickThrough(
+    const clickThrough = await dbStorage.recordBookClickThrough(
       bookId, 
-      referralId,
-      userId || 0, // Use 0 for anonymous
-      source
+      userId,
+      source,
+      referrer,
+      position,
+      container_type,
+      container_id,
+      metadata
     );
     
     res.status(201).json(clickThrough);
