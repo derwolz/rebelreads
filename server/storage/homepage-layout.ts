@@ -132,6 +132,14 @@ export class HomepageLayoutStorage implements IHomepageLayoutStorage {
         itemCount: 10,
         visible: true,
       },
+      {
+        id: "default-coming-soon",
+        type: "coming_soon",
+        displayMode: "carousel",
+        title: "Coming Soon",
+        itemCount: 10,
+        visible: true,
+      },
     ];
   }
 }
