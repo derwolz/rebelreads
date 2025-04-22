@@ -35,24 +35,7 @@ export function BasicInfoStep({ formData, setFormData }: StepComponentProps) {
           required
         />
       </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Internal Details
-        </label>
-        <p className="text-sm text-muted-foreground mb-2">
-          Write about the themes, details and characters of your book. We will use this to match and suggest books.
-        </p>
-        <Textarea
-          value={formData.internal_details}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              internal_details: e.target.value,
-            }))
-          }
-          className="min-h-[200px]"
-        />
-      </div>
+
     </div>
   );
 }

@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Gift, Star, Zap } from "lucide-react";
-import { getBetaEndDate } from "@shared/beta-constants";
 
 interface AuthorBetaNotificationProps {
   isOpen: boolean;
@@ -17,12 +16,6 @@ interface AuthorBetaNotificationProps {
 }
 
 export function AuthorBetaNotification({ isOpen, onClose }: AuthorBetaNotificationProps) {
-  // Format the beta end date nicely
-  const betaEndDateStr = getBetaEndDate().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -43,7 +36,7 @@ export function AuthorBetaNotification({ isOpen, onClose }: AuthorBetaNotificati
             <div>
               <h4 className="font-medium">Pro Access Included</h4>
               <p className="text-sm text-muted-foreground">
-                You've been automatically upgraded to Pro status until {betaEndDateStr} to help us test all features.
+                You've been automatically upgraded to Pro status until the beta ends to help us test all features.
               </p>
             </div>
           </div>

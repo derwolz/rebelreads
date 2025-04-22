@@ -211,15 +211,15 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
          
               
               {/* Book details */}
-              <div className="flex h-full bg-muted border-gray-800 border flex-col overflow-hidden md:flex-row rounded-lg max-w-full">
+              <div className="flex h-full bg-muted border-gray-800 border flex-col  md:flex-row rounded-lg max-w-full">
 
 
                 {/* Book cover */}
-                <div className="h-full z-20 flex-left flex justify-center overflow-hidden md:max-w-[200px]">
+                <div className="h-full z-20 flex-left flex justify-center  md:min-w-[400px]">
                   <img 
                     src={selectedBook?.images?.find((img: any) => img.imageType === "book-detail")?.imageUrl || "/images/placeholder-book.png"} 
                     alt={selectedBook?.title} 
-                    className="h-auto max-h-[350px] w-full shadow-lg object-cover rounded-md" 
+                    className="h-auto  w-full shadow-lg object-cover rounded-md" 
                   />
                 </div>
 
