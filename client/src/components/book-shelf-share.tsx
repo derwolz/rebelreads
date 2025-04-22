@@ -305,7 +305,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       </div>
                     )}
                     
-                    <ScrollArea className="h-full min-w-0 w-full pr-4">
+                    <ScrollArea className="max-h-[40vh] min-w-0 w-full pr-4">
                       <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                     </ScrollArea>
                   </div>
