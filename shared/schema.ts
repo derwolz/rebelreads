@@ -367,8 +367,12 @@ export const bookImpressions = pgTable("book_impressions", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   source: text("source").notNull(), // e.g., 'card', 'grid', 'carousel'
   context: text("context").notNull(), // e.g., 'home', 'search', 'author-page'
-  type: text("type").default("view"), // e.g., 'view', 'detail-expand', 'card-click'
+  type: text("type").default("view"), // e.g., 'view', 'detail-expand', 'card-click', 'referral-click'
   weight: decimal("weight").default("1"), // Weight of the interaction (0.25, 0.5, 1.0)
+  position: integer("position"), // Position in list/container (index in carousel, grid, etc.)
+  container_type: text("container_type"), // Type of container: 'carousel', 'book-rack', 'grid', 'book-shelf', 'wishlist'
+  container_id: text("container_id"), // ID of the container (e.g., carousel ID, shelf ID)
+  metadata: jsonb("metadata").default({}), // Additional tracking metadata (device info, section data)
 });
 
 export const bookClickThroughs = pgTable("book_click_throughs", {
@@ -376,8 +380,12 @@ export const bookClickThroughs = pgTable("book_click_throughs", {
   bookId: integer("book_id").notNull(),
   userId: integer("user_id"), // Optional, as not all users might be logged in
   timestamp: timestamp("timestamp").notNull().defaultNow(),
-  source: text("source").notNull(), // Where the click came from
+  source: text("source").notNull(), // Where the click came from (component type)
   referrer: text("referrer"), // Previous page URL
+  position: integer("position"), // Position in list/container (index in carousel, grid, etc.)
+  container_type: text("container_type"), // Type of container: 'carousel', 'book-rack', 'grid', 'book-shelf', 'wishlist'
+  container_id: text("container_id"), // ID of the container (e.g., carousel ID, shelf ID)
+  metadata: jsonb("metadata").default({}), // Additional tracking metadata
 });
 
 export const publishers = pgTable("publishers", {
@@ -820,12 +828,16 @@ export const adImpressions = pgTable("ad_impressions", {
   campaignId: integer("campaign_id").notNull(),
   bookId: integer("book_id").notNull(),
   userId: integer("user_id"), // Optional, as not all users might be logged in
-  adType: text("ad_type").notNull(), // "ad", "review_boost", "featured"
-  position: text("position"), // position on the page where the ad was shown
+  adType: text("ad_type").notNull(), // "horizontal", "vertical", "hero", "featured"
+  position: text("position"), // Position on the page (e.g., "before-reviews", "between-sections")
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   clicked: boolean("clicked").notNull().default(false),
   clickedAt: timestamp("clicked_at"),
-  source: text("source").notNull(), // e.g., 'home', 'search', 'author-page'
+  source: text("source").notNull(), // Page source e.g., 'home', 'search', 'author-page', 'book-details'
+  container_type: text("container_type"), // Type of container: 'carousel', 'grid', etc.
+  container_id: text("container_id"), // ID of the container if applicable
+  section_order: integer("section_order"), // Order in the page (first ad, second ad, etc.)
+  metadata: jsonb("metadata").default({}), // Additional tracking metadata (device info, viewability)
 });
 
 export const insertAdImpressionSchema = createInsertSchema(adImpressions).omit({

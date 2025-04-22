@@ -6,17 +6,25 @@ import { apiRequest } from "./queryClient";
 // Types for locally stored impressions
 export interface LocalImpression {
   bookId: number;
-  source: string;
-  context: string;
+  source: string;         // Component type: 'book-card', 'spine-book', 'grid-item', 'mini-card'
+  context: string;        // Page context/path: '/home', '/author-page', etc.
   timestamp: number;
-  type?: string; // Optional type field for different impression types (e.g., "view", "detail-expand")
+  type?: string;          // Impression type: 'view', 'detail-expand', 'card-click', 'referral-click'
+  position?: number;      // Position in container (index)
+  container_type?: string; // 'carousel', 'book-rack', 'grid', 'book-shelf', 'wishlist'
+  container_id?: string;   // ID of the container if applicable
+  metadata?: Record<string, any>; // Additional tracking data
 }
 
 export interface LocalClickThrough {
   bookId: number;
-  source: string;
-  referrer: string;
+  source: string;         // Component type that was clicked
+  referrer: string;       // Previous page URL
   timestamp: number;
+  position?: number;      // Position in container (index)
+  container_type?: string; // 'carousel', 'book-rack', 'grid', 'book-shelf', 'wishlist'
+  container_id?: string;   // ID of the container if applicable
+  metadata?: Record<string, any>; // Additional tracking data
 }
 
 // Local storage keys
@@ -51,7 +59,11 @@ export function recordLocalImpression(
   bookId: number,
   source: string,
   context: string,
-  type: string = "view" // Default type is "view"
+  type: string = "view", // Default type is "view"
+  position?: number,
+  container_type?: string,
+  container_id?: string,
+  metadata?: Record<string, any>
 ): void {
   try {
     const impressions = getStoredImpressions();
@@ -69,7 +81,11 @@ export function recordLocalImpression(
         source,
         context,
         timestamp: Date.now(),
-        type
+        type,
+        position,
+        container_type,
+        container_id,
+        metadata
       };
       
       impressions.push(newImpression);
@@ -84,7 +100,11 @@ export function recordLocalImpression(
 export function recordLocalClickThrough(
   bookId: number,
   source: string,
-  referrer: string
+  referrer: string,
+  position?: number,
+  container_type?: string,
+  container_id?: string,
+  metadata?: Record<string, any>
 ): void {
   try {
     const clickThroughs = getStoredClickThroughs();
@@ -94,6 +114,10 @@ export function recordLocalClickThrough(
       source,
       referrer,
       timestamp: Date.now(),
+      position,
+      container_type,
+      container_id,
+      metadata
     };
     
     clickThroughs.push(newClickThrough);
