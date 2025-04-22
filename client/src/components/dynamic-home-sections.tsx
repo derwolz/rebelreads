@@ -115,18 +115,38 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
     enabled: !!endpoint,
   });
   
-  // For sections that need additional filtering
-  let displayBooks = books;
+  // Filter out books with release dates after today (future releases)
+  const filterOutFutureReleases = (books?: Book[]) => {
+    if (!books) return [];
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of today
+    
+    return books.filter(book => {
+      // If no published date, assume it's already published
+      if (!book.publishedDate) return true;
+      
+      // Convert the published date string to a Date object
+      const publishedDate = new Date(book.publishedDate);
+      publishedDate.setHours(0, 0, 0, 0); // Set to beginning of published date
+      
+      // Keep book if published date is today or earlier
+      return publishedDate <= today;
+    });
+  };
   
-  if (section.type === "popular" && books) {
+  // For sections that need additional filtering
+  let displayBooks = books ? filterOutFutureReleases(books) : [];
+  
+  if (section.type === "popular" && displayBooks.length > 0) {
     // Sort by impressions or some popularity metric
-    displayBooks = [...books].sort((a, b) => 
+    displayBooks = [...displayBooks].sort((a, b) => 
       (b.impressionCount || 0) - (a.impressionCount || 0)
     ).slice(0, section.itemCount);
-  } else if (section.type === "unreviewed" && books && user) {
+  } else if (section.type === "unreviewed" && displayBooks.length > 0 && user) {
     // Filter for books that haven't been reviewed by the user
     // This is a placeholder and would need to be implemented properly
-    displayBooks = books.slice(0, section.itemCount);
+    displayBooks = displayBooks.slice(0, section.itemCount);
   }
   
   // Define what happens when "Discover More" is clicked
