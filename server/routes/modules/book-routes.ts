@@ -65,9 +65,9 @@ router.get("/", async (_req, res) => {
  * GET /api/books/:id
  * Direct ID-based access has been removed to prevent scraping attacks
  */
-router.get("/:id(\\d+)$", async (req, res) => {
+router.get("/:id([0-9]+)", async (req, res) => {
   // This will catch direct numeric IDs only, like /books/1
-  // Uses $ to ensure this doesn't match paths like /:id/ratings
+  // Other routes like /:id/ratings will still work
   return res.status(404).json({ error: "Not found - Direct ID access is not permitted" });
 });
 
