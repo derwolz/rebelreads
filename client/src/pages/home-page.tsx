@@ -8,6 +8,7 @@ import { BookCarousel } from "@/components/book-carousel";
 import { WhatsHotSidebar } from "@/components/whats-hot-sidebar";
 import { HeroBannerAd, VerticalBannerAd, HorizontalBannerAd } from "@/components/banner-ads";
 import { DynamicHomeSections } from "@/components/dynamic-home-sections";
+import { ComingSoonSection } from "@/components/coming-soon-section";
 
 // Define the homepage section types for manual layout
 interface HomepageSection {
@@ -125,7 +126,7 @@ export default function HomePage() {
           <div className="flex-1 order-2 lg:order-1">
             {/* New Arrivals Section */}
             {newBooks && newBooks.length > 0 && (
-              <div className="max-w-[1024px]  mb-8">
+              <div className="max-w-[1024px] mb-8">
                 <BookCarousel 
                   title="Recently Updated"
                   books={newBooks}
@@ -134,6 +135,10 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* Coming Soon Section - Books with future publication dates */}
+            <div className="max-w-[1024px] mb-8">
+              <ComingSoonSection title="Coming Soon" limit={8} />
+            </div>
 
             {/* Dynamic Home Sections for logged-in users */}
             {user ? (

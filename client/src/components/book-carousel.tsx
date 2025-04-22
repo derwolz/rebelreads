@@ -23,9 +23,10 @@ interface BookCarouselProps {
   title: string;
   books?: Book[];
   isLoading: boolean;
+  showPublishedDate?: boolean;
 }
 
-export function BookCarousel({ title, books, isLoading }: BookCarouselProps) {
+export function BookCarousel({ title, books, isLoading, showPublishedDate = false }: BookCarouselProps) {
   // Define custom options for Embla Carousel that allow flexibility
   const carouselOptions = {
     align: "start" as const,

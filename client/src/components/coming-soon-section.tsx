@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Book } from "@shared/schema";
+import type { Book } from "../types"; // Import from client types instead of shared schema
 import { BookCarousel } from "./book-carousel";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon } from "lucide-react";
@@ -28,7 +28,7 @@ export function ComingSoonSection({
             Future Releases
           </Badge>
         </h2>
-        <BookCarousel isLoading={true} books={[]} />
+        <BookCarousel title={title} isLoading={true} books={[]} />
       </div>
     );
   }
@@ -49,6 +49,7 @@ export function ComingSoonSection({
         </Badge>
       </h2>
       <BookCarousel
+        title={title}
         books={comingSoonBooks}
         isLoading={isLoading}
         showPublishedDate={true}
