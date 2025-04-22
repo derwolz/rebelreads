@@ -287,7 +287,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     </div>
                   )}
                 </div>
-                <div className="flex ml-auto p-4 flex-col min-w-0 md:w-[500px] overflow-hidden">
+                <div className="flex ml-auto p-4 flex-col min-w-0 md:w-[500px] md:max-h-[500px]">
                 <h2 className="text-2xl  font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
                 <p className="text-foreground/90 mb-2 break-words">by {selectedBook?.authorName}</p>
                 
@@ -305,7 +305,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       </div>
                     )}
                     
-                    <ScrollArea className="max-h-[40vh] min-w-0 w-full pr-4">
+                    <ScrollArea className="h-[300px] min-w-0 w-full pr-4">
                       <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                     </ScrollArea>
                   </div>
