@@ -31,13 +31,21 @@ interface BookCarouselProps {
 
 export function BookCarousel({ title, books, isLoading, showPublishedDate = false }: BookCarouselProps) {
   // Define custom options for Embla Carousel that allow flexibility
+  
   const carouselOptions = {
     align: "start" as const,
     dragFree: true,
     containScroll: "trimSnaps" as const,
     slidesToScroll: 2,
   };
+  function getQuarterYear(date: Date): string {
+    const month = date.getMonth(); // getMonth() returns month index starting from 0
+    const year = date.getFullYear();
 
+    const quarter = Math.floor(month / 3) + 1; // Divide by 3 and add 1 to get the quarter
+
+    return `Q${quarter} ${year}`;
+  }
   return (
     <section className="mb-12 relative">
       <h2 className="text-3xl font-bold mb-6">{title}</h2>
@@ -58,7 +66,7 @@ export function BookCarousel({ title, books, isLoading, showPublishedDate = fals
                         <div className="mt-2 text-center">
                           <Badge variant="outline" className="mx-auto py-1">
                             <CalendarIcon className="h-3 w-3 mr-1" />
-                            {format(new Date(book.publishedDate), "MMM d, yyyy")}
+                            {getQuarterYear(new Date(book.publishedDate))}
                           </Badge>
                         </div>
                       )}
