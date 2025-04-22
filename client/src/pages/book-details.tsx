@@ -310,19 +310,18 @@ export default function BookDetails() {
               </div>
             </div>
             {/* Referral links with improved mobile layout */}
-            <div className="mt-4 space-y-2 gap-2 overflow-y-auto max-h-[250px] md:max-h-[calc(100vh-500px)]">
+            <div className="mt-4 space-y-2 gap-2 overflow-y-auto max-h-[200px] md:max-h-[calc(100vh-500px)]">
               {Array.isArray(book.referralLinks) &&
-                book.referralLinks.length > 0 && (
-                  <>
-                    {book.referralLinks.map(
-                      (link: ReferralLink, index: number) => (
-                        <a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full block"
-                          onClick={async (e) => {
+                book.referralLinks.length > 0 && 
+                book.referralLinks.map(
+                  (link: ReferralLink, index: number) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full block"
+                      onClick={async (e) => {
                             // Prevent default to handle the tracking
                             e.preventDefault();
                             
@@ -388,8 +387,7 @@ export default function BookDetails() {
                         </a>
                       ),
                     )}
-                  </>
-                )}
+                )
             </div>
           </div>
 
