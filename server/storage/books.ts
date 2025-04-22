@@ -40,6 +40,7 @@ export interface IBookStorage {
   selectBooks(query: string): Promise<Book[]>;
   updateInternalDetails(id: number, details: string): Promise<Book>;
   getRecommendations(userId: number, limit?: number): Promise<Book[]>;
+  getComingSoonBooks(limit?: number): Promise<Book[]>; // New method for upcoming unreleased books
 }
 
 export class BookStorage implements IBookStorage {
