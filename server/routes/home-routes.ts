@@ -139,6 +139,22 @@ router.get("/recommendations", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/coming-soon
+ * Get a list of upcoming books with future publication dates
+ * Public endpoint - no authentication required
+ */
+router.get("/coming-soon", async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const comingSoonBooks = await dbStorage.getComingSoonBooks(limit);
+    res.json(comingSoonBooks);
+  } catch (error) {
+    console.error("Error getting coming soon books:", error);
+    res.status(500).json({ error: "Failed to get coming soon books" });
+  }
+});
+
 // This needs to be changed away from bookId to authorName and bookTitle (secureAPI)
 router.get("/books/:id/ratings", async (req, res) => {
   const bookId = parseInt(req.params.id);

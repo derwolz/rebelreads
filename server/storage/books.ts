@@ -1171,4 +1171,84 @@ export class BookStorage implements IBookStorage {
       })) as Book[];
     }
   }
+  
+  /**
+   * Get upcoming books with future publication dates
+   * @param limit Maximum number of books to return
+   * @returns Array of books with publication dates in the future
+   */
+  async getComingSoonBooks(limit = 10): Promise<Book[]> {
+    try {
+      const currentDate = new Date();
+      
+      // Query books with publication dates in the future
+      const comingSoonBooks = await db
+        .select({
+          id: books.id,
+          title: books.title,
+          authorId: books.authorId,
+          description: books.description,
+          promoted: books.promoted,
+          pageCount: books.pageCount,
+          formats: books.formats,
+          publishedDate: books.publishedDate,
+          awards: books.awards,
+          originalTitle: books.originalTitle,
+          series: books.series,
+          setting: books.setting,
+          characters: books.characters,
+          isbn: books.isbn,
+          asin: books.asin,
+          language: books.language,
+          referralLinks: books.referralLinks,
+          impressionCount: books.impressionCount,
+          clickThroughCount: books.clickThroughCount,
+          lastImpressionAt: books.lastImpressionAt,
+          lastClickThroughAt: books.lastClickThroughAt,
+          internal_details: books.internal_details,
+          // Join author information
+          authorName: authors.author_name,
+          authorImageUrl: authors.author_image_url
+        })
+        .from(books)
+        .leftJoin(authors, eq(books.authorId, authors.id))
+        .where(and(
+          // Only include books with publication dates in the future
+          sql`${books.publishedDate} > ${currentDate}::date`,
+          // Ensure publication date is not null
+          sql`${books.publishedDate} IS NOT NULL`
+        ))
+        .orderBy(books.publishedDate) // Order by closest publication date first
+        .limit(limit);
+      
+      if (comingSoonBooks.length === 0) return [];
+      
+      // Get all books IDs
+      const bookIds = comingSoonBooks.map(book => book.id);
+      
+      // Fetch all images for these books
+      const allImages = await db.select()
+        .from(bookImages)
+        .where(inArray(bookImages.bookId, bookIds));
+      
+      // Group images by book ID for easy lookup
+      const imagesByBookId = new Map<number, BookImage[]>();
+      
+      allImages.forEach(image => {
+        if (!imagesByBookId.has(image.bookId)) {
+          imagesByBookId.set(image.bookId, []);
+        }
+        imagesByBookId.get(image.bookId)!.push(image);
+      });
+      
+      // Add images to books
+      return comingSoonBooks.map(book => ({
+        ...book,
+        images: imagesByBookId.get(book.id) || []
+      })) as Book[];
+    } catch (error) {
+      console.error('Error in getComingSoonBooks():', error);
+      return [];
+    }
+  }
 }
