@@ -135,8 +135,8 @@ function SortableShelfCard({
               </CardTitle>
             </div>
             <div className="flex space-x-2">
-              {/* Link to profile bookshelf view (non-share view) */}
-              <Link to="/profile?tab=bookshelves" title="View in your profile">
+              {/* Link to bookshelf view (non-share view) */}
+              <Link to={`/book-shelf?username=${encodeURIComponent(user?.username || '')}&shelfname=${encodeURIComponent(shelf.title)}`} title="View bookshelf page">
                 <Button variant="ghost" size="icon">
                   <User size={18} />
                 </Button>
