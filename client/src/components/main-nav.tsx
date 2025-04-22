@@ -86,6 +86,8 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (searchQuery.trim()) {
+      // We'll keep the existing search route, as it's for searching, not linking directly to a book
+      // The search results page will be responsible for using the new book-details format for its results
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setOpen(false);
     }
@@ -110,7 +112,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
         {searchResults.books.slice(0, 5).map((book) => (
           <CommandItem key={book.id} value={book.title}>
             <Link
-              href={`/books/${book.id}`}
+              href={`/book-details?authorName=${encodeURIComponent(book.author)}&bookTitle=${encodeURIComponent(book.title)}`}
               className="flex items-center gap-2"
               onClick={() => setOpen(false)}
             >
