@@ -282,9 +282,9 @@ export default function BookDetails() {
         }}
       />
       <main className="container mx-auto px-4 py-8 relative z-10">
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* Left column with book cover and action buttons - sticky on desktop, scrollable on mobile */}
-          <div className="md:sticky md:top-20 self-start" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+          <div className="md:sticky md:top-20 self-start md:max-h-[calc(100vh-120px)]">
             <div className="relative">
               <img
                 src={
@@ -309,8 +309,9 @@ export default function BookDetails() {
                 />
               </div>
             </div>
+            
             {/* Referral links with improved mobile layout */}
-            <div className="mt-4 space-y-2 gap-2 overflow-y-auto max-h-[200px] md:max-h-[calc(100vh-500px)]">
+            <div className="mt-4 space-y-2 overflow-y-auto max-h-[180px] md:max-h-[calc(100vh-500px)]">
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && 
                 book.referralLinks.map(
@@ -395,7 +396,7 @@ export default function BookDetails() {
           <div className="md:col-span-2 space-y-8">
             <div>
               <div className="flex justify-between items-start mb-2">
-                <h1 className="text-4xl font-bold">{book.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold break-words">{book.title}</h1>
                 
                 {user && (
                   <DropdownMenu>
@@ -630,23 +631,23 @@ export default function BookDetails() {
                   </DropdownMenu>
                 )}
               </div>
-              <div className="flex items-center gap-4 mb-4">
-                <p className="text-xl">
-                  by{" "}
-                  <Link
-                    href={`/author?authorName=${encodeURIComponent(author?.author_name || book.authorName || '')}`}
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {author?.author_name || book.authorName}
-                  </Link>
-                </p>
-                {author?.author_name && (
-                  <FollowButton
-                    authorId={book.authorId}
-                    authorName={author.author_name}
-                    className="ml-2"
-                  />
-                )}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <p className="text-lg md:text-xl">
+                    by{" "}
+                    <Link
+                      href={`/author?authorName=${encodeURIComponent(author?.author_name || book.authorName || '')}`}
+                      className="text-muted-foreground hover:text-primary transition-colors break-words"
+                    >
+                      {author?.author_name || book.authorName}
+                    </Link>
+                  </p>
+                  {author?.author_name && (
+                    <FollowButton
+                      authorId={book.authorId}
+                      authorName={author.author_name}
+                      className="ml-0 mt-1 md:mt-0 md:ml-2"
+                    />
+                  )}
               </div>
 
               <div className="relative mb-4">
@@ -773,9 +774,11 @@ export default function BookDetails() {
               )}
 
               <div className="text-base md:text-lg break-words overflow-hidden">
-                {book.description.split('\n').map((paragraph, index) => (
-                  <p key={index} className="mb-4 max-w-full">{paragraph}</p>
-                ))}
+                <ScrollArea className="md:h-auto max-h-[400px]">
+                  {book.description.split('\n').map((paragraph, index) => (
+                    <p key={index} className="mb-4 max-w-full pr-4">{paragraph}</p>
+                  ))}
+                </ScrollArea>
               </div>
 
               <div className="grid gap-8">
