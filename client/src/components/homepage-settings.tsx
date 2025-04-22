@@ -86,6 +86,14 @@ const DEFAULT_SECTIONS: HomepageSection[] = [
     itemCount: 10,
     visible: true,
   },
+  {
+    id: "coming-soon",
+    type: "coming_soon",
+    displayMode: "carousel",
+    title: "Coming Soon",
+    itemCount: 10,
+    visible: true,
+  },
 ];
 
 // Convert section type to friendly display name
@@ -99,6 +107,7 @@ function getSectionTypeName(type: string): string {
     reviewed: "Your Reviewed Books",
     completed: "Completed Books",
     custom_genre_view: "Custom Genre View",
+    coming_soon: "Coming Soon",
   };
   
   return typeMap[type] || type;

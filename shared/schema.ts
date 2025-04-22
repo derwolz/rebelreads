@@ -1219,7 +1219,8 @@ export const HOMEPAGE_SECTION_TYPES = [
   "unreviewed", 
   "reviewed", 
   "completed",
-  "custom_genre_view"
+  "custom_genre_view",
+  "coming_soon"
 ] as const;
 
 export const DISPLAY_MODE_TYPES = ["carousel", "grid", "book_rack"] as const;
