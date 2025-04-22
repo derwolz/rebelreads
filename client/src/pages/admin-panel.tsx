@@ -161,15 +161,22 @@ export default function AdminPanel() {
                   <Card className="p-4">
                     <div className="flex flex-col items-center space-y-4">
                       <Mail className="h-10 w-10 text-primary" />
-                      <h4 className="text-lg font-medium">Email Collection</h4>
+                      <h4 className="text-lg font-medium">Email Management</h4>
                       <p className="text-sm text-muted-foreground text-center">
-                        View and export emails collected from landing pages
+                        View and manage email collection and beta invitations
                       </p>
-                      <Link href="/admin/email-collection">
-                        <Button className="w-full">
-                          Manage Email Collection
-                        </Button>
-                      </Link>
+                      <div className="flex flex-col w-full gap-2">
+                        <Link href="/admin/email-collection">
+                          <Button className="w-full">
+                            View Email Collection
+                          </Button>
+                        </Link>
+                        <Link href="/admin/beta-emails">
+                          <Button className="w-full" variant="outline">
+                            Send Beta Invitations
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </Card>
                   
