@@ -305,11 +305,11 @@ export const betaInvitationEmailTemplate = (email: string, betaKey: string) => {
         <div style="text-align: center; background-color: #102B3F; padding: 30px 20px 15px 20px;">
           <!-- Sirened Logo PNG -->
           <img src="https://sirened.com/api/storage/custom/sirenedlogo2-bQ788jFt.png" alt="Sirened Logo" style="width: 200px; height: auto; margin-bottom: 10px;">
-          <h2 style="color: #F6F0FB; font-size: 24px; margin-bottom: 0;">Welcome to Sirened Beta!</h2>
+          <h2 style="color: #white; font-size: 24px; margin-bottom: 0;">Welcome to Sirened Beta!</h2>
         </div>
         
         <!-- Content section -->
-        <div style="padding: 25px; color: #F6F0FB;">
+        <div style="padding: 25px; color: white;">
           <p>Hello there,</p>
           <p>Great news! We're excited to invite you to join the Sirened beta program. As one of our select early users, you'll help shape the future of a platform created specifically for independent authors and readers.</p>
           <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0; text-align: center;">
@@ -318,13 +318,13 @@ export const betaInvitationEmailTemplate = (email: string, betaKey: string) => {
             <p style="margin-bottom: 0; font-size: 14px;">Use this key when signing in to access your account</p>
           </div>
           <p>At Sirened, we're building a community where:</p>
-          <ul style="padding-left: 20px; color: #F6F0FB;">
+          <ul style="padding-left: 20px; color: #white;">
             <li>Readers can discover exceptional independent books</li>
             <li>Authors maintain complete control over their work</li>
             <li>Direct connections foster a vibrant literary ecosystem</li>
           </ul>
           <p>Ready to get started? Just follow these steps:</p>
-          <ol style="padding-left: 20px; color: #F6F0FB;">
+          <ol style="padding-left: 20px; color: #white;">
             <li>Visit <a href="https://sirened.com/auth" style="color: #A06CD5;">sirened.com/auth</a></li>
             <li>Sign in with your account</li>
             <li>When prompted, enter your beta key</li>
