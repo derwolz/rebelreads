@@ -94,6 +94,10 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
       // This will need custom filtering based on what books the user hasn't reviewed
       endpoint = "/api/books";
       break;
+    case "coming_soon":
+      // Get books with future publication dates
+      endpoint = `/api/coming-soon?limit=${section.itemCount}`;
+      break;
     case "custom_genre_view":
       // Custom genre views would need another endpoint
       endpoint = section.customViewId 
@@ -136,7 +140,15 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
   };
   
   // For sections that need additional filtering
-  let displayBooks = books ? filterOutFutureReleases(books) : [];
+  let displayBooks = [];
+  
+  // For coming_soon section, we want to show future releases, not filter them out
+  if (section.type === "coming_soon") {
+    displayBooks = books || [];
+  } else {
+    // For all other sections, filter out future releases
+    displayBooks = books ? filterOutFutureReleases(books) : [];
+  }
   
   if (section.type === "popular" && displayBooks.length > 0) {
     // Sort by impressions or some popularity metric
@@ -174,6 +186,9 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
         break;
       case "unreviewed":
         searchPath = '/discover/to-review';
+        break;
+      case "coming_soon":
+        searchPath = '/discover/coming-soon';
         break;
       case "custom_genre_view":
         // For genre views, include the view ID
@@ -229,6 +244,7 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
           title={section.title} 
           books={displayBooks} 
           isLoading={isLoading}
+          showPublishedDate={section.type === "coming_soon"} // Show published dates for coming soon section
         />
         <DiscoverMoreButton />
       </div>
@@ -252,6 +268,7 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
         books={displayBooks} 
         isLoading={isLoading}
         onDiscoverMore={handleDiscoverMore}
+        showPublishedDate={section.type === "coming_soon"} // Show published dates for coming soon section
       />
     );
   }
