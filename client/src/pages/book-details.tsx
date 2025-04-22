@@ -632,22 +632,22 @@ export default function BookDetails() {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <p className="text-lg md:text-xl">
-                    by{" "}
-                    <Link
-                      href={`/author?authorName=${encodeURIComponent(author?.author_name || book.authorName || '')}`}
-                      className="text-muted-foreground hover:text-primary transition-colors break-words"
-                    >
-                      {author?.author_name || book.authorName}
-                    </Link>
-                  </p>
-                  {author?.author_name && (
-                    <FollowButton
-                      authorId={book.authorId}
-                      authorName={author.author_name}
-                      className="ml-0 mt-1 md:mt-0 md:ml-2"
-                    />
-                  )}
+                <p className="text-lg md:text-xl">
+                  by{" "}
+                  <Link
+                    href={`/author?authorName=${encodeURIComponent(author?.author_name || book.authorName || '')}`}
+                    className="text-muted-foreground hover:text-primary transition-colors break-words"
+                  >
+                    {author?.author_name || book.authorName}
+                  </Link>
+                </p>
+                {author?.author_name && (
+                  <FollowButton
+                    authorId={book.authorId}
+                    authorName={author.author_name}
+                    className="ml-0 mt-1 md:mt-0 md:ml-2"
+                  />
+                )}
               </div>
 
               <div className="relative mb-4">
