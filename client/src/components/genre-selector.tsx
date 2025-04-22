@@ -199,8 +199,9 @@ function SimpleGenreSelector({
   // Create a list of genre names from the genre taxonomy objects
   const genreNames = (customGenres || []).map((g: any) => g.name || "").filter(Boolean);
   
-  // Combine built-in and custom genres
-  const availableGenres = Array.from(new Set([...AVAILABLE_GENRES, ...genreNames]));
+  // Combine built-in and custom genres, then sort alphabetically
+  const availableGenres = Array.from(new Set([...AVAILABLE_GENRES, ...genreNames]))
+    .sort((a, b) => a.localeCompare(b));
 
   const isMaxSelected = maxItems !== undefined && selectedGenres.length >= maxItems;
 
@@ -229,7 +230,8 @@ function SimpleGenreSelector({
     setSearchValue("");
   };
 
-  const commonGenres = AVAILABLE_GENRES.slice(0, 6); // Show first 6 common genres as quick buttons
+  // Get first 6 common genres and sort them alphabetically
+  const commonGenres = [...AVAILABLE_GENRES.slice(0, 6)].sort((a, b) => a.localeCompare(b));
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -473,38 +475,48 @@ function TaxonomyGenreSelector({
     },
   });
 
-  // Filter taxonomies based on search term
+  // Filter taxonomies based on search term and sort alphabetically
   const filteredTaxonomies = () => {
     const searchLower = search.toLowerCase();
     switch (tab) {
       case "genre":
-        return genres.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "genre")
-        );
+        return genres
+          .filter(g => 
+            g.name.toLowerCase().includes(searchLower) &&
+            !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "genre")
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
       case "subgenre":
-        return subgenres.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "subgenre")
-        );
+        return subgenres
+          .filter(g => 
+            g.name.toLowerCase().includes(searchLower) &&
+            !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "subgenre")
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
       case "theme":
-        return themes.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "theme")
-        );
+        return themes
+          .filter(g => 
+            g.name.toLowerCase().includes(searchLower) &&
+            !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "theme")
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
       case "trope":
-        return tropes.filter(g => 
-          g.name.toLowerCase().includes(searchLower) &&
-          !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "trope")
-        );
+        return tropes
+          .filter(g => 
+            g.name.toLowerCase().includes(searchLower) &&
+            !selectedTaxonomies.some(st => st.taxonomyId === g.id && st.type === "trope")
+          )
+          .sort((a, b) => a.name.localeCompare(b.name));
       default:
         return [];
     }
   };
 
-  // Get selected taxonomies by type
+  // Get selected taxonomies by type, sorted alphabetically
   const getSelectedByType = (type: "genre" | "subgenre" | "theme" | "trope") => {
-    return selectedTaxonomies.filter(item => item.type === type);
+    return selectedTaxonomies
+      .filter(item => item.type === type)
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Check if a taxonomy type has reached its maximum allowed count
