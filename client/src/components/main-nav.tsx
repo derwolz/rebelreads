@@ -110,12 +110,15 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
     return (
       <CommandGroup heading="Search Results">
         {searchResults.books.slice(0, 5).map((book) => (
-          <CommandItem key={book.id} value={book.title}>
-            <Link
-              href={`/book-details?authorName=${encodeURIComponent(book.authorName || '')}&bookTitle=${encodeURIComponent(book.title)}`}
-              className="flex items-center gap-2"
-              // Don't close the popup when a book link is clicked
-            >
+          <CommandItem 
+            key={book.id} 
+            value={book.title}
+            onSelect={() => {
+              // Directly navigate to the book page when selected
+              window.location.href = `/book-details?authorName=${encodeURIComponent(book.authorName || '')}&bookTitle=${encodeURIComponent(book.title)}`;
+            }}
+          >
+            <div className="flex items-center gap-2">
               <img
                 src={
                   book.images?.find((img) => img.imageType === "mini")
@@ -133,7 +136,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                   {book.description}
                 </div>
               </div>
-            </Link>
+            </div>
           </CommandItem>
         ))}
         {searchResults.books.length > 0 && (
