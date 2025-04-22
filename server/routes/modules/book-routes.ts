@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { dbStorage } from "../../storage";
 import multer from "multer";
 import { enhanceReferralLinks } from "../../utils/favicon-utils";
+import { applyContentFilters } from "../../utils/content-filters";
 import { and, eq } from "drizzle-orm";
 import { sirenedImageBucket } from "../../services/sirened-image-bucket";
 
@@ -53,12 +54,118 @@ const router = Router();
 
 /**
  * GET /api/books
- * Get all books
+ * Get books with query parameters
+ * Supports pagination and filtering to prevent exposing the entire database
  * Public endpoint - no authentication required
  */
-router.get("/", async (_req, res) => {
-  const books = await dbStorage.getBooks();
-  res.json(books);
+router.get("/", async (req, res) => {
+  try {
+    // Get query parameters for pagination and filtering
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+    const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+    const genre = req.query.genre as string || null;
+    const authorName = req.query.authorName as string || null;
+    
+    // Validate pagination parameters
+    if (isNaN(limit) || isNaN(offset) || limit <= 0 || offset < 0) {
+      return res.status(400).json({ error: "Invalid pagination parameters" });
+    }
+    
+    // Require at least one filter parameter to prevent full database exposure
+    if (!genre && !authorName && !req.query.promoted && !req.query.recent) {
+      return res.status(400).json({ 
+        error: "Query parameters required",
+        message: "Please provide at least one filter parameter (genre, authorName, promoted=true, or recent=true)"
+      });
+    }
+    
+    // Get filtered and paginated books
+    const books = await dbStorage.getBooks();
+    
+    // Apply manual filtering based on query parameters
+    let filteredBooks = books;
+    
+    // Filter by genre if specified
+    if (genre) {
+      // Get all book IDs first
+      const bookIds = filteredBooks.map(book => book.id);
+      
+      // Fetch taxonomy data for these books
+      const bookTaxonomies = await Promise.all(
+        bookIds.map(async (bookId) => {
+          const taxonomies = await dbStorage.getBookTaxonomies(bookId);
+          return { bookId, taxonomies };
+        })
+      );
+      
+      // Create a map of book ID to genres
+      const bookGenresMap = new Map();
+      bookTaxonomies.forEach(item => {
+        const genres = item.taxonomies
+          .filter(tax => tax.type === 'genre')
+          .map(tax => tax.name.toLowerCase());
+        bookGenresMap.set(item.bookId, genres);
+      });
+      
+      // Filter books by genre
+      filteredBooks = filteredBooks.filter(book => {
+        const bookGenres = bookGenresMap.get(book.id) || [];
+        return bookGenres.includes(genre.toLowerCase());
+      });
+    }
+    
+    // Filter by author name if specified
+    if (authorName) {
+      filteredBooks = filteredBooks.filter(book => 
+        book.authorName?.toLowerCase().includes(authorName.toLowerCase())
+      );
+    }
+    
+    // Filter to promoted books only if specified
+    if (req.query.promoted === 'true') {
+      filteredBooks = filteredBooks.filter(book => book.promoted);
+    }
+    
+    // Filter to recent books if specified
+    if (req.query.recent === 'true') {
+      // Sort by published date
+      filteredBooks = filteredBooks
+        .filter(book => book.publishedDate)
+        .sort((a, b) => {
+          if (!a.publishedDate || !b.publishedDate) return 0;
+          return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+        });
+    }
+    
+    // Apply content filtering if user is authenticated
+    if (req.isAuthenticated() && req.user) {
+      // Extract book IDs from filtered results
+      const bookIds = filteredBooks.map(book => book.id);
+      
+      // Apply content filters
+      const filteredBookIds = await applyContentFilters(req.user.id, bookIds);
+      
+      // Filter out blocked books
+      filteredBooks = filteredBooks.filter(book => filteredBookIds.includes(book.id));
+    }
+    
+    // Apply pagination
+    const paginatedBooks = filteredBooks.slice(offset, offset + limit);
+    
+    // Return books with metadata
+    res.json({
+      books: paginatedBooks,
+      metadata: {
+        total: filteredBooks.length,
+        limit,
+        offset,
+        hasMore: (offset + limit) < filteredBooks.length
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching books:", error);
+    res.status(500).json({ error: "Failed to fetch books" });
+  }
 });
 
 /**
