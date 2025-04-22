@@ -8,9 +8,9 @@ const router = Router();
  * GET /api/authors/:id
  * Direct ID-based access has been removed to prevent scraping attacks
  */
-router.get("/:id([0-9]+)", async (req, res) => {
+router.get("/:id(\\d+)$", async (req, res) => {
   // This will catch direct numeric IDs only, like /authors/1
-  // Other routes like /:id/publisher will still work
+  // Uses $ to ensure this doesn't match paths like /:id/something
   return res.status(404).json({ error: "Not found - Direct ID access is not permitted" });
 });
 
