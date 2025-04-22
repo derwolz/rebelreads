@@ -92,7 +92,7 @@ export default function AuthorPage() {
     error: authorError,
   } = useQuery<AuthorDetails>({
     queryKey: isUsingSecureFormat 
-      ? [`/api/author?authorName=${encodeURIComponent(authorName!)}`]
+      ? [`/api/author?name=${encodeURIComponent(authorName!)}`]
       : [`/api/authors/${paramsById?.id}`],
     enabled: !!(isUsingSecureFormat || !!paramsById?.id),
   });

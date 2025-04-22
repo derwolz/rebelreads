@@ -55,6 +55,7 @@ export const dbStorage = {
   followAuthor: accountStorage.followAuthor.bind(accountStorage),
   unfollowAuthor: accountStorage.unfollowAuthor.bind(accountStorage),
   isFollowing: accountStorage.isFollowing.bind(accountStorage),
+  isFollowingAuthor: accountStorage.isFollowing.bind(accountStorage), // Alias for isFollowing
   getFollowerCount: accountStorage.getFollowerCount.bind(accountStorage),
   getFollowingCount: accountStorage.getFollowingCount.bind(accountStorage),
   getFollowerMetrics: accountStorage.getFollowerMetrics.bind(accountStorage),
