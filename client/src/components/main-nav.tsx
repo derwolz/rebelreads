@@ -112,7 +112,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
         {searchResults.books.slice(0, 5).map((book) => (
           <CommandItem key={book.id} value={book.title}>
             <Link
-              href={`/book-details?authorName=${encodeURIComponent(book.author)}&bookTitle=${encodeURIComponent(book.title)}`}
+              href={`/book-details?authorName=${encodeURIComponent(book.authorName || '')}&bookTitle=${encodeURIComponent(book.title)}`}
               className="flex items-center gap-2"
               onClick={() => setOpen(false)}
             >
@@ -127,7 +127,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
               <div>
                 <div className="font-medium">{book.title}</div>
                 <div className="text-sm text-muted-foreground">
-                  by {book.author}
+                  by {book.authorName || ''}
                 </div>
                 <div className="text-xs text-muted-foreground line-clamp-1">
                   {book.description}
@@ -137,7 +137,13 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
           </CommandItem>
         ))}
         {searchResults.books.length > 0 && (
-          <CommandItem onSelect={handleSearchSubmit}>
+          <CommandItem 
+            onSelect={(value: string) => {
+              // We need to convert our form submission handler to work with CommandItem's onSelect
+              // The value parameter is required by the CommandItem type but we don't need it
+              handleSearchSubmit();
+            }}
+          >
             <div className="w-full text-center text-sm text-muted-foreground">
               View all results →
             </div>
