@@ -222,13 +222,21 @@ export async function syncWithServer(): Promise<void> {
     // Process click-throughs
     for (const clickThrough of clickThroughs) {
       try {
+        const metadata = clickThrough.metadata || {};
+        // Need to extract referralDomain from metadata or generate a placeholder
+        // to ensure compatibility with both old and new server routes
+        const referralDomain = metadata.referralDomain || 'unknown';
+        
         await apiRequest("POST", `/api/books/${clickThrough.bookId}/click-through`, {
           source: clickThrough.source,
           referrer: clickThrough.referrer,
           position: clickThrough.position,
           container_type: clickThrough.container_type,
           container_id: clickThrough.container_id,
-          metadata: clickThrough.metadata || {}
+          metadata: metadata,
+          // Include referralDomain directly in the request for compatibility
+          // with the updated server API that can handle both old and new formats
+          referralId: referralDomain
         });
         processedClickThroughs.push(clickThrough);
       } catch (error) {

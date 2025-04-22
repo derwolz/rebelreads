@@ -547,7 +547,7 @@ router.post("/:id/click-through", async (req, res) => {
   }
   
   try {
-    const referralId = req.body.referralId;
+    // Get source, referrer, and container data
     const source = req.body.source || "unknown";
     const referrer = req.body.referrer || "unknown";
     
@@ -557,8 +557,21 @@ router.post("/:id/click-through", async (req, res) => {
     const container_id = req.body.container_id; // ID of container (optional)
     const metadata = req.body.metadata || {}; // Additional metadata (optional)
     
-    if (!referralId) {
-      return res.status(400).json({ error: "referralId is required" });
+    // Support both new and old tracking formats
+    // - Old format requires referralId
+    // - New format uses metadata.referralDomain
+    const referralId = req.body.referralId;
+    if (!referralId && !metadata.referralDomain) {
+      // For backward compatibility, we still support the old format
+      // but we also accept the new format with referralDomain in metadata
+      return res.status(400).json({ 
+        error: "Either referralId or metadata.referralDomain is required" 
+      });
+    }
+    
+    // If using old format, add the referralId to metadata for consistency
+    if (referralId && !metadata.referralDomain) {
+      metadata.referralDomain = referralId;
     }
     
     // Record as an impression with type 'referral_click' and weight 1.0
