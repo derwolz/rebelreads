@@ -292,6 +292,86 @@ export const signupInterestEmailTemplate = (email: string) => {
 };
 
 /**
+ * Beta invitation email template with beta key for users invited to join the beta
+ */
+export const betaInvitationEmailTemplate = (email: string, betaKey: string) => {
+  return {
+    subject: "Your Sirened Beta Access Is Ready!",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #102B3F; border-radius: 8px; overflow: hidden;">
+        <!-- Header with logo -->
+        <div style="text-align: center; background-color: #102B3F; padding: 30px 20px 15px 20px;">
+          <!-- Sirened Logo PNG -->
+          <img src="data:image/png;base64,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" alt="Sirened Logo" style="width: 200px; height: auto; margin-bottom: 10px;">
+          <h2 style="color: #F6F0FB; font-size: 24px; margin-bottom: 0;">Welcome to Sirened Beta!</h2>
+        </div>
+        
+        <!-- Content section -->
+        <div style="padding: 25px; color: #F6F0FB;">
+          <p>Hello there,</p>
+          <p>Great news! We're excited to invite you to join the Sirened beta program. As one of our select early users, you'll help shape the future of a platform created specifically for independent authors and readers.</p>
+          <div style="background-color: #A06CD5; padding: 15px; border-radius: 8px; color: white; margin: 20px 0; text-align: center;">
+            <p style="font-weight: bold; margin-top: 0; font-size: 16px;">Your exclusive beta key:</p>
+            <p style="font-size: 24px; letter-spacing: 1px; font-family: monospace; background-color: #183A56; padding: 10px; border-radius: 5px; margin: 10px 0;">${betaKey}</p>
+            <p style="margin-bottom: 0; font-size: 14px;">Use this key when signing in to access your account</p>
+          </div>
+          <p>At Sirened, we're building a community where:</p>
+          <ul style="padding-left: 20px; color: #F6F0FB;">
+            <li>Readers can discover exceptional independent books</li>
+            <li>Authors maintain complete control over their work</li>
+            <li>Direct connections foster a vibrant literary ecosystem</li>
+          </ul>
+          <p>Ready to get started? Just follow these steps:</p>
+          <ol style="padding-left: 20px; color: #F6F0FB;">
+            <li>Visit <a href="https://sirened.com/auth" style="color: #A06CD5;">sirened.com/auth</a></li>
+            <li>Sign in with your account</li>
+            <li>When prompted, enter your beta key</li>
+            <li>Start exploring and sharing your feedback</li>
+          </ol>
+          <p>Your insights during this beta period are invaluable to us. We can't wait to hear what you think!</p>
+          <p>Happy reading,</p>
+          <p>The Sirened Team</p>
+        </div>
+        
+        <!-- Footer section -->
+        <div style="margin-top: 10px; font-size: 12px; color: #A06CD5; text-align: center; background-color: #0A1C2C; border-top: 1px solid #1E3C54; padding: 15px;">
+          <p>You received this email because ${email} was used to sign up for Sirened updates. This beta key is exclusive to you and should not be shared.</p>
+        </div>
+      </div>
+    `,
+    text: `
+      Welcome to Sirened Beta!
+      
+      Hello there,
+      
+      Great news! We're excited to invite you to join the Sirened beta program. As one of our select early users, you'll help shape the future of a platform created specifically for independent authors and readers.
+      
+      Your exclusive beta key: ${betaKey}
+      
+      Use this key when signing in to access your account.
+      
+      At Sirened, we're building a community where:
+      - Readers can discover exceptional independent books
+      - Authors maintain complete control over their work
+      - Direct connections foster a vibrant literary ecosystem
+      
+      Ready to get started? Just follow these steps:
+      1. Visit sirened.com/auth
+      2. Sign in with your account
+      3. When prompted, enter your beta key
+      4. Start exploring and sharing your feedback
+      
+      Your insights during this beta period are invaluable to us. We can't wait to hear what you think!
+      
+      Happy reading,
+      The Sirened Team
+      
+      You received this email because ${email} was used to sign up for Sirened updates. This beta key is exclusive to you and should not be shared.
+    `
+  };
+};
+
+/**
  * Beta key required email template for users who try to log in without a beta key
  */
 export const betaKeyRequiredEmailTemplate = (email: string) => {

@@ -3,6 +3,7 @@ import {
   welcomeEmailTemplate, 
   signupInterestEmailTemplate, 
   betaKeyRequiredEmailTemplate,
+  betaInvitationEmailTemplate,
   emailVerificationTemplate,
   loginVerificationTemplate,
   passwordResetTemplate
@@ -99,6 +100,14 @@ export class EmailService {
    */
   public async sendBetaKeyRequiredEmail(email: string): Promise<boolean> {
     const template = betaKeyRequiredEmailTemplate(email);
+    return this.sendEmail(email, template.subject, template.html, template.text);
+  }
+
+  /**
+   * Sends a beta invitation email with beta key
+   */
+  public async sendBetaInvitationEmail(email: string, betaKey: string): Promise<boolean> {
+    const template = betaInvitationEmailTemplate(email, betaKey);
     return this.sendEmail(email, template.subject, template.html, template.text);
   }
 
