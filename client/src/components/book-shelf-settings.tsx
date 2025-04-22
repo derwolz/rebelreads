@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import {
   Card,
   CardContent,
@@ -44,7 +45,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, PencilIcon, Trash2, GripVertical, BookOpen, X } from "lucide-react";
+import { Plus, PencilIcon, Trash2, GripVertical, BookOpen, X, User } from "lucide-react";
 import { BookShelfCoverUploader } from "@/components/book-shelf-cover-uploader";
 
 // Define types based on schema
@@ -134,6 +135,12 @@ function SortableShelfCard({
               </CardTitle>
             </div>
             <div className="flex space-x-2">
+              {/* Link to profile bookshelf view (non-share view) */}
+              <Link to="/profile?tab=bookshelves" title="View in your profile">
+                <Button variant="ghost" size="icon">
+                  <User size={18} />
+                </Button>
+              </Link>
               {isAuthor && (
                 <Button 
                   variant="ghost" 
