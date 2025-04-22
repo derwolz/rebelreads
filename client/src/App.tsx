@@ -8,6 +8,7 @@ import { BetaProvider } from "@/hooks/use-beta";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { OnboardingProvider } from "@/hooks/use-onboarding";
 import EmailCollectionPage from "@/pages/admin/email-collection";
+import BetaEmailsPage from "@/pages/admin/beta-emails";
 import { MainNav } from "@/components/main-nav";
 import { AuthModal } from "@/components/auth-modal";
 import { ReviewInviteDialog } from "@/components/review-invite-dialog";
@@ -167,6 +168,7 @@ function App() {
           <ProtectedRoute path="/admin/reports" component={AdminPanel} />
           <ProtectedRoute path="/admin/books" component={AdminBooksPage} />
           <ProtectedRoute path="/admin/email-collection" component={EmailCollectionPage} />
+          <ProtectedRoute path="/admin/beta-emails" component={BetaEmailsPage} />
           <ProtectedRoute path="/admin/campaign-management" component={AdminCampaignManagementPage} />
           
           {/* Sales routes */}

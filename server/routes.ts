@@ -17,6 +17,7 @@ import adminRoutes from "./routes/admin-routes";
 import adminBookRoutes from "./routes/admin-book-routes";
 import adminUserRoutes from "./routes/admin-user-routes";
 import adminCampaignRoutes from "./routes/admin-campaigns-routes";
+import adminBetaEmailsRoutes from "./routes/admin-beta-emails-routes";
 import betaRoutes from "./routes/beta-routes";
 import genreRoutes from "./routes/genre-routes";
 import homepageRoutes from "./routes/homepage-routes";
@@ -105,6 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/admin/books", adminBookRoutes);
   app.use("/api/admin/users", adminUserRoutes);
   app.use("/api/admin/campaigns-management", adminCampaignRoutes);
+  app.use("/api/admin/beta-emails", adminBetaEmailsRoutes);
   app.use("/api/beta", betaRoutes);
   app.use("/api/genres", genreRoutes);
   app.use("/api/homepage-layout", homepageRoutes);
