@@ -31,9 +31,6 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
     element.style.opacity = '0';
     element.style.willChange = 'opacity, transform';
     
-    // IMPORTANT FIX: Add pointer-events: none to prevent click blocking when invisible
-    element.style.pointerEvents = 'none';
-    
     const observer = new IntersectionObserver(
       ([entry]) => {
         // When element is visible
@@ -50,10 +47,6 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
           } else if (type === 'grow') {
             element.classList.add('animate-fade-scale');
           }
-          
-          // IMPORTANT FIX: Re-enable pointer events once animation starts
-          // This ensures elements become interactive only when they're actually visible
-          element.style.pointerEvents = 'auto';
 
           // Remove element from observation once animation is applied
           observer.unobserve(element);
@@ -91,7 +84,7 @@ export const AnimateOnScroll: React.FC<AnimateOnScrollProps> = ({
     <div 
       ref={elementRef} 
       className={`${delayClass} ${className}`}
-      style={{ opacity: 0, pointerEvents: 'none' /* Initial state: invisible and non-interactive */ }}
+      style={{ opacity: 0 }}
     >
       {children}
     </div>
@@ -116,18 +109,12 @@ export const AnimatedChart: React.FC<{
     chart.style.transform = 'scale(0.7)';
     chart.style.opacity = '0';
     chart.style.willChange = 'transform, opacity';
-    // IMPORTANT FIX: Add pointer-events: none to prevent click blocking when invisible
-    chart.style.pointerEvents = 'none';
     
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           // Use the predefined animation class
           chart.classList.add('animate-grow-chart');
-          
-          // IMPORTANT FIX: Re-enable pointer events once animation starts
-          // This ensures elements become interactive only when they're actually visible
-          chart.style.pointerEvents = 'auto';
           
           // Remove element from observation once animation is applied
           observer.unobserve(chart);
@@ -156,7 +143,7 @@ export const AnimatedChart: React.FC<{
     <div 
       ref={chartRef} 
       className={className}
-      style={{ opacity: 0, transform: 'scale(0.7)', pointerEvents: 'none' /* Initial state: invisible and non-interactive */ }}
+      style={{ opacity: 0, transform: 'scale(0.7)' }}
     >
       {children}
     </div>
