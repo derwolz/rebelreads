@@ -34,14 +34,14 @@ export class BetaKeyStorage implements IBetaKeyStorage {
     return betaKey;
   }
 
-  async generateBetaKey(data: Omit<InsertBetaKey, "key">, prefix: string = "BETA"): Promise<BetaKey> {
-    // Generate a key with format PREFIX-XXXXX-XXXX-XXXX-XXXX where X is alphanumeric
-    const randomPart = (length: number) => {
-      return Math.random().toString(36).substring(2, 2 + length).toUpperCase();
+  async generateBetaKey(data: Omit<InsertBetaKey, "key">, prefix: string = "SIREN"): Promise<BetaKey> {
+    // Generate a key with format 5-4-4-4 where the prefix is 5 chars followed by three 4-char segments
+    const randomPart = () => {
+      return Math.random().toString(36).substring(2, 6).toUpperCase();
     };
     
-    // First part is 5 chars, others are 4 chars each
-    const key = `${prefix}-${randomPart(5)}-${randomPart(4)}-${randomPart(4)}-${randomPart(4)}`;
+    // Use the 5-character prefix, followed by three 4-character segments
+    const key = `${prefix}-${randomPart()}-${randomPart()}-${randomPart()}`;
     
     const [betaKey] = await db
       .insert(betaKeys)
