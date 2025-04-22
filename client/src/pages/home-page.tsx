@@ -100,12 +100,22 @@ export default function HomePage() {
     }
   }, [user]);
 
-  // Filter new books (published in the last 7 days)
+  // Filter new books (published in the last 7 days and not in the future)
   const newBooks = books?.filter(book => {
     if (!book.publishedDate) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of today
+    
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    return new Date(book.publishedDate) > oneWeekAgo;
+    oneWeekAgo.setHours(0, 0, 0, 0); // Set to beginning of one week ago
+    
+    const publishedDate = new Date(book.publishedDate);
+    publishedDate.setHours(0, 0, 0, 0); // Set to beginning of published date
+    
+    // Only show books published in the last 7 days and not in the future
+    return publishedDate > oneWeekAgo && publishedDate <= today;
   });
 
   // Get featured book for hero ad if available
