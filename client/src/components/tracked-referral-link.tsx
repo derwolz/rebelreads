@@ -38,13 +38,24 @@ export const TrackedReferralLink: React.FC<TrackedReferralLinkProps> = ({
   const { trackReferralWithDomain } = useTracking(containerType, containerId);
   
   const handleClick = (e: React.MouseEvent) => {
+    // Extract domain from URL for tracking
+    let domain = '';
+    try {
+      const urlObj = new URL(url);
+      domain = urlObj.hostname;
+    } catch (error) {
+      console.error('Invalid URL in referral tracking:', url);
+      domain = 'unknown';
+    }
+    
     // Track the referral click with domain extraction
+    // This will add the domain to metadata.referralDomain
     trackReferralWithDomain(bookId, 'referral-link', url, position);
     
     // For non-production environments, prevent navigation to make testing easier
     if (import.meta.env.DEV) {
       e.preventDefault();
-      console.log(`[DEV] Referral tracked for ${url}`);
+      console.log(`[DEV] Referral tracked for ${url} (domain: ${domain})`);
     }
   };
   

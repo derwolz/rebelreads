@@ -222,10 +222,12 @@ export async function syncWithServer(): Promise<void> {
     // Process click-throughs
     for (const clickThrough of clickThroughs) {
       try {
+        // Ensure metadata exists
         const metadata = clickThrough.metadata || {};
-        // Need to extract referralDomain from metadata or generate a placeholder
-        // to ensure compatibility with both old and new server routes
-        const referralDomain = metadata.referralDomain || 'unknown';
+        
+        // Check if this is a referral link click (external link)
+        // by checking if there's a referralDomain in metadata
+        const isReferral = !!metadata.referralDomain;
         
         await apiRequest("POST", `/api/books/${clickThrough.bookId}/click-through`, {
           source: clickThrough.source,
@@ -234,9 +236,7 @@ export async function syncWithServer(): Promise<void> {
           container_type: clickThrough.container_type,
           container_id: clickThrough.container_id,
           metadata: metadata,
-          // Include referralDomain directly in the request for compatibility
-          // with the updated server API that can handle both old and new formats
-          referralId: referralDomain
+          isReferral: isReferral // Send flag to server to indicate if this is a referral
         });
         processedClickThroughs.push(clickThrough);
       } catch (error) {

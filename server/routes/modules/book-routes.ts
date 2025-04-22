@@ -557,21 +557,14 @@ router.post("/:id/click-through", async (req, res) => {
     const container_id = req.body.container_id; // ID of container (optional)
     const metadata = req.body.metadata || {}; // Additional metadata (optional)
     
-    // Support both new and old tracking formats
-    // - Old format requires referralId
-    // - New format uses metadata.referralDomain
-    const referralId = req.body.referralId;
-    if (!referralId && !metadata.referralDomain) {
-      // For backward compatibility, we still support the old format
-      // but we also accept the new format with referralDomain in metadata
-      return res.status(400).json({ 
-        error: "Either referralId or metadata.referralDomain is required" 
-      });
-    }
+    // Check if this is a referral link click or a regular book card click
+    const isReferralLink = req.body.isReferral === true;
     
-    // If using old format, add the referralId to metadata for consistency
-    if (referralId && !metadata.referralDomain) {
-      metadata.referralDomain = referralId;
+    // Only require referralDomain for actual external referral links
+    if (isReferralLink && !metadata.referralDomain) {
+      return res.status(400).json({ 
+        error: "metadata.referralDomain is required for referral links" 
+      });
     }
     
     // Record as an impression with type 'referral_click' and weight 1.0
