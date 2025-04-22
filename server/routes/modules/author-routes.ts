@@ -6,50 +6,12 @@ const router = Router();
 
 /**
  * GET /api/authors/:id
- * Get author details by ID
- * Public endpoint - no authentication required
+ * Direct ID-based access has been removed to prevent scraping attacks
  */
-router.get("/:id", async (req, res) => {
-  const authorId = parseInt(req.params.id);
-  if (isNaN(authorId)) {
-    return res.status(400).json({ error: "Invalid author ID" });
-  }
-
-  try {
-    const author = await dbStorage.getAuthor(authorId);
-    
-    if (!author) {
-      return res.status(404).json({ error: "Author not found" });
-    }
-    
-    // Get number of books published by this author
-    const books = await dbStorage.getBooksByAuthor(authorId);
-    
-    // Get number of followers for this author
-    const followerCount = await dbStorage.getFollowerCount(authorId);
-    
-    // Get total number of ratings across all books
-    let totalRatings = 0;
-    if (books && books.length > 0) {
-      const bookIds = books.map(book => book.id);
-      const allRatings = await dbStorage.getRatingsForBooks(bookIds);
-      totalRatings = allRatings.length;
-    }
-    
-    // Update response with enhanced data
-    const authorWithStats = {
-      ...author,
-      bookCount: books.length,
-      followerCount: followerCount,
-      totalRatings: totalRatings,
-      books: books
-    };
-    
-    return res.json(authorWithStats);
-  } catch (error) {
-    console.error("Error fetching author:", error);
-    return res.status(500).json({ error: "Failed to fetch author" });
-  }
+router.get("/:id([0-9]+)", async (req, res) => {
+  // This will catch direct numeric IDs only, like /authors/1
+  // Other routes like /:id/publisher will still work
+  return res.status(404).json({ error: "Not found - Direct ID access is not permitted" });
 });
 
 /**
@@ -107,9 +69,13 @@ router.get("/", async (req, res) => {
 /**
  * GET /api/authors/:id/publisher
  * Get publisher details for a specific author
- * Public endpoint - no authentication required
+ * Authentication required to prevent scraping attacks
  */
 router.get("/:id/publisher", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   const authorId = parseInt(req.params.id);
   if (isNaN(authorId)) {
     return res.status(400).json({ error: "Invalid author ID" });
@@ -139,9 +105,13 @@ router.get("/:id/publisher", async (req, res) => {
 /**
  * GET /api/authors/:id/bookshelves
  * Get bookshelves shared by an author
- * Public endpoint - no authentication required
+ * Authentication required to prevent scraping attacks
  */
 router.get("/:id/bookshelves", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   const authorId = parseInt(req.params.id);
   if (isNaN(authorId)) {
     return res.status(400).json({ error: "Invalid author ID" });
