@@ -13,28 +13,13 @@ import { CompletedBooksGrid } from "@/components/completed-books-grid";
 import { BookshelfCarousel } from "@/components/bookshelf-carousel";
 
 interface DashboardData {
-  user: {
-    username: string;
-    bio: string | null;
-    profileImageUrl: string | null;
-    followingCount: number;
-    followerCount: number;
-    socialMediaLinks?: any[];
-  };
-  readingStats: {
-    wishlisted: number;
-    completed: number;
-  };
-  averageRatings: {
-    overall: number;
-    enjoyment: number;
-    writing: number;
-    themes: number;
-    characters: number;
-    worldbuilding: number;
-  } | null;
-  recentReviews: any[];
-  recommendations: any[];
+  wishlistCount: number;
+  completedCount: number;
+  ratingCount: number;
+  followingCount: number;
+  isPublisher: boolean;
+  isAuthor: boolean;
+  recentActivity: any[];
 }
 
 export default function DashboardPage(): React.JSX.Element {
@@ -61,12 +46,13 @@ export default function DashboardPage(): React.JSX.Element {
     enabled: !!user,
   });
 
+  // Temporarily handling genres with 'as any' during migration to taxonomy system
   const uniqueGenres = wishlistedBooks
-    ? Array.from(new Set(wishlistedBooks.flatMap(book => book.genres || [])))
+    ? Array.from(new Set(wishlistedBooks.flatMap(book => (book as any).genres || [])))
     : [];
 
   const filteredBooks = wishlistedBooks?.filter(book =>
-    selectedGenre === "all" || (book.genres || []).includes(selectedGenre)
+    selectedGenre === "all" || ((book as any).genres || []).includes(selectedGenre)
   );
 
   if (isLoading) {
@@ -101,7 +87,7 @@ export default function DashboardPage(): React.JSX.Element {
     );
   }
 
-  const { readingStats, averageRatings, recentReviews, recommendations } = dashboardData;
+  const { wishlistCount, completedCount, followingCount } = dashboardData;
 
   return (
     <main className="container mx-auto px-4 py-8">
@@ -109,10 +95,10 @@ export default function DashboardPage(): React.JSX.Element {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              {dashboardData.user.profileImageUrl ? (
+              {user?.profileImageUrl ? (
                 <img
-                  src={dashboardData.user.profileImageUrl}
-                  alt={dashboardData.user.username}
+                  src={user.profileImageUrl}
+                  alt={user?.username || 'User'}
                   className="w-20 h-20 rounded-full object-cover"
                 />
               ) : (
@@ -121,19 +107,13 @@ export default function DashboardPage(): React.JSX.Element {
                 </div>
               )}
               <div>
-                <CardTitle className="text-2xl">{dashboardData.user.username}</CardTitle>
-                {dashboardData.user.bio && (
-                  <p className="text-muted-foreground mt-2">{dashboardData.user.bio}</p>
+                <CardTitle className="text-2xl">{user?.username || 'User'}</CardTitle>
+                {user?.bio && (
+                  <p className="text-muted-foreground mt-2">{user.bio}</p>
                 )}
                 <div className="flex gap-4 mt-2">
-                  <span>{dashboardData.user.followingCount} Following</span>
-                  <span>{dashboardData.user.followerCount} Followers</span>
+                  <span>{followingCount} Following</span>
                 </div>
-                {dashboardData.user.socialMediaLinks && dashboardData.user.socialMediaLinks.length > 0 && (
-                  <div className="mt-4">
-                    <SocialMediaLinks links={dashboardData.user.socialMediaLinks} />
-                  </div>
-                )}
               </div>
             </div>
           </CardHeader>
@@ -193,7 +173,7 @@ export default function DashboardPage(): React.JSX.Element {
               <CardTitle>Wishlist</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{readingStats.wishlisted}</div>
+              <div className="text-3xl font-bold">{wishlistCount}</div>
             </CardContent>
           </Card>
           <Card>
@@ -201,87 +181,12 @@ export default function DashboardPage(): React.JSX.Element {
               <CardTitle>Completed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{readingStats.completed}</div>
+              <div className="text-3xl font-bold">{completedCount}</div>
             </CardContent>
           </Card>
         </div>
 
-        {averageRatings && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Rating Stats</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="font-semibold">Overall Rating</span>
-                  <span>{averageRatings.overall.toFixed(1)}/5</span>
-                </div>
-                <Progress value={averageRatings.overall * 20} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Enjoyment (30%)</span>
-                  <span>{averageRatings.enjoyment.toFixed(1)}/5</span>
-                </div>
-                <Progress value={averageRatings.enjoyment * 20} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Writing (30%)</span>
-                  <span>{averageRatings.writing.toFixed(1)}/5</span>
-                </div>
-                <Progress value={averageRatings.writing * 20} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Themes (20%)</span>
-                  <span>{averageRatings.themes.toFixed(1)}/5</span>
-                </div>
-                <Progress value={averageRatings.themes * 20} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Characters (10%)</span>
-                  <span>{averageRatings.characters.toFixed(1)}/5</span>
-                </div>
-                <Progress value={averageRatings.characters * 20} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Worldbuilding (10%)</span>
-                  <span>{averageRatings.worldbuilding.toFixed(1)}/5</span>
-                </div>
-                <Progress value={averageRatings.worldbuilding * 20} className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {recentReviews.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Reviews</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recentReviews.map((review) => (
-                <ReviewCard 
-                  key={review.id} 
-                  review={{
-                    ...review,
-                    book: review.bookId ? {
-                      id: review.bookId,
-                      title: review.bookTitle || 'Unknown Title',
-                      coverImageUrl: review.bookCoverUrl
-                    } : undefined
-                  }} 
-                />
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {readingStats.completed > 0 && (
+        {completedCount > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Completed Books</CardTitle>
@@ -294,23 +199,6 @@ export default function DashboardPage(): React.JSX.Element {
                 books={completedBooks || []}
                 isLoading={isLoadingCompletedBooks}
               />
-            </CardContent>
-          </Card>
-        )}
-
-        {recommendations.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Recommended for You</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recommendations.map((book) => (
-                  <div key={book.id} className="relative pb-24">
-                    <BookCard book={book} />
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
         )}
