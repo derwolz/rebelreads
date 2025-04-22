@@ -114,7 +114,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
             <Link
               href={`/book-details?authorName=${encodeURIComponent(book.authorName || '')}&bookTitle=${encodeURIComponent(book.title)}`}
               className="flex items-center gap-2"
-              onClick={() => setOpen(false)}
+              // Don't close the popup when a book link is clicked
             >
               <img
                 src={
