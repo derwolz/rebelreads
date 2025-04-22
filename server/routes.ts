@@ -47,6 +47,8 @@ import objectStorageRoutes from "./routes/object-storage-routes";
 import testUploadRoutes from "./routes/test-upload-routes";
 import testBookImageRoutes from "./routes/test-book-image-routes";
 import testSirenedBucketRoutes from "./routes/test-sirened-bucket-routes";
+import dashboardRoutes from "./routes/modules/dashboard-routes";
+import wishlistRoutes from "./routes/modules/wishlist-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -174,6 +176,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register login verification routes
   app.use("/api", verifyLoginRoutes);
+  
+  // Register dashboard and wishlist routes
+  app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api", wishlistRoutes);
   
   // Register content reports routes directly
   registerContentReportsRoutes(app);

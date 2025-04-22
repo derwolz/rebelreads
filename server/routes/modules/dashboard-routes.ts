@@ -15,7 +15,7 @@ router.get("/", async (req: Request, res: Response) => {
   
   try {
     // Get user's wishlist count
-    const wishlistBooks = await dbStorage.getWishlistBooks(req.user!.id);
+    const wishlistBooks = await dbStorage.getWishlistedBooks(req.user!.id);
     
     // Get user's completed books count
     const completedBooks = await dbStorage.getCompletedBooks(req.user!.id);
@@ -23,24 +23,24 @@ router.get("/", async (req: Request, res: Response) => {
     // Get user's ratings count
     const userRatings = await dbStorage.getUserRatings(req.user!.id);
     
-    // Get authors the user follows
-    const followedAuthors = await dbStorage.getFollowedAuthors(req.user!.id);
+    // Get authors the user follows count
+    const followingCount = await dbStorage.getFollowingCount(req.user!.id);
     
     // Get the user's publisher status
-    const publisherStatus = await dbStorage.getPublisherStatus(req.user!.id);
+    const publisherStatus = await dbStorage.getPublisherByUserId(req.user!.id);
     
     // Get the user's author status
     const author = await dbStorage.getAuthorByUserId(req.user!.id);
     const isAuthor = !!author;
     
-    // Get the user's recent activity (impressions, ratings, etc.)
-    const recentActivity = await dbStorage.getUserRecentActivity(req.user!.id, 10);
+    // Create recent activity array (empty for now)
+    const recentActivity = [];
     
     const dashboardData = {
       wishlistCount: wishlistBooks.length,
       completedCount: completedBooks.length,
       ratingCount: userRatings.length,
-      followingCount: followedAuthors.length,
+      followingCount: followingCount,
       isPublisher: !!publisherStatus,
       isAuthor: isAuthor,
       recentActivity,

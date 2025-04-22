@@ -62,7 +62,7 @@ router.get("/wishlist/books", async (req, res) => {
   }
   
   try {
-    const books = await dbStorage.getWishlistBooks(req.user!.id);
+    const books = await dbStorage.getWishlistedBooks(req.user!.id);
     res.json(books);
   } catch (error: any) {
     console.error(`Error getting wishlist books:`, error);
