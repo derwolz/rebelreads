@@ -321,27 +321,44 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         // For updates, send only changed fields as JSON
         const changedFields: Record<string, any> = {};
 
-        Object.entries(data).forEach(([key, value]) => {
-          const bookValue = book[key as keyof Book];
-
-          // Skip unchanged values
-          if (value === bookValue) return;
-
-          // Skip empty strings
-          if (value === "") return;
-
-          // Handle special cases
-          if (key === "cover" && value instanceof File) {
-            changedFields[key] = value;
-          } else if (Array.isArray(value)) {
-            if (JSON.stringify(value) !== JSON.stringify(bookValue)) {
-              changedFields[key] = value;
+        try {
+          Object.entries(data).forEach(([key, value]) => {
+            try {
+              const bookValue = book[key as keyof Book];
+  
+              // Skip unchanged values
+              if (value === bookValue) return;
+  
+              // Skip empty strings
+              if (value === "") return;
+  
+              // Handle special cases
+              if (key === "cover" && value instanceof File) {
+                changedFields[key] = value;
+              } else if (Array.isArray(value)) {
+                try {
+                  const valueJson = JSON.stringify(value);
+                  const bookValueJson = JSON.stringify(bookValue);
+                  if (valueJson !== bookValueJson) {
+                    changedFields[key] = value;
+                  }
+                } catch (jsonError) {
+                  console.error(`Error comparing array field ${key}:`, jsonError);
+                  // Fall back to direct assignment
+                  changedFields[key] = value;
+                }
+              } else if (value !== null && value !== undefined) {
+                changedFields[key] = value;
+              }
+            } catch (fieldError) {
+              console.error(`Error processing field ${key} for update:`, fieldError);
+              // Skip problematic field
             }
-          } else if (value !== null && value !== undefined) {
-            changedFields[key] = value;
-          }
-        });
-
+          });
+        } catch (error) {
+          console.error("Error processing changed fields:", error);
+        }
+  
         // If we have image files to upload, use FormData
         const hasFileUploads = changedFields.cover instanceof File;
         
@@ -389,32 +406,65 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
       // For new books, keep existing FormData logic
       const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === "cover" && value instanceof File) {
-          formData.append(key, value);
-        } else if (key === "bookImages" && typeof value === "object") {
-          // Handle book images
-          console.log("Processing bookImages in formData:", value);
-          Object.entries(value as Record<string, BookImageFile>).forEach(
-            ([imageType, imageData]) => {
-              console.log(
-                `Processing image type: ${imageType}, has file:`,
-                !!imageData.file,
+      
+      try {
+        Object.entries(data).forEach(([key, value]) => {
+          try {
+            if (key === "cover" && value instanceof File) {
+              formData.append(key, value);
+            } else if (key === "bookImages" && typeof value === "object") {
+              // Handle book images
+              console.log("Processing bookImages in formData:", value);
+              Object.entries(value as Record<string, BookImageFile>).forEach(
+                ([imageType, imageData]) => {
+                  console.log(
+                    `Processing image type: ${imageType}, has file:`,
+                    !!imageData.file,
+                  );
+                  if (imageData.file) {
+                    formData.append(`bookImage_${imageType}`, imageData.file);
+                    formData.append(`bookImageType_${imageType}`, imageType);
+                    console.log(`Added image file for ${imageType} to formData`);
+                  }
+                },
               );
-              if (imageData.file) {
-                formData.append(`bookImage_${imageType}`, imageData.file);
-                formData.append(`bookImageType_${imageType}`, imageType);
-                console.log(`Added image file for ${imageType} to formData`);
+            // We no longer need to handle book files since we only track format availability
+            } else if (Array.isArray(value)) {
+              try {
+                const jsonString = JSON.stringify(value);
+                formData.append(key, jsonString);
+                console.log(`Serialized array for ${key}, length: ${value.length}`);
+              } catch (jsonError) {
+                console.error(`Error serializing array field ${key}:`, jsonError, value);
+                // Handle the error by creating a safe version of the array
+                const safeArray = value.map(item => {
+                  if (typeof item === 'object' && item !== null) {
+                    // Create a safe copy of object items
+                    const safeItem = {};
+                    Object.entries(item).forEach(([k, v]) => {
+                      if (typeof v !== 'function' && k !== 'file') {
+                        // @ts-ignore
+                        safeItem[k] = v;
+                      }
+                    });
+                    return safeItem;
+                  }
+                  return item;
+                });
+                formData.append(key, JSON.stringify(safeArray));
               }
-            },
-          );
-        // We no longer need to handle book files since we only track format availability
-        } else if (Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else if (value !== null && value !== undefined && value !== "") {
-          formData.append(key, value.toString());
-        }
-      });
+            } else if (value !== null && value !== undefined && value !== "") {
+              formData.append(key, value.toString());
+            }
+          } catch (fieldError) {
+            console.error(`Error processing field ${key}:`, fieldError);
+            // Skip problematic field but continue with the rest
+          }
+        });
+      } catch (formDataError) {
+        console.error("Error creating FormData:", formDataError);
+        throw new Error(`Failed to create form data: ${formDataError instanceof Error ? formDataError.message : String(formDataError)}`);
+      }
 
       const response = await fetch("/api/books", {
         method: "POST",

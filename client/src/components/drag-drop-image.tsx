@@ -107,29 +107,55 @@ export function DragDropImage({
       return;
     }
     
-    // Create an Image object to check dimensions
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    
-    img.onload = () => {
-      // Process or validate the image
-      processImageForUpload(img, file, objectUrl);
-    };
-    
-    img.onerror = () => {
-      const errorMessage = "Failed to load image";
+    // Add a try/catch to handle potential errors when creating the object URL
+    try {
+      // Create an Image object to check dimensions
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        // Process or validate the image
+        try {
+          processImageForUpload(img, file, objectUrl);
+        } catch (error) {
+          console.error("Error processing image:", error);
+          const errorMessage = "Failed to process image: " + (error instanceof Error ? error.message : String(error));
+          setError(errorMessage);
+          toast({
+            title: "Image processing error",
+            description: "Failed to process the image. Please try another one.",
+            variant: "destructive"
+          });
+          onChange(null as any, true, errorMessage);
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+      
+      img.onerror = () => {
+        const errorMessage = "Failed to load image";
+        setError(errorMessage);
+        toast({
+          title: "Image error",
+          description: "Failed to process the image. Please try another one.",
+          variant: "destructive"
+        });
+        // Pass null as the file to free the slot
+        onChange(null as any, true, errorMessage);
+        URL.revokeObjectURL(objectUrl);
+      };
+      
+      img.src = objectUrl;
+    } catch (error) {
+      console.error("Error creating object URL:", error);
+      const errorMessage = "Error creating image preview: " + (error instanceof Error ? error.message : String(error));
       setError(errorMessage);
       toast({
         title: "Image error",
         description: "Failed to process the image. Please try another one.",
         variant: "destructive"
       });
-      // Pass null as the file to free the slot
       onChange(null as any, true, errorMessage);
-      URL.revokeObjectURL(objectUrl);
-    };
-    
-    img.src = objectUrl;
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
