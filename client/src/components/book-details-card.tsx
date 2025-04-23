@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDate } from "@/lib/utils";
 // Importing only the icons we need
 import { FiTwitter, FiInstagram, FiFacebook, FiLinkedin, FiGithub } from "react-icons/fi";
+import { ReferralButton } from "./referral-button";
 
 interface BookDetailsCardProps {
   book: Book | null;
@@ -255,39 +256,13 @@ export function BookDetailsCard({ book, className }: BookDetailsCardProps) {
               <h4 className="text-sm font-medium mb-2">Where to Buy</h4>
               <div className="flex flex-wrap gap-2">
                 {book.referralLinks.map((link: any, idx: number) => (
-                  <a 
+                  <ReferralButton
                     key={idx}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-xs bg-muted hover:bg-muted/80 rounded-md px-3 py-1 transition-colors"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      
-                      // Extract domain from the URL for analytics
-                      let domain = "unknown";
-                      try {
-                        const url = new URL(link.url);
-                        domain = url.hostname;
-                      } catch (error) {
-                        console.error("Error extracting domain from URL:", link.url);
-                      }
-                      
-                      // Record click-through on referral link with domain information
-                      await apiRequest("POST", `/api/books/${book.id}/click-through`, {
-                        source: "referral-link",
-                        referrer: window.location.pathname,
-                        isReferral: true, // Flag as a referral click
-                        metadata: {
-                          referralDomain: domain,
-                          retailer: link.retailer
-                        }
-                      });
-                    }}
-                  >
-                    <span className="mr-1">{link.customName || link.retailer}</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                    bookId={book.id}
+                    link={link}
+                    sourceContext="book-details"
+                    className="text-xs bg-muted hover:bg-muted/80 rounded-md px-3 py-1 transition-colors"
+                  />
                 ))}
               </div>
             </div>
