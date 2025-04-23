@@ -33,7 +33,7 @@ const upload = multer({
 const multipleImageUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB size limit
+    fileSize: 20 * 1024 * 1024, // 20MB size limit (increased for full resolution images)
   },
   fileFilter: (req, file, cb) => {
     // Only allow image files
@@ -43,6 +43,7 @@ const multipleImageUpload = multer({
     cb(new Error('Only image files are allowed'));
   }
 }).fields([
+  { name: 'bookImage_full', maxCount: 1 },           // The new high-res source image
   { name: 'bookImage_book-detail', maxCount: 1 },
   { name: 'bookImage_background', maxCount: 1 },
   { name: 'bookImage_spine', maxCount: 1 },
@@ -402,20 +403,19 @@ router.post("/", multipleImageUpload, async (req, res) => {
     const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] };
     const bookImageEntries = [];
 
-    // Track if we have a book-detail image to use for auto-generation
-    let bookDetailFile: Express.Multer.File | null = null;
-    let bookDetailUrl: string = '';
+    // Track if we have a full image to use for auto-generation
+    let fullImageFile: Express.Multer.File | null = null;
+    let fullImageUrl: string = '';
 
-    // First pass: process the uploaded files and look for book-detail
+    // First pass: process the uploaded files and look for the full high-res image
     for (const fieldName in uploadedFiles) {
       if (fieldName.startsWith('bookImage_')) {
         const imageType = fieldName.replace('bookImage_', '');
         const file = uploadedFiles[fieldName][0]; // Get first file from array
         
-        // Store the book-detail file for potential auto-generation
-        if (imageType === 'book-detail') {
-          bookDetailFile = file;
-          // We'll upload the file in the next pass with the book ID
+        // Store the full image file for resizing
+        if (imageType === 'full') {
+          fullImageFile = file;
         }
       }
     }
@@ -435,20 +435,58 @@ router.post("/", multipleImageUpload, async (req, res) => {
           const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, book.id);
           const imageUrl = await sirenedImageBucket.getPublicUrl(storageKey);
           
-          // Store book-detail URL for potential auto-generation
-          if (imageType === 'book-detail') {
-            bookDetailUrl = imageUrl;
+          // Store full image URL for auto-generation
+          if (imageType === 'full') {
+            fullImageUrl = imageUrl;
           }
           
-          // Add to database with imageType
+          // Add to database with imageType and correct dimensions
+          let width = 0;
+          let height = 0;
+          switch (imageType) {
+            case 'full':
+              width = 2560;
+              height = 1600;
+              break;
+            case 'book-detail':
+              width = 773;
+              height = 480;
+              break;
+            case 'background':
+              width = 1300;
+              height = 1500;
+              break;
+            case 'spine':
+              width = 56;
+              height = 212;
+              break;
+            case 'hero':
+              width = 1500;
+              height = 600;
+              break;
+            case 'book-card':
+              width = 260;
+              height = 435;
+              break;
+            case 'mini':
+              width = 64;
+              height = 40;
+              break;
+            default:
+              // Default sizes if not recognized
+              width = 100;
+              height = 100;
+          }
+          
           const bookImage = await dbStorage.addBookImage({
             bookId: book.id,
             imageUrl,
             imageType,
-            storageKey,
-            width: null, // These could be calculated but we're skipping for now
-            height: null,
+            width,
+            height,
+            sizeKb: Math.round(file.size / 1024),
             createdAt: new Date(),
+            updatedAt: new Date(),
           });
           
           bookImageEntries.push(bookImage);
@@ -459,11 +497,30 @@ router.post("/", multipleImageUpload, async (req, res) => {
       }
     }
 
-    // Generate missing image types if book-detail is available
-    if (bookDetailFile && bookDetailUrl) {
+    // Generate derived images from the full image if available
+    if (fullImageFile && fullImageUrl) {
       try {
-        // Call function to auto-generate other image types
-        const generatedImages = await sirenedImageBucket.generateAdditionalBookImages(bookDetailFile, book.id);
+        // Call function to auto-generate other image types from the full image
+        const generatedImages = await sirenedImageBucket.generateAdditionalBookImages(fullImageFile, book.id);
+        
+        // Add book-detail image to database if generated
+        if (generatedImages.bookDetail) {
+          try {
+            const bookDetailImage = await dbStorage.addBookImage({
+              bookId: book.id,
+              imageUrl: generatedImages.bookDetail.publicUrl,
+              imageType: 'book-detail',
+              width: 773,  // New width for book-detail
+              height: 480, // New height for book-detail
+              sizeKb: Math.round(fullImageFile.size / 4), // Estimate size based on original
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            bookImageEntries.push(bookDetailImage);
+          } catch (err) {
+            console.error(`Error adding book-detail image to database:`, err);
+          }
+        }
         
         // Add book-card image to database if generated
         if (generatedImages.bookCard) {
@@ -472,10 +529,11 @@ router.post("/", multipleImageUpload, async (req, res) => {
               bookId: book.id,
               imageUrl: generatedImages.bookCard.publicUrl,
               imageType: 'book-card',
-              storageKey: generatedImages.bookCard.storageKey,
-              width: 256,  // Preset width and height based on our resize function
-              height: 440,
+              width: 260,  // New width for book-card
+              height: 435, // New height for book-card
+              sizeKb: Math.round(fullImageFile.size / 8), // Estimate size based on original
               createdAt: new Date(),
+              updatedAt: new Date(),
             });
             bookImageEntries.push(bookCardImage);
           } catch (err) {
@@ -490,10 +548,11 @@ router.post("/", multipleImageUpload, async (req, res) => {
               bookId: book.id,
               imageUrl: generatedImages.mini.publicUrl,
               imageType: 'mini',
-              storageKey: generatedImages.mini.storageKey,
-              width: 48,  // Preset width and height based on our resize function
-              height: 64,
+              width: 64,   // New width for mini
+              height: 40,  // New height for mini
+              sizeKb: Math.round(fullImageFile.size / 16), // Estimate size based on original
               createdAt: new Date(),
+              updatedAt: new Date(),
             });
             bookImageEntries.push(miniImage);
           } catch (err) {
@@ -501,7 +560,7 @@ router.post("/", multipleImageUpload, async (req, res) => {
           }
         }
       } catch (genError) {
-        console.error(`Error generating additional book images:`, genError);
+        console.error(`Error generating additional book images from full image:`, genError);
       }
     }
 
