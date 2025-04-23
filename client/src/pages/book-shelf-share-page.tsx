@@ -43,17 +43,21 @@ export default function BookShelfSharePage() {
     username = username.replace(/\+/g, ' ');
     shelfname = shelfname.replace(/\+/g, ' ');
     
+    // Log parameters for debugging
+    console.log("BookShelfSharePage parameters:", { username, shelfname });
+    
   } catch (error) {
     console.error("Error parsing URL parameters:", error);
     // Fallback to empty values, which will trigger the redirect in useEffect
   }
   
   useEffect(() => {
-    // If username or shelfname is not provided, redirect to the user's shelves
+    // If username or shelfname is not provided, log it but don't redirect
     if (!username || !shelfname) {
-      navigate("/profile?tab=bookshelves");
+      console.log("Missing parameters in book-shelf-share URL:", { username, shelfname });
+      // No redirect here - just log the issue
     }
-  }, [username, shelfname, navigate]);
+  }, [username, shelfname]);
 
   // Function to handle sharing the bookshelf
   const handleShare = async () => {

@@ -60,8 +60,10 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   }
   
   // Fetch the shelf and its books with robust parameter encoding - using the correct API endpoint
-  const { data: shelfData, isLoading: isShelfLoading, refetch: refetchShelf } = useQuery<ShelfData>({
+  const { data: shelfData, isLoading: isShelfLoading, error, refetch: refetchShelf } = useQuery<ShelfData>({
     queryKey: [`/api/book-shelf?username=${encodeURIComponent(username)}&shelfname=${encodeURIComponent(shelfName)}`],
+    enabled: !!username && !!shelfName, // Only run query if we have both parameters
+    retry: 3, // Retry failed requests up to 3 times
   });
 
   // Get the books from the shelf data with safety check for undefined
@@ -185,32 +187,50 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
 
   const { theme } = useTheme();
 
+  // Log any query errors
+  useEffect(() => {
+    if (error) {
+      console.error("Error fetching bookshelf data:", error);
+    }
+  }, [error]);
+
   return (
     <div className={`${className} bg-background w-full max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full overflow-hidden`}>
       
+      {/* Loading indicator */}
+      {isShelfLoading && (
+        <div className="flex flex-col items-center justify-center w-full h-64">
+          <div className="w-16 h-16 border-t-4 border-b-4 border-primary rounded-full animate-spin"></div>
+          <p className="mt-4 text-foreground/80">Loading bookshelf...</p>
+        </div>
+      )}
       
-      {/* Main content area */}
-      <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 w-full overflow-x-hidden">
-       
-        {/* Left column: Book details and comments */}
-        <div className="w-full lg:w-2/3 flex relative ">
-
-          
-          
-          
-          {/* Book Details Card that shows the selected book */}
-          <div 
-            className={`transition-all duration-500 `}
-          >
-            <div className="">
-
-             
-
-
-              
+      {/* Error state */}
+      {!isShelfLoading && error && (
+        <div className="w-full py-8 px-4 text-center">
+          <div className="mb-4 text-red-500">
+            <X className="h-16 w-16 mx-auto" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Could not load bookshelf</h2>
+          <p className="text-foreground/80 mb-4">The bookshelf you're looking for might not exist or is not shared.</p>
+          <Button onClick={() => window.location.href = "/dashboard"}>
+            Go to Dashboard
+          </Button>
+        </div>
+      )}
+      
+      {/* Main content area - only show when we have data and not loading */}
+      {!isShelfLoading && !error && shelfData && (
+        <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 w-full overflow-x-hidden">
          
-              
-              {/* Book details */}
+          {/* Left column: Book details and comments */}
+          <div className="w-full lg:w-2/3 flex relative ">
+            
+            {/* Book Details Card that shows the selected book */}
+            <div className="transition-all duration-500">
+              <div className="">
+                
+                {/* Book details */}
               <div className="flex h-full bg-muted border-gray-800 border flex-col  md:flex-row rounded-lg max-w-full">
 
 
@@ -524,25 +544,30 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
         </div>
       </div>
-
+      )}
       
-      {/* Separator */}
-      <div className="w-full border-t border-border my-4"></div>
-      {/** Place the bookshelf name here */}
-      <div className="relative">
-        <h4 className="font-medium absolute w-full z-20 text-foregound">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
-      
-        {/* Book Rack at the bottom */}
-        <div className="px-4">
-          <BookRackShelf 
-            books={books}
-            isLoading={isShelfLoading}
-            onSelectBook={handleSelectBook}
-            selectedBookIndex={selectedBookIndex}
-            className="mx-auto max-w-4xl"
-          />
-        </div>
-      </div>
+      {/* Show separator and book rack only when data is loaded */}
+      {!isShelfLoading && !error && shelfData && (
+        <>
+          {/* Separator */}
+          <div className="w-full border-t border-border my-4"></div>
+          {/** Place the bookshelf name here */}
+          <div className="relative">
+            <h4 className="font-medium absolute w-full z-20 text-foregound">{ shelfData?.shelf?.title || "Book Shelf Name" }</h4>
+          
+            {/* Book Rack at the bottom */}
+            <div className="px-4">
+              <BookRackShelf 
+                books={books}
+                isLoading={isShelfLoading}
+                onSelectBook={handleSelectBook}
+                selectedBookIndex={selectedBookIndex}
+                className="mx-auto max-w-4xl"
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
