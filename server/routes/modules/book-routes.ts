@@ -785,7 +785,31 @@ router.patch("/:id", async (req, res) => {
       return res.status(400).json({ error: "Invalid book ID" });
     }
     
+    // Handle authorname and bookname parameters (if provided)
+    if (req.body.authorname && req.body.bookname) {
+      console.log(`Looking up book by author name and book name: ${req.body.authorname}, ${req.body.bookname}`);
+      
+      // Find author by name
+      const authorByName = await dbStorage.getAuthorByName(req.body.authorname);
+      if (!authorByName) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+      
+      // Find book by author and title
+      const bookByAuthorAndTitle = await dbStorage.getBookByAuthorAndTitle(authorByName.id, req.body.bookname);
+      if (!bookByAuthorAndTitle) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      // Use these IDs instead of path parameters
+      console.log(`Found matching book with ID: ${bookByAuthorAndTitle.id}`);
+      if (bookByAuthorAndTitle.id !== bookId) {
+        console.log(`Note: Book ID in URL (${bookId}) doesn't match book found by name (${bookByAuthorAndTitle.id})`);
+      }
+    }
+    
     // Get the current book
+    console.log(`Fetching book with ID: ${bookId}`);
     const book = await dbStorage.getBook(bookId);
     if (!book) {
       return res.status(404).json({ error: "Book not found" });
@@ -799,25 +823,24 @@ router.patch("/:id", async (req, res) => {
     
     // Verify ownership
     if (book.authorId !== author.id) {
-      return res.status(403).json({ error: "Not authorized" });
+      return res.status(403).json({ error: "Not authorized - you don't own this book" });
     }
     
     console.log("PATCH request for book:", bookId);
     console.log("Update fields:", Object.keys(req.body));
     
     // Extract the updated fields from request body
-    const updates = { ...req.body };
+    // Remove non-book fields to avoid DB errors
+    const { authorname, bookname, genreTaxonomies, ...updates } = req.body;
     
-    // Process taxonomy data separately if present
-    const taxonomies = updates.genreTaxonomies;
-    delete updates.genreTaxonomies;
+    console.log("Processing update with cleaned fields:", Object.keys(updates));
     
     // Update the book in database
     const updatedBook = await dbStorage.updateBook(bookId, updates);
     
     // Update taxonomies if provided
-    if (taxonomies && Array.isArray(taxonomies)) {
-      await dbStorage.updateBookTaxonomies(bookId, taxonomies);
+    if (genreTaxonomies && Array.isArray(genreTaxonomies)) {
+      await dbStorage.updateBookTaxonomies(bookId, genreTaxonomies);
     }
     
     // Return success with updated book
