@@ -99,6 +99,7 @@ export const dbStorage = {
   updateInternalDetails: bookStorage.updateInternalDetails.bind(bookStorage),
   getRecommendations: bookStorage.getRecommendations.bind(bookStorage),
   getComingSoonBooks: bookStorage.getComingSoonBooks.bind(bookStorage),
+  addBookImage: bookStorage.addBookImage.bind(bookStorage),
 
   // Analytics
   recordBookImpression:

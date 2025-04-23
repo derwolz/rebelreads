@@ -9,6 +9,7 @@ import { objectStorage } from './object-storage';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { nanoid } from 'nanoid';
+import sharp from 'sharp';
 
 // Define interface for file objects (like Express multer files)
 interface UploadedFile {

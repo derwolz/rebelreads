@@ -41,6 +41,7 @@ export interface IBookStorage {
   updateInternalDetails(id: number, details: string): Promise<Book>;
   getRecommendations(userId: number, limit?: number): Promise<Book[]>;
   getComingSoonBooks(limit?: number): Promise<Book[]>; // New method for upcoming unreleased books
+  addBookImage(image: Omit<BookImage, "id">): Promise<BookImage>; // For uploading book images
 }
 
 export class BookStorage implements IBookStorage {
@@ -728,6 +729,22 @@ export class BookStorage implements IBookStorage {
       .where(eq(books.id, id))
       .returning();
     return book;
+  }
+
+  async addBookImage(image: Omit<BookImage, "id">): Promise<BookImage> {
+    try {
+      console.log(`Adding book image to database: ${JSON.stringify(image)}`);
+      const [newImage] = await db
+        .insert(bookImages)
+        .values(image)
+        .returning();
+      
+      console.log(`Successfully added book image: ${JSON.stringify(newImage)}`);
+      return newImage;
+    } catch (error) {
+      console.error(`Error adding book image:`, error);
+      throw error;
+    }
   }
 
   async getBookByAuthorAndTitle(authorName: string, title: string): Promise<Book | undefined> {
