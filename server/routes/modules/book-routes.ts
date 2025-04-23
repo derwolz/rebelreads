@@ -976,6 +976,17 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
       // Track if we have a full image to use for auto-generation
       let fullImageFile: Express.Multer.File | null = null;
       let fullImageUrl: string = '';
+      let fullImageChanged = false;
+      
+      // Check if book already has a full-size image
+      let existingFullImageUrl: string | null = null;
+      if (book.images && book.images.length > 0) {
+        const existingFullImage = book.images.find(img => img.imageType === 'full');
+        if (existingFullImage) {
+          existingFullImageUrl = existingFullImage.imageUrl;
+          console.log(`Found existing full image URL: ${existingFullImageUrl}`);
+        }
+      }
       
       // First pass: identify the full-size image if it exists
       for (const fieldName in files) {
@@ -987,6 +998,7 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
           if (imageType === 'full') {
             console.log("Found full size image for book ID:", bookId);
             fullImageFile = file;
+            fullImageChanged = true;
           }
         }
       }
@@ -1111,6 +1123,117 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
           }
         } catch (error) {
           console.error("Error auto-generating smaller image variants:", error);
+        }
+      } 
+      // If full image changed but we don't have the file anymore (e.g., only URL known),
+      // use the regenerateDerivedImages function that fetches the image from storage
+      else if (fullImageChanged && fullImageUrl) {
+        try {
+          console.log(`Full image changed. Regenerating derived images from URL: ${fullImageUrl}`);
+          
+          // Regenerate derived images from the full image URL
+          const regeneratedImages = await sirenedImageBucket.regenerateDerivedImages(bookId, fullImageUrl);
+          
+          // Add book-card image to database if regenerated
+          if (regeneratedImages.bookCard) {
+            try {
+              const bookCardImage = await dbStorage.addBookImage({
+                bookId: bookId,
+                imageUrl: regeneratedImages.bookCard.publicUrl,
+                imageType: 'book-card',
+                width: 260, 
+                height: 435,
+                sizeKb: 40, // Estimate size
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+              console.log("Regenerated book-card image saved:", regeneratedImages.bookCard.publicUrl);
+            } catch (err) {
+              console.error(`Error adding regenerated book-card image to database:`, err);
+            }
+          }
+          
+          // Add mini image to database if regenerated
+          if (regeneratedImages.mini) {
+            try {
+              const miniImage = await dbStorage.addBookImage({
+                bookId: bookId,
+                imageUrl: regeneratedImages.mini.publicUrl,
+                imageType: 'mini',
+                width: 96,
+                height: 60,
+                sizeKb: 15, // Estimate size
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+              console.log("Regenerated mini image saved:", regeneratedImages.mini.publicUrl);
+            } catch (err) {
+              console.error(`Error adding regenerated mini image to database:`, err);
+            }
+          }
+        } catch (error) {
+          console.error("Error regenerating derived images:", error);
+        }
+      }
+      // If no full image was uploaded but we have an existing one and need to regenerate derived images
+      else if (existingFullImageUrl) {
+        // Find if any derived image types were directly uploaded, in which case we don't need to regenerate them
+        const uploadedImageTypes = new Set<string>();
+        for (const fieldName in files) {
+          if (fieldName.startsWith('bookImage_')) {
+            const imageType = fieldName.replace('bookImage_', '');
+            uploadedImageTypes.add(imageType);
+          }
+        }
+        
+        // Only regenerate if there's no direct upload for these types
+        if (!uploadedImageTypes.has('mini') || !uploadedImageTypes.has('book-card')) {
+          try {
+            console.log(`Using existing full image to regenerate derived images: ${existingFullImageUrl}`);
+            
+            // Regenerate derived images from the existing full image URL
+            const regeneratedImages = await sirenedImageBucket.regenerateDerivedImages(bookId, existingFullImageUrl);
+            
+            // Only add book-card image to database if it wasn't directly uploaded
+            if (!uploadedImageTypes.has('book-card') && regeneratedImages.bookCard) {
+              try {
+                const bookCardImage = await dbStorage.addBookImage({
+                  bookId: bookId,
+                  imageUrl: regeneratedImages.bookCard.publicUrl,
+                  imageType: 'book-card',
+                  width: 260,
+                  height: 435,
+                  sizeKb: 40, // Estimate size
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+                console.log("Regenerated book-card image saved:", regeneratedImages.bookCard.publicUrl);
+              } catch (err) {
+                console.error(`Error adding regenerated book-card image to database:`, err);
+              }
+            }
+            
+            // Only add mini image to database if it wasn't directly uploaded
+            if (!uploadedImageTypes.has('mini') && regeneratedImages.mini) {
+              try {
+                const miniImage = await dbStorage.addBookImage({
+                  bookId: bookId,
+                  imageUrl: regeneratedImages.mini.publicUrl,
+                  imageType: 'mini',
+                  width: 96,
+                  height: 60,
+                  sizeKb: 15, // Estimate size
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                });
+                console.log("Regenerated mini image saved:", regeneratedImages.mini.publicUrl);
+              } catch (err) {
+                console.error(`Error adding regenerated mini image to database:`, err);
+              }
+            }
+          } catch (error) {
+            console.error("Error regenerating derived images from existing full image:", error);
+          }
         }
       }
     }

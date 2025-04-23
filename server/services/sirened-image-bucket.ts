@@ -376,6 +376,50 @@ class SirenedImageBucket {
       return result;
     }
   }
+  
+  /**
+   * Regenerate derived images (book-card, mini) when the full-size image changes
+   * Fetches the full image from storage and generates all required derived formats
+   * @param bookId The book ID for which to regenerate derived images
+   * @param fullImageUrl URL of the full-size image
+   * @returns Object containing storage keys and public URLs for regenerated images
+   */
+  async regenerateDerivedImages(bookId: number, fullImageUrl: string) {
+    if (!fullImageUrl) {
+      throw new Error('Full image URL is required to regenerate derived images');
+    }
+    
+    console.log(`Regenerating derived images for book ID ${bookId} from full image: ${fullImageUrl}`);
+    
+    try {
+      // Fetch the full-size image from storage
+      const response = await fetch(fullImageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch full image: ${response.status} ${response.statusText}`);
+      }
+      
+      const buffer = await response.arrayBuffer();
+      
+      // Create a pseudo-file object for the image processing
+      const fullImageFile: UploadedFile = {
+        fieldname: 'regenerated_full_image',
+        originalname: `full-${bookId}-regenerated.webp`,
+        encoding: '7bit',
+        mimetype: 'image/webp',
+        buffer: Buffer.from(buffer),
+        size: buffer.byteLength
+      };
+      
+      // Use the existing function to generate the derived images
+      const generatedImages = await this.generateAdditionalBookImages(fullImageFile, bookId);
+      console.log(`Successfully regenerated derived images for book ID ${bookId}`);
+      
+      return generatedImages;
+    } catch (error) {
+      console.error(`Error regenerating derived images for book ID ${bookId}:`, error);
+      throw error;
+    }
+  }
 }
 
 // Create singleton instance
