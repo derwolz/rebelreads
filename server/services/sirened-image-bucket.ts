@@ -326,10 +326,10 @@ class SirenedImageBucket {
       };
       
       // ----------------------------------------------------------------
-      // Generate mini image (96x60)
+      // Generate mini image (64x40)
       // ----------------------------------------------------------------
       const miniBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(96, 60, imageOptions)
+        .resize(64, 40, imageOptions)
         .webp({ quality: 95 }) // Higher quality for mini images
         .toBuffer();
       

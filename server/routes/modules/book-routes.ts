@@ -1037,8 +1037,8 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
                 height = 435;
                 break;
               case 'mini':
-                width = 64;
-                height = 40;
+                width = 96;
+                height = 60;
                 break;
               default:
                 width = 100;
@@ -1098,8 +1098,8 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
                 bookId: bookId,
                 imageUrl: generatedImages.mini.publicUrl,
                 imageType: 'mini',
-                width: 64,
-                height: 40,
+                width: 96,
+                height: 60,
                 sizeKb: Math.round(fullImageFile.size / 32), // Estimate size
                 createdAt: new Date(),
                 updatedAt: new Date(),
