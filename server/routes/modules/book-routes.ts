@@ -674,7 +674,7 @@ router.delete("/:id", async (req, res) => {
     }
     
     // Delete the book
-    await dbStorage.deleteBook(bookId);
+    await dbStorage.deleteBook(bookId, author.id);
     
     res.status(200).json({ message: "Book deleted successfully" });
   } catch (error: any) {
