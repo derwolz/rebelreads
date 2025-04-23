@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../../db";
-import { bookImpressions } from "@shared/schema";
+import { bookImpressions, referralClicks } from "@shared/schema";
 import { and, eq, sql, count, desc, inArray, like, isNotNull } from "drizzle-orm";
 
 const router = Router();
@@ -35,8 +35,8 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid book ID in query" });
     }
     
-    // Query to get referral source data by context (where they were sent from)
-    const referralsByContext = await db
+    // LEGACY: Query for old referral clicks still in bookImpressions table (backwards compatibility)
+    const legacyReferralsByContext = await db
       .select({
         context: bookImpressions.context,
         count: count(),
@@ -52,8 +52,75 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       .orderBy(desc(count()))
       .execute();
     
-    // Query to get referral domain data from metadata (where clicks go to)
-    const referralsByDomain = await db
+    // NEW: Query for referral source data by origin context (where clicks came from)
+    const newReferralsBySource = await db
+      .select({
+        sourceContext: referralClicks.sourceContext,
+        count: count(),
+      })
+      .from(referralClicks)
+      .where(
+        bookIds.length > 0 ? inArray(referralClicks.bookId, bookIds) : sql`1=1`
+      )
+      .groupBy(referralClicks.sourceContext)
+      .orderBy(desc(count()))
+      .execute();
+    
+    // NEW: Query for domain data (actual destination domains)
+    const domainData = await db
+      .select({
+        targetDomain: referralClicks.targetDomain,
+        targetSubdomain: referralClicks.targetSubdomain,
+        count: count(),
+      })
+      .from(referralClicks)
+      .where(
+        bookIds.length > 0 ? inArray(referralClicks.bookId, bookIds) : sql`1=1`
+      )
+      .groupBy(referralClicks.targetDomain, referralClicks.targetSubdomain)
+      .orderBy(desc(count()))
+      .execute();
+    
+    // Process domain data to include full domain (domain + subdomain if present)
+    const processedDomains = domainData.map(item => {
+      let displayDomain = item.targetDomain;
+      if (item.targetSubdomain) {
+        displayDomain = `${item.targetSubdomain}.${item.targetDomain}`;
+      }
+      
+      return {
+        name: displayDomain,
+        domain: item.targetDomain,
+        subdomain: item.targetSubdomain,
+        count: Number(item.count),
+      };
+    });
+    
+    // NEW: Query for retailer name data
+    const retailerData = await db
+      .select({
+        retailerName: referralClicks.retailerName,
+        count: count(),
+      })
+      .from(referralClicks)
+      .where(
+        bookIds.length > 0 ? inArray(referralClicks.bookId, bookIds) : sql`1=1`
+      )
+      .groupBy(referralClicks.retailerName)
+      .orderBy(desc(count()))
+      .execute();
+    
+    // Process retailer data
+    const processedRetailers = retailerData.map(item => {
+      return {
+        name: item.retailerName,
+        count: Number(item.count),
+      };
+    });
+    
+    // LEGACY (for backwards compatibility)
+    // Process domain data from metadata in old bookImpressions table
+    const legacyReferralsByDomain = await db
       .select({
         metadata: bookImpressions.metadata,
         count: count(),
@@ -70,8 +137,8 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       .orderBy(desc(count()))
       .execute();
     
-    // Process domain data from metadata
-    const processedDomains = referralsByDomain.map(item => {
+    // Process legacy domain data from metadata
+    const legacyProcessedDomains = legacyReferralsByDomain.map(item => {
       let domain = "Unknown";
       try {
         const metadata = item.metadata as any;
@@ -88,8 +155,9 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       };
     });
     
-    // Query to get referral source data by source (retailer name)
-    const referralsBySource = await db
+    // LEGACY (for backwards compatibility)
+    // Query to get old referral source data by source string (retailer name)
+    const legacyReferralsBySource = await db
       .select({
         source: bookImpressions.source,
         count: count(),
@@ -106,8 +174,8 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       .orderBy(desc(count()))
       .execute();
     
-    // Process source data to extract retailer information
-    const processedSources = referralsBySource.map(item => {
+    // Process legacy source data to extract retailer information
+    const legacyProcessedSources = legacyReferralsBySource.map(item => {
       // Extract retailer name from source (format: "referral_amazon_click")
       const sourceString = item.source as string;
       const parts = sourceString.split("_");
@@ -126,14 +194,27 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       };
     });
     
-    // Return the data
-    return res.json({
-      byContext: referralsByContext.map(item => ({
-        name: item.context,
-        count: Number(item.count),
+    // Combine all sources of data with new data taking precedence
+    const combinedBySource = [...processedRetailers, ...legacyProcessedSources];
+    const combinedByDomain = [...processedDomains, ...legacyProcessedDomains];
+    
+    // Convert legacy context data and new source context data to same format
+    const byContextData = [
+      ...newReferralsBySource.map(item => ({
+        name: item.sourceContext,
+        count: Number(item.count)
       })),
-      bySource: processedSources,
-      byDomain: processedDomains,
+      ...legacyReferralsByContext.map(item => ({
+        name: item.context,
+        count: Number(item.count)
+      }))
+    ];
+    
+    // Return the combined data
+    return res.json({
+      byContext: byContextData,
+      bySource: combinedBySource,
+      byDomain: combinedByDomain,
     });
   } catch (error) {
     console.error("Error fetching referral sources:", error);

@@ -718,6 +718,10 @@ export const insertReadingStatusSchema = createInsertSchema(reading_status);
 export const insertFollowerSchema = createInsertSchema(followers);
 export const insertImpressionSchema = createInsertSchema(bookImpressions);
 export const insertClickThroughSchema = createInsertSchema(bookClickThroughs);
+export const insertReferralClickSchema = createInsertSchema(referralClicks).omit({
+  id: true,
+  timestamp: true
+});
 export const insertRatingPreferencesSchema = createInsertSchema(rating_preferences).omit({
   id: true,
   createdAt: true,
@@ -793,8 +797,10 @@ export type InsertReadingStatus = typeof reading_status.$inferInsert;
 export type Follower = typeof followers.$inferSelect;
 export type BookImpression = typeof bookImpressions.$inferSelect;
 export type BookClickThrough = typeof bookClickThroughs.$inferSelect;
+export type ReferralClick = typeof referralClicks.$inferSelect;
 export type InsertBookImpression = typeof bookImpressions.$inferInsert;
 export type InsertBookClickThrough = typeof bookClickThroughs.$inferInsert;
+export type InsertReferralClick = z.infer<typeof insertReferralClickSchema>;
 export type InsertBook = typeof books.$inferInsert;
 export type Campaign = typeof campaigns.$inferSelect;
 export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
