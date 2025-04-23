@@ -207,7 +207,7 @@ export function AdminBookCsvUploadWizard() {
       setCsvData([]);
       setZipFile(null);
       setBookImages({
-        'book-detail': null,
+        'full': null,
         'background': null,
         'hero': null,
         'book-card': null,
@@ -411,7 +411,7 @@ export function AdminBookCsvUploadWizard() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your ZIP should include:<br />
                 1. A CSV file with columns: Title, Author, language, genres, subgenres, themes, tropes, formats<br />
-                2. Book cover images with filenames matching the image types: book-detail, background, hero, etc.<br />
+                2. Book cover images with filenames matching the image types: full, background, hero, etc.<br />
                 <span className="text-amber-500 font-semibold">Maximum file size: 100MB</span>
               </p>
               
@@ -632,7 +632,7 @@ export function AdminBookCsvUploadWizard() {
                     onClick={() => {
                       setCsvData([]);
                       setBookImages({
-                        'book-detail': null,
+                        'full': null,
                         'background': null,
                         'hero': null,
                         'book-card': null,
@@ -647,7 +647,7 @@ export function AdminBookCsvUploadWizard() {
                   <Button
                     onClick={() => uploadMutation.mutate(csvData)}
                     disabled={uploadMutation.isPending || isProcessing || 
-                             !bookImages['book-detail'] || // Required image
+                             !bookImages['full'] || // Required image
                              !bookImages['background'] || // Required image
                              !bookImages['hero'] || // Required image
                              !bookImages['book-card'] || // Required image
