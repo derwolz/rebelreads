@@ -1,15 +1,22 @@
-import React from "react";
-import { Info, ExternalLink } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Info, ExternalLink, RefreshCw } from "lucide-react";
 import { UPLOAD_IMAGE_TYPES, IMAGE_TYPES } from "@shared/schema";
 import { DragDropImage } from "@/components/drag-drop-image";
 import { StepComponentProps, BookImageFile } from "./types";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { GeneratedImagePreview } from "./generated-image-preview";
+import { generateDerivedImages } from "@/utils/image-processor";
 
 export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   const { toast } = useToast();
   
+  // State to track when derived images have been generated
+  const [derivedImagesGenerated, setDerivedImagesGenerated] = useState(false);
+  
+  // Handle image change for any image type
   const handleImageChange = (
     imageType: string,
     file: File | null,
@@ -23,7 +30,9 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
         [imageType]: {
           ...prev.bookImages[imageType],
           file,
-          error: hasError ? errorMessage : undefined
+          error: hasError ? errorMessage : undefined,
+          // If this is a full image, it's not considered generated
+          isGenerated: imageType === 'full' ? false : prev.bookImages[imageType]?.isGenerated
         }
       };
       
@@ -32,6 +41,132 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
         bookImages: newImages
       };
     });
+    
+    // If this is a full-size image that was just uploaded, generate derived images
+    if (imageType === 'full' && file && !hasError) {
+      generateDerivedImagesFromFull(file);
+    }
+  };
+  
+  // Generate derived images (mini, book-card) from the full-size image
+  const generateDerivedImagesFromFull = async (fullSizeFile: File) => {
+    try {
+      // Start the generation process
+      toast({
+        title: "Generating Images",
+        description: "Creating smaller versions from your full-size image...",
+      });
+      
+      // Generate the derived images on the client side
+      const derivedImages = await generateDerivedImages(fullSizeFile);
+      
+      // Update the form data with the generated images
+      setFormData((prev) => {
+        const newImages = {
+          ...prev.bookImages,
+          'mini': {
+            ...prev.bookImages['mini'],
+            file: derivedImages.mini,
+            isGenerated: true,
+            sourceImageUrl: prev.bookImages['full'].file 
+              ? URL.createObjectURL(prev.bookImages['full'].file) 
+              : undefined
+          },
+          'book-card': {
+            ...prev.bookImages['book-card'],
+            file: derivedImages.bookCard,
+            isGenerated: true,
+            sourceImageUrl: prev.bookImages['full'].file 
+              ? URL.createObjectURL(prev.bookImages['full'].file) 
+              : undefined
+          }
+        };
+        
+        return {
+          ...prev,
+          bookImages: newImages
+        };
+      });
+      
+      // Mark derived images as generated
+      setDerivedImagesGenerated(true);
+      
+      toast({
+        title: "Images Generated",
+        description: "Smaller versions have been created. You can review them below.",
+      });
+    } catch (error) {
+      console.error('Error generating derived images:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate smaller images. Please try again or upload them manually.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Accept a generated image (just removes the isGenerated flag)
+  const handleAcceptGeneratedImage = (imageType: string) => {
+    setFormData((prev) => {
+      const newImages = {
+        ...prev.bookImages,
+        [imageType]: {
+          ...prev.bookImages[imageType],
+          isGenerated: false
+        }
+      };
+      
+      return {
+        ...prev,
+        bookImages: newImages
+      };
+    });
+    
+    toast({
+      title: "Image Accepted",
+      description: `The generated ${imageType.replace('-', ' ')} image has been accepted.`
+    });
+  };
+  
+  // Reject a generated image (clears the file)
+  const handleRejectGeneratedImage = (imageType: string) => {
+    setFormData((prev) => {
+      const newImages = {
+        ...prev.bookImages,
+        [imageType]: {
+          ...prev.bookImages[imageType],
+          file: null,
+          isGenerated: false
+        }
+      };
+      
+      return {
+        ...prev,
+        bookImages: newImages
+      };
+    });
+    
+    toast({
+      title: "Image Rejected",
+      description: `The generated ${imageType.replace('-', ' ')} image has been discarded. You can upload your own.`
+    });
+  };
+  
+  // Regenerate a derived image
+  const handleRegenerateImage = (imageType: string) => {
+    // Only regenerate if there's a full-size image to work with
+    if (formData.bookImages['full']?.file) {
+      // Regenerate just this specific derived image
+      if (imageType === 'mini' || imageType === 'book-card') {
+        generateDerivedImagesFromFull(formData.bookImages['full'].file);
+      }
+    } else {
+      toast({
+        title: "Cannot Regenerate",
+        description: "You need to upload a full-size image first.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Get image dimensions for a specific image type
@@ -134,6 +269,62 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
         </div>
       </div>
       
+      {/* Generated Images Preview */}
+      {(formData.bookImages['mini']?.isGenerated || formData.bookImages['book-card']?.isGenerated) && (
+        <div className="mb-4">
+          <Card className="bg-muted/30 border-dashed">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Generated Images Preview</CardTitle>
+              <CardDescription>
+                These images were automatically generated from your full-size image.
+                You can accept them as is, regenerate them, or upload your own versions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Mini Image Preview */}
+                {formData.bookImages['mini']?.isGenerated && (
+                  <GeneratedImagePreview
+                    imageType="mini"
+                    imageData={formData.bookImages['mini']}
+                    onAccept={() => handleAcceptGeneratedImage('mini')}
+                    onReject={() => handleRejectGeneratedImage('mini')}
+                    onRegenerate={() => handleRegenerateImage('mini')}
+                  />
+                )}
+                
+                {/* Book Card Image Preview */}
+                {formData.bookImages['book-card']?.isGenerated && (
+                  <GeneratedImagePreview
+                    imageType="book-card"
+                    imageData={formData.bookImages['book-card']}
+                    onAccept={() => handleAcceptGeneratedImage('book-card')}
+                    onReject={() => handleRejectGeneratedImage('book-card')}
+                    onRegenerate={() => handleRegenerateImage('book-card')}
+                  />
+                )}
+              </div>
+              
+              <div className="mt-4 pt-2 border-t flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  You can generate new images anytime after updating the full-size image
+                </p>
+                
+                {formData.bookImages['full']?.file && (
+                  <Button
+                    size="sm"
+                    onClick={() => generateDerivedImagesFromFull(formData.bookImages['full'].file)}
+                    className="flex items-center gap-1"
+                  >
+                    <RefreshCw className="h-4 w-4" /> Regenerate All
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div>
         <h3 className="text-md font-medium mb-2">Additional Banner Images</h3>
         <p className="text-sm text-muted-foreground mb-4">
