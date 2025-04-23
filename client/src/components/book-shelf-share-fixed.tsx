@@ -277,9 +277,37 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                               className="inline-flex items-center justify-center"
                               onClick={async (e) => {
                                 e.stopPropagation();
+                                
+                                // Extract domain from the URL for analytics
+                                let domain = "unknown";
+                                try {
+                                  const url = new URL(link.url);
+                                  domain = url.hostname;
+                                } catch (error) {
+                                  console.error("Error extracting domain from URL:", link.url);
+                                }
+                                
+                                // Record click-through on referral link with domain information
                                 await apiRequest("POST", `/api/books/${selectedBook.id}/click-through`, {
                                   source: "referral-link",
                                   referrer: window.location.pathname,
+                                  context: "book-shelf/share",
+                                  isReferral: true, // Flag as a referral click
+                                  metadata: {
+                                    referralDomain: domain,
+                                    retailer: link.retailer
+                                  }
+                                });
+                                
+                                // Also record as impression with referral-click type and weight
+                                await apiRequest("POST", `/api/books/${selectedBook.id}/impression`, {
+                                  source: `referral_${link.retailer.toLowerCase()}_click`,
+                                  context: "book-shelf/share",
+                                  type: "referral-click",
+                                  weight: 1.0,
+                                  metadata: {
+                                    referralDomain: domain
+                                  }
                                 });
                               }}
                             >
