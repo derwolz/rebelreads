@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../../db";
 import { bookImpressions } from "@shared/schema";
-import { and, eq, sql, count, desc, inArray, like } from "drizzle-orm";
+import { and, eq, sql, count, desc, inArray, like, isNotNull } from "drizzle-orm";
 
 const router = Router();
 
@@ -52,7 +52,43 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
       .orderBy(desc(count()))
       .execute();
     
-    // Query to get referral source data by source
+    // Query to get referral domain data from metadata (where clicks go to)
+    const referralsByDomain = await db
+      .select({
+        metadata: bookImpressions.metadata,
+        count: count(),
+      })
+      .from(bookImpressions)
+      .where(
+        and(
+          eq(bookImpressions.type, "referral-click"),
+          isNotNull(bookImpressions.metadata),
+          bookIds.length > 0 ? inArray(bookImpressions.bookId, bookIds) : sql`1=1`
+        )
+      )
+      .groupBy(bookImpressions.metadata)
+      .orderBy(desc(count()))
+      .execute();
+    
+    // Process domain data from metadata
+    const processedDomains = referralsByDomain.map(item => {
+      let domain = "Unknown";
+      try {
+        const metadata = item.metadata as any;
+        if (metadata && metadata.referralDomain) {
+          domain = metadata.referralDomain;
+        }
+      } catch (e) {
+        console.error("Error parsing referral domain metadata:", e);
+      }
+      
+      return {
+        name: domain,
+        count: Number(item.count),
+      };
+    });
+    
+    // Query to get referral source data by source (retailer name)
     const referralsBySource = await db
       .select({
         source: bookImpressions.source,
@@ -97,6 +133,7 @@ router.get("/referral-sources", async (req: Request, res: Response) => {
         count: Number(item.count),
       })),
       bySource: processedSources,
+      byDomain: processedDomains,
     });
   } catch (error) {
     console.error("Error fetching referral sources:", error);

@@ -29,6 +29,7 @@ interface ReferralSourceData {
 interface ReferralSourcesResponse {
   byContext: ReferralSourceData[];
   bySource: ReferralSourceData[];
+  byDomain: ReferralSourceData[];
 }
 
 export function ReferralSources({ selectedBookIds }: ReferralSourcesProps) {
@@ -58,6 +59,26 @@ export function ReferralSources({ selectedBookIds }: ReferralSourcesProps) {
     
     return topSources;
   }, [data?.bySource]);
+
+  const byDomainData = useMemo(() => {
+    if (!data?.byDomain || data.byDomain.length === 0) {
+      return [{ name: "No Data", count: 1 }];
+    }
+    
+    // Group small counts as "Other"
+    const threshold = 2; // Minimum count to be shown individually
+    const topDomains = [...data.byDomain].filter(item => item.count >= threshold);
+    const otherDomains = [...data.byDomain].filter(item => item.count < threshold);
+    
+    if (otherDomains.length > 0) {
+      const otherCount = otherDomains.reduce((sum, item) => sum + item.count, 0);
+      if (otherCount > 0) {
+        topDomains.push({ name: "Other", count: otherCount });
+      }
+    }
+    
+    return topDomains;
+  }, [data?.byDomain]);
 
   const byContextData = useMemo(() => {
     if (!data?.byContext || data.byContext.length === 0) {
@@ -133,8 +154,9 @@ export function ReferralSources({ selectedBookIds }: ReferralSourcesProps) {
   // No data to display
   const hasSourceData = bySourceData.length > 0 && !(bySourceData.length === 1 && bySourceData[0].name === "No Data");
   const hasContextData = byContextData.length > 0 && !(byContextData.length === 1 && byContextData[0].name === "No Data");
+  const hasDomainData = byDomainData.length > 0 && !(byDomainData.length === 1 && byDomainData[0].name === "No Data");
 
-  if (!hasSourceData && !hasContextData) {
+  if (!hasSourceData && !hasContextData && !hasDomainData) {
     return (
       <Card className="w-full md:w-[49%]">
         <CardHeader>
@@ -152,73 +174,41 @@ export function ReferralSources({ selectedBookIds }: ReferralSourcesProps) {
   }
 
   // Calculate total referrals for the title
-  const totalReferrals = hasSourceData 
-    ? bySourceData.reduce((sum, item) => sum + item.count, 0) 
-    : byContextData.reduce((sum, item) => sum + item.count, 0);
+  const totalReferrals = hasDomainData 
+    ? byDomainData.reduce((sum, item) => sum + item.count, 0) 
+    : (hasSourceData 
+      ? bySourceData.reduce((sum, item) => sum + item.count, 0) 
+      : byContextData.reduce((sum, item) => sum + item.count, 0));
 
   return (
-    <Card className="w-full md:w-[49%]">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Referral Sources</CardTitle>
+        <CardTitle>Referral Analytics</CardTitle>
         <CardDescription>
           {totalReferrals} total referrals {selectedBookIds.length ? `for selected books` : `across all books`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="h-[350px]">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-          {/* Referral Source (Retailer) Chart */}
+      <CardContent className="h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 h-full">
+          {/* Domain (Website) Chart */}
           <div className="flex flex-col items-center">
-            <h3 className="text-sm font-medium">By Retailer</h3>
-            <div className="w-full h-[250px]">
+            <h3 className="text-md font-medium mb-3">Referral Destinations (by Domain)</h3>
+            <div className="w-full h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={bySourceData}
+                    data={byDomainData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    outerRadius={80}
+                    outerRadius={120}
                     fill="#8884d8"
                     dataKey="count"
                     nameKey="name"
                     label={({ name, percent }) => percent > 0.05 ? `${name} (${(percent * 100).toFixed(0)}%)` : ''}
                   >
-                    {bySourceData.map((entry, index) => (
+                    {byDomainData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value, name) => [value, name]} 
-                    labelFormatter={() => 'Referrals'} 
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Referral Context Chart */}
-          <div className="flex flex-col items-center">
-            <h3 className="text-sm font-medium">By Page Source</h3>
-            <div className="w-full h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={byContextData.map(item => ({
-                      ...item,
-                      name: formatContextName(item.name)
-                    }))}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#82ca9d"
-                    dataKey="count"
-                    nameKey="name"
-                    label={({ name, percent }) => percent > 0.05 ? `${name} (${(percent * 100).toFixed(0)}%)` : ''}
-                  >
-                    {byContextData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[(index + 5) % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
