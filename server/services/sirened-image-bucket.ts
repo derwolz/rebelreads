@@ -163,7 +163,7 @@ class SirenedImageBucket {
     bookCard: { storageKey: string; publicUrl: string } | null;
     mini: { storageKey: string; publicUrl: string } | null;
   }> {
-    console.log(`Generating additional image sizes for book ID ${bookId}`);
+    console.log(`Generating additional image sizes for book ID ${bookId} from full resolution image`);
     
     if (!fullResolutionFile || !fullResolutionFile.buffer) {
       throw new Error('No full resolution image provided for resizing');
@@ -176,9 +176,22 @@ class SirenedImageBucket {
     };
     
     try {
+      // Image processing options with proper aspect ratio preservation
+      const imageOptions = { 
+        fit: 'contain' as const, 
+        background: { r: 255, g: 255, b: 255, alpha: 0 },
+        withoutEnlargement: true
+      };
+      
+      // Convert to optimized format (WebP) for smaller file sizes
+      const formatOptions = { 
+        quality: 90
+      };
+      
       // Generate book-detail image (773x480)
       const bookDetailBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(773, 480, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .resize(773, 480, imageOptions)
+        .webp(formatOptions)
         .toBuffer();
       
       // Create a file object for the book-detail image
@@ -186,7 +199,8 @@ class SirenedImageBucket {
         ...fullResolutionFile,
         buffer: bookDetailBuffer,
         size: bookDetailBuffer.length,
-        originalname: `book-detail-${bookId}.webp`
+        originalname: `book-detail-${bookId}.webp`,
+        mimetype: 'image/webp'
       };
       
       // Upload the book-detail image
@@ -200,7 +214,8 @@ class SirenedImageBucket {
       
       // Generate book-card image (260x435)
       const bookCardBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(260, 435, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .resize(260, 435, imageOptions)
+        .webp(formatOptions)
         .toBuffer();
       
       // Create a file object for the book-card image
@@ -208,7 +223,8 @@ class SirenedImageBucket {
         ...fullResolutionFile,
         buffer: bookCardBuffer,
         size: bookCardBuffer.length,
-        originalname: `book-card-${bookId}.webp`
+        originalname: `book-card-${bookId}.webp`,
+        mimetype: 'image/webp'
       };
       
       // Upload the book-card image
@@ -222,7 +238,8 @@ class SirenedImageBucket {
       
       // Generate mini image (64x40)
       const miniBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(64, 40, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .resize(64, 40, imageOptions)
+        .webp(formatOptions)
         .toBuffer();
       
       // Create a file object for the mini image
@@ -230,7 +247,8 @@ class SirenedImageBucket {
         ...fullResolutionFile,
         buffer: miniBuffer,
         size: miniBuffer.length,
-        originalname: `mini-${bookId}.webp`
+        originalname: `mini-${bookId}.webp`,
+        mimetype: 'image/webp'
       };
       
       // Upload the mini image
