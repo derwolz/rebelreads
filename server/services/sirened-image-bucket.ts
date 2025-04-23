@@ -236,6 +236,11 @@ class SirenedImageBucket {
         quality: 90
       };
       
+      // Higher quality options for mini images
+      const miniFormatOptions = {
+        quality: 95
+      };
+      
       // ----------------------------------------------------------------
       // Generate book-cover image (480x770)
       // ----------------------------------------------------------------
