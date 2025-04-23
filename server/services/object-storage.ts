@@ -59,6 +59,32 @@ class ObjectStorageService {
       throw new Error('Failed to upload file to object storage');
     }
   }
+  
+  /**
+   * Upload a file to object storage with explicit path
+   * @param file The uploaded file (from multer)
+   * @param fullPath The full path including filename to use for storage
+   * @returns The storage key (path) of the uploaded file
+   */
+  async uploadFileWithPath(file: UploadedFile, fullPath: string): Promise<string> {
+    try {
+      console.log(`Uploading file to explicit path: ${fullPath}`);
+      
+      // Upload the file to object storage using the correct method
+      const result = await this.client.uploadFromBytes(fullPath, file.buffer);
+      
+      if (!result.ok) {
+        console.error(`Upload failed: ${result.error.message}`);
+        throw new Error(`Upload failed: ${result.error.message}`);
+      }
+      
+      console.log(`Successfully uploaded file to path: ${fullPath}`);
+      return fullPath;
+    } catch (error) {
+      console.error('Error uploading file to object storage:', error);
+      throw new Error('Failed to upload file to object storage');
+    }
+  }
 
   /**
    * Retrieve a file from object storage

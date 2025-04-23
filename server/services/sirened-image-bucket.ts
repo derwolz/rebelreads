@@ -79,9 +79,25 @@ class SirenedImageBucket {
         : directory;
       
       console.log(`Final storage path: ${filePath}`);
-        
-      // Upload to object storage
-      const storageKey = await objectStorage.uploadFile(file, filePath);
+      
+      // Create a descriptive filename that includes image type and book ID
+      const extname = path.extname(file.originalname) || '.webp';
+      const basename = imageType;
+      const uniqueId = nanoid(8);
+      const filename = bookId 
+        ? `${basename}-${bookId}-${uniqueId}${extname}`
+        : `${basename}-${uniqueId}${extname}`;
+      
+      // Create the complete filepath with filename
+      const fullPath = `${filePath}/${filename}`;
+      console.log(`Full storage path with filename: ${fullPath}`);
+      
+      // Upload to object storage, forcing the specific path + filename
+      const storageKey = await objectStorage.uploadFileWithPath(file, fullPath);
+      
+      if (!storageKey) {
+        throw new Error(`Failed to upload image to path: ${fullPath}`);
+      }
       
       // Log the resulting storage key and public URL
       const publicUrl = this.getPublicUrl(storageKey);
