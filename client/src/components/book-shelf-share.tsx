@@ -268,7 +268,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       
                       {/* Referral links for mobile */}
                       {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
-                        <div className="flex gap-4">
+                        <div className="flex z-90 gap-4">
                           {selectedBook.referralLinks.map((link: any, idx: number) => (
                             <ReferralButton
                               key={idx}
@@ -278,8 +278,9 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                               iconOnly={true}
                               className="inline-flex items-center justify-center"
                             />
-                          ))}
+                          ))} 4
                         </div>
+                  
                       )}
                     </div>
 
@@ -291,7 +292,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       {/* Book description */}
                       <div className="mb-4">
                         {/* Desktop view */}
-                        <div className="hidden md:block relative">
+                        <div className="hidden md:block relative ">
                           {/* Animated Note Overlay */}
                           {selectedNote && (
                             <div className={`absolute z-30 top-0 left-0 w-full h-full flex items-center justify-center transition-all duration-500 ${isRotating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'} ${noteVisible ? 'pointer-events-auto' : 'pointer-events-none opacity-0'}`}>
@@ -303,17 +304,17 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                           )}
                           
                           {/* Description text */}
-                          <ScrollArea className="h-[300px] min-w-0 w-full pr-4">
+                          <ScrollArea className="h-[300px] min-w-0 w-full pr-16 md:pr-1">
                             <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                           </ScrollArea>
                         </div>
                         
                         {/* Mobile view - Swipeable cards */}
-                        <div className="md:hidden w-[90vw]">
-                          <div className="overflow-hidden border border-border rounded-lg w-[90vw]" ref={emblaRef}>
-                            <div className="flex touch-pan-y">
+                        <div className="md:hidden max-w-[80vw] overflow-hidden ">
+                          <div className="overflow-hidden w-[90vw]" ref={emblaRef}>
+                            <div className="flex  touch-pan-y">
                               {/* First card - book details */}
-                              <div className="flex-[0_0_100%] pr-4 min-w-0 max-w-full">
+                              <div className="flex-[0_0_100%] pr-12 min-w-0 max-w-full">
                                 <ScrollArea className="h-[180px] w-full">
                                   <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                                 </ScrollArea>
@@ -336,7 +337,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                               
                               {/* Notes cards */}
                               {bookNotes.map((note, idx) => (
-                                <div key={note.id} className="flex-[0_0_100%] p-4 min-w-0 max-w-full">
+                                <div key={note.id} className="flex-[0_0_100%] p-4 pr-12 min-w-0 max-w-full">
                                   <div className="bg-muted/20 rounded-lg h-full overflow-y-auto w-full">
                                     <div className="flex justify-between items-center mb-2">
                                       <p className="text-xs text-muted-foreground">
@@ -365,34 +366,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                               ))}
                             </div>
                           </div>
-                          
-                          {/* Book navigation */}
-                          {selectedBookIndex !== null && (
-                            <div className="flex justify-between mt-3 text-muted-foreground">
-                              {selectedBookIndex > 0 && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="flex items-center text-xs p-0 h-8"
-                                  onClick={goToPrevBook}
-                                >
-                                  <ChevronLeft className="h-3 w-3 mr-1" /> 
-                                  <span>Previous book</span>
-                                </Button>
-                              )}
-                              {selectedBookIndex < books.length - 1 && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="flex items-center text-xs p-0 h-8 ml-auto"
-                                  onClick={goToNextBook}
-                                >
-                                  <span>Next book</span>
-                                  <ChevronRight className="h-3 w-3 ml-1" />
-                                </Button>
-                              )}
-                            </div>
-                          )}
+                   
                         </div>
                       </div>
                       

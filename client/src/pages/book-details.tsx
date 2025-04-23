@@ -403,7 +403,7 @@ export default function BookDetails() {
                         </a>
                       ),
                     )}
-                )
+                
             </div>
           </div>
 
