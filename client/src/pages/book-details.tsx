@@ -289,7 +289,6 @@ export default function BookDetails() {
               <img
                 src={
                   book.images?.find((img) => img.imageType === "full")?.imageUrl ||
-                  book.images?.find((img) => img.imageType === "book-detail")?.imageUrl || 
                   "/images/placeholder-book.png"
                 }
                 alt={book.title}

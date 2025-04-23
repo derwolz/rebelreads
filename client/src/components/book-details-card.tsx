@@ -108,9 +108,8 @@ export function BookDetailsCard({ book, className }: BookDetailsCardProps) {
     );
   }
 
-  // Get book cover image - prefer full image, fallback to book-detail for backwards compatibility
+  // Get book cover image - use only full image (no backwards compatibility)
   const coverImage = book.images?.find(img => img.imageType === "full")?.imageUrl || 
-                     book.images?.find(img => img.imageType === "book-detail")?.imageUrl || 
                      "/images/placeholder-book.png";
 
   // Get top 5 taxonomies with proper sorting
