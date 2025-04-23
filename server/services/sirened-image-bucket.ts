@@ -142,6 +142,87 @@ class SirenedImageBucket {
   getPublicUrl(storageKey: string): string {
     return objectStorage.getPublicUrl(storageKey);
   }
+  
+  /**
+   * Generate additional book image sizes from the book-detail image
+   * Specifically creates:
+   * - book-card (256x440)
+   * - mini (48x64)
+   * 
+   * @param bookDetailFile The original book-detail image file
+   * @param bookId The book ID
+   * @returns Object with the generated image storage keys and public URLs
+   */
+  async generateAdditionalBookImages(
+    bookDetailFile: UploadedFile,
+    bookId: number
+  ): Promise<{
+    bookCard: { storageKey: string; publicUrl: string } | null;
+    mini: { storageKey: string; publicUrl: string } | null;
+  }> {
+    console.log(`Generating additional image sizes for book ID ${bookId}`);
+    
+    if (!bookDetailFile || !bookDetailFile.buffer) {
+      throw new Error('No book-detail image provided for resizing');
+    }
+    
+    const result = {
+      bookCard: null as { storageKey: string; publicUrl: string } | null,
+      mini: null as { storageKey: string; publicUrl: string } | null
+    };
+    
+    try {
+      // Generate book-card image (256x440)
+      const bookCardBuffer = await sharp(bookDetailFile.buffer)
+        .resize(256, 440, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .toBuffer();
+      
+      // Create a file object for the book-card image
+      const bookCardFile: UploadedFile = {
+        ...bookDetailFile,
+        buffer: bookCardBuffer,
+        size: bookCardBuffer.length,
+        originalname: `book-card-${bookId}.webp`
+      };
+      
+      // Upload the book-card image
+      const bookCardStorageKey = await this.uploadBookImage(bookCardFile, 'book-card', bookId);
+      const bookCardPublicUrl = this.getPublicUrl(bookCardStorageKey);
+      
+      result.bookCard = {
+        storageKey: bookCardStorageKey,
+        publicUrl: bookCardPublicUrl
+      };
+      
+      // Generate mini image (48x64)
+      const miniBuffer = await sharp(bookDetailFile.buffer)
+        .resize(48, 64, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .toBuffer();
+      
+      // Create a file object for the mini image
+      const miniFile: UploadedFile = {
+        ...bookDetailFile,
+        buffer: miniBuffer,
+        size: miniBuffer.length,
+        originalname: `mini-${bookId}.webp`
+      };
+      
+      // Upload the mini image
+      const miniStorageKey = await this.uploadBookImage(miniFile, 'mini', bookId);
+      const miniPublicUrl = this.getPublicUrl(miniStorageKey);
+      
+      result.mini = {
+        storageKey: miniStorageKey,
+        publicUrl: miniPublicUrl
+      };
+      
+      console.log(`Successfully generated additional images for book ID ${bookId}`);
+      return result;
+    } catch (error) {
+      console.error(`Error generating additional images for book ID ${bookId}:`, error);
+      return result;
+    }
+  }
 }
 
 // Create singleton instance

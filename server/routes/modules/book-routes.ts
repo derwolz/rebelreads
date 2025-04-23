@@ -461,7 +461,43 @@ router.post("/", multipleImageUpload, async (req, res) => {
     if (bookDetailFile && bookDetailUrl) {
       try {
         // Call function to auto-generate other image types
-        await sirenedImageBucket.generateAdditionalBookImages(bookDetailFile, book.id);
+        const generatedImages = await sirenedImageBucket.generateAdditionalBookImages(bookDetailFile, book.id);
+        
+        // Add book-card image to database if generated
+        if (generatedImages.bookCard) {
+          try {
+            const bookCardImage = await dbStorage.addBookImage({
+              bookId: book.id,
+              imageUrl: generatedImages.bookCard.publicUrl,
+              imageType: 'book-card',
+              storageKey: generatedImages.bookCard.storageKey,
+              width: 256,  // Preset width and height based on our resize function
+              height: 440,
+              createdAt: new Date(),
+            });
+            bookImageEntries.push(bookCardImage);
+          } catch (err) {
+            console.error(`Error adding book-card image to database:`, err);
+          }
+        }
+        
+        // Add mini image to database if generated
+        if (generatedImages.mini) {
+          try {
+            const miniImage = await dbStorage.addBookImage({
+              bookId: book.id,
+              imageUrl: generatedImages.mini.publicUrl,
+              imageType: 'mini',
+              storageKey: generatedImages.mini.storageKey,
+              width: 48,  // Preset width and height based on our resize function
+              height: 64,
+              createdAt: new Date(),
+            });
+            bookImageEntries.push(miniImage);
+          } catch (err) {
+            console.error(`Error adding mini image to database:`, err);
+          }
+        }
       } catch (genError) {
         console.error(`Error generating additional book images:`, genError);
       }
