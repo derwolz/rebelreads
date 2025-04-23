@@ -945,6 +945,25 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
     if (files && Object.keys(files).length > 0) {
       console.log("Processing uploads:", Object.keys(files));
       
+      // Track if we have a full image to use for auto-generation
+      let fullImageFile: Express.Multer.File | null = null;
+      let fullImageUrl: string = '';
+      
+      // First pass: identify the full-size image if it exists
+      for (const fieldName in files) {
+        if (fieldName.startsWith('bookImage_')) {
+          const imageType = fieldName.replace('bookImage_', '') as any;
+          const file = files[fieldName][0];
+          
+          // Store the full image file for auto-generation
+          if (imageType === 'full') {
+            console.log("Found full size image for book ID:", bookId);
+            fullImageFile = file;
+          }
+        }
+      }
+      
+      // Process all image uploads
       for (const fieldName in files) {
         if (fieldName.startsWith('bookImage_')) {
           const imageType = fieldName.replace('bookImage_', '') as any;
@@ -955,9 +974,10 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
             const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, bookId);
             const imageUrl = await sirenedImageBucket.getPublicUrl(storageKey);
             
-            // Log the full image URL to make sure it's being captured
+            // Log and store the full image URL for auto-generation
             if (imageType === 'full') {
               console.log("IMPORTANT: Saving full size image URL:", imageUrl);
+              fullImageUrl = imageUrl;
             }
             
             // Get dimensions based on image type
@@ -1011,6 +1031,56 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
           } catch (e) {
             console.error(`Error uploading ${imageType} image:`, e);
           }
+        }
+      }
+      
+      // Auto-generate smaller variants if we have a full-size image
+      if (fullImageFile && fullImageUrl) {
+        try {
+          console.log("Auto-generating smaller image variants from full-size image for book ID:", bookId);
+          
+          // Call function to auto-generate other image types from the full image
+          const generatedImages = await sirenedImageBucket.generateAdditionalBookImages(fullImageFile, bookId);
+          
+          // Add book-card image to database if generated
+          if (generatedImages.bookCard) {
+            try {
+              const bookCardImage = await dbStorage.addBookImage({
+                bookId: bookId,
+                imageUrl: generatedImages.bookCard.publicUrl,
+                imageType: 'book-card',
+                width: 260,
+                height: 435,
+                sizeKb: Math.round(fullImageFile.size / 8), // Estimate size
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+              console.log("Auto-generated book-card image saved:", generatedImages.bookCard.publicUrl);
+            } catch (err) {
+              console.error(`Error adding auto-generated book-card image to database:`, err);
+            }
+          }
+          
+          // Add mini image to database if generated
+          if (generatedImages.mini) {
+            try {
+              const miniImage = await dbStorage.addBookImage({
+                bookId: bookId,
+                imageUrl: generatedImages.mini.publicUrl,
+                imageType: 'mini',
+                width: 64,
+                height: 40,
+                sizeKb: Math.round(fullImageFile.size / 32), // Estimate size
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+              console.log("Auto-generated mini image saved:", generatedImages.mini.publicUrl);
+            } catch (err) {
+              console.error(`Error adding auto-generated mini image to database:`, err);
+            }
+          }
+        } catch (error) {
+          console.error("Error auto-generating smaller image variants:", error);
         }
       }
     }
