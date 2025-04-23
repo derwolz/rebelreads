@@ -400,8 +400,6 @@ export default function AuthorPage() {
                 </CarouselItem>
               )}
             </CarouselContent>
-            <CarouselPrevious className="left-1" />
-            <CarouselNext className="right-1" />
           </Carousel>
         </div>
         
