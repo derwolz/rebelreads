@@ -9,7 +9,8 @@ import type { Book } from "@shared/schema";
 export const METRICS = [
   { id: "impressions", label: "Impressions" },
   { id: "clicks", label: "Clicks" },
-  { id: "ctr", label: "CTR" },
+  { id: "hovers", label: "Hovers" },
+  { id: "ctr", label: "Referrals" },
 ] as const;
 
 export type MetricType = typeof METRICS[number]["id"];
