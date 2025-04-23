@@ -26,7 +26,7 @@ import {
 import type { Book, SocialMediaLink, BookShelf } from "@shared/schema";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
-import { Search, BookOpen } from "lucide-react";
+import { Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Interface representing a taxonomy with its usage weight
@@ -467,7 +467,6 @@ export default function AuthorPage() {
           </div>
         ) : (
           <div className="mt-16 text-center py-12 border rounded-lg bg-muted/10">
-            <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h2 className="text-2xl font-semibold mb-2">No Shared Bookshelves</h2>
             <p className="text-muted-foreground">
               This author hasn't shared any bookshelves yet.
