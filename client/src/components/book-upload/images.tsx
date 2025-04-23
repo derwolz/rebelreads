@@ -10,7 +10,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   const handleImageChange = (
     imageType: string,
     file: File | null,
-    hasError: boolean,
+    hasError?: boolean,
     errorMessage?: string
   ) => {
     console.log(`Image change: ${imageType}, File: ${file?.name}, Error: ${hasError ? errorMessage : 'none'}`);
@@ -74,7 +74,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
               width={imageData.width}
               height={imageData.height}
               previewUrl={imageData.previewUrl}
-              onChange={(file, hasError, errorMessage) => 
+              onChange={(file, hasError = false, errorMessage) => 
                 handleImageChange(imageType, file, hasError, errorMessage)
               }
               required={imageType === "book-detail" ? true : false}
