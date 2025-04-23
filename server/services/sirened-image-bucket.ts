@@ -31,7 +31,6 @@ class SirenedImageBucket {
   // Directory structure for different image types
   private directories: Record<string, string> = {
     // Main image types
-    'book-detail': 'covers/detail',
     'background': 'covers/background',
     'spine': 'covers/spine',
     'hero': 'covers/hero',

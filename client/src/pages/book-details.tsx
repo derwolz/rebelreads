@@ -1038,7 +1038,7 @@ export default function BookDetails() {
                         bookId={book.id}
                         imageSrc={
                           book.images?.find(
-                            (img) => img.imageType === "book-detail",
+                            (img) => img.imageType === "full",
                           )?.imageUrl || "/images/placeholder-book.png"
                         }
                         title={`Readers also enjoyed: ${book.title}`}
