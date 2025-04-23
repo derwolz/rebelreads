@@ -287,8 +287,10 @@ router.post("/", multipleImageUpload, async (req, res) => {
           let height = 0;
           switch (imageType) {
             case 'full':
+              // Ensure full cover is always stored with correct dimensions
               width = 1600;
               height = 2560;
+              console.log("SAVING FULL COVER IMAGE TO DATABASE:", imageUrl);
               break;
             case 'background':
               width = 1300;
@@ -671,8 +673,10 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
             
             switch (imageType) {
               case 'full':
+                // Ensure full cover is always stored with correct dimensions
                 width = 1600;
                 height = 2560;
+                console.log("SAVING FULL COVER IMAGE TO DATABASE:", imageUrl);
                 break;
               case 'background':
                 width = 1300;
