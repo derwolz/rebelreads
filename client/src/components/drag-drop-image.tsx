@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X, AlertCircle } from 'lucide-react';
+import { Upload, X, AlertCircle, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IMAGE_TYPES } from '@shared/schema';
 import { Button } from './ui/button';
@@ -56,72 +56,98 @@ export function DragDropImage({
     }
   };
 
+  // Process specific image types only (for book cover conversions)
   const processImageForUpload = (img: HTMLImageElement, file: File, objectUrl: string) => {
-    try {
-      // Create canvas for the cropped and scaled image
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
+    // Only apply automatic resizing to book-detail type (for generating book-card and mini)
+    // All other types should use strict dimension validation
+    if (imageType === 'book-detail') {
+      try {
+        // Create canvas for the cropped and scaled image
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        
+        if (!ctx) {
+          throw new Error("Could not get canvas context");
+        }
+        
+        // Calculate scaling and positioning
+        const imgRatio = img.width / img.height;
+        const targetRatio = width / height;
+        
+        let sx = 0;  // source x
+        let sy = 0;  // source y
+        let sw = img.width;  // source width
+        let sh = img.height;  // source height
+        
+        // Scale to the largest dimension while maintaining aspect ratio
+        if (imgRatio > targetRatio) {
+          // Image is wider than target ratio - scale to height and crop width
+          sw = img.height * targetRatio;
+          sx = (img.width - sw) / 2;  // Center horizontally
+        } else {
+          // Image is taller than target ratio - scale to width and crop height
+          sh = img.width / targetRatio;
+          sy = (img.height - sh) / 2;  // Center vertically
+        }
+        
+        // Draw the image with the calculated dimensions
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+        
+        // Convert canvas to blob
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              const errorMessage = "Failed to process image";
+              setError(errorMessage);
+              onChange(file, true, errorMessage);
+              return;
+            }
+            
+            // Create a file from the blob
+            const processedFile = new File([blob], file.name, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            
+            // Create preview
+            const processedUrl = URL.createObjectURL(processedFile);
+            setPreview(processedUrl);
+            
+            // Pass the processed file
+            onChange(processedFile, false);
+          },
+          "image/jpeg",
+          0.95
+        );
+      } catch (error) {
+        console.error("Error processing image:", error);
+        const errorMessage = "Failed to process image";
+        setError(errorMessage);
+        onChange(file, true, errorMessage);
+      }
+    } else {
+      // For all other types, validate dimensions strictly
+      const errorThreshold = 5; // Allow 5px difference to account for rounding
       
-      if (!ctx) {
-        throw new Error("Could not get canvas context");
+      if (Math.abs(img.width - width) > errorThreshold || Math.abs(img.height - height) > errorThreshold) {
+        const errorMessage = `Image must be exactly ${width}×${height} pixels. Your image is ${img.width}×${img.height}.`;
+        setError(errorMessage);
+        toast({
+          title: "Incorrect image dimensions",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        onChange(file, true, errorMessage);
+        return;
       }
       
-      // Calculate scaling and positioning
-      const imgRatio = img.width / img.height;
-      const targetRatio = width / height;
+      // Create preview for display
+      setPreview(objectUrl);
       
-      let sx = 0;  // source x
-      let sy = 0;  // source y
-      let sw = img.width;  // source width
-      let sh = img.height;  // source height
-      
-      // Scale to the largest dimension while maintaining aspect ratio
-      if (imgRatio > targetRatio) {
-        // Image is wider than target ratio - scale to height and crop width
-        sw = img.height * targetRatio;
-        sx = (img.width - sw) / 2;  // Center horizontally
-      } else {
-        // Image is taller than target ratio - scale to width and crop height
-        sh = img.width / targetRatio;
-        sy = (img.height - sh) / 2;  // Center vertically
-      }
-      
-      // Draw the image with the calculated dimensions
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
-      
-      // Convert canvas to blob
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            const errorMessage = "Failed to process image";
-            setError(errorMessage);
-            onChange(file, true, errorMessage);
-            return;
-          }
-          
-          // Create a file from the blob
-          const processedFile = new File([blob], file.name, {
-            type: "image/jpeg",
-            lastModified: Date.now(),
-          });
-          
-          // Create preview
-          const processedUrl = URL.createObjectURL(processedFile);
-          setPreview(processedUrl);
-          
-          // Pass the processed file
-          onChange(processedFile, false);
-        },
-        "image/jpeg",
-        0.95
-      );
-    } catch (error) {
-      console.error("Error processing image:", error);
-      const errorMessage = "Failed to process image";
-      setError(errorMessage);
-      onChange(file, true, errorMessage);
+      // Pass the original file as it already has the correct dimensions
+      onChange(file, false);
     }
   };
 
@@ -146,9 +172,8 @@ export function DragDropImage({
     const objectUrl = URL.createObjectURL(file);
     
     img.onload = () => {
-      // Process the image to the required dimensions
+      // Process or validate the image
       processImageForUpload(img, file, objectUrl);
-      URL.revokeObjectURL(objectUrl);
     };
     
     img.onerror = () => {
@@ -228,7 +253,7 @@ export function DragDropImage({
             </Button>
           </div>
           <div className="mt-1 sm:mt-2 text-center text-xs text-muted-foreground">
-            Output size: {width}×{height}
+            Required size: {width}×{height} pixels
           </div>
         </div>
       ) : (
@@ -251,12 +276,18 @@ export function DragDropImage({
           <p className="text-xs sm:text-sm text-center text-muted-foreground">
             Tap to select image
           </p>
-          <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1">
-            Will be resized to {width}×{height}
+          <p className="text-[10px] sm:text-xs text-center font-semibold text-primary mt-1">
+            Required size: {width}×{height} pixels
           </p>
-          <p className="text-[10px] text-center text-muted-foreground mt-0.5">
-            Images will be automatically cropped and centered
-          </p>
+          {imageType === 'book-detail' ? (
+            <p className="text-[10px] text-center text-muted-foreground mt-0.5">
+              Book cover will be processed for card and mini views
+            </p>
+          ) : (
+            <p className="text-[10px] text-center text-muted-foreground mt-0.5">
+              Image must match exact dimensions
+            </p>
+          )}
           {error && (
             <p className="text-[10px] sm:text-xs text-center text-destructive mt-1 sm:mt-2">
               {error}

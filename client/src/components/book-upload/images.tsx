@@ -1,8 +1,10 @@
 import React from "react";
-import { Info } from "lucide-react";
+import { Info, ExternalLink } from "lucide-react";
 import { UPLOAD_IMAGE_TYPES } from "@shared/schema";
 import { DragDropImage } from "@/components/drag-drop-image";
 import { StepComponentProps, BookImageFile } from "./types";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   const handleImageChange = (
@@ -31,19 +33,35 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Promotional Images</h2>
-        <a 
-          href="/image-guide" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline flex items-center gap-1"
-        >
-          <Info className="h-4 w-4" /> 
-          Learn about image types
-        </a>
       </div>
+
+      <Alert className="bg-primary/10 border-primary">
+        <div className="flex justify-between items-center w-full">
+          <AlertDescription className="flex items-center gap-2 text-base">
+            <Info className="h-5 w-5 text-primary" /> 
+            All images must be exactly the specified dimensions
+          </AlertDescription>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-primary text-primary hover:bg-primary/10"
+            asChild
+          >
+            <a 
+              href="/image-guide" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1"
+            >
+              <ExternalLink className="h-4 w-4" /> 
+              Learn about image requirements
+            </a>
+          </Button>
+        </div>
+      </Alert>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
         {UPLOAD_IMAGE_TYPES.map((imageType) => {
