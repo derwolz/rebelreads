@@ -93,8 +93,19 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Set content type to application/json explicitly
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Log the error but don't rethrow it - that causes HTML error pages
+    console.error("API Error:", { status, message, error: err });
+    
+    // Return a proper JSON response
+    return res.status(status).json({ 
+      error: message,
+      status: status 
+    });
+    
+    // REMOVED: throw err; - This was causing HTML error pages to be generated
   });
 
   // importantly only setup vite in development and after
