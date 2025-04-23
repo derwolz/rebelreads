@@ -980,6 +980,8 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
               fullImageUrl = imageUrl;
             }
             
+            console.log(`Saved ${imageType} image with URL: ${imageUrl} and storage key: ${storageKey}`);
+            
             // Get dimensions based on image type
             let width = 0;
             let height = 0;

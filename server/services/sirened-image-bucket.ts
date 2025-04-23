@@ -150,6 +150,9 @@ class SirenedImageBucket {
    * - mini (64x40)
    * 
    * Note: We no longer generate book-detail (773x480) since we use the full image for that purpose
+   * IMPORTANT: Images are stored in separate directories:
+   * - book-card images go in 'covers/card'
+   * - mini images go in 'covers/mini'
    * 
    * @param fullResolutionFile The original high-res image file (2560x1600)
    * @param bookId The book ID
@@ -203,6 +206,8 @@ class SirenedImageBucket {
         originalname: `book-card-${bookId}.webp`,
         mimetype: 'image/webp'
       };
+      
+      console.log("Creating book-card image for:", bookId, "to be stored in directory:", this.directories['book-card']);
       
       // Upload the book-card image
       const bookCardStorageKey = await this.uploadBookImage(bookCardFile, 'book-card', bookId);
