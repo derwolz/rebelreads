@@ -1,126 +1,150 @@
-# Enhanced Book Tracking System
+# Tracking Component System
 
-This tracking system provides comprehensive analytics for user interactions with book components throughout the application. It captures detailed container metadata to better understand user engagement patterns.
+This directory contains a unified tracking system for monitoring user interactions with various book-related UI components. The system tracks:
 
-## Tracking Types
+- **Impressions**: When a component becomes visible in the viewport
+- **Hover events**: When a user hovers over a component
+- **Click events**: When a user clicks on a component
+- **Referral clicks**: When a user clicks on a purchase/referral link
 
-The system tracks four types of interactions:
+## Core Components
 
-1. **Impressions** - When a book card is visible on screen (baseline tracking)
-2. **Hovers** - When a user hovers on a book card for 0.3+ seconds (detail-expand)
-3. **Click-throughs** - When a book card is clicked (leading to details page)
-4. **Referrals** - When a referral link is clicked (leading to external site)
+### `TrackedComponent`
 
-## Container Metadata
+The base component that handles all tracking functionality. It wraps any UI component and adds tracking capabilities.
 
-Each interaction captures the following metadata:
+```tsx
+<TrackedComponent
+  itemId={book.id}
+  componentType="book-card"
+  containerType="carousel"
+  containerId="featured-books"
+  position={2}
+  trackHover={true}
+  trackClick={true}
+  trackImpression={true}
+>
+  {/* Your component here */}
+</TrackedComponent>
+```
 
-- **Container Type** - The type of container: 'carousel', 'book-rack', 'grid', 'book-shelf', 'wishlist'
-- **Container ID** - An optional identifier for the specific container instance
-- **Position** - The position/index of the item within the container
-- **Page Route** - The current page path where the interaction occurred
+### Specialized Tracking Components
 
-## Referral Domain Tracking
+We provide pre-built tracked wrappers for common book components:
 
-For referral links, the system also captures the destination domain:
+- `TrackedBookCardComponent`: For standard book cards
+- `TrackedGridItemComponent`: For grid-style book items
+- `TrackedSpineComponent`: For book spines in rack/shelf displays
+- `TrackedMiniCardComponent`: For mini book cards (used in sidebars, top lists)
+- `TrackedBannerAdComponent`: For ad banners (hero, vertical, horizontal)
 
-- **Referral Domain** - The hostname of the external site (e.g., 'amazon.com', 'bookshop.org')
+## Usage Examples
 
-This enables analysis of which referral partners perform best and how user behavior varies by external site.
+### Example 1: Tracking a Book Card in a Carousel
 
-## Tracked Components
-
-We provide pre-built tracked versions of common book components:
-
-- `TrackedBookCard` - Enhanced tracking for standard book cards
-- `TrackedBookGridCard` - Enhanced tracking for grid-style book items
-
-## Usage
-
-### Using Tracked Components
-
-These components handle all tracking automatically:
-
-```jsx
-import { 
-  TrackedBookCard, 
-  TrackedReferralLink 
-} from '../components/tracking-components';
+```tsx
+import { TrackedBookCardComponent } from './tracking/tracked-book-components';
+import { BookCard } from './book-card';
 
 function BookCarousel({ books, carouselId }) {
   return (
     <div className="carousel">
       {books.map((book, index) => (
-        <div key={book.id}>
-          <TrackedBookCard
-            book={book}
-            containerType="carousel"
-            containerId={carouselId}
-            position={index}
-          />
-          
-          {/* For buy links with domain tracking */}
-          <TrackedReferralLink
-            bookId={book.id}
-            url={book.purchaseUrl}
-            containerType="carousel"
-            containerId={carouselId}
-            position={index}
-            className="buy-button"
-          >
-            Buy Now
-          </TrackedReferralLink>
-        </div>
+        <TrackedBookCardComponent
+          key={book.id}
+          book={book}
+          containerType="carousel"
+          containerId={carouselId}
+          position={index}
+        >
+          <BookCard book={book} />
+        </TrackedBookCardComponent>
       ))}
     </div>
   );
 }
 ```
 
-### Using the useTracking Hook
+### Example 2: Tracking a Banner Ad
 
-For custom components, use the `useTracking` hook:
+```tsx
+import { TrackedBannerAdComponent } from './tracking/tracked-book-components';
+import { HeroBannerAd } from './banner-ads';
 
-```jsx
-import { useTracking } from '../components/tracking-components';
-
-function CustomBookComponent({ book, containerType, containerId, position }) {
-  const { 
-    trackImpression, 
-    trackHover, 
-    trackCardClick,
-    trackReferralWithDomain 
-  } = useTracking(containerType, containerId);
-
-  // Track impression when component mounts
-  useEffect(() => {
-    trackImpression(book.id, 'custom-component', position);
-  }, []);
-
-  // Track referral click with domain capture
-  const handleReferralClick = (e) => {
-    // This will automatically extract the domain from the URL
-    trackReferralWithDomain(book.id, 'custom-component', book.referralLink, position);
-  };
-
+function HomePage() {
   return (
-    <div>
-      {/* Component content */}
-      <a onClick={handleReferralClick} href={book.referralLink}>
-        Buy Now
-      </a>
-    </div>
+    <TrackedBannerAdComponent
+      bookId={123}
+      campaignId={456}
+      adType="hero"
+      containerType="page"
+      metadata={{ source: 'home', position: 'top' }}
+    >
+      <HeroBannerAd
+        campaignId={456}
+        bookId={123}
+        imageSrc="/path/to/image.jpg"
+        title="Featured Book"
+        description="Check out this amazing book!"
+        source="home"
+        position="top"
+      />
+    </TrackedBannerAdComponent>
   );
 }
 ```
 
-## Weight System
+### Example 3: Tracking Without Using Pre-built Components
 
-Different interaction types have assigned weights that affect their significance in recommendation algorithms:
+You can also use the base `TrackedComponent` directly for custom UI elements:
 
-- Hover/detail-expand: 0.25
-- Card click: 0.5
-- Referral link click: 1.0
-- Regular view impressions: 0.0 (baseline)
+```tsx
+import { TrackedComponent } from './tracking/tracked-component';
 
-These weights are used in the analytics dashboard and recommendation engine to prioritize more meaningful engagements.
+function CustomElement({ book }) {
+  return (
+    <TrackedComponent
+      itemId={book.id}
+      componentType="custom-element"
+      containerType="profile-page"
+      className="custom-class"
+    >
+      {/* Your custom UI */}
+      <div>
+        <h3>{book.title}</h3>
+        <p>{book.description}</p>
+      </div>
+    </TrackedComponent>
+  );
+}
+```
+
+## Pre-Built Examples
+
+See the `examples.tsx` file for ready-to-use implementations of tracked components, including:
+
+- `TrackedBookCard`
+- `TrackedGridItem`
+- `TrackedMiniBook`
+- `TrackedHeroBannerAd`
+- `TrackedVerticalBannerAd`
+- `TrackedHorizontalBannerAd`
+
+These can be imported and used directly in your components.
+
+## Data Flow
+
+1. The tracking component detects user interactions (view, hover, click)
+2. The interaction is passed to the appropriate tracking function
+3. The data is stored temporarily in localStorage
+4. Data is periodically synced with the server via API calls
+5. The server stores the data in the database for analytics
+
+## Integration with Analytics
+
+The tracked data can be used for:
+- Book popularity calculation
+- User recommendation engine
+- Author dashboards
+- Publisher analytics
+- A/B testing different UI components

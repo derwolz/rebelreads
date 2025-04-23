@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { 
   ContainerInfo, 
-  TrackingMetadata, 
+  TrackingMetadata,
   trackBookImpression, 
   trackBookClickThrough 
-} from '../components/tracking';
+} from '../components/tracking/tracking-functions';
 
 /**
  * Hook to provide tracking functions with pre-configured context

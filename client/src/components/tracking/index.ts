@@ -21,9 +21,6 @@ export interface TrackingMetadata {
   [key: string]: any;
 }
 
-// Tracking functions used by the useTracking hook
-export { trackBookImpression, trackBookClickThrough } from './tracking-functions';
-
 // Export all the tracked components
 export * from './tracked-component';
 export * from './tracked-book-components';
