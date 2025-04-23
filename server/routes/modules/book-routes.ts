@@ -641,6 +641,71 @@ router.post("/:id/click-through", async (req, res) => {
 });
 
 /**
+ * POST /api/books/:id/referral-click
+ * Record a referral click in the dedicated referral_clicks table
+ * This is a new endpoint specifically for tracking external referral links with domain info
+ */
+router.post("/:id/referral-click", async (req, res) => {
+  // Allow anonymous tracking but record user ID if authenticated
+  const userId = req.isAuthenticated() ? req.user!.id : null;
+  
+  const bookId = parseInt(req.params.id);
+  if (isNaN(bookId)) {
+    return res.status(400).json({ error: "Invalid book ID" });
+  }
+  
+  try {
+    // Extract required data from request body
+    const {
+      sourceContext,   // Where the click came from (e.g., book-details, book-shelf/share)
+      retailerName,    // Name of the retailer (Amazon, Barnes & Noble, etc.)
+      targetDomain,    // The domain of the destination URL (e.g., amazon.com)
+      targetSubdomain, // Optional subdomain (e.g., www, smile)
+      targetUrl,       // The full destination URL
+      deviceInfo,      // Optional device information
+      metadata         // Any additional tracking data
+    } = req.body;
+    
+    // Validate required fields
+    if (!sourceContext || !retailerName || !targetDomain || !targetUrl) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        message: "sourceContext, retailerName, targetDomain, and targetUrl are required"
+      });
+    }
+    
+    // Validate URL format
+    try {
+      new URL(targetUrl);
+    } catch (urlError) {
+      return res.status(400).json({
+        error: "Invalid URL format",
+        message: "targetUrl must be a valid URL"
+      });
+    }
+    
+    // Insert the referral click record
+    const result = await db.insert(referralClicks).values({
+      bookId,
+      userId,
+      sourceContext,
+      retailerName,
+      targetDomain,
+      targetSubdomain: targetSubdomain || null,
+      targetUrl,
+      deviceInfo: deviceInfo || {},
+      metadata: metadata || {}
+    }).returning();
+    
+    // Return the created referral click record
+    res.status(201).json(result[0]);
+  } catch (error: any) {
+    console.error(`Error recording referral click:`, error);
+    res.status(500).json({ error: error.message || "Failed to record referral click" });
+  }
+});
+
+/**
  * DELETE /api/books/:id
  * Delete a book
  * Authentication and author status required
