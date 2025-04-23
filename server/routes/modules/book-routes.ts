@@ -445,8 +445,8 @@ router.post("/", multipleImageUpload, async (req, res) => {
           let height = 0;
           switch (imageType) {
             case 'full':
-              width = 2560;
-              height = 1600;
+              width = 1600;
+              height = 2560;
               break;
             case 'background':
               width = 1300;

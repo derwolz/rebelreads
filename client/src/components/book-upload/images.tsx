@@ -18,11 +18,11 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   ) => {
 
     
-    // If this is the 'full' image upload, generate preview versions for book-card and mini from the full image
+    // If this is the 'full' image upload (book cover), generate preview versions for book-card and mini 
     if (imageType === 'full' && file && !hasError) {
       toast({
-        title: "Full image uploaded",
-        description: "This high-resolution image will be resized for the other image types during processing.",
+        title: "Book Cover uploaded",
+        description: "This high-resolution cover image will be resized for other display types during processing.",
       });
     }
     
