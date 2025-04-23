@@ -161,7 +161,7 @@ export const UPLOAD_IMAGE_TYPES = [
   "background",     // 1300x1500 - Used as background on book details page
   "spine",          // 56x212 - Used in grid layouts (renamed from grid-item)
   "hero",           // 1500x600 - Used in hero sections
-  "full"            // 2560x1600 - Full resolution image for upload
+  "full"            // 1600x2560 - Full resolution book cover image
 ] as const;
 
 // All image types including auto-generated ones

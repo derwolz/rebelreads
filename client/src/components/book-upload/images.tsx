@@ -16,7 +16,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
     hasError?: boolean,
     errorMessage?: string
   ) => {
-    console.log(`Image change: ${imageType}, File: ${file?.name}, Error: ${hasError ? errorMessage : 'none'}`);
+
     
     // If this is the 'full' image upload, generate preview versions for book-card and mini from the full image
     if (imageType === 'full' && file && !hasError) {
@@ -44,7 +44,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Promotional Images</h2>
       </div>
