@@ -51,7 +51,7 @@ const sampleBooks = [
     images: [
       { imageId: 1, bookId: 1, imageType: "mini", imageUrl: "/images/book-cover-1.jpg" },
       { imageId: 2, bookId: 1, imageType: "book-card", imageUrl: "/images/book-cover-1.jpg" },
-      { imageId: 3, bookId: 1, imageType: "book-detail", imageUrl: "/images/book-cover-1.jpg" },
+      { imageId: 3, bookId: 1, imageType: "full", imageUrl: "/images/book-cover-1.jpg" },
     ],
     ratings: {
       overall: 4.7,
@@ -69,7 +69,7 @@ const sampleBooks = [
     images: [
       { imageId: 4, bookId: 2, imageType: "mini", imageUrl: "/images/book-cover-2.jpg" },
       { imageId: 5, bookId: 2, imageType: "book-card", imageUrl: "/images/book-cover-2.jpg" },
-      { imageId: 6, bookId: 2, imageType: "book-detail", imageUrl: "/images/book-cover-2.jpg" },
+      { imageId: 6, bookId: 2, imageType: "full", imageUrl: "/images/book-cover-2.jpg" },
     ],
     ratings: {
       overall: 4.3,
@@ -87,7 +87,7 @@ const sampleBooks = [
     images: [
       { imageId: 7, bookId: 3, imageType: "mini", imageUrl: "/images/manuscript.svg" },
       { imageId: 8, bookId: 3, imageType: "book-card", imageUrl: "/images/manuscript.svg" },
-      { imageId: 9, bookId: 3, imageType: "book-detail", imageUrl: "/images/manuscript.svg" },
+      { imageId: 9, bookId: 3, imageType: "full", imageUrl: "/images/manuscript.svg" },
     ], // Using existing SVG
     ratings: {
       overall: 4.8,

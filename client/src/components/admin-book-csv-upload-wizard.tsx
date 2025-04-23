@@ -44,7 +44,7 @@ interface CsvBook {
   tropes: string;
   background: string;
   hero: string;
-  'book-detail': string;
+  full: string;
   'book-card': string;
   spine: string;
   mini: string;
@@ -71,7 +71,7 @@ export function AdminBookCsvUploadWizard() {
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [uploadMode, setUploadMode] = useState<'csv' | 'zip'>('zip'); // Default to ZIP mode
   const [bookImages, setBookImages] = useState<Record<string, File | null>>({
-    'book-detail': null,
+    'full': null,
     'background': null,
     'hero': null,
     'book-card': null,
@@ -80,10 +80,10 @@ export function AdminBookCsvUploadWizard() {
   });
   
   // Define refs with type safety
-  type ImageTypes = 'book-detail' | 'background' | 'hero' | 'book-card' | 'spine' | 'mini';
+  type ImageTypes = 'full' | 'background' | 'hero' | 'book-card' | 'spine' | 'mini';
   
   const fileInputRefs: Record<ImageTypes, React.RefObject<HTMLInputElement>> = {
-    'book-detail': useRef<HTMLInputElement>(null),
+    'full': useRef<HTMLInputElement>(null),
     'background': useRef<HTMLInputElement>(null), 
     'hero': useRef<HTMLInputElement>(null),
     'book-card': useRef<HTMLInputElement>(null),
