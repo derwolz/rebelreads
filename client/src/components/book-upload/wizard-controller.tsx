@@ -308,9 +308,24 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   useEffect(() => {
     if (bookTaxonomies && bookTaxonomies.length > 0) {
       console.log("Loaded book taxonomies:", bookTaxonomies);
+      
+      // Map the backend taxonomy format to the format expected by the TaxonomyItem interface
+      const mappedTaxonomies = bookTaxonomies.map(taxonomy => ({
+        // Use taxonomyId from backend as the taxonomyId property in TaxonomyItem
+        taxonomyId: taxonomy.taxonomyId,
+        // Include the rest of the properties
+        rank: taxonomy.rank,
+        type: taxonomy.type as "genre" | "subgenre" | "theme" | "trope",
+        name: taxonomy.name,
+        // Include description if available
+        description: taxonomy.description
+      }));
+      
+      console.log("Mapped taxonomies for form:", mappedTaxonomies);
+      
       setFormData((prevData) => ({
         ...prevData,
-        genreTaxonomies: bookTaxonomies,
+        genreTaxonomies: mappedTaxonomies,
       }));
     }
   }, [bookTaxonomies]);

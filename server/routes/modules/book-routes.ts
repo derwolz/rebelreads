@@ -955,6 +955,11 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
             const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, bookId);
             const imageUrl = await sirenedImageBucket.getPublicUrl(storageKey);
             
+            // Log the full image URL to make sure it's being captured
+            if (imageType === 'full') {
+              console.log("IMPORTANT: Saving full size image URL:", imageUrl);
+            }
+            
             // Get dimensions based on image type
             let width = 0;
             let height = 0;
@@ -963,6 +968,7 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
               case 'full':
                 width = 1600;
                 height = 2560;
+                console.log("SAVING FULL COVER IMAGE TO DATABASE WITH DIMENSIONS:", width, "x", height);
                 break;
               case 'background':
                 width = 1300;

@@ -51,6 +51,8 @@ export type TaxonomyItem = {
   rank: number;
   type: "genre" | "subgenre" | "theme" | "trope";
   name: string;
+  description?: string;
+  importance?: number;
 };
 
 export type GenreSelectorMode = "simple" | "taxonomy";
