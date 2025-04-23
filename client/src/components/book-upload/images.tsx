@@ -5,8 +5,11 @@ import { DragDropImage } from "@/components/drag-drop-image";
 import { StepComponentProps, BookImageFile } from "./types";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
 
 export function ImagesStep({ formData, setFormData }: StepComponentProps) {
+  const { toast } = useToast();
+  
   const handleImageChange = (
     imageType: string,
     file: File | null,
@@ -14,6 +17,14 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
     errorMessage?: string
   ) => {
     console.log(`Image change: ${imageType}, File: ${file?.name}, Error: ${hasError ? errorMessage : 'none'}`);
+    
+    // If this is the 'full' image upload, generate preview versions for book-detail, book-card, and mini
+    if (imageType === 'full' && file && !hasError) {
+      toast({
+        title: "Full image uploaded",
+        description: "This high-resolution image will be resized for the other image types during processing.",
+      });
+    }
     
     setFormData((prev) => {
       const newImages = {

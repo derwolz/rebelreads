@@ -154,28 +154,32 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       // Set dimensions based on image type
       switch (type) {
         case "book-detail":
-          width = 480;
-          height = 600;
+          width = 773;
+          height = 480;
           break;
         case "background":
           width = 1300;
           height = 1500;
           break;
         case "book-card":
-          width = 256;
-          height = 440;
+          width = 260;
+          height = 435;
           break;
         case "spine":
           width = 56;
           height = 212;
           break;
         case "mini":
-          width = 48;
-          height = 64;
+          width = 64;
+          height = 40;
           break;
         case "hero":
           width = 1500;
           height = 600;
+          break;
+        case "full":
+          width = 2560;
+          height = 1600;
           break;
       }
 

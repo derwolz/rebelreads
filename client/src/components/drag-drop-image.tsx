@@ -155,17 +155,19 @@ export function DragDropImage({
   const getTypeLabel = (type: typeof IMAGE_TYPES[number]) => {
     switch(type) {
       case 'book-detail':
-        return 'Book Cover (480×600)';
+        return 'Book Cover (773×480)';
       case 'background':
         return 'Background (1300×1500)';
       case 'book-card':
-        return 'Book Card (256×440)';
+        return 'Book Card (260×435)';
       case 'spine':
         return 'Spine (56×212)';
       case 'mini':
-        return 'Mini (48×64)';
+        return 'Mini (64×40)';
       case 'hero':
         return 'Hero (1500×600)';
+      case 'full':
+        return 'Full Resolution (2560×1600)';
       default:
         return type;
     }
