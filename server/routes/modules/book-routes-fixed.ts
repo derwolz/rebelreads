@@ -501,13 +501,18 @@ router.patch("/:id", async (req, res) => {
     console.log("PATCH updating book:", bookId);
     console.log("Update fields:", Object.keys(req.body));
     
-    // Extract the updated fields from request body, removing special fields
+    // Extract the updated fields from request body, ensuring authorname and bookname don't get sent to SQL
     const { authorname, bookname, genreTaxonomies, ...updates } = req.body;
     
     console.log("Processing update with clean fields:", Object.keys(updates));
     
-    // Update the book in database
-    const updatedBook = await dbStorage.updateBook(bookId, updates);
+    // Explicitly ensure we're not trying to update the book ID or author ID which could cause SQL issues
+    const cleanUpdates = { ...updates };
+    delete cleanUpdates.id;
+    delete cleanUpdates.authorId;
+    
+    // Update the book in database with clean data
+    const updatedBook = await dbStorage.updateBook(bookId, cleanUpdates);
     
     // Update taxonomies if provided
     if (genreTaxonomies && Array.isArray(genreTaxonomies)) {

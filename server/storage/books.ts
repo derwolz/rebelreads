@@ -421,16 +421,37 @@ export class BookStorage implements IBookStorage {
   }
 
   async updateBook(id: number, data: Partial<Book>): Promise<Book> {
-    // Extract genreTaxonomies from data if present, as we'll handle them separately
-    const { genreTaxonomies, ...bookData } = data as any;
+    // Extract special fields that need separate handling
+    const { genreTaxonomies, bookImages, hasAwards, authorname, bookname, ...bookData } = data as any;
     
-    const [book] = await db
-      .update(books)
-      .set(bookData)
-      .where(eq(books.id, id))
-      .returning();
+    // Filter out any empty or undefined values to avoid SQL errors
+    const cleanBookData: any = {};
+    for (const key in bookData) {
+      if (bookData[key] !== undefined && bookData[key] !== null && key !== "id") {
+        cleanBookData[key] = bookData[key];
+      }
+    }
     
-    return book;
+    // Only proceed with update if we have valid data to update
+    if (Object.keys(cleanBookData).length === 0) {
+      // If no valid fields to update, just return the current book
+      const book = await this.getBook(id);
+      return book as Book;
+    }
+    
+    // Perform the update with clean data
+    try {
+      const [book] = await db
+        .update(books)
+        .set(cleanBookData)
+        .where(eq(books.id, id))
+        .returning();
+      
+      return book;
+    } catch (error) {
+      console.error(`Error updating book ${id}:`, error);
+      throw error;
+    }
   }
   
   async updateBookTaxonomies(bookId: number, taxonomyData: any[]): Promise<void> {
