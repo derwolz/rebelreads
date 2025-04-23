@@ -340,53 +340,72 @@ router.get("/my-books", async (req, res) => {
  * Authentication and author status required
  */
 router.post("/", multipleImageUpload, async (req, res) => {
-  if (!req.isAuthenticated() || !req.user!.isAuthor) {
-    return res.sendStatus(401);
-  }
-
+  // Force JSON content type
+  res.type('json');
+  
   try {
-    // Check if we have at least one image
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).json({ message: "At least one book image is required" });
+    // Validate authentication
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
     }
-
-    // Parse form data fields
-    const formats = req.body.formats ? JSON.parse(req.body.formats) : [];
-    const characters = req.body.characters ? JSON.parse(req.body.characters) : [];
-    const awards = req.body.awards ? JSON.parse(req.body.awards) : [];
-    const publishedDate = req.body.publishedDate ? new Date(req.body.publishedDate) : null;
     
-    // Extract and handle taxonomy data separately
-    const genreTaxonomies = req.body.genreTaxonomies ? JSON.parse(req.body.genreTaxonomies) : [];
-    
-    // Process referral links if present
-    let referralLinks = [];
-    if (req.body.referralLinks) {
-      try {
-        const parsedLinks = JSON.parse(req.body.referralLinks);
-        // Enhance with domain and favicon information
-        referralLinks = await enhanceReferralLinks(parsedLinks);
-      } catch (error) {
-        console.error("Error processing referral links:", error);
-      }
-    }
-
-    // Get the author ID from the user ID (not using user.id directly since we need author.id)
+    // Check author status
     const author = await dbStorage.getAuthorByUserId(req.user!.id);
-    
     if (!author) {
-      return res.status(403).json({ error: "User is not an author or author record not found" });
+      return res.status(403).json({ error: "Not an author" });
     }
     
-    // Create the book first (without taxonomies and without cover URL)
+    console.log("POST - Creating new book");
+    
+    // Check if we have images
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: "At least one book image is required" });
+    }
+    
+    console.log("POST - Processing form data");
+    
+    // Process form data fields with safe parsing
+    const parseJsonField = (fieldName: string, defaultVal: any = []) => {
+      if (!req.body[fieldName]) return defaultVal;
+      try {
+        return JSON.parse(req.body[fieldName]);
+      } catch (error) {
+        console.error(`Error parsing ${fieldName}:`, error);
+        return defaultVal;
+      }
+    };
+    
+    // Parse all JSON fields
+    const formats = parseJsonField('formats');
+    const characters = parseJsonField('characters');
+    const awards = parseJsonField('awards');
+    const genreTaxonomies = parseJsonField('genreTaxonomies');
+    
+    // Parse dates and numbers
+    const publishedDate = req.body.publishedDate ? new Date(req.body.publishedDate) : null;
+    const pageCount = req.body.pageCount ? parseInt(req.body.pageCount) : null;
+    
+    // Process referral links
+    let referralLinks = [];
+    try {
+      const parsedLinks = parseJsonField('referralLinks');
+      // Enhance with domain and favicon information
+      referralLinks = await enhanceReferralLinks(parsedLinks);
+    } catch (error) {
+      console.error("Error processing referral links:", error);
+    }
+    
+    console.log("POST - Creating book record");
+    
+    // Create the book
     const book = await dbStorage.createBook({
       title: req.body.title,
       description: req.body.description,
-      authorId: author.id, // Use the author ID instead of the user ID
+      authorId: author.id,
       referralLinks: referralLinks,
       formats: formats,
       promoted: false,
-      pageCount: req.body.pageCount ? parseInt(req.body.pageCount) : null,
+      pageCount: pageCount,
       publishedDate,
       awards,
       originalTitle: req.body.originalTitle || null,
@@ -748,124 +767,176 @@ router.post("/:id/referral-click", async (req, res) => {
  * Update an existing book
  * Authentication and author status required
  */
-router.patch("/:id", multipleImageUpload, async (req, res) => {
-  // Set content type right away to ensure JSON response
-  res.setHeader('Content-Type', 'application/json');
+router.patch("/:id", async (req, res) => {
+  // Force JSON content type
+  res.type('json');
   
-  if (!req.isAuthenticated() || !req.user!.isAuthor) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-
   try {
-    // Parse the ID from the URL
+    // Basic validation
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    // Get user and book IDs
+    const userId = req.user!.id;
     const bookId = parseInt(req.params.id);
+    
     if (isNaN(bookId)) {
       return res.status(400).json({ error: "Invalid book ID" });
     }
-
-    // Get the book to verify ownership
+    
+    // Get the current book
     const book = await dbStorage.getBook(bookId);
     if (!book) {
       return res.status(404).json({ error: "Book not found" });
     }
-
-    // Get the author ID from the user ID
-    const author = await dbStorage.getAuthorByUserId(req.user!.id);
+    
+    // Get author record
+    const author = await dbStorage.getAuthorByUserId(userId);
     if (!author) {
-      return res.status(403).json({ error: "Author record not found" });
+      return res.status(403).json({ error: "Not an author" });
     }
-
-    // Verify the author owns this book
+    
+    // Verify ownership
     if (book.authorId !== author.id) {
-      return res.status(403).json({ error: "You do not have permission to update this book" });
+      return res.status(403).json({ error: "Not authorized" });
     }
-
-    console.log("Processing PATCH request for book ID:", bookId);
-    console.log("Request Content-Type:", req.get('Content-Type'));
     
-    // Create an object to hold all the updated fields
-    const updatedFields: any = {};
-
-    // Process form data or JSON depending on content type
-    if (req.is('multipart/form-data')) {
-      console.log("Processing multipart form data");
-      
-      // Handle simple fields
-      for (const key in req.body) {
-        // Skip empty values
-        if (req.body[key] === '' || req.body[key] === undefined) continue;
-        
-        // Handle fields that need to be parsed from JSON strings
-        if (['formats', 'characters', 'awards', 'genreTaxonomies', 'referralLinks'].includes(key)) {
-          try {
-            updatedFields[key] = JSON.parse(req.body[key]);
-          } catch (e) {
-            console.error(`Error parsing JSON field ${key}:`, e);
-          }
-        } else if (key === 'publishedDate') {
-          updatedFields[key] = new Date(req.body[key]);
-        } else if (key === 'pageCount') {
-          updatedFields[key] = parseInt(req.body[key]);
-        } else {
-          updatedFields[key] = req.body[key];
-        }
-      }
-      
-      // Process uploaded files if any
-      const uploadedFiles = req.files as { [fieldname: string]: Express.Multer.File[] };
-      if (uploadedFiles && Object.keys(uploadedFiles).length > 0) {
-        console.log("Processing uploaded files:", Object.keys(uploadedFiles));
-        // Process book images similar to the POST endpoint
-        for (const fieldName in uploadedFiles) {
-          if (fieldName.startsWith('bookImage_')) {
-            const imageType = fieldName.replace('bookImage_', '') as any;
-            const file = uploadedFiles[fieldName][0]; // Get first file from array
-            
-            console.log(`Uploading ${imageType} image for book ID ${bookId}`);
-            
-            try {
-              // Upload to object storage using SirenedImageBucket with book ID
-              const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, bookId);
-              const imageUrl = await sirenedImageBucket.getPublicUrl(storageKey);
-              
-              // Store the image URL in the database separately
-              await dbStorage.addBookImage(bookId, imageType, imageUrl);
-            } catch (e) {
-              console.error(`Error uploading image ${imageType}:`, e);
-            }
-          }
-        }
-      }
-    } else {
-      // If not multipart, assume it's JSON
-      console.log("Processing JSON data");
-      Object.assign(updatedFields, req.body);
-    }
-
-    console.log("Fields to update:", Object.keys(updatedFields));
+    console.log("PATCH request for book:", bookId);
+    console.log("Update fields:", Object.keys(req.body));
     
-    // Process referral links if present
-    if (updatedFields.referralLinks) {
-      try {
-        updatedFields.referralLinks = await enhanceReferralLinks(updatedFields.referralLinks);
-      } catch (error) {
-        console.error("Error processing referral links:", error);
-      }
-    }
-
-    // Update the book
-    const updatedBook = await dbStorage.updateBook(bookId, updatedFields);
+    // Extract the updated fields from request body
+    const updates = { ...req.body };
     
-    // Handle taxonomy data if present
-    if (updatedFields.genreTaxonomies && Array.isArray(updatedFields.genreTaxonomies)) {
-      await dbStorage.updateBookTaxonomies(bookId, updatedFields.genreTaxonomies);
+    // Process taxonomy data separately if present
+    const taxonomies = updates.genreTaxonomies;
+    delete updates.genreTaxonomies;
+    
+    // Update the book in database
+    const updatedBook = await dbStorage.updateBook(bookId, updates);
+    
+    // Update taxonomies if provided
+    if (taxonomies && Array.isArray(taxonomies)) {
+      await dbStorage.updateBookTaxonomies(bookId, taxonomies);
     }
-
-    console.log("Book updated successfully:", bookId);
+    
+    // Return success with updated book
     return res.status(200).json(updatedBook);
   } catch (error) {
-    console.error("Error updating book:", error);
-    return res.status(500).json({ error: "Failed to update book" });
+    console.error("PATCH book error:", error);
+    return res.status(500).json({ 
+      error: "Failed to update book",
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+/**
+ * PATCH /api/books/:id/upload
+ * Update a book with file uploads
+ * Authentication and author status required
+ */
+router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
+  // Force JSON content type
+  res.type('json');
+  
+  try {
+    // Basic validation
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    // Get user and book IDs
+    const userId = req.user!.id;
+    const bookId = parseInt(req.params.id);
+    
+    if (isNaN(bookId)) {
+      return res.status(400).json({ error: "Invalid book ID" });
+    }
+    
+    // Get the current book
+    const book = await dbStorage.getBook(bookId);
+    if (!book) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    // Get author record
+    const author = await dbStorage.getAuthorByUserId(userId);
+    if (!author) {
+      return res.status(403).json({ error: "Not an author" });
+    }
+    
+    // Verify ownership
+    if (book.authorId !== author.id) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+    
+    console.log("PATCH upload request for book:", bookId);
+    
+    // Process form data
+    const updates: any = {};
+    
+    // Handle simple fields first
+    for (const key in req.body) {
+      if (req.body[key] === '' || req.body[key] === undefined) continue;
+      
+      // Parse JSON fields
+      if (['formats', 'characters', 'awards', 'genreTaxonomies', 'referralLinks'].includes(key)) {
+        try {
+          updates[key] = JSON.parse(req.body[key]);
+        } catch (e) {
+          console.error(`Error parsing JSON field ${key}:`, e);
+        }
+      } else if (key === 'publishedDate') {
+        updates[key] = new Date(req.body[key]);
+      } else if (key === 'pageCount') {
+        updates[key] = parseInt(req.body[key]);
+      } else {
+        updates[key] = req.body[key];
+      }
+    }
+    
+    // Process uploaded files
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    if (files && Object.keys(files).length > 0) {
+      console.log("Processing uploads:", Object.keys(files));
+      
+      for (const fieldName in files) {
+        if (fieldName.startsWith('bookImage_')) {
+          const imageType = fieldName.replace('bookImage_', '');
+          const file = files[fieldName][0];
+          
+          try {
+            // Upload to storage
+            const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, bookId);
+            const imageUrl = await sirenedImageBucket.getPublicUrl(storageKey);
+            
+            // Save to database
+            await dbStorage.addBookImage(bookId, imageType, imageUrl);
+            console.log(`Uploaded ${imageType} image for book ${bookId}`);
+          } catch (e) {
+            console.error(`Error uploading ${imageType} image:`, e);
+          }
+        }
+      }
+    }
+    
+    // Update the book
+    const updatedBook = await dbStorage.updateBook(bookId, updates);
+    
+    // Update taxonomies if provided
+    if (updates.genreTaxonomies && Array.isArray(updates.genreTaxonomies)) {
+      await dbStorage.updateBookTaxonomies(bookId, updates.genreTaxonomies);
+    }
+    
+    // Return success
+    return res.status(200).json(updatedBook);
+  } catch (error) {
+    console.error("PATCH book upload error:", error);
+    return res.status(500).json({ 
+      error: "Failed to update book with uploads",
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 });
 
