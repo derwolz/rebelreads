@@ -5,6 +5,8 @@ import { enhanceReferralLinks } from "../../utils/favicon-utils";
 import { applyContentFilters } from "../../utils/content-filters";
 import { and, eq } from "drizzle-orm";
 import { sirenedImageBucket } from "../../services/sirened-image-bucket";
+import { db } from "../../db";
+import { insertReferralClickSchema, referralClicks } from "@shared/schema";
 
 // Configure multer for in-memory uploads (for use with object storage)
 // Create a field name filter that accepts form fields matching bookImage_ pattern
