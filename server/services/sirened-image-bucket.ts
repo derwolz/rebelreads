@@ -147,9 +147,10 @@ class SirenedImageBucket {
   /**
    * Generate additional book image sizes from the full resolution image
    * Specifically creates:
-   * - book-detail (773x480)
    * - book-card (260x435)
    * - mini (64x40)
+   * 
+   * Note: We no longer generate book-detail (773x480) since we use the full image for that purpose
    * 
    * @param fullResolutionFile The original high-res image file (2560x1600)
    * @param bookId The book ID
@@ -188,29 +189,8 @@ class SirenedImageBucket {
         quality: 90
       };
       
-      // Generate book-detail image (773x480)
-      const bookDetailBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(773, 480, imageOptions)
-        .webp(formatOptions)
-        .toBuffer();
-      
-      // Create a file object for the book-detail image
-      const bookDetailFile: UploadedFile = {
-        ...fullResolutionFile,
-        buffer: bookDetailBuffer,
-        size: bookDetailBuffer.length,
-        originalname: `book-detail-${bookId}.webp`,
-        mimetype: 'image/webp'
-      };
-      
-      // Upload the book-detail image
-      const bookDetailStorageKey = await this.uploadBookImage(bookDetailFile, 'book-detail', bookId);
-      const bookDetailPublicUrl = this.getPublicUrl(bookDetailStorageKey);
-      
-      result.bookDetail = {
-        storageKey: bookDetailStorageKey,
-        publicUrl: bookDetailPublicUrl
-      };
+      // We no longer generate a separate book-detail image
+      // Instead, the book-detail view will use the full image directly
       
       // Generate book-card image (260x435)
       const bookCardBuffer = await sharp(fullResolutionFile.buffer)

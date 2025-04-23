@@ -503,24 +503,8 @@ router.post("/", multipleImageUpload, async (req, res) => {
         // Call function to auto-generate other image types from the full image
         const generatedImages = await sirenedImageBucket.generateAdditionalBookImages(fullImageFile, book.id);
         
-        // Add book-detail image to database if generated
-        if (generatedImages.bookDetail) {
-          try {
-            const bookDetailImage = await dbStorage.addBookImage({
-              bookId: book.id,
-              imageUrl: generatedImages.bookDetail.publicUrl,
-              imageType: 'book-detail',
-              width: 773,  // New width for book-detail
-              height: 480, // New height for book-detail
-              sizeKb: Math.round(fullImageFile.size / 4), // Estimate size based on original
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-            bookImageEntries.push(bookDetailImage);
-          } catch (err) {
-            console.error(`Error adding book-detail image to database:`, err);
-          }
-        }
+        // We no longer generate or store a separate book-detail image
+        // The book-detail view will use the full image directly
         
         // Add book-card image to database if generated
         if (generatedImages.bookCard) {
