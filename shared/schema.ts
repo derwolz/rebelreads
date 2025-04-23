@@ -388,6 +388,21 @@ export const bookClickThroughs = pgTable("book_click_throughs", {
   metadata: jsonb("metadata").default({}), // Additional tracking metadata
 });
 
+// Dedicated table for referral link tracking
+export const referralClicks = pgTable("referral_clicks", {
+  id: serial("id").primaryKey(),
+  bookId: integer("book_id").notNull().references(() => books.id),
+  userId: integer("user_id").references(() => users.id), // Optional, as not all users might be logged in
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  sourceContext: text("source_context").notNull(), // Where the click originated from (book_details, book-shelf/share)
+  retailerName: text("retailer_name").notNull(), // Name of the retailer (Amazon, Barnes & Noble, etc.)
+  targetDomain: text("target_domain").notNull(), // Actual domain being linked to (amazon.com, bn.com)
+  targetSubdomain: text("target_subdomain"), // Subdomain if applicable
+  targetUrl: text("target_url").notNull(), // Full destination URL
+  deviceInfo: jsonb("device_info").default({}), // Device information
+  metadata: jsonb("metadata").default({}), // Additional tracking data
+});
+
 export const publishers = pgTable("publishers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().unique().references(() => users.id),
