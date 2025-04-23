@@ -18,7 +18,7 @@ const bookImageFieldFilter = (fieldname: string) => {
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB size limit
+    fileSize: 20 * 1024 * 1024, // 20MB size limit (increased for full resolution images)
   },
   fileFilter: (req, file, cb) => {
     // Only allow image files
@@ -447,10 +447,6 @@ router.post("/", multipleImageUpload, async (req, res) => {
             case 'full':
               width = 2560;
               height = 1600;
-              break;
-            case 'book-detail':
-              width = 773;
-              height = 480;
               break;
             case 'background':
               width = 1300;

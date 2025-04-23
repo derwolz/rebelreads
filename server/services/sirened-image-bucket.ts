@@ -159,7 +159,6 @@ class SirenedImageBucket {
     fullResolutionFile: UploadedFile,
     bookId: number
   ): Promise<{
-    bookDetail: { storageKey: string; publicUrl: string } | null;
     bookCard: { storageKey: string; publicUrl: string } | null;
     mini: { storageKey: string; publicUrl: string } | null;
   }> {
@@ -170,7 +169,6 @@ class SirenedImageBucket {
     }
     
     const result = {
-      bookDetail: null as { storageKey: string; publicUrl: string } | null,
       bookCard: null as { storageKey: string; publicUrl: string } | null,
       mini: null as { storageKey: string; publicUrl: string } | null
     };
