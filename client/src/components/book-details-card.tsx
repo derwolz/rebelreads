@@ -263,10 +263,25 @@ export function BookDetailsCard({ book, className }: BookDetailsCardProps) {
                     className="inline-flex items-center text-xs bg-muted hover:bg-muted/80 rounded-md px-3 py-1 transition-colors"
                     onClick={async (e) => {
                       e.stopPropagation();
-                      // Record click-through on referral link
+                      
+                      // Extract domain from the URL for analytics
+                      let domain = "unknown";
+                      try {
+                        const url = new URL(link.url);
+                        domain = url.hostname;
+                      } catch (error) {
+                        console.error("Error extracting domain from URL:", link.url);
+                      }
+                      
+                      // Record click-through on referral link with domain information
                       await apiRequest("POST", `/api/books/${book.id}/click-through`, {
                         source: "referral-link",
                         referrer: window.location.pathname,
+                        isReferral: true, // Flag as a referral click
+                        metadata: {
+                          referralDomain: domain,
+                          retailer: link.retailer
+                        }
                       });
                     }}
                   >

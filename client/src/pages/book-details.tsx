@@ -326,6 +326,15 @@ export default function BookDetails() {
                             // Prevent default to handle the tracking
                             e.preventDefault();
                             
+                            // Extract domain from the URL for analytics
+                            let domain = "unknown";
+                            try {
+                              const url = new URL(link.url);
+                              domain = url.hostname;
+                            } catch (error) {
+                              console.error("Error extracting domain from URL:", link.url);
+                            }
+                            
                             // Process the click-through and weight tracking
                             try {
                               // Record weighted impression with referral-click type (weight 1.0)
@@ -336,7 +345,10 @@ export default function BookDetails() {
                                   source: `referral_${link.retailer.toLowerCase()}_click`,
                                   context: "book_details",
                                   type: "referral-click",
-                                  weight: 1.0
+                                  weight: 1.0,
+                                  metadata: {
+                                    referralDomain: domain
+                                  }
                                 }
                               );
                               
@@ -347,6 +359,9 @@ export default function BookDetails() {
                                 {
                                   source: `referral_${link.retailer.toLowerCase()}_click`,
                                   referrer: window.location.pathname,
+                                  metadata: {
+                                    referralDomain: domain
+                                  }
                                 },
                               );
                             } catch (error) {
