@@ -62,13 +62,29 @@ class SirenedImageBucket {
       // Get the appropriate directory for this image type
       const directory = this.directories[imageType];
       
+      if (!directory) {
+        console.error(`Invalid image type: ${imageType}. Valid types are: ${Object.keys(this.directories).join(', ')}`);
+        throw new Error(`Invalid image type: ${imageType}`);
+      }
+      
+      console.log(`Uploading ${imageType} image to directory: ${directory}`);
+      
       // Create a more specific path if bookId is provided
       const filePath = bookId 
         ? `${directory}/book_${bookId}` 
         : directory;
+      
+      console.log(`Final storage path: ${filePath}`);
         
       // Upload to object storage
       const storageKey = await objectStorage.uploadFile(file, filePath);
+      
+      // Log the resulting storage key and public URL
+      const publicUrl = this.getPublicUrl(storageKey);
+      console.log(`Image uploaded successfully: 
+        - Storage Key: ${storageKey}
+        - Public URL: ${publicUrl}
+        - Image Type: ${imageType}`);
       
       return storageKey;
     } catch (error) {

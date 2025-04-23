@@ -29,9 +29,43 @@ router.get("/book-details", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Book not found" });
     }
     
-    // Add debugging to check if images are attached to the book
-    console.log(`Public API - Book with title "${bookTitle}" by "${authorName}" has ${book.images?.length || 0} images:`, 
-      book.images?.map(img => `${img.imageType}: ${img.imageUrl}`));
+    // Add detailed debugging to check if images are attached to the book with proper paths
+    if (book.images && book.images.length > 0) {
+      // Create a detailed array of image information for diagnostics
+      const imageAnalysis = book.images.map(img => {
+        // Extract the directory path from the URL to verify correct pathing
+        const pathParts = img.imageUrl.split('/');
+        const directory = pathParts.length > 3 ? pathParts[pathParts.length - 2] : 'unknown'; 
+        
+        // Determine the expected directory based on image type
+        const expectedDir = img.imageType === 'book-card' ? 'card' : 
+                          img.imageType === 'mini' ? 'mini' :
+                          img.imageType === 'background' ? 'background' :
+                          img.imageType === 'spine' ? 'spine' :
+                          img.imageType === 'hero' ? 'hero' :
+                          img.imageType === 'full' ? 'full' : 'unknown';
+        
+        // Check if directory path is correct
+        const pathCorrect = directory.includes(expectedDir);
+        
+        return {
+          type: img.imageType,
+          url: img.imageUrl,
+          directory: directory,
+          expected_directory: expectedDir,
+          path_correct: pathCorrect
+        };
+      });
+      
+      console.log(`Public API - Book with title "${bookTitle}" by "${authorName}" has ${book.images.length} images:`);
+      console.log(JSON.stringify(imageAnalysis, null, 2));
+      
+      // Also log in the simpler format for backward compatibility
+      console.log(`Public API - Book with title "${bookTitle}" by "${authorName}" has ${book.images.length} images:`, 
+        book.images.map(img => `${img.imageType}: ${img.imageUrl}`));
+    } else {
+      console.log(`Public API - Book with title "${bookTitle}" by "${authorName}" has no images attached.`);
+    }
     
     // Note: We don't record impressions for public routes to avoid authentication checks
     
