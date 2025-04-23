@@ -43,8 +43,7 @@ const multipleImageUpload = multer({
     cb(new Error('Only image files are allowed'));
   }
 }).fields([
-  { name: 'bookImage_full', maxCount: 1 },           // The new high-res source image
-  { name: 'bookImage_book-detail', maxCount: 1 },
+  { name: 'bookImage_full', maxCount: 1 },           // The high-resolution book cover image
   { name: 'bookImage_background', maxCount: 1 },
   { name: 'bookImage_spine', maxCount: 1 },
   { name: 'bookImage_hero', maxCount: 1 },
