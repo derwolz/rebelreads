@@ -50,7 +50,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
       case 'book-card':
         return { width: 256, height: 412 };
       case 'mini':
-        return { width: 64, height: 40 };
+        return { width: 96, height: 60 };
       case 'vertical-banner':
         return { width: 400, height: 800 };
       case 'horizontal-banner':

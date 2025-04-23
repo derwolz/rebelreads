@@ -11,6 +11,8 @@ export interface BookImageFile {
   height: number;
   previewUrl?: string; // URL for existing images when editing
   error?: string; // Track validation errors
+  isGenerated?: boolean; // Flag to mark auto-generated images
+  sourceImageUrl?: string; // URL to the source full image (for regeneration)
 }
 
 /**
