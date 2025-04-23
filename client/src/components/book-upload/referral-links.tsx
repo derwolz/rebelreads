@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StepComponentProps } from "./types";
-import { ReferralLink } from "@shared/schema";
+import { ReferralLink, RETAILER_OPTIONS } from "@shared/schema";
 import {
   DndContext,
   closestCenter,
@@ -85,6 +85,86 @@ export function ReferralLinksStep({ formData, setFormData }: StepComponentProps)
     }),
   );
 
+  // Helper functions to safely handle referral links
+  const getSafeReferralLinks = () => {
+    // Ensure referralLinks exists and is an array
+    try {
+      if (!formData.referralLinks || !Array.isArray(formData.referralLinks)) {
+        console.warn("Invalid referralLinks detected, resetting to empty array", formData.referralLinks);
+        return [];
+      }
+
+      // Check that each link has required properties
+      return formData.referralLinks.map(link => {
+        // Ensure each link has all required properties
+        if (!link || typeof link !== 'object') {
+          console.warn("Invalid link object detected, creating a new one");
+          return { retailer: "Custom", url: "", customName: "" };
+        }
+
+        // Ensure URL is a string
+        const url = typeof link.url === 'string' ? link.url : "";
+        
+        // Ensure retailer is valid enum value (or default to Custom)
+        let retailer: typeof RETAILER_OPTIONS[number] = "Custom";
+        if (typeof link.retailer === 'string') {
+          // Check if it's a valid retailer option
+          if (RETAILER_OPTIONS.includes(link.retailer as any)) {
+            retailer = link.retailer as typeof RETAILER_OPTIONS[number];
+          }
+        }
+        
+        // Ensure customName is a string or undefined
+        const customName = typeof link.customName === 'string' ? link.customName : "";
+        
+        return { 
+          retailer, 
+          url, 
+          customName 
+        };
+      });
+    } catch (error) {
+      console.error("Error processing referralLinks:", error);
+      return [];
+    }
+  };
+
+  const safeSetReferralLinks = (newLinks: ReferralLink[]) => {
+    try {
+      // Log stringified version to check for JSON issues
+      const jsonString = JSON.stringify(newLinks);
+      console.log("Setting referral links, stringify successful");
+      
+      // Update form data with validated links
+      setFormData(prev => ({
+        ...prev,
+        referralLinks: newLinks
+      }));
+    } catch (error) {
+      console.error("Error stringifying referral links:", error);
+      // If we can't stringify the links, they will cause JSON.parse errors later
+      // Create clean links instead
+      const cleanLinks = newLinks.map(link => {
+        // Ensure retailer is a valid enum value
+        let retailer: typeof RETAILER_OPTIONS[number] = "Custom";
+        if (typeof link.retailer === 'string' && RETAILER_OPTIONS.includes(link.retailer as any)) {
+          retailer = link.retailer as typeof RETAILER_OPTIONS[number];
+        }
+        
+        return {
+          retailer,
+          url: typeof link.url === 'string' ? link.url : "",
+          customName: typeof link.customName === 'string' ? link.customName : ""
+        };
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        referralLinks: cleanLinks
+      }));
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Referral Links</h2>
@@ -96,45 +176,68 @@ export function ReferralLinksStep({ formData, setFormData }: StepComponentProps)
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={(event) => {
-          const { active, over } = event;
-          if (over && active.id !== over.id) {
-            const oldIndex = Number(active.id);
-            const newIndex = Number(over.id);
-            setFormData((prev) => ({
-              ...prev,
-              referralLinks: arrayMove(
-                prev.referralLinks,
-                oldIndex,
-                newIndex,
-              ),
-            }));
+          try {
+            const { active, over } = event;
+            if (over && active.id !== over.id) {
+              const oldIndex = Number(active.id);
+              const newIndex = Number(over.id);
+              
+              // Get current links with validation
+              const currentLinks = getSafeReferralLinks();
+              
+              // Perform the array move safely
+              const reorderedLinks = arrayMove(currentLinks, oldIndex, newIndex);
+              
+              // Update with the reordered links
+              safeSetReferralLinks(reorderedLinks);
+            }
+          } catch (error) {
+            console.error("Error handling drag end:", error);
           }
         }}
       >
         <SortableContext
-          items={formData.referralLinks.map((_, i) => i)}
+          items={getSafeReferralLinks().map((_, i) => i)}
           strategy={verticalListSortingStrategy}
         >
-          {formData.referralLinks.map((link, index) => (
+          {getSafeReferralLinks().map((link, index) => (
             <SortableReferralLink
               key={index}
               link={link}
               index={index}
               onChange={(field, value) => {
-                const newLinks = [...formData.referralLinks];
-                newLinks[index] = { ...link, [field]: value };
-                setFormData((prev) => ({
-                  ...prev,
-                  referralLinks: newLinks,
-                }));
+                try {
+                  // Get current links with validation
+                  const currentLinks = getSafeReferralLinks();
+                  
+                  // Create a new copy of the links
+                  const newLinks = [...currentLinks];
+                  
+                  // Update the specific link
+                  newLinks[index] = { 
+                    ...newLinks[index], 
+                    [field]: value 
+                  };
+                  
+                  // Update form data with the new links
+                  safeSetReferralLinks(newLinks);
+                } catch (error) {
+                  console.error("Error updating link:", error);
+                }
               }}
               onRemove={() => {
-                setFormData((prev) => ({
-                  ...prev,
-                  referralLinks: prev.referralLinks.filter(
-                    (_, i) => i !== index,
-                  ),
-                }));
+                try {
+                  // Get current links with validation
+                  const currentLinks = getSafeReferralLinks();
+                  
+                  // Filter out the link to remove
+                  const filteredLinks = currentLinks.filter((_, i) => i !== index);
+                  
+                  // Update form data with the filtered links
+                  safeSetReferralLinks(filteredLinks);
+                } catch (error) {
+                  console.error("Error removing link:", error);
+                }
               }}
             />
           ))}
@@ -144,28 +247,39 @@ export function ReferralLinksStep({ formData, setFormData }: StepComponentProps)
       <div className="flex gap-2 mt-2">
         <Button
           onClick={() => {
-            // Import the retailer constant from schema to ensure type compatibility
-            const newLink: ReferralLink = {
-              retailer: "Custom", // Using "Custom" from RETAILER_OPTIONS
-              url: "",
-              customName: "", // Initially empty, can be filled by user
-            };
-            setFormData((prev) => ({
-              ...prev,
-              referralLinks: [...prev.referralLinks, newLink],
-            }));
+            try {
+              // Create a new link
+              const newLink: ReferralLink = {
+                retailer: "Custom",
+                url: "",
+                customName: "",
+              };
+              
+              // Get current links with validation
+              const currentLinks = getSafeReferralLinks();
+              
+              // Add the new link
+              safeSetReferralLinks([...currentLinks, newLink]);
+            } catch (error) {
+              console.error("Error adding new link:", error);
+            }
           }}
           type="button"
         >
           Add Link
         </Button>
-        {formData.referralLinks.length > 0 && (
+        {getSafeReferralLinks().length > 0 && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              setFormData((prev) => ({ ...prev, referralLinks: [] }))
-            }
+            onClick={() => {
+              try {
+                // Reset referral links to empty array
+                safeSetReferralLinks([]);
+              } catch (error) {
+                console.error("Error clearing links:", error);
+              }
+            }}
             type="button"
           >
             Clear All

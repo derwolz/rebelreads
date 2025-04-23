@@ -431,27 +431,75 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
             // We no longer need to handle book files since we only track format availability
             } else if (Array.isArray(value)) {
               try {
-                const jsonString = JSON.stringify(value);
-                formData.append(key, jsonString);
-                console.log(`Serialized array for ${key}, length: ${value.length}`);
+                // Special handling for referralLinks to ensure they're properly sanitized
+                if (key === "referralLinks") {
+                  console.log(`Processing referralLinks array with ${value.length} items`);
+                  
+                  // Create a sanitized version of referral links
+                  const sanitizedLinks = value.map(link => {
+                    if (!link || typeof link !== 'object') {
+                      console.warn(`Invalid referral link found:`, link);
+                      return { retailer: "Custom", url: "", customName: "" };
+                    }
+                    
+                    // Ensure all properties are valid strings
+                    return {
+                      retailer: typeof link.retailer === 'string' ? link.retailer : "Custom",
+                      url: typeof link.url === 'string' ? link.url : "",
+                      customName: typeof link.customName === 'string' ? link.customName : ""
+                    };
+                  });
+                  
+                  const jsonString = JSON.stringify(sanitizedLinks);
+                  formData.append(key, jsonString);
+                  console.log(`Successfully serialized referralLinks, length: ${sanitizedLinks.length}`);
+                } else {
+                  // Standard array handling for other array fields
+                  const jsonString = JSON.stringify(value);
+                  formData.append(key, jsonString);
+                  console.log(`Serialized array for ${key}, length: ${value.length}`);
+                }
               } catch (jsonError) {
-                console.error(`Error serializing array field ${key}:`, jsonError, value);
-                // Handle the error by creating a safe version of the array
-                const safeArray = value.map(item => {
-                  if (typeof item === 'object' && item !== null) {
-                    // Create a safe copy of object items
-                    const safeItem = {};
-                    Object.entries(item).forEach(([k, v]) => {
-                      if (typeof v !== 'function' && k !== 'file') {
-                        // @ts-ignore
-                        safeItem[k] = v;
-                      }
-                    });
-                    return safeItem;
-                  }
-                  return item;
-                });
-                formData.append(key, JSON.stringify(safeArray));
+                console.error(`Error serializing array field ${key}:`, jsonError);
+                
+                // Fallback handling with additional safety
+                try {
+                  console.log(`Attempting to create safe version of ${key} array`);
+                  
+                  // Handle the error by creating a safe version of the array
+                  const safeArray = value.map(item => {
+                    if (typeof item === 'object' && item !== null) {
+                      // Create a safe copy of object items
+                      const safeItem = {};
+                      Object.entries(item).forEach(([k, v]) => {
+                        // Skip functions, File objects, circular references, and any complex objects
+                        if (typeof v !== 'function' && k !== 'file' && 
+                            (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')) {
+                          // @ts-ignore
+                          safeItem[k] = v;
+                        }
+                      });
+                      return safeItem;
+                    }
+                    // For primitive values
+                    if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
+                      return item;
+                    }
+                    // Default for any other type
+                    return null;
+                  });
+                  
+                  // Filter out null values
+                  const filteredArray = safeArray.filter(item => item !== null);
+                  
+                  const safeJson = JSON.stringify(filteredArray);
+                  formData.append(key, safeJson);
+                  console.log(`Used safe serialization for ${key}, length: ${filteredArray.length}`);
+                } catch (fallbackError) {
+                  console.error(`Even safe serialization failed for ${key}:`, fallbackError);
+                  // Last resort: empty array
+                  formData.append(key, "[]");
+                }
               }
             } else if (value !== null && value !== undefined && value !== "") {
               formData.append(key, value.toString());
