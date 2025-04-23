@@ -174,8 +174,8 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           height = 256;
           break;
         case "mini":
-          width = 64;
-          height = 40;
+          width = 96;
+          height = 60;
           break;
         case "hero":
           width = 1500;

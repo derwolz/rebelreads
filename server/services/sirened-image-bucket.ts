@@ -321,11 +321,11 @@ class SirenedImageBucket {
       };
       
       // ----------------------------------------------------------------
-      // Generate mini image (64x40)
+      // Generate mini image (96x60)
       // ----------------------------------------------------------------
       const miniBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(64, 40, imageOptions)
-        .webp(formatOptions)
+        .resize(96, 60, imageOptions)
+        .webp({ quality: 95 }) // Higher quality for mini images
         .toBuffer();
       
       // Create a descriptive filename that clearly indicates type and book ID

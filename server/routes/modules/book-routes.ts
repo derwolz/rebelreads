@@ -487,8 +487,8 @@ router.post("/", multipleImageUpload, async (req, res) => {
               height = 412;
               break;
             case 'mini':
-              width = 64;
-              height = 40;
+              width = 96;
+              height = 60;
               break;
             case 'vertical-banner':
               width = 400;
@@ -574,8 +574,8 @@ router.post("/", multipleImageUpload, async (req, res) => {
               bookId: book.id,
               imageUrl: generatedImages.mini.publicUrl,
               imageType: 'mini',
-              width: 64,   // Width for mini
-              height: 40,  // Height for mini
+              width: 96,   // Width for mini
+              height: 60,  // Height for mini
               sizeKb: Math.round(fullImageFile.size / 16), // Estimate size based on original
               createdAt: new Date(),
               updatedAt: new Date(),
