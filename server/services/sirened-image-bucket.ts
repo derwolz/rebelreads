@@ -170,6 +170,8 @@ class SirenedImageBucket {
    * - book-card images go in 'covers/card'
    * - mini images go in 'covers/mini'
    * 
+   * This is a critical function for the book upload/edit process
+   * 
    * @param fullResolutionFile The original high-res image file (2560x1600)
    * @param bookId The book ID
    * @returns Object with the generated image storage keys and public URLs
@@ -193,6 +195,12 @@ class SirenedImageBucket {
     };
     
     try {
+      // Verify that the directories exist in our configuration
+      if (!this.directories['book-card'] || !this.directories['mini']) {
+        console.error('Missing directory configuration for derived images', this.directories);
+        throw new Error('Directory configuration missing for derived images');
+      }
+      
       // Image processing options with proper aspect ratio preservation
       const imageOptions = { 
         fit: 'contain' as const, 
@@ -208,50 +216,84 @@ class SirenedImageBucket {
       // We no longer generate a separate book-detail image
       // Instead, the book-detail view will use the full image directly
       
+      // ----------------------------------------------------------------
       // Generate book-card image (260x435)
+      // ----------------------------------------------------------------
       const bookCardBuffer = await sharp(fullResolutionFile.buffer)
         .resize(260, 435, imageOptions)
         .webp(formatOptions)
         .toBuffer();
+      
+      // Create a descriptive filename that clearly indicates type and book ID
+      const bookCardFilename = `book-card-${bookId}-${Date.now().toString(36)}.webp`;
       
       // Create a file object for the book-card image
       const bookCardFile: UploadedFile = {
         ...fullResolutionFile,
         buffer: bookCardBuffer,
         size: bookCardBuffer.length,
-        originalname: `book-card-${bookId}.webp`,
+        originalname: bookCardFilename,
         mimetype: 'image/webp'
       };
       
-      console.log("Creating book-card image for:", bookId, "to be stored in directory:", this.directories['book-card']);
+      console.log(`Creating book-card image '${bookCardFilename}' for book ID: ${bookId}`);
+      console.log(`Will be stored in directory: ${this.directories['book-card']}`);
       
       // Upload the book-card image
       const bookCardStorageKey = await this.uploadBookImage(bookCardFile, 'book-card', bookId);
       const bookCardPublicUrl = this.getPublicUrl(bookCardStorageKey);
+      
+      // Verify the path contains the correct directory
+      if (!bookCardStorageKey.includes(this.directories['book-card'])) {
+        console.error(`WARNING: Book card storage key does not contain expected directory path.
+          Expected: ${this.directories['book-card']}
+          Actual: ${bookCardStorageKey}`);
+      }
+      
+      console.log(`Book card image saved at storage key: ${bookCardStorageKey}`);
+      console.log(`Book card public URL: ${bookCardPublicUrl}`);
       
       result.bookCard = {
         storageKey: bookCardStorageKey,
         publicUrl: bookCardPublicUrl
       };
       
+      // ----------------------------------------------------------------
       // Generate mini image (64x40)
+      // ----------------------------------------------------------------
       const miniBuffer = await sharp(fullResolutionFile.buffer)
         .resize(64, 40, imageOptions)
         .webp(formatOptions)
         .toBuffer();
+      
+      // Create a descriptive filename that clearly indicates type and book ID
+      const miniFilename = `mini-${bookId}-${Date.now().toString(36)}.webp`;
       
       // Create a file object for the mini image
       const miniFile: UploadedFile = {
         ...fullResolutionFile,
         buffer: miniBuffer,
         size: miniBuffer.length,
-        originalname: `mini-${bookId}.webp`,
+        originalname: miniFilename,
         mimetype: 'image/webp'
       };
+      
+      console.log(`Creating mini image '${miniFilename}' for book ID: ${bookId}`);
+      console.log(`Will be stored in directory: ${this.directories['mini']}`);
       
       // Upload the mini image
       const miniStorageKey = await this.uploadBookImage(miniFile, 'mini', bookId);
       const miniPublicUrl = this.getPublicUrl(miniStorageKey);
+      
+      // Verify the path contains the correct directory
+      if (!miniStorageKey.includes(this.directories['mini'])) {
+        console.error(`WARNING: Mini image storage key does not contain expected directory path.
+          Expected: ${this.directories['mini']}
+          Actual: ${miniStorageKey}`);
+      }
+      
+      console.log(`Mini image saved at storage key: ${miniStorageKey}`);
+      console.log(`Mini public URL: ${miniPublicUrl}`);
       
       result.mini = {
         storageKey: miniStorageKey,
@@ -262,6 +304,8 @@ class SirenedImageBucket {
       return result;
     } catch (error) {
       console.error(`Error generating additional images for book ID ${bookId}:`, error);
+      
+      // Return partial results if any were successfully generated
       return result;
     }
   }
