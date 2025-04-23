@@ -877,6 +877,26 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
       return res.status(400).json({ error: "Invalid book ID" });
     }
     
+    // Handle authorname and bookname parameters (if provided)
+    if (req.body.authorname && req.body.bookname) {
+      console.log(`Looking up book by author name and book name: ${req.body.authorname}, ${req.body.bookname}`);
+      
+      // Find author by name
+      const authorByName = await dbStorage.getAuthorByName(req.body.authorname);
+      if (!authorByName) {
+        return res.status(404).json({ error: "Author not found" });
+      }
+      
+      // Find book by author and title
+      const bookByAuthorAndTitle = await dbStorage.getBookByAuthorAndTitle(authorByName.id, req.body.bookname);
+      if (!bookByAuthorAndTitle) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      // Use these IDs instead of path parameters
+      console.log(`Found matching book with ID: ${bookByAuthorAndTitle.id}`);
+    }
+    
     // Get the current book
     const book = await dbStorage.getBook(bookId);
     if (!book) {
@@ -891,7 +911,7 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
     
     // Verify ownership
     if (book.authorId !== author.id) {
-      return res.status(403).json({ error: "Not authorized" });
+      return res.status(403).json({ error: "Not authorized - you don't own this book" });
     }
     
     console.log("PATCH upload request for book:", bookId);
@@ -899,8 +919,9 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
     // Process form data
     const updates: any = {};
     
-    // Handle simple fields first
+    // Handle simple fields first (excluding authorname and bookname)
     for (const key in req.body) {
+      if (key === 'authorname' || key === 'bookname') continue;
       if (req.body[key] === '' || req.body[key] === undefined) continue;
       
       // Parse JSON fields
@@ -926,7 +947,7 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
       
       for (const fieldName in files) {
         if (fieldName.startsWith('bookImage_')) {
-          const imageType = fieldName.replace('bookImage_', '');
+          const imageType = fieldName.replace('bookImage_', '') as any;
           const file = files[fieldName][0];
           
           try {
@@ -934,8 +955,52 @@ router.patch("/:id/upload", multipleImageUpload, async (req, res) => {
             const storageKey = await sirenedImageBucket.uploadBookImage(file, imageType, bookId);
             const imageUrl = await sirenedImageBucket.getPublicUrl(storageKey);
             
-            // Save to database
-            await dbStorage.addBookImage(bookId, imageType, imageUrl);
+            // Get dimensions based on image type
+            let width = 0;
+            let height = 0;
+            
+            switch (imageType) {
+              case 'full':
+                width = 1600;
+                height = 2560;
+                break;
+              case 'background':
+                width = 1300;
+                height = 1500;
+                break;
+              case 'spine':
+                width = 56;
+                height = 212;
+                break;
+              case 'hero':
+                width = 1500;
+                height = 600;
+                break;
+              case 'book-card':
+                width = 260;
+                height = 435;
+                break;
+              case 'mini':
+                width = 64;
+                height = 40;
+                break;
+              default:
+                width = 100;
+                height = 100;
+            }
+            
+            // Save to database with appropriate dimensions
+            const bookImage = await dbStorage.addBookImage({
+              bookId: bookId,
+              imageUrl,
+              imageType,
+              width,
+              height,
+              sizeKb: Math.round(file.size / 1024),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            
             console.log(`Uploaded ${imageType} image for book ${bookId}`);
           } catch (e) {
             console.error(`Error uploading ${imageType} image:`, e);
