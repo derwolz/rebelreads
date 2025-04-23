@@ -69,7 +69,8 @@ export function DragDropImage({
         description: errorMessage,
         variant: "destructive"
       });
-      onChange(file, true, errorMessage);
+      // Pass null as the file to free the slot
+      onChange(null as any, true, errorMessage);
       URL.revokeObjectURL(objectUrl);
       return;
     }
@@ -101,7 +102,8 @@ export function DragDropImage({
         description: "Please upload an image smaller than 5MB",
         variant: "destructive"
       });
-      onChange(file, true, errorMessage);
+      // Pass null as the file to free the slot
+      onChange(null as any, true, errorMessage);
       return;
     }
     
@@ -122,7 +124,8 @@ export function DragDropImage({
         description: "Failed to process the image. Please try another one.",
         variant: "destructive"
       });
-      onChange(file, true, errorMessage);
+      // Pass null as the file to free the slot
+      onChange(null as any, true, errorMessage);
       URL.revokeObjectURL(objectUrl);
     };
     
@@ -145,6 +148,8 @@ export function DragDropImage({
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+    // Pass null as the file to free the slot completely
+    onChange(null as any, false);
   };
 
   const getTypeLabel = (type: typeof IMAGE_TYPES[number]) => {
