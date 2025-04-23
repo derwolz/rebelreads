@@ -380,6 +380,14 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
             }
           });
 
+          // CRITICAL: Always add authorname and bookname parameters
+          formData.append("authorname", book?.authorName || data.authorName || "");
+          formData.append("bookname", book?.title || data.title || "");
+          console.log("Added critical params:", { 
+            authorname: book?.authorName || data.authorName,
+            bookname: book?.title || data.title
+          });
+          
           const response = await fetch(`/api/books/${book.id}`, {
             method: "PATCH",
             body: formData,
@@ -391,6 +399,14 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         }
 
         // If no new cover, send as JSON
+        // CRITICAL: Always add authorname and bookname parameters
+        changedFields.authorname = book?.authorName || data.authorName || "";
+        changedFields.bookname = book?.title || data.title || "";
+        console.log("Added critical params to JSON PATCH:", { 
+          authorname: changedFields.authorname,
+          bookname: changedFields.bookname
+        });
+        
         const response = await fetch(`/api/books/${book.id}`, {
           method: "PATCH",
           headers: {
@@ -406,6 +422,27 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
       // For new books, keep existing FormData logic
       const formData = new FormData();
+      
+      // CRITICAL: Always add authorname and bookname parameters
+      // The backend requires these for identification (NOT IDs)
+      if (data.title) {
+        formData.append("bookname", data.title);
+        console.log("Added bookname parameter:", data.title);
+      }
+
+      // Get current user's author name (this assumes the app has access to it)
+      // If editing an existing book we should already have the author name
+      try {
+        const authorName = book?.authorName || data.authorName;
+        if (authorName) {
+          formData.append("authorname", authorName);
+          console.log("Added authorname parameter:", authorName);
+        } else {
+          console.warn("No author name available - this may cause API issues");
+        }
+      } catch (e) {
+        console.error("Error adding author name:", e);
+      }
       
       try {
         Object.entries(data).forEach(([key, value]) => {
