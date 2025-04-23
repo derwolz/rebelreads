@@ -36,8 +36,12 @@ class SirenedImageBucket {
     'hero': 'covers/hero',
     'full': 'covers/full',
     // Auto-generated types
+    'book-cover': 'covers/cover',
     'book-card': 'covers/card',
     'mini': 'covers/mini',
+    // Banner types
+    'vertical-banner': 'covers/vertical-banner',
+    'horizontal-banner': 'covers/horizontal-banner',
     // Other types
     'book-thumbnail': 'covers/thumbnail',
     'book-banner': 'covers/banner', 
@@ -162,17 +166,18 @@ class SirenedImageBucket {
   /**
    * Generate additional book image sizes from the full resolution image
    * Specifically creates:
-   * - book-card (260x435)
+   * - book-cover (480x770)
+   * - book-card (256x412)
    * - mini (64x40)
    * 
-   * Note: We no longer generate book-detail (773x480) since we use the full image for that purpose
    * IMPORTANT: Images are stored in separate directories:
+   * - book-cover images go in 'covers/cover'
    * - book-card images go in 'covers/card'
    * - mini images go in 'covers/mini'
    * 
    * This is a critical function for the book upload/edit process
    * 
-   * @param fullResolutionFile The original high-res image file (2560x1600)
+   * @param fullResolutionFile The original high-res image file (1600x2560)
    * @param bookId The book ID
    * @returns Object with the generated image storage keys and public URLs
    */
@@ -180,6 +185,7 @@ class SirenedImageBucket {
     fullResolutionFile: UploadedFile,
     bookId: number
   ): Promise<{
+    bookCover: { storageKey: string; publicUrl: string } | null;
     bookCard: { storageKey: string; publicUrl: string } | null;
     mini: { storageKey: string; publicUrl: string } | null;
   }> {
@@ -190,13 +196,14 @@ class SirenedImageBucket {
     }
     
     const result = {
+      bookCover: null as { storageKey: string; publicUrl: string } | null,
       bookCard: null as { storageKey: string; publicUrl: string } | null,
       mini: null as { storageKey: string; publicUrl: string } | null
     };
     
     try {
       // Verify that the directories exist in our configuration
-      if (!this.directories['book-card'] || !this.directories['mini']) {
+      if (!this.directories['book-cover'] || !this.directories['book-card'] || !this.directories['mini']) {
         console.error('Missing directory configuration for derived images', this.directories);
         throw new Error('Directory configuration missing for derived images');
       }
@@ -213,14 +220,53 @@ class SirenedImageBucket {
         quality: 90
       };
       
-      // We no longer generate a separate book-detail image
-      // Instead, the book-detail view will use the full image directly
+      // ----------------------------------------------------------------
+      // Generate book-cover image (480x770)
+      // ----------------------------------------------------------------
+      const bookCoverBuffer = await sharp(fullResolutionFile.buffer)
+        .resize(480, 770, imageOptions)
+        .webp(formatOptions)
+        .toBuffer();
+      
+      // Create a descriptive filename that clearly indicates type and book ID
+      const bookCoverFilename = `book-cover-${bookId}-${Date.now().toString(36)}.webp`;
+      
+      // Create a file object for the book-cover image
+      const bookCoverFile: UploadedFile = {
+        ...fullResolutionFile,
+        buffer: bookCoverBuffer,
+        size: bookCoverBuffer.length,
+        originalname: bookCoverFilename,
+        mimetype: 'image/webp'
+      };
+      
+      console.log(`Creating book-cover image '${bookCoverFilename}' for book ID: ${bookId}`);
+      console.log(`Will be stored in directory: ${this.directories['book-cover']}`);
+      
+      // Upload the book-cover image
+      const bookCoverStorageKey = await this.uploadBookImage(bookCoverFile, 'book-cover', bookId);
+      const bookCoverPublicUrl = this.getPublicUrl(bookCoverStorageKey);
+      
+      // Verify the path contains the correct directory
+      if (!bookCoverStorageKey.includes(this.directories['book-cover'])) {
+        console.error(`WARNING: Book cover storage key does not contain expected directory path.
+          Expected: ${this.directories['book-cover']}
+          Actual: ${bookCoverStorageKey}`);
+      }
+      
+      console.log(`Book cover image saved at storage key: ${bookCoverStorageKey}`);
+      console.log(`Book cover public URL: ${bookCoverPublicUrl}`);
+      
+      result.bookCover = {
+        storageKey: bookCoverStorageKey,
+        publicUrl: bookCoverPublicUrl
+      };
       
       // ----------------------------------------------------------------
-      // Generate book-card image (260x435)
+      // Generate book-card image (256x412)
       // ----------------------------------------------------------------
       const bookCardBuffer = await sharp(fullResolutionFile.buffer)
-        .resize(260, 435, imageOptions)
+        .resize(256, 412, imageOptions)
         .webp(formatOptions)
         .toBuffer();
       

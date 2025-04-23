@@ -156,10 +156,10 @@ export const books = pgTable("books", {
 });
 
 // Define the image types for books
-// We now only require the user to upload 4 types, and we'll generate the other 3
+// We require the user to upload 4 types, and the other 3 are generated
 export const UPLOAD_IMAGE_TYPES = [
   "background",     // 1300x1500 - Used as background on book details page
-  "spine",          // 56x212 - Used in grid layouts (renamed from grid-item)
+  "spine",          // 56x256 - Used in grid layouts (renamed from grid-item)
   "hero",           // 1500x600 - Used in hero sections
   "full"            // 1600x2560 - Full resolution book cover image
 ] as const;
@@ -167,8 +167,11 @@ export const UPLOAD_IMAGE_TYPES = [
 // All image types including auto-generated ones
 export const IMAGE_TYPES = [
   ...UPLOAD_IMAGE_TYPES,
-  "book-card",      // 260x435 - Auto-generated from full
+  "book-cover",     // 480x770 - Auto-generated from full
+  "book-card",      // 256x412 - Auto-generated from full
   "mini",           // 64x40 - Auto-generated from full
+  "vertical-banner", // Additional banner format
+  "horizontal-banner", // Additional banner format
 ] as const;
 
 // Book images table to store different image sizes for each book

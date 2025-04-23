@@ -472,19 +472,31 @@ router.post("/", multipleImageUpload, async (req, res) => {
               break;
             case 'spine':
               width = 56;
-              height = 212;
+              height = 256;
               break;
             case 'hero':
               width = 1500;
               height = 600;
               break;
+            case 'book-cover':
+              width = 480;
+              height = 770;
+              break;
             case 'book-card':
-              width = 260;
-              height = 435;
+              width = 256;
+              height = 412;
               break;
             case 'mini':
               width = 64;
               height = 40;
+              break;
+            case 'vertical-banner':
+              width = 400;
+              height = 800;
+              break;
+            case 'horizontal-banner':
+              width = 800;
+              height = 400;
               break;
             default:
               // Default sizes if not recognized
@@ -517,8 +529,24 @@ router.post("/", multipleImageUpload, async (req, res) => {
         // Call function to auto-generate other image types from the full image
         const generatedImages = await sirenedImageBucket.generateAdditionalBookImages(fullImageFile, book.id);
         
-        // We no longer generate or store a separate book-detail image
-        // The book-detail view will use the full image directly
+        // Add book-cover image to database if generated
+        if (generatedImages.bookCover) {
+          try {
+            const bookCoverImage = await dbStorage.addBookImage({
+              bookId: book.id,
+              imageUrl: generatedImages.bookCover.publicUrl,
+              imageType: 'book-cover',
+              width: 480,  // Width for book-cover
+              height: 770, // Height for book-cover
+              sizeKb: Math.round(fullImageFile.size / 6), // Estimate size based on original
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+            bookImageEntries.push(bookCoverImage);
+          } catch (err) {
+            console.error(`Error adding book-cover image to database:`, err);
+          }
+        }
         
         // Add book-card image to database if generated
         if (generatedImages.bookCard) {
@@ -527,8 +555,8 @@ router.post("/", multipleImageUpload, async (req, res) => {
               bookId: book.id,
               imageUrl: generatedImages.bookCard.publicUrl,
               imageType: 'book-card',
-              width: 260,  // New width for book-card
-              height: 435, // New height for book-card
+              width: 256,  // Updated width for book-card
+              height: 412, // Updated height for book-card
               sizeKb: Math.round(fullImageFile.size / 8), // Estimate size based on original
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -546,8 +574,8 @@ router.post("/", multipleImageUpload, async (req, res) => {
               bookId: book.id,
               imageUrl: generatedImages.mini.publicUrl,
               imageType: 'mini',
-              width: 64,   // New width for mini
-              height: 40,  // New height for mini
+              width: 64,   // Width for mini
+              height: 40,  // Height for mini
               sizeKb: Math.round(fullImageFile.size / 16), // Estimate size based on original
               createdAt: new Date(),
               updatedAt: new Date(),
