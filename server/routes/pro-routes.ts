@@ -3,8 +3,12 @@ import { db } from "../db";
 import { users, ratings, replies, reports } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { dbStorage } from "../storage";
+import proAnalyticsRoutes from "./modules/pro-analytics-routes";
 
 const router = Router();
+
+// Register the pro analytics routes
+router.use("/analytics", proAnalyticsRoutes);
 
 // Endpoint to check if user is a Pro user
 router.get("/status", async (req: Request, res: Response) => {
