@@ -5,6 +5,8 @@ import {
   ratings,
   followers,
   books,
+  bookShelves,
+  shelfBooks,
   insertAuthorSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -31,6 +33,7 @@ export interface IAuthorStorage {
     worldbuilding: number;
   } | null>;
   deleteAuthor(userId: number, preservePro?: boolean, proExpiresAt?: Date | null): Promise<void>;
+  getSharedBookshelvesForUser(userId: number): Promise<any[]>;
 }
 
 export class AuthorStorage implements IAuthorStorage {
@@ -200,5 +203,56 @@ export class AuthorStorage implements IAuthorStorage {
       .where(eq(authors.userId, userId));
       
     console.log(`Deleted author with user ID ${userId}`);
+  }
+
+  /**
+   * Get shared bookshelves for a user with the books in each shelf
+   * @param userId The user ID to get shared bookshelves for
+   * @returns Array of shelf objects with associated books
+   */
+  async getSharedBookshelvesForUser(userId: number): Promise<any[]> {
+    try {
+      // Get all shared bookshelves for the user
+      const shelves = await db
+        .select()
+        .from(bookShelves)
+        .where(
+          and(
+            eq(bookShelves.userId, userId),
+            eq(bookShelves.isShared, true)
+          )
+        )
+        .orderBy(bookShelves.rank);
+
+      // For each shelf, get the associated books
+      const result = await Promise.all(
+        shelves.map(async (shelf) => {
+          // Get shelf books with book details
+          const shelfBooksWithDetails = await db
+            .select({
+              id: shelfBooks.id,
+              bookId: shelfBooks.bookId,
+              shelfId: shelfBooks.shelfId,
+              rank: shelfBooks.rank,
+              addedAt: shelfBooks.addedAt,
+              book: books
+            })
+            .from(shelfBooks)
+            .innerJoin(books, eq(shelfBooks.bookId, books.id))
+            .where(eq(shelfBooks.shelfId, shelf.id))
+            .orderBy(shelfBooks.rank);
+
+          return {
+            shelf: shelf,
+            books: shelfBooksWithDetails
+          };
+        })
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Error fetching shared bookshelves:", error);
+      return [];
+    }
   }
 }
