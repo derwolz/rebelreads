@@ -222,9 +222,7 @@ export function DragDropImage({
           <p className="text-[10px] sm:text-xs text-center font-semibold text-primary mt-1">
             Required size: {width}×{height} pixels
           </p>
-          <p className="text-[10px] text-center font-semibold text-destructive mt-0.5">
-            Must be EXACTLY {width}×{height} - no resizing will be done
-          </p>
+
           {error && (
             <p className="text-[10px] sm:text-xs text-center text-destructive mt-1 sm:mt-2">
               {error}
