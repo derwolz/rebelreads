@@ -26,7 +26,7 @@ import {
 import type { Book, SocialMediaLink, BookShelf } from "@shared/schema";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
-import { Search } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Interface representing a taxonomy with its usage weight
@@ -92,7 +92,7 @@ export default function AuthorPage() {
     error: authorError,
   } = useQuery<AuthorDetails>({
     queryKey: isUsingSecureFormat 
-      ? [`/api/author?name=${encodeURIComponent(authorName!)}`]
+      ? [`/api/authors?name=${encodeURIComponent(authorName!)}`]
       : [`/api/authors/${paramsById?.id}`],
     enabled: !!(isUsingSecureFormat || !!paramsById?.id),
   });
