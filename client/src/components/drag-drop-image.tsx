@@ -75,9 +75,9 @@ export function DragDropImage({
       return;
     }
     
-    // For book detail images that will be used to generate other sizes, we need exact dimensions
+    // For full images that will be used to generate other sizes, we need exact dimensions
     // but we also need to create book-card and mini variants server-side
-    if (imageType === 'book-detail') {
+    if (imageType === 'full') {
       // We'll pass the file without modifications, but tag it so the backend knows to generate variants
       setPreview(objectUrl);
       onChange(file, false);
@@ -154,8 +154,8 @@ export function DragDropImage({
 
   const getTypeLabel = (type: typeof IMAGE_TYPES[number]) => {
     switch(type) {
-      case 'book-detail':
-        return 'Book Cover (773×480)';
+      case 'full':
+        return 'Full Resolution (2560×1600)';
       case 'background':
         return 'Background (1300×1500)';
       case 'book-card':
@@ -166,8 +166,6 @@ export function DragDropImage({
         return 'Mini (64×40)';
       case 'hero':
         return 'Hero (1500×600)';
-      case 'full':
-        return 'Full Resolution (2560×1600)';
       default:
         return type;
     }

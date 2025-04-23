@@ -177,10 +177,6 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           width = 1500;
           height = 600;
           break;
-        case "full":
-          width = 2560;
-          height = 1600;
-          break;
       }
 
       images[type] = {
@@ -480,9 +476,9 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       case 0: // Basic Information
         return !!formData.title && !!formData.description;
       case 1: // Images
-        // Require at least book-detail and book-card images
+        // Require at least full and other important images
         const requiredImageTypes = [
-          "book-detail",
+          "full",
           "background",
           "hero",
           "spine",
@@ -550,7 +546,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         if (!formData.description) errors.push("Description is required");
         break;
       case 1: // Images
-        const requiredImageTypes = ["book-detail", "background", "hero", "spine"];
+        const requiredImageTypes = ["full", "background", "hero", "spine"];
         requiredImageTypes.forEach((type) => {
           if (
             !formData.bookImages[type]?.file &&

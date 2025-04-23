@@ -18,7 +18,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   ) => {
     console.log(`Image change: ${imageType}, File: ${file?.name}, Error: ${hasError ? errorMessage : 'none'}`);
     
-    // If this is the 'full' image upload, generate preview versions for book-detail, book-card, and mini
+    // If this is the 'full' image upload, generate preview versions for book-card and mini from the full image
     if (imageType === 'full' && file && !hasError) {
       toast({
         title: "Full image uploaded",
@@ -88,7 +88,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
               onChange={(file, hasError = false, errorMessage) => 
                 handleImageChange(imageType, file, hasError, errorMessage)
               }
-              required={imageType === "book-detail" ? true : false}
+              required={imageType === "full" ? true : false}
             />
           );
         })}
