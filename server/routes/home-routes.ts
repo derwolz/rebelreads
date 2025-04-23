@@ -4,7 +4,7 @@ import express from "express";
 import { dbStorage } from "../storage";
 
 // Import route modules
-import bookRoutes from "./modules/book-routes";
+import bookRoutes from "./modules/book-routes-fixed"; // Using fixed version with better error handling
 import authorRoutes from "./modules/author-routes";
 import ratingRoutes from "./modules/rating-routes";
 import wishlistRoutes from "./modules/wishlist-routes";

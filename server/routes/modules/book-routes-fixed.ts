@@ -1,8 +1,33 @@
 import express, { Router } from "express";
 import { dbStorage } from "../../storage";
-import { sirenedImageBucket } from "../../services/storage";
-import { enhanceReferralLinks } from "../../services/enhancer";
-import { multipleImageUpload } from "../../middleware/upload";
+import multer from "multer";
+import { enhanceReferralLinks } from "../../utils/favicon-utils";
+import { sirenedImageBucket } from "../../services/sirened-image-bucket";
+import { db } from "../../db";
+
+// Configure multer for in-memory uploads (for use with object storage)
+// Multer for multiple book images with dynamic field names
+const multipleImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 20MB size limit (increased for full resolution images)
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed'));
+  }
+}).fields([
+  { name: 'bookImage_full', maxCount: 1 },           // The high-resolution book cover image
+  { name: 'bookImage_background', maxCount: 1 },
+  { name: 'bookImage_spine', maxCount: 1 },
+  { name: 'bookImage_hero', maxCount: 1 },
+  // We still accept these but they're optional now as they'll be auto-generated
+  { name: 'bookImage_book-card', maxCount: 1 },
+  { name: 'bookImage_mini', maxCount: 1 }
+]);
 
 const router: Router = express.Router();
 
