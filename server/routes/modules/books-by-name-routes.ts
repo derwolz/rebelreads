@@ -354,8 +354,17 @@ router.patch("/upload", multipleImageUpload, async (req, res) => {
                 height = 100;
             }
             
-            // Add or update the image in the database
-            await dbStorage.addBookImage(book.id, imageUrl, imageType, width, height, file.size);
+            // Add or update the image in the database using object format
+            await dbStorage.addBookImage({
+              bookId: book.id,
+              imageUrl,
+              imageType,
+              width,
+              height,
+              sizeKb: Math.round(file.size / 1024),
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
           } catch (error) {
             console.error(`Error processing ${imageType} image:`, error);
             return res.status(500).json({ 
