@@ -11,11 +11,19 @@ import { cn } from "@/lib/utils";
 const SPINE_WIDTH = 56;
 const SPINE_HEIGHT = 256;
 
+// Spacing constants for A/B test variants
+const VARIANT_A_SPACING = 128; // 128px spacing for variant A
+const VARIANT_B_SPACING = 266; // 266px spacing for variant B
+
 // Book rack test page with A/B test configuration
 export default function BookSpineTest() {
   // State for the book rack hover interactions
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [showingCard, setShowingCard] = useState<boolean>(false);
+  const [hoveredIndexA, setHoveredIndexA] = useState<number | null>(null);
+  const [showingCardA, setShowingCardA] = useState<boolean>(false);
+  
+  // Separate state for variant B
+  const [hoveredIndexB, setHoveredIndexB] = useState<number | null>(null);
+  const [showingCardB, setShowingCardB] = useState<boolean>(false);
   
   // Fetch books for testing
   const { data: books, isLoading } = useQuery<Book[]>({
@@ -76,10 +84,16 @@ export default function BookSpineTest() {
     }, 0);
   }, [bookAngles, books]);
   
-  // Handle hover events for BookSpine components
-  const handleBookHover = useCallback((index: number | null, showCard: boolean) => {
-    setHoveredIndex(index);
-    setShowingCard(showCard);
+  // Handle hover events for BookSpine components - Variant A
+  const handleBookHoverA = useCallback((index: number | null, showCard: boolean) => {
+    setHoveredIndexA(index);
+    setShowingCardA(showCard);
+  }, []);
+  
+  // Handle hover events for BookSpine components - Variant B
+  const handleBookHoverB = useCallback((index: number | null, showCard: boolean) => {
+    setHoveredIndexB(index);
+    setShowingCardB(showCard);
   }, []);
 
   if (isLoading || !books) {
@@ -111,6 +125,7 @@ export default function BookSpineTest() {
           <h2 className="text-2xl font-bold mb-4">BookRack with Spine A</h2>
           <p className="mb-4 text-muted-foreground">
             BookRack with Spine A variant - features colored trim and a featured badge for promoted books.
+            Uses {VARIANT_A_SPACING}px spacing when hovered.
           </p>
           
           {/* Book Rack A Implementation */}
@@ -119,7 +134,7 @@ export default function BookSpineTest() {
             <div 
               className="flex items-end bg-muted/10 rounded-md"
               style={{ 
-                minHeight: showingCard ? '400px' : '300px',
+                minHeight: showingCardA ? '400px' : '300px',
                 transition: 'min-height 0.3s ease-in-out'
               }}
             >
@@ -131,15 +146,15 @@ export default function BookSpineTest() {
                   // Calculate the position shift based on hovered index
                   let positionShift = 0;
                   
-                  if (hoveredIndex !== null && showingCard) {
+                  if (hoveredIndexA !== null && showingCardA) {
                     // When a book is hovered and the card is shown:
-                    // Books to the left of the hovered book shift left
-                    if (index < hoveredIndex) {
-                      positionShift = -150; // shift left by 150px
+                    // For variant A, use 128px spacing
+                    if (index < hoveredIndexA) {
+                      positionShift = -VARIANT_A_SPACING; // shift left by 128px for variant A
                     }
                     // Books to the right of the hovered book shift right
-                    else if (index > hoveredIndex) {
-                      positionShift = 150; // shift right by 150px
+                    else if (index > hoveredIndexA) {
+                      positionShift = VARIANT_A_SPACING; // shift right by 128px for variant A
                     }
                   }
                   
@@ -147,16 +162,16 @@ export default function BookSpineTest() {
                   const handleSpineHover = (isHovered: boolean) => {
                     if (isHovered) {
                       // First update without the card
-                      handleBookHover(index, false);
+                      handleBookHoverA(index, false);
                       
                       // Then after a delay, update to show the card
                       setTimeout(() => {
-                        if (hoveredIndex === index) { // Only if still hovering this book
-                          handleBookHover(index, true);
+                        if (hoveredIndexA === index) { // Only if still hovering this book
+                          handleBookHoverA(index, true);
                         }
                       }, 300);
                     } else {
-                      handleBookHover(null, false);
+                      handleBookHoverA(null, false);
                     }
                   };
                   
@@ -181,7 +196,7 @@ export default function BookSpineTest() {
             </div>
             
             {/* Show book card for the hovered book */}
-            {hoveredIndex !== null && showingCard && books[hoveredIndex] && (
+            {hoveredIndexA !== null && showingCardA && books[hoveredIndexA] && (
               <div 
                 className="absolute bottom-0 transition-all duration-600 ease-in-out z-50"
                 style={{
@@ -190,7 +205,7 @@ export default function BookSpineTest() {
                   marginBottom: '10px',
                 }}
               >
-                <BookCard book={books[hoveredIndex]} />
+                <BookCard book={books[hoveredIndexA]} />
               </div>
             )}
             
@@ -203,6 +218,7 @@ export default function BookSpineTest() {
           <h2 className="text-2xl font-bold mb-4">BookRack with Spine B</h2>
           <p className="mb-4 text-muted-foreground">
             BookRack with Spine B variant - features rating indicator and glow effect on hover.
+            Uses {VARIANT_B_SPACING}px spacing when hovered.
           </p>
           
           {/* Book Rack B Implementation */}
@@ -211,7 +227,7 @@ export default function BookSpineTest() {
             <div 
               className="flex items-end bg-muted/10 rounded-md"
               style={{ 
-                minHeight: showingCard ? '400px' : '300px',
+                minHeight: showingCardB ? '400px' : '300px',
                 transition: 'min-height 0.3s ease-in-out'
               }}
             >
@@ -223,15 +239,15 @@ export default function BookSpineTest() {
                   // Calculate the position shift based on hovered index
                   let positionShift = 0;
                   
-                  if (hoveredIndex !== null && showingCard) {
+                  if (hoveredIndexB !== null && showingCardB) {
                     // When a book is hovered and the card is shown:
-                    // Books to the left of the hovered book shift left
-                    if (index < hoveredIndex) {
-                      positionShift = -150; // shift left by 150px
+                    // For variant B, use 266px spacing
+                    if (index < hoveredIndexB) {
+                      positionShift = -VARIANT_B_SPACING; // shift left by 266px for variant B
                     }
                     // Books to the right of the hovered book shift right
-                    else if (index > hoveredIndex) {
-                      positionShift = 150; // shift right by 150px
+                    else if (index > hoveredIndexB) {
+                      positionShift = VARIANT_B_SPACING; // shift right by 266px for variant B
                     }
                   }
                   
@@ -239,16 +255,16 @@ export default function BookSpineTest() {
                   const handleSpineHover = (isHovered: boolean) => {
                     if (isHovered) {
                       // First update without the card
-                      handleBookHover(index, false);
+                      handleBookHoverB(index, false);
                       
                       // Then after a delay, update to show the card
                       setTimeout(() => {
-                        if (hoveredIndex === index) { // Only if still hovering this book
-                          handleBookHover(index, true);
+                        if (hoveredIndexB === index) { // Only if still hovering this book
+                          handleBookHoverB(index, true);
                         }
                       }, 300);
                     } else {
-                      handleBookHover(null, false);
+                      handleBookHoverB(null, false);
                     }
                   };
                   
@@ -273,7 +289,7 @@ export default function BookSpineTest() {
             </div>
             
             {/* Show book card for the hovered book */}
-            {hoveredIndex !== null && showingCard && books[hoveredIndex] && (
+            {hoveredIndexB !== null && showingCardB && books[hoveredIndexB] && (
               <div 
                 className="absolute bottom-0 transition-all duration-600 ease-in-out z-50"
                 style={{
@@ -282,7 +298,7 @@ export default function BookSpineTest() {
                   marginBottom: '10px',
                 }}
               >
-                <BookCard book={books[hoveredIndex]} />
+                <BookCard book={books[hoveredIndexB]} />
               </div>
             )}
             
