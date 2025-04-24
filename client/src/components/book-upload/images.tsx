@@ -152,17 +152,17 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
     });
   };
   
-  // Regenerate a derived image
-  const handleRegenerateImage = (imageType: string) => {
-    // Only regenerate if there's a full-size image to work with
+  // Generate a derived image
+  const handleGenerateImage = (imageType: string) => {
+    // Only generate if there's a full-size image to work with
     if (formData.bookImages['full']?.file) {
-      // Regenerate just this specific derived image
+      // Generate just this specific derived image
       if (imageType === 'mini' || imageType === 'book-card') {
         generateDerivedImagesFromFull(formData.bookImages['full'].file);
       }
     } else {
       toast({
-        title: "Cannot Regenerate",
+        title: "Cannot Generate",
         description: "You need to upload a full-size image first.",
         variant: "destructive"
       });
@@ -227,10 +227,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
       </Alert>
       
       <div className="mb-4">
-        <h3 className="text-md font-medium mb-2">Required Images</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          These images are required to create a book. The full-size image will be used to automatically generate the book-card and mini images.
-        </p>
+    
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
           {UPLOAD_IMAGE_TYPES.map((imageType) => {
             // Make sure we have dimensions for this image type in the form data
@@ -277,7 +274,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
               <CardTitle className="text-lg">Generated Images Preview</CardTitle>
               <CardDescription>
                 These images were automatically generated from your full-size image.
-                You can accept them as is, regenerate them, or upload your own versions.
+                You can accept them as is, generate new ones, or upload your own versions.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -289,7 +286,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                     imageData={formData.bookImages['mini']}
                     onAccept={() => handleAcceptGeneratedImage('mini')}
                     onReject={() => handleRejectGeneratedImage('mini')}
-                    onRegenerate={() => handleRegenerateImage('mini')}
+                    onGenerate={() => handleGenerateImage('mini')}
                   />
                 )}
                 
@@ -300,7 +297,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                     imageData={formData.bookImages['book-card']}
                     onAccept={() => handleAcceptGeneratedImage('book-card')}
                     onReject={() => handleRejectGeneratedImage('book-card')}
-                    onRegenerate={() => handleRegenerateImage('book-card')}
+                    onGenerate={() => handleGenerateImage('book-card')}
                   />
                 )}
               </div>
@@ -320,7 +317,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                     }}
                     className="flex items-center gap-1"
                   >
-                    <RefreshCw className="h-4 w-4" /> Regenerate All
+                    <RefreshCw className="h-4 w-4" /> Generate All
                   </Button>
                 )}
               </div>

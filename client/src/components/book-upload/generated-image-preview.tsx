@@ -10,7 +10,7 @@ interface GeneratedImagePreviewProps {
   imageData: BookImageFile;
   onAccept: () => void;
   onReject: () => void;
-  onRegenerate: () => void;
+  onGenerate: () => void;
 }
 
 export function GeneratedImagePreview({
@@ -18,7 +18,7 @@ export function GeneratedImagePreview({
   imageData,
   onAccept,
   onReject,
-  onRegenerate
+  onGenerate
 }: GeneratedImagePreviewProps) {
   // Create a preview URL for the file
   const previewUrl = imageData.file ? URL.createObjectURL(imageData.file) : null;
@@ -27,13 +27,13 @@ export function GeneratedImagePreview({
   const formattedType = imageType.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
+    <Card className="overflow-hidden h-full">
+      <CardContent className="p-0 h-full">
         {/* Top section with image preview */}
-        <div className="relative">
+        <div className="relative h-full">
           {/* The preview image */}
           {previewUrl && (
-            <div className="relative overflow-hidden flex items-center justify-center bg-gradient-to-t from-black/10 to-transparent">
+            <div className="relative overflow-hidden h-full flex items-center justify-center bg-gradient-to-t from-black/10 to-transparent">
               <img 
                 src={previewUrl} 
                 alt={`Generated ${formattedType} preview`}
@@ -86,21 +86,7 @@ export function GeneratedImagePreview({
                 </TooltipContent>
               </Tooltip>
               
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    size="icon" 
-                    onClick={onRegenerate} 
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-transparent"
-                  >
-                    <RefreshCw className="h-4 w-4 text-blue-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Regenerate image</p>
-                </TooltipContent>
-              </Tooltip>
+             
             </TooltipProvider>
           </div>
         </div>
