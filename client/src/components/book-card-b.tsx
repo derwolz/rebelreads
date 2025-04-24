@@ -44,13 +44,13 @@ export function BookCardB({
   useEffect(() => {
     if (book.promoted) {
       // Create multiple trail elements with different delays
-      const trailCount = 5; // Number of trail elements
+      const trailCount = 20; // Number of trail elements
       const newTrailElements = [];
       
       for (let i = 0; i < trailCount; i++) {
         // Calculate delays for animation synchronization
-        const animationDelay = i * 0.4; // seconds between trails
-        const rotationOffset = (i + 1) * 0.5; // offset percentage in the animation cycle
+        const animationDelay = i * 0.010; // seconds between trails
+        const rotationOffset = (i + 1) * 0.1; // offset percentage in the animation cycle
         
         newTrailElements.push(
           <div 
@@ -61,14 +61,13 @@ export function BookCardB({
               // Each trail element follows the pixel but with delay
               // The animation-delay of the trail elements creates a trailing effect
               animationName: 'trail-fade, border-path',
-              animationDuration: '2s, 8s',
+              animationDuration: '0s, 6s',
               animationTimingFunction: 'linear, linear',
               animationIterationCount: 'infinite, infinite',
               animationDirection: 'normal, normal',
               // This staggers the trail elements along the path
               animationPlayState: 'running, running',
-              opacity: 0.7 - (i * 0.1), // Decreasing opacity for each trail
-              width: 10 + (i * 2), // Slightly increasing width for each trail
+              opacity: Math.sin(i*Math.PI*2/trailCount), // Decreasing opacity for each trail
             }}
           />
         );
@@ -159,15 +158,13 @@ export function BookCardB({
       const encodedTitle = encodeURIComponent(book.title);
       navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
     } else {
-      // Fallback to traditional ID-based URL if authorName is not available
-      navigate(`/books/${book.id}`);
     }
   };
 
   return (
     <div
-      className="relative overflow-hidden"
-      style={{ width: "256px", height: "440px" }}
+      className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
+      style={{ width: "256px", height: "412px" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

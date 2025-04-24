@@ -128,7 +128,7 @@ export function BookCardA({
   return (
     <div
       className="relative"
-      style={{ width: "256px", height: "440px" }}
+      style={{ width: "256px", height: "412px" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
