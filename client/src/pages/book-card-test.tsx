@@ -3,36 +3,44 @@ import { BookCardA } from "@/components/book-card-a";
 import { BookCardB } from "@/components/book-card-b";
 import { Book, BookImage } from "../types";
 
-// Create a sample book for ValkyrieXTruck by King Stanky
+// Use real ValkyrieXTruck by King Stanky from database
 const valkyrieXTruckBook: Book = {
-  id: 999,
-  title: "ValkyrieXTruck",
-  authorId: 1,
+  id: 51,
+  title: "Valkyrie X Truck",
+  authorId: 14,
   authorName: "King Stanky",
-  description: "A thrilling adventure that follows the epic journey of the ValkyrieXTruck as it battles through a post-apocalyptic wasteland. With a powerful V8 engine and otherworldly abilities, the Valkyrie transforms the transportation landscape forever.",
+  description: "Truck struck and gun shot, Max finds himself enraptured by a mysterious woman, pursued by even more mysterious assailants. Her goal: retrieve her missing gun. His goal: survive, as his mundane world descends into madness.",
   promoted: true,
   pageCount: 320,
-  formats: ["hardcover", "ebook", "audiobook"],
+  formats: ["digital"],
   publishedDate: new Date().toISOString(), // Set to current date to show "New" badge
-  awards: ["Best Fiction 2025"],
-  originalTitle: "ValkyrieXTruck: Origins",
-  series: "Valkyrie Chronicles",
-  setting: "Post-Apocalyptic",
-  characters: ["Valkyrie", "King Stanky", "The Mechanic"],
-  isbn: "1234567890123",
-  asin: "B123456789",
+  awards: [],
+  originalTitle: null,
+  series: null,
+  setting: null,
+  characters: [],
+  isbn: null,
+  asin: null,
   language: "English",
-  referralLinks: [],
-  impressionCount: 500,
-  clickThroughCount: 120,
-  lastImpressionAt: new Date().toISOString(),
-  lastClickThroughAt: new Date().toISOString(),
+  referralLinks: [
+    {
+      url: "https://valkyriexTruck.com",
+      domain: "valkyriextruck.com",
+      retailer: "Custom",
+      customName: "Read the first 5 chapters!",
+      faviconUrl: "https://www.google.com/s2/favicons?domain=valkyriextruck.com&sz=64"
+    }
+  ],
+  impressionCount: 0,
+  clickThroughCount: 0,
+  lastImpressionAt: null,
+  lastClickThroughAt: null,
   internal_details: null,
   images: [
     {
       id: 1,
-      bookId: 999,
-      imageUrl: "/images/placeholder-book.png",
+      bookId: 51,
+      imageUrl: "/api/storage/author-profiles/profile-CHWrejjN.jpg", // Using author profile image since we don't have the book image
       imageType: "book-card",
       width: 500,
       height: 750,
@@ -41,7 +49,7 @@ const valkyrieXTruckBook: Book = {
       updatedAt: new Date().toISOString()
     }
   ],
-  genres: ["Post-Apocalyptic", "Adventure", "Science Fiction", "Automotive", "Thriller"]
+  genres: ["Post-Apocalyptic", "Adventure", "Science Fiction", "Action", "Thriller"]
 };
 
 // BookCardTest component

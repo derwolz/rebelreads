@@ -192,16 +192,20 @@ export function BookCardB({
           </div>
         )}
 
-        {/* Slide-out drawer from the right */}
+        {/* Slide-out drawer from the right (completely hidden behind the card by default) */}
         <div 
           className={`
             absolute top-0 bottom-0 right-0 w-3/4 bg-background
             shadow-xl border-l border-border/50
             transition-all duration-300 ease-in-out
-            transform ${isHovered ? 'translate-x-0' : 'translate-x-full'}
+            transform ${isHovered ? 'translate-x-0' : 'translate-x-[100%]'}
             p-4 flex flex-col
-            z-40
+            z-40 overflow-hidden
           `}
+          style={{ 
+            right: isHovered ? '0' : '-100%', // Ensures it's completely hidden behind the card
+            opacity: isHovered ? '1' : '0'
+          }}
         >
           <h3 className="text-lg font-semibold mb-1">{book.title}</h3>
           <p className="text-sm text-muted-foreground mb-3">{book.authorName}</p>
