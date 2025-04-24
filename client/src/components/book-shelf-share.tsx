@@ -226,7 +226,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                 <div className="w-full">
                   <div className="flex h-full bg-muted border-gray-800 border flex-col md:flex-row rounded-lg max-w-full">
                     {/* Book cover */}
-                    <div className="h-full z-20 flex-left flex justify-center md:min-w-[400px]">
+                    <div className="h-full z-20 flex-left flex justify-center md:w-[370px]">
                       <img 
                         src={selectedBook?.images?.find((img: any) => img.imageType === "full")?.imageUrl || "/images/placeholder-book.png"} 
                         alt={selectedBook?.title} 
