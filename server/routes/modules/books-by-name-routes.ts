@@ -127,8 +127,20 @@ router.patch("/update", async (req, res) => {
       await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
     }
     
-    // Return success with updated book
-    return res.status(200).json(updatedBook);
+    // Get the complete updated book with all its images and taxonomies
+    const completeBook = await dbStorage.getBook(book.id);
+    
+    // Get the book taxonomies to include in the response
+    const bookTaxonomies = await dbStorage.getBookTaxonomies(book.id);
+    
+    // Add taxonomies to the complete book object
+    const bookWithTaxonomies = {
+      ...completeBook,
+      genreTaxonomies: bookTaxonomies
+    };
+    
+    // Return success with updated book including images and taxonomies
+    return res.status(200).json(bookWithTaxonomies);
   } catch (error) {
     console.error("PATCH book error:", error);
     return res.status(500).json({ 
@@ -350,7 +362,17 @@ router.patch("/upload", multipleImageUpload, async (req, res) => {
       return res.status(500).json({ error: "Failed to retrieve updated book" });
     }
     
-    return res.status(200).json(updatedBook);
+    // Get the book taxonomies to include in the response
+    const bookTaxonomies = await dbStorage.getBookTaxonomies(book.id);
+    
+    // Add taxonomies to the complete book object
+    const bookWithTaxonomies = {
+      ...updatedBook,
+      genreTaxonomies: bookTaxonomies
+    };
+    
+    // Return success with updated book including images and taxonomies
+    return res.status(200).json(bookWithTaxonomies);
   } catch (error) {
     console.error("PATCH book upload error:", error);
     return res.status(500).json({ 
