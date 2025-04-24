@@ -85,8 +85,21 @@ export function GeneratedImagePreview({
                   <p>Reject image</p>
                 </TooltipContent>
               </Tooltip>
-              
-             
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="icon" 
+                    onClick={onGenerate} 
+                    variant="outline"
+                    className="bg-white/10 hover:bg-white/20 border-transparent"
+                  >
+                    <RefreshCw className="h-4 w-4 text-blue-400" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generate new image</p>
+                </TooltipContent>
+              </Tooltip>
             </TooltipProvider>
           </div>
         </div>

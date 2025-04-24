@@ -128,15 +128,20 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
     });
   };
   
-  // Reject a generated image (clears the file)
+  // Reject a generated image (clears the file and makes it a required upload)
   const handleRejectGeneratedImage = (imageType: string) => {
     setFormData((prev) => {
+      const dimensions = getImageDimensions(imageType);
+      
       const newImages = {
         ...prev.bookImages,
         [imageType]: {
           ...prev.bookImages[imageType],
           file: null,
-          isGenerated: false
+          isGenerated: false,
+          isRejected: true, // Mark as rejected to track that user needs to upload their own
+          width: dimensions.width,
+          height: dimensions.height
         }
       };
       
@@ -148,7 +153,8 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
     
     toast({
       title: "Image Rejected",
-      description: `The generated ${imageType.replace('-', ' ')} image has been discarded. You can upload your own.`
+      description: `The generated ${imageType.replace('-', ' ')} image has been discarded. Please upload your own ${imageType.replace('-', ' ')} image.`,
+      variant: "destructive"
     });
   };
   
@@ -259,7 +265,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                 onChange={(file, hasError = false, errorMessage) => 
                   handleImageChange(imageType, file, hasError, errorMessage)
                 }
-                required={imageType === "full" || imageType === "background" || imageType === "hero" ? true : false}
+                required={imageType === "full" || imageType === "background" || imageType === "hero" || imageData.isRejected ? true : false}
               />
             );
           })}
@@ -362,7 +368,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                 onChange={(file, hasError = false, errorMessage) => 
                   handleImageChange(imageType, file, hasError, errorMessage)
                 }
-                required={false}
+                required={imageData.isRejected ? true : false}
               />
             );
           })}
