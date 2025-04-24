@@ -494,7 +494,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
           </div>
 
           {/* Separator and Book Rack */}
-          <div className="w-full border-t border-border my-4"></div>
+          <div className="w-full border-t border-border mt-4 mb-2"></div>
           <div className="relative">
             <h4 className="font-medium absolute w-full z-20 text-foregound">
               {shelfData?.shelf?.title || "Book Shelf Name"}

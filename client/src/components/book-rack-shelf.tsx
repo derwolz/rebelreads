@@ -17,7 +17,7 @@ const LEAN_OPTIONS = [
 
 // Original dimensions of the book spine images
 const SPINE_WIDTH = 56;
-const SPINE_HEIGHT = 212;
+const SPINE_HEIGHT = 256;
 
 // Calculate the geometric properties for a leaning book (copied from book-rack.tsx)
 function calculateLeaningGeometry(angle: number) {
@@ -148,7 +148,7 @@ export function BookRackShelf({
     return (
       <div
         ref={(el) => (bookRefs.current[index] = el)}
-        className="relative cursor-pointer"
+        className="relative cursor-pointer my-0"
         style={{
           width: `${width}px`,
           height: `${SPINE_HEIGHT}px`,
@@ -192,7 +192,7 @@ export function BookRackShelf({
   );
 
   const LoadingState = () => (
-    <div className="flex space-x-4 overflow-hidden py-4">
+    <div className="flex space-x-4  py-4">
       {Array.from({ length: 5 }).map((_, i) => (
         <Skeleton key={i} className="h-52 w-14 rounded" />
       ))}
@@ -206,8 +206,8 @@ export function BookRackShelf({
       ) : displayedBooks.length === 0 ? (
         <EmptyState />
       ) : (
-        <ScrollArea className="w-full" type="scroll">
-          <div className="flex space-x-1 pt-6 justify-center items-center">
+      
+          <div className="flex space-x-1 pt-0 justify-center items-center">
             <AnimatePresence>
               {displayedBooks.map((book, index) => {
                 // Get this book's angle
@@ -227,8 +227,7 @@ export function BookRackShelf({
               })}
             </AnimatePresence>
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+
       )}
     </div>
   );
