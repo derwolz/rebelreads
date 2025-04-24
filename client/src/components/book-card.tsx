@@ -20,11 +20,15 @@ function isNewBook(book: Book) {
 export function BookCard({ 
   book, 
   taxonomicScore, 
-  matchingTaxonomies 
+  matchingTaxonomies,
+  onContextMenuOpen,
+  onContextMenuClose
 }: { 
   book: Book, 
   taxonomicScore?: number, 
-  matchingTaxonomies?: number 
+  matchingTaxonomies?: number,
+  onContextMenuOpen?: () => void,
+  onContextMenuClose?: () => void
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [, navigate] = useLocation();

@@ -68,6 +68,8 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
     return calculateLeaningGeometry(angle);
   }, [angle]);
   const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  
   // Get the book images
   const spineImageUrl = book.images?.find(img => img.imageType === "spine")?.imageUrl || "/images/placeholder-book.png";
   
@@ -117,8 +119,6 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
   const handleMouseEnter = useCallback(() => {
     // First just notify that this book is hovered (for scaling effect)
     onHover(index, false);
-
-
     
     // Set a timer to show the card after a delay
     if (timeoutRef.current) {
@@ -131,15 +131,20 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
     }, 300);
   }, [index, onHover]);
   
-  // Handle mouse leave - clear hover state
+  // Handle mouse leave - clear hover state only if context menu isn't open
   const handleMouseLeave = useCallback(() => {
+    if (isContextMenuOpen) {
+      // Don't clear hover if context menu is open
+      return;
+    }
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
     
     onHover(null, false);
-  }, [onHover]);
+  }, [onHover, isContextMenuOpen]);
   
   // Clean up timeouts when component unmounts
   useEffect(() => {
@@ -150,8 +155,25 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
     };
   }, []);
   
+  // Handle context menu events
+  const handleContextMenuOpen = useCallback(() => {
+    setIsContextMenuOpen(true);
+    // Ensure the book card is visible when context menu opens
+    onHover(index, true);
+  }, [index, onHover]);
+  
+  const handleContextMenuClose = useCallback(() => {
+    setIsContextMenuOpen(false);
+    // Optional: could delay this to prevent flickering if user reopens menu quickly
+    setTimeout(() => {
+      if (!isHovered) {
+        onHover(null, false);
+      }
+    }, 300);
+  }, [isHovered, onHover]);
+  
   // Check if we should show the book card
-  const showBookCard = isHovered && hoveredIndex !== null;
+  const showBookCard = (isHovered && hoveredIndex !== null) || isContextMenuOpen;
   
   return (
     <div 
@@ -203,13 +225,23 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
         <div 
           className="absolute bottom-0 animate-fade-in-from-left ease-in-out"
           style={{
-            
             transform: 'translateX(-50%) translateY(30%) ',
             zIndex: 9999,
             width: '256px', // Match the BookCard's width
           }}
+          // Add event listener for context menu to keep the card visible
+          onContextMenu={() => handleContextMenuOpen()}
         >
-          <BookCard book={book} />
+          <div 
+            onContextMenuCapture={() => handleContextMenuOpen()}
+            className="custom-context-menu-wrapper"
+          >
+            <BookCard 
+              book={book} 
+              onContextMenuOpen={handleContextMenuOpen}
+              onContextMenuClose={handleContextMenuClose}
+            />
+          </div>
         </div>
       )}
     </div>

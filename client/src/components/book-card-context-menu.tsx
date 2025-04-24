@@ -41,9 +41,11 @@ import { Book } from "../types";
 interface BookCardContextMenuProps {
   book: Book;
   children: React.ReactNode;
+  onContextMenuOpen?: () => void;
+  onContextMenuClose?: () => void;
 }
 
-export function BookCardContextMenu({ book, children }: BookCardContextMenuProps) {
+export function BookCardContextMenu({ book, children, onContextMenuOpen, onContextMenuClose }: BookCardContextMenuProps) {
   const { user } = useAuth();
   const { setIsOpen: setAuthModalOpen } = useAuthModal();
   const { toast } = useToast();
@@ -279,9 +281,25 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
     navigate(`/authors/${book.authorId}`);
   };
 
+  // Function to handle context menu open event
+  const handleContextMenuOpen = () => {
+    if (onContextMenuOpen) onContextMenuOpen();
+  };
+
+  // Function to handle context menu close event
+  const handleContextMenuClose = () => {
+    if (onContextMenuClose) onContextMenuClose();
+  };
+
   return (
     <>
-      <ContextMenu>
+      <ContextMenu onOpenChange={(open) => {
+        if (open) {
+          handleContextMenuOpen();
+        } else {
+          handleContextMenuClose();
+        }
+      }}>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-64">
           <ContextMenuItem
