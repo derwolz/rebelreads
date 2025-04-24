@@ -169,7 +169,7 @@ export const IMAGE_TYPES = [
   ...UPLOAD_IMAGE_TYPES,
   "book-cover",     // 480x770 - Auto-generated from full
   "book-card",      // 256x412 - Auto-generated from full
-  "mini",           // 64x40 - Auto-generated from full
+  "mini",           // 60x96 - Auto-generated from full (tall, not wide)
   "vertical-banner", // Additional banner format
   "horizontal-banner", // Additional banner format
 ] as const;
