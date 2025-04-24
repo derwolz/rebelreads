@@ -452,6 +452,89 @@
 
 @tailwind utilities;
 
+/* Pixel trail animation for Card B */
+@keyframes border-path {
+  0% {
+    top: 0;
+    left: 0;
+    transform: translateX(0);
+  }
+  25% {
+    top: 0;
+    left: 100%;
+    transform: translateX(-100%);
+  }
+  26% {
+    top: 0;
+    left: 100%;
+    transform: translateX(-100%) translateY(0);
+  }
+  50% {
+    top: 100%;
+    left: 100%;
+    transform: translateX(-100%) translateY(-100%);
+  }
+  51% {
+    top: 100%;
+    left: 100%;
+    transform: translateX(-100%) translateY(-100%);
+  }
+  75% {
+    top: 100%;
+    left: 0;
+    transform: translateX(0) translateY(-100%);
+  }
+  76% {
+    top: 100%;
+    left: 0;
+    transform: translateX(0) translateY(-100%);
+  }
+  100% {
+    top: 0;
+    left: 0;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes trail-fade {
+  0% {
+    opacity: 0.8;
+    width: 0;
+    height: 2px;
+  }
+  50% {
+    opacity: 0.4;
+    width: 15px;
+    height: 2px;
+  }
+  100% {
+    opacity: 0;
+    width: 0;
+    height: 2px;
+  }
+}
+
+.pixel-traveler {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: hsl(35 81% 58%);
+  border-radius: 50%;
+  z-index: 50;
+  animation: border-path 8s linear infinite;
+  box-shadow: 0 0 4px 2px hsl(35 81% 58% / 0.6);
+}
+
+.pixel-trail {
+  position: absolute;
+  background: linear-gradient(to right, transparent, hsl(35 81% 58%), transparent);
+  border-radius: 2px;
+  transform-origin: left center;
+  z-index: 49;
+  animation: trail-fade 2s linear infinite;
+  pointer-events: none;
+}
+
 /* Custom styles for mode toggle button */
 .mode-toggle-button {
   position: relative;

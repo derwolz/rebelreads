@@ -29,6 +29,7 @@ export function BookCardB({
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
+  const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
@@ -38,6 +39,44 @@ export function BookCardB({
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ["/api/rating-preferences"],
   });
+
+  // Generate pixel trails that follow the traveler
+  useEffect(() => {
+    if (book.promoted) {
+      // Create multiple trail elements with different delays
+      const trailCount = 5; // Number of trail elements
+      const newTrailElements = [];
+      
+      for (let i = 0; i < trailCount; i++) {
+        // Calculate delays for animation synchronization
+        const animationDelay = i * 0.4; // seconds between trails
+        const rotationOffset = (i + 1) * 0.5; // offset percentage in the animation cycle
+        
+        newTrailElements.push(
+          <div 
+            key={`trail-${i}`}
+            className="pixel-trail"
+            style={{
+              animationDelay: `${animationDelay}s`,
+              // Each trail element follows the pixel but with delay
+              // The animation-delay of the trail elements creates a trailing effect
+              animationName: 'trail-fade, border-path',
+              animationDuration: '2s, 8s',
+              animationTimingFunction: 'linear, linear',
+              animationIterationCount: 'infinite, infinite',
+              animationDirection: 'normal, normal',
+              // This staggers the trail elements along the path
+              animationPlayState: 'running, running',
+              opacity: 0.7 - (i * 0.1), // Decreasing opacity for each trail
+              width: 10 + (i * 2), // Slightly increasing width for each trail
+            }}
+          />
+        );
+      }
+      
+      setTrailElements(newTrailElements);
+    }
+  }, [book.promoted]);
 
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
@@ -132,8 +171,16 @@ export function BookCardB({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      
-      
+      {/* Gold pixel with trail - only for promoted books */}
+      {book.promoted && (
+        <div className="absolute inset-0 z-40 pointer-events-none">
+          {/* The traveling pixel */}
+          <div className="pixel-traveler" />
+          
+          {/* Trail elements */}
+          {trailElements}
+        </div>
+      )}
       
       <Card
         id={`book-card-b-${book.id}`}
