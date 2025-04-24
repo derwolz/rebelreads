@@ -1,23 +1,24 @@
 import React from "react";
-import { BookCard } from "@/components/book-card";
+import { BookCardA } from "@/components/book-card-a";
+import { BookCardB } from "@/components/book-card-b";
 import { Book, BookImage } from "../types";
 
-// Create a sample book for testing purposes
-const sampleBook: Book = {
+// Create a sample book for ValkyrieXTruck by King Stanky
+const valkyrieXTruckBook: Book = {
   id: 999,
-  title: "Sample Book Title",
+  title: "ValkyrieXTruck",
   authorId: 1,
-  authorName: "Sample Author",
-  description: "This is a sample book description for testing the BookCard component. It includes enough text to demonstrate how descriptions appear in the tooltip.",
+  authorName: "King Stanky",
+  description: "A thrilling adventure that follows the epic journey of the ValkyrieXTruck as it battles through a post-apocalyptic wasteland. With a powerful V8 engine and otherworldly abilities, the Valkyrie transforms the transportation landscape forever.",
   promoted: true,
   pageCount: 320,
   formats: ["hardcover", "ebook", "audiobook"],
   publishedDate: new Date().toISOString(), // Set to current date to show "New" badge
   awards: ["Best Fiction 2025"],
-  originalTitle: "Original Sample Title",
-  series: "Sample Series",
-  setting: "Contemporary",
-  characters: ["Character 1", "Character 2"],
+  originalTitle: "ValkyrieXTruck: Origins",
+  series: "Valkyrie Chronicles",
+  setting: "Post-Apocalyptic",
+  characters: ["Valkyrie", "King Stanky", "The Mechanic"],
   isbn: "1234567890123",
   asin: "B123456789",
   language: "English",
@@ -40,7 +41,7 @@ const sampleBook: Book = {
       updatedAt: new Date().toISOString()
     }
   ],
-  genres: ["Fantasy", "Adventure", "Mystery"]
+  genres: ["Post-Apocalyptic", "Adventure", "Science Fiction", "Automotive", "Thriller"]
 };
 
 // BookCardTest component
@@ -48,8 +49,21 @@ export default function BookCardTest() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-background">
       <h1 className="text-3xl font-bold mb-8">Book Card Test Page</h1>
-      <div className="w-full max-w-7xl mx-auto flex justify-center">
-        <BookCard book={sampleBook} />
+      
+      <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 p-8">
+        <div className="flex flex-col items-center">
+          <h2 className="text-2xl font-bold mb-6">Card A</h2>
+          <div className="flex justify-center">
+            <BookCardA book={valkyrieXTruckBook} />
+          </div>
+        </div>
+        
+        <div className="flex flex-col items-center">
+          <h2 className="text-2xl font-bold mb-6">Card B</h2>
+          <div className="flex justify-center">
+            <BookCardB book={valkyrieXTruckBook} />
+          </div>
+        </div>
       </div>
     </div>
   );
