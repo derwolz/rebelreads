@@ -38,15 +38,15 @@ const valkyrieXTruckBook: Book = {
   internal_details: null,
   images: [
     {
-      id: 1,
+      id: 180,
       bookId: 51,
-      imageUrl: "/api/storage/author-profiles/profile-CHWrejjN.jpg", // Using author profile image since we don't have the book image
+      imageUrl: "/api/storage/covers/card/book_51/book-card-51-fLkWW5Q5.jpg", // Using the actual book-card image from database
       imageType: "book-card",
-      width: 500,
-      height: 750,
-      sizeKb: 200,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      width: 260,
+      height: 435,
+      sizeKb: 38,
+      createdAt: new Date("2025-04-24T05:38:57.568Z").toISOString(),
+      updatedAt: new Date("2025-04-24T05:38:57.568Z").toISOString()
     }
   ],
   genres: ["Post-Apocalyptic", "Adventure", "Science Fiction", "Action", "Thriller"]
