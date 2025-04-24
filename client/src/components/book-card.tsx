@@ -175,7 +175,11 @@ export function BookCard({
     : "";
 
   return (
-    <BookCardContextMenu book={book}>
+    <BookCardContextMenu 
+      book={book} 
+      onContextMenuOpen={onContextMenuOpen}
+      onContextMenuClose={onContextMenuClose}
+    >
       <div
         className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
         style={{ width: "256px", height: "412px" }}
