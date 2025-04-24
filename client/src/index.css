@@ -238,6 +238,18 @@
   }
 }
 
+@keyframes fadeInFromLeft {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @keyframes slideInFromRight {
   0% {
     transform: translateX(50px);
@@ -361,6 +373,11 @@
 .animate-fade-in {
   animation: fadeIn 0.8s ease-out forwards;
   will-change: opacity;
+}
+
+.animate-fade-in-from-left {
+  animation: fadeInFromLeft 0.4s ease-out forwards;
+  will-change: transform, opacity;
 }
 
 .animate-grow-chart {

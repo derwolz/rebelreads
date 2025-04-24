@@ -152,10 +152,9 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
       {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
       {showBookCard && (
         <div 
-          className="absolute bottom-0 transition-all duration-900 ease-in-out"
+          className="absolute bottom-0 transition-all duration-300 ease-in-out animate-fade-in-from-left"
           style={{
-            
-            transform: 'translateX(-50%) translateY(30%) ',
+            transform: 'translateX(-50%) translateY(30%)',
             zIndex: 9999,
             width: '256px', // Match the BookCard's width
           }}
