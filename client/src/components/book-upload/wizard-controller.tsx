@@ -135,15 +135,33 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
     queryKey: ["/api/books", book?.id, "taxonomies"],
     queryFn: async () => {
       if (!book?.id) return [];
-      console.log(`Fetching taxonomies for book ${book.id}...`);
-      const response = await fetch(`/api/books/${book.id}/taxonomies`);
-      if (!response.ok) {
-        console.error(`Failed to fetch book taxonomies: ${response.status} ${response.statusText}`);
-        throw new Error(`Failed to fetch book taxonomies: ${response.status}`);
+      
+      try {
+        console.log(`Fetching taxonomies for book ${book.id}...`);
+        const response = await fetch(`/api/books/${book.id}/taxonomies`);
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch book taxonomies: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch book taxonomies: ${response.status}`);
+        }
+        
+        const text = await response.text();
+        console.log("Raw response from taxonomies API:", text);
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+          console.log("Parsed taxonomies data:", data);
+        } catch (parseError) {
+          console.error("Error parsing taxonomies data:", parseError);
+          throw new Error("Failed to parse taxonomies response as JSON");
+        }
+        
+        return data;
+      } catch (error) {
+        console.error("Error in taxonomies fetch:", error);
+        throw error;
       }
-      const data = await response.json();
-      console.log("Received taxonomies data:", data);
-      return data;
     },
     enabled: !!book?.id, // Only run this query if we have a book ID
   });
