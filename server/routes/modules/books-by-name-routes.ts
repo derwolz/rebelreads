@@ -430,4 +430,70 @@ router.patch("/upload", multipleImageUpload, async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/books-by-name/delete
+ * Delete a book by author name and book title via query parameters
+ * Authentication and author status required
+ */
+router.delete("/delete", async (req, res) => {
+  // Force JSON content type
+  res.type('json');
+  
+  try {
+    // Basic validation
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    
+    // Get user ID
+    const userId = req.user!.id;
+    
+    // Get author name and book title from query parameters
+    const authorName = req.query.authorName as string;
+    const bookTitle = req.query.bookTitle as string;
+    
+    if (!authorName || !bookTitle) {
+      return res.status(400).json({ 
+        error: "Missing parameters", 
+        message: "Both authorName and bookTitle are required query parameters" 
+      });
+    }
+    
+    console.log(`Looking up book to delete by author name and book title: ${authorName}, ${bookTitle}`);
+    
+    // Find book by author name and title
+    const book = await dbStorage.getBookByAuthorAndTitle(authorName, bookTitle);
+    if (!book) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    // Get author record
+    const author = await dbStorage.getAuthorByUserId(userId);
+    if (!author) {
+      return res.status(403).json({ error: "Not an author" });
+    }
+    
+    // Verify ownership
+    if (book.authorId !== author.id && !(req.user as any).isAdmin) {
+      return res.status(403).json({ error: "Not authorized - you don't own this book" });
+    }
+    
+    // Delete the book
+    await dbStorage.deleteBook(book.id, author.id);
+    console.log(`Successfully deleted book "${bookTitle}" by author "${authorName}"`);
+    
+    return res.status(200).json({ 
+      message: "Book deleted successfully", 
+      bookId: book.id,
+      bookTitle: book.title
+    });
+  } catch (error) {
+    console.error("DELETE book error:", error);
+    return res.status(500).json({ 
+      error: "Failed to delete book",
+      message: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 export default router;
