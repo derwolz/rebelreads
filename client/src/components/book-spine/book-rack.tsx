@@ -106,16 +106,16 @@ export function BookRack({
       setShowingCard(false);
       
       // Then after a delay, show the card if still hovering
-      setTimeout(() => {
-        if (hoveredIndex === index) {
-          setShowingCard(true);
-        }
+      const timer = setTimeout(() => {
+        setShowingCard(true);
       }, 300);
+      
+      return () => clearTimeout(timer);
     } else {
       setHoveredIndex(null);
       setShowingCard(false);
     }
-  }, [hoveredIndex]);
+  }, []);
   
   // Skeleton placeholder when loading
   if (isLoading) {
@@ -181,6 +181,7 @@ export function BookRack({
               // Handle hover for this specific spine
               const handleSpineHover = (isHovered: boolean) => {
                 handleBookHover(isHovered, index);
+                console.log(`Spine hover: ${isHovered ? 'on' : 'off'} for index ${index}, variant ${variant}, spacing ${getSpacingAmount()}`);
               };
               
               // Use a unique key combining book ID and index

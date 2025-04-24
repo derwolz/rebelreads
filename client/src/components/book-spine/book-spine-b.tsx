@@ -125,7 +125,7 @@ export function BookSpineB({book,
           <img 
             src={spineImageUrl} 
             alt={book.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover border border-white/30"
             style={{ maxWidth: `${SPINE_WIDTH}px` }}
           />
           {/* Shadow overlay */}
