@@ -127,7 +127,7 @@ export function BookCardB({
 
   return (
     <div
-      className="relative"
+      className="relative overflow-hidden"
       style={{ width: "256px", height: "440px" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
