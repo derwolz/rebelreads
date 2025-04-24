@@ -556,6 +556,26 @@
   }
 }
 
+/* Traveling border animation for Card B */
+@keyframes border-travel-b {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(100% + 200px) 0;
+  }
+}
+
+/* Continuous rotation animation for Card B's border */
+@keyframes rotate-border {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%; /* #FFFFFF */
