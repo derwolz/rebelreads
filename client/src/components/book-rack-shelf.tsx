@@ -152,7 +152,7 @@ export function BookRackShelf({
         style={{
           width: `${width}px`,
           height: `${SPINE_HEIGHT}px`,
-          zIndex: isHovered ? 30 : 1,
+          zIndex: isHovered ? 5 : 1,
         }}
         onClick={() => onSelectBook && onSelectBook(book, index)}
         onMouseEnter={handleMouseEnter}

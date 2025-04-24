@@ -198,7 +198,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
       >
         {/* Gold pixel with trail - only for promoted books */}
         {book.promoted && (
-          <div className="absolute inset-0 z-40 pointer-events-none">
+          <div className="absolute inset-0 z-10 pointer-events-none">
             {/* The traveling pixel */}
             <div className="pixel-traveler" />
 
@@ -226,7 +226,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
           className="absolute bottom-0 animate-fade-in-from-left ease-in-out"
           style={{
             transform: 'translateX(-50%) translateY(30%) ',
-            zIndex: 9999,
+            zIndex: 20, // Lower than WhatsHot sidebar but higher than regular books
             width: '256px', // Match the BookCard's width
           }}
           // Add event listener for context menu to keep the card visible
