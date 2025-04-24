@@ -50,6 +50,9 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
   const queryClient = useQueryClient();
   const [location, navigate] = useLocation();
   
+  // State to control context menu and force hover state
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  
   // State for shelve dialog
   const [isShelveDialogOpen, setIsShelveDialogOpen] = useState(false);
   const [selectedShelfId, setSelectedShelfId] = useState<number | null>(null);
@@ -281,7 +284,16 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
 
   return (
     <>
-      <ContextMenu>
+      <ContextMenu onOpenChange={(open) => {
+        setIsContextMenuOpen(open);
+        if (open) {
+          // When opening context menu, add a class to prevent hover state from disappearing
+          document.body.classList.add('context-menu-open');
+        } else {
+          // When closing, remove the class
+          document.body.classList.remove('context-menu-open');
+        }
+      }}>
         <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
         <ContextMenuContent className="w-64">
           <ContextMenuItem
