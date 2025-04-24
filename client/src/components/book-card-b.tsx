@@ -134,10 +134,16 @@ export function BookCardB({
     >
       <Card
         id={`book-card-b-${book.id}`}
-        className="cursor-pointer w-full shadow-md transition-all duration-300 ease-in-out overflow-hidden"
+        className={`
+          cursor-pointer w-full
+          transition-all duration-300 ease-in-out 
+          overflow-hidden
+          ${book.promoted ? 'shadow-none' : 'shadow-md'}
+        `}
         style={{
           height: "100%",
           aspectRatio: "58/100",
+          animation: book.promoted ? "shadow-pulse 3s ease-in-out infinite" : "none",
         }}
         onClick={handleCardClick}
       >

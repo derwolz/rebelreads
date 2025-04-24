@@ -511,6 +511,38 @@
   }
 }
 
+/* Gold border animation for Card A */
+@keyframes border-glow {
+  0%, 100% {
+    border-top: 1px solid transparent;
+    border-right: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    border-left: 1px solid transparent;
+  }
+  25% {
+    border-right: 1px solid hsl(35 81% 58% / 0.6);
+    border-top: 1px solid hsl(35 81% 58% / 0.3);
+  }
+  50% {
+    border-bottom: 1px solid hsl(35 81% 58% / 0.6);
+    border-right: 1px solid hsl(35 81% 58% / 0.3);
+  }
+  75% {
+    border-left: 1px solid hsl(35 81% 58% / 0.6);
+    border-bottom: 1px solid hsl(35 81% 58% / 0.3);
+  }
+}
+
+/* Shadow glow animation for Card B */
+@keyframes shadow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px 1px hsl(35 81% 58% / 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px 2px hsl(35 81% 58% / 0.3);
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%; /* #FFFFFF */
