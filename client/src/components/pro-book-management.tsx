@@ -49,22 +49,9 @@ export function ProBookManagement() {
   });
 
   const deleteBookMutation = useMutation({
-    // Update to use the new delete endpoint with authorName and bookTitle
-    mutationFn: async (book: { id: number; title: string; authorName?: string }) => {
-      // If we don't have the author name, we need to fallback to the old method
-      if (!book.authorName) {
-        const res = await fetch(`/api/books/${book.id}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (!res.ok) {
-          const error = await res.text();
-          throw new Error(error);
-        }
-        return;
-      }
-
-      // Use the new name-based endpoint
+    // Delete using only authorName and bookTitle
+    mutationFn: async (book: { id: number; title: string; authorName: string }) => {
+      // All books must have an author name, no fallback needed
       const encodedAuthor = encodeURIComponent(book.authorName);
       const encodedTitle = encodeURIComponent(book.title);
       const res = await fetch(`/api/books-by-name/delete?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`, {
@@ -91,16 +78,10 @@ export function ProBookManagement() {
     if ((e.target as HTMLElement).closest("button")) {
       return;
     }
-    // Use anti-scraping link format with query parameters
-    if (book.authorName) {
-      // Encode both authorName and bookTitle for the URL
-      const encodedAuthor = encodeURIComponent(book.authorName);
-      const encodedTitle = encodeURIComponent(book.title);
-      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
-    } else {
-      // Fallback to traditional ID-based URL if authorName is not available
-      navigate(`/book-details?authorName=${encodeURIComponent("Unknown")}&bookTitle=${encodeURIComponent(book.title)}`);
-    }
+    // All books have an author name
+    const encodedAuthor = encodeURIComponent(book.authorName);
+    const encodedTitle = encodeURIComponent(book.title);
+    navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
   };
 
   // Process ratings data
