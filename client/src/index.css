@@ -470,6 +470,21 @@
 
 @tailwind utilities;
 
+/* Context menu interaction styles */
+body.context-menu-open .book-card-hover-content {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}
+
+body.context-menu-open .book-card-container {
+  transform: scale(1.05) !important;
+}
+
+[data-state="open"] ~ .book-card-hover-content {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+}
+
 /* Pixel trail animation for Card B */
 @keyframes border-path {
   0% {
