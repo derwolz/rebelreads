@@ -114,17 +114,46 @@ router.patch("/update", async (req, res) => {
     
     // Extract the updated fields from request body
     // Remove non-book fields to avoid DB errors
-    const { authorname, bookname, genreTaxonomies, ...updates } = req.body;
+    const { authorname, bookname, genreTaxonomies, bookImages, ...updates } = req.body;
     
     // Process the update
-    console.log("Processing update with cleaned fields:", Object.keys(updates));
+    console.log("Processing update with full data:", {
+      fieldsToUpdate: Object.keys(updates),
+      hasTaxonomies: !!genreTaxonomies,
+      hasImages: !!bookImages,
+      taxonomiesCount: genreTaxonomies ? genreTaxonomies.length : 0,
+      imagesCount: bookImages ? bookImages.length : 0
+    });
     
-    // Update the book in database
+    // Update the book basic info in database
     const updatedBook = await dbStorage.updateBook(book.id, updates);
     
     // Update taxonomies if provided
     if (genreTaxonomies && Array.isArray(genreTaxonomies)) {
+      console.log("Updating taxonomies:", genreTaxonomies);
       await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
+    }
+    
+    // Process book images if provided
+    if (bookImages && Array.isArray(bookImages) && bookImages.length > 0) {
+      console.log("Processing images update:", bookImages.length, "images");
+      
+      for (const image of bookImages) {
+        if (image && image.imageUrl && image.imageType) {
+          try {
+            // Get dimensions from image data or use defaults based on type
+            const width = image.width || 100;
+            const height = image.height || 100;
+            const sizeKb = image.sizeKb || 0;
+            
+            // Add or update the image in the database
+            await dbStorage.addBookImage(book.id, image.imageUrl, image.imageType, width, height, sizeKb);
+            console.log(`Updated ${image.imageType} image: ${image.imageUrl}`);
+          } catch (error) {
+            console.error(`Error updating image ${image.imageType}:`, error);
+          }
+        }
+      }
     }
     
     // Get the complete updated book with all its images and taxonomies
