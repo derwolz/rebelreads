@@ -132,38 +132,49 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
   // Fetch book taxonomies when editing a book
   const { data: bookTaxonomies, error: bookTaxonomiesError } = useQuery<TaxonomyItem[]>({
-    queryKey: ["/api/books", book?.id, "taxonomies"],
+    queryKey: ["/api/books/lookup/taxonomies", book?.authorName, book?.title],
     queryFn: async () => {
-      if (!book?.id) return [];
+      if (!book?.title || !book?.authorName) return [];
       
       try {
-        console.log(`Fetching taxonomies for book ${book.id}...`);
-        const response = await fetch(`/api/books/${book.id}/taxonomies`);
+        console.log(`Fetching taxonomies for book "${book.title}" by ${book.authorName}...`);
+        
+        // Use the new lookup endpoint with query parameters
+        const url = `/api/books/lookup/taxonomies?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`;
+        const response = await fetch(url);
         
         if (!response.ok) {
           console.error(`Failed to fetch book taxonomies: ${response.status} ${response.statusText}`);
           throw new Error(`Failed to fetch book taxonomies: ${response.status}`);
         }
         
-        const text = await response.text();
-        console.log("Raw response from taxonomies API:", text);
-        
-        let data;
+        // Try to parse response directly as JSON first
         try {
-          data = JSON.parse(text);
+          const data = await response.json();
           console.log("Parsed taxonomies data:", data);
-        } catch (parseError) {
-          console.error("Error parsing taxonomies data:", parseError);
-          throw new Error("Failed to parse taxonomies response as JSON");
+          return data;
+        } catch (jsonError) {
+          // If JSON parsing fails, try text parsing as a fallback
+          console.warn("Error parsing JSON directly, falling back to text parsing:", jsonError);
+          
+          const text = await response.text();
+          console.log("Raw response from taxonomies API:", text);
+          
+          try {
+            const data = JSON.parse(text);
+            console.log("Parsed taxonomies data from text:", data);
+            return data;
+          } catch (parseError) {
+            console.error("Error parsing taxonomies data:", parseError);
+            throw new Error("Failed to parse taxonomies response as JSON");
+          }
         }
-        
-        return data;
       } catch (error) {
         console.error("Error in taxonomies fetch:", error);
         throw error;
       }
     },
-    enabled: !!book?.id, // Only run this query if we have a book ID
+    enabled: !!book?.title && !!book?.authorName, // Only run this query if we have book title and author name
   });
   
   // Log any errors

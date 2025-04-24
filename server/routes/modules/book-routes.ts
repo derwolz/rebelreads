@@ -259,10 +259,13 @@ router.get("/coming-soon", async (req, res) => {
 
 /**
  * GET /api/books/:id/taxonomies
- * Get taxonomies for a specific book
+ * Get taxonomies for a specific book by ID
  * Public endpoint - no authentication required
  */
 router.get("/:id/taxonomies", async (req, res) => {
+  // Force JSON content type to prevent Vite intercept
+  res.type('application/json');
+  
   // Public endpoint - no authentication required
   const bookId = parseInt(req.params.id);
   if (isNaN(bookId)) {
@@ -277,6 +280,41 @@ router.get("/:id/taxonomies", async (req, res) => {
     }
     
     const taxonomies = await dbStorage.getBookTaxonomies(bookId);
+    return res.json(taxonomies);
+  } catch (error) {
+    console.error("Error fetching book taxonomies:", error);
+    return res.status(500).json({ error: "Failed to fetch book taxonomies" });
+  }
+});
+
+/**
+ * GET /api/books/lookup/taxonomies
+ * Get taxonomies for a specific book by author name and book title
+ * Public endpoint - no authentication required
+ */
+router.get("/lookup/taxonomies", async (req, res) => {
+  // Force JSON content type to prevent Vite intercept
+  res.type('application/json');
+  
+  // Get author name and book title from query parameters
+  const authorName = req.query.authorName as string;
+  const bookTitle = req.query.bookTitle as string;
+  
+  if (!authorName || !bookTitle) {
+    return res.status(400).json({ 
+      error: "Missing parameters", 
+      message: "Both authorName and bookTitle are required" 
+    });
+  }
+
+  try {
+    // Look up the book by author name and title
+    const book = await dbStorage.getBookByAuthorAndTitle(authorName, bookTitle);
+    if (!book) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+    
+    const taxonomies = await dbStorage.getBookTaxonomies(book.id);
     return res.json(taxonomies);
   } catch (error) {
     console.error("Error fetching book taxonomies:", error);
