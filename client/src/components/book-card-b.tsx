@@ -132,18 +132,27 @@ export function BookCardB({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Promoted glow wrapper */}
+      {book.promoted && (
+        <div 
+          className="absolute inset-0 rounded-md z-10 pointer-events-none"
+          style={{
+            animation: "shadow-pulse 3s ease-in-out infinite",
+            padding: "0",
+          }}
+        />
+      )}
       <Card
         id={`book-card-b-${book.id}`}
         className={`
           cursor-pointer w-full
           transition-all duration-300 ease-in-out 
           overflow-hidden
-          ${book.promoted ? 'shadow-none' : 'shadow-md'}
+          ${book.promoted ? 'shadow-none relative z-20' : 'shadow-md'}
         `}
         style={{
           height: "100%",
           aspectRatio: "58/100",
-          animation: book.promoted ? "shadow-pulse 3s ease-in-out infinite" : "none",
         }}
         onClick={handleCardClick}
       >

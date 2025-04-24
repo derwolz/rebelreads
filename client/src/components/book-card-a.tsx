@@ -135,13 +135,24 @@ export function BookCardA({
       {/* Promoted card wrapper with animated border */}
       {book.promoted && (
         <div 
-          className="absolute inset-0 rounded-md z-10"
+          className="absolute inset-0 rounded-md z-10 pointer-events-none"
           style={{ 
             animation: "border-glow 4s infinite",
-            padding: "1px",
-            pointerEvents: "none"
+            padding: "4px",
           }}
-        ></div>
+        >
+          <div 
+            className="absolute inset-0 rounded-md"
+            style={{
+              backgroundImage: "linear-gradient(90deg, transparent, hsl(35 81% 58% / 0.9), transparent)",
+              backgroundSize: "200% 200%",
+              animation: "border-travel 6s linear infinite",
+              border: "2px solid transparent",
+              backgroundClip: "padding-box",
+              WebkitBackgroundClip: "padding-box"
+            }}
+          />
+        </div>
       )}
       <Card
         id={`book-card-a-${book.id}`}
