@@ -131,16 +131,29 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
   const LOCAL_STORAGE_KEY = "book_upload_form_data";
 
   // Fetch book taxonomies when editing a book
-  const { data: bookTaxonomies } = useQuery<TaxonomyItem[]>({
+  const { data: bookTaxonomies, error: bookTaxonomiesError } = useQuery<TaxonomyItem[]>({
     queryKey: ["/api/books", book?.id, "taxonomies"],
     queryFn: async () => {
       if (!book?.id) return [];
+      console.log(`Fetching taxonomies for book ${book.id}...`);
       const response = await fetch(`/api/books/${book.id}/taxonomies`);
-      if (!response.ok) throw new Error("Failed to fetch book taxonomies");
-      return response.json();
+      if (!response.ok) {
+        console.error(`Failed to fetch book taxonomies: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch book taxonomies: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Received taxonomies data:", data);
+      return data;
     },
     enabled: !!book?.id, // Only run this query if we have a book ID
   });
+  
+  // Log any errors
+  useEffect(() => {
+    if (bookTaxonomiesError) {
+      console.error("Error fetching book taxonomies:", bookTaxonomiesError);
+    }
+  }, [bookTaxonomiesError]);
 
   // Helper function to create empty book images structure
   const createEmptyBookImages = (): Record<string, BookImageFile> => {
