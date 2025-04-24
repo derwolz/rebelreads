@@ -146,8 +146,17 @@ router.patch("/update", async (req, res) => {
             const height = image.height || 100;
             const sizeKb = image.sizeKb || 0;
             
-            // Add or update the image in the database
-            await dbStorage.addBookImage(book.id, image.imageUrl, image.imageType, width, height, sizeKb);
+            // Add or update the image in the database using object format
+            await dbStorage.addBookImage({
+              bookId: book.id,
+              imageUrl: image.imageUrl,
+              imageType: image.imageType,
+              width,
+              height,
+              sizeKb,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
             console.log(`Updated ${image.imageType} image: ${image.imageUrl}`);
           } catch (error) {
             console.error(`Error updating image ${image.imageType}:`, error);
@@ -375,23 +384,24 @@ router.patch("/upload", multipleImageUpload, async (req, res) => {
         }
       }
       
-      // Auto-generate missing images from full image if applicable
-      if (fullImageUrl && fullImageChanged) {
-        try {
-          console.log("Attempting to auto-generate missing images from full image...");
-          const regeneratedImages = await dbStorage.regenerateBookImages(book.id, fullImageUrl);
-          console.log("Image regeneration complete:", regeneratedImages);
-        } catch (error) {
-          console.error("Error generating book images:", error);
-          // Continue anyway as this is a non-critical error
-        }
-      }
+      // Image regeneration is now handled by the frontend
+      // No need for server-side image regeneration
     }
     
     // Update book data in the database
     if (Object.keys(updates).length > 0) {
       console.log("Updating book data with fields:", Object.keys(updates));
-      await dbStorage.updateBook(book.id, updates);
+      
+      // Filter out any image-related fields that might have been added (bookImageType_*)
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([key]) => !key.startsWith('bookImageType_'))
+      );
+      
+      console.log("Cleaned update fields:", Object.keys(cleanUpdates));
+      
+      if (Object.keys(cleanUpdates).length > 0) {
+        await dbStorage.updateBook(book.id, cleanUpdates);
+      }
     }
     
     // Get the updated book with all its images

@@ -1,0 +1,58 @@
+Error generating book images: TypeError: dbStorage.regenerateBookImages is not a function
+    at <anonymous> (/home/runner/workspace/server/routes/modules/books-by-name-routes.ts:382:53)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Updating book data with fields: [
+  'hasAwards',
+  'genreTaxonomies',
+  'bookImageType_full',
+  'bookImageType_book-card',
+  'bookImageType_mini'
+]
+Error updating book 43: error: syntax error at or near "where"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async BookStorage.updateBook (/home/runner/workspace/server/storage/books.ts:454:22)
+    at async <anonymous> (/home/runner/workspace/server/routes/modules/books-by-name-routes.ts:394:7) {
+  length: 94,
+  severity: 'ERROR',
+  code: '42601',
+  detail: undefined,
+  hint: undefined,
+  position: '21',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'scan.l',
+  line: '1244',
+  routine: 'scanner_yyerror'
+}
+PATCH book upload error: error: syntax error at or near "where"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async BookStorage.updateBook (/home/runner/workspace/server/storage/books.ts:454:22)
+    at async <anonymous> (/home/runner/workspace/server/routes/modules/books-by-name-routes.ts:394:7) {
+  length: 94,
+  severity: 'ERROR',
+  code: '42601',
+  detail: undefined,
+  hint: undefined,
+  position: '21',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'scan.l',
+  line: '1244',
+  routine: 'scanner_yyerror'
+}
