@@ -8,34 +8,6 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-// Helper function to get weight percentage for a criteria based on stored weights or position
-function getWeightPercentage(
-  criteriaName: string,
-  prefs?: RatingPreferences,
-): string {
-  if (!prefs) {
-    // Use default weights if no user preferences
-    return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
-  }
-
-  // If we have individual weights columns, use those directly
-  if (prefs[criteriaName as keyof RatingPreferences] !== undefined) {
-    // Convert any string values to numbers for percentage calculation
-    const value = prefs[criteriaName as keyof RatingPreferences];
-    const numericValue = typeof value === "string" ? parseFloat(value) : value;
-    return `${(Number(numericValue) * 100).toFixed(0)}%`;
-  }
-
-  // Fall back to default weights if we don't have the specific property
-  return `${(DEFAULT_RATING_WEIGHTS[criteriaName as keyof typeof DEFAULT_RATING_WEIGHTS] * 100).toFixed(0)}%`;
-}
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
@@ -67,18 +39,18 @@ export function BookCard({
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ["/api/rating-preferences"],
   });
-  
+
   // Generate pixel trails that follow the traveler
   useEffect(() => {
     if (book.promoted) {
       // Create multiple trail elements with different delays
       const trailCount = 20; // Number of trail elements
       const newTrailElements = [];
-      
+
       for (let i = 0; i < trailCount; i++) {
         // Calculate delays for animation synchronization
         const animationDelay = i * 0.010; // seconds between trails
-        
+
         newTrailElements.push(
           <div 
             key={`trail-${i}`}
@@ -99,7 +71,7 @@ export function BookCard({
           />
         );
       }
-      
+
       setTrailElements(newTrailElements);
     }
   }, [book.promoted]);
@@ -113,7 +85,7 @@ export function BookCard({
       { threshold: 0.5 }, // Card must be 50% visible to count
     );
 
-    const element = document.getElementById(`book-card-${book.id}`);
+    const element = document.getElementById(`book-card-a-${book.id}`);
     if (element) {
       observer.observe(element);
     }
@@ -126,7 +98,7 @@ export function BookCard({
     if (isVisible && !hasRecordedImpression) {
       const recordImpression = async () => {
         await apiRequest("POST", `/api/books/${book.id}/impression`, {
-          source: "card",
+          source: "card-a",
           context: window.location.pathname,
         });
         setHasRecordedImpression(true);
@@ -174,10 +146,10 @@ export function BookCard({
     }
     // Record click-through before navigation
     await apiRequest("POST", `/api/books/${book.id}/click-through`, {
-      source: "card",
+      source: "card-a",
       referrer: window.location.pathname,
     });
-    
+
     // Use anti-scraping link format when navigating to book details
     if (book.authorName) {
       // Encode both authorName and bookTitle for the URL
@@ -199,162 +171,135 @@ export function BookCard({
 
   return (
     <div
-      className="relative"
+      className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
       style={{ width: "256px", height: "412px" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {/* Gold pixel with trail - only for promoted books */}
-            {book.promoted && (
-              <div className="absolute inset-0 z-40 pointer-events-none">
-                {/* The traveling pixel */}
-                <div className="pixel-traveler" />
-                
-                {/* Trail elements */}
-                {trailElements}
-              </div>
-            )}
-            
-            <Card
-              id={`book-card-${book.id}`}
-              className={`
-                cursor-pointer w-full
-                transition-all duration-300 ease-in-out
-                overflow-hidden relative
-                ${isHovered ? 'scale-105' : ''}
-                ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
-              `}
-              style={{
-                height: "100%",
-                aspectRatio: "58/100",
-                transformOrigin: "center",
-                zIndex: "20"
-              }}
-              onClick={handleCardClick}
+      {/* Gold pixel with trail - only for promoted books */}
+      {book.promoted && (
+        <div className="absolute inset-0 z-40 pointer-events-none">
+          {/* The traveling pixel */}
+          <div className="pixel-traveler" />
+
+          {/* Trail elements */}
+          {trailElements}
+        </div>
+      )}
+
+      <Card
+        id={`book-card-a-${book.id}`}
+        className={`
+          cursor-pointer w-full
+          transition-all duration-300 ease-in-out
+          overflow-hidden relative
+
+          ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
+        `}
+        style={{
+          height: "100%",
+          aspectRatio: "58/100",
+          transformOrigin: "center",
+          zIndex: "20"
+        }}
+        onClick={handleCardClick}
+      >
+        {/* Featured badge */}
+        {book.promoted && (
+          <div className="absolute -top-[3px] -right-0 z-20">
+            <Badge
+              variant="default"
+              className="bg-primary/10 text-primary rounded-md rounded-tr-md rounded-br-none border-t-0 rounded-tl-none border-l-1 border-r-0 border-b-1 border-primary/20 text-xs"
             >
-              {/* Featured badge */}
-              {book.promoted && (
-                <div className="absolute -top-[3px] -right-0 z-20">
-                  <Badge
-                    variant="default"
-                    className="bg-primary/10 text-primary rounded-md rounded-tr-md rounded-br-none border-t-0 rounded-tl-none border-l-1 border-r-0 border-b-1 border-primary/20 text-xs"
-                  >
-                    Featured
-                  </Badge>
-                </div>
-              )}
-              
-              {/* Wishlist button */}
-              <div className="absolute bg-black/20 rounded-full top-2 left-2 z-20">
-                <WishlistButton bookId={book.id} className="rounded-full bg-transparent" size="icon" />
-              </div>
+              Featured
+            </Badge>
+          </div>
+        )}
 
-              {/* Book cover image with subtle highlight */}
-              <div className="relative w-full h-full">
-                <div className="absolute inset-0 bg-black/5 shadow-inner z-10"></div>
-                <img
-                  src={
-                    book.images?.find((img) => img.imageType === "book-card")
-                      ?.imageUrl || "/images/placeholder-book.png"
-                  }
-                  alt={book.title}
-                  className="w-full h-full object-cover object-center"
-                />
-                
-                {/* Black gradient overlay at bottom third */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
-                
-                {/* Weighted rating in the gradient area */}
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
-                  <div className="flex items-center gap-2">
-                    <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
-                    <span className="text-white text-sm">
-                      ({averageRatings?.overall.toFixed(1) || "0.0"})
-                    </span>
-                  </div>
-                </div>
-              </div>
+        {/* Wishlist button */}
+        <div className="absolute bg-black/20 rounded-full top-2 left-2 z-20">
+          <WishlistButton bookId={book.id} className="rounded-full bg-transparent" size="icon" />
+        </div>
 
-              {/* New book banner */}
-              {isNewBook(book) && (
-                <div className="absolute bottom-0 left-0 z-20">
-                  <div className="bg-gold text-gold-foreground text-xs px-4 py-0.5 shadow-sm">
-                    New
-                  </div>
-                </div>
-              )}
+        {/* Book cover image with subtle highlight */}
+        <div className="relative w-full h-full">
+          <div className="absolute inset-0 bg-black/5 shadow-inner z-10"></div>
+          <img
+            src={
+              book.images?.find((img) => img.imageType === "book-card")
+                ?.imageUrl || "/images/placeholder-book.png"
+            }
+            alt={book.title}
+            className="w-full h-full object-cover object-center"
+          />
 
-              {/* Slide-out section with details */}
-              <div 
-                className={`
-                  absolute inset-0 bg-gradient-to-t from-background/95 to-transparent
-                  transition-all duration-300 ease-in-out
-                  transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
-                  p-4 flex flex-col justify-end
-                  z-30
-                `} 
-                style={{height: '100%'}}
-              >
-                <h3 className="text-lg font-semibold mb-1">{book.title}</h3>
-                <p className="text-sm text-muted-foreground mb-2">{book.authorName}</p>
-                
-                {/* Book description (first 100 characters) */}
-                <p className="text-sm mb-4 flex-grow">
-                  {truncatedDescription}
-                </p>
-                
-                {/* Show taxonomic score information if available */}
-                {taxonomicScore !== undefined && (
-                  <div className="mb-2 text-xs text-muted-foreground">
-                    <div className="flex justify-between">
-                      <span>Match Score:</span>
-                      <span className="font-medium">{taxonomicScore.toFixed(2)}</span>
-                    </div>
-                    {matchingTaxonomies !== undefined && (
-                      <div className="flex justify-between">
-                        <span>Matching Taxonomies:</span>
-                        <span className="font-medium">{matchingTaxonomies}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* 5 vector star ratings */}
-                <div className="space-y-1 mt-auto">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Enjoyment</span>
-                    <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Writing</span>
-                    <StarRating rating={averageRatings?.writing || 0} readOnly size="xs" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Themes</span>
-                    <StarRating rating={averageRatings?.themes || 0} readOnly size="xs" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Characters</span>
-                    <StarRating rating={averageRatings?.characters || 0} readOnly size="xs" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">World Building</span>
-                    <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="xs" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-[300px] p-2">
-            {book.description.length > 100
-              ? `${book.description.slice(0, 100)}...`
-              : book.description}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+          {/* Black gradient overlay at bottom third */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
+
+          {/* Weighted rating in the gradient area */}
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
+            <div className="flex items-center gap-2">
+              <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
+              <span className="text-white text-sm">
+                ({averageRatings?.overall.toFixed(1) || "0.0"})
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* New book banner */}
+        {isNewBook(book) && (
+          <div className="absolute bottom-0 left-0 z-20">
+            <div className="bg-gold text-gold-foreground text-xs px-4 py-0.5 shadow-sm">
+              New
+            </div>
+          </div>
+        )}
+
+        {/* Slide-out section with details */}
+        <div 
+          className={`
+            absolute inset-0 bg-gradient-to-t from-background/95 to-background/60
+            transition-all duration-300 ease-in-out
+            transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
+            p-4 flex flex-col justify-end
+            z-30
+          `} 
+          style={{height: '100%'}}
+        >
+          <h3 className="text-lg font-semibold mb-1">{book.title}</h3>
+          <p className="text-sm text-muted-foreground mb-2">{book.authorName}</p>
+
+          {/* Book description (first 100 characters) */}
+          <p className="text-sm mb-4 flex-grow">
+            {truncatedDescription}
+          </p>
+
+          {/* 5 vector star ratings */}
+          <div className="space-y-1 mt-auto">
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Enjoyment</span>
+              <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Writing</span>
+              <StarRating rating={averageRatings?.writing || 0} readOnly size="xs" />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Themes</span>
+              <StarRating rating={averageRatings?.themes || 0} readOnly size="xs" />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Characters</span>
+              <StarRating rating={averageRatings?.characters || 0} readOnly size="xs" />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs">World Building</span>
+              <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="xs" />
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
