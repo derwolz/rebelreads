@@ -15,7 +15,7 @@ const LEAN_OPTIONS = [
 
 // Original dimensions of the book spine images
 const SPINE_WIDTH = 56;
-const SPINE_HEIGHT = 212;
+const SPINE_HEIGHT = 256;
 
 // Interface for BookRack component props
 interface BookRackProps {
@@ -121,7 +121,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
       style={{ 
         width: `${width}px`,
         height: `${SPINE_HEIGHT}px`,
-        zIndex: showBookCard ? 0 : 1,
+       
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -133,7 +133,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
           transform: `translateX(${offset}px) rotate(${angle}deg) ${isHovered ? 'scale(1.05)' : ''}`,
           transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
           left: `${(width - SPINE_WIDTH) / 2}px`, // Center the book in its container
-          zIndex: showBookCard ? 11 : 1, // Keep spine above card
+         
         }}
       >
         <img 
@@ -152,12 +152,11 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
       {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
       {showBookCard && (
         <div 
-          className="absolute bottom-0 transition-all duration-600 ease-in-out"
+          className="absolute bottom-0 transition-all duration-900 ease-in-out"
           style={{
-            left: '50%',
+            
             transform: 'translateX(-50%) translateY(30%) ',
-            marginBottom: '10px',
-            zIndex: 50,
+            zIndex: 9999,
             width: '256px', // Match the BookCard's width
           }}
         >
@@ -281,11 +280,7 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       <div className="relative">
         {/* The books container - positioned on the shelf */}
         <div 
-          className="flex items-end bg-muted/10 rounded-md h-[400px] "
-          style={{ 
-            minHeight: showingCard ? '400px' : '250px',
-            transition: 'min-height 0.3s ease-in-out'
-          }}
+          className="flex items-end bg-muted/10 rounded-md h-[266px] "
         >
           <div className="flex justify-center items-center" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
             {books.map((book, index) => {
@@ -313,9 +308,10 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
               return (
                 <div
                   key={key}
-                  className="transition-transform duration-300 ease-in-out"
+                  className={`transition-transform ${""} duration-300 ease-in-out`}
                   style={{ 
                     transform: `translateX(${positionShift}px)`,
+                    zIndex: hoveredIndex !== null && showingCard ? 0 : 1
                   }}
                 >
                   <BookSpine 
@@ -331,8 +327,8 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
           </div>
         </div>
         
-        {/* The wooden shelf */}
-        <div className="border-t border-foreground bg-gradient-to-b from-foreground to-background w-full h-3"></div>
+        {/* The shelf */}
+        <div className="border-t border-foreground/30 bg-gradient-to-b from-foreground/20 to-background w-full h-2"></div>
       </div>
     </section>
   );
