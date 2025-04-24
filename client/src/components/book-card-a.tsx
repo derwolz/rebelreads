@@ -171,7 +171,7 @@ export function BookCardA({
 
   return (
     <div
-      className="relative"
+      className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
       style={{ width: "256px", height: "412px" }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -193,7 +193,7 @@ export function BookCardA({
           cursor-pointer w-full
           transition-all duration-300 ease-in-out
           overflow-hidden relative
-          ${isHovered ? 'scale-105' : ''}
+          
           ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
         `}
         style={{
@@ -259,7 +259,7 @@ export function BookCardA({
         {/* Slide-out section with details */}
         <div 
           className={`
-            absolute inset-0 bg-gradient-to-t from-background/95 to-transparent
+            absolute inset-0 bg-gradient-to-t from-background/95 to-background/60
             transition-all duration-300 ease-in-out
             transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
             p-4 flex flex-col justify-end
