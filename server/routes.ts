@@ -49,6 +49,7 @@ import testBookImageRoutes from "./routes/test-book-image-routes";
 import testSirenedBucketRoutes from "./routes/test-sirened-bucket-routes";
 import dashboardRoutes from "./routes/modules/dashboard-routes";
 import wishlistRoutes from "./routes/modules/wishlist-routes";
+import booksByNameRoutes from "./routes/modules/books-by-name-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -180,6 +181,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register dashboard and wishlist routes
   app.use("/api/dashboard", dashboardRoutes);
   app.use("/api", wishlistRoutes);
+  
+  // Register book-by-name routes for safer ID-less access
+  app.use("/api/books-by-name", booksByNameRoutes);
   
   // Register content reports routes directly
   registerContentReportsRoutes(app);

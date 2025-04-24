@@ -829,11 +829,11 @@ router.post("/:id/referral-click", async (req, res) => {
 });
 
 /**
- * PATCH /api/books/:id
- * Update an existing book
+ * PATCH /api/books/lookup
+ * Update an existing book by author name and title
  * Authentication and author status required
  */
-router.patch("/:id", async (req, res) => {
+router.patch("/lookup", async (req, res) => {
   // Force JSON content type
   res.type('json');
   
@@ -843,40 +843,24 @@ router.patch("/:id", async (req, res) => {
       return res.status(401).json({ error: "Authentication required" });
     }
     
-    // Get user and book IDs
+    // Get user ID
     const userId = req.user!.id;
-    const bookId = parseInt(req.params.id);
     
-    if (isNaN(bookId)) {
-      return res.status(400).json({ error: "Invalid book ID" });
+    // Get author name and book title from query parameters
+    const authorName = req.query.authorName as string;
+    const bookTitle = req.query.bookTitle as string;
+    
+    if (!authorName || !bookTitle) {
+      return res.status(400).json({ 
+        error: "Missing parameters", 
+        message: "Both authorName and bookTitle are required query parameters" 
+      });
     }
     
-    // Handle authorname and bookname parameters (if provided)
-    if (req.body.authorname && req.body.bookname) {
-      console.log(`Looking up book by author name and book name: ${req.body.authorname}, ${req.body.bookname}`);
-      
-      // Find author by name
-      const authorByName = await dbStorage.getAuthorByName(req.body.authorname);
-      if (!authorByName) {
-        return res.status(404).json({ error: "Author not found" });
-      }
-      
-      // Find book by author and title
-      const bookByAuthorAndTitle = await dbStorage.getBookByAuthorAndTitle(authorByName.id, req.body.bookname);
-      if (!bookByAuthorAndTitle) {
-        return res.status(404).json({ error: "Book not found" });
-      }
-      
-      // Use these IDs instead of path parameters
-      console.log(`Found matching book with ID: ${bookByAuthorAndTitle.id}`);
-      if (bookByAuthorAndTitle.id !== bookId) {
-        console.log(`Note: Book ID in URL (${bookId}) doesn't match book found by name (${bookByAuthorAndTitle.id})`);
-      }
-    }
+    console.log(`Looking up book by author name and book title: ${authorName}, ${bookTitle}`);
     
-    // Get the current book
-    console.log(`Fetching book with ID: ${bookId}`);
-    const book = await dbStorage.getBook(bookId);
+    // Find book by author name and title
+    const book = await dbStorage.getBookByAuthorAndTitle(authorName, bookTitle);
     if (!book) {
       return res.status(404).json({ error: "Book not found" });
     }
@@ -892,12 +876,98 @@ router.patch("/:id", async (req, res) => {
       return res.status(403).json({ error: "Not authorized - you don't own this book" });
     }
     
-    console.log("PATCH request for book:", bookId);
+    console.log("PATCH request for book:", book.id);
     console.log("Update fields:", Object.keys(req.body));
     
     // Extract the updated fields from request body
     // Remove non-book fields to avoid DB errors
     const { authorname, bookname, genreTaxonomies, ...updates } = req.body;
+    
+    // Process the update
+    console.log("Processing update with cleaned fields:", Object.keys(updates));
+    
+    // Update the book in database
+    const updatedBook = await dbStorage.updateBook(book.id, updates);
+    
+    // Update taxonomies if provided
+    if (genreTaxonomies && Array.isArray(genreTaxonomies)) {
+      await dbStorage.updateBookTaxonomies(book.id, genreTaxonomies);
+    }
+    
+    // Return success with updated book
+    return res.status(200).json(updatedBook);
+    
+    // Preserve old ID-based route for backward compatibility
+    // (can be removed later once frontend is fully updated)
+    /**
+     * PATCH /api/books/:id
+     * Update an existing book
+     * Authentication and author status required
+     */
+    router.patch("/:id", async (req, res) => {
+      // Force JSON content type
+      res.type('json');
+      
+      console.log("PATCH request data:", {
+        urlId: req.params.id,
+        authorname: req.body.authorname,
+        bookname: req.body.bookname
+      });
+      
+      try {
+        // Basic validation
+        if (!req.isAuthenticated()) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
+        
+        // Get user ID
+        const userId = req.user!.id;
+        let bookId = parseInt(req.params.id);
+        let book = null;
+        
+        // Handle authorname and bookname parameters (if provided)
+        if (req.body.authorname && req.body.bookname) {
+          console.log(`Looking up book by author name and book name: ${req.body.authorname}, ${req.body.bookname}`);
+          
+          // Find book by author name and title
+          const authorBook = await dbStorage.getBookByAuthorAndTitle(
+            req.body.authorname, 
+            req.body.bookname
+          );
+          
+          if (authorBook) {
+            console.log(`Found book with ID ${authorBook.id} by author name match`);
+            bookId = authorBook.id;
+            book = authorBook;
+          }
+        }
+        
+        // If we didn't find the book by name, try the direct ID approach
+        if (!book && !isNaN(bookId)) {
+          book = await dbStorage.getBook(bookId);
+        }
+        
+        if (!book) {
+          return res.status(404).json({ error: "Book not found" });
+        }
+        
+        // Get author record
+        const author = await dbStorage.getAuthorByUserId(userId);
+        if (!author) {
+          return res.status(403).json({ error: "Not an author" });
+        }
+        
+        // Verify ownership
+        if (book.authorId !== author.id) {
+          return res.status(403).json({ error: "Not authorized - you don't own this book" });
+        }
+        
+        console.log(`PATCH updating book: ${bookId}`);
+        console.log(`Update fields: ${Object.keys(req.body)}`);
+        
+        // Extract the updated fields from request body
+        // Remove non-book fields to avoid DB errors
+        const { authorname, bookname, genreTaxonomies, ...updates } = req.body;
     
     console.log("Processing update with cleaned fields:", Object.keys(updates));
     
