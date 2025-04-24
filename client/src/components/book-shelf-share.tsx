@@ -289,11 +289,11 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                       <p className="text-foreground/90 mb-2 break-words">by {selectedBook?.authorName}</p>
                       
                       {/* Desktop-only referral links container */}
-                      <div className="hidden md:flex items-center mt-1 mb-4 gap-4">
+                      <div className="hidden md:flex items-center mt-2 mb-6 gap-4">
                         {/* Referral links for desktop */}
                         {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
                           <div className="flex gap-2">
-                            <p className="text-sm text-muted-foreground mr-1 flex items-center">Get this book:</p>
+                          
                             {selectedBook.referralLinks.map((link: any, idx: number) => (
                               <ReferralButton
                                 key={idx}
