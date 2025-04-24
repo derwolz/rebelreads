@@ -49,11 +49,29 @@ export function ProBookManagement() {
   });
 
   const deleteBookMutation = useMutation({
-    mutationFn: async (bookId: number) => {
-      const res = await fetch(`/api/books/${bookId}`, {
+    // Update to use the new delete endpoint with authorName and bookTitle
+    mutationFn: async (book: { id: number; title: string; authorName?: string }) => {
+      // If we don't have the author name, we need to fallback to the old method
+      if (!book.authorName) {
+        const res = await fetch(`/api/books/${book.id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const error = await res.text();
+          throw new Error(error);
+        }
+        return;
+      }
+
+      // Use the new name-based endpoint
+      const encodedAuthor = encodeURIComponent(book.authorName);
+      const encodedTitle = encodeURIComponent(book.title);
+      const res = await fetch(`/api/books-by-name/delete?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`, {
         method: "DELETE",
         credentials: "include",
       });
+      
       if (!res.ok) {
         const error = await res.text();
         throw new Error(error);
@@ -283,7 +301,7 @@ export function ProBookManagement() {
                           Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => deleteBookMutation.mutate(book.id)}
+                          onClick={() => deleteBookMutation.mutate(book)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Delete
