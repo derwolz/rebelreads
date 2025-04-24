@@ -67,7 +67,7 @@ function App() {
   const [location] = useLocation();
   
   // Pages where feedback button should not be displayed
-  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding"];
+  const noFeedbackPaths = ["/landing", "/new-landing", "/auth", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding", "book-shelf/share"];
   const currentPath = location.split("#")[0]; // Remove hash from path
   const showFeedbackButton = !noFeedbackPaths.includes(currentPath);
 
@@ -78,7 +78,7 @@ function App() {
     const { isBetaActive, isLoading: isBetaLoading } = useBeta();
     const { user, isLoading: isAuthLoading } = useAuth();
 
-    const allowedPaths = ["/landing", "/how-it-works", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding"];
+    const allowedPaths = ["/landing", "/bookshelf/share", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding"];
     const isApiPath = location.startsWith("/api");
     const isAuthWallPath = location === "/auth";
     const [path, hash] = location.split("#");
