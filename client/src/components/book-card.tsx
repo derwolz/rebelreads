@@ -15,9 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Position-based weights for rating criteria
-const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
-
 // Helper function to get weight percentage for a criteria based on stored weights or position
 function getWeightPercentage(
   criteriaName: string,
@@ -56,10 +53,11 @@ export function BookCard({
   taxonomicScore?: number, 
   matchingTaxonomies?: number 
 }) {
-  const [showDetailed, setShowDetailed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
+  const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
@@ -69,6 +67,42 @@ export function BookCard({
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ["/api/rating-preferences"],
   });
+  
+  // Generate pixel trails that follow the traveler
+  useEffect(() => {
+    if (book.promoted) {
+      // Create multiple trail elements with different delays
+      const trailCount = 20; // Number of trail elements
+      const newTrailElements = [];
+      
+      for (let i = 0; i < trailCount; i++) {
+        // Calculate delays for animation synchronization
+        const animationDelay = i * 0.010; // seconds between trails
+        
+        newTrailElements.push(
+          <div 
+            key={`trail-${i}`}
+            className="pixel-trail"
+            style={{
+              animationDelay: `${animationDelay}s`,
+              // Each trail element follows the pixel but with delay
+              // The animation-delay of the trail elements creates a trailing effect
+              animationName: 'trail-fade, border-path',
+              animationDuration: '0s, 6s',
+              animationTimingFunction: 'linear, linear',
+              animationIterationCount: 'infinite, infinite',
+              animationDirection: 'normal, normal',
+              // This staggers the trail elements along the path
+              animationPlayState: 'running, running',
+              opacity: Math.sin(i*Math.PI*2/trailCount), // Decreasing opacity for each trail
+            }}
+          />
+        );
+      }
+      
+      setTrailElements(newTrailElements);
+    }
+  }, [book.promoted]);
 
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
@@ -100,8 +134,6 @@ export function BookCard({
       recordImpression();
     }
   }, [isVisible, hasRecordedImpression, book.id]);
-
-  // We no longer need to derive criteria order as we're using the weight columns directly
 
   // Calculate individual unweighted ratings per vector
   const unweightedRatings = ratings?.length
@@ -157,206 +189,163 @@ export function BookCard({
       navigate(`/books/${book.id}`);
     }
   };
-  // Inject keyframes into the document head once
-  useEffect(() => {
-    if (book.promoted) {
-      const styleSheet = document.createElement("style");
-      styleSheet.textContent = `
-        @keyframes pulse-shadow {
-          0%, 100% { box-shadow: 0 10px 15px -3px rgba(127, 255, 212, .10); }
-          50% { box-shadow: 0 10px 15px -3px rgba(127, 255, 212, 0.24); }
-        }
-      `;
-      document.head.appendChild(styleSheet);
 
-      // Cleanup to avoid duplicate styles
-      return () => {
-        document.head.removeChild(styleSheet);
-      };
-    }
-  }, [book.promoted]);
+  // Get the first 100 characters of book description
+  const truncatedDescription = book.description
+    ? book.description.length > 100
+      ? `${book.description.slice(0, 100)}...`
+      : book.description
+    : "";
+
   return (
     <div
-      className="relative group "
-      style={{ width: "256px", height: "512px", maxWidth: "100%" }}
+      className="relative"
+      style={{ width: "256px", height: "412px" }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
+            {/* Gold pixel with trail - only for promoted books */}
+            {book.promoted && (
+              <div className="absolute inset-0 z-40 pointer-events-none">
+                {/* The traveling pixel */}
+                <div className="pixel-traveler" />
+                
+                {/* Trail elements */}
+                {trailElements}
+              </div>
+            )}
+            
             <Card
               id={`book-card-${book.id}`}
               className={`
-                 cursor-pointer w-full rounded-none shadow-xl shadow-black/15
-                transition-all duration-300 ease-in-out overflow-hidden
-                ${showDetailed ? "absolute inset-0 scale-105 shadow-xl z-50" : "relative z-10"}
-                ${book.promoted ? "animate-pulse-shadow border-primary/20" : ""}
+                cursor-pointer w-full
+                transition-all duration-300 ease-in-out
+                overflow-hidden relative
+                ${isHovered ? 'scale-105' : ''}
+                ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
               `}
               style={{
-                width: "100%",
                 height: "100%",
-                aspectRatio: "1/2",
-                position: showDetailed ? "absolute" : "relative",
+                aspectRatio: "58/100",
+                transformOrigin: "center",
+                zIndex: "20"
               }}
               onClick={handleCardClick}
-              onMouseEnter={() => setShowDetailed(true)}
-              onMouseLeave={() => setShowDetailed(false)}
             >
+              {/* Featured badge */}
               {book.promoted && (
-                <div className="absolute -top-[2.9px] -right-0 z-20">
+                <div className="absolute -top-[3px] -right-0 z-20">
                   <Badge
                     variant="default"
-                    className="bg-primary/10 text-primary rounded-md rounded-tr-md rounded-br-none  border-t-0 rounded-tl-none  border-l-1 border-r-0 border-b-1 border-primary/20 text-xs"
+                    className="bg-primary/10 text-primary rounded-md rounded-tr-md rounded-br-none border-t-0 rounded-tl-none border-l-1 border-r-0 border-b-1 border-primary/20 text-xs"
                   >
                     Featured
                   </Badge>
                 </div>
               )}
-              <div className="absolute bg-black/20 rounded-full top-2 left-2  z-10">
+              
+              {/* Wishlist button */}
+              <div className="absolute bg-black/20 rounded-full top-2 left-2 z-20">
                 <WishlistButton bookId={book.id} className="rounded-full bg-transparent" size="icon" />
               </div>
 
-              <img
-                src={
-                  book.images?.find((img) => img.imageType === "book-card")
-                    ?.imageUrl || "/images/placeholder-book.png"
-                }
-                alt={book.title}
-                className="w-full h-96 object-cover object-center"
-                style={{ aspectRatio: "1/1" }}
-              />
-              <CardContent className="p-4  relative">
-                <div className="absolute -mb-0 t-0 l-0 -mr-0 w-[94%] h-[90%] ">
-                  {/* New Book Banner */}
-                  {isNewBook(book) && (
-                    <div className="absolute -bottom-8 -right-12 z-20">
-                      <div className="bg-gold text-gold-foreground text-xs px-16 py-0.5 rotate-[-45deg] origin-top-left shadow-sm">
-                        New
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-lg font-semibold mb-2 ">{book.title}</h3>
-                <Link
-                  href={`/authors/${book.authorId}`}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {book.authorName}
-                </Link>
-
-                <div className="flex flex-wrap gap-1 mt-2 mb-2">
-                  {/* Temporarily handling missing genres field during migration to taxonomy system */}
-                  {((book as any).genres || [])
-                    .slice(0, 3)
-                    .map((genre: string) => (
-                      <Badge
-                        key={genre}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {genre}
-                      </Badge>
-                    ))}
-                </div>
-
-                <div className="mt-2">
+              {/* Book cover image with subtle highlight */}
+              <div className="relative w-full h-full">
+                <div className="absolute inset-0 bg-black/5 shadow-inner z-10"></div>
+                <img
+                  src={
+                    book.images?.find((img) => img.imageType === "book-card")
+                      ?.imageUrl || "/images/placeholder-book.png"
+                  }
+                  alt={book.title}
+                  className="w-full h-full object-cover object-center"
+                />
+                
+                {/* Black gradient overlay at bottom third */}
+                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
+                
+                {/* Weighted rating in the gradient area */}
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
                   <div className="flex items-center gap-2">
-                    <StarRating
-                      rating={averageRatings?.overall || 0}
-                      readOnly
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      ({averageRatings?.overall.toFixed(2) || "0.00"})
+                    <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
+                    <span className="text-white text-sm">
+                      ({averageRatings?.overall.toFixed(1) || "0.0"})
                     </span>
                   </div>
-                  
-                  {/* Show taxonomic score information if available */}
-                  {taxonomicScore !== undefined && (
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      <div className="flex justify-between">
-                        <span>Match Score:</span>
-                        <span className="font-medium">{taxonomicScore.toFixed(2)}</span>
-                      </div>
-                      {matchingTaxonomies !== undefined && (
-                        <div className="flex justify-between">
-                          <span>Matching Taxonomies:</span>
-                          <span className="font-medium">{matchingTaxonomies}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
+              </div>
 
-                <div
-                  className={`
-                    absolute t-0 l-0 r-0 inset-x-0 bg-background/95 backdrop-blur-sm
-                    transition-all duration-300 ease-in-out
-                    shadow-lg rounded-t-lg w-full h-120 rounded-b-none
-                    ${showDetailed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
-                  `}
-                  style={{
-                    bottom: "100%",
-
-                    borderBottom: "1px solid var(--border)",
-                    zIndex: 100,
-                    transformOrigin: "bottom",
-                    width: "100%",
-                  }}
-                >
-                  <div className="p-4 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Enjoyment</span>
-                      <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings?.enjoyment || 0}
-                          readOnly
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Writing</span>
-                      <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings?.writing || 0}
-                          readOnly
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Themes</span>
-                      <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings?.themes || 0}
-                          readOnly
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Characters</span>
-                      <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings?.characters || 0}
-                          readOnly
-                          size="sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">World Building</span>
-                      <div className="flex items-center gap-2">
-                        <StarRating
-                          rating={averageRatings?.worldbuilding || 0}
-                          readOnly
-                          size="sm"
-                        />
-                      </div>
-                    </div>
+              {/* New book banner */}
+              {isNewBook(book) && (
+                <div className="absolute bottom-0 left-0 z-20">
+                  <div className="bg-gold text-gold-foreground text-xs px-4 py-0.5 shadow-sm">
+                    New
                   </div>
                 </div>
-              </CardContent>
+              )}
+
+              {/* Slide-out section with details */}
+              <div 
+                className={`
+                  absolute inset-0 bg-gradient-to-t from-background/95 to-transparent
+                  transition-all duration-300 ease-in-out
+                  transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
+                  p-4 flex flex-col justify-end
+                  z-30
+                `} 
+                style={{height: '100%'}}
+              >
+                <h3 className="text-lg font-semibold mb-1">{book.title}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{book.authorName}</p>
+                
+                {/* Book description (first 100 characters) */}
+                <p className="text-sm mb-4 flex-grow">
+                  {truncatedDescription}
+                </p>
+                
+                {/* Show taxonomic score information if available */}
+                {taxonomicScore !== undefined && (
+                  <div className="mb-2 text-xs text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Match Score:</span>
+                      <span className="font-medium">{taxonomicScore.toFixed(2)}</span>
+                    </div>
+                    {matchingTaxonomies !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Matching Taxonomies:</span>
+                        <span className="font-medium">{matchingTaxonomies}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* 5 vector star ratings */}
+                <div className="space-y-1 mt-auto">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs">Enjoyment</span>
+                    <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs">Writing</span>
+                    <StarRating rating={averageRatings?.writing || 0} readOnly size="xs" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs">Themes</span>
+                    <StarRating rating={averageRatings?.themes || 0} readOnly size="xs" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs">Characters</span>
+                    <StarRating rating={averageRatings?.characters || 0} readOnly size="xs" />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs">World Building</span>
+                    <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="xs" />
+                  </div>
+                </div>
+              </div>
             </Card>
           </TooltipTrigger>
           <TooltipContent className="max-w-[300px] p-2">
