@@ -132,93 +132,9 @@ export function BookCardB({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Promoted glow wrapper with shadow */}
-      {book.promoted && (
-        <div 
-          className="absolute inset-0 rounded-md z-10 pointer-events-none"
-          style={{
-            animation: "shadow-pulse 3s ease-in-out infinite",
-            padding: "0",
-          }}
-        />
-      )}
       
-      {/* Traveling border effect */}
-      {book.promoted && (
-        <div className="absolute inset-0 rounded-md overflow-hidden z-20 pointer-events-none">
-          {/* Top border */}
-          <div 
-            className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden"
-            style={{
-              background: `linear-gradient(to right, 
-                transparent, 
-                transparent,
-                hsl(35 81% 58% / 0.3), 
-                hsl(35 81% 58% / 0.8), 
-                hsl(35 81% 58% / 0.3),
-                transparent, 
-                transparent
-              )`,
-              backgroundSize: "400px 100%",
-              animation: "border-travel-b 4s linear infinite"
-            }}
-          />
-          
-          {/* Right border */}
-          <div 
-            className="absolute top-0 right-0 bottom-0 w-[2px] overflow-hidden"
-            style={{
-              background: `linear-gradient(to bottom, 
-                transparent, 
-                transparent,
-                hsl(35 81% 58% / 0.3), 
-                hsl(35 81% 58% / 0.8), 
-                hsl(35 81% 58% / 0.3),
-                transparent, 
-                transparent
-              )`,
-              backgroundSize: "100% 400px",
-              animation: "border-travel-b 4s linear infinite 1s"
-            }}
-          />
-          
-          {/* Bottom border */}
-          <div 
-            className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden"
-            style={{
-              background: `linear-gradient(to left, 
-                transparent, 
-                transparent,
-                hsl(35 81% 58% / 0.3), 
-                hsl(35 81% 58% / 0.8), 
-                hsl(35 81% 58% / 0.3),
-                transparent, 
-                transparent
-              )`,
-              backgroundSize: "400px 100%",
-              animation: "border-travel-b 4s linear infinite 2s"
-            }}
-          />
-          
-          {/* Left border */}
-          <div 
-            className="absolute top-0 left-0 bottom-0 w-[2px] overflow-hidden"
-            style={{
-              background: `linear-gradient(to top, 
-                transparent, 
-                transparent,
-                hsl(35 81% 58% / 0.3), 
-                hsl(35 81% 58% / 0.8), 
-                hsl(35 81% 58% / 0.3),
-                transparent, 
-                transparent
-              )`,
-              backgroundSize: "100% 400px",
-              animation: "border-travel-b 4s linear infinite 3s"
-            }}
-          />
-        </div>
-      )}
+      
+      
       <Card
         id={`book-card-b-${book.id}`}
         className={`
