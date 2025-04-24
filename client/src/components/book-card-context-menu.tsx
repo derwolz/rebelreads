@@ -35,7 +35,8 @@ import {
   Ban, 
   Flag
 } from "lucide-react";
-import { Book, BookShelf } from "@shared/schema";
+import { BookShelf } from "@shared/schema";
+import { Book } from "../types";
 
 interface BookCardContextMenuProps {
   book: Book;
@@ -59,7 +60,7 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
   const [isReferralDialogOpen, setIsReferralDialogOpen] = useState(false);
 
   // Fetch reading status (for wishlist)
-  const { data: readingStatus } = useQuery({
+  const { data: readingStatus = {isWishlisted: false, isCurrentlyReading: false, isCompleted: false} } = useQuery<{isWishlisted: boolean; isCurrentlyReading: boolean; isCompleted: boolean}>({
     queryKey: [`/api/books/${book.id}/reading-status`],
     enabled: !!user,
   });
@@ -71,7 +72,7 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
   });
 
   // Fetch follow status
-  const { data: followStatus } = useQuery({
+  const { data: followStatus = {isFollowing: false} } = useQuery<{isFollowing: boolean}>({
     queryKey: [`/api/authors/${book.authorId}/following`],
     enabled: !!user && book.authorId !== user.id,
   });
@@ -247,7 +248,7 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
     }
   };
 
-  const handleReferralLinkSelect = (link: any) => {
+  const handleReferralLinkSelect = (link: {url: string; retailer?: string; customName?: string; domain?: string}) => {
     // Simple tracking of referral clicks
     const trackReferralClick = async () => {
       try {
@@ -337,7 +338,7 @@ export function BookCardContextMenu({ book, children }: BookCardContextMenuProps
                 Visit Link
               </ContextMenuSubTrigger>
               <ContextMenuSubContent className="w-48">
-                {book.referralLinks.map((link, index) => (
+                {book.referralLinks.map((link: {url: string; retailer?: string; customName?: string; domain?: string}, index: number) => (
                   <ContextMenuItem 
                     key={index}
                     onClick={() => handleReferralLinkSelect(link)}

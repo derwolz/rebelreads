@@ -8,6 +8,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { BookCardContextMenu } from "./book-card-context-menu";
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
@@ -170,40 +171,41 @@ export function BookCard({
     : "";
 
   return (
-    <div
-      className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
-      style={{ width: "256px", height: "412px" }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Gold pixel with trail - only for promoted books */}
-      {book.promoted && (
-        <div className="absolute inset-0 z-40 pointer-events-none">
-          {/* The traveling pixel */}
-          <div className="pixel-traveler" />
-
-          {/* Trail elements */}
-          {trailElements}
-        </div>
-      )}
-
-      <Card
-        id={`book-card-a-${book.id}`}
-        className={`
-          cursor-pointer w-full
-          transition-all duration-300 ease-in-out
-          overflow-hidden relative
-
-          ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
-        `}
-        style={{
-          height: "100%",
-          aspectRatio: "58/100",
-          transformOrigin: "center",
-          zIndex: "20"
-        }}
-        onClick={handleCardClick}
+    <BookCardContextMenu book={book}>
+      <div
+        className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
+        style={{ width: "256px", height: "412px" }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Gold pixel with trail - only for promoted books */}
+        {book.promoted && (
+          <div className="absolute inset-0 z-40 pointer-events-none">
+            {/* The traveling pixel */}
+            <div className="pixel-traveler" />
+
+            {/* Trail elements */}
+            {trailElements}
+          </div>
+        )}
+
+        <Card
+          id={`book-card-a-${book.id}`}
+          className={`
+            cursor-pointer w-full
+            transition-all duration-300 ease-in-out
+            overflow-hidden relative
+
+            ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
+          `}
+          style={{
+            height: "100%",
+            aspectRatio: "58/100",
+            transformOrigin: "center",
+            zIndex: "20"
+          }}
+          onClick={handleCardClick}
+        >
         {/* Featured badge */}
         {book.promoted && (
           <div className="absolute -top-[3px] -right-0 z-20">
@@ -301,5 +303,6 @@ export function BookCard({
         </div>
       </Card>
     </div>
+    </BookCardContextMenu>
   );
 }
