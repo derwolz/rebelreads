@@ -260,48 +260,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
         </div>
       )}
 
-      <div>
-        <h3 className="text-md font-medium mb-2">Additional Banner Images</h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          These optional banner images can be used for promotional purposes.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-          {(['vertical-banner', 'horizontal-banner'] as const).map((imageType) => {
-            // Make sure we have dimensions for this image type in the form data
-            if (!formData.bookImages[imageType]) {
-              const dimensions = getImageDimensions(imageType);
-              setFormData((prev) => ({
-                ...prev,
-                bookImages: {
-                  ...prev.bookImages,
-                  [imageType]: {
-                    type: imageType,
-                    file: null,
-                    width: dimensions.width,
-                    height: dimensions.height
-                  }
-                }
-              }));
-            }
-            
-            const imageData = formData.bookImages[imageType];
-            return (
-              <DragDropImage
-                key={imageType}
-                imageType={imageType}
-                value={imageData.file}
-                width={imageData.width}
-                height={imageData.height}
-                previewUrl={imageData.previewUrl}
-                onChange={(file, hasError = false, errorMessage) => 
-                  handleImageChange(imageType, file, hasError, errorMessage)
-                }
-                required={false}
-              />
-            );
-          })}
-        </div>
-      </div>
+   
     </div>
   );
 }

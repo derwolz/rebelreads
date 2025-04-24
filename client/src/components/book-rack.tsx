@@ -67,7 +67,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
   const { width, offset } = useMemo(() => {
     return calculateLeaningGeometry(angle);
   }, [angle]);
-  
+  const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
   // Get the book images
   const spineImageUrl = book.images?.find(img => img.imageType === "spine")?.imageUrl || "/images/placeholder-book.png";
   
@@ -77,10 +77,48 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
   // Reference to the timeout for delayed actions
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Generate pixel trails that follow the traveler
+  useEffect(() => {
+    if (book.promoted) {
+      // Create multiple trail elements with different delays
+      const trailCount = 40; // Number of trail elements
+      const newTrailElements = [];
+
+      for (let i = 0; i < trailCount; i++) {
+        // Calculate delays for animation synchronization
+        const animationDelay = i * 0.006; // seconds between trails
+
+        newTrailElements.push(
+          <div 
+            key={`trail-${i}`}
+            className="pixel-trail"
+            style={{
+              animationDelay: `${animationDelay}s`,
+              // Each trail element follows the pixel but with delay
+              // The animation-delay of the trail elements creates a trailing effect
+              animationName: 'trail-fade, border-path',
+              animationDuration: '0s, 5s',
+              animationTimingFunction: 'linear, linear',
+              animationIterationCount: 'infinite, infinite',
+              animationDirection: 'normal, normal',
+              // This staggers the trail elements along the path
+              animationPlayState: 'running, running',
+              opacity: Math.sin(i*Math.PI*2/trailCount), // Decreasing opacity for each trail
+            }}
+          />
+        );
+      }
+
+      setTrailElements(newTrailElements);
+    }
+  }, [book.promoted]);
+  
   // Handle mouse enter - notify parent and set timer for card display
   const handleMouseEnter = useCallback(() => {
     // First just notify that this book is hovered (for scaling effect)
     onHover(index, false);
+
+
     
     // Set a timer to show the card after a delay
     if (timeoutRef.current) {
@@ -128,7 +166,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
     >
       {/* Book Spine */}
       <div 
-        className="absolute w-[56px] h-full transition-all duration-300 ease-in-out"
+        className="absolute w-[56px] h-full transition-all duration-300 ease-in-out border border-muted/40"
         style={{ 
           transform: `translateX(${offset}px) rotate(${angle}deg) ${isHovered ? 'scale(1.05)' : ''}`,
           transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
@@ -136,6 +174,17 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
          
         }}
       >
+        {/* Gold pixel with trail - only for promoted books */}
+        {book.promoted && (
+          <div className="absolute inset-0 z-40 pointer-events-none">
+            {/* The traveling pixel */}
+            <div className="pixel-traveler" />
+
+            {/* Trail elements */}
+            {trailElements}
+          </div>
+        )}
+        
         <img 
           src={spineImageUrl} 
           alt={book.title}
@@ -152,9 +201,10 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
       {/* Book Card (shown on hover after delay) - using the existing BookCard component */}
       {showBookCard && (
         <div 
-          className="absolute bottom-0 transition-all duration-300 ease-in-out animate-fade-in-from-left"
+          className="absolute bottom-0 animate-fade-in-from-left ease-in-out"
           style={{
-            transform: 'translateX(-50%) translateY(30%)',
+            
+            transform: 'translateX(-50%) translateY(30%) ',
             zIndex: 9999,
             width: '256px', // Match the BookCard's width
           }}
