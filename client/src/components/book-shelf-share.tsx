@@ -278,9 +278,8 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                               iconOnly={true}
                               className="inline-flex items-center justify-center"
                             />
-                          ))} 4
+                          ))}
                         </div>
-                  
                       )}
                     </div>
 
@@ -288,6 +287,26 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                     <div className="flex ml-auto p-4 flex-col min-w-0 md:w-[500px] md:max-h-[500px]">
                       <h2 className="text-2xl font-bold mb-1 text-foregound">{selectedBook?.title}</h2>
                       <p className="text-foreground/90 mb-2 break-words">by {selectedBook?.authorName}</p>
+                      
+                      {/* Desktop-only referral links container */}
+                      <div className="hidden md:flex items-center mt-1 mb-4 gap-4">
+                        {/* Referral links for desktop */}
+                        {selectedBook?.referralLinks && selectedBook.referralLinks.length > 0 && (
+                          <div className="flex gap-2">
+                            <p className="text-sm text-muted-foreground mr-1 flex items-center">Get this book:</p>
+                            {selectedBook.referralLinks.map((link: any, idx: number) => (
+                              <ReferralButton
+                                key={idx}
+                                bookId={selectedBook.id}
+                                link={link}
+                                sourceContext="book-shelf/share"
+                                iconOnly={false}
+                                className="inline-flex items-center justify-center"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       
                       {/* Book description */}
                       <div className="mb-4">
