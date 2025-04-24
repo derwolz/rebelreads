@@ -379,7 +379,7 @@ export class BookStorage implements IBookStorage {
       .leftJoin(authors, eq(books.authorId, authors.id))
       .where(eq(books.authorId, authorId));
     
-    // Get all book IDs to fetch images
+    // Get all book IDs to fetch images and taxonomies
     const bookIds = authorBooks.map(book => book.id);
     
     if (bookIds.length === 0) return [];
@@ -399,10 +399,20 @@ export class BookStorage implements IBookStorage {
       imagesByBookId.get(image.bookId)!.push(image);
     });
     
-    // Add images to books
+    // Fetch all taxonomies for these books
+    const allTaxonomiesByBook = new Map<number, any[]>();
+    
+    // For each book, get its taxonomies
+    for (const bookId of bookIds) {
+      const taxonomies = await this.getBookTaxonomies(bookId);
+      allTaxonomiesByBook.set(bookId, taxonomies);
+    }
+    
+    // Add images and taxonomies to books
     return authorBooks.map(book => ({
       ...book,
-      images: imagesByBookId.get(book.id) || []
+      images: imagesByBookId.get(book.id) || [],
+      genreTaxonomies: allTaxonomiesByBook.get(book.id) || []
     })) as Book[];
   }
 
