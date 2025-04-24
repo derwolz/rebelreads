@@ -20,13 +20,11 @@ function isNewBook(book: Book) {
 export function BookCard({ 
   book, 
   taxonomicScore, 
-  matchingTaxonomies,
-  isContextMenuOpen 
+  matchingTaxonomies 
 }: { 
   book: Book, 
   taxonomicScore?: number, 
-  matchingTaxonomies?: number,
-  isContextMenuOpen?: boolean 
+  matchingTaxonomies?: number 
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [, navigate] = useLocation();
@@ -175,7 +173,7 @@ export function BookCard({
   return (
     <BookCardContextMenu book={book}>
       <div
-        className={`relative transition-all duration-300 ease-in-out book-card-container ${(isHovered || isContextMenuOpen) ? 'scale-105' : ''}`}
+        className={`relative transition-all duration-300 ease-in-out ${isHovered ? 'scale-105' : ''}`}
         style={{ width: "256px", height: "412px" }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -264,8 +262,8 @@ export function BookCard({
         <div 
           className={`
             absolute inset-0 bg-gradient-to-t from-background/95 to-background/60
-            transition-all duration-300 ease-in-out book-card-hover-content
-            transform ${isHovered || isContextMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
+            transition-all duration-300 ease-in-out
+            transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
             p-4 flex flex-col justify-end
             z-30
           `} 
