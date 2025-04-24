@@ -74,10 +74,13 @@ export function BookCardContextMenu({ book, children, onContextMenuOpen, onConte
   });
 
   // Fetch follow status
-  const { data: followStatus = {isFollowing: false} } = useQuery<{isFollowing: boolean}>({
+  const { data: followStatus, isLoading: isLoadingFollowStatus } = useQuery<{isFollowing: boolean; following?: boolean}>({
     queryKey: [`/api/authors/${book.authorId}/following`],
-    enabled: !!user && book.authorId !== user.id,
+    enabled: !!user && !!book.authorId && book.authorId !== user?.id,
   });
+  
+  // Determine if user is following the author, handling both response formats (isFollowing and following)
+  const isFollowing = followStatus?.isFollowing || followStatus?.following || false;
 
   // Toggle wishlist mutation
   const toggleWishlistMutation = useMutation({
@@ -111,7 +114,7 @@ export function BookCardContextMenu({ book, children, onContextMenuOpen, onConte
     mutationFn: async () => {
       const res = await apiRequest(
         "POST",
-        `/api/authors/${book.authorId}/${followStatus?.isFollowing ? 'unfollow' : 'follow'}`
+        `/api/authors/${book.authorId}/${isFollowing ? 'unfollow' : 'follow'}`
       );
       if (!res.ok) throw new Error("Failed to update follow status");
       return res;
@@ -120,8 +123,8 @@ export function BookCardContextMenu({ book, children, onContextMenuOpen, onConte
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${book.authorId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${book.authorId}/following`] });
       toast({
-        title: followStatus?.isFollowing ? "Unfollowed" : "Following",
-        description: `You are ${followStatus?.isFollowing ? 'no longer' : 'now'} following ${book.authorName}`,
+        title: isFollowing ? "Unfollowed" : "Following",
+        description: `You are ${isFollowing ? 'no longer' : 'now'} following ${book.authorName}`,
       });
     },
     onError: (error) => {
@@ -344,7 +347,7 @@ export function BookCardContextMenu({ book, children, onContextMenuOpen, onConte
               onClick={() => handleAuthCheck(() => followAuthorMutation.mutate())}
             >
               <UserRound className="mr-2 h-4 w-4" />
-              {followStatus?.isFollowing ? `Unfollow ${book.authorName}` : `Follow ${book.authorName}`}
+              {isFollowing ? `Unfollow ${book.authorName}` : `Follow ${book.authorName}`}
             </ContextMenuItem>
           )}
           
