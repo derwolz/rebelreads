@@ -1,8 +1,30 @@
 import { Router, Request, Response } from "express";
 import { dbStorage } from "../../storage";
 import { enhanceReferralLinks } from "../../utils/favicon-utils";
+import multer from "multer";
+import { sirenedImageBucket } from "../../services/sirened-image-bucket";
+import sharp from "sharp";
 
 const router = Router();
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const multipleImageUpload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  }
+}).fields([
+  { name: 'bookImage_full', maxCount: 1 },
+  { name: 'bookImage_background', maxCount: 1 },
+  { name: 'bookImage_book-cover', maxCount: 1 },
+  { name: 'bookImage_book-card', maxCount: 1 },
+  { name: 'bookImage_hero', maxCount: 1 },
+  { name: 'bookImage_spine', maxCount: 1 },
+  { name: 'bookImage_mini', maxCount: 1 },
+  { name: 'bookImage_vertical-banner', maxCount: 1 },
+  { name: 'bookImage_horizontal-banner', maxCount: 1 }
+]);
 
 /**
  * GET /api/books-by-name/taxonomies

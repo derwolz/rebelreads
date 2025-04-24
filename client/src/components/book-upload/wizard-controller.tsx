@@ -132,15 +132,15 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
   // Fetch book taxonomies when editing a book
   const { data: bookTaxonomies, error: bookTaxonomiesError } = useQuery<TaxonomyItem[]>({
-    queryKey: ["/api/books/lookup/taxonomies", book?.authorName, book?.title],
+    queryKey: ["/api/books-by-name/taxonomies", book?.authorName, book?.title],
     queryFn: async () => {
       if (!book?.title || !book?.authorName) return [];
       
       try {
         console.log(`Fetching taxonomies for book "${book.title}" by ${book.authorName}...`);
         
-        // Use the new lookup endpoint with query parameters
-        const url = `/api/books/lookup/taxonomies?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`;
+        // Use the new books-by-name endpoint with query parameters
+        const url = `/api/books-by-name/taxonomies?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`;
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -457,7 +457,16 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
             bookname: book?.title || data.title
           });
           
-          const response = await fetch(`/api/books/${book.id}`, {
+          // Use the name-based API endpoint for file uploads
+          const authorName = book?.authorName || data.authorName || "";
+          const bookTitle = book?.title || data.title || "";
+          
+          // Create a URL with author name and book title
+          const url = `/api/books-by-name/upload?authorName=${encodeURIComponent(authorName)}&bookTitle=${encodeURIComponent(bookTitle)}`;
+          
+          console.log(`Using book-by-name upload endpoint: ${url}`);
+          
+          const response = await fetch(url, {
             method: "PATCH",
             body: formData,
             credentials: "include",
@@ -476,7 +485,16 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
           bookname: changedFields.bookname
         });
         
-        const response = await fetch(`/api/books/${book.id}`, {
+        // Use the name-based API endpoint instead of ID-based endpoint for better security
+        const authorName = changedFields.authorname || "";
+        const bookTitle = changedFields.bookname || "";
+        
+        // Use the new endpoint with query parameters
+        const url = `/api/books-by-name/update?authorName=${encodeURIComponent(authorName)}&bookTitle=${encodeURIComponent(bookTitle)}`;
+        
+        console.log(`Using book-by-name endpoint: ${url}`);
+        
+        const response = await fetch(url, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
