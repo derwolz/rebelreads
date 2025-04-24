@@ -39,6 +39,8 @@ export interface BookFormData {
   genreTaxonomies: TaxonomyItem[];
   // Book images
   bookImages: Record<string, BookImageFile>;
+  // Author name (used when identifying books by name instead of ID)
+  authorName?: string;
 }
 
 /**

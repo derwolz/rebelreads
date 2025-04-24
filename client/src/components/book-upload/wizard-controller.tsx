@@ -291,6 +291,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         referralLinks: book.referralLinks || [],
         internal_details: book.internal_details || "",
         bookImages: bookImages,
+        authorName: book.authorName, // Add the author name from the book
       };
     }
 
@@ -331,6 +332,7 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
       internal_details: "",
       genreTaxonomies: [],
       bookImages: createEmptyBookImages(),
+      authorName: "", // Include empty authorName
     };
   });
 
@@ -429,7 +431,16 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
         }
   
         // If we have image files to upload, use FormData
-        const hasFileUploads = changedFields.cover instanceof File;
+        // Check if we have any image files in bookImages or the legacy cover field
+        let hasFileUploads = changedFields.cover instanceof File;
+        
+        // Also check if there are any files in the bookImages object
+        if (!hasFileUploads && changedFields.bookImages && typeof changedFields.bookImages === 'object') {
+          // Look for any image file in any of the image types
+          const bookImages = changedFields.bookImages as Record<string, BookImageFile>;
+          hasFileUploads = Object.values(bookImages).some(imageData => imageData.file instanceof File);
+          console.log("Checking bookImages for file uploads:", hasFileUploads);
+        }
         
         if (hasFileUploads) {
           const formData = new FormData();
@@ -441,7 +452,19 @@ export function BookUploadWizard({ onSuccess, book }: WizardControllerProps) {
 
           // Add other changed fields
           Object.entries(changedFields).forEach(([key, value]) => {
-            if (key !== "cover") {
+            if (key === "bookImages" && typeof value === "object") {
+              // Handle book images specially - include files in formData
+              console.log("Processing bookImages for FormData:", value);
+              Object.entries(value as Record<string, BookImageFile>).forEach(
+                ([imageType, imageData]) => {
+                  if (imageData.file) {
+                    formData.append(`bookImage_${imageType}`, imageData.file);
+                    formData.append(`bookImageType_${imageType}`, imageType);
+                    console.log(`Added image file for ${imageType} to update FormData`);
+                  }
+                }
+              );
+            } else if (key !== "cover") {
               formData.append(
                 key,
                 Array.isArray(value) ? JSON.stringify(value) : String(value),
