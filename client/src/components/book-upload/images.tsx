@@ -185,7 +185,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
       case 'book-card':
         return { width: 256, height: 412 };
       case 'mini':
-        return { width: 96, height: 60 };
+        return { width: 60, height: 96 };
       case 'vertical-banner':
         return { width: 400, height: 800 };
       case 'horizontal-banner':
@@ -313,7 +313,11 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                 {formData.bookImages['full']?.file && (
                   <Button
                     size="sm"
-                    onClick={() => generateDerivedImagesFromFull(formData.bookImages['full'].file)}
+                    onClick={() => {
+                      if (formData.bookImages['full'].file) {
+                        generateDerivedImagesFromFull(formData.bookImages['full'].file);
+                      }
+                    }}
                     className="flex items-center gap-1"
                   >
                     <RefreshCw className="h-4 w-4" /> Regenerate All
@@ -331,7 +335,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
           These optional banner images can be used for promotional purposes.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-          {['vertical-banner', 'horizontal-banner'].map((imageType) => {
+          {(['vertical-banner', 'horizontal-banner'] as const).map((imageType) => {
             // Make sure we have dimensions for this image type in the form data
             if (!formData.bookImages[imageType]) {
               const dimensions = getImageDimensions(imageType);

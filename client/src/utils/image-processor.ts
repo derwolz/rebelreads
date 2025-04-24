@@ -128,11 +128,11 @@ export async function generateDerivedImages(fullSizeFile: File): Promise<{
       'image/jpeg'
     );
     
-    // Generate mini image (96x60) with higher quality
+    // Generate mini image (60x96) with higher quality
     const miniBlob = await resizeImage(
       fullSizeFile,
-      96,
       60,
+      96,
       0.95,
       'image/jpeg'
     );
