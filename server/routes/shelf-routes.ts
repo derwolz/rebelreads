@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
-import { bookShelves, shelfBooks, notes, books, bookImages, authors, users, shelfComments } from "../../shared/schema";
+import { bookShelves, shelfBooks, notes, books, bookImages, authors, users, shelfComments, bookGenreTaxonomies, genreTaxonomies } from "../../shared/schema";
 import { eq, and, desc, asc, inArray, or } from "drizzle-orm";
 import { insertBookShelfSchema, insertShelfBookSchema, insertNoteSchema, insertShelfCommentSchema } from "../../shared/schema";
 import { z } from "zod";
@@ -588,11 +588,37 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
           where: eq(authors.id, book.authorId)
         });
         
+        // Get book taxonomies (genres)
+        const genreTaxonomies = await db
+          .select({
+            taxonomyId: bookGenreTaxonomies.taxonomyId,
+            rank: bookGenreTaxonomies.rank,
+            importance: bookGenreTaxonomies.importance,
+            name: genreTaxonomies.name,
+            type: genreTaxonomies.type,
+            description: genreTaxonomies.description,
+          })
+          .from(bookGenreTaxonomies)
+          .innerJoin(
+            genreTaxonomies,
+            eq(bookGenreTaxonomies.taxonomyId, genreTaxonomies.id)
+          )
+          .where(eq(bookGenreTaxonomies.bookId, shelfBookRow.bookId))
+          .orderBy(bookGenreTaxonomies.rank);
+        
         // Create an enhanced book object with additional properties
         const enhancedBook = {
           ...book,
           authorName: author?.author_name || "Unknown Author",
-          images: images
+          images: images,
+          genreTaxonomies: genreTaxonomies.map(item => ({
+            taxonomyId: Number(item.taxonomyId),
+            rank: Number(item.rank),
+            importance: Number(item.importance),
+            name: item.name,
+            type: item.type,
+            description: item.description
+          }))
         };
         
         // Compile enhanced book entry
