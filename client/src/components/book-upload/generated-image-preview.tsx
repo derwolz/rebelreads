@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, X, RefreshCw } from "lucide-react";
+import { X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,17 +8,13 @@ import { BookImageFile } from "./types";
 interface GeneratedImagePreviewProps {
   imageType: string;
   imageData: BookImageFile;
-  onAccept: () => void;
-  onReject: () => void;
-  onGenerate: () => void;
+  onDelete: () => void;
 }
 
 export function GeneratedImagePreview({
   imageType,
   imageData,
-  onAccept,
-  onReject,
-  onGenerate
+  onDelete
 }: GeneratedImagePreviewProps) {
   // Create a preview URL for the file
   const previewUrl = imageData.file ? URL.createObjectURL(imageData.file) : null;
@@ -51,30 +47,14 @@ export function GeneratedImagePreview({
             </div>
           )}
           
-          {/* Action buttons */}
+          {/* Action button - only Delete/Replace */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex gap-2 justify-center">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     size="icon" 
-                    onClick={onAccept} 
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-transparent"
-                  >
-                    <Check className="h-4 w-4 text-green-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Accept image</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    size="icon" 
-                    onClick={onReject} 
+                    onClick={onDelete} 
                     variant="outline"
                     className="bg-white/10 hover:bg-white/20 border-transparent"
                   >
@@ -82,22 +62,7 @@ export function GeneratedImagePreview({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Reject image</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    size="icon" 
-                    onClick={onGenerate} 
-                    variant="outline"
-                    className="bg-white/10 hover:bg-white/20 border-transparent"
-                  >
-                    <RefreshCw className="h-4 w-4 text-blue-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Generate new image</p>
+                  <p>Delete image (you can upload your own)</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Info, ExternalLink, RefreshCw } from "lucide-react";
+import { Info, ExternalLink } from "lucide-react";
 import { UPLOAD_IMAGE_TYPES, IMAGE_TYPES } from "@shared/schema";
 import { DragDropImage } from "@/components/drag-drop-image";
 import { StepComponentProps, BookImageFile } from "./types";
@@ -12,9 +12,6 @@ import { generateDerivedImages } from "@/utils/image-processor";
 
 export function ImagesStep({ formData, setFormData }: StepComponentProps) {
   const { toast } = useToast();
-  
-  // State to track when derived images have been generated
-  const [derivedImagesGenerated, setDerivedImagesGenerated] = useState(false);
   
   // Handle image change for any image type
   const handleImageChange = (
@@ -31,8 +28,9 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
           ...prev.bookImages[imageType],
           file,
           error: hasError ? errorMessage : undefined,
-          // If this is a full image, it's not considered generated
-          isGenerated: imageType === 'full' ? false : prev.bookImages[imageType]?.isGenerated
+          // Clear the isGenerated flag if manually uploading a generated type image
+          isGenerated: imageType === 'mini' || imageType === 'book-card' ? false : 
+                      prev.bookImages[imageType]?.isGenerated
         }
       };
       
@@ -60,7 +58,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
       // Generate the derived images on the client side
       const derivedImages = await generateDerivedImages(fullSizeFile);
       
-      // Update the form data with the generated images
+      // Update the form data with the generated images - automatically attached
       setFormData((prev) => {
         const newImages = {
           ...prev.bookImages,
@@ -88,48 +86,22 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
         };
       });
       
-      // Mark derived images as generated
-      setDerivedImagesGenerated(true);
-      
       toast({
         title: "Images Generated",
-        description: "Smaller versions have been created. You can review them below.",
+        description: "Smaller versions have been created from your full-size image.",
       });
     } catch (error) {
       console.error('Error generating derived images:', error);
       toast({
         title: "Generation Failed",
-        description: "Failed to generate smaller images. Please try again or upload them manually.",
+        description: "Failed to generate smaller images. Please upload them manually.",
         variant: "destructive"
       });
     }
   };
   
-  // Accept a generated image (just removes the isGenerated flag)
-  const handleAcceptGeneratedImage = (imageType: string) => {
-    setFormData((prev) => {
-      const newImages = {
-        ...prev.bookImages,
-        [imageType]: {
-          ...prev.bookImages[imageType],
-          isGenerated: false
-        }
-      };
-      
-      return {
-        ...prev,
-        bookImages: newImages
-      };
-    });
-    
-    toast({
-      title: "Image Accepted",
-      description: `The generated ${imageType.replace('-', ' ')} image has been accepted.`
-    });
-  };
-  
-  // Reject a generated image (clears the file and makes it a required upload)
-  const handleRejectGeneratedImage = (imageType: string) => {
+  // Delete a generated image (allows user to upload their own)
+  const handleDeleteGeneratedImage = (imageType: string) => {
     setFormData((prev) => {
       const dimensions = getImageDimensions(imageType);
       
@@ -139,7 +111,6 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
           ...prev.bookImages[imageType],
           file: null,
           isGenerated: false,
-          isRejected: true, // Mark as rejected to track that user needs to upload their own
           width: dimensions.width,
           height: dimensions.height
         }
@@ -152,27 +123,9 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
     });
     
     toast({
-      title: "Image Rejected",
-      description: `The generated ${imageType.replace('-', ' ')} image has been discarded. Please upload your own ${imageType.replace('-', ' ')} image.`,
-      variant: "destructive"
+      title: "Image Deleted",
+      description: `The generated ${imageType.replace('-', ' ')} image has been removed. You can upload your own.`,
     });
-  };
-  
-  // Generate a derived image
-  const handleGenerateImage = (imageType: string) => {
-    // Only generate if there's a full-size image to work with
-    if (formData.bookImages['full']?.file) {
-      // Generate just this specific derived image
-      if (imageType === 'mini' || imageType === 'book-card') {
-        generateDerivedImagesFromFull(formData.bookImages['full'].file);
-      }
-    } else {
-      toast({
-        title: "Cannot Generate",
-        description: "You need to upload a full-size image first.",
-        variant: "destructive"
-      });
-    }
   };
 
   // Get image dimensions for a specific image type
@@ -233,7 +186,6 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
       </Alert>
       
       <div className="mb-4">
-    
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
           {UPLOAD_IMAGE_TYPES.map((imageType) => {
             // Make sure we have dimensions for this image type in the form data
@@ -265,22 +217,22 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                 onChange={(file, hasError = false, errorMessage) => 
                   handleImageChange(imageType, file, hasError, errorMessage)
                 }
-                required={imageType === "full" || imageType === "background" || imageType === "hero" || imageData.isRejected ? true : false}
+                required={imageType === "full" || imageType === "background" || imageType === "hero" ? true : false}
               />
             );
           })}
         </div>
       </div>
       
-      {/* Generated Images Preview */}
+      {/* Generated Images */}
       {(formData.bookImages['mini']?.isGenerated || formData.bookImages['book-card']?.isGenerated) && (
         <div className="mb-4">
           <Card className="bg-muted/30 border-dashed">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Generated Images Preview</CardTitle>
+              <CardTitle className="text-lg">Generated Images</CardTitle>
               <CardDescription>
                 These images were automatically generated from your full-size image.
-                You can accept them as is, generate new ones, or upload your own versions.
+                You can delete them if you'd like to upload your own versions instead.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -290,9 +242,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                   <GeneratedImagePreview
                     imageType="mini"
                     imageData={formData.bookImages['mini']}
-                    onAccept={() => handleAcceptGeneratedImage('mini')}
-                    onReject={() => handleRejectGeneratedImage('mini')}
-                    onGenerate={() => handleGenerateImage('mini')}
+                    onDelete={() => handleDeleteGeneratedImage('mini')}
                   />
                 )}
                 
@@ -301,30 +251,8 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                   <GeneratedImagePreview
                     imageType="book-card"
                     imageData={formData.bookImages['book-card']}
-                    onAccept={() => handleAcceptGeneratedImage('book-card')}
-                    onReject={() => handleRejectGeneratedImage('book-card')}
-                    onGenerate={() => handleGenerateImage('book-card')}
+                    onDelete={() => handleDeleteGeneratedImage('book-card')}
                   />
-                )}
-              </div>
-              
-              <div className="mt-4 pt-2 border-t flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  You can generate new images anytime after updating the full-size image
-                </p>
-                
-                {formData.bookImages['full']?.file && (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (formData.bookImages['full'].file) {
-                        generateDerivedImagesFromFull(formData.bookImages['full'].file);
-                      }
-                    }}
-                    className="flex items-center gap-1"
-                  >
-                    <RefreshCw className="h-4 w-4" /> Generate All
-                  </Button>
                 )}
               </div>
             </CardContent>
@@ -368,7 +296,7 @@ export function ImagesStep({ formData, setFormData }: StepComponentProps) {
                 onChange={(file, hasError = false, errorMessage) => 
                   handleImageChange(imageType, file, hasError, errorMessage)
                 }
-                required={imageData.isRejected ? true : false}
+                required={false}
               />
             );
           })}
