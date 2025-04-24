@@ -2,8 +2,15 @@ import { useState, useMemo, useCallback } from "react";
 import type { Book } from "../../types";
 import { cn } from "@/lib/utils";
 import { BookCard } from "@/components/book-card";
-import { SpineCard } from "./spine-card";
+import { BookSpineA, BookSpineB } from "./index";
 import { LEAN_OPTIONS, calculateLeaningGeometry } from "./constants";
+
+// Constants for book rack spacing
+const VARIANT_A_SPACING = 128; // 128px spacing for variant A
+const VARIANT_B_SPACING = 266; // 266px spacing for variant B
+
+// Book rack variants for A/B testing
+export type BookRackVariant = "a" | "b";
 
 // Interface for BookRack component props
 export interface BookRackProps {
@@ -11,20 +18,21 @@ export interface BookRackProps {
   books?: Book[];
   isLoading?: boolean;
   className?: string;
+  variant?: BookRackVariant; // A/B variant to test
 }
 
-// BookRack component - uses the SpineCard component
-export function BookRack({ title, books = [], isLoading = false, className }: BookRackProps) {
+// BookRack component with A/B test support
+export function BookRack({ 
+  title, 
+  books = [], 
+  isLoading = false, 
+  className,
+  variant = "a" // Default to variant A
+}: BookRackProps) {
   // State to track which book is being hovered
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   // State to track if the book card is shown (after delay)
   const [showingCard, setShowingCard] = useState<boolean>(false);
-  
-  // Handle hover events from child SpineCard components
-  const handleBookHover = useCallback((index: number | null, showCard: boolean) => {
-    setHoveredIndex(index);
-    setShowingCard(showCard);
-  }, []);
   
   // Create a stable book ID string for dependencies
   const bookIdsString = useMemo(() => {
@@ -76,12 +84,38 @@ export function BookRack({ title, books = [], isLoading = false, className }: Bo
   
   // Calculate total width needed for all the books
   const totalShelfWidth = useMemo(() => {
+    if (!books || !bookAngles.length) return 0;
+    
     return bookAngles.reduce((total, angle, index) => {
       const { width } = calculateLeaningGeometry(angle);
       // Add a small gap between books
       return total + width + 2;
     }, 0);
-  }, [bookAngles]);
+  }, [bookAngles, books]);
+  
+  // Get the spacing amount based on variant
+  const getSpacingAmount = useCallback(() => {
+    return variant === "a" ? VARIANT_A_SPACING : VARIANT_B_SPACING;
+  }, [variant]);
+  
+  // Handle hover events from child BookSpine components
+  const handleBookHover = useCallback((isHovered: boolean, index?: number) => {
+    if (isHovered && typeof index === 'number') {
+      // First update the hover state without showing the card
+      setHoveredIndex(index);
+      setShowingCard(false);
+      
+      // Then after a delay, show the card if still hovering
+      setTimeout(() => {
+        if (hoveredIndex === index) {
+          setShowingCard(true);
+        }
+      }, 300);
+    } else {
+      setHoveredIndex(null);
+      setShowingCard(false);
+    }
+  }, [hoveredIndex]);
   
   // Skeleton placeholder when loading
   if (isLoading) {
@@ -117,9 +151,9 @@ export function BookRack({ title, books = [], isLoading = false, className }: Bo
       <div className="relative">
         {/* The books container - positioned on the shelf */}
         <div 
-          className="flex items-end bg-muted/10 rounded-md h-[400px]"
+          className="flex items-end bg-muted/10 rounded-md"
           style={{ 
-            minHeight: showingCard ? '400px' : '250px',
+            minHeight: showingCard ? '400px' : '300px',
             transition: 'min-height 0.3s ease-in-out'
           }}
         >
@@ -130,21 +164,27 @@ export function BookRack({ title, books = [], isLoading = false, className }: Bo
               
               // Calculate the position shift based on hovered index
               let positionShift = 0;
+              const spacingAmount = getSpacingAmount();
               
               if (hoveredIndex !== null && showingCard) {
                 // When a book is hovered and the card is shown:
                 // Books to the left of the hovered book shift left
                 if (index < hoveredIndex) {
-                  positionShift = -150; // shift left by 150px
+                  positionShift = -spacingAmount; // Use variant-specific shift amount
                 }
                 // Books to the right of the hovered book shift right
                 else if (index > hoveredIndex) {
-                  positionShift = 150; // shift right by 150px
+                  positionShift = spacingAmount; // Use variant-specific shift amount
                 }
               }
               
+              // Handle hover for this specific spine
+              const handleSpineHover = (isHovered: boolean) => {
+                handleBookHover(isHovered, index);
+              };
+              
               // Use a unique key combining book ID and index
-              const key = `${book.id}-${index}`;
+              const key = `spine-${variant}-${book.id}-${index}`;
               
               return (
                 <div
@@ -154,13 +194,21 @@ export function BookRack({ title, books = [], isLoading = false, className }: Bo
                     transform: `translateX(${positionShift}px)`,
                   }}
                 >
-                  <SpineCard 
-                    book={book} 
-                    angle={angle}
-                    index={index}
-                    hoveredIndex={hoveredIndex}
-                    onHover={handleBookHover}
-                  />
+                  {variant === "a" ? (
+                    <BookSpineA 
+                      book={book} 
+                      angle={angle}
+                      index={index}
+                      onHover={handleSpineHover}
+                    />
+                  ) : (
+                    <BookSpineB 
+                      book={book} 
+                      angle={angle}
+                      index={index}
+                      onHover={handleSpineHover}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -168,15 +216,13 @@ export function BookRack({ title, books = [], isLoading = false, className }: Bo
         </div>
         
         {/* Show book card for the hovered book */}
-        {hoveredIndex !== null && showingCard && (
+        {hoveredIndex !== null && showingCard && books[hoveredIndex] && (
           <div 
-            className="absolute bottom-0 transition-all duration-600 ease-in-out"
+            className="absolute bottom-0 transition-all duration-600 ease-in-out z-50"
             style={{
               left: '50%',
               transform: 'translateX(-50%) translateY(30%)',
               marginBottom: '10px',
-              zIndex: 50,
-              width: '256px', // Match the BookCard's width
             }}
           >
             <BookCard book={books[hoveredIndex]} />
