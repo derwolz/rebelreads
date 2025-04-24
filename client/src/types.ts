@@ -41,6 +41,7 @@ export interface Book {
   matchingTaxonomies?: number;
   coverUrl?: string | null; // Used in discover page
   genres?: string[]; // For displaying genres in UI
+  genreTaxonomies?: GenreTaxonomyItem[]; // For detailed genre taxonomy information
 }
 
 export interface BookImage {
@@ -80,6 +81,15 @@ export interface Publisher {
   website: string | null;
   logoUrl: string | null;
   createdAt: string;
+}
+
+export interface GenreTaxonomyItem {
+  taxonomyId: number;
+  rank: number;
+  importance: number;
+  name: string;
+  type: string;
+  description: string | null;
 }
 
 export interface GenreTaxonomy {

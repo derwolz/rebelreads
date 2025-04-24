@@ -414,14 +414,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         </div>
                       </div>
                       
-                      {/* Genres & Themes */}
-                      <div className="mb-4">
-                        <div className="flex flex-wrap gap-1">
-                          {selectedBook?.genres?.map((genre: any, idx: number) => (
-                            <Badge key={idx} className="text-xs" variant="outline">{genre}</Badge>
-                          ))}
-                        </div>
-                      </div>
+                      {/* We replaced this with the genre taxonomies section above */}
 
                       {/* Notes and actions */}
                       <div className="flex items-center justify-between mt-2">
