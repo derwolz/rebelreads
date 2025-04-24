@@ -1,61 +1,140 @@
-import { useState, useCallback } from "react";
-import { BookSpineProps, BookSpineBase } from "./book-spine-base";
-import { cn } from "@/lib/utils";
-import { StarIcon } from "lucide-react";
+import { useState, useMemo, useCallback, useRef, useEffect} from "react";
+import { calculateLeaningGeometry, SPINE_WIDTH, SPINE_HEIGHT, BookSpineProps } from "./constants";
 
-// BookSpineB - Version with rating indicator and glow effect
-export function BookSpineB(props: BookSpineProps) {
+import { cn } from "@/lib/utils";
+
+
+// BookSpineA - Version with colored trim and featured badge
+export function BookSpineB({book, 
+                           angle, 
+                           index, 
+                           className,
+                           onClick,
+                           onHover}:BookSpineProps) {
   const [isHovered, setIsHovered] = useState(false);
-  
+
+  // Calculate geometric properties for this book spine
+  const { width, offset } = useMemo(() => {
+    return calculateLeaningGeometry(angle);
+  }, [angle]);
+  const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
+
+
+  // Generate pixel trails that follow the traveler
+  useEffect(() => {
+    if (book.promoted) {
+      // Create multiple trail elements with different delays
+      const trailCount = 20; // Number of trail elements
+      const newTrailElements = [];
+
+      for (let i = 0; i < trailCount; i++) {
+        // Calculate delays for animation synchronization
+        const animationDelay = i * 0.010; // seconds between trails
+
+        newTrailElements.push(
+          <div 
+            key={`trail-${i}`}
+            className="pixel-trail"
+            style={{
+              animationDelay: `${animationDelay}s`,
+              // Each trail element follows the pixel but with delay
+              // The animation-delay of the trail elements creates a trailing effect
+              animationName: 'trail-fade, border-path',
+              animationDuration: '0s, 6s',
+              animationTimingFunction: 'linear, linear',
+              animationIterationCount: 'infinite, infinite',
+              animationDirection: 'normal, normal',
+              // This staggers the trail elements along the path
+              animationPlayState: 'running, running',
+              opacity: Math.sin(i*Math.PI*2/trailCount), // Decreasing opacity for each trail
+            }}
+          />
+        );
+      }
+
+      setTrailElements(newTrailElements);
+    }
+  }, [book.promoted]);
+
+  // Get the book spine image
+  const spineImageUrl = book.images?.find(img => img.imageType === "spine")?.imageUrl || "/images/placeholder-book.png";
+
+  // Handle mouse enter
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+    if (onHover) onHover(true);
+  }, [onHover]);
+
+  // Handle mouse leave
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    if (onHover) onHover(false);
+  }, [onHover]);
+
+  // Handle click
+  const handleClick = useCallback(() => {
+    if (onClick) onClick(book);
+  }, [onClick, book]);
+
   // Handle hover state
+
   const handleHover = useCallback((hover: boolean) => {
     setIsHovered(hover);
-    if (props.onHover) props.onHover(hover);
-  }, [props.onHover]);
+    if (onHover) onHover(hover);
+  }, [onHover]);
 
-  // Mock rating for demo purposes - in real app, would come from book data
-  const rating = props.book.id % 5 + 1; // Just a way to generate different ratings (1-5)
-  const isNew = props.book.publishedDate && 
-    (new Date().getTime() - new Date(props.book.publishedDate).getTime() < 30 * 24 * 60 * 60 * 1000);
-  
+
   return (
     <div className="relative">
-      <BookSpineBase 
-        {...props}
-        onHover={handleHover}
-        className={cn(
-          "transition-all duration-300",
-          isHovered && "shadow-lg"
-        )}
-      />
-      
-      {/* Glowing effect when hovered */}
-      {isHovered && (
-        <div className="absolute inset-0 bg-primary/5 blur-md rounded-md -z-10"></div>
-      )}
-      
-      {/* Rating indicator at the bottom */}
       <div 
         className={cn(
-          "absolute bottom-2 left-[50%] translate-x-[-50%] flex items-center transition-opacity duration-300",
-          isHovered ? "opacity-100" : "opacity-70"
+          "relative cursor-pointer", 
+          className
         )}
+        style={{ 
+          width: `${width}px`,
+          height: `${SPINE_HEIGHT}px`,
+          zIndex: isHovered ? 10 : 1,
+        }}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        <StarIcon className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-        <span className="text-[10px] font-bold text-foreground ml-[1px]">
-          {rating.toFixed(1)}
-        </span>
-      </div>
-      
-      {/* New indicator */}
-      {isNew && (
+
+
+        {/* Book Spine */}
         <div 
-          className={cn(
-            "absolute top-2 left-[50%] translate-x-[-50%] w-[8px] h-[8px] rounded-full bg-blue-500",
-            isHovered ? "opacity-100" : "opacity-70"
+          className="absolute w-[56px] h-full transition-all duration-300 ease-in-out"
+          style={{ 
+            transform: `translateX(${offset}px) rotate(${angle}deg) ${isHovered ? 'scale(1.05)' : ''}`,
+            transformOrigin: angle < 0 ? 'bottom left' : angle > 0 ? 'bottom right' : 'center',
+            left: `${(width - SPINE_WIDTH) / 2}px`, // Center the book in its container
+          }}
+        >
+          {/* Gold pixel with trail - only for promoted books */}
+          {book.promoted && (
+            <div className="absolute inset-0 z-40 pointer-events-none">
+              {/* The traveling pixel */}
+              <div className="pixel-traveler" />
+
+              {/* Trail elements */}
+              {trailElements}
+            </div>
           )}
-        />
-      )}
+
+          <img 
+            src={spineImageUrl} 
+            alt={book.title}
+            className="w-full h-full object-cover"
+            style={{ maxWidth: `${SPINE_WIDTH}px` }}
+          />
+          {/* Shadow overlay */}
+          <div 
+            className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black opacity-70 pointer-events-none"
+            style={{ maxWidth: `${SPINE_WIDTH}px`}}
+          />
+        </div>
+      </div>
     </div>
   );
 }

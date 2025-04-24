@@ -1,6 +1,16 @@
+import { Book } from "../../types";
 // Constants for book spine dimensions and animation
 export const SPINE_WIDTH = 56;
-export const SPINE_HEIGHT = 212;
+export const SPINE_HEIGHT = 256;
+
+export interface BookSpineProps {
+  book: Book;
+  angle: number;
+  index?: number;
+  className?: string;
+  onClick?: (book: Book) => void;
+  onHover?: (isHovered: boolean) => void;
+}
 
 // Possible lean angles in degrees
 export const LEAN_OPTIONS = [
