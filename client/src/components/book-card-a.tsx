@@ -29,6 +29,7 @@ export function BookCardA({
   const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
+  const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
 
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
@@ -38,6 +39,42 @@ export function BookCardA({
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ["/api/rating-preferences"],
   });
+  
+  // Generate pixel trails that follow the traveler
+  useEffect(() => {
+    if (book.promoted) {
+      // Create multiple trail elements with different delays
+      const trailCount = 20; // Number of trail elements
+      const newTrailElements = [];
+      
+      for (let i = 0; i < trailCount; i++) {
+        // Calculate delays for animation synchronization
+        const animationDelay = i * 0.010; // seconds between trails
+        
+        newTrailElements.push(
+          <div 
+            key={`trail-${i}`}
+            className="pixel-trail"
+            style={{
+              animationDelay: `${animationDelay}s`,
+              // Each trail element follows the pixel but with delay
+              // The animation-delay of the trail elements creates a trailing effect
+              animationName: 'trail-fade, border-path',
+              animationDuration: '0s, 6s',
+              animationTimingFunction: 'linear, linear',
+              animationIterationCount: 'infinite, infinite',
+              animationDirection: 'normal, normal',
+              // This staggers the trail elements along the path
+              animationPlayState: 'running, running',
+              opacity: Math.sin(i*Math.PI*2/trailCount), // Decreasing opacity for each trail
+            }}
+          />
+        );
+      }
+      
+      setTrailElements(newTrailElements);
+    }
+  }, [book.promoted]);
 
   // Set up intersection observer to track when the card becomes visible
   useEffect(() => {
@@ -125,6 +162,13 @@ export function BookCardA({
     }
   };
 
+  // Get the first 100 characters of book description
+  const truncatedDescription = book.description
+    ? book.description.length > 100
+      ? `${book.description.slice(0, 100)}...`
+      : book.description
+    : "";
+
   return (
     <div
       className="relative"
@@ -132,28 +176,17 @@ export function BookCardA({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Promoted card wrapper with animated border */}
+      {/* Gold pixel with trail - only for promoted books */}
       {book.promoted && (
-        <div 
-          className="absolute inset-0 rounded-md z-10 pointer-events-none"
-          style={{ 
-            animation: "border-glow 4s infinite",
-            padding: "4px",
-          }}
-        >
-          <div 
-            className="absolute inset-0 rounded-md"
-            style={{
-              backgroundImage: "linear-gradient(90deg, transparent, hsl(35 81% 58% / 0.9), transparent)",
-              backgroundSize: "200% 200%",
-              animation: "border-travel 6s linear infinite",
-              border: "2px solid transparent",
-              backgroundClip: "padding-box",
-              WebkitBackgroundClip: "padding-box"
-            }}
-          />
+        <div className="absolute inset-0 z-40 pointer-events-none">
+          {/* The traveling pixel */}
+          <div className="pixel-traveler" />
+          
+          {/* Trail elements */}
+          {trailElements}
         </div>
       )}
+      
       <Card
         id={`book-card-a-${book.id}`}
         className={`
@@ -161,7 +194,7 @@ export function BookCardA({
           transition-all duration-300 ease-in-out
           overflow-hidden relative
           ${isHovered ? 'scale-105' : ''}
-          ${book.promoted ? 'shadow-lg' : 'shadow-md'}
+          ${book.promoted ? 'shadow-none z-30' : 'shadow-md'}
         `}
         style={{
           height: "100%",
@@ -199,6 +232,19 @@ export function BookCardA({
             alt={book.title}
             className="w-full h-full object-cover object-center"
           />
+          
+          {/* Black gradient overlay at bottom third */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
+          
+          {/* Weighted rating in the gradient area */}
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
+            <div className="flex items-center gap-2">
+              <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
+              <span className="text-white text-sm">
+                ({averageRatings?.overall.toFixed(1) || "0.0"})
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* New book banner */}
@@ -224,17 +270,13 @@ export function BookCardA({
           <h3 className="text-lg font-semibold mb-1">{book.title}</h3>
           <p className="text-sm text-muted-foreground mb-2">{book.authorName}</p>
           
-          {/* Top 5 genres */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            {book.genres?.slice(0, 5).map((genre) => (
-              <Badge key={genre} variant="secondary" className="text-xs">
-                {genre}
-              </Badge>
-            ))}
-          </div>
+          {/* Book description (first 100 characters) */}
+          <p className="text-sm mb-4 flex-grow">
+            {truncatedDescription}
+          </p>
           
           {/* 5 vector star ratings */}
-          <div className="space-y-1">
+          <div className="space-y-1 mt-auto">
             <div className="flex justify-between items-center">
               <span className="text-xs">Enjoyment</span>
               <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
