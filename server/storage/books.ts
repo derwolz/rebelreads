@@ -764,6 +764,32 @@ export class BookStorage implements IBookStorage {
 
   async addBookImage(image: Omit<BookImage, "id">): Promise<BookImage> {
     try {
+      // First, check if an image of this type already exists for the book
+      const existingImages = await db
+        .select()
+        .from(bookImages)
+        .where(
+          and(
+            eq(bookImages.bookId, image.bookId),
+            eq(bookImages.imageType, image.imageType)
+          )
+        );
+      
+      // If we found existing images of this type, delete them first
+      if (existingImages.length > 0) {
+        console.log(`Found ${existingImages.length} existing ${image.imageType} images for book ${image.bookId}. Deleting them.`);
+        
+        await db
+          .delete(bookImages)
+          .where(
+            and(
+              eq(bookImages.bookId, image.bookId),
+              eq(bookImages.imageType, image.imageType)
+            )
+          );
+      }
+      
+      // Now insert the new image
       console.log(`Adding book image to database: ${JSON.stringify(image)}`);
       const [newImage] = await db
         .insert(bookImages)
