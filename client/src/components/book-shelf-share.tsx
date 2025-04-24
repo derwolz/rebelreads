@@ -308,6 +308,31 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                         )}
                       </div>
                       
+                      {/* Genre taxonomies */}
+                      <div className="flex flex-wrap gap-2 mb-3 mt-1">
+                        {selectedBook?.genreTaxonomies && selectedBook.genreTaxonomies.length > 0 
+                          ? selectedBook.genreTaxonomies.slice(0, 5).map((taxonomy: any) => (
+                              <Badge
+                                key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}
+                                variant={
+                                  taxonomy.type === "genre"
+                                    ? "default"
+                                    : taxonomy.type === "subgenre"
+                                    ? "secondary"
+                                    : taxonomy.type === "theme"
+                                    ? "outline"
+                                    : "destructive"
+                                }
+                                className="text-sm cursor-default"
+                                title={taxonomy.description || ''}
+                              >
+                                {taxonomy.name}
+                              </Badge>
+                            ))
+                          : null
+                        }
+                      </div>
+                      
                       {/* Book description */}
                       <div className="mb-4">
                         {/* Desktop view */}

@@ -589,7 +589,7 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
         });
         
         // Get book taxonomies (genres)
-        const genreTaxonomies = await db
+        const bookTaxonomies = await db
           .select({
             taxonomyId: bookGenreTaxonomies.taxonomyId,
             rank: bookGenreTaxonomies.rank,
@@ -611,14 +611,7 @@ router.get("/api/book-shelf", async (req: Request, res: Response) => {
           ...book,
           authorName: author?.author_name || "Unknown Author",
           images: images,
-          genreTaxonomies: genreTaxonomies.map(item => ({
-            taxonomyId: Number(item.taxonomyId),
-            rank: Number(item.rank),
-            importance: Number(item.importance),
-            name: item.name,
-            type: item.type,
-            description: item.description
-          }))
+          genreTaxonomies: bookTaxonomies
         };
         
         // Compile enhanced book entry
