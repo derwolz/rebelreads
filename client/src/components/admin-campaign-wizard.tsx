@@ -5,11 +5,10 @@ import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { z } from "zod";
 import { 
-  DialogContent, 
-  DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle,
+  DialogDescription 
 } from "@/components/ui/dialog";
 import { 
   Form, 
@@ -148,7 +147,7 @@ export function AdminCampaignWizard({
   });
 
   return (
-    <DialogContent className="sm:max-w-[625px] max-h-[90vh] overflow-y-auto">
+    <>
       <DialogHeader>
         <DialogTitle>Create New Campaign</DialogTitle>
         <DialogDescription>
@@ -156,260 +155,262 @@ export function AdminCampaignWizard({
         </DialogDescription>
       </DialogHeader>
       
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Campaign Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter campaign name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="px-4 py-2">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="type"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Campaign Type</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select campaign type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="promotion">Promotion</SelectItem>
-                      <SelectItem value="ad">Advertisement</SelectItem>
-                      <SelectItem value="survey">Survey</SelectItem>
-                      <SelectItem value="review_boost">Review Boost</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Campaign Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter campaign name" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="paused">Paused</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Start Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campaign Type</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select campaign type" />
+                        </SelectTrigger>
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <SelectContent>
+                        <SelectItem value="promotion">Promotion</SelectItem>
+                        <SelectItem value="ad">Advertisement</SelectItem>
+                        <SelectItem value="survey">Survey</SelectItem>
+                        <SelectItem value="review_boost">Review Boost</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="paused">Paused</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>End Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <FormField
-            control={form.control}
-            name="budget"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Budget (optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    min="0" 
-                    step="0.01" 
-                    placeholder="0.00" 
-                    {...field} 
-                  />
-                </FormControl>
-                <FormDescription>
-                  Budget for this campaign (in credits)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="books"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Books</FormLabel>
-                
-                {/* Book Search Input */}
-                <div className="relative mb-2">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search books by title or author..."
-                    className="pl-8"
-                    value={booksSearchQuery}
-                    onChange={(e) => setBooksSearchQuery(e.target.value)}
-                  />
-                  {booksSearchQuery && (
-                    <X
-                      className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
-                      onClick={() => setBooksSearchQuery("")}
-                    />
-                  )}
-                </div>
-                
-                <div className="border rounded-md p-4 space-y-3 max-h-[200px] overflow-y-auto">
-                  {loadingBooks ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : filteredBooks?.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">
-                      {booksSearchQuery ? "No books match your search" : "No books available"}
-                    </p>
-                  ) : (
-                    filteredBooks?.map((book: any) => (
-                      <div key={book.id} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`book-${book.id}`} 
-                          checked={field.value?.includes(book.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              field.onChange([...field.value, book.id]);
-                            } else {
-                              field.onChange(
-                                field.value?.filter((id) => id !== book.id)
-                              );
-                            }
-                          }}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
                         />
-                        <Label
-                          htmlFor={`book-${book.id}`}
-                          className="text-sm font-medium leading-none cursor-pointer"
-                        >
-                          {book.title}
-                          {book.authorName && <span className="text-muted-foreground ml-1">by {book.authorName}</span>}
-                        </Label>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              className="mr-2"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              disabled={createCampaign.isPending}
-            >
-              {createCampaign.isPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>End Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <FormField
+              control={form.control}
+              name="budget"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Budget (optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min="0" 
+                      step="0.01" 
+                      placeholder="0.00" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Budget for this campaign (in credits)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-              Create Campaign
-            </Button>
-          </DialogFooter>
-        </form>
-      </Form>
-    </DialogContent>
+            />
+            
+            <FormField
+              control={form.control}
+              name="books"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Books</FormLabel>
+                  
+                  {/* Book Search Input */}
+                  <div className="relative mb-2">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search books by title or author..."
+                      className="pl-8"
+                      value={booksSearchQuery}
+                      onChange={(e) => setBooksSearchQuery(e.target.value)}
+                    />
+                    {booksSearchQuery && (
+                      <X
+                        className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground cursor-pointer"
+                        onClick={() => setBooksSearchQuery("")}
+                      />
+                    )}
+                  </div>
+                  
+                  <div className="border rounded-md p-4 space-y-3 max-h-[200px] overflow-y-auto">
+                    {loadingBooks ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : filteredBooks?.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">
+                        {booksSearchQuery ? "No books match your search" : "No books available"}
+                      </p>
+                    ) : (
+                      filteredBooks?.map((book: any) => (
+                        <div key={book.id} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`book-${book.id}`} 
+                            checked={field.value?.includes(book.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                field.onChange([...field.value, book.id]);
+                              } else {
+                                field.onChange(
+                                  field.value?.filter((id) => id !== book.id)
+                                );
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`book-${book.id}`}
+                            className="text-sm font-medium leading-none cursor-pointer"
+                          >
+                            {book.title}
+                            {book.authorName && <span className="text-muted-foreground ml-1">by {book.authorName}</span>}
+                          </Label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+                className="mr-2"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                disabled={createCampaign.isPending}
+              >
+                {createCampaign.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Create Campaign
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }

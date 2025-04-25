@@ -8,6 +8,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import { AdminCampaignWizard } from "@/components/admin-campaign-wizard";
 import {
   Table,
   TableBody,
@@ -266,17 +267,19 @@ export function AdminCampaignManager() {
               Create Campaign
             </Button>
           </DialogTrigger>
-          <AdminCampaignWizard
-            onSuccess={() => {
-              setCreateDialogOpen(false);
-              queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
-              toast({
-                title: "Campaign created",
-                description: "The campaign has been created successfully.",
-              });
-            }}
-            onCancel={() => setCreateDialogOpen(false)}
-          />
+          <DialogContent className="p-0 sm:max-w-[625px] max-h-[90vh]">
+            <AdminCampaignWizard
+              onSuccess={() => {
+                setCreateDialogOpen(false);
+                queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+                toast({
+                  title: "Campaign created",
+                  description: "The campaign has been created successfully.",
+                });
+              }}
+              onCancel={() => setCreateDialogOpen(false)}
+            />
+          </DialogContent>
         </Dialog>
       </div>
       
