@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Book } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { HeroCarousel } from "@/components/hero-carousel";
@@ -9,6 +8,7 @@ import { WhatsHotSidebar } from "@/components/whats-hot-sidebar";
 import { HeroBannerAd, VerticalBannerAd, HorizontalBannerAd } from "@/components/banner-ads";
 import { DynamicHomeSections } from "@/components/dynamic-home-sections";
 import { ComingSoonSection } from "@/components/coming-soon-section";
+import { Book } from "@/types";
 
 // Define the homepage section types for manual layout
 interface HomepageSection {
@@ -27,40 +27,48 @@ export default function HomePage() {
   const [searchType, setSearchType] = useState("title");
 
   // Main book data query
-  const { data: books, isLoading } = useQuery<Book[]>({
+  const { data: booksData, isLoading } = useQuery({
     queryKey: ["/api/books"],
   });
+  // Type assertion to convert from server Book to client Book
+  const books = booksData as Book[];
 
   // Get genre-specific book lists
-  const { data: fantasyBooks, isLoading: isLoadingFantasy } = useQuery<Book[]>({
+  const { data: fantasyBooksData, isLoading: isLoadingFantasy } = useQuery({
     queryKey: ["/api/genres/view/1"], // Fantasy genre view
   });
+  const fantasyBooks = fantasyBooksData as Book[];
 
-  const { data: isekaiBooks, isLoading: isLoadingIsekai } = useQuery<Book[]>({
+  const { data: isekaiBooksData, isLoading: isLoadingIsekai } = useQuery({
     queryKey: ["/api/genres/view/2"], // Isekai RPG genre view
   });
+  const isekaiBooks = isekaiBooksData as Book[];
 
-  const { data: scifiBooks, isLoading: isLoadingScifi } = useQuery<Book[]>({
+  const { data: scifiBooksData, isLoading: isLoadingScifi } = useQuery({
     queryKey: ["/api/genres/view/3"], // Sci-fi genre view
   });
+  const scifiBooks = scifiBooksData as Book[];
 
   // Get personalized recommendations if user is logged in
-  const { data: recommendedBooks, isLoading: isLoadingRecommended } = useQuery<Book[]>({
+  const { data: recommendedBooksData, isLoading: isLoadingRecommended } = useQuery({
     queryKey: ["/api/recommendations"],
     enabled: !!user,
   });
+  const recommendedBooks = recommendedBooksData as Book[];
 
   // Get books from authors the user follows
-  const { data: followedAuthorsBooks, isLoading: isLoadingFollowed } = useQuery<Book[]>({
+  const { data: followedAuthorsBooksData, isLoading: isLoadingFollowed } = useQuery({
     queryKey: ["/api/recommendations/followed-authors"],
     enabled: !!user,
   });
+  const followedAuthorsBooks = followedAuthorsBooksData as Book[];
 
   // Get books on user's wishlist
-  const { data: wishlistBooks, isLoading: isLoadingWishlist } = useQuery<Book[]>({
+  const { data: wishlistBooksData, isLoading: isLoadingWishlist } = useQuery({
     queryKey: ["/api/recommendations/wishlist"],
     enabled: !!user,
   });
+  const wishlistBooks = wishlistBooksData as Book[];
 
   // Create manual homepage sections for non-authenticated users
   const [manualSections, setManualSections] = useState<HomepageSection[]>([]);
@@ -123,12 +131,20 @@ export default function HomePage() {
                       (books && books.length > 0 ? books[0] : null);
 
   return (
-    <div className="bg-background min-h-screen  flex justify-center">
+    <div className="bg-background min-h-screen flex justify-center">
       <main className="container max-w-[95vw] overflow-hidden mx-auto pb-8">
         {/* Hero Section - Full Width */}
-        <section className="w-full  mb-8">
+        <section className="w-full mb-8">
           <HeroCarousel />
         </section>
+
+        {/* What's Hot Section - Mobile: Appears directly after banner */}
+        <div className="block lg:hidden mb-8">
+          <h2 className="text-xl font-medium mb-4">What's Hot</h2>
+          <div className="whats-hot-mobile-container">
+            <WhatsHotSidebar />
+          </div>
+        </div>
 
         {/* Main Content Area with Sidebar Layout */}
         <div className="flex flex-col lg:flex-row gap-8">
@@ -173,13 +189,11 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* What's Hot Sidebar - Right Side on Desktop */}
-          <div className="lg:w-72 order-1 lg:order-2 mb-8 lg:mb-0">
-            {/* What's Hot Section - Mobile: Horizontal, Desktop: Vertical */}
+          {/* What's Hot Sidebar - Right Side on Desktop only */}
+          <div className="lg:w-72 hidden lg:block lg:order-2">
+            {/* What's Hot Section - Desktop: Vertical */}
             <div className="sticky top-20">
               <WhatsHotSidebar />
-              
-             
             </div>
           </div>
         </div>

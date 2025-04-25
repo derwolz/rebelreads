@@ -221,6 +221,42 @@ export function WhatsHotSidebar() {
     setIsMinimized(!isMinimized);
   };
 
+  // Check if component is in mobile or desktop view based on parent container
+  const isMobileContainer = () => {
+    return document.querySelector('.whats-hot-mobile-container') !== null;
+  };
+
+  // Render for mobile view (directly after banner)
+  if (isMobileContainer()) {
+    return (
+      <div className="bg-muted/10 rounded-lg border border-border/20 p-4 backdrop-blur-sm">
+        <PopularityFilter 
+          activePeriod={periodFilter} 
+          onChange={setPeriodFilter} 
+        />
+        
+        <div className="space-y-1 overflow-y-auto custom-scrollbar">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <BookItemSkeleton key={i} />
+            ))
+          ) : popularBooks?.length ? (
+            popularBooks.slice(0, 5).map((book, index) => (
+              <MiniBookCard 
+                key={book.id} 
+                book={book} 
+                rank={index + 1} 
+              />
+            ))
+          ) : (
+            <p className="text-muted-foreground text-sm">No popular books available</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Default render (sidebar for desktop)
   return (
     <div className={`fixed z-40 transition-all duration-300 ease-in-out ${
       isMinimized 
