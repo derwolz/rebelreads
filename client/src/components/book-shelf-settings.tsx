@@ -131,7 +131,7 @@ function SortableShelfCard({
                 {shelf.title}
                 {shelf.isShared && (
                   <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                    Shared
+                    Pinned to Author Profile
                   </span>
                 )}
               </CardTitle>
@@ -148,7 +148,7 @@ function SortableShelfCard({
                   variant="ghost" 
                   size="icon" 
                   onClick={() => onToggleShare(shelf.id, !shelf.isShared)}
-                  title={shelf.isShared ? "Unshare this bookshelf" : "Share this bookshelf"}
+                  title={shelf.isShared ? "Unpin from author profile" : "Pin to author profile"}
                   className={shelf.isShared ? "text-yellow-500" : "text-gray-400"}
                 >
                   <svg 
