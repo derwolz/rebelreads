@@ -56,8 +56,8 @@ router.post("/verify-code", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Verify the code
-    const verificationResult = await verificationService.verifyCode(userId, code, type);
+    // Check the code without consuming it
+    const verificationResult = await verificationService.checkCode(userId, code, type);
     
     if (!verificationResult) {
       return res.status(400).json({ error: "Invalid or expired verification code" });

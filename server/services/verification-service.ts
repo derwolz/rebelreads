@@ -247,6 +247,41 @@ class VerificationService {
   }
   
   /**
+   * Checks if a verification code is valid without marking it as used
+   * Similar to verifyCode but does not consume the code
+   */
+  public async checkCode(
+    userId: number,
+    code: string,
+    type: VERIFICATION_TYPES
+  ): Promise<boolean> {
+    try {
+      // Get the most recent active verification code for this user and type
+      const verificationCode = await dbStorage.getActiveVerificationCode(userId, type);
+      
+      if (!verificationCode) {
+        return false;
+      }
+      
+      // Check if the code is expired
+      const now = new Date();
+      if (now > verificationCode.expiresAt) {
+        return false;
+      }
+      
+      // Check if the code matches
+      if (verificationCode.code !== code) {
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error checking code:", error);
+      return false;
+    }
+  }
+  
+  /**
    * Invalidates all active verification codes for a user and type
    */
   public async invalidateActiveVerificationCodes(
