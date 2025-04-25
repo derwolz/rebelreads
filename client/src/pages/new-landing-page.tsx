@@ -325,6 +325,13 @@ const NewLandingPage = () => {
             >
               Get Beta Access
             </Button>
+            <Button
+              variant="outline"
+              className="rounded-none font-bold"
+              onClick={() => setLocation("/auth")}
+            >
+              Login
+            </Button>
           </div>
         </div>
       </header>
