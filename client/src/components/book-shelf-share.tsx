@@ -191,7 +191,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
   const { theme } = useTheme();
 
   return (
-    <div className={`${className} bg-background w-full max-w-[95vw] md:max-w-[90vw] flex justify-center flex-col text-foregound h-full overflow-hidden`}>
+    <div className={`${className} bg-background w-full max-w-[95vw]  md:max-w-[1350px] flex justify-center flex-col text-foregound h-full overflow-hidden`}>
       
       {/* Loading indicator */}
       {isShelfLoading && (
@@ -218,7 +218,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
       {/* Main content area - only show when we have data and not loading */}
       {!isShelfLoading && !error && shelfData && (
         <>
-          <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 w-full overflow-x-hidden">
+          <div className="flex flex-col mt-0 lg:flex-row gap-6 p-4 w-full overflow-x-hidden ">
             {/* Left column: Book details and comments */}
             <div className="w-full lg:w-2/3 flex relative">
               {/* Book Details Card that shows the selected book */}
@@ -348,7 +348,7 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                           )}
                           
                           {/* Description text */}
-                          <ScrollArea className="h-[300px] min-w-0 w-full pr-16 md:pr-1">
+                          <ScrollArea className="h-[200px] min-w-0 w-full pr-16 md:pr-1">
                             <p className="text-sm text-foreground/80">{selectedBook?.description}</p>
                           </ScrollArea>
                         </div>
@@ -429,11 +429,14 @@ export function BookShelfShare({ username, shelfName, className }: BookShelfShar
                                 if (!selectedNote) {
                                   setSelectedNote(bookNotes[0]);
                                   setNoteVisible(true);
-                                } else {
+                                } 
+                                else {
+                                  
                                   setIsRotating(true);
                                   setTimeout(() => {
                                     setNoteVisible(!noteVisible);
                                     setIsRotating(false);
+                                    setSelectedNote(null);
                                   }, 300);
                                 }
                               }}
