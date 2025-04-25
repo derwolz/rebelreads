@@ -674,8 +674,8 @@ export function setupAuth(app: Express) {
           }
         }
         
-        // For beta users, we'll redirect to a special page that will check localStorage
-        if (isBetaActive && shouldVerifyLocalKey) {
+        // For beta users without a verified key, redirect to check localStorage
+        if (isBetaActive && shouldVerifyLocalKey && !hasUsedBetaKey) {
           res.redirect("/auth-check");
         } else if (req.user?.isAuthor) {
           res.redirect("/pro");
