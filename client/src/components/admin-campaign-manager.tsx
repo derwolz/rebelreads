@@ -143,9 +143,9 @@ export function AdminCampaignManager() {
     data: books, 
     isLoading: loadingBooks 
   } = useQuery({
-    queryKey: ['/api/admin/campaigns/books/list'],
+    queryKey: ['/api/admin/campaigns-management/campaigns/books/list'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/campaigns/books/list');
+      const res = await fetch('/api/admin/campaigns-management/campaigns/books/list');
       if (!res.ok) throw new Error('Failed to fetch books');
       return res.json();
     }
@@ -154,7 +154,7 @@ export function AdminCampaignManager() {
   // Mutation to create a new campaign
   const createCampaign = useMutation({
     mutationFn: async (formData: CampaignFormValues) => {
-      const res = await fetch('/api/admin/campaigns', {
+      const res = await fetch('/api/admin/campaigns-management/campaigns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ export function AdminCampaignManager() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns-management/campaigns'] });
       setCreateDialogOpen(false);
       form.reset();
       toast({
@@ -190,7 +190,7 @@ export function AdminCampaignManager() {
   // Mutation to update campaign status
   const updateCampaignStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number, status: string }) => {
-      const res = await fetch(`/api/admin/campaigns/${id}/status`, {
+      const res = await fetch(`/api/admin/campaigns-management/campaigns/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +206,7 @@ export function AdminCampaignManager() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns-management/campaigns'] });
       toast({
         title: "Status updated",
         description: "The campaign status has been updated.",
@@ -271,7 +271,7 @@ export function AdminCampaignManager() {
             <AdminCampaignWizard
               onSuccess={() => {
                 setCreateDialogOpen(false);
-                queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+                queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns-management/campaigns'] });
                 toast({
                   title: "Campaign created",
                   description: "The campaign has been created successfully.",
