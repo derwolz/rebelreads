@@ -79,7 +79,7 @@ function App() {
     const { isBetaActive, isLoading: isBetaLoading } = useBeta();
     const { user, isLoading: isAuthLoading } = useAuth();
 
-    const allowedPaths = ["/landing", "/bookshelf/share", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding"];
+    const allowedPaths = ["/landing", "/bookshelf/share", "/partner", "/new-landing", "/privacy-policy", "/cookie-policy", "/terms-of-service", "/about-us", "/contact-us", "/branding", "/reset-password"];
     const isApiPath = location.startsWith("/api");
     const isAuthWallPath = location === "/auth";
     const [path, hash] = location.split("#");
