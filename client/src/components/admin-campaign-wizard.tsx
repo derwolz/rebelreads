@@ -87,9 +87,9 @@ export function AdminCampaignWizard({
     data: books, 
     isLoading: loadingBooks 
   } = useQuery({
-    queryKey: ['/api/admin/campaigns/books/list'],
+    queryKey: ['/api/admin/campaigns-management/campaigns/books/list'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/campaigns/books/list');
+      const res = await fetch('/api/admin/campaigns-management/campaigns/books/list');
       if (!res.ok) throw new Error('Failed to fetch books');
       return res.json();
     }
@@ -98,7 +98,7 @@ export function AdminCampaignWizard({
   // Mutation to create a new campaign
   const createCampaign = useMutation({
     mutationFn: async (formData: CampaignFormValues) => {
-      const res = await fetch('/api/admin/campaigns', {
+      const res = await fetch('/api/admin/campaigns-management/campaigns', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export function AdminCampaignWizard({
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/campaigns-management/campaigns'] });
       toast({
         title: "Campaign created",
         description: "The campaign has been created successfully.",

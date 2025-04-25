@@ -130,9 +130,9 @@ export function AdminCampaignManager() {
     data: campaigns, 
     isLoading: loadingCampaigns 
   } = useQuery({
-    queryKey: ['/api/admin/campaigns'],
+    queryKey: ['/api/admin/campaigns-management/campaigns'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/campaigns');
+      const res = await fetch('/api/admin/campaigns-management/campaigns');
       if (!res.ok) throw new Error('Failed to fetch campaigns');
       return res.json();
     }
