@@ -42,6 +42,10 @@ router.get("/books/:id/ratings", async (req, res) => {
       };
     }));
     
+    // Get the book information to get the author data
+    const book = await dbStorage.getBook(rating.bookId);
+    const bookAuthor = book ? await dbStorage.getAuthor(book.authorId) : null;
+    
     return {
       ...rating,
       user: {
@@ -49,6 +53,9 @@ router.get("/books/:id/ratings", async (req, res) => {
         displayName: user?.displayName || user?.username || 'Anonymous',
         profileImageUrl: user?.profileImageUrl
       },
+      // Add author information for reference
+      authorName: bookAuthor?.author_name,
+      authorImageUrl: bookAuthor?.author_image_url,
       replies: repliesWithAuthor
     };
   }));

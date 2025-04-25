@@ -32,6 +32,9 @@ interface ReviewCardProps {
       coverImageUrl?: string;
     };
     replies?: Reply[];
+    // Additional fields that might be needed for author information
+    authorName?: string;
+    authorImageUrl?: string;
   };
 }
 
