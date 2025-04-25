@@ -408,7 +408,7 @@ export default function AuthorPage() {
                 filteredBooks.map((book) => (
                   <CarouselItem
                     key={book.id}
-                    className="md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4 pb-4"
+                    className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4 pl-4 pb-4"
                   >
                     <BookCard book={convertBooksToClientFormat([book])[0]} />
                   </CarouselItem>
@@ -440,16 +440,16 @@ export default function AuthorPage() {
             </div>
           </div>
         ) : bookshelves && bookshelves.length > 0 ? (
-          <div className="space-y-10">
+          <div className="space-y-4">
             <h2 className="text-2xl font-bold mb-6">Shared Bookshelves</h2>
             {bookshelves.map((shelfWithBooks) => (
-              <div key={shelfWithBooks.shelf.id} className="space-y-4">
-                <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
+              <div key={shelfWithBooks.shelf.id} className="">
+              
                 {shelfWithBooks.books && shelfWithBooks.books.length > 0 ? (
-                  <div className="flex flex-col md:flex-row items-start gap-6">
+                  <div className="flex flex-col md:flex-row mb-12 justify-center items-center gap-6">
                     {/* Bookshelf cover on the left */}
                     <div className="w-full md:w-48 flex-shrink-0">
-                      <div className="aspect-[2/3] relative rounded-lg overflow-hidden border shadow">
+                      <div className="aspect-[2/3] relative rounded-lg   border shadow">
                         <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-muted/60">
                           <img 
                             src={shelfWithBooks.shelf.coverImageUrl?.toString() || "/images/default-bookshelf-cover.svg"} 
@@ -465,14 +465,16 @@ export default function AuthorPage() {
                       
                     </div>
                     {/* Book rack display on the right */}
-                    <div className="flex-1 overflow-hidden">
+                    <div className="flex-1 w-full">
                       <BookRack 
                         title="" 
                         books={convertBooksToClientFormat(shelfWithBooks.books)} 
                         isLoading={false}
                         className="m-0 mb-0"
                       />
+                      <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
                     </div>
+                    
                   </div>
                 ) : (
                   <div className="flex justify-center items-center h-32 bg-muted/20 rounded-lg">

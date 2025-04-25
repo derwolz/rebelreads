@@ -225,7 +225,7 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
         <div 
           className="absolute bottom-0 animate-fade-in-from-left ease-in-out"
           style={{
-            transform: 'translateX(-50%) translateY(30%) ',
+            transform: 'translateX(-50%) translateY(50%) ',
             zIndex: 20, // Lower than WhatsHot sidebar but higher than regular books
             width: '256px', // Match the BookCard's width
           }}
@@ -354,16 +354,16 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
   }
   
   return (
-    <section className={cn("mb-12 relative", className)}>
+    <section className={cn("mb-12 relative w-full", className)}>
       <h2 className="text-3xl font-bold mb-6">{title}</h2>
       
       {/* Book shelf */}
-      <div className="relative">
+      <div className="relative w-full">
         {/* The books container - positioned on the shelf */}
         <div 
           className="flex items-end bg-muted/10 rounded-md h-[266px] "
         >
-          <div className="flex justify-center items-center" style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
+          <div className="flex justify-center items-center " style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
             {books.map((book, index) => {
               // Get this book's angle
               const angle = bookAngles[index] || 0;
@@ -389,7 +389,7 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
               return (
                 <div
                   key={key}
-                  className={`transition-transform ${""} duration-300 ease-in-out`}
+                  className={`transition-transform ${""} duration-300 ease-in-out `}
                   style={{ 
                     transform: `translateX(${positionShift}px)`,
                     zIndex: hoveredIndex !== null && showingCard ? 0 : 1

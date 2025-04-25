@@ -284,7 +284,7 @@ export default function BookDetails() {
       <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid md:grid-cols-3 gap-6">
           {/* Left column with book cover and action buttons - sticky on desktop, scrollable on mobile */}
-          <div className="md:sticky md:top-10 self-start md:max-h-[calc(65vh-220px)]">
+          <div className="md:sticky md:top-10 md:max-w-[400px] self-start justify-self-end ">
             <div className="relative">
               <img
                 src={
@@ -292,7 +292,7 @@ export default function BookDetails() {
                   "/images/placeholder-book.png"
                 }
                 alt={book.title}
-                className="w-full rounded-lg shadow-lg object-fit "
+                className="w-full rounded-lg shadow-lg md:max-w-[400px] object-fit "
               />
               <div className="absolute top-2 left-2 flex space-x-2">
                 <WishlistButton
@@ -311,7 +311,7 @@ export default function BookDetails() {
             </div>
             
             {/* Referral links with improved mobile layout */}
-            <div className="mt-4 space-y-2 overflow-y-auto max-h-[180px] md:max-h-[calc(100vh-500px)]">
+            <div className="mt-4 space-y-2 verflow-y-auto ">
               {Array.isArray(book.referralLinks) &&
                 book.referralLinks.length > 0 && 
                 book.referralLinks.map(
