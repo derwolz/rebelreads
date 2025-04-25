@@ -226,6 +226,19 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                   <Button className="w-full mt-6" type="submit">
                     Login
                   </Button>
+                  <div className="text-center mt-4">
+                    <a 
+                      href="#" 
+                      className="text-sm text-primary hover:underline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onOpenChange(false);
+                        setLocation("/reset-password");
+                      }}
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
                 </form>
               </Form>
             </TabsContent>
