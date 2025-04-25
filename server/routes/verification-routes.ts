@@ -4,6 +4,7 @@ import { verificationService } from "../services/verification-service";
 import { VERIFICATION_TYPES } from "../services/verification-service";
 import { dbStorage } from "../storage";
 import { z } from "zod";
+import { hashPassword } from "../auth";
 
 const verificationRouter = Router();
 

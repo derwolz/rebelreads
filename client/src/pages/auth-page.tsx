@@ -178,6 +178,18 @@ export default function AuthPage() {
                     <Button className="w-full mt-6" type="submit" disabled={loginMutation.isPending}>
                       {loginMutation.isPending ? "Logging in..." : "Login"}
                     </Button>
+                    <div className="text-center mt-4">
+                      <a 
+                        href="#" 
+                        className="text-sm text-primary hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setLocation("/reset-password");
+                        }}
+                      >
+                        Forgot your password?
+                      </a>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>
