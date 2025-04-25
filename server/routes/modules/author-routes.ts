@@ -6,12 +6,62 @@ const router = Router();
 
 /**
  * GET /api/authors/:id
- * Direct ID-based access has been removed to prevent scraping attacks
+ * Get author details by ID
+ * Authentication required to prevent scraping attacks
  */
 router.get("/:id([0-9]+)", async (req, res) => {
-  // This will catch direct numeric IDs only, like /authors/1
-  // Other routes like /:id/publisher will still work
-  return res.status(404).json({ error: "Not found - Direct ID access is not permitted" });
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const authorId = parseInt(req.params.id);
+  if (isNaN(authorId)) {
+    return res.status(400).json({ error: "Invalid author ID" });
+  }
+  
+  try {
+    const author = await dbStorage.getAuthor(authorId);
+    
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    // Get number of books published by this author
+    const books = await dbStorage.getBooksByAuthor(author.id);
+    
+    // Get number of followers for this author
+    const followerCount = await dbStorage.getFollowerCount(author.id);
+    
+    // Get author aggregate ratings
+    const aggregateRatings = await dbStorage.getAuthorAggregateRatings(author.id);
+    
+    // Get total number of ratings across all books
+    let totalRatings = 0;
+    if (books && books.length > 0) {
+      const bookIds = books.map(book => book.id);
+      const allRatings = await dbStorage.getRatingsForBooks(bookIds);
+      totalRatings = allRatings.length;
+    }
+    
+    // Get user profile data for profile image
+    const userData = await dbStorage.getUser(author.userId);
+    
+    // Update response with enhanced data
+    const authorWithStats = {
+      ...author,
+      bookCount: books.length,
+      followerCount: followerCount,
+      totalRatings: totalRatings,
+      books: books,
+      aggregateRatings: aggregateRatings,
+      profileImageUrl: userData?.profileImageUrl
+    };
+    
+    return res.json(authorWithStats);
+  } catch (error) {
+    console.error(`Error fetching author by ID: ${authorId}:`, error);
+    return res.status(500).json({ error: "Failed to fetch author" });
+  }
 });
 
 /**
@@ -42,6 +92,9 @@ router.get("/", async (req, res) => {
     // Get number of followers for this author
     const followerCount = await dbStorage.getFollowerCount(author.id);
     
+    // Get author aggregate ratings
+    const aggregateRatings = await dbStorage.getAuthorAggregateRatings(author.id);
+    
     // Get total number of ratings across all books
     let totalRatings = 0;
     if (books && books.length > 0) {
@@ -50,13 +103,18 @@ router.get("/", async (req, res) => {
       totalRatings = allRatings.length;
     }
     
+    // Get user profile data for profile image
+    const userData = await dbStorage.getUser(author.userId);
+    
     // Update response with enhanced data
     const authorWithStats = {
       ...author,
       bookCount: books.length,
       followerCount: followerCount,
       totalRatings: totalRatings,
-      books: books
+      books: books,
+      aggregateRatings: aggregateRatings,
+      profileImageUrl: userData?.profileImageUrl
     };
     
     return res.json(authorWithStats);
