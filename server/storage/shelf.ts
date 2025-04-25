@@ -1,6 +1,6 @@
 import { db } from "../db";
-import { bookShelves, shelfBooks, books } from "@shared/schema";
-import { eq, and, asc, desc } from "drizzle-orm";
+import { bookShelves, shelfBooks, books, bookImages } from "@shared/schema";
+import { eq, and, asc, desc, inArray } from "drizzle-orm";
 
 export interface IShelfStorage {
   getSharedBookshelvesForUser(userId: number): Promise<any[]>;
@@ -45,10 +45,35 @@ export class ShelfStorage implements IShelfStorage {
           book: item.book
         }));
         
+        // Get all book IDs to fetch images
+        const bookIds = shelfBooksList.map(item => item.book.id);
+        
+        // Fetch images for all books in a single query
+        const allBookImages = bookIds.length > 0 
+          ? await db.select()
+              .from(bookImages)
+              .where(inArray(bookImages.bookId, bookIds))
+          : [];
+        
+        // Group images by book ID for easy lookup
+        const imagesByBookId = new Map();
+        allBookImages.forEach(image => {
+          if (!imagesByBookId.has(image.bookId)) {
+            imagesByBookId.set(image.bookId, []);
+          }
+          imagesByBookId.get(image.bookId).push(image);
+        });
+        
+        // Add images to each book
+        const booksWithImages = shelfBooksList.map(item => ({
+          ...item.book,
+          images: imagesByBookId.get(item.book.id) || []
+        }));
+        
         // Return the shelf with its books
         return {
           shelf,
-          books: shelfBooksList.map(item => item.book)
+          books: booksWithImages
         };
       })
     );
