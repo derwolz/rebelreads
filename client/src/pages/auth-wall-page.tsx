@@ -167,7 +167,15 @@ export default function AuthWallPage() {
                         name="password"
                         render={({ field }) => (
                           <FormItem className="mt-4">
-                            <FormLabel>Password</FormLabel>
+                            <div className="flex justify-between items-center">
+                              <FormLabel>Password</FormLabel>
+                              <a
+                                href="/reset-password"
+                                className="text-xs text-primary hover:underline"
+                              >
+                                Forgot your password?
+                              </a>
+                            </div>
                             <FormControl>
                               <Input type="password" {...field} />
                             </FormControl>
