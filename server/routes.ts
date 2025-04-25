@@ -40,6 +40,7 @@ import shelfRoutes from "./routes/shelf-routes";
 import { registerContentReportsRoutes } from "./routes/content-reports-routes";
 import { registerRandomBookRoutes } from "./routes/random-book-routes";
 import accountVerificationRoutes from "./routes/account-verification-routes";
+import accountLookupRoutes from "./routes/account-lookup-routes";
 import verificationRoutes from "./routes/verification-routes";
 import verifyLoginRoutes from "./routes/verify-login-route";
 import linkPreviewRoutes from "./routes/link-preview-routes";
@@ -171,6 +172,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register account verification routes
   app.use("/api/account/verification", accountVerificationRoutes);
+  
+  // Register account lookup routes for password reset
+  app.use("/api/account", accountLookupRoutes);
   
   // Register verification routes for login verification, resend codes, etc.
   app.use("/api", verificationRoutes);

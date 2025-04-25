@@ -24,7 +24,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { hashPassword, comparePasswords } from "@shared/auth";
 
 // Define the steps of the password reset flow
 enum ResetStep {

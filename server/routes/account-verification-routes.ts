@@ -4,6 +4,7 @@ import { verificationService, VERIFICATION_TYPES } from '../services/verificatio
 import { securityService } from '../services/security-service';
 import { db } from '../db';
 import { users } from '@shared/schema';
+import { hashPassword } from '../auth';
 import { eq } from 'drizzle-orm';
 
 const router = express.Router();
