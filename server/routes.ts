@@ -92,6 +92,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register public routes BEFORE auth to make them available without authentication
   app.use("/api/public", publicAuthorRoutes);
   
+  // Register verification routes before auth for password reset functionality
+  app.use("/api", verificationRoutes);
+  app.use("/api/account", accountLookupRoutes);
+  
   // Setup authentication
   setupAuth(app);
 
@@ -172,12 +176,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register account verification routes
   app.use("/api/account/verification", accountVerificationRoutes);
-  
-  // Register account lookup routes for password reset
-  app.use("/api/account", accountLookupRoutes);
-  
-  // Register verification routes for login verification, resend codes, etc.
-  app.use("/api", verificationRoutes);
   
   // Register login verification routes
   app.use("/api", verifyLoginRoutes);
