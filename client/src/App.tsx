@@ -61,6 +61,7 @@ import BookShelfSharePage from "@/pages/book-shelf-share-page";
 import TestImageUpload from "@/pages/TestImageUpload";
 import BookCardTest from "@/pages/book-card-test";
 import BookSpineTest from "@/pages/book-spine-test";
+import ResetPasswordPage from "@/pages/reset-password-page";
 
 function App() {
   const { isOpen, setIsOpen } = useAuthModal();
@@ -121,6 +122,7 @@ function App() {
           {/* Auth wall */}
           <Route path="/auth" component={AuthWallPage} />
           <Route path="/auth-check" component={AuthCheckPage} />
+          <Route path="/reset-password" component={ResetPasswordPage} />
 
           {/* Public routes that require authentication in beta mode */}
           <Route path="/" component={HomeComponent} />

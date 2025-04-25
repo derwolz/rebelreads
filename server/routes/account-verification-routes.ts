@@ -244,12 +244,6 @@ router.get('/login-status/:userId', async (req, res) => {
   }
 });
 
-// Placeholder for password hashing function
-// In a real implementation, this should be the same function used in auth.ts
-async function hashPassword(password: string): Promise<string> {
-  // This is a placeholder, the actual implementation should match auth.ts
-  // For example, using bcrypt or scrypt as in your auth system
-  return `hashed_${password}`;
-}
+
 
 export default router;
