@@ -235,8 +235,8 @@ export function AdminCampaignManager() {
       matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
     }
     
-    // Apply status filter if set
-    if (filterStatus) {
+    // Apply status filter if set and not "all"
+    if (filterStatus && filterStatus !== "all") {
       matchesFilter = campaign.status === filterStatus;
     }
     
@@ -529,7 +529,7 @@ export function AdminCampaignManager() {
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="paused">Paused</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
