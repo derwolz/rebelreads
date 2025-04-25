@@ -23,7 +23,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import type { Book, SocialMediaLink, BookShelf } from "@shared/schema";
+import type { SocialMediaLink, BookShelf } from "@shared/schema";
+import type { Book } from "@/types";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
 import { Search } from "lucide-react";
@@ -58,12 +59,22 @@ interface AuthorDetails {
     worldbuilding: number;
   };
   socialMediaLinks?: SocialMediaLink[];
+  profileImageUrl?: string | null;
+  author_image_url?: string | null;
 }
 
 interface ShelfWithBooks {
   shelf: BookShelf;
   books: Book[];
 }
+
+// Helper function to convert API books to client books
+const convertBooksToClientFormat = (books: any[]): Book[] => {
+  return books.map(book => ({
+    ...book,
+    referralLinks: book.referralLinks || []
+  }));
+};
 
 export default function AuthorPage() {
   const [matchAuthorsId, paramsById] = useRoute("/authors/:id");
@@ -196,7 +207,7 @@ export default function AuthorPage() {
                 {(author.author_image_url || author.profileImageUrl) && (
                   <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-2 border-primary">
                     <img 
-                      src={author.author_image_url || author.profileImageUrl} 
+                      src={author.author_image_url || author.profileImageUrl || '/images/default-bookshelf-cover.svg'} 
                       alt={`${author.authorName || author.username}'s profile`}
                       className="w-full h-full object-cover"
                     />
@@ -399,7 +410,7 @@ export default function AuthorPage() {
                     key={book.id}
                     className="md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4 pb-4"
                   >
-                    <BookCard book={book} />
+                    <BookCard book={convertBooksToClientFormat([book])[0]} />
                   </CarouselItem>
                 ))
               ) : (
@@ -457,7 +468,7 @@ export default function AuthorPage() {
                     <div className="flex-1 overflow-hidden">
                       <BookRack 
                         title="" 
-                        books={shelfWithBooks.books} 
+                        books={convertBooksToClientFormat(shelfWithBooks.books)} 
                         isLoading={false}
                         className="m-0 mb-0"
                       />

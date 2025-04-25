@@ -163,13 +163,9 @@ router.get("/:id/publisher", async (req, res) => {
 /**
  * GET /api/authors/:id/bookshelves
  * Get bookshelves shared by an author
- * Authentication required to prevent scraping attacks
+ * Public endpoint - no authentication required since these are shared shelves
  */
 router.get("/:id/bookshelves", async (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-
   const authorId = parseInt(req.params.id);
   if (isNaN(authorId)) {
     return res.status(400).json({ error: "Invalid author ID" });
