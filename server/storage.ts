@@ -13,6 +13,7 @@ import { SellerStorage } from "./storage/seller";
 import { FilterStorage } from "./storage/filters";
 import { ContentReportStorage } from "./storage/content-reports";
 import { SecurityStorage } from "./storage/security";
+import { ShelfStorage } from "./storage/shelf";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -30,6 +31,7 @@ const sellerStorage = new SellerStorage();
 const filterStorage = new FilterStorage();
 const contentReportStorage = new ContentReportStorage();
 const securityStorage = new SecurityStorage();
+const shelfStorage = new ShelfStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
@@ -236,6 +238,9 @@ export const dbStorage = {
   getNewTickets: feedbackStorage.getNewTickets.bind(feedbackStorage),
   getResolvedTickets: feedbackStorage.getResolvedTickets.bind(feedbackStorage),
   
+  // Bookshelf
+  getSharedBookshelvesForUser: shelfStorage.getSharedBookshelvesForUser.bind(shelfStorage),
+  
   // Seller management
   isUserSeller: sellerStorage.isUserSeller.bind(sellerStorage),
   getSellerByUserId: sellerStorage.getSellerByUserId.bind(sellerStorage),
@@ -294,6 +299,7 @@ export type { IFeedbackStorage } from "./storage/feedback";
 export type { ISellerStorage } from "./storage/seller";
 export type { IContentReportStorage } from "./storage/content-reports";
 export type { ISecurityStorage } from "./storage/security";
+export type { IShelfStorage } from "./storage/shelf";
 
 // Re-export storage classes
 export {
@@ -311,4 +317,5 @@ export {
   SellerStorage,
   FilterStorage,
   ContentReportStorage,
+  ShelfStorage,
 };

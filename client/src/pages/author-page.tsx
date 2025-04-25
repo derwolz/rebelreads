@@ -192,9 +192,19 @@ export default function AuthorPage() {
             {/* Left column - Author Identity Card */}
             <Card className="bg-card/50 backdrop-blur-sm shadow-lg overflow-hidden">
               <CardHeader className="pb-3">
-                <CardTitle className="text-2xl">{author.authorName || author.username}</CardTitle>
+                {/* Author Profile Image */}
+                {(author.author_image_url || author.profileImageUrl) && (
+                  <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-2 border-primary">
+                    <img 
+                      src={author.author_image_url || author.profileImageUrl} 
+                      alt={`${author.authorName || author.username}'s profile`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <CardTitle className="text-2xl text-center">{author.authorName || author.username}</CardTitle>
                 <CardDescription className="flex flex-col space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-center">
                     <span>{author.followerCount} followers</span>
                     <span>•</span>
                     <span>{author.books.length} books</span>
@@ -420,16 +430,14 @@ export default function AuthorPage() {
           </div>
         ) : bookshelves && bookshelves.length > 0 ? (
           <div className="space-y-10">
-            <h2 className="text-2xl font-bold mb-6">Bookshelves</h2>
+            <h2 className="text-2xl font-bold mb-6">Shared Bookshelves</h2>
             {bookshelves.map((shelfWithBooks) => (
-              <div key={shelfWithBooks.shelf.id} className="text-2xl space-y-4">
-                {shelfWithBooks.shelf.title}
-                {shelfWithBooks.books.length > 0 ? (
-                  <div className="flex flex-col md:flex-row items-center gap-6">
+              <div key={shelfWithBooks.shelf.id} className="space-y-4">
+                <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
+                {shelfWithBooks.books && shelfWithBooks.books.length > 0 ? (
+                  <div className="flex flex-col md:flex-row items-start gap-6">
                     {/* Bookshelf cover on the left */}
-                    
                     <div className="w-full md:w-48 flex-shrink-0">
-                      
                       <div className="aspect-[2/3] relative rounded-lg overflow-hidden border shadow">
                         <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-muted/60">
                           <img 
