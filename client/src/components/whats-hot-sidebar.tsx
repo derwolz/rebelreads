@@ -206,7 +206,11 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
   );
 }
 
-export function WhatsHotSidebar() {
+interface WhatsHotSidebarProps {
+  isSticky?: boolean;
+}
+
+export function WhatsHotSidebar({ isSticky = false }: WhatsHotSidebarProps) {
   const [, navigate] = useLocation();
   const [periodFilter, setPeriodFilter] = useState<"day" | "week" | "month">("day");
   const [isMinimized, setIsMinimized] = useState(false);
@@ -257,6 +261,38 @@ export function WhatsHotSidebar() {
   }
 
   // Default render (sidebar for desktop)
+  // If isSticky is true, render a non-fixed version that will be placed in a sticky container
+  if (isSticky) {
+    return (
+      <div className="bg-muted/10 shadow-lg p-4 rounded-lg border border-border/20 backdrop-blur-sm">
+        <h2 className="text-lg font-medium mb-4">What's Hot</h2>
+        <PopularityFilter 
+          activePeriod={periodFilter} 
+          onChange={setPeriodFilter} 
+        />
+        
+        <div className="space-y-1 max-h-[calc(100vh-220px)] overflow-y-auto pr-1 custom-scrollbar">
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <BookItemSkeleton key={i} />
+            ))
+          ) : popularBooks?.length ? (
+            popularBooks.slice(0, 5).map((book, index) => (
+              <MiniBookCard 
+                key={book.id} 
+                book={book} 
+                rank={index + 1} 
+              />
+            ))
+          ) : (
+            <p className="text-muted-foreground text-sm">No popular books available</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Default floating sidebar version
   return (
     <div className={`fixed z-40 transition-all duration-300 ease-in-out ${
       isMinimized 

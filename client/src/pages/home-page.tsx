@@ -193,7 +193,7 @@ export default function HomePage() {
           <div className="lg:w-72 hidden lg:block lg:order-2">
             {/* What's Hot Section - Desktop: Vertical */}
             <div className="sticky top-20">
-              <WhatsHotSidebar />
+              <WhatsHotSidebar isSticky={true} />
             </div>
           </div>
         </div>
