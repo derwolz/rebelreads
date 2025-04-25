@@ -128,8 +128,8 @@ router.post("/reset-password", async (req, res) => {
       });
     }
     
-    // Verify the code
-    const verificationResult = await verificationService.verifyCode(
+    // Check the code first without consuming it
+    const verificationResult = await verificationService.checkCode(
       userId,
       code,
       VERIFICATION_TYPES.PASSWORD_RESET
@@ -138,6 +138,13 @@ router.post("/reset-password", async (req, res) => {
     if (!verificationResult) {
       return res.status(400).json({ error: "Invalid or expired verification code" });
     }
+    
+    // If we get here, the code is valid, but we'll need to verify and consume it
+    await verificationService.verifyCode(
+      userId,
+      code,
+      VERIFICATION_TYPES.PASSWORD_RESET
+    );
     
     // Hash the new password
     const hashedPassword = await hashPassword(newPassword);
