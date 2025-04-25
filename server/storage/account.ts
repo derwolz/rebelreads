@@ -132,16 +132,46 @@ export class AccountStorage implements IAccountStorage {
     // Import the normalizeEmail function to handle aliases
     const { normalizeEmail } = await import("@shared/utils/email-validator");
     
-    // Normalize email to handle aliases (gmail dots, plus addressing, etc.)
-    // This helps prevent multiple accounts with the same effective email
-    // Also ensure email and username are stored in lowercase
-    const normalizedUser = {
+    // Check for duplicate email addresses more comprehensively
+    if (insertUser.email) {
+      // Get original email lowercase for exact match checking
+      const lowerEmail = insertUser.email.toLowerCase();
+      
+      // Get normalized version for alias checking (periods removed, etc.)
+      const normalizedEmail = normalizeEmail(lowerEmail);
+      
+      // Check for exact match first
+      const existingExactMatch = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, lowerEmail));
+      
+      if (existingExactMatch.length > 0) {
+        throw new Error("Email already in use by another account");
+      }
+      
+      // Also check for normalized match (aliases)
+      // This handles cases like j.ohn@gmail.com vs john@gmail.com
+      if (normalizedEmail !== lowerEmail) {
+        const existingNormalizedMatch = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, normalizedEmail));
+        
+        if (existingNormalizedMatch.length > 0) {
+          throw new Error("Email already in use by another account (alias detected)");
+        }
+      }
+    }
+    
+    // Create user with original email format (but lowercase) and lowercase username
+    const userData = {
       ...insertUser,
-      email: normalizeEmail(insertUser.email?.toLowerCase() || ""),
+      email: insertUser.email?.toLowerCase() || "",
       username: insertUser.username?.toLowerCase()
     };
     
-    const [user] = await db.insert(users).values(normalizedUser).returning();
+    const [user] = await db.insert(users).values(userData).returning();
     return user;
   }
 
@@ -149,17 +179,59 @@ export class AccountStorage implements IAccountStorage {
     // Import the normalizeEmail function to handle aliases
     const { normalizeEmail } = await import("@shared/utils/email-validator");
     
-    // Normalize email address to handle aliases when updating
-    // Also ensure email and username are stored in lowercase if they're being updated
-    const normalizedData = {
+    // Check for duplicate email if email is being updated
+    if (data.email) {
+      // Get original email lowercase for exact match checking
+      const lowerEmail = data.email.toLowerCase();
+      
+      // Get normalized version for alias checking (periods removed, etc.)
+      const normalizedEmail = normalizeEmail(lowerEmail);
+      
+      // Check for exact match first, excluding the current user
+      const existingExactMatch = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.email, lowerEmail),
+            sql`${users.id} != ${id}`
+          )
+        );
+      
+      if (existingExactMatch.length > 0) {
+        throw new Error("Email already in use by another account");
+      }
+      
+      // Also check for normalized match (aliases)
+      // This handles cases like j.ohn@gmail.com vs john@gmail.com, excluding the current user
+      if (normalizedEmail !== lowerEmail) {
+        const existingNormalizedMatch = await db
+          .select()
+          .from(users)
+          .where(
+            and(
+              eq(users.email, normalizedEmail),
+              sql`${users.id} != ${id}`
+            )
+          );
+        
+        if (existingNormalizedMatch.length > 0) {
+          throw new Error("Email already in use by another account (alias detected)");
+        }
+      }
+    }
+    
+    // Preserve the original email format but ensure usernames are lowercase
+    const updateData = {
       ...data,
-      email: data.email ? normalizeEmail(data.email.toLowerCase()) : undefined,
+      // Store email in original format but lowercase
+      email: data.email ? data.email.toLowerCase() : undefined,
       username: data.username ? data.username.toLowerCase() : undefined
     };
     
     const [user] = await db
       .update(users)
-      .set(normalizedData)
+      .set(updateData)
       .where(eq(users.id, id))
       .returning();
     return user;
