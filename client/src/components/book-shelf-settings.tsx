@@ -645,10 +645,10 @@ export function BookShelfSettings() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookshelves"] });
       toast({
-        title: data.isShared ? "Bookshelf shared" : "Bookshelf unshared",
+        title: data.isShared ? "Bookshelf pinned to author profile" : "Bookshelf unpinned from author profile",
         description: data.isShared 
-          ? "Your bookshelf is now visible to others"
-          : "Your bookshelf is now private",
+          ? "Your bookshelf is now featured on your author page"
+          : "Your bookshelf has been removed from your author page",
       });
     },
     onError: (error) => {
