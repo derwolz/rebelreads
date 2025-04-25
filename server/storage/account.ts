@@ -366,6 +366,19 @@ export class AccountStorage implements IAccountStorage {
       .where(eq(ratings.userId, userId))
       .orderBy(desc(ratings.createdAt));
   }
+  
+  async getUserRating(userId: number, bookId: number): Promise<Rating | null> {
+    const result = await db
+      .select()
+      .from(ratings)
+      .where(and(
+        eq(ratings.userId, userId),
+        eq(ratings.bookId, bookId)
+      ))
+      .limit(1);
+    
+    return result.length > 0 ? result[0] : null;
+  }
 
   async getReadingStatus(
     userId: number,

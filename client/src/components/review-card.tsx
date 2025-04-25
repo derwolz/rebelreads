@@ -45,8 +45,13 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const hasLongReview = review.review && review.review.length > REVIEW_PREVIEW_LENGTH;
   const hasReplies = review.replies && review.replies.length > 0;
 
+  // Use available user information in this priority order
   const userDisplayName = review.user?.displayName || review.user?.username || "Anonymous";
   const userInitial = userDisplayName.charAt(0).toUpperCase();
+  
+  // For consistent author display across components
+  const authorName = review.authorName;
+  const authorImageUrl = review.authorImageUrl;
 
   return (
     <div className="p-4 bg-muted rounded-lg space-y-2 cursor-pointer w-full" onClick={() => setIsOpen(!isOpen)}>
@@ -125,24 +130,31 @@ export function ReviewCard({ review }: ReviewCardProps) {
             <div className="mt-4 border-t pt-2">
               <p className="text-sm font-medium mb-2">Author Replies:</p>
               <ScrollArea className="max-h-48">
-                {review.replies?.map((reply) => (
-                  <div key={reply.id} className="flex items-start gap-2 mb-2 pl-3 border-l-2 border-primary/20">
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={reply.author.profileImageUrl || undefined} />
-                      <AvatarFallback>{reply.author.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <p className="text-xs font-medium">{reply.author.name}</p>
-                        <Badge variant="outline" className="text-xs ml-1 py-0 px-1 h-4">Author</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
-                        </span>
+                {review.replies?.map((reply) => {
+                  // Use the book author information from the review when available
+                  // This ensures all author replies consistently use the author name and profile image
+                  const replyAuthorName = authorName || reply.author.name;
+                  const replyAuthorImageUrl = authorImageUrl || reply.author.profileImageUrl;
+                  
+                  return (
+                    <div key={reply.id} className="flex items-start gap-2 mb-2 pl-3 border-l-2 border-primary/20">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={replyAuthorImageUrl || undefined} />
+                        <AvatarFallback>{replyAuthorName.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs font-medium">{replyAuthorName}</p>
+                          <Badge variant="outline" className="text-xs ml-1 py-0 px-1 h-4">Author</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-sm">{reply.content}</p>
                       </div>
-                      <p className="text-sm">{reply.content}</p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </ScrollArea>
             </div>
           )}

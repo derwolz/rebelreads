@@ -263,8 +263,8 @@ router.get("/coming-soon", async (req, res) => {
  * Public endpoint - no authentication required
  */
 router.get("/:id/taxonomies", async (req, res) => {
-  // Force JSON content type to prevent Vite intercept
-  res.type('application/json');
+  // Force JSON content type to prevent Vite intercept - specify explicitly to avoid HTML responses
+  res.set('Content-Type', 'application/json');
   
   // Public endpoint - no authentication required
   const bookId = parseInt(req.params.id);
@@ -280,6 +280,10 @@ router.get("/:id/taxonomies", async (req, res) => {
     }
     
     const taxonomies = await dbStorage.getBookTaxonomies(bookId);
+    
+    // Log what we're sending for debugging
+    console.log(`Fetched ${taxonomies.length} taxonomies for book ${bookId}`);
+    
     return res.json(taxonomies);
   } catch (error) {
     console.error("Error fetching book taxonomies:", error);
