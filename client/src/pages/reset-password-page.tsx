@@ -148,7 +148,7 @@ export default function ResetPasswordPage() {
       setUserId(userData.userId);
 
       // Now verify the code
-      const response = await apiRequest("POST", "/api/account/verification/verify", {
+      const response = await apiRequest("POST", "/api/public/verify-code", {
         userId: userData.userId,
         code: values.code,
         type: "password_reset",
@@ -191,7 +191,7 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      const response = await apiRequest("POST", "/api/account/verification/reset-password", {
+      const response = await apiRequest("POST", "/api/public/reset-password", {
         userId: userId,
         code: verificationCode,
         newPassword: values.password,

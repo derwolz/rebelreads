@@ -247,8 +247,8 @@ verificationRouter.post("/reset-password", async (req, res) => {
 });
 
 /**
- * Endpoint to verify a code
- * This doesn't require authentication since it's part of the password reset flow
+ * Endpoint to verify a code without requiring authentication
+ * This is part of the public password reset flow
  * 
  * Usage:
  * POST /api/verify-code

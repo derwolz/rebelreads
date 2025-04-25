@@ -42,6 +42,7 @@ import { registerRandomBookRoutes } from "./routes/random-book-routes";
 import accountVerificationRoutes from "./routes/account-verification-routes";
 import accountLookupRoutes from "./routes/account-lookup-routes";
 import verificationRoutes from "./routes/verification-routes";
+import publicVerificationRoutes from "./routes/public-verification-routes";
 import verifyLoginRoutes from "./routes/verify-login-route";
 import linkPreviewRoutes from "./routes/link-preview-routes";
 import objectStorageRoutes from "./routes/object-storage-routes";
@@ -91,6 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register public routes BEFORE auth to make them available without authentication
   app.use("/api/public", publicAuthorRoutes);
+  app.use("/api/public", publicVerificationRoutes);
   
   // Register verification routes before auth for password reset functionality
   app.use("/api", verificationRoutes);
