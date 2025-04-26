@@ -482,7 +482,7 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       <div className="relative w-full">
         {/* The books container - positioned on the shelf */}
         <div 
-          className={`flex items-end bg-muted/10 rounded-md h-[266px] overflow-x-auto scrollbar-hide ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          className={`flex items-end bg-muted/10 rounded-md h-[266px]  scrollbar-hide ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           ref={containerRef}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
