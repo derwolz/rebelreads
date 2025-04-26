@@ -117,20 +117,6 @@ function BookSpine({ book, angle, index, hoveredIndex, onHover }: BookSpineProps
   
   // Handle mouse enter - notify parent and set timer for card display
   const handleMouseEnter = useCallback(() => {
-    // Check if we've recently completed a drag operation
-    const lastDragTimeStr = localStorage.getItem('lastDragTime');
-    const currentTime = Date.now();
-    const dragCooldownPeriod = 500; // ms
-    
-    if (lastDragTimeStr) {
-      const lastDragTime = parseInt(lastDragTimeStr, 10);
-      
-      // If we're still within the cooldown period after dragging, don't activate hover
-      if (currentTime - lastDragTime < dragCooldownPeriod) {
-        return;
-      }
-    }
-    
     // First just notify that this book is hovered (for scaling effect)
     onHover(index, false);
     
@@ -278,32 +264,11 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
   // State to track if the book card is shown (after delay)
   const [showingCard, setShowingCard] = useState<boolean>(false);
   
-  // State for the drag carousel effect
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
-  
-  // Reference to the scrollable container
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Update window width on resize
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
   // Handle hover events from child BookSpine components
   const handleBookHover = useCallback((index: number | null, showCard: boolean) => {
-    if (!isDragging) { // Only handle hover if not dragging
-      setHoveredIndex(index);
-      setShowingCard(showCard);
-    }
-  }, [isDragging]);
+    setHoveredIndex(index);
+    setShowingCard(showCard);
+  }, []);
   
   // Create a stable book ID string for dependencies
   const bookIdsString = useMemo(() => {
@@ -362,92 +327,6 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
     }, 0);
   }, [bookAngles]);
   
-  // Track if we've moved during dragging (to distinguish between a click and a drag)
-  const [hasMoved, setHasMoved] = useState(false);
-  
-  // Mouse and touch event handlers for drag-scrolling
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!containerRef.current) return;
-    setIsDragging(true);
-    setHasMoved(false); // Reset the movement tracker
-    setStartX(e.pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
-  }, []);
-  
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!containerRef.current || e.touches.length === 0) return;
-    setIsDragging(true);
-    setHasMoved(false); // Reset the movement tracker
-    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft);
-    setScrollLeft(containerRef.current.scrollLeft);
-  }, []);
-  
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - containerRef.current.offsetLeft;
-    const distance = x - startX;
-    
-    // Only consider it a move if we've moved more than a few pixels
-    if (Math.abs(distance) > 5) {
-      setHasMoved(true);
-    }
-    
-    containerRef.current.scrollLeft = scrollLeft - distance;
-  }, [isDragging, startX, scrollLeft]);
-  
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || !containerRef.current || e.touches.length === 0) return;
-    const x = e.touches[0].pageX - containerRef.current.offsetLeft;
-    const distance = x - startX;
-    
-    // Only consider it a move if we've moved more than a few pixels
-    if (Math.abs(distance) > 5) {
-      setHasMoved(true);
-    }
-    
-    containerRef.current.scrollLeft = scrollLeft - distance;
-  }, [isDragging, startX, scrollLeft]);
-  
-  const handleMouseUp = useCallback(() => {
-    // If we dragged (not just clicked), prevent book hovering on mouse up
-    if (hasMoved) {
-      // Clear any current hover state
-      setHoveredIndex(null);
-      setShowingCard(false);
-      
-      // Disable hover events briefly to prevent accidental activations
-      const disableHoverTime = 500; // ms
-      const currentTime = Date.now();
-      
-      // Store the time of the last drag
-      localStorage.setItem('lastDragTime', currentTime.toString());
-    }
-    
-    setIsDragging(false);
-  }, [hasMoved, hoveredIndex]);
-  
-  const handleTouchEnd = useCallback(() => {
-    // If we swiped (not just tapped), prevent book hovering
-    if (hasMoved) {
-      setHoveredIndex(null);
-      setShowingCard(false);
-    }
-    
-    setIsDragging(false);
-  }, [hasMoved]);
-  
-  // Add event listeners to window for mouseup and touchend
-  useEffect(() => {
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchend', handleTouchEnd);
-    
-    return () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [handleMouseUp, handleTouchEnd]);
-  
   // Skeleton placeholder when loading
   if (isLoading) {
     return (
@@ -482,25 +361,9 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
       <div className="relative w-full">
         {/* The books container - positioned on the shelf */}
         <div 
-          className={`flex items-end bg-muted/10 rounded-md h-[266px]  scrollbar-hide ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-          ref={containerRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          style={{ 
-            overscrollBehavior: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}
+          className="flex items-end bg-muted/10 rounded-md h-[266px] "
         >
-          <div 
-            className="flex items-center" 
-            style={{ 
-              width: `${totalShelfWidth}px`, 
-              minWidth: totalShelfWidth > windowWidth ? `${totalShelfWidth}px` : '100%',
-              pointerEvents: isDragging ? 'none' : 'auto' // Disable pointer events during drag
-            }}
-          >
+          <div className="flex justify-center items-center " style={{ width: `${totalShelfWidth}px`, minWidth: '100%' }}>
             {books.map((book, index) => {
               // Get this book's angle
               const angle = bookAngles[index] || 0;
@@ -508,8 +371,8 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
               // Calculate the position shift based on hovered index
               let positionShift = 0;
               
-              if (hoveredIndex !== null && showingCard && !isDragging) {
-                // When a book is hovered and the card is shown (and not dragging):
+              if (hoveredIndex !== null && showingCard) {
+                // When a book is hovered and the card is shown:
                 // Books to the left of the hovered book shift left
                 if (index < hoveredIndex) {
                   positionShift = -150; // shift left by 150px
@@ -526,10 +389,10 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
               return (
                 <div
                   key={key}
-                  className={`transition-transform duration-300 ease-in-out`}
+                  className={`transition-transform ${""} duration-300 ease-in-out `}
                   style={{ 
                     transform: `translateX(${positionShift}px)`,
-                    zIndex: (hoveredIndex !== null && showingCard) ? 0 : 1
+                    zIndex: hoveredIndex !== null && showingCard ? 0 : 1
                   }}
                 >
                   <BookSpine 
@@ -547,15 +410,6 @@ export function BookRack({ title, books = [], isLoading, className }: BookRackPr
         
         {/* The shelf */}
         <div className="border-t border-foreground/30 bg-gradient-to-b from-foreground/20 to-background w-full h-2"></div>
-        
-        {/* Visual indicator for scrollable content */}
-        {totalShelfWidth > windowWidth && (
-          <div className="flex justify-center mt-2">
-            <div className="text-xs text-muted-foreground">
-              <span>← Drag to see more books →</span>
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
