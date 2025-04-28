@@ -125,15 +125,17 @@ export default function AuthorBashLeaderboard() {
                       </Badge>
                     </div>
                   )}
-                  <div className="aspect-video overflow-hidden">
-                    <img 
-                      src={response.imageUrl} 
-                      alt={response.text} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardContent className="pt-4">
-                    <p className="text-sm font-medium">{response.text}</p>
+                  {response.imageUrl && (
+                    <div className="aspect-video overflow-hidden">
+                      <img 
+                        src={response.imageUrl} 
+                        alt={response.text || "Author response"} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <CardContent className={response.imageUrl ? "pt-4" : ""}>
+                    {response.text && <p className="text-sm font-medium">{response.text}</p>}
                     <div className="flex items-center mt-3">
                       <Avatar className="h-6 w-6 mr-2">
                         <AvatarImage src={response.author.author_image_url || undefined} />
