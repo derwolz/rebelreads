@@ -341,12 +341,12 @@ authorBashRouter.get("/game/cards", async (req: Request, res: Response) => {
     
     // Get 3 random responses that haven't been seen yet
     const randomResponses = await db.query.authorBashResponses.findMany({
-      where: viewedIds.length > 0 ? not(authorBashResponses.id, { in: viewedIds }) : undefined,
+      where: viewedIds.length > 0 ? not(authorBashResponses.id.in(viewedIds)) : undefined,
       with: {
         author: {
           columns: {
             author_name: true,
-            imageUrl: true
+            author_image_url: true
           }
         }
       },
@@ -509,12 +509,12 @@ authorBashRouter.get("/game/retained", async (req: Request, res: Response) => {
     
     // Fetch the actual response data
     const retainedResponses = await db.query.authorBashResponses.findMany({
-      where: authorBashResponses.id.in(retainedIds),
+      where: retainedIds.length > 0 ? authorBashResponses.id.in(retainedIds) : undefined,
       with: {
         author: {
           columns: {
             author_name: true,
-            imageUrl: true
+            author_image_url: true
           }
         }
       }
@@ -617,7 +617,7 @@ authorBashRouter.get("/leaderboard/responses", async (req: Request, res: Respons
         author: {
           columns: {
             author_name: true,
-            imageUrl: true
+            author_image_url: true
           }
         },
         question: true
@@ -655,7 +655,7 @@ authorBashRouter.get("/leaderboard/authors", async (req: Request, res: Response)
         columns: {
           id: true,
           author_name: true,
-          imageUrl: true
+          author_image_url: true
         },
         with: {
           user: {
