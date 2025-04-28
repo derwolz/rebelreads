@@ -1,5 +1,25 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+
+// Helper function for JSON requests
+async function jsonRequest(url: string) {
+  const res = await fetch(url, {
+    method: 'GET',
+    credentials: "include",
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      throw json;
+    } catch {
+      throw new Error(text || res.statusText);
+    }
+  }
+  
+  return await res.json();
+}
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,9 +66,7 @@ export default function AuthorBashLeaderboard() {
     isError: isResponsesError,
   } = useQuery({
     queryKey: ["/api/authorbash/leaderboard/responses"],
-    onError: (error) => {
-      console.error("Failed to fetch top responses:", error);
-    },
+    queryFn: () => jsonRequest("/api/authorbash/leaderboard/responses"),
   });
 
   // Fetch top authors
@@ -58,9 +76,7 @@ export default function AuthorBashLeaderboard() {
     isError: isAuthorsError,
   } = useQuery({
     queryKey: ["/api/authorbash/leaderboard/authors"],
-    onError: (error) => {
-      console.error("Failed to fetch top authors:", error);
-    },
+    queryFn: () => jsonRequest("/api/authorbash/leaderboard/authors"),
   });
 
   // Handle loading states

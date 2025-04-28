@@ -52,21 +52,36 @@ export default function AuthorBashGame() {
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [gameId, setGameId] = useState<number | null>(null);
 
+  // Define game data type
+  interface GameData {
+    gameId: number;
+    gameComplete: boolean;
+    cards: CardResponse[];
+  }
+
+  // Define retained data type
+  interface RetainedData {
+    retainedCards: CardResponse[];
+  }
+
   // Get three random responses for the user to choose from
   const {
     data: gameData,
     isLoading: isLoadingGame,
     isError: isGameError,
     refetch: refetchGame,
-  } = useQuery({
+  } = useQuery<GameData>({
     queryKey: ["/api/authorbash/game/cards"],
     enabled: !!user,
-    onSuccess: (data) => {
-      if (data.gameId) {
-        setGameId(data.gameId);
-      }
-    },
+    queryFn: () => jsonRequest("/api/authorbash/game/cards"),
   });
+  
+  // Set game ID when data is available
+  React.useEffect(() => {
+    if (gameData?.gameId) {
+      setGameId(gameData.gameId);
+    }
+  }, [gameData]);
 
   // Get the user's currently retained cards
   const {
@@ -74,9 +89,10 @@ export default function AuthorBashGame() {
     isLoading: isLoadingRetained,
     isError: isRetainedError,
     refetch: refetchRetained,
-  } = useQuery({
+  } = useQuery<RetainedData>({
     queryKey: ["/api/authorbash/game/retained"],
     enabled: !!user,
+    queryFn: () => jsonRequest("/api/authorbash/game/retained"),
   });
 
   // Mutation for retaining a card

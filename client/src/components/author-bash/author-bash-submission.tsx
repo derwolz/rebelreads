@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2, AlertCircle, Clock, Upload, Camera, Image, Pencil } from "lucide-react";
 
-// Helper function for FormData requests
-async function formDataRequest(url: string, options: { method: string; body: FormData }) {
+// Helper function for JSON requests
+async function jsonRequest(url: string) {
   const res = await fetch(url, {
-    method: options.method,
-    body: options.body,
+    method: 'GET',
     credentials: "include",
   });
   
@@ -22,168 +28,288 @@ async function formDataRequest(url: string, options: { method: string; body: For
   
   return await res.json();
 }
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, AlertCircle, CheckCircle, Upload } from "lucide-react";
+
+interface Question {
+  id: number;
+  question: string;
+  weekNumber: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+interface AuthorResponse {
+  id: number;
+  questionId: number;
+  authorId: number;
+  text: string;
+  imageUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AuthorBashSubmission() {
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [text, setText] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [charCount, setCharCount] = useState(0);
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const maxChars = 200;
+  const [text, setText] = useState<string>("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Define types for API responses
-  interface Question {
-    id: number;
-    question: string;
-    weekNumber: number;
-    startDate: string;
-    endDate: string;
-    isActive: boolean;
-  }
-
-  interface Response {
-    id: number;
-    questionId: number;
-    authorId: number;
-    text: string;
-    imageUrl: string;
-    retentionCount: number;
-    impressionCount: number;
-  }
-
-  // Fetch the current active question
-  const { data: activeQuestion, isLoading: isLoadingQuestion } = useQuery<Question>({
+  // Fetch current active question
+  const {
+    data: activeQuestion,
+    isLoading: isLoadingQuestion,
+    isError: isQuestionError,
+  } = useQuery<Question>({
     queryKey: ["/api/authorbash/questions/active"],
-    retry: false,
+    queryFn: () => jsonRequest("/api/authorbash/questions/active"),
+    enabled: !!user?.isAuthor,
   });
 
-  // Fetch author's existing response (if any)
-  const { data: myResponse, isLoading: isLoadingResponse } = useQuery<Response>({
+  // Fetch author's existing response to the active question
+  const {
+    data: existingResponse,
+    isLoading: isLoadingResponse,
+    isError: isResponseError,
+    refetch: refetchResponse,
+  } = useQuery<AuthorResponse>({
     queryKey: ["/api/authorbash/responses/mine"],
-    retry: false,
-    // Using .catch for error handling instead of onError
-    // to be compatible with the TanStack Query API
+    queryFn: () => jsonRequest("/api/authorbash/responses/mine"),
+    enabled: !!user?.isAuthor && !!activeQuestion,
   });
-
-  // Setup mutation for submitting a response
-  const mutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      let url = "/api/authorbash/responses";
-      let method = "POST";
-      
-      // If editing an existing response
-      if (myResponse?.id) {
-        url = `/api/authorbash/responses/${myResponse.id}`;
-        method = "PATCH";
+  
+  // Set form data when existing response is loaded
+  React.useEffect(() => {
+    if (existingResponse && !isEditing) {
+      setText(existingResponse.text || "");
+      if (existingResponse.imageUrl) {
+        setImagePreview(existingResponse.imageUrl);
       }
-      
-      return formDataRequest(url, {
-        method,
-        body: formData,
-      });
-    },
-    onSuccess: () => {
+    }
+  }, [existingResponse, isEditing]);
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
       toast({
-        title: myResponse?.id ? "Response updated!" : "Response submitted!",
-        description: "Your response has been saved successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/authorbash/responses/mine"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.error || "Failed to submit your response. Please try again.",
+        title: "Invalid file type",
+        description: "Please select an image file.",
         variant: "destructive",
       });
-    },
-  });
+      return;
+    }
 
-  // Handle text input change
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Image must be less than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setImage(file);
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+  };
+
+  // Handle text change
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    if (newText.length <= maxChars) {
-      setText(newText);
-      setCharCount(newText.length);
-    }
+    setText(e.target.value.slice(0, 200));
   };
 
-  // Handle image file selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      
-      // Create a preview URL
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        setPreviewUrl(fileReader.result as string);
-      };
-      fileReader.readAsDataURL(file);
-    }
-  };
-
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!activeQuestion) {
+  // Submit new response
+  const handleSubmit = async () => {
+    if (!activeQuestion || !text || !image) {
       toast({
-        title: "No active question",
-        description: "There is no active question to respond to at this time.",
+        title: "Missing information",
+        description: "Please provide both text and an image.",
         variant: "destructive",
       });
       return;
     }
-    
-    if (!text.trim()) {
+
+    if (text.length > 200) {
       toast({
-        title: "Text required",
-        description: "Please enter a response text.",
+        title: "Text too long",
+        description: "Response text must be 200 characters or less.",
         variant: "destructive",
       });
       return;
     }
-    
-    if (!imageFile && !myResponse?.imageUrl) {
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("text", text);
+      formData.append("image", image);
+
+      const response = await fetch("/api/authorbash/responses", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit response");
+      }
+
       toast({
-        title: "Image required",
-        description: "Please select an image for your response.",
+        title: "Response submitted!",
+        description: "Your response has been submitted successfully.",
+      });
+
+      // Refetch data
+      queryClient.invalidateQueries({
+        queryKey: ["/api/authorbash/responses/mine"],
+      });
+      refetchResponse();
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "Submission failed",
+        description: error.message || "Failed to submit response. Please try again.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Create form data for the submission
-    const formData = new FormData();
-    formData.append("text", text);
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
-    
-    mutation.mutate(formData);
   };
 
-  // Initialize form with existing response (if any)
-  useEffect(() => {
-    if (myResponse) {
-      setText(myResponse.text);
-      setCharCount(myResponse.text.length);
-      if (myResponse.imageUrl) {
-        setPreviewUrl(myResponse.imageUrl);
+  // Update existing response
+  const handleUpdate = async () => {
+    if (!existingResponse || !text) {
+      toast({
+        title: "Missing information",
+        description: "Please provide response text.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (text.length > 200) {
+      toast({
+        title: "Text too long",
+        description: "Response text must be 200 characters or less.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("text", text);
+      if (image) {
+        formData.append("image", image);
+      }
+
+      const response = await fetch(`/api/authorbash/responses/${existingResponse.id}`, {
+        method: "PATCH",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update response");
+      }
+
+      toast({
+        title: "Response updated!",
+        description: "Your response has been updated successfully.",
+      });
+
+      // Refetch data
+      queryClient.invalidateQueries({
+        queryKey: ["/api/authorbash/responses/mine"],
+      });
+      refetchResponse();
+      setIsEditing(false);
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  // Calculate time remaining until end date
+  const getTimeRemaining = (endDateString: string) => {
+    const now = new Date();
+    const endDate = new Date(endDateString);
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 1) {
+      return `${diffDays} days remaining`;
+    } else if (diffDays === 1) {
+      return "1 day remaining";
+    } else {
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      if (diffHours > 0) {
+        return `${diffHours} hours remaining`;
+      } else {
+        const diffMinutes = Math.floor(diffTime / (1000 * 60));
+        return `${diffMinutes} minutes remaining`;
       }
     }
-  }, [myResponse]);
+  };
 
-  if (isLoadingQuestion) {
+  // Handle loading states
+  if (!user) {
+    return (
+      <div className="text-center py-8">
+        <h3 className="text-xl font-semibold mb-4">Sign in to Submit</h3>
+        <p className="mb-6">You need to be signed in to submit responses to AuthorBash.</p>
+        <Button asChild>
+          <a href="/auth">Sign In</a>
+        </Button>
+      </div>
+    );
+  }
+
+  if (!user.isAuthor) {
+    return (
+      <Alert className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Author Access Required</AlertTitle>
+        <AlertDescription>
+          Only authors can submit responses to AuthorBash. If you are an author,
+          please make sure your account is properly set up.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoadingQuestion || (isLoadingResponse && !isEditing)) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -192,104 +318,178 @@ export default function AuthorBashSubmission() {
     );
   }
 
-  if (!activeQuestion) {
+  if (isQuestionError) {
     return (
       <Alert variant="destructive" className="mb-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>No Active Question</AlertTitle>
+        <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          There is no active question available at this time. Please check back later.
+          Failed to load the current question. There may not be an active question at this time.
         </AlertDescription>
       </Alert>
     );
   }
 
-  const hasSubmitted = !!myResponse;
+  if (!activeQuestion) {
+    return (
+      <Alert className="mb-6">
+        <Clock className="h-4 w-4" />
+        <AlertTitle>No Active Question</AlertTitle>
+        <AlertDescription>
+          There is no active question at this time. Please check back later for the next AuthorBash prompt.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
-  return (
-    <div>
-      <Card className="mb-6">
+  // Render the existing response (viewing mode)
+  if (existingResponse && !isEditing) {
+    return (
+      <Card>
         <CardHeader>
-          <CardTitle>This Week's Question</CardTitle>
+          <CardTitle>Your Response to Week {activeQuestion.weekNumber}</CardTitle>
+          <p className="text-muted-foreground mt-2">{activeQuestion.question}</p>
         </CardHeader>
         <CardContent>
-          <p className="text-lg font-medium">{activeQuestion.question}</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Week {activeQuestion.weekNumber} • Ending {new Date(activeQuestion.endDate).toLocaleDateString()}
-          </p>
+          <div className="mb-6 aspect-video overflow-hidden rounded-md">
+            <img 
+              src={existingResponse.imageUrl} 
+              alt={existingResponse.text} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="border rounded-md p-4 bg-muted/30">
+            <p>{existingResponse.text}</p>
+          </div>
+          <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
+            <div>Submitted: {formatDate(existingResponse.createdAt)}</div>
+            <div>{getTimeRemaining(activeQuestion.endDate)}</div>
+          </div>
         </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button onClick={() => setIsEditing(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Response
+          </Button>
+        </CardFooter>
       </Card>
+    );
+  }
 
-      {hasSubmitted && (
-        <Alert className="mb-6">
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Response Submitted</AlertTitle>
-          <AlertDescription>
-            You have already submitted a response to this question. You can edit your response below.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>{hasSubmitted ? "Edit Your Response" : "Submit Your Response"}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="response-text">Your Response</Label>
-              <Textarea 
+  // Render the submission form (for new submissions or editing)
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {existingResponse ? "Edit Your Response" : "Submit Your Response"}
+        </CardTitle>
+        <p className="text-muted-foreground mt-2">
+          Week {activeQuestion.weekNumber}: {activeQuestion.question}
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <div>
+            <Label htmlFor="response-text">Your Response (max 200 characters)</Label>
+            <div className="mt-1">
+              <Textarea
                 id="response-text"
-                placeholder="Your response in 200 characters or less..."
+                placeholder="Enter your response..."
                 value={text}
                 onChange={handleTextChange}
-                className="mt-1 resize-none"
+                maxLength={200}
+                className="resize-none"
                 rows={3}
               />
-              <div className="text-right text-sm text-muted-foreground mt-1">
-                {charCount}/{maxChars} characters
+              <div className="text-xs text-right mt-1 text-muted-foreground">
+                {text.length}/200 characters
               </div>
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="response-image">Image</Label>
-              <div className="mt-1">
-                <Input
-                  id="response-image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="mb-2"
-                />
-                {previewUrl && (
-                  <div className="relative mt-2 rounded-md overflow-hidden border border-input">
-                    <img 
-                      src={previewUrl} 
-                      alt="Preview" 
-                      className="max-h-[300px] w-auto mx-auto"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {hasSubmitted ? "Updating..." : "Submitting..."}
-                </>
+          <div>
+            <Label htmlFor="response-image">Image</Label>
+            <div className="mt-1">
+              {imagePreview ? (
+                <div className="relative aspect-video mb-4">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover rounded-md"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute bottom-2 right-2 bg-background/80"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Change Image
+                  </Button>
+                </div>
               ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {hasSubmitted ? "Update Response" : "Submit Response"}
-                </>
+                <div 
+                  className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer bg-muted/30 hover:bg-muted/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Image className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Click to select an image, or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    (JPG, PNG, GIF up to 5MB)
+                  </p>
+                </div>
               )}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
-    </div>
+              <input
+                type="file"
+                id="response-image"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
+          <div className="text-sm text-muted-foreground">
+            {getTimeRemaining(activeQuestion.endDate)} for submissions
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        {existingResponse && (
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setIsEditing(false);
+              setText(existingResponse.text);
+              setImagePreview(existingResponse.imageUrl);
+              setImage(null);
+            }}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+        )}
+        <Button 
+          onClick={existingResponse ? handleUpdate : handleSubmit}
+          disabled={isSubmitting || !text || (!image && !existingResponse)}
+          className={existingResponse ? "ml-auto" : ""}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {existingResponse ? "Updating..." : "Submitting..."}
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2" />
+              {existingResponse ? "Update Response" : "Submit Response"}
+            </>
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
