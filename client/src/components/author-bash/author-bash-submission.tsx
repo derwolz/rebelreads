@@ -131,16 +131,25 @@ export default function AuthorBashSubmission() {
 
   // Submit new response
   const handleSubmit = async () => {
-    if (!activeQuestion || !text || !image) {
+    if (!activeQuestion) {
       toast({
         title: "Missing information",
-        description: "Please provide both text and an image.",
+        description: "No active question found.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!text && !image) {
+      toast({
+        title: "Missing information",
+        description: "Please provide either text, an image, or both.",
         variant: "destructive",
       });
       return;
     }
 
-    if (text.length > 200) {
+    if (text && text.length > 200) {
       toast({
         title: "Text too long",
         description: "Response text must be 200 characters or less.",
@@ -153,8 +162,12 @@ export default function AuthorBashSubmission() {
 
     try {
       const formData = new FormData();
-      formData.append("text", text);
-      formData.append("image", image);
+      if (text) {
+        formData.append("text", text);
+      }
+      if (image) {
+        formData.append("image", image);
+      }
 
       const response = await fetch("/api/authorbash/responses", {
         method: "POST",
@@ -191,16 +204,25 @@ export default function AuthorBashSubmission() {
 
   // Update existing response
   const handleUpdate = async () => {
-    if (!existingResponse || !text) {
+    if (!existingResponse) {
       toast({
         title: "Missing information",
-        description: "Please provide response text.",
+        description: "No existing response found to update.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!text && !image && !existingResponse.imageUrl) {
+      toast({
+        title: "Missing information",
+        description: "Please provide either text, an image, or both.",
         variant: "destructive",
       });
       return;
     }
 
-    if (text.length > 200) {
+    if (text && text.length > 200) {
       toast({
         title: "Text too long",
         description: "Response text must be 200 characters or less.",
@@ -213,7 +235,11 @@ export default function AuthorBashSubmission() {
 
     try {
       const formData = new FormData();
-      formData.append("text", text);
+      if (text) {
+        formData.append("text", text);
+      } else {
+        formData.append("text", ""); // Send empty string if text was cleared
+      }
       if (image) {
         formData.append("image", image);
       }
@@ -351,16 +377,20 @@ export default function AuthorBashSubmission() {
           <p className="text-muted-foreground mt-2">{activeQuestion.question}</p>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 aspect-video overflow-hidden rounded-md">
-            <img 
-              src={existingResponse.imageUrl} 
-              alt={existingResponse.text} 
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="border rounded-md p-4 bg-muted/30">
-            <p>{existingResponse.text}</p>
-          </div>
+          {existingResponse.imageUrl && (
+            <div className="mb-6 aspect-video overflow-hidden rounded-md">
+              <img 
+                src={existingResponse.imageUrl} 
+                alt={existingResponse.text || "Response image"} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          {existingResponse.text && (
+            <div className="border rounded-md p-4 bg-muted/30">
+              <p>{existingResponse.text}</p>
+            </div>
+          )}
           <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
             <div>Submitted: {formatDate(existingResponse.createdAt)}</div>
             <div>{getTimeRemaining(activeQuestion.endDate)}</div>
@@ -474,7 +504,7 @@ export default function AuthorBashSubmission() {
         )}
         <Button 
           onClick={existingResponse ? handleUpdate : handleSubmit}
-          disabled={isSubmitting || !text || (!image && !existingResponse)}
+          disabled={isSubmitting || (!text && !image)}
           className={existingResponse ? "ml-auto" : ""}
         >
           {isSubmitting ? (
