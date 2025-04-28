@@ -42,8 +42,8 @@ interface AuthorResponse {
   id: number;
   questionId: number;
   authorId: number;
-  text: string;
-  imageUrl: string;
+  text: string | null;  // Now nullable
+  imageUrl: string | null;  // Now nullable
   createdAt: string;
   updatedAt: string;
 }
@@ -235,11 +235,9 @@ export default function AuthorBashSubmission() {
 
     try {
       const formData = new FormData();
-      if (text) {
-        formData.append("text", text);
-      } else {
-        formData.append("text", ""); // Send empty string if text was cleared
-      }
+      // Always send the text field, even if empty string
+      // The server will convert empty string to null
+      formData.append("text", text);
       if (image) {
         formData.append("image", image);
       }

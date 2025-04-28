@@ -213,8 +213,8 @@ authorBashRouter.post("/responses", upload.single("image"), async (req: Request,
     const responseData = {
       questionId: activeQuestion.id,
       authorId: author.id,
-      text: text || "",  // Use empty string if text is null/undefined
-      imageUrl,
+      text: text || null,  // null if text is not provided
+      imageUrl: imageUrl || null, // null if image is not provided
     };
     
     const [newResponse] = await db
@@ -275,7 +275,7 @@ authorBashRouter.patch("/responses/:id", upload.single("image"), async (req: Req
       if (text && text.length > 200) {
         return res.status(400).json({ error: "Response text must be 200 characters or less" });
       }
-      updateData.text = text || ""; // Use empty string if text is null/undefined
+      updateData.text = text || null; // Use null if text is empty
     }
     
     // Update image if provided
