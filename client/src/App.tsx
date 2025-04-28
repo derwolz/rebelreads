@@ -48,6 +48,7 @@ import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
 import BookShelfPage from "@/pages/book-shelf-page";
 import FeedbackButton from "@/components/feedback-button";
+import AuthorBashPage from "@/pages/author-bash-page";
 import BrandingPage from "@/pages/branding-page";
 import AuthWallPage from "@/pages/auth-wall-page";
 import { Redirect, useLocation } from "wouter";
@@ -147,6 +148,9 @@ function App() {
           <Route path="/discover" component={DiscoverPage} />
           <Route path="/discover/:type" component={DiscoverPage} />
           <Route path="/discover/:type/:id" component={DiscoverPage} />
+          
+          {/* AuthorBash experimental game mode */}
+          <Route path="/authorbash" component={AuthorBashPage} />
 
           {/* Protected routes (always require login) */}
           <ProtectedRoute path="/settings" component={SettingsPage} />

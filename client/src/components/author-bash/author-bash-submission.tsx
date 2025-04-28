@@ -1,6 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+
+// Helper function for FormData requests
+async function formDataRequest(url: string, options: { method: string; body: FormData }) {
+  const res = await fetch(url, {
+    method: options.method,
+    body: options.body,
+    credentials: "include",
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      throw json;
+    } catch {
+      throw new Error(text || res.statusText);
+    }
+  }
+  
+  return await res.json();
+}
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,19 +40,38 @@ export default function AuthorBashSubmission() {
   const queryClient = useQueryClient();
   const maxChars = 200;
 
+  // Define types for API responses
+  interface Question {
+    id: number;
+    question: string;
+    weekNumber: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+  }
+
+  interface Response {
+    id: number;
+    questionId: number;
+    authorId: number;
+    text: string;
+    imageUrl: string;
+    retentionCount: number;
+    impressionCount: number;
+  }
+
   // Fetch the current active question
-  const { data: activeQuestion, isLoading: isLoadingQuestion } = useQuery({
+  const { data: activeQuestion, isLoading: isLoadingQuestion } = useQuery<Question>({
     queryKey: ["/api/authorbash/questions/active"],
     retry: false,
   });
 
   // Fetch author's existing response (if any)
-  const { data: myResponse, isLoading: isLoadingResponse } = useQuery({
+  const { data: myResponse, isLoading: isLoadingResponse } = useQuery<Response>({
     queryKey: ["/api/authorbash/responses/mine"],
     retry: false,
-    onError: () => {
-      // It's okay if the author doesn't have a response yet
-    },
+    // Using .catch for error handling instead of onError
+    // to be compatible with the TanStack Query API
   });
 
   // Setup mutation for submitting a response
@@ -46,7 +86,7 @@ export default function AuthorBashSubmission() {
         method = "PATCH";
       }
       
-      return apiRequest(url, {
+      return formDataRequest(url, {
         method,
         body: formData,
       });
