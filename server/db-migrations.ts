@@ -1814,7 +1814,9 @@ export async function runMigrations() {
   // Add performance optimization indexes
   await addDatabaseIndexes();
   
-  
+  // Import and run AuthorBash migrations
+  const { runAuthorBashMigrations } = await import("./migrations/authorbash-tables");
+  await runAuthorBashMigrations();
 }
 
 async function createSellersTableAndUpdatePublisherSellers() {
