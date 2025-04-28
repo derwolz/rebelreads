@@ -140,7 +140,7 @@ export default function AuthorBashSubmission() {
       return;
     }
     
-    if (!text && !image) {
+    if (!text && !image && !imagePreview) {
       toast({
         title: "Missing information",
         description: "Please provide either text, an image, or both.",
@@ -213,7 +213,7 @@ export default function AuthorBashSubmission() {
       return;
     }
     
-    if (!text && !image && !existingResponse.imageUrl) {
+    if (!text && !image && !imagePreview) {
       toast({
         title: "Missing information",
         description: "Please provide either text, an image, or both.",
@@ -491,7 +491,7 @@ export default function AuthorBashSubmission() {
             variant="outline" 
             onClick={() => {
               setIsEditing(false);
-              setText(existingResponse.text);
+              setText(existingResponse.text || "");
               setImagePreview(existingResponse.imageUrl);
               setImage(null);
             }}
@@ -502,7 +502,7 @@ export default function AuthorBashSubmission() {
         )}
         <Button 
           onClick={existingResponse ? handleUpdate : handleSubmit}
-          disabled={isSubmitting || (!text && !image)}
+          disabled={isSubmitting || (!text && !image && !imagePreview)}
           className={existingResponse ? "ml-auto" : ""}
         >
           {isSubmitting ? (
