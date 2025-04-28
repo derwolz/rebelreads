@@ -1531,8 +1531,8 @@ export const authorBashResponses = pgTable("authorbash_responses", {
   id: serial("id").primaryKey(),
   questionId: integer("question_id").notNull().references(() => authorBashQuestions.id),
   authorId: integer("author_id").notNull().references(() => authors.id),
-  imageUrl: text("image_url").notNull(),
-  text: text("text").notNull(), // Limited to 200 characters
+  imageUrl: text("image_url"), // Optional field - can be null
+  text: text("text"), // Optional field - can be null, limited to 200 characters when provided
   retentionCount: integer("retention_count").default(0), // Number of times this response was retained
   impressionCount: integer("impression_count").default(0), // Number of times this response was viewed
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -1608,7 +1608,8 @@ export const insertAuthorBashResponseSchema = createInsertSchema(authorBashRespo
   createdAt: true,
   updatedAt: true,
 }).extend({
-  text: z.string().max(200, "Response text cannot exceed 200 characters"),
+  text: z.string().max(200, "Response text cannot exceed 200 characters").optional(),
+  imageUrl: z.string().optional(),
 });
 
 export const insertAuthorBashGameSchema = createInsertSchema(authorBashGames).omit({

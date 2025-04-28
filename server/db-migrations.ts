@@ -1755,6 +1755,7 @@ export async function runMigrations() {
   await removeHasBetaAccessFromUsers();
   await removeGenresColumnFromBooks();
   await removeAuthorColumnsFromBooks();
+  await updateAuthorBashResponsesTable();
   await addFeaturedColumnToRatings();
   await addReportStatusColumnToRatings();
   await createAdImpressionsTable();
