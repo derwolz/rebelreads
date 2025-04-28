@@ -133,8 +133,8 @@ export async function createAuthorBashSampleData() {
         INSERT INTO "authorbash_questions" 
         ("question", "week_number", "start_date", "end_date", "is_active")
         VALUES 
-        ('What's a book that changed your perspective on life?', 1, $1, $2, true)
-      `, [now.toISOString(), oneWeekLater.toISOString()]);
+        ($1, 1, $2, $3, true)
+      `, ['What book changed your perspective on life?', now.toISOString(), oneWeekLater.toISOString()]);
       
       console.log("Sample question created");
     } else {
