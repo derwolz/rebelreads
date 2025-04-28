@@ -69,11 +69,33 @@ export default function AuthorBashGame() {
     data: gameData,
     isLoading: isLoadingGame,
     isError: isGameError,
+    error: gameErrorDetails,
     refetch: refetchGame,
   } = useQuery<GameData>({
     queryKey: ["/api/authorbash/game/cards"],
     enabled: !!user,
-    queryFn: () => jsonRequest("/api/authorbash/game/cards"),
+    queryFn: async () => {
+      try {
+        console.log("Fetching game cards...");
+        const res = await fetch("/api/authorbash/game/cards", {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Game cards error response:", errorText);
+          throw new Error(errorText);
+        }
+        
+        const result = await res.json();
+        console.log("Game cards result:", result);
+        return result;
+      } catch (error) {
+        console.error("Error fetching game cards:", error);
+        throw error;
+      }
+    },
   });
   
   // Set game ID when data is available
@@ -88,11 +110,33 @@ export default function AuthorBashGame() {
     data: retainedData,
     isLoading: isLoadingRetained,
     isError: isRetainedError,
+    error: retainedErrorDetails,
     refetch: refetchRetained,
   } = useQuery<RetainedData>({
     queryKey: ["/api/authorbash/game/retained"],
     enabled: !!user,
-    queryFn: () => jsonRequest("/api/authorbash/game/retained"),
+    queryFn: async () => {
+      try {
+        console.log("Fetching retained cards...");
+        const res = await fetch("/api/authorbash/game/retained", {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Retained cards error response:", errorText);
+          throw new Error(errorText);
+        }
+        
+        const result = await res.json();
+        console.log("Retained cards result:", result);
+        return result;
+      } catch (error) {
+        console.error("Error fetching retained cards:", error);
+        throw error;
+      }
+    },
   });
 
   // Mutation for retaining a card

@@ -1,5 +1,6 @@
 import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 import { z } from "zod";
 import { validateEmail, isDisposableEmail, isSuspiciousLocalPart } from './utils/email-validator';
 
@@ -1523,7 +1524,6 @@ export const authorBashQuestions = pgTable("authorbash_questions", {
   endDate: timestamp("end_date").notNull(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Author responses to weekly questions
@@ -1557,6 +1557,42 @@ export const authorBashRetentions = pgTable("authorbash_retentions", {
   viewedAt: timestamp("viewed_at").notNull().defaultNow(),
   retainedAt: timestamp("retained_at"),
 });
+
+// Define relations between tables
+export const authorBashQuestionRelations = relations(authorBashQuestions, ({ many }) => ({
+  responses: many(authorBashResponses),
+}));
+
+export const authorBashResponseRelations = relations(authorBashResponses, ({ one, many }) => ({
+  question: one(authorBashQuestions, {
+    fields: [authorBashResponses.questionId],
+    references: [authorBashQuestions.id],
+  }),
+  author: one(authors, {
+    fields: [authorBashResponses.authorId],
+    references: [authors.id],
+  }),
+  retentions: many(authorBashRetentions),
+}));
+
+export const authorBashGameRelations = relations(authorBashGames, ({ one, many }) => ({
+  user: one(users, {
+    fields: [authorBashGames.userId],
+    references: [users.id],
+  }),
+  retentions: many(authorBashRetentions),
+}));
+
+export const authorBashRetentionRelations = relations(authorBashRetentions, ({ one }) => ({
+  game: one(authorBashGames, {
+    fields: [authorBashRetentions.gameId],
+    references: [authorBashGames.id],
+  }),
+  response: one(authorBashResponses, {
+    fields: [authorBashRetentions.responseId],
+    references: [authorBashResponses.id],
+  }),
+}));
 
 // Create insert schemas
 export const insertAuthorBashQuestionSchema = createInsertSchema(authorBashQuestions).omit({
