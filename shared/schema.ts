@@ -1511,3 +1511,87 @@ export type Note = typeof notes.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type ShelfComment = typeof shelfComments.$inferSelect;
 export type InsertShelfComment = z.infer<typeof insertShelfCommentSchema>;
+
+// AuthorBash - Experimental Game Mode
+
+// Weekly questions for authors
+export const authorBashQuestions = pgTable("authorbash_questions", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  weekNumber: integer("week_number").notNull(),
+  startDate: timestamp("start_date").notNull().defaultNow(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Author responses to weekly questions
+export const authorBashResponses = pgTable("authorbash_responses", {
+  id: serial("id").primaryKey(),
+  questionId: integer("question_id").notNull().references(() => authorBashQuestions.id),
+  authorId: integer("author_id").notNull().references(() => authors.id),
+  imageUrl: text("image_url").notNull(),
+  text: text("text").notNull(), // Limited to 200 characters
+  retentionCount: integer("retention_count").default(0), // Number of times this response was retained
+  impressionCount: integer("impression_count").default(0), // Number of times this response was viewed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Track user game sessions
+export const authorBashGames = pgTable("authorbash_games", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Track which responses users have seen and retained
+export const authorBashRetentions = pgTable("authorbash_retentions", {
+  id: serial("id").primaryKey(),
+  gameId: integer("game_id").notNull().references(() => authorBashGames.id),
+  responseId: integer("response_id").notNull().references(() => authorBashResponses.id),
+  isRetained: boolean("is_retained").notNull().default(false),
+  viewedAt: timestamp("viewed_at").notNull().defaultNow(),
+  retainedAt: timestamp("retained_at"),
+});
+
+// Create insert schemas
+export const insertAuthorBashQuestionSchema = createInsertSchema(authorBashQuestions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAuthorBashResponseSchema = createInsertSchema(authorBashResponses).omit({
+  id: true,
+  retentionCount: true,
+  impressionCount: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  text: z.string().max(200, "Response text cannot exceed 200 characters"),
+});
+
+export const insertAuthorBashGameSchema = createInsertSchema(authorBashGames).omit({
+  id: true,
+  completedAt: true,
+  createdAt: true,
+});
+
+export const insertAuthorBashRetentionSchema = createInsertSchema(authorBashRetentions).omit({
+  id: true,
+  retainedAt: true,
+});
+
+// Define types
+export type AuthorBashQuestion = typeof authorBashQuestions.$inferSelect;
+export type InsertAuthorBashQuestion = z.infer<typeof insertAuthorBashQuestionSchema>;
+export type AuthorBashResponse = typeof authorBashResponses.$inferSelect;
+export type InsertAuthorBashResponse = z.infer<typeof insertAuthorBashResponseSchema>;
+export type AuthorBashGame = typeof authorBashGames.$inferSelect;
+export type InsertAuthorBashGame = z.infer<typeof insertAuthorBashGameSchema>;
+export type AuthorBashRetention = typeof authorBashRetentions.$inferSelect;
+export type InsertAuthorBashRetention = z.infer<typeof insertAuthorBashRetentionSchema>;
