@@ -12,7 +12,7 @@ import {
   authors,
   users
 } from "@shared/schema";
-import { eq, and, desc, sql, count, not, exists, lt, gt, isNull, or } from "drizzle-orm";
+import { eq, and, desc, sql, count, not, exists, lt, gt, isNull, or, inArray } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -341,7 +341,7 @@ authorBashRouter.get("/game/cards", async (req: Request, res: Response) => {
     
     // Get 3 random responses that haven't been seen yet
     const randomResponses = await db.query.authorBashResponses.findMany({
-      where: viewedIds.length > 0 ? not(authorBashResponses.id.in(viewedIds)) : undefined,
+      where: viewedIds.length > 0 ? not(inArray(authorBashResponses.id, viewedIds)) : undefined,
       with: {
         author: {
           columns: {
@@ -509,7 +509,7 @@ authorBashRouter.get("/game/retained", async (req: Request, res: Response) => {
     
     // Fetch the actual response data
     const retainedResponses = await db.query.authorBashResponses.findMany({
-      where: retainedIds.length > 0 ? authorBashResponses.id.in(retainedIds) : undefined,
+      where: retainedIds.length > 0 ? inArray(authorBashResponses.id, retainedIds) : undefined,
       with: {
         author: {
           columns: {

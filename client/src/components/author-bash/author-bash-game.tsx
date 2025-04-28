@@ -1,6 +1,28 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+
+// Helper function for JSON requests
+async function jsonRequest(url: string, options: { method: string; body: string }) {
+  const res = await fetch(url, {
+    method: options.method,
+    headers: { "Content-Type": "application/json" },
+    body: options.body,
+    credentials: "include",
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    try {
+      const json = JSON.parse(text);
+      throw json;
+    } catch {
+      throw new Error(text || res.statusText);
+    }
+  }
+  
+  return await res.json();
+}
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -60,7 +82,7 @@ export default function AuthorBashGame() {
   // Mutation for retaining a card
   const retainMutation = useMutation({
     mutationFn: (responseId: number) => {
-      return apiRequest("/api/authorbash/game/retain", {
+      return jsonRequest("/api/authorbash/game/retain", {
         method: "POST",
         body: JSON.stringify({ responseId, gameId }),
       });
@@ -87,7 +109,7 @@ export default function AuthorBashGame() {
   // Mutation for replacing a card
   const replaceMutation = useMutation({
     mutationFn: ({ oldResponseId, newResponseId }: { oldResponseId: number; newResponseId: number }) => {
-      return apiRequest("/api/authorbash/game/replace", {
+      return jsonRequest("/api/authorbash/game/replace", {
         method: "POST",
         body: JSON.stringify({ oldResponseId, newResponseId, gameId }),
       });
