@@ -35,8 +35,8 @@ interface CardResponse {
   id: number;
   questionId: number;
   authorId: number;
-  imageUrl: string;
-  text: string;
+  imageUrl: string | null;
+  text: string | null;
   retentionCount: number;
   impressionCount: number;
   author: {
@@ -294,15 +294,17 @@ export default function AuthorBashGame() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {retainedData.retainedCards.map((card: CardResponse) => (
           <Card key={card.id} className="overflow-hidden">
-            <div className="aspect-video overflow-hidden">
-              <img 
-                src={card.imageUrl} 
-                alt={card.text} 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <CardContent className="pt-4">
-              <p className="text-sm font-medium">{card.text}</p>
+            {card.imageUrl && (
+              <div className="aspect-video overflow-hidden">
+                <img 
+                  src={card.imageUrl} 
+                  alt={card.text || "Author response"} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <CardContent className={card.imageUrl ? "pt-4" : ""}>
+              {card.text && <p className="text-sm font-medium">{card.text}</p>}
               <p className="text-xs text-muted-foreground mt-2">By {card.author.author_name}</p>
             </CardContent>
             <CardFooter className="bg-muted/30 p-2 flex justify-end">
@@ -358,15 +360,17 @@ export default function AuthorBashGame() {
                 }`}
                 onClick={() => handleSelectCard(card.id)}
               >
-                <div className="aspect-video overflow-hidden">
-                  <img 
-                    src={card.imageUrl} 
-                    alt={card.text} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <CardContent className="pt-4">
-                  <p className="text-sm font-medium">{card.text}</p>
+                {card.imageUrl && (
+                  <div className="aspect-video overflow-hidden">
+                    <img 
+                      src={card.imageUrl} 
+                      alt={card.text || "Author response"} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <CardContent className={card.imageUrl ? "pt-4" : ""}>
+                  {card.text && <p className="text-sm font-medium">{card.text}</p>}
                   <p className="text-xs text-muted-foreground mt-2">By {card.author.author_name}</p>
                 </CardContent>
               </Card>

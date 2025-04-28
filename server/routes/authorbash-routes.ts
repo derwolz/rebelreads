@@ -159,14 +159,17 @@ authorBashRouter.post("/responses", upload.single("image"), async (req: Request,
       return res.status(403).json({ error: "Only authors can submit responses" });
     }
     
-    // Validate text does not exceed 200 characters
+    // Validate at least one of text or image is provided
     const text = req.body.text;
-    if (!text || text.length > 200) {
-      return res.status(400).json({ error: "Response text must be 1-200 characters" });
+    const hasImage = !!req.file;
+    
+    if (!text && !hasImage) {
+      return res.status(400).json({ error: "Either text or image (or both) must be provided" });
     }
     
-    if (!req.file) {
-      return res.status(400).json({ error: "Image is required" });
+    // Validate text does not exceed 200 characters if provided
+    if (text && text.length > 200) {
+      return res.status(400).json({ error: "Response text must be 200 characters or less" });
     }
     
     const now = new Date();
@@ -203,14 +206,14 @@ authorBashRouter.post("/responses", upload.single("image"), async (req: Request,
       return res.status(400).json({ error: "You have already submitted a response to this question" });
     }
     
-    // Get image URL path
-    const imageUrl = `/uploads/authorbash/${req.file.filename}`;
+    // Get image URL path if image was uploaded
+    const imageUrl = req.file ? `/uploads/authorbash/${req.file.filename}` : null;
     
     // Create response
     const responseData = {
       questionId: activeQuestion.id,
       authorId: author.id,
-      text,
+      text: text || "",  // Use empty string if text is null/undefined
       imageUrl,
     };
     
@@ -266,13 +269,13 @@ authorBashRouter.patch("/responses/:id", upload.single("image"), async (req: Req
     // Build update data
     const updateData: any = {};
     
-    // Validate text does not exceed 200 characters
+    // Validate text does not exceed 200 characters if provided
     if (req.body.text !== undefined) {
       const text = req.body.text;
-      if (text.length > 200) {
-        return res.status(400).json({ error: "Response text must be 1-200 characters" });
+      if (text && text.length > 200) {
+        return res.status(400).json({ error: "Response text must be 200 characters or less" });
       }
-      updateData.text = text;
+      updateData.text = text || ""; // Use empty string if text is null/undefined
     }
     
     // Update image if provided

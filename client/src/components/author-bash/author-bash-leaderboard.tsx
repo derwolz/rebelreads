@@ -31,14 +31,14 @@ interface AuthorResponse {
   id: number;
   questionId: number;
   authorId: number;
-  text: string;
-  imageUrl: string;
+  text: string | null;
+  imageUrl: string | null;
   retentionCount: number;
   impressionCount: number;
   createdAt: string;
   author: {
     author_name: string;
-    author_image_url: string;
+    author_image_url: string | null;
   };
   question: {
     question: string;
