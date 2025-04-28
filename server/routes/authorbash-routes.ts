@@ -653,26 +653,26 @@ authorBashRouter.get("/leaderboard/authors", async (req: Request, res: Response)
     // Get author details for each
     const authorDetails = [];
     for (const item of result) {
-      const author = await db.query.authors.findFirst({
-        where: eq(authors.id, item.authorId),
-        columns: {
-          id: true,
-          author_name: true,
-          author_image_url: true
-        },
-        with: {
-          user: {
-            columns: {
-              username: true
-            }
-          }
-        }
-      });
+      // Query the authors table directly without the relation
+      const author = await db
+        .select({
+          id: authors.id,
+          author_name: authors.author_name,
+          author_image_url: authors.author_image_url,
+          username: users.username
+        })
+        .from(authors)
+        .innerJoin(users, eq(authors.userId, users.id))
+        .where(eq(authors.id, item.authorId))
+        .limit(1);
       
-      if (author) {
+      if (author && author.length > 0) {
         authorDetails.push({
-          ...author,
-          totalRetentions: item.totalRetentions
+          ...author[0],
+          totalRetentions: item.totalRetentions,
+          user: {
+            username: author[0].username
+          }
         });
       }
     }
