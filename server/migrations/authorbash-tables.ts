@@ -87,19 +87,21 @@ export async function createAuthorBashTables() {
         "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
       );
 
-      CREATE TABLE IF NOT EXISTS "authorbash_card_retentions" (
+      CREATE TABLE IF NOT EXISTS "authorbash_retentions" (
         "id" SERIAL PRIMARY KEY,
-        "user_id" INTEGER NOT NULL,
+        "game_id" INTEGER NOT NULL,
         "response_id" INTEGER NOT NULL REFERENCES "authorbash_responses"("id"),
-        "created_at" TIMESTAMP NOT NULL DEFAULT NOW()
+        "is_retained" BOOLEAN NOT NULL DEFAULT false,
+        "viewed_at" TIMESTAMP NOT NULL DEFAULT NOW(),
+        "retained_at" TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS "authorbash_game_sessions" (
+      CREATE TABLE IF NOT EXISTS "authorbash_games" (
         "id" SERIAL PRIMARY KEY,
         "user_id" INTEGER NOT NULL,
-        "seen_response_ids" JSONB NOT NULL DEFAULT '[]',
-        "created_at" TIMESTAMP NOT NULL DEFAULT NOW(),
-        "updated_at" TIMESTAMP NOT NULL DEFAULT NOW()
+        "started_at" TIMESTAMP NOT NULL DEFAULT NOW(),
+        "completed_at" TIMESTAMP,
+        "created_at" TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
 
@@ -129,12 +131,16 @@ export async function createAuthorBashSampleData() {
       const oneWeekLater = new Date(now);
       oneWeekLater.setDate(oneWeekLater.getDate() + 7);
       
+      // Create the date strings directly for the SQL query
+      const startDate = now.toISOString();
+      const endDate = oneWeekLater.toISOString();
+      
       await db.execute(`
         INSERT INTO "authorbash_questions" 
         ("question", "week_number", "start_date", "end_date", "is_active")
         VALUES 
-        ('What book changed your perspective on life?', 1, $1, $2, true)
-      `, [now.toISOString(), oneWeekLater.toISOString()]);
+        ('What book changed your perspective on life?', 1, '${startDate}', '${endDate}', true)
+      `);
       
       console.log("Sample question created");
     } else {
