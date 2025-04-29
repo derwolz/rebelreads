@@ -39,7 +39,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 const authorBashRouter = Router();
 
-// Get the current active question
+// Get the current active question (public access)
 authorBashRouter.get("/questions/active", async (req: Request, res: Response) => {
   try {
     const now = new Date();
@@ -614,7 +614,7 @@ authorBashRouter.post("/game/replace", async (req: Request, res: Response) => {
   }
 });
 
-// Get leaderboard of top responses
+// Get leaderboard of top responses (public access)
 authorBashRouter.get("/leaderboard/responses", async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
@@ -641,7 +641,7 @@ authorBashRouter.get("/leaderboard/responses", async (req: Request, res: Respons
   }
 });
 
-// Get leaderboard of top authors
+// Get leaderboard of top authors (public access)
 authorBashRouter.get("/leaderboard/authors", async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
