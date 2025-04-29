@@ -13,31 +13,6 @@ import {
   users
 } from "@shared/schema";
 import { adminAuthMiddleware } from "../middleware/admin-auth";
-
-// Custom admin middleware for AuthorBash
-function authorBashAdminMiddleware(req: Request, res: Response, next: Function) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  // Check if the authenticated user's email matches the admin email
-  const adminEmails = [
-    process.env.ADMIN_EMAIL,
-    'der.wolz@gmail.com',   // Test user in the database (for development only)
-    'admin@example.com',    // Fallback admin email
-    'admin2@example.com'    // New admin user
-  ];
-  
-  console.log('[DEBUG AUTHORBASH] User email:', req.user?.email);
-  console.log('[DEBUG AUTHORBASH] Admin emails:', adminEmails);
-  console.log('[DEBUG AUTHORBASH] Is admin:', adminEmails.includes(req.user?.email));
-  
-  if (!adminEmails.includes(req.user?.email)) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-
-  next();
-}
 import { eq, and, desc, sql, count, not, exists, lt, gt, isNull, or, inArray } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
@@ -103,7 +78,13 @@ authorBashRouter.get("/questions", async (req: Request, res: Response) => {
 // Create a new question (admin use)
 authorBashRouter.post("/questions", async (req: Request, res: Response) => {
   try {
-    const questionData = insertAuthorBashQuestionSchema.parse(req.body);
+    const questionData = insertAuthorBashQuestionSchema.parse({
+      question: req.body.question,
+      weekNumber: req.body.weekNumber,
+      startDate: req.body.startDate || new Date(),
+      endDate: req.body.endDate,
+      isActive: req.body.isActive || false
+    });
     
     // Set all other questions to inactive if this one is active
     if (questionData.isActive) {
@@ -710,89 +691,12 @@ authorBashRouter.get("/leaderboard/authors", async (req: Request, res: Response)
   }
 });
 
-// Create a few dummy questions and responses for development
-authorBashRouter.post("/dev/seed", async (req: Request, res: Response) => {
-  try {
-    // Create dummy questions
-    const question1 = await db
-      .insert(authorBashQuestions)
-      .values({
-        question: "What's your favorite book and why in just a few words?",
-        weekNumber: 1,
-        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
-        isActive: true,
-      })
-      .returning();
-
-    const question2 = await db
-      .insert(authorBashQuestions)
-      .values({
-        question: "If you could be any character from a book, who would you be?",
-        weekNumber: 2,
-        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
-        endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 2 weeks from now
-        isActive: false,
-      })
-      .returning();
-
-    // Get some authors
-    const authorsList = await db.query.authors.findMany({
-      limit: 5,
-    });
-
-    if (authorsList.length === 0) {
-      return res.status(200).json({ message: "No authors found, added questions only" });
-    }
-
-    // Create dummy responses
-    const dummyResponses = [];
-    const imageUrls = [
-      "/uploads/authorbash/dummy_book1.jpg",
-      "/uploads/authorbash/dummy_book2.jpg",
-      "/uploads/authorbash/dummy_book3.jpg",
-      "/uploads/authorbash/dummy_book4.jpg",
-      "/uploads/authorbash/dummy_book5.jpg",
-    ];
-
-    const dummyTexts = [
-      "To Kill a Mockingbird - Timeless exploration of justice and humanity.",
-      "1984 - A chilling warning about power and surveillance.",
-      "The Great Gatsby - Dreams, wealth, and emptiness of materialism.",
-      "The Lord of the Rings - Epic journey of friendship and courage.",
-      "Pride and Prejudice - Sharp wit and enduring love story.",
-    ];
-
-    for (let i = 0; i < Math.min(authorsList.length, 5); i++) {
-      const response = await db
-        .insert(authorBashResponses)
-        .values({
-          questionId: question1[0].id,
-          authorId: authorsList[i].id,
-          imageUrl: imageUrls[i],
-          text: dummyTexts[i],
-          retentionCount: Math.floor(Math.random() * 50),
-          impressionCount: Math.floor(Math.random() * 100) + 50,
-        })
-        .returning();
-
-      dummyResponses.push(response[0]);
-    }
-
-    return res.status(200).json({
-      questions: [question1[0], question2[0]],
-      responses: dummyResponses,
-    });
-  } catch (error) {
-    console.error("Error seeding data:", error);
-    return res.status(500).json({ error: "Failed to seed data" });
-  }
-});
+// NOTE: Seed endpoint removed - database now uses real data
 
 // ===== ADMIN ROUTES =====
 
 // Get all questions (admin only)
-authorBashRouter.get("/admin/questions", authorBashAdminMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.get("/admin/questions", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questions = await db.query.authorBashQuestions.findMany({
       orderBy: desc(authorBashQuestions.weekNumber),
@@ -806,7 +710,7 @@ authorBashRouter.get("/admin/questions", authorBashAdminMiddleware, async (req: 
 });
 
 // Get responses for a specific question (admin only)
-authorBashRouter.get("/admin/responses", authorBashAdminMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.get("/admin/responses", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = req.query.questionId ? parseInt(req.query.questionId as string) : undefined;
     
@@ -835,7 +739,7 @@ authorBashRouter.get("/admin/responses", authorBashAdminMiddleware, async (req: 
 });
 
 // Create a new question (admin only)
-authorBashRouter.post("/admin/questions", authorBashAdminMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.post("/admin/questions", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionData = insertAuthorBashQuestionSchema.parse({
       question: req.body.question,
@@ -866,7 +770,7 @@ authorBashRouter.post("/admin/questions", authorBashAdminMiddleware, async (req:
 });
 
 // Update a question (admin only)
-authorBashRouter.patch("/admin/questions/:id", authorBashAdminMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.patch("/admin/questions/:id", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = parseInt(req.params.id);
     
@@ -911,7 +815,7 @@ authorBashRouter.patch("/admin/questions/:id", authorBashAdminMiddleware, async 
 });
 
 // Delete a question (admin only)
-authorBashRouter.delete("/admin/questions/:id", authorBashAdminMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.delete("/admin/questions/:id", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = parseInt(req.params.id);
     
