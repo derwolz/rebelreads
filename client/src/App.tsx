@@ -38,6 +38,7 @@ import AdminPanel from "@/pages/admin-panel";
 import AdminBooksPage from "@/pages/admin-books-page";
 import AdminUsersPage from "@/pages/admin-users-page";
 import AdminCampaignManagementPage from "@/pages/admin-campaign-management";
+import AdminAuthorBashPage from "@/pages/admin-authorbash-page";
 import SalesPanel from "@/pages/sales-panel";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import CookiePolicy from "@/pages/cookie-policy";
@@ -180,6 +181,7 @@ function App() {
           <ProtectedRoute path="/admin/email-collection" component={EmailCollectionPage} />
           <ProtectedRoute path="/admin/beta-emails" component={BetaEmailsPage} />
           <ProtectedRoute path="/admin/campaign-management" component={AdminCampaignManagementPage} />
+          <ProtectedRoute path="/admin/authorbash" component={AdminAuthorBashPage} />
           
           {/* Sales routes */}
           <ProtectedRoute path="/sales" component={SalesPanel} />

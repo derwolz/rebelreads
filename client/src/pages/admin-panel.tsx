@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare, UserCog, Mail, Megaphone } from "lucide-react";
+import { Loader2, BarChart2, BookCopy, UsersRound, Settings, Key, BookMarked, MessageSquare, UserCog, Mail, Megaphone, Gamepad2 } from "lucide-react";
 import { Link, Redirect } from "wouter";
 import { AdminAnalyticsDashboard } from "@/components/admin-analytics-dashboard";
 import { AdminBetaKeysManager } from "@/components/admin-beta-keys-manager";
@@ -45,7 +45,7 @@ export default function AdminPanel() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="analytics">
-            <TabsList className="grid w-full grid-cols-9">
+            <TabsList className="grid w-full grid-cols-10">
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <BarChart2 className="h-4 w-4" />
                 <span>Analytics</span>
@@ -69,6 +69,10 @@ export default function AdminPanel() {
               <TabsTrigger value="genres" className="flex items-center gap-2">
                 <BookMarked className="h-4 w-4" />
                 <span>Genres</span>
+              </TabsTrigger>
+              <TabsTrigger value="authorbash" className="flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4" />
+                <span>AuthorBash</span>
               </TabsTrigger>
               <TabsTrigger value="feedback" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -152,6 +156,26 @@ export default function AdminPanel() {
             
             <TabsContent value="beta" className="py-4">
               <AdminBetaKeysManager />
+            </TabsContent>
+            
+            <TabsContent value="authorbash" className="py-4">
+              <h3 className="text-lg font-semibold mb-4">AuthorBash Game Management</h3>
+              <div className="grid gap-4">
+                <Card className="p-6">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <Gamepad2 className="h-12 w-12 text-primary" />
+                    <h4 className="text-lg font-medium">AuthorBash Question & Response Management</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Manage weekly questions, view author responses, and monitor game performance
+                    </p>
+                    <Link href="/admin/authorbash">
+                      <Button className="w-full">
+                        Manage AuthorBash
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              </div>
             </TabsContent>
             
             <TabsContent value="settings" className="py-4">
