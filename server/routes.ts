@@ -53,6 +53,7 @@ import dashboardRoutes from "./routes/modules/dashboard-routes";
 import wishlistRoutes from "./routes/modules/wishlist-routes";
 import booksByNameRoutes from "./routes/modules/books-by-name-routes";
 import authorBashRoutes from "./routes/authorbash-routes";
+import authorBashPublicRoutes from "./routes/authorbash-public-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -94,6 +95,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register public routes BEFORE auth to make them available without authentication
   app.use("/api/public", publicAuthorRoutes);
   app.use("/api/public", publicVerificationRoutes);
+  
+  // Register public AuthorBash routes BEFORE auth to make them available without authentication
+  app.use("/api/authorbash", authorBashPublicRoutes);
   
   // Register verification routes before auth for password reset functionality
   app.use("/api", verificationRoutes);
