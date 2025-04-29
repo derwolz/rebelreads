@@ -835,7 +835,7 @@ authorBashRouter.get("/admin/responses", authorBashAdminMiddleware, async (req: 
 });
 
 // Create a new question (admin only)
-authorBashRouter.post("/admin/questions", adminAuthMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.post("/admin/questions", authorBashAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const questionData = insertAuthorBashQuestionSchema.parse({
       question: req.body.question,
@@ -866,7 +866,7 @@ authorBashRouter.post("/admin/questions", adminAuthMiddleware, async (req: Reque
 });
 
 // Update a question (admin only)
-authorBashRouter.patch("/admin/questions/:id", adminAuthMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.patch("/admin/questions/:id", authorBashAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = parseInt(req.params.id);
     
@@ -911,7 +911,7 @@ authorBashRouter.patch("/admin/questions/:id", adminAuthMiddleware, async (req: 
 });
 
 // Delete a question (admin only)
-authorBashRouter.delete("/admin/questions/:id", adminAuthMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.delete("/admin/questions/:id", authorBashAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = parseInt(req.params.id);
     
