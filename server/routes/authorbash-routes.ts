@@ -12,14 +12,7 @@ import {
   authors,
   users
 } from "@shared/schema";
-
-// Admin middleware to check if user is an admin
-function isAdmin(req: Request, res: Response, next: Function) {
-  if (!req.isAuthenticated || !req.isAuthenticated() || !req.session.isAdmin) {
-    return res.status(401).json({ error: 'Admin access required' });
-  }
-  next();
-}
+import { adminAuthMiddleware } from "../middleware/admin-auth";
 import { eq, and, desc, sql, count, not, exists, lt, gt, isNull, or, inArray } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
@@ -774,7 +767,7 @@ authorBashRouter.post("/dev/seed", async (req: Request, res: Response) => {
 // ===== ADMIN ROUTES =====
 
 // Get all questions (admin only)
-authorBashRouter.get("/admin/questions", isAdmin, async (req: Request, res: Response) => {
+authorBashRouter.get("/admin/questions", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questions = await db.query.authorBashQuestions.findMany({
       orderBy: desc(authorBashQuestions.weekNumber),
@@ -788,7 +781,7 @@ authorBashRouter.get("/admin/questions", isAdmin, async (req: Request, res: Resp
 });
 
 // Get responses for a specific question (admin only)
-authorBashRouter.get("/admin/responses", isAdmin, async (req: Request, res: Response) => {
+authorBashRouter.get("/admin/responses", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = req.query.questionId ? parseInt(req.query.questionId as string) : undefined;
     
@@ -817,7 +810,7 @@ authorBashRouter.get("/admin/responses", isAdmin, async (req: Request, res: Resp
 });
 
 // Create a new question (admin only)
-authorBashRouter.post("/admin/questions", isAdmin, async (req: Request, res: Response) => {
+authorBashRouter.post("/admin/questions", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionData = insertAuthorBashQuestionSchema.parse({
       question: req.body.question,
@@ -848,7 +841,7 @@ authorBashRouter.post("/admin/questions", isAdmin, async (req: Request, res: Res
 });
 
 // Update a question (admin only)
-authorBashRouter.patch("/admin/questions/:id", isAdmin, async (req: Request, res: Response) => {
+authorBashRouter.patch("/admin/questions/:id", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = parseInt(req.params.id);
     
@@ -893,7 +886,7 @@ authorBashRouter.patch("/admin/questions/:id", isAdmin, async (req: Request, res
 });
 
 // Delete a question (admin only)
-authorBashRouter.delete("/admin/questions/:id", isAdmin, async (req: Request, res: Response) => {
+authorBashRouter.delete("/admin/questions/:id", adminAuthMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = parseInt(req.params.id);
     
