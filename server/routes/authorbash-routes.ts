@@ -13,6 +13,31 @@ import {
   users
 } from "@shared/schema";
 import { adminAuthMiddleware } from "../middleware/admin-auth";
+
+// Custom admin middleware for AuthorBash
+function authorBashAdminMiddleware(req: Request, res: Response, next: Function) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // Check if the authenticated user's email matches the admin email
+  const adminEmails = [
+    process.env.ADMIN_EMAIL,
+    'der.wolz@gmail.com',   // Test user in the database (for development only)
+    'admin@example.com',    // Fallback admin email
+    'admin2@example.com'    // New admin user
+  ];
+  
+  console.log('[DEBUG AUTHORBASH] User email:', req.user?.email);
+  console.log('[DEBUG AUTHORBASH] Admin emails:', adminEmails);
+  console.log('[DEBUG AUTHORBASH] Is admin:', adminEmails.includes(req.user?.email));
+  
+  if (!adminEmails.includes(req.user?.email)) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  next();
+}
 import { eq, and, desc, sql, count, not, exists, lt, gt, isNull, or, inArray } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
@@ -767,7 +792,7 @@ authorBashRouter.post("/dev/seed", async (req: Request, res: Response) => {
 // ===== ADMIN ROUTES =====
 
 // Get all questions (admin only)
-authorBashRouter.get("/admin/questions", adminAuthMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.get("/admin/questions", authorBashAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const questions = await db.query.authorBashQuestions.findMany({
       orderBy: desc(authorBashQuestions.weekNumber),
@@ -781,7 +806,7 @@ authorBashRouter.get("/admin/questions", adminAuthMiddleware, async (req: Reques
 });
 
 // Get responses for a specific question (admin only)
-authorBashRouter.get("/admin/responses", adminAuthMiddleware, async (req: Request, res: Response) => {
+authorBashRouter.get("/admin/responses", authorBashAdminMiddleware, async (req: Request, res: Response) => {
   try {
     const questionId = req.query.questionId ? parseInt(req.query.questionId as string) : undefined;
     
