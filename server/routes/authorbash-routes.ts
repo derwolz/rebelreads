@@ -12,6 +12,14 @@ import {
   authors,
   users
 } from "@shared/schema";
+
+// Admin middleware to check if user is an admin
+function isAdmin(req: Request, res: Response, next: Function) {
+  if (!req.isAuthenticated || !req.isAuthenticated() || !req.session.isAdmin) {
+    return res.status(401).json({ error: 'Admin access required' });
+  }
+  next();
+}
 import { eq, and, desc, sql, count, not, exists, lt, gt, isNull, or, inArray } from "drizzle-orm";
 import { z } from "zod";
 import multer from "multer";
@@ -760,6 +768,158 @@ authorBashRouter.post("/dev/seed", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error seeding data:", error);
     return res.status(500).json({ error: "Failed to seed data" });
+  }
+});
+
+// ===== ADMIN ROUTES =====
+
+// Get all questions (admin only)
+authorBashRouter.get("/admin/questions", isAdmin, async (req: Request, res: Response) => {
+  try {
+    const questions = await db.query.authorBashQuestions.findMany({
+      orderBy: desc(authorBashQuestions.weekNumber),
+    });
+    
+    return res.status(200).json(questions);
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    return res.status(500).json({ error: "Failed to fetch questions" });
+  }
+});
+
+// Get responses for a specific question (admin only)
+authorBashRouter.get("/admin/responses", isAdmin, async (req: Request, res: Response) => {
+  try {
+    const questionId = req.query.questionId ? parseInt(req.query.questionId as string) : undefined;
+    
+    if (!questionId) {
+      return res.status(400).json({ error: "Question ID is required" });
+    }
+    
+    const responses = await db.query.authorBashResponses.findMany({
+      where: eq(authorBashResponses.questionId, questionId),
+      orderBy: desc(authorBashResponses.retentionCount),
+      with: {
+        author: {
+          columns: {
+            author_name: true,
+            author_image_url: true
+          }
+        }
+      }
+    });
+    
+    return res.status(200).json(responses);
+  } catch (error) {
+    console.error("Error fetching responses:", error);
+    return res.status(500).json({ error: "Failed to fetch responses" });
+  }
+});
+
+// Create a new question (admin only)
+authorBashRouter.post("/admin/questions", isAdmin, async (req: Request, res: Response) => {
+  try {
+    const questionData = insertAuthorBashQuestionSchema.parse({
+      question: req.body.question,
+      weekNumber: req.body.weekNumber,
+      startDate: req.body.startDate,
+      endDate: req.body.endDate,
+      isActive: req.body.isActive,
+    });
+    
+    // Set all other questions to inactive if this one is active
+    if (questionData.isActive) {
+      await db
+        .update(authorBashQuestions)
+        .set({ isActive: false })
+        .where(eq(authorBashQuestions.isActive, true));
+    }
+    
+    const [newQuestion] = await db
+      .insert(authorBashQuestions)
+      .values(questionData)
+      .returning();
+      
+    return res.status(201).json(newQuestion);
+  } catch (error) {
+    console.error("Error creating question:", error);
+    return res.status(500).json({ error: "Failed to create question" });
+  }
+});
+
+// Update a question (admin only)
+authorBashRouter.patch("/admin/questions/:id", isAdmin, async (req: Request, res: Response) => {
+  try {
+    const questionId = parseInt(req.params.id);
+    
+    if (isNaN(questionId)) {
+      return res.status(400).json({ error: "Invalid question ID" });
+    }
+    
+    const questionData = insertAuthorBashQuestionSchema.parse({
+      question: req.body.question,
+      weekNumber: req.body.weekNumber,
+      startDate: req.body.startDate,
+      endDate: req.body.endDate,
+      isActive: req.body.isActive,
+    });
+    
+    // Set all other questions to inactive if this one is being set to active
+    if (questionData.isActive) {
+      await db
+        .update(authorBashQuestions)
+        .set({ isActive: false })
+        .where(and(
+          eq(authorBashQuestions.isActive, true),
+          not(eq(authorBashQuestions.id, questionId))
+        ));
+    }
+    
+    const [updatedQuestion] = await db
+      .update(authorBashQuestions)
+      .set(questionData)
+      .where(eq(authorBashQuestions.id, questionId))
+      .returning();
+      
+    if (!updatedQuestion) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+    
+    return res.status(200).json(updatedQuestion);
+  } catch (error) {
+    console.error("Error updating question:", error);
+    return res.status(500).json({ error: "Failed to update question" });
+  }
+});
+
+// Delete a question (admin only)
+authorBashRouter.delete("/admin/questions/:id", isAdmin, async (req: Request, res: Response) => {
+  try {
+    const questionId = parseInt(req.params.id);
+    
+    if (isNaN(questionId)) {
+      return res.status(400).json({ error: "Invalid question ID" });
+    }
+    
+    // Delete all responses for this question first
+    await db
+      .delete(authorBashResponses)
+      .where(eq(authorBashResponses.questionId, questionId));
+    
+    // Delete the question
+    const [deletedQuestion] = await db
+      .delete(authorBashQuestions)
+      .where(eq(authorBashQuestions.id, questionId))
+      .returning();
+      
+    if (!deletedQuestion) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+    
+    return res.status(200).json({ success: true, message: "Question and all its responses deleted" });
+  } catch (error) {
+    console.error("Error deleting question:", error);
+    return res.status(500).json({ error: "Failed to delete question" });
   }
 });
 
