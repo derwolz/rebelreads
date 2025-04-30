@@ -2,12 +2,14 @@ import {
   Book,
   Rating,
   calculateWeightedRating,
+  calculateCompatibilityRating,
   DEFAULT_RATING_WEIGHTS,
   RatingPreferences,
 } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
+import { SeashellRating } from "./seashell-rating";
 import { WishlistButton } from "./wishlist-button";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -158,6 +160,17 @@ export function BookGridCard({ book }: { book: Book }) {
           } as Rating,
           ratingPreferences,
         ),
+        // Calculate compatibility rating (ranges from -3 to 3)
+        compatibility: calculateCompatibilityRating(
+          {
+            enjoyment: unweightedRatings.enjoyment,
+            writing: unweightedRatings.writing,
+            themes: unweightedRatings.themes,
+            characters: unweightedRatings.characters,
+            worldbuilding: unweightedRatings.worldbuilding,
+          } as Rating,
+          ratingPreferences,
+        ),
       }
     : null;
 
@@ -245,11 +258,14 @@ export function BookGridCard({ book }: { book: Book }) {
 
                   <div className="mt-2">
                     <div className="flex flex-col items-left gap-1">
-                      <StarRating
-                        rating={averageRatings?.overall || 0}
-                        readOnly
-                        size="sm"
-                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold mb-1">Compatibility</span>
+                        <SeashellRating
+                          compatibility={averageRatings?.compatibility || 0}
+                          readOnly
+                          size="xs"
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>

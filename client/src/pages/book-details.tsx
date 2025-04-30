@@ -226,6 +226,17 @@ export default function BookDetails() {
           } as Rating,
           ratingPreferences,
         ),
+        // Calculate compatibility rating (ranges from -3 to 3)
+        compatibility: calculateCompatibilityRating(
+          {
+            enjoyment: unweightedRatings.enjoyment,
+            writing: unweightedRatings.writing,
+            themes: unweightedRatings.themes,
+            characters: unweightedRatings.characters,
+            worldbuilding: unweightedRatings.worldbuilding,
+          } as Rating,
+          ratingPreferences,
+        ),
       }
     : null;
 
@@ -923,10 +934,13 @@ export default function BookDetails() {
                   {averageRatings ? (
                     <div className="space-y-6">
                       <div className="flex items-center gap-2">
-                        <StarRating rating={averageRatings.overall} readOnly />
-                        <span className="text-sm text-muted-foreground">
-                          ({averageRatings.overall.toFixed(2)})
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold mb-1">Compatibility Rating</span>
+                          <SeashellRating compatibility={averageRatings.compatibility} readOnly />
+                          <span className="text-xs text-muted-foreground mt-1">
+                            ({averageRatings.compatibility.toFixed(2)})
+                          </span>
+                        </div>
                       </div>
                       
                       {/* Rating Sentiment Display */}
