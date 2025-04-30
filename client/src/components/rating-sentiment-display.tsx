@@ -1,142 +1,253 @@
-import { useState, useEffect } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { SentimentLevel } from "@shared/schema";
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { 
+  CircleCheck, CircleX, CircleDashed, 
+  BookOpen, Pencil, Heart, BookMarked, GlobeIcon
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { SentimentLevel } from '../../../shared/schema';
 
-// Icons for each criteria
-const CRITERIA_ICONS = {
-  worldbuilding: "🏔", // mountains for world building
-  themes: "🌙", // moon for themes
-  characters: "🎭", // drama masks for characters
-  enjoyment: "😃", // smiley for enjoyment
-  writing: "🖋", // pen for writing style
+// Define category icons
+const CATEGORY_ICONS = {
+  enjoyment: Heart,
+  writing: Pencil,
+  themes: BookOpen, 
+  characters: CircleCheck,
+  worldbuilding: GlobeIcon,
 };
 
-// Tooltip descriptions for each criteria
-const CRITERIA_DESCRIPTIONS = {
-  worldbuilding: "World Building - How well-developed the setting, magic systems, and environments are",
-  themes: "Themes - The depth and exploration of ideas and concepts",
-  characters: "Characters - How compelling, interesting, and well-developed the characters are",
-  enjoyment: "Enjoyment - How entertaining and engaging the book is",
-  writing: "Writing - Quality of prose, plot structure, and overall skill",
+// Map sentiment levels to readable descriptions
+const SENTIMENT_LABELS: Record<SentimentLevel, string> = {
+  overwhelmingly_positive: 'Overwhelmingly Positive',
+  very_positive: 'Very Positive',
+  mostly_positive: 'Mostly Positive',
+  mixed: 'Mixed',
+  mostly_negative: 'Mostly Negative',
+  very_negative: 'Very Negative',
+  overwhelmingly_negative: 'Overwhelmingly Negative',
 };
 
-// Colors for each sentiment level
-const SENTIMENT_COLORS = {
-  overwhelmingly_positive: "text-green-600",
-  very_positive: "text-green-500",
-  mostly_positive: "text-green-400",
-  mixed: "text-amber-500",
-  mostly_negative: "text-red-400",
-  very_negative: "text-red-500",
-  overwhelmingly_negative: "text-red-600",
+// Map sentiment levels to colors
+const SENTIMENT_COLORS: Record<SentimentLevel, string> = {
+  overwhelmingly_positive: 'text-green-600',
+  very_positive: 'text-green-500',
+  mostly_positive: 'text-green-400',
+  mixed: 'text-amber-500',
+  mostly_negative: 'text-red-400',
+  very_negative: 'text-red-500',
+  overwhelmingly_negative: 'text-red-600',
 };
 
-// Descriptions for sentiment levels
-const SENTIMENT_DESCRIPTIONS = {
-  overwhelmingly_positive: "Overwhelmingly Positive",
-  very_positive: "Very Positive", 
-  mostly_positive: "Mostly Positive",
-  mixed: "Mixed",
-  mostly_negative: "Mostly Negative",
-  very_negative: "Very Negative",
-  overwhelmingly_negative: "Overwhelmingly Negative",
-};
-
-interface RatingSentimentProps {
-  ratings: {
-    enjoyment: number;
-    writing: number;
-    themes: number;
-    characters: number;
-    worldbuilding: number;
-  };
-  ratingsCount: number;
-  className?: string;
+interface RatingSentimentThreshold {
+  id: number;
+  criteriaName: string;
+  sentimentLevel: SentimentLevel;
+  ratingMin: number;
+  ratingMax: number;
+  requiredCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export function RatingSentimentDisplay({ ratings, ratingsCount, className }: RatingSentimentProps) {
-  const [sentiments, setSentiments] = useState<Record<string, SentimentLevel | null>>({
-    worldbuilding: null,
-    themes: null,
-    characters: null,
-    enjoyment: null,
-    writing: null,
+interface RatingSentimentResult {
+  criteriaName: string;
+  sentimentLevel: SentimentLevel | null;
+  averageRating: number;
+  count: number;
+  hasEnoughRatings: boolean;
+}
+
+// Define our own rating type to avoid import issues
+interface Rating {
+  id: number;
+  userId: number;
+  bookId: number;
+  enjoyment: number;
+  writing: number;
+  themes: number;
+  characters: number;
+  worldbuilding: number;
+  review?: string | null;
+  createdAt: string;
+}
+
+// Define aggregated ratings type
+interface AggregatedRatings {
+  overall: number;
+  enjoyment: number;
+  writing: number;
+  themes: number;
+  characters: number;
+  worldbuilding: number;
+}
+
+interface RatingSentimentDisplayProps {
+  ratings: Rating[] | AggregatedRatings;
+  ratingsCount?: number;
+  className?: string;
+  showCount?: boolean;
+}
+
+const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({ 
+  ratings, 
+  ratingsCount = 0,
+  className,
+  showCount = false
+}) => {
+  const [sentimentResults, setSentimentResults] = useState<RatingSentimentResult[]>([]);
+
+  // Fetch sentiment thresholds from the API
+  const { data: thresholds, isLoading, error } = useQuery({
+    queryKey: ['/api/rating-sentiments'],
   });
 
+  // Calculate sentiment levels based on ratings and thresholds
   useEffect(() => {
-    // This would normally fetch the thresholds from the API and calculate sentiments
-    // For now, we'll use a simplified approach based on the ratings
-    const calculatedSentiments: Record<string, SentimentLevel | null> = {};
+    if (!thresholds) return;
+
+    // Determine if we have array of ratings or aggregated ratings
+    const isAggregated = !Array.isArray(ratings);
     
-    Object.entries(ratings).forEach(([criteria, value]) => {
-      // Skip if no ratings
-      if (ratingsCount === 0) {
-        calculatedSentiments[criteria] = null;
-        return;
-      }
-      
-      // Convert -1 to 1 rating scale to our sentiment levels
-      // Each level has specific required counts, but for demo we'll simplify
-      if (ratingsCount >= 100 && value >= 0.9) {
-        calculatedSentiments[criteria] = "overwhelmingly_positive";
-      } else if (ratingsCount >= 30 && value >= 0.5) {
-        calculatedSentiments[criteria] = "very_positive";
-      } else if (ratingsCount >= 10 && value >= 0.1) {
-        calculatedSentiments[criteria] = "mostly_positive";
-      } else if (ratingsCount >= 5 && value >= -0.1 && value <= 0.1) {
-        calculatedSentiments[criteria] = "mixed";
-      } else if (ratingsCount >= 10 && value <= -0.1) {
-        calculatedSentiments[criteria] = "mostly_negative";
-      } else if (ratingsCount >= 30 && value <= -0.5) {
-        calculatedSentiments[criteria] = "very_negative";
-      } else if (ratingsCount >= 100 && value <= -0.9) {
-        calculatedSentiments[criteria] = "overwhelmingly_negative";
+    // Initialize result data
+    const criterias = ["enjoyment", "writing", "themes", "characters", "worldbuilding"];
+    const results = criterias.map(criteriaName => {
+      let averageRating = 0;
+      let count = ratingsCount || 0;
+
+      if (isAggregated) {
+        // If we have aggregated ratings, use those values directly
+        const aggregated = ratings as AggregatedRatings;
+        averageRating = aggregated[criteriaName as keyof AggregatedRatings] || 0;
       } else {
-        // Not enough ratings to make a determination
-        calculatedSentiments[criteria] = null;
+        // If we have array of ratings, calculate averages
+        const ratingArray = ratings as Rating[];
+        if (!ratingArray.length) {
+          count = 0;
+        } else {
+          const ratingValues = ratingArray
+            .map(r => r[criteriaName as keyof Rating] as number)
+            .filter(v => typeof v === 'number');
+          
+          if (ratingValues.length) {
+            averageRating = ratingValues.reduce((sum, r) => sum + r, 0) / ratingValues.length;
+            count = ratingValues.length;
+          } else {
+            count = 0;
+          }
+        }
       }
+
+      // Find applicable thresholds for this criteria
+      const criteriaThresholds = thresholds.filter(
+        (t: RatingSentimentThreshold) => t.criteriaName === criteriaName
+      ) as RatingSentimentThreshold[];
+
+      // Find matching sentiment level
+      let sentimentLevel: SentimentLevel | null = null;
+      let hasEnoughRatings = false;
+
+      for (const threshold of criteriaThresholds) {
+        if (
+          count >= threshold.requiredCount &&
+          averageRating >= threshold.ratingMin &&
+          averageRating <= threshold.ratingMax
+        ) {
+          sentimentLevel = threshold.sentimentLevel;
+          hasEnoughRatings = true;
+          break;
+        }
+      }
+
+      return {
+        criteriaName,
+        sentimentLevel,
+        averageRating,
+        count,
+        hasEnoughRatings
+      };
     });
-    
-    setSentiments(calculatedSentiments);
-  }, [ratings, ratingsCount]);
+
+    setSentimentResults(results);
+  }, [ratings, thresholds, ratingsCount]);
+
+  if (isLoading) {
+    return <div className="text-sm text-muted-foreground">Loading sentiment ratings...</div>;
+  }
+
+  if (error) {
+    console.error('Error loading sentiment thresholds:', error);
+    return null;
+  }
+
+  if (
+    (Array.isArray(ratings) && ratings.length === 0) ||
+    (!Array.isArray(ratings) && !Object.values(ratings).some(v => v > 0))
+  ) {
+    return null;
+  }
 
   return (
-    <div className={cn("flex flex-col space-y-3", className)}>
-      <h3 className="text-sm font-medium">Community Sentiment</h3>
-      <div className="flex flex-wrap gap-3 justify-start">
-        {Object.entries(sentiments).map(([criteria, sentiment]) => (
-          <TooltipProvider key={criteria}>
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <div
-                  className={cn(
-                    "flex items-center justify-center w-8 h-8 rounded-full border",
-                    sentiment ? SENTIMENT_COLORS[sentiment] : "text-gray-400 opacity-50"
-                  )}
-                >
-                  <span className="text-lg">
-                    {CRITERIA_ICONS[criteria as keyof typeof CRITERIA_ICONS]}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="p-2 max-w-[220px]">
-                <p className="font-medium">
-                  {CRITERIA_DESCRIPTIONS[criteria as keyof typeof CRITERIA_DESCRIPTIONS]}
-                </p>
-                {sentiment ? (
-                  <p className="text-sm mt-1">
-                    {SENTIMENT_DESCRIPTIONS[sentiment]}: {ratings[criteria as keyof typeof ratings].toFixed(2)} 
-                    <span className="text-xs ml-1">({ratingsCount} ratings)</span>
-                  </p>
-                ) : (
-                  <p className="text-sm mt-1">Not enough ratings to determine sentiment</p>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
+    <div className={cn("flex flex-col space-y-2", className)}>
+      <h3 className="text-sm font-medium">Rating Sentiment</h3>
+      <div className="flex flex-wrap gap-2">
+        {sentimentResults.map((result) => {
+          // Get the appropriate icon for this criteria
+          const IconComponent = CATEGORY_ICONS[result.criteriaName as keyof typeof CATEGORY_ICONS] || CircleDashed;
+          
+          return (
+            <TooltipProvider key={result.criteriaName}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <IconComponent 
+                      className={cn(
+                        "h-6 w-6", 
+                        result.hasEnoughRatings && result.sentimentLevel
+                          ? SENTIMENT_COLORS[result.sentimentLevel]
+                          : "text-muted-foreground"
+                      )} 
+                    />
+                    {showCount && (
+                      <span className="absolute -bottom-1 -right-1 text-[10px] font-semibold">
+                        {result.count}
+                      </span>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-xs">
+                    <p className="font-semibold capitalize">{result.criteriaName}</p>
+                    {result.hasEnoughRatings && result.sentimentLevel ? (
+                      <p className={SENTIMENT_COLORS[result.sentimentLevel]}>
+                        {SENTIMENT_LABELS[result.sentimentLevel]} ({result.count} ratings)
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        Not enough ratings yet ({result.count}/{thresholds?.find(
+                          (t: RatingSentimentThreshold) => 
+                            t.criteriaName === result.criteriaName && 
+                            t.sentimentLevel === 'mixed'
+                        )?.requiredCount || 5})
+                      </p>
+                    )}
+                    <p className="text-muted-foreground">
+                      Average: {result.averageRating.toFixed(2)}
+                    </p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        })}
       </div>
     </div>
   );
-}
+};
+
+export { RatingSentimentDisplay };
