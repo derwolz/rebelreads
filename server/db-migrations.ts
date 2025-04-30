@@ -1896,6 +1896,9 @@ export async function runMigrations() {
   
   // Update ratings table to use thumbs up/down system
   await updateRatingsToThumbsSystem();
+  
+  // Create rating sentiment thresholds table for the new sentiment system
+  await createRatingSentimentThresholdsTable();
 }
 
 async function createSellersTableAndUpdatePublisherSellers() {
@@ -2100,6 +2103,111 @@ async function addUserIdToPublishers() {
     }
   } catch (error) {
     console.error("Error adding user_id column to publishers table:", error);
+    throw error;
+  }
+}
+
+/**
+ * Create rating_sentiment_thresholds table and populate with default values
+ */
+async function createRatingSentimentThresholdsTable() {
+  try {
+    console.log("Checking for rating_sentiment_thresholds table...");
+    
+    // Check if table exists first
+    const checkResult = await db.execute(sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'rating_sentiment_thresholds'
+      )
+    `);
+    
+    const tableExists = checkResult.rows[0]?.exists === true;
+    
+    if (!tableExists) {
+      console.log("Creating rating_sentiment_thresholds table...");
+      
+      // Create the table first
+      await db.execute(sql`
+        CREATE TABLE rating_sentiment_thresholds (
+          id SERIAL PRIMARY KEY,
+          criteria_name TEXT NOT NULL,
+          sentiment_level TEXT NOT NULL,
+          rating_min DECIMAL NOT NULL,
+          rating_max DECIMAL NOT NULL,
+          required_count INTEGER NOT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        )
+      `);
+      
+      // Insert default values for each criteria
+      const criteriaNames = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'];
+      
+      for (const criteria of criteriaNames) {
+        // Overwhelmingly negative: <= -0.9 with 100+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'overwhelmingly_negative', -1.0, -0.9, 100)
+        `);
+        
+        // Very negative: > -0.9 and <= -0.5 with 30+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'very_negative', -0.9, -0.5, 30)
+        `);
+        
+        // Mostly negative: > -0.5 and <= -0.1 with 10+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'mostly_negative', -0.5, -0.1, 10)
+        `);
+        
+        // Mixed: > -0.1 and <= 0.1 with 5+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'mixed', -0.1, 0.1, 5)
+        `);
+        
+        // Mostly positive: > 0.1 and <= 0.5 with 10+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'mostly_positive', 0.1, 0.5, 10)
+        `);
+        
+        // Very positive: > 0.5 and <= 0.9 with 30+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'very_positive', 0.5, 0.9, 30)
+        `);
+        
+        // Overwhelmingly positive: > 0.9 with 100+ ratings
+        await db.execute(sql`
+          INSERT INTO rating_sentiment_thresholds
+          (criteria_name, sentiment_level, rating_min, rating_max, required_count)
+          VALUES
+          (${criteria}, 'overwhelmingly_positive', 0.9, 1.0, 100)
+        `);
+      }
+      
+      console.log("Rating sentiment thresholds table created and populated successfully.");
+    } else {
+      console.log("Rating sentiment thresholds table already exists, skipping.");
+    }
+  } catch (error) {
+    console.error("Error creating rating_sentiment_thresholds table:", error);
     throw error;
   }
 }
