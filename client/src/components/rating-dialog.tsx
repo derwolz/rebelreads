@@ -231,117 +231,123 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
               {renderRatingButtons("enjoyment")}
             </div>
             
-            {/* Writing Style */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <label className="text-sm font-medium">Writing Style</label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="ml-1 text-muted-foreground cursor-help">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <div className="max-w-[200px]">
-                          <p className="text-xs text-muted-foreground mt-1">A measurement of wordchoice, plot, style, overall skill in presenting the book</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            {/* Only show additional rating options if enjoyment has been rated */}
+            {ratings.enjoyment !== 0 && (
+              <>
+                {/* Section title for additional ratings */}
+                <div className="mt-4 mb-2">
+                  <h3 className="text-sm font-medium">Additional Ratings (Optional)</h3>
+                  <p className="text-xs text-muted-foreground">Help others by rating specific aspects</p>
                 </div>
-              </div>
-              {renderRatingButtons("writing")}
-            </div>
-            
-            {/* Themes */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <label className="text-sm font-medium">Themes</label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="ml-1 text-muted-foreground cursor-help">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <div className="max-w-[200px]">
-                          <p className="text-xs text-muted-foreground mt-1">A measurement of the ideas. Are they well developed, novel, and thought-provoking?</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                
+                {/* 2x2 grid for additional ratings */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Writing Style */}
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <label className="text-sm font-medium">Writing Style</label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="ml-1 text-muted-foreground cursor-help">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <div className="max-w-[200px]">
+                              <p className="text-xs text-muted-foreground mt-1">A measurement of wordchoice, plot, style, overall skill in presenting the book</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {renderRatingButtons("writing")}
+                  </div>
+                  
+                  {/* Themes */}
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <label className="text-sm font-medium">Themes</label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="ml-1 text-muted-foreground cursor-help">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <div className="max-w-[200px]">
+                              <p className="text-xs text-muted-foreground mt-1">A measurement of the ideas. Are they well developed, novel, and thought-provoking?</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {renderRatingButtons("themes")}
+                  </div>
+                  
+                  {/* Characters */}
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <label className="text-sm font-medium">Characters</label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="ml-1 text-muted-foreground cursor-help">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <div className="max-w-[200px]">
+                              <p className="text-xs text-muted-foreground mt-1">A measurement of how well characters are developed and portrayed</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {renderRatingButtons("characters")}
+                  </div>
+                  
+                  {/* World Building */}
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <label className="text-sm font-medium">World Building</label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="ml-1 text-muted-foreground cursor-help">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <div className="max-w-[200px]">
+                              <p className="text-xs text-muted-foreground mt-1">How rich and believable is the setting? Is it well integrated with the story?</p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {renderRatingButtons("worldbuilding")}
+                  </div>
                 </div>
-              </div>
-              {renderRatingButtons("themes")}
-            </div>
-            
-            {/* Characters */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <label className="text-sm font-medium">Characters</label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="ml-1 text-muted-foreground cursor-help">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <div className="max-w-[200px]">
-                          <p className="text-xs text-muted-foreground mt-1">A measurement of how well characters are developed and portrayed</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-              {renderRatingButtons("characters")}
-            </div>
-            
-            {/* World Building */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <label className="text-sm font-medium">World Building</label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="ml-1 text-muted-foreground cursor-help">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                          </svg>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <div className="max-w-[200px]">
-                          <p className="text-xs text-muted-foreground mt-1">How rich and believable is the setting? Is it well integrated with the story?</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
-              {renderRatingButtons("worldbuilding")}
-            </div>
+              </>
+            )}
           </div>
           <div>
             <div className="flex justify-between">
