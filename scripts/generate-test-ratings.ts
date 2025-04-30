@@ -1,6 +1,6 @@
 import { db } from "../server/db";
 import { users, ratings, books } from "../shared/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { hash } from "bcryptjs";
 
 /**
@@ -36,8 +36,11 @@ async function main() {
       return 1;                    // 50% chance of thumbs up
     }
     
-    // Create 100 dummy users and ratings
-    for (let i = 1; i <= 100; i++) {
+    // Create up to a total of 100 dummy users and ratings
+    // We'll limit to 100 to avoid timeouts
+    const MAX_USERS = 100;
+    
+    for (let i = 1; i <= MAX_USERS; i++) {
       const email = `private.test${i}@sirened.com`;
       const username = `test${i}.sirened`;
       const displayName = `Test ${i} Sirened`;
@@ -78,7 +81,36 @@ async function main() {
       });
       
       if (existingRating) {
-        console.log(`Rating for user ${userId} on book ${BOOK_ID} already exists, skipping`);
+        console.log(`Rating for user ${userId} on book ${BOOK_ID} already exists, updating it`);
+        
+        // Generate random ratings
+        const enjoyment = getRandomRating();
+        const writing = getRandomRating();
+        const themes = getRandomRating();
+        const characters = getRandomRating();
+        const worldbuilding = getRandomRating();
+        
+        // Update existing rating with new random values
+        const review = i % 5 === 0 ? `This is a test review from ${username}` : null;
+        await db.execute(
+          sql`UPDATE ratings 
+              SET enjoyment = ${enjoyment}, 
+                  writing = ${writing}, 
+                  themes = ${themes}, 
+                  characters = ${characters}, 
+                  worldbuilding = ${worldbuilding},
+                  review = ${review}
+              WHERE user_id = ${userId} AND book_id = ${BOOK_ID}`
+        );
+        
+        console.log(`Updated rating ${existingRating.id} for user ${userId}: ${JSON.stringify({
+          enjoyment,
+          writing,
+          themes,
+          characters,
+          worldbuilding
+        })}`);
+        
         continue;
       }
       
