@@ -72,40 +72,52 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
     
     // Add prompts based on ratings
     if (ratings.enjoyment === 1) {
-      prompts.push("What did you enjoy most about this book?");
+      prompts.push("Tell us what you enjoyed most about this book.");
     } else if (ratings.enjoyment === -1) {
-      prompts.push("What didn't you enjoy about this book?");
+      prompts.push("Share what aspects of the book didn't work for you.");
     }
     
-    if (ratings.writing === 1) {
-      prompts.push("What did you like about the writing style?");
-    } else if (ratings.writing === -1) {
-      prompts.push("What didn't you like about the writing style?");
+    // Combine writing and themes feedback when appropriate
+    if ((ratings.writing === 1 || ratings.themes === 1) && 
+        (ratings.writing !== -1 && ratings.themes !== -1)) {
+      prompts.push("What did you appreciate about the writing style or themes?");
+    } else {
+      if (ratings.writing === 1) {
+        prompts.push("What stood out about the writing style?");
+      } else if (ratings.writing === -1) {
+        prompts.push("What issues did you find with the writing?");
+      }
+      
+      if (ratings.themes === 1) {
+        prompts.push("Which themes resonated with you most?");
+      } else if (ratings.themes === -1) {
+        prompts.push("Which themes didn't connect with you?");
+      }
     }
     
-    if (ratings.themes === 1) {
-      prompts.push("What themes resonated with you?");
-    } else if (ratings.themes === -1) {
-      prompts.push("What themes didn't work for you?");
-    }
-    
-    if (ratings.characters === 1) {
-      prompts.push("What did you like about the characters?");
-    } else if (ratings.characters === -1) {
-      prompts.push("What didn't you like about the characters?");
-    }
-    
-    if (ratings.worldbuilding === 1) {
-      prompts.push("What was it about the setting/world that you liked?");
-    } else if (ratings.worldbuilding === -1) {
-      prompts.push("What didn't you like about the setting/world?");
+    // Combine characters and worldbuilding feedback when appropriate
+    if ((ratings.characters === 1 || ratings.worldbuilding === 1) && 
+        (ratings.characters !== -1 && ratings.worldbuilding !== -1)) {
+      prompts.push("What did you like about the characters or world-building?");
+    } else {
+      if (ratings.characters === 1) {
+        prompts.push("Which characters did you connect with and why?");
+      } else if (ratings.characters === -1) {
+        prompts.push("What didn't work for you with the characters?");
+      }
+      
+      if (ratings.worldbuilding === 1) {
+        prompts.push("What aspects of the setting enhanced your reading experience?");
+      } else if (ratings.worldbuilding === -1) {
+        prompts.push("How could the world-building have been improved?");
+      }
     }
     
     // Return default or specific prompts
     if (prompts.length === 0) {
-      return "Write your review...";
+      return "Share your thoughts about this book...\n\nWhat did you like or dislike?\nWould you recommend it to others?";
     } else {
-      return prompts.join(" ");
+      return prompts.join("\n\n");
     }
   }, [ratings]);
 
@@ -360,7 +372,7 @@ export function RatingDialog({ bookId, trigger }: RatingDialogProps) {
               value={review}
               onChange={handleReviewChange}
               placeholder={reviewPlaceholder}
-              className="mt-1"
+              className="mt-1 min-h-[120px]"
             />
           </div>
         </div>
