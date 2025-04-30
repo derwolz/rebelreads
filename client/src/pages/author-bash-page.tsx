@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import AuthorBashSubmission from "../components/author-bash/author-bash-submission";
-import AuthorBashGame from "../components/author-bash/author-bash-game";
+import AuthorBashCardGame from "../components/author-bash/author-bash-card-game";
 import AuthorBashLeaderboard from "../components/author-bash/author-bash-leaderboard";
 
 export default function AuthorBashPage() {
@@ -58,7 +58,7 @@ export default function AuthorBashPage() {
         </TabsList>
 
         <TabsContent value="play" className="space-y-6">
-          <AuthorBashGame />
+          <AuthorBashCardGame />
         </TabsContent>
 
         <TabsContent value="leaderboard" className="space-y-6">
