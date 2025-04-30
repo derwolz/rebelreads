@@ -441,7 +441,7 @@ export default function AuthorBashCardGame() {
 
   // Render the retained cards section
   const renderRetainedCards = () => {
-    if (!retainedData || retainedData.retainedCards.length === 0) {
+    if (!retainedData || !retainedData.retainedCards || retainedData.retainedCards.length === 0) {
       return (
         <div className="text-center p-8 border rounded-md bg-muted/30">
           <p className="text-muted-foreground">Drag your favorite cards here or tap a card then press "Retain"</p>
