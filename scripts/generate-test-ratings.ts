@@ -2,7 +2,6 @@ import { db } from "../server/db";
 import { users, ratings, books } from "../shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { hash } from "bcryptjs";
-import { Pool } from 'pg';
 
 /**
  * This script creates 100 dummy users with the format private.test{num}@sirened.com
@@ -28,10 +27,13 @@ async function main() {
     
     console.log(`Found book: "${bookCheck.title}"`);
     
-    // Generate a random rating value between -1 and 1
+    // Generate a random rating value of -1, 0, or 1 with a slight bias toward positive
     function getRandomRating(): number {
-      // Generate a value between -1 and 1 with a slight bias toward positive
-      return Math.min(1, Math.max(-1, Math.random() * 2 - 0.8));
+      // Generate random value with distribution: 25% chance of -1, 25% chance of 0, 50% chance of 1
+      const rand = Math.random();
+      if (rand < 0.25) return -1; // 25% chance of thumbs down
+      if (rand < 0.5) return 0;   // 25% chance of neutral (not rated)
+      return 1;                    // 50% chance of thumbs up
     }
     
     // Create 100 dummy users and ratings
@@ -59,8 +61,8 @@ async function main() {
         
         // Use raw SQL with sql tagged template
         const result = await db.execute(
-          sql`INSERT INTO users (email, username, display_name, password_hash, role, verification_status, verified_at)
-              VALUES (${email}, ${username}, ${displayName}, ${passwordHash}, 'user', 'verified', ${new Date()})
+          sql`INSERT INTO users (email, username, display_name, password)
+              VALUES (${email}, ${username}, ${displayName}, ${passwordHash})
               RETURNING id`
         );
         
@@ -98,11 +100,11 @@ async function main() {
       const ratingId = Number(ratingResult.rows[0].id);
       
       console.log(`Created rating ${ratingId} for user ${userId}: ${JSON.stringify({
-        enjoyment: enjoyment.toFixed(2),
-        writing: writing.toFixed(2),
-        themes: themes.toFixed(2),
-        characters: characters.toFixed(2),
-        worldbuilding: worldbuilding.toFixed(2)
+        enjoyment,
+        writing,
+        themes,
+        characters,
+        worldbuilding
       })}`);
     }
     
@@ -110,11 +112,10 @@ async function main() {
   } catch (error) {
     console.error("Error creating dummy users and ratings:", error);
   } finally {
-    // Close the database pool connection
-    // We need to access the underlying pg Pool to close the connection properly
-    if (db.$client instanceof Pool) {
-      await db.$client.end();
-    }
+    // Note: Since we're running in the context of a web server,
+    // we don't need to close the database connection as it would
+    // stop the server. In a standalone script, you would close it.
+    console.log("Script execution completed.");
   }
 }
 
