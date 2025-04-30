@@ -1716,6 +1716,81 @@ async function addIsSharedColumnToBookShelves() {
 import { addSocialMediaLinksToAuthors } from "./migrations/social-media-links";
 
 /**
+ * Update ratings table for thumbs up/down system
+ * Changes from 5-star ratings to a system where:
+ * -1 = thumbs down
+ *  0 = not rated (default)
+ *  1 = thumbs up
+ */
+async function updateRatingsToThumbsSystem() {
+  try {
+    // Check if the default constraints are already set
+    const checkResult = await db.execute(sql`
+      SELECT column_name, column_default
+      FROM information_schema.columns 
+      WHERE table_name = 'ratings' AND column_name = 'enjoyment'
+    `);
+    
+    const hasDefault = checkResult.rows.length > 0 && 
+                      checkResult.rows[0].column_default === '0';
+    
+    if (!hasDefault) {
+      console.log("Updating ratings table to thumbs up/down system...");
+      
+      // Set default value of 0 for all rating columns
+      await db.execute(sql`
+        ALTER TABLE ratings 
+        ALTER COLUMN enjoyment SET DEFAULT 0,
+        ALTER COLUMN writing SET DEFAULT 0,
+        ALTER COLUMN themes SET DEFAULT 0,
+        ALTER COLUMN characters SET DEFAULT 0,
+        ALTER COLUMN worldbuilding SET DEFAULT 0
+      `);
+      
+      // Convert existing ratings to the new format
+      // 1-2 stars -> thumbs down (-1)
+      // 3 stars -> not rated (0) - neutral rating
+      // 4-5 stars -> thumbs up (1)
+      await db.execute(sql`
+        UPDATE ratings SET
+          enjoyment = CASE 
+            WHEN enjoyment <= 2 THEN -1
+            WHEN enjoyment >= 4 THEN 1
+            ELSE 0
+          END,
+          writing = CASE 
+            WHEN writing <= 2 THEN -1
+            WHEN writing >= 4 THEN 1
+            ELSE 0
+          END,
+          themes = CASE 
+            WHEN themes <= 2 THEN -1
+            WHEN themes >= 4 THEN 1
+            ELSE 0
+          END,
+          characters = CASE 
+            WHEN characters <= 2 THEN -1
+            WHEN characters >= 4 THEN 1
+            ELSE 0
+          END,
+          worldbuilding = CASE 
+            WHEN worldbuilding <= 2 THEN -1
+            WHEN worldbuilding >= 4 THEN 1
+            ELSE 0
+          END
+      `);
+      
+      console.log("Ratings table updated to thumbs up/down system successfully");
+    } else {
+      console.log("Ratings table already using thumbs up/down system");
+    }
+  } catch (error) {
+    console.error("Error updating ratings to thumbs system:", error);
+    throw error;
+  }
+}
+
+/**
  * Create shelf comments table for comment section on shared bookshelves
  */
 async function createShelfCommentsTable() {
@@ -1818,6 +1893,9 @@ export async function runMigrations() {
   // Import and run AuthorBash migrations
   const { runAuthorBashMigrations } = await import("./migrations/authorbash-tables");
   await runAuthorBashMigrations();
+  
+  // Update ratings table to use thumbs up/down system
+  await updateRatingsToThumbsSystem();
 }
 
 async function createSellersTableAndUpdatePublisherSellers() {
