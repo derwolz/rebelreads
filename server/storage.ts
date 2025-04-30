@@ -36,6 +36,11 @@ const shelfStorage = new ShelfStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
+  // Rating Sentiments
+  getSentimentThresholds: ratingSentimentStorage.getSentimentThresholds.bind(ratingSentimentStorage),
+  getSentimentThresholdsByCriteria: ratingSentimentStorage.getSentimentThresholdsByCriteria.bind(ratingSentimentStorage),
+  updateSentimentThreshold: ratingSentimentStorage.updateSentimentThreshold.bind(ratingSentimentStorage),
+  
   // User and account management
   getUser: accountStorage.getUser.bind(accountStorage),
   getUserByEmail: accountStorage.getUserByEmail.bind(accountStorage),
