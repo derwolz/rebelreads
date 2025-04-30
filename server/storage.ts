@@ -14,6 +14,7 @@ import { FilterStorage } from "./storage/filters";
 import { ContentReportStorage } from "./storage/content-reports";
 import { SecurityStorage } from "./storage/security";
 import { ShelfStorage } from "./storage/shelf";
+import { RatingSentimentStorage, ratingSentimentStorage } from "./storage/rating-sentiments";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();

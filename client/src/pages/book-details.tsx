@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { FollowButton } from "@/components/follow-button";
+import { RatingSentimentDisplay } from "@/components/rating-sentiment-display";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink, MoreVertical, Ban, Flag } from "lucide-react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -918,13 +919,21 @@ export default function BookDetails() {
                   </div>
 
                   {averageRatings ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="flex items-center gap-2">
                         <StarRating rating={averageRatings.overall} readOnly />
                         <span className="text-sm text-muted-foreground">
                           ({averageRatings.overall.toFixed(2)})
                         </span>
                       </div>
+                      
+                      {/* Rating Sentiment Display */}
+                      <RatingSentimentDisplay 
+                        ratings={averageRatings} 
+                        ratingsCount={ratings?.length || 0}
+                        className="mb-2 bg-secondary/20 p-3 rounded-md" 
+                      />
+                      
                       <div className="grid gap-2">
                         {ratingPreferences ? (
                           // If user has preferences, show a message
