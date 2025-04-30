@@ -1149,6 +1149,26 @@ export function calculateWeightedRating(
   return totalWeightedRating / totalWeight;
 }
 
+/**
+ * Calculates a compatibility rating based on the weighted rating
+ * Multiplies the weighted rating by 3 to produce a value between -3 and 3
+ * - Negative values indicate incompatibility (shown in red)
+ * - Positive values indicate compatibility (shown in purple)
+ */
+export function calculateCompatibilityRating(
+  rating: Rating, 
+  customWeights?: Record<string, number> | RatingPreferences
+): number {
+  // Get weighted rating (between 1-5)
+  const weightedRating = calculateWeightedRating(rating, customWeights);
+  
+  // Transform to a scale of -3 to 3
+  // When weightedRating is 3 (neutral), compatibilityRating is 0
+  // When weightedRating > 3, compatibilityRating is positive (up to 3)
+  // When weightedRating < 3, compatibilityRating is negative (down to -3)
+  return (weightedRating - 3) * 1.5;
+}
+
 export const landing_sessions = pgTable("landing_sessions", {
   id: serial("id").primaryKey(),
   sessionId: text("session_id").notNull().unique(),

@@ -5,6 +5,7 @@ import {
   Rating,
   Author,
   calculateWeightedRating,
+  calculateCompatibilityRating,
   RATING_CRITERIA,
   DEFAULT_RATING_WEIGHTS,
   RatingPreferences,
@@ -13,6 +14,7 @@ import {
 import { Heart, ChevronRight } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
+import { SeashellRating } from "@/components/seashell-rating";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
