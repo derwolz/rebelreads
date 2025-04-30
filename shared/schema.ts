@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, date, jsonb, decimal, varchar, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
@@ -119,6 +119,153 @@ export const authors = pgTable("authors", {
 });
 
 // Publisher-specific information is contained in the publishers table already defined below
+
+// Define experience action types for users and authors
+export const USER_EXPERIENCE_ACTIONS = [
+  "leave_rating",           // When a user rates a book
+  "leave_review",           // When a user writes a review
+  "book_completed",         // When a user marks a book as completed
+  "referral_click",         // When a user clicks on a referral link
+  "follow_author",          // When a user follows an author
+  "create_bookshelf",       // When a user creates a bookshelf
+  "share_bookshelf",        // When a user shares a bookshelf
+  "daily_login",            // When a user logs in daily
+  "profile_completion",     // When a user completes their profile
+  "comment_on_shelf"        // When a user comments on a bookshelf
+] as const;
+
+export const AUTHOR_EXPERIENCE_ACTIONS = [
+  "publish_book",           // When an author publishes a book
+  "receive_rating",         // When an author's book receives a rating
+  "receive_review",         // When an author's book receives a review
+  "referral_conversion",    // When someone clicks on an author's book referral link
+  "gain_follower",          // When an author gains a follower
+  "respond_to_review",      // When an author responds to a review
+  "author_bash_submission", // When an author participates in Author Bash
+  "update_book",            // When an author updates book details
+  "daily_login",            // When an author logs in daily
+  "profile_completion"      // When an author completes their profile
+] as const;
+
+// Experience levels table for users
+export const userLevels = pgTable("user_levels", {
+  level: integer("level").primaryKey(),
+  experienceRequired: integer("experience_required").notNull(), // Total XP needed to reach this level
+  title: text("title").notNull(), // Title displayed for this level
+  benefits: jsonb("benefits").default({}), // Benefits unlocked at this level (JSON)
+  description: text("description"), // Description of what this level means
+  iconUrl: text("icon_url"), // Icon URL for this level
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+// Experience levels table for authors
+export const authorLevels = pgTable("author_levels", {
+  level: integer("level").primaryKey(),
+  experienceRequired: integer("experience_required").notNull(), // Total XP needed to reach this level
+  title: text("title").notNull(), // Title displayed for this level
+  benefits: jsonb("benefits").default({}), // Benefits unlocked at this level (JSON)
+  description: text("description"), // Description of what this level means
+  iconUrl: text("icon_url"), // Icon URL for this level
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+// User experience records
+export const userExperience = pgTable("user_experience", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  action: text("action").notNull(), // One of USER_EXPERIENCE_ACTIONS
+  amount: integer("amount").notNull(), // Amount of XP gained
+  metadata: jsonb("metadata").default({}), // Additional context (target book, etc)
+  timestamp: timestamp("timestamp").notNull().defaultNow()
+});
+
+// Author experience records
+export const authorExperience = pgTable("author_experience", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull().references(() => authors.id),
+  action: text("action").notNull(), // One of AUTHOR_EXPERIENCE_ACTIONS
+  amount: integer("amount").notNull(), // Amount of XP gained
+  metadata: jsonb("metadata").default({}), // Additional context (target book, etc)
+  timestamp: timestamp("timestamp").notNull().defaultNow()
+});
+
+// Badges table - for both users and authors
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  iconUrl: text("icon_url").notNull(),
+  type: text("type").notNull(), // 'user' or 'author'
+  rarity: text("rarity").notNull(), // 'common', 'rare', 'epic', 'legendary'
+  requirements: jsonb("requirements").default({}), // JSON with badge requirements
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
+// User badges relation table
+export const userBadges = pgTable("user_badges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  badgeId: integer("badge_id").notNull().references(() => badges.id),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+  isEquipped: boolean("is_equipped").default(false) // Whether the badge is currently displayed
+});
+
+// Author badges relation table
+export const authorBadges = pgTable("author_badges", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull().references(() => authors.id),
+  badgeId: integer("badge_id").notNull().references(() => badges.id),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+  isEquipped: boolean("is_equipped").default(false) // Whether the badge is currently displayed
+});
+
+// Titles table - for both users and authors
+export const titles = pgTable("titles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // 'user' or 'author'
+  requirements: jsonb("requirements").default({}), // JSON with title requirements
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
+// User titles relation table
+export const userTitles = pgTable("user_titles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  titleId: integer("title_id").notNull().references(() => titles.id),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+  isEquipped: boolean("is_equipped").default(false) // Whether the title is currently displayed
+});
+
+// Author titles relation table
+export const authorTitles = pgTable("author_titles", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull().references(() => authors.id),
+  titleId: integer("title_id").notNull().references(() => titles.id),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+  isEquipped: boolean("is_equipped").default(false) // Whether the title is currently displayed
+});
+
+// Track current experience and level for users
+export const userProgression = pgTable("user_progression", {
+  userId: integer("user_id").primaryKey().references(() => users.id),
+  currentExperience: integer("current_experience").notNull().default(0),
+  currentLevel: integer("current_level").notNull().default(1).references(() => userLevels.level),
+  activeTitleId: integer("active_title_id").references(() => titles.id),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+// Track current experience and level for authors
+export const authorProgression = pgTable("author_progression", {
+  authorId: integer("author_id").primaryKey().references(() => authors.id),
+  currentExperience: integer("current_experience").notNull().default(0),
+  currentLevel: integer("current_level").notNull().default(1).references(() => authorLevels.level),
+  activeTitleId: integer("active_title_id").references(() => titles.id),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
 
 export const followers = pgTable("followers", {
   id: serial("id").primaryKey(),
