@@ -1755,7 +1755,6 @@ export async function runMigrations() {
   await removeHasBetaAccessFromUsers();
   await removeGenresColumnFromBooks();
   await removeAuthorColumnsFromBooks();
-  await updateAuthorBashResponsesTable();
   await addFeaturedColumnToRatings();
   await addReportStatusColumnToRatings();
   await createAdImpressionsTable();
@@ -1815,9 +1814,7 @@ export async function runMigrations() {
   // Add performance optimization indexes
   await addDatabaseIndexes();
   
-  // Import and run AuthorBash migrations
-  const { runAuthorBashMigrations } = await import("./migrations/authorbash-tables");
-  await runAuthorBashMigrations();
+  
 }
 
 async function createSellersTableAndUpdatePublisherSellers() {
@@ -1939,45 +1936,6 @@ async function createSellersTableAndUpdatePublisherSellers() {
     }
   } catch (error) {
     console.error("Error creating sellers table and updating publisher_sellers:", error);
-  }
-}
-
-/**
- * Make text and imageUrl columns in authorbash_responses table nullable
- * This allows submissions with only text or only image
- */
-async function updateAuthorBashResponsesTable() {
-  try {
-    console.log("Checking authorbash_responses table...");
-    
-    // Check if the table exists
-    const tableCheck = await db.execute(sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_name = 'authorbash_responses'
-    `);
-    
-    if (tableCheck.rows.length > 0) {
-      console.log("AuthorBash responses table exists, updating columns...");
-      
-      // Drop NOT NULL constraint from text column
-      await db.execute(sql`
-        ALTER TABLE authorbash_responses 
-        ALTER COLUMN text DROP NOT NULL
-      `);
-      
-      // Drop NOT NULL constraint from image_url column
-      await db.execute(sql`
-        ALTER TABLE authorbash_responses 
-        ALTER COLUMN image_url DROP NOT NULL
-      `);
-      
-      console.log("AuthorBash responses table updated successfully");
-    } else {
-      console.log("AuthorBash responses table doesn't exist yet, skipping update");
-    }
-  } catch (error) {
-    console.error("Error updating AuthorBash responses table:", error);
   }
 }
 
