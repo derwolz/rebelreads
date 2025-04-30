@@ -85,6 +85,35 @@ export const DEFAULT_RATING_WEIGHTS = {
   worldbuilding: 0.08
 } as const;
 
+// Rating sentiment thresholds with count requirements
+export type SentimentLevel = 
+  | "overwhelmingly_negative" 
+  | "very_negative" 
+  | "mostly_negative" 
+  | "mixed" 
+  | "mostly_positive" 
+  | "very_positive" 
+  | "overwhelmingly_positive";
+
+export type RatingSentimentThresholds = {
+  sentimentLevel: SentimentLevel;
+  ratingMin: number;
+  ratingMax: number;
+  requiredCount: number;
+}
+
+// Table to store the sentiment threshold configuration
+export const ratingSentimentThresholds = pgTable("rating_sentiment_thresholds", {
+  id: serial("id").primaryKey(),
+  criteriaName: text("criteria_name").notNull(), // enjoyment, writing, themes, characters, worldbuilding
+  sentimentLevel: text("sentiment_level").notNull(), // Maps to SentimentLevel type
+  ratingMin: decimal("rating_min").notNull(),
+  ratingMax: decimal("rating_max").notNull(),
+  requiredCount: integer("required_count").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Base users table with common authentication and profile fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
