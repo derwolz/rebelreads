@@ -96,8 +96,14 @@ export function ReviewCard({ review }: ReviewCardProps) {
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <StarRating rating={Math.round(calculateWeightedRating(review))} readOnly size="sm" />
-                  <span>•</span>
+                  {review.enjoyment !== 0 && (
+                    <>
+                      <span className={review.enjoyment === 1 ? "text-green-600" : "text-red-600"}>
+                        {review.enjoyment === 1 ? "👍" : "👎"}
+                      </span>
+                      <span>•</span>
+                    </>
+                  )}
                   <span>{format(new Date(review.createdAt), 'MMM d, yyyy')}</span>
                 </div>
               </div>
@@ -160,26 +166,47 @@ export function ReviewCard({ review }: ReviewCardProps) {
           )}
 
           <div className={`grid gap-2 text-sm border-t pt-2 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
-            <div className="flex justify-between items-center">
-              <span>Enjoyment (30%)</span>
-              <StarRating rating={review.enjoyment} readOnly size="sm" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Writing Style (20%)</span>
-              <StarRating rating={review.writing} readOnly size="sm" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Themes (20%)</span>
-              <StarRating rating={review.themes} readOnly size="sm" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Characters (10%)</span>
-              <StarRating rating={review.characters} readOnly size="sm" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span>World Building (10%)</span>
-              <StarRating rating={review.worldbuilding} readOnly size="sm" />
-            </div>
+            {/* Only display metrics that have been rated */}
+            {review.enjoyment !== 0 && (
+              <div className="flex justify-between items-center">
+                <span>Enjoyment</span>
+                <span className={review.enjoyment === 1 ? "text-green-600" : "text-red-600"}>
+                  {review.enjoyment === 1 ? "👍 Recommended" : "👎 Not Recommended"}
+                </span>
+              </div>
+            )}
+            {review.writing !== 0 && (
+              <div className="flex justify-between items-center">
+                <span>Writing Style</span>
+                <span className={review.writing === 1 ? "text-green-600" : "text-red-600"}>
+                  {review.writing === 1 ? "👍 Recommended" : "👎 Not Recommended"}
+                </span>
+              </div>
+            )}
+            {review.themes !== 0 && (
+              <div className="flex justify-between items-center">
+                <span>Themes</span>
+                <span className={review.themes === 1 ? "text-green-600" : "text-red-600"}>
+                  {review.themes === 1 ? "👍 Recommended" : "👎 Not Recommended"}
+                </span>
+              </div>
+            )}
+            {review.characters !== 0 && (
+              <div className="flex justify-between items-center">
+                <span>Characters</span>
+                <span className={review.characters === 1 ? "text-green-600" : "text-red-600"}>
+                  {review.characters === 1 ? "👍 Recommended" : "👎 Not Recommended"}
+                </span>
+              </div>
+            )}
+            {review.worldbuilding !== 0 && (
+              <div className="flex justify-between items-center">
+                <span>World Building</span>
+                <span className={review.worldbuilding === 1 ? "text-green-600" : "text-red-600"}>
+                  {review.worldbuilding === 1 ? "👍 Recommended" : "👎 Not Recommended"}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

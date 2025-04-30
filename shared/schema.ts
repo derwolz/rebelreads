@@ -1049,6 +1049,11 @@ export function calculateStraightAverageRating(rating: Rating): number {
 /**
  * Calculates a weighted rating based on user preferences
  * Used for most of the application outside of Pro Book Management
+ * 
+ * With the new thumbs up/down system:
+ * - Thumbs up (1) contributes positively based on weight
+ * - Thumbs down (-1) contributes negatively based on weight
+ * - No rating (0) doesn't contribute
  */
 export function calculateWeightedRating(
   rating: Rating, 
@@ -1083,14 +1088,36 @@ export function calculateWeightedRating(
     }
   });
   
-  // Apply weights to each rating component
-  return (
-    rating.enjoyment * weights.enjoyment +
-    rating.writing * weights.writing +
-    rating.themes * weights.themes + 
-    rating.characters * weights.characters +
-    rating.worldbuilding * weights.worldbuilding
-  );
+  // Count how many criteria were actually rated (non-zero)
+  let ratedCriteriaCount = 0;
+  let totalWeightedRating = 0;
+  let totalWeight = 0;
+  
+  // Process each criterion
+  const criteria = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'] as const;
+  
+  for (const criterion of criteria) {
+    const value = rating[criterion];
+    
+    // Skip if this criterion wasn't rated
+    if (value === 0) continue;
+    
+    ratedCriteriaCount++;
+    const weight = weights[criterion];
+    totalWeight += weight;
+    
+    // Convert -1/1 to a value we can use
+    // -1 (thumbs down) maps to 1 (negative contribution)
+    // 1 (thumbs up) maps to 5 (positive contribution)
+    const normalizedValue = value === 1 ? 5 : 1;
+    totalWeightedRating += normalizedValue * weight;
+  }
+  
+  // If nothing was rated, return a neutral score
+  if (ratedCriteriaCount === 0) return 0;
+  
+  // Calculate the weighted average
+  return totalWeightedRating / totalWeight;
 }
 
 export const landing_sessions = pgTable("landing_sessions", {
