@@ -73,25 +73,24 @@ async function main() {
         console.log(`Created user with ID: ${userId}`);
       }
       
-      // Check if rating already exists
-      const existingRating = await db.query.ratings.findFirst({
-        where: (rating) => 
-          eq(rating.userId, userId) && 
-          eq(rating.bookId, BOOK_ID)
-      });
+      // Check if rating already exists using direct SQL to ensure accuracy
+      const checkRatingResult = await db.execute(
+        sql`SELECT id FROM ratings WHERE user_id = ${userId} AND book_id = ${BOOK_ID}`
+      );
       
-      if (existingRating) {
-        console.log(`Rating for user ${userId} on book ${BOOK_ID} already exists, updating it`);
-        
-        // Generate random ratings
-        const enjoyment = getRandomRating();
-        const writing = getRandomRating();
-        const themes = getRandomRating();
-        const characters = getRandomRating();
-        const worldbuilding = getRandomRating();
+      // Generate random ratings
+      const enjoyment = getRandomRating();
+      const writing = getRandomRating();
+      const themes = getRandomRating();
+      const characters = getRandomRating();
+      const worldbuilding = getRandomRating();
+      const review = i % 5 === 0 ? `This is a test review from ${username}` : null;
+      
+      if (checkRatingResult.rowCount > 0) {
+        const ratingId = checkRatingResult.rows[0].id;
+        console.log(`Rating for user ${userId} on book ${BOOK_ID} already exists (ID: ${ratingId}), updating it`);
         
         // Update existing rating with new random values
-        const review = i % 5 === 0 ? `This is a test review from ${username}` : null;
         await db.execute(
           sql`UPDATE ratings 
               SET enjoyment = ${enjoyment}, 
@@ -100,44 +99,35 @@ async function main() {
                   characters = ${characters}, 
                   worldbuilding = ${worldbuilding},
                   review = ${review}
-              WHERE user_id = ${userId} AND book_id = ${BOOK_ID}`
+              WHERE id = ${ratingId}`
         );
         
-        console.log(`Updated rating ${existingRating.id} for user ${userId}: ${JSON.stringify({
+        console.log(`Updated rating ${ratingId} for user ${userId}: ${JSON.stringify({
           enjoyment,
           writing,
           themes,
           characters,
           worldbuilding
         })}`);
+      } else {
+        // Create new rating
+        const ratingResult = await db.execute(
+          sql`INSERT INTO ratings (user_id, book_id, enjoyment, writing, themes, characters, worldbuilding, review)
+              VALUES (${userId}, ${BOOK_ID}, ${enjoyment}, ${writing}, ${themes}, ${characters}, ${worldbuilding}, ${review})
+              RETURNING id`
+        );
         
-        continue;
+        const ratingId = Number(ratingResult.rows[0].id);
+        console.log(`Created NEW rating ${ratingId} for user ${userId}: ${JSON.stringify({
+          enjoyment,
+          writing,
+          themes,
+          characters,
+          worldbuilding
+        })}`);
       }
       
-      // Generate random ratings
-      const enjoyment = getRandomRating();
-      const writing = getRandomRating();
-      const themes = getRandomRating();
-      const characters = getRandomRating();
-      const worldbuilding = getRandomRating();
-      
-      // Create rating using raw SQL
-      const review = i % 5 === 0 ? `This is a test review from ${username}` : null;
-      const ratingResult = await db.execute(
-        sql`INSERT INTO ratings (user_id, book_id, enjoyment, writing, themes, characters, worldbuilding, review)
-            VALUES (${userId}, ${BOOK_ID}, ${enjoyment}, ${writing}, ${themes}, ${characters}, ${worldbuilding}, ${review})
-            RETURNING id`
-      );
-      
-      const ratingId = Number(ratingResult.rows[0].id);
-      
-      console.log(`Created rating ${ratingId} for user ${userId}: ${JSON.stringify({
-        enjoyment,
-        writing,
-        themes,
-        characters,
-        worldbuilding
-      })}`);
+      // We've already handled this user's rating above, continue to next user
     }
     
     console.log("Finished creating dummy users and ratings!");
