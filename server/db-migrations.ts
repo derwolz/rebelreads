@@ -1818,6 +1818,10 @@ export async function runMigrations() {
   // Import and run AuthorBash migrations
   const { runAuthorBashMigrations } = await import("./migrations/authorbash-tables");
   await runAuthorBashMigrations();
+  
+  // Import and run Leveling System migrations
+  const { runLevelingMigrations } = await import("./db-migrations-leveling");
+  await runLevelingMigrations();
 }
 
 async function createSellersTableAndUpdatePublisherSellers() {

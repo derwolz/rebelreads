@@ -1452,6 +1452,8 @@ export const bookShelves = pgTable("book_shelves", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Note: we are using 'shelfBooks' and 'notes' tables instead of these duplicate definitions
+
 // ShelfBooks table to associate books with shelves
 export const shelfBooks = pgTable("shelf_books", {
   id: serial("id").primaryKey(),
@@ -1741,6 +1743,225 @@ export const authorBashRetentionRelations = relations(authorBashRetentions, ({ o
   }),
 }));
 
+// Relations for the leveling system
+export const userRelations = relations(users, ({ many, one }) => ({
+  ratings: many(ratings),
+  readingStatuses: many(reading_status),
+  bookshelves: many(bookShelves),
+  experiences: many(userExperience),
+  badges: many(userBadges),
+  titles: many(userTitles),
+  progression: one(userProgression),
+}));
+
+export const authorRelations = relations(authors, ({ one, many }) => ({
+  user: one(users, {
+    fields: [authors.userId],
+    references: [users.id],
+  }),
+  books: many(books),
+  experiences: many(authorExperience),
+  badges: many(authorBadges),
+  titles: many(authorTitles),
+  progression: one(authorProgression),
+}));
+
+export const bookRelations = relations(books, ({ one, many }) => ({
+  author: one(authors, {
+    fields: [books.authorId],
+    references: [authors.id],
+  }),
+  ratings: many(ratings),
+  readingStatuses: many(reading_status),
+  shelfBooks: many(shelfBooks),
+  images: many(bookImages),
+  files: many(bookFiles),
+  genreTaxonomies: many(bookGenreTaxonomies),
+}));
+
+export const ratingRelations = relations(ratings, ({ one }) => ({
+  user: one(users, {
+    fields: [ratings.userId],
+    references: [users.id],
+  }),
+  book: one(books, {
+    fields: [ratings.bookId],
+    references: [books.id],
+  }),
+}));
+
+export const readingStatusRelations = relations(reading_status, ({ one }) => ({
+  user: one(users, {
+    fields: [reading_status.userId],
+    references: [users.id],
+  }),
+  book: one(books, {
+    fields: [reading_status.bookId],
+    references: [books.id],
+  }),
+}));
+
+export const bookshelfRelations = relations(bookShelves, ({ one, many }) => ({
+  user: one(users, {
+    fields: [bookShelves.userId],
+    references: [users.id],
+  }),
+  books: many(shelfBooks),
+  notes: many(notes, { relationName: "shelfNotes" }),
+}));
+
+export const shelfBookRelations = relations(shelfBooks, ({ one }) => ({
+  bookshelf: one(bookShelves, {
+    fields: [shelfBooks.shelfId],
+    references: [bookShelves.id],
+  }),
+  book: one(books, {
+    fields: [shelfBooks.bookId],
+    references: [books.id],
+  }),
+}));
+
+export const noteRelations = relations(notes, ({ one }) => ({
+  user: one(users, {
+    fields: [notes.userId],
+    references: [users.id],
+  }),
+  book: one(books, {
+    fields: [notes.bookId],
+    references: [books.id],
+    relationName: "bookNotes"
+  }),
+  bookshelf: one(bookShelves, {
+    fields: [notes.shelfId],
+    references: [bookShelves.id],
+    relationName: "shelfNotes"
+  }),
+}));
+
+export const genreTaxonomyRelations = relations(genreTaxonomies, ({ many }) => ({
+  books: many(bookGenreTaxonomies),
+}));
+
+export const bookGenreTaxonomyRelations = relations(bookGenreTaxonomies, ({ one }) => ({
+  book: one(books, {
+    fields: [bookGenreTaxonomies.bookId],
+    references: [books.id],
+  }),
+  taxonomy: one(genreTaxonomies, {
+    fields: [bookGenreTaxonomies.taxonomyId],
+    references: [genreTaxonomies.id],
+  }),
+}));
+
+// Relations for the new leveling system tables
+export const userLevelRelations = relations(userLevels, ({ many }) => ({
+  users: many(userProgression),
+}));
+
+export const authorLevelRelations = relations(authorLevels, ({ many }) => ({
+  authors: many(authorProgression),
+}));
+
+export const userExperienceRelations = relations(userExperience, ({ one }) => ({
+  user: one(users, {
+    fields: [userExperience.userId],
+    references: [users.id],
+  }),
+}));
+
+export const authorExperienceRelations = relations(authorExperience, ({ one }) => ({
+  author: one(authors, {
+    fields: [authorExperience.authorId],
+    references: [authors.id],
+  }),
+}));
+
+export const badgeRelations = relations(badges, ({ many }) => ({
+  userBadges: many(userBadges),
+  authorBadges: many(authorBadges),
+}));
+
+export const userBadgeRelations = relations(userBadges, ({ one }) => ({
+  user: one(users, {
+    fields: [userBadges.userId],
+    references: [users.id],
+  }),
+  badge: one(badges, {
+    fields: [userBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
+
+export const authorBadgeRelations = relations(authorBadges, ({ one }) => ({
+  author: one(authors, {
+    fields: [authorBadges.authorId],
+    references: [authors.id],
+  }),
+  badge: one(badges, {
+    fields: [authorBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
+
+export const titleRelations = relations(titles, ({ many }) => ({
+  userTitles: many(userTitles),
+  authorTitles: many(authorTitles),
+  userProgressions: many(userProgression),
+  authorProgressions: many(authorProgression),
+}));
+
+export const userTitleRelations = relations(userTitles, ({ one }) => ({
+  user: one(users, {
+    fields: [userTitles.userId],
+    references: [users.id],
+  }),
+  title: one(titles, {
+    fields: [userTitles.titleId],
+    references: [titles.id],
+  }),
+}));
+
+export const authorTitleRelations = relations(authorTitles, ({ one }) => ({
+  author: one(authors, {
+    fields: [authorTitles.authorId],
+    references: [authors.id],
+  }),
+  title: one(titles, {
+    fields: [authorTitles.titleId],
+    references: [titles.id],
+  }),
+}));
+
+export const userProgressionRelations = relations(userProgression, ({ one }) => ({
+  user: one(users, {
+    fields: [userProgression.userId],
+    references: [users.id],
+  }),
+  level: one(userLevels, {
+    fields: [userProgression.currentLevel],
+    references: [userLevels.level],
+  }),
+  activeTitle: one(titles, {
+    fields: [userProgression.activeTitleId],
+    references: [titles.id],
+  }),
+}));
+
+export const authorProgressionRelations = relations(authorProgression, ({ one }) => ({
+  author: one(authors, {
+    fields: [authorProgression.authorId],
+    references: [authors.id],
+  }),
+  level: one(authorLevels, {
+    fields: [authorProgression.currentLevel],
+    references: [authorLevels.level],
+  }),
+  activeTitle: one(titles, {
+    fields: [authorProgression.activeTitleId],
+    references: [titles.id],
+  }),
+}));
+
 // Create insert schemas
 export const insertAuthorBashQuestionSchema = createInsertSchema(authorBashQuestions).omit({
   id: true,
@@ -1779,3 +2000,108 @@ export type AuthorBashGame = typeof authorBashGames.$inferSelect;
 export type InsertAuthorBashGame = z.infer<typeof insertAuthorBashGameSchema>;
 export type AuthorBashRetention = typeof authorBashRetentions.$inferSelect;
 export type InsertAuthorBashRetention = z.infer<typeof insertAuthorBashRetentionSchema>;
+
+// Create insert schemas for experience and leveling system
+export const insertUserLevelSchema = createInsertSchema(userLevels).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAuthorLevelSchema = createInsertSchema(authorLevels).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserExperienceSchema = createInsertSchema(userExperience).omit({
+  id: true,
+  timestamp: true,
+}).extend({
+  action: z.enum(USER_EXPERIENCE_ACTIONS),
+});
+
+export const insertAuthorExperienceSchema = createInsertSchema(authorExperience).omit({
+  id: true,
+  timestamp: true,
+}).extend({
+  action: z.enum(AUTHOR_EXPERIENCE_ACTIONS),
+});
+
+export const insertBadgeSchema = createInsertSchema(badges).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  type: z.enum(["user", "author"]),
+  rarity: z.enum(["common", "rare", "epic", "legendary"]),
+});
+
+export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
+  id: true,
+  earnedAt: true,
+});
+
+export const insertAuthorBadgeSchema = createInsertSchema(authorBadges).omit({
+  id: true,
+  earnedAt: true,
+});
+
+export const insertTitleSchema = createInsertSchema(titles).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  type: z.enum(["user", "author"]),
+});
+
+export const insertUserTitleSchema = createInsertSchema(userTitles).omit({
+  id: true,
+  earnedAt: true,
+});
+
+export const insertAuthorTitleSchema = createInsertSchema(authorTitles).omit({
+  id: true,
+  earnedAt: true,
+});
+
+export const insertUserProgressionSchema = createInsertSchema(userProgression).omit({
+  updatedAt: true,
+});
+
+export const insertAuthorProgressionSchema = createInsertSchema(authorProgression).omit({
+  updatedAt: true,
+});
+
+// Define types for leveling system
+export type UserLevel = typeof userLevels.$inferSelect;
+export type InsertUserLevel = z.infer<typeof insertUserLevelSchema>;
+
+export type AuthorLevel = typeof authorLevels.$inferSelect;
+export type InsertAuthorLevel = z.infer<typeof insertAuthorLevelSchema>;
+
+export type UserExperience = typeof userExperience.$inferSelect;
+export type InsertUserExperience = z.infer<typeof insertUserExperienceSchema>;
+
+export type AuthorExperience = typeof authorExperience.$inferSelect;
+export type InsertAuthorExperience = z.infer<typeof insertAuthorExperienceSchema>;
+
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
+
+export type AuthorBadge = typeof authorBadges.$inferSelect;
+export type InsertAuthorBadge = z.infer<typeof insertAuthorBadgeSchema>;
+
+export type Title = typeof titles.$inferSelect;
+export type InsertTitle = z.infer<typeof insertTitleSchema>;
+
+export type UserTitle = typeof userTitles.$inferSelect;
+export type InsertUserTitle = z.infer<typeof insertUserTitleSchema>;
+
+export type AuthorTitle = typeof authorTitles.$inferSelect;
+export type InsertAuthorTitle = z.infer<typeof insertAuthorTitleSchema>;
+
+export type UserProgression = typeof userProgression.$inferSelect;
+export type InsertUserProgression = z.infer<typeof insertUserProgressionSchema>;
+
+export type AuthorProgression = typeof authorProgression.$inferSelect;
+export type InsertAuthorProgression = z.infer<typeof insertAuthorProgressionSchema>;
