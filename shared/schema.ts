@@ -1150,8 +1150,8 @@ export function calculateWeightedRating(
 }
 
 /**
- * Calculates a compatibility rating based on the weighted rating
- * Multiplies the weighted rating by 3 to produce a value between -3 and 3
+ * Calculates a compatibility rating directly from thumbs up/down values
+ * Produces a value between -3 and 3
  * - Negative values indicate incompatibility (shown in red)
  * - Positive values indicate compatibility (shown in purple)
  */
@@ -1159,14 +1159,58 @@ export function calculateCompatibilityRating(
   rating: Rating, 
   customWeights?: Record<string, number> | RatingPreferences
 ): number {
-  // Get weighted rating (between 1-5)
-  const weightedRating = calculateWeightedRating(rating, customWeights);
+  let weights: Record<string, number>;
   
-  // Transform to a scale of -3 to 3
-  // When weightedRating is 3 (neutral), compatibilityRating is 0
-  // When weightedRating > 3, compatibilityRating is positive (up to 3)
-  // When weightedRating < 3, compatibilityRating is negative (down to -3)
-  return (weightedRating - 3) * 1.5;
+  // If RatingPreferences object is provided with individual columns
+  if (customWeights && 'themes' in customWeights) {
+    // Handle string values from DB by converting to numbers
+    weights = {
+      enjoyment: typeof customWeights.enjoyment === 'string' ? parseFloat(customWeights.enjoyment) : Number(customWeights.enjoyment),
+      writing: typeof customWeights.writing === 'string' ? parseFloat(customWeights.writing) : Number(customWeights.writing),
+      themes: typeof customWeights.themes === 'string' ? parseFloat(customWeights.themes) : Number(customWeights.themes),
+      characters: typeof customWeights.characters === 'string' ? parseFloat(customWeights.characters) : Number(customWeights.characters),
+      worldbuilding: typeof customWeights.worldbuilding === 'string' ? parseFloat(customWeights.worldbuilding) : Number(customWeights.worldbuilding)
+    };
+  } 
+  // If custom weights are provided as a Record
+  else if (customWeights && typeof customWeights === 'object' && !('id' in customWeights)) {
+    weights = customWeights as Record<string, number>;
+  }
+  // Default fallback using system default weights
+  else {
+    weights = {...DEFAULT_RATING_WEIGHTS};
+  }
+  
+  // Ensure all weights are valid numbers
+  Object.keys(weights).forEach(key => {
+    if (isNaN(weights[key])) {
+      weights[key] = DEFAULT_RATING_WEIGHTS[key as keyof typeof DEFAULT_RATING_WEIGHTS];
+    }
+  });
+  
+  // Process each criterion and directly use the -1/0/1 values
+  const criteria = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'] as const;
+  let weightedSum = 0;
+  let totalWeight = 0;
+  
+  for (const criterion of criteria) {
+    const value = rating[criterion];
+    
+    // Skip if this criterion wasn't rated
+    if (value === 0) continue;
+    
+    const weight = weights[criterion];
+    totalWeight += weight;
+    
+    // Use the raw -1/1 value directly (multiplied by 3 for -3 to 3 scale)
+    weightedSum += (value * 3) * weight;
+  }
+  
+  // If nothing was rated, return a neutral score
+  if (totalWeight === 0) return 0;
+  
+  // Return the weighted average (already in the -3 to 3 scale)
+  return weightedSum / totalWeight;
 }
 
 export const landing_sessions = pgTable("landing_sessions", {

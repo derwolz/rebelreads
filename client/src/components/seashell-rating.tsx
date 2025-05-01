@@ -1,127 +1,121 @@
-import React from "react";
 import { cn } from "@/lib/utils";
-import { Shell } from "lucide-react";
 
-export interface SeashellRatingProps {
+type SeashellRatingProps = {
   compatibility: number;
-  maxRating?: number;
-  size?: "xs" | "sm" | "md" | "lg";
   readOnly?: boolean;
-  onChange?: (value: number) => void;
-}
+  size?: "xs" | "sm" | "md" | "lg";
+  className?: string;
+  onChange?: (newRating: number) => void;
+};
 
 /**
- * SeashellRating component for displaying compatibility ratings as seashells
- * Takes a compatibility score and renders the appropriate number of seashells
+ * SeashellRating component for displaying compatibility ratings
+ * 
+ * Uses a -3 to +3 compatibility scale:
+ * - Negative values (incompatible) are displayed in red
+ * - Positive values (compatible) are displayed in purple
+ * - Neutral values (near 0) are displayed in gray
+ * 
+ * The component displays 3 seashells and colors them based on the compatibility value
  */
 export function SeashellRating({
   compatibility,
-  maxRating = 5,
-  size = "md",
   readOnly = false,
+  size = "md",
+  className,
   onChange,
 }: SeashellRatingProps) {
-  // Get appropriate classes based on size
+  // Clamp compatibility value between -3 and 3
+  const clampedValue = Math.max(-3, Math.min(3, compatibility));
+  
+  // Convert the -3 to 3 range to an absolute 0 to 3 scale for display purposes
+  const absoluteValue = Math.abs(clampedValue);
+  
+  // Determine color based on compatibility direction
+  const color = clampedValue > 0 
+    ? "text-purple-500" // Purple for positive/compatible
+    : clampedValue < 0 
+      ? "text-red-500"  // Red for negative/incompatible
+      : "text-gray-400"; // Gray for neutral/no preference
+  
+  // Size classes
   const sizeClasses = {
-    xs: "h-3 w-3",
-    sm: "h-4 w-4",
-    md: "h-5 w-5",
-    lg: "h-6 w-6",
-  }[size];
-
-  // Determine color class based on compatibility value
-  const getColorClass = (value: number) => {
-    // Negative compatibility (red)
-    if (value < 0) return "text-red-500 fill-red-500";
-    // Positive compatibility (purple/accent)
-    return "text-purple-500 fill-purple-500";
+    xs: "text-xs gap-0.5",
+    sm: "text-sm gap-1",
+    md: "text-base gap-1",
+    lg: "text-lg gap-1.5",
   };
-
-  // Create an array to hold the seashells we need to render
-  const seashells = [];
   
-  // Get the absolute value for rendering purposes
-  const absCompatibility = Math.abs(compatibility);
+  // Calculate the fractional part for partially filled seashells
+  const fullSeashells = Math.floor(absoluteValue);
+  const partialFill = absoluteValue % 1;
   
-  // Calculate whole and fractional parts
-  const fullSeashells = Math.floor(absCompatibility);
-  const fractionalPart = absCompatibility - fullSeashells;
-  
-  // Color class based on whether compatibility is positive or negative
-  const colorClass = getColorClass(compatibility);
-  
-  // Render full, partial, and empty seashells
-  for (let i = 0; i < maxRating; i++) {
-    if (i < fullSeashells) {
-      // Full seashell
-      seashells.push(
-        <Shell
-          key={i}
-          className={cn(
-            sizeClasses,
-            "cursor-pointer transition-colors",
-            colorClass,
-            readOnly && "cursor-default"
-          )}
-          onClick={() => !readOnly && onChange?.(i + 1)}
-        />
+  // Helper function to render a single seashell
+  const renderSeashell = (index: number) => {
+    // If current index is less than the floor of absoluteValue, render a full seashell
+    if (index < fullSeashells) {
+      return (
+        <div key={index} className={color}>
+          <SeashellIcon />
+        </div>
       );
-    } else if (i === fullSeashells && fractionalPart >= 0.25 && fractionalPart < 0.75) {
-      // Half seashell
-      seashells.push(
-        <div key={i} className="relative">
-          <Shell
-            className={cn(
-              sizeClasses,
-              "cursor-pointer transition-colors text-muted",
-              readOnly && "cursor-default"
-            )}
-          />
-          <div className="absolute top-0 left-0 overflow-hidden" style={{ width: '50%' }}>
-            <Shell
-              className={cn(
-                sizeClasses,
-                "cursor-pointer transition-colors",
-                colorClass,
-                readOnly && "cursor-default"
-              )}
-            />
+    }
+    
+    // If current index is equal to the floor and there's a partial fill, render a partially filled seashell
+    if (index === fullSeashells && partialFill > 0) {
+      return (
+        <div key={index} className="relative">
+          <div className="text-gray-300 absolute">
+            <SeashellIcon />
+          </div>
+          <div 
+            className={`${color} overflow-hidden`} 
+            style={{ width: `${partialFill * 100}%` }}
+          >
+            <SeashellIcon />
           </div>
         </div>
       );
-    } else if (i === fullSeashells && fractionalPart >= 0.75) {
-      // Almost full seashell but not quite
-      seashells.push(
-        <Shell
-          key={i}
-          className={cn(
-            sizeClasses,
-            "cursor-pointer transition-colors",
-            colorClass,
-            readOnly && "cursor-default"
-          )}
-          onClick={() => !readOnly && onChange?.(i + 1)}
-        />
-      );
-    } else {
-      // Empty seashell
-      seashells.push(
-        <Shell
-          key={i}
-          className={cn(
-            sizeClasses,
-            "cursor-pointer transition-colors text-muted",
-            readOnly && "cursor-default"
-          )}
-          onClick={() => !readOnly && onChange?.(i + 1)}
-        />
-      );
     }
-  }
+    
+    // Otherwise render an empty (gray) seashell
+    return (
+      <div key={index} className="text-gray-300">
+        <SeashellIcon />
+      </div>
+    );
+  };
 
   return (
-    <div className={cn("flex gap-1")}>
-      {seashells}
+    <div 
+      className={cn(
+        "flex items-center", 
+        sizeClasses[size],
+        className
+      )}
+    >
+      {/* Display 3 seashells - one for each rating point */}
+      {[0, 1, 2].map(renderSeashell)}
+      
+      {/* Optionally display the numerical rating for debugging/clarity */}
+      {/* <span className="ml-2 text-xs text-muted-foreground">
+        {clampedValue.toFixed(1)}
+      </span> */}
     </div>
+  );
+}
+
+// Simple seashell SVG icon
+function SeashellIcon() {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="1em" 
+      height="1em" 
+      viewBox="0 0 24 24" 
+      fill="currentColor"
+    >
+      <path d="M12.134 2a.75.75 0 0 0-.544.232 13.593 13.593 0 0 0-1.234 1.496c-.582.823-1.17 1.87-1.555 3.178-.364 1.243-.542 2.688-.384 4.322.1 1.082.366 2.308.86 3.597.254.657.571 1.348.961 2.048-.804.342-1.559.487-2.27.418-.704-.062-1.305-.327-1.787-.75-.447-.394-.775-.945-.941-1.588-.163-.622-.167-1.346-.003-2.12.09-.393.23-.81.42-1.235a.75.75 0 1 0-1.4-.532 8.111 8.111 0 0 0-.494 1.453c-.191.898-.19 1.793.019 2.591.205.779.618 1.516 1.225 2.058.642.566 1.442.913 2.328.993.9.082 1.85-.097 2.845-.518.67 1.056 1.489 2.07 2.443 2.921a.75.75 0 0 0 .554.245.75.75 0 0 0 .555-.245c.954-.851 1.773-1.865 2.444-2.921.994.421 1.944.6 2.844.518.886-.08 1.687-.427 2.33-.993.606-.542 1.019-1.279 1.223-2.058.21-.798.21-1.693.02-2.591a8.111 8.111 0 0 0-.494-1.453.75.75 0 1 0-1.4.532c.19.425.33.843.42 1.235.163.774.16 1.498-.004 2.12-.165.643-.494 1.194-.94 1.588-.483.423-1.084.688-1.788.75-.711.069-1.465-.076-2.27-.418.39-.7.708-1.391.962-2.048.494-1.289.76-2.515.859-3.597.159-1.634-.02-3.08-.383-4.322-.386-1.307-.974-2.355-1.556-3.178A13.593 13.593 0 0 0 12.678 2.232a.75.75 0 0 0-.544-.232zm0 1.61c.204.228.445.507.714.84.467.66.973 1.562 1.306 2.689.318 1.078.472 2.35.335 3.775-.087.94-.329 2.066-.783 3.26-.38.984-.888 2.047-1.572 3.092-.684-1.045-1.192-2.108-1.572-3.091-.454-1.195-.696-2.321-.783-3.261-.137-1.425.017-2.697.334-3.775.334-1.127.84-2.029 1.307-2.69.269-.332.51-.61.714-.839z" />
+    </svg>
   );
 }
