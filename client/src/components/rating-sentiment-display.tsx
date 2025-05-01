@@ -35,15 +35,15 @@ const SENTIMENT_LABELS: Record<SentimentLevel, string> = {
   overwhelmingly_negative: 'Overwhelmingly Negative',
 };
 
-// Map sentiment levels to colors
+// Map sentiment levels to colors - Using Sirened purple for positive sentiments (colorblind friendly)
 const SENTIMENT_COLORS: Record<SentimentLevel, string> = {
-  overwhelmingly_positive: 'text-green-600',
-  very_positive: 'text-green-500',
-  mostly_positive: 'text-green-400',
-  mixed: 'text-amber-500',
-  mostly_negative: 'text-red-400',
-  very_negative: 'text-red-500',
-  overwhelmingly_negative: 'text-red-600',
+  overwhelmingly_positive: 'text-[hsl(271,56%,45%)]', // primary-600 - Darker purple for strongest contrast
+  very_positive: 'text-[hsl(271,56%,55%)]',          // primary-500 - Medium dark purple
+  mostly_positive: 'text-[hsl(271,56%,63%)]',        // primary-400 - Main purple
+  mixed: 'text-amber-500',                          // Keep amber for mixed
+  mostly_negative: 'text-red-400',                  // Keep red for negative
+  very_negative: 'text-red-500',                    // Keep red for negative
+  overwhelmingly_negative: 'text-red-600',          // Keep red for negative
 };
 
 interface RatingSentimentThreshold {
@@ -260,7 +260,7 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
                       </p>
                     )}
                     <div className="flex justify-between mt-1">
-                      <p className="text-green-500">👍 {formatCount(thumbsUpCount)}</p>
+                      <p className="text-[hsl(271,56%,63%)]">👍 {formatCount(thumbsUpCount)}</p>
                       <p className="text-red-500">👎 {formatCount(thumbsDownCount)}</p>
                     </div>
                   </div>
