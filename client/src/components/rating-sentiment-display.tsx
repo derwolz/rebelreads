@@ -225,7 +225,7 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
                     <p className="font-semibold capitalize">{result.criteriaName}</p>
                     {result.hasEnoughRatings && result.sentimentLevel ? (
                       <p className={SENTIMENT_COLORS[result.sentimentLevel]}>
-                        {SENTIMENT_LABELS[result.sentimentLevel]} ({result.count} ratings)
+                        {SENTIMENT_LABELS[result.sentimentLevel]}
                       </p>
                     ) : (
                       <p className="text-muted-foreground">
@@ -236,9 +236,10 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
                         )?.requiredCount || 5})
                       </p>
                     )}
-                    <p className="text-muted-foreground">
-                      Average: {result.averageRating.toFixed(2)}
-                    </p>
+                    <div className="flex justify-between mt-1">
+                      <p className="text-green-500">👍 {Math.round(result.count * (result.averageRating > 0 ? result.averageRating : 0))}</p>
+                      <p className="text-red-500">👎 {Math.round(result.count * (result.averageRating < 0 ? Math.abs(result.averageRating) : 0))}</p>
+                    </div>
                   </div>
                 </TooltipContent>
               </Tooltip>
