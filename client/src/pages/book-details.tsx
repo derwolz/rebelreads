@@ -66,6 +66,14 @@ import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
 import { ContentReportDialog } from "@/components/content-report-dialog";
 import { useTheme } from "@/hooks/use-theme";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
 
@@ -103,6 +111,8 @@ export default function BookDetails() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 20;
   const {theme} = useTheme();
   // Parse query parameters if we're using the secure URL format
   const urlSearchParams = new URLSearchParams(window.location.search);
@@ -249,6 +259,11 @@ export default function BookDetails() {
 
   const filteredRatings = ratings
     ?.filter((rating) => {
+      // Filter out reviews with no text
+      if (!rating.review || rating.review.trim() === '') {
+        return false;
+      }
+      
       // Apply user preferences to rating calculation for filtering
       const overallRating = calculateWeightedRating(rating, ratingPreferences);
       switch (ratingFilter) {
@@ -276,6 +291,16 @@ export default function BookDetails() {
         calculateWeightedRating(a, ratingPreferences)
       );
     });
+    
+  // Get total pages
+  const totalReviews = filteredRatings?.length || 0;
+  const totalPages = Math.ceil(totalReviews / reviewsPerPage);
+  
+  // Get current page reviews
+  const paginatedReviews = filteredRatings?.slice(
+    (currentPage - 1) * reviewsPerPage,
+    currentPage * reviewsPerPage
+  );
 
   return (
     <div className="relative">
