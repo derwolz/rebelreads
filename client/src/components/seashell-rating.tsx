@@ -1,4 +1,10 @@
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 type SeashellRatingProps = {
   compatibility: number;
@@ -68,22 +74,55 @@ export function SeashellRating({
     );
   };
 
+  // Calculate compatibility percentage (from -3/3 to percentage)
+  const compatibilityPercentage = Math.round((clampedValue / 3) * 100);
+  
+  // Generate tooltip text based on the compatibility percentage
+  const getCompatibilityTooltip = () => {
+    const isPositive = clampedValue > 0;
+    const absPercentage = Math.abs(compatibilityPercentage);
+    
+    // Direction prefix (Positive/Negative)
+    const directionPrefix = isPositive ? "Positive" : "Negative";
+    
+    // Level description based on percentage range
+    let levelDescription = "";
+    if (absPercentage <= 33) {
+      levelDescription = isPositive ? "Some Compatibility" : "Some Incompatibility";
+    } else if (absPercentage <= 66) {
+      levelDescription = isPositive ? "Medium Compatibility" : "Medium Incompatibility";
+    } else {
+      levelDescription = isPositive ? "High Compatibility" : "High Incompatibility";
+    }
+    
+    return `${directionPrefix} ${absPercentage}% (${levelDescription})`;
+  };
+
   return (
-    <div 
-      className={cn(
-        "flex items-center", 
-        sizeClasses[size],
-        className
-      )}
-    >
-      {/* Display 3 seashells - one for each rating point */}
-      {[0, 1, 2].map(renderSeashell)}
-      
-      {/* Optionally display the numerical rating for debugging/clarity */}
-      {/* <span className="ml-2 text-xs text-muted-foreground">
-        {clampedValue.toFixed(1)}
-      </span> */}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div 
+            className={cn(
+              "flex items-center", 
+              sizeClasses[size],
+              className
+            )}
+          >
+            {/* Display 3 seashells - one for each rating point */}
+            {[0, 1, 2].map(renderSeashell)}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="text-xs">
+            <p className="font-semibold">Compatibility Rating</p>
+            <p className={clampedValue > 0 ? "text-purple-500" : clampedValue < 0 ? "text-red-500" : "text-gray-500"}>
+              {getCompatibilityTooltip()}
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

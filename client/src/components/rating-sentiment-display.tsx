@@ -7,8 +7,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { 
-  CircleCheck, CircleX, CircleDashed, 
-  BookOpen, Pencil, Heart, BookMarked, GlobeIcon
+  Drama, CircleX, CircleDashed, 
+  Lightbulb, Pencil, Heart, BookMarked, GlobeIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { SentimentLevel } from '../../../shared/schema';
@@ -19,8 +19,8 @@ import type { SentimentLevel } from '../../../shared/schema';
 const CATEGORY_ICONS = {
   enjoyment: Heart,
   writing: Pencil,
-  themes: BookOpen, 
-  characters: CircleCheck,
+  themes: Lightbulb, 
+  characters: Drama,
   worldbuilding: GlobeIcon,
 };
 
