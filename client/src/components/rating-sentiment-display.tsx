@@ -37,13 +37,13 @@ const SENTIMENT_LABELS: Record<SentimentLevel, string> = {
 
 // Map sentiment levels to colors - Using Sirened purple for positive sentiments (colorblind friendly)
 const SENTIMENT_COLORS: Record<SentimentLevel, string> = {
-  overwhelmingly_positive: 'text-[hsl(271,56%,45%)]', // primary-600 - Darker purple for strongest contrast
-  very_positive: 'text-[hsl(271,56%,55%)]',          // primary-500 - Medium dark purple
-  mostly_positive: 'text-[hsl(271,56%,63%)]',        // primary-400 - Main purple
+  overwhelmingly_positive: 'text-[hsl(271,56%,45%)] fill-[hsl(271,56%,25%)]', // primary-600 - Darker purple for strongest contrast
+  very_positive: 'text-[hsl(271,56%,45%)]',          // primary-500 - Medium dark purple
+  mostly_positive: 'text-[hsl(271,56%,70%)]',        // primary-400 - Main purple
   mixed: 'text-amber-500',                          // Keep amber for mixed
   mostly_negative: 'text-red-400',                  // Keep red for negative
   very_negative: 'text-red-500',                    // Keep red for negative
-  overwhelmingly_negative: 'text-red-600',          // Keep red for negative
+  overwhelmingly_negative: 'text-red-600 fill-red-900',          // Keep red for negative
 };
 
 interface RatingSentimentThreshold {
