@@ -37,9 +37,9 @@ export function SeashellRating({
   // Convert the -3 to 3 range to an absolute 0 to 3 scale for display purposes
   const absoluteValue = Math.abs(clampedValue);
   
-  // Determine color based on compatibility direction
+  // Determine color based on compatibility direction - Using Sirened purple for positive (colorblind friendly)
   const color = clampedValue > 0 
-    ? "text-purple-500" // Purple for positive/compatible
+    ? "text-[hsl(271,56%,63%)]" // Sirened purple for positive/compatible
     : clampedValue < 0 
       ? "text-red-500"  // Red for negative/incompatible
       : "text-gray-400"; // Gray for neutral/no preference
@@ -122,7 +122,7 @@ export function SeashellRating({
         <TooltipContent>
           <div className="text-xs">
             <p className="font-semibold">Compatibility Rating</p>
-            <p className={clampedValue > 0 ? "text-purple-500" : clampedValue < 0 ? "text-red-500" : "text-gray-500"}>
+            <p className={clampedValue > 0 ? "text-[hsl(271,56%,63%)]" : clampedValue < 0 ? "text-red-500" : "text-gray-500"}>
               {getCompatibilityTooltip()}
             </p>
           </div>
