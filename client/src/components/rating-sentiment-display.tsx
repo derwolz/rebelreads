@@ -13,6 +13,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { SentimentLevel } from '../../../shared/schema';
 
+
+
 // Define category icons
 const CATEGORY_ICONS = {
   enjoyment: Heart,
@@ -92,6 +94,23 @@ interface RatingSentimentDisplayProps {
   ratingsCount?: number;
   className?: string;
   showCount?: boolean;
+}
+
+/**
+ * Format count with abbreviations (k, m) for large numbers
+ * @param count Number to format
+ * @returns Formatted string with abbreviation
+ */
+function formatCount(count: number): string {
+  if (count >= 1000000) {
+    // For numbers >= 1M, format as #.##m
+    return (Math.floor(count / 10000) / 100).toFixed(2).replace(/\.0+$/, '') + 'm';
+  } else if (count >= 1000) {
+    // For numbers >= 1k, format as #.##k
+    return (Math.floor(count / 10) / 100).toFixed(2).replace(/\.0+$/, '') + 'k';
+  }
+  // For small numbers, no abbreviation
+  return count.toString();
 }
 
 const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({ 
@@ -200,6 +219,10 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
           // Get the appropriate icon for this criteria
           const IconComponent = CATEGORY_ICONS[result.criteriaName as keyof typeof CATEGORY_ICONS] || CircleDashed;
           
+          // Calculate thumbs up and thumbs down counts
+          const thumbsUpCount = Math.round(result.count * (1 + result.averageRating) / 2);
+          const thumbsDownCount = Math.round(result.count * (1 - result.averageRating) / 2);
+          
           return (
             <TooltipProvider key={result.criteriaName}>
               <Tooltip>
@@ -237,8 +260,8 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
                       </p>
                     )}
                     <div className="flex justify-between mt-1">
-                      <p className="text-green-500">👍 {Math.round(result.count * (1 + result.averageRating) / 2)}</p>
-                      <p className="text-red-500">👎 {Math.round(result.count * (1 - result.averageRating) / 2)}</p>
+                      <p className="text-green-500">👍 {formatCount(thumbsUpCount)}</p>
+                      <p className="text-red-500">👎 {formatCount(thumbsDownCount)}</p>
                     </div>
                   </div>
                 </TooltipContent>
