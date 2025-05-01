@@ -46,34 +46,16 @@ export function SeashellRating({
     lg: "text-lg gap-1.5",
   };
   
-  // Calculate the fractional part for partially filled seashells
-  const fullSeashells = Math.floor(absoluteValue);
-  const partialFill = absoluteValue % 1;
+  // Round to the nearest integer for clearer display
+  const roundedValue = Math.round(absoluteValue);
   
   // Helper function to render a single seashell
   const renderSeashell = (index: number) => {
-    // If current index is less than the floor of absoluteValue, render a full seashell
-    if (index < fullSeashells) {
+    // If current index is less than the rounded value, render a full seashell
+    if (index < roundedValue) {
       return (
         <div key={index} className={color}>
           <SeashellIcon />
-        </div>
-      );
-    }
-    
-    // If current index is equal to the floor and there's a partial fill, render a partially filled seashell
-    if (index === fullSeashells && partialFill > 0) {
-      return (
-        <div key={index} className="relative">
-          <div className="text-gray-300 absolute">
-            <SeashellIcon />
-          </div>
-          <div 
-            className={`${color} overflow-hidden`} 
-            style={{ width: `${partialFill * 100}%` }}
-          >
-            <SeashellIcon />
-          </div>
         </div>
       );
     }
