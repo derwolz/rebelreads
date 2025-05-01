@@ -1001,12 +1001,87 @@ export default function BookDetails() {
                     </div>
                   )}
 
-                  <div className="space-y-4 mt-8">
-                    <h3 className="text-xl font-semibold">Reviews</h3>
+                  <div id="reviews-section" className="space-y-4 mt-8">
+                    <h3 className="text-xl font-semibold">Reviews{totalReviews > 0 ? ` (${totalReviews})` : ''}</h3>
                     <div className="max-w-3xl space-y-4">
-                      {filteredRatings?.map((review) => (
-                        <ReviewCard key={review.id} review={review} />
-                      ))}
+                      {totalReviews === 0 ? (
+                        <p className="text-muted-foreground">No reviews available</p>
+                      ) : (
+                        <>
+                          {paginatedReviews?.map((review) => (
+                            <ReviewCard key={review.id} review={review} />
+                          ))}
+                          
+                          {/* Pagination controls */}
+                          {totalPages > 1 && (
+                            <Pagination className="mt-6">
+                              <PaginationContent>
+                                {currentPage > 1 && (
+                                  <PaginationItem>
+                                    <PaginationPrevious 
+                                      href="#" 
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrentPage(currentPage - 1);
+                                        // Scroll back to the top of the reviews section
+                                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                      }} 
+                                    />
+                                  </PaginationItem>
+                                )}
+                                
+                                {/* Show up to 5 page numbers */}
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                  // Calculate page number to display
+                                  let pageNum;
+                                  if (totalPages <= 5) {
+                                    // Less than 5 pages total, just show all
+                                    pageNum = i + 1;
+                                  } else if (currentPage <= 3) {
+                                    // Near the start
+                                    pageNum = i + 1;
+                                  } else if (currentPage >= totalPages - 2) {
+                                    // Near the end
+                                    pageNum = totalPages - 4 + i;
+                                  } else {
+                                    // In the middle
+                                    pageNum = currentPage - 2 + i;
+                                  }
+                                  
+                                  return (
+                                    <PaginationItem key={pageNum}>
+                                      <PaginationLink 
+                                        href="#"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setCurrentPage(pageNum);
+                                          document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        isActive={currentPage === pageNum}
+                                      >
+                                        {pageNum}
+                                      </PaginationLink>
+                                    </PaginationItem>
+                                  );
+                                })}
+                                
+                                {currentPage < totalPages && (
+                                  <PaginationItem>
+                                    <PaginationNext 
+                                      href="#" 
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrentPage(currentPage + 1);
+                                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                      }} 
+                                    />
+                                  </PaginationItem>
+                                )}
+                              </PaginationContent>
+                            </Pagination>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
