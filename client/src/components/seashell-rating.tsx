@@ -82,6 +82,12 @@ export function SeashellRating({
     const isPositive = clampedValue > 0;
     const absPercentage = Math.abs(compatibilityPercentage);
     
+    // For values between -10% and +10% show "Unknown Compatibility"
+    if (absPercentage <= 10) {
+      const directionPrefix = isPositive ? "Positive" : "Negative";
+      return `${directionPrefix} ${absPercentage}% (Unknown Compatibility)`;
+    }
+    
     // Direction prefix (Positive/Negative)
     const directionPrefix = isPositive ? "Positive" : "Negative";
     
