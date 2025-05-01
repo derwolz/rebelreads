@@ -1,4 +1,4 @@
-import { Rating, calculateWeightedRating, calculateCompatibilityRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
+import { Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
 import { Book } from "../types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { BookCardContextMenu } from "./book-card-context-menu";
-import { RatingSentimentDisplay } from "./rating-sentiment-display";
-import { SeashellRating } from "./seashell-rating";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
@@ -44,7 +36,6 @@ export function BookCard({
   const [hasRecordedImpression, setHasRecordedImpression] = useState(false);
   const [trailElements, setTrailElements] = useState<React.ReactNode[]>([]);
 
-  // Fetch book ratings
   const { data: ratings } = useQuery<Rating[]>({
     queryKey: [`/api/books/${book.id}/ratings`],
   });
@@ -52,11 +43,6 @@ export function BookCard({
   // Fetch user's rating preferences
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ["/api/rating-preferences"],
-  });
-
-  // Fetch book taxonomies
-  const { data: bookTaxonomies } = useQuery({
-    queryKey: [`/api/books/${book.id}/taxonomies`],
   });
 
   // Generate pixel trails that follow the traveler
@@ -141,7 +127,7 @@ export function BookCard({
       }
     : null;
 
-  // Calculate overall weighted rating and compatibility rating using user preferences
+  // Calculate overall weighted rating using user preferences and the unweighted individual ratings
   const averageRatings = unweightedRatings
     ? {
         ...unweightedRatings,
@@ -155,36 +141,8 @@ export function BookCard({
           } as Rating,
           ratingPreferences,
         ),
-        // Calculate compatibility rating (-3 to 3 scale)
-        compatibility: calculateCompatibilityRating(
-          {
-            enjoyment: unweightedRatings.enjoyment,
-            writing: unweightedRatings.writing,
-            themes: unweightedRatings.themes,
-            characters: unweightedRatings.characters,
-            worldbuilding: unweightedRatings.worldbuilding,
-          } as Rating,
-          ratingPreferences,
-        ),
       }
     : null;
-
-  // Get top 5 taxonomies with proper sorting
-  const topTaxonomies = bookTaxonomies 
-    ? [...bookTaxonomies]
-        .sort((a, b) => {
-          // First sort by type priority (genre > subgenre > theme > trope)
-          const typePriority = { genre: 0, subgenre: 1, theme: 2, trope: 3 };
-          const typeA = typePriority[a.type as keyof typeof typePriority] || 4;
-          const typeB = typePriority[b.type as keyof typeof typePriority] || 4;
-          
-          if (typeA !== typeB) return typeA - typeB;
-          
-          // Then sort by rank/importance
-          return a.rank - b.rank;
-        })
-        .slice(0, 5)
-    : [];
 
   const handleCardClick = async (e: React.MouseEvent) => {
     // Don't navigate if clicking on the wishlist button
@@ -288,29 +246,15 @@ export function BookCard({
           {/* Black gradient overlay at bottom third */}
           <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
 
-          {/* Display only positive sentiment at the bottom of the card */}
-          {ratings && ratings.length > 0 && (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
-              <RatingSentimentDisplay 
-                ratings={unweightedRatings as any} 
-                ratingsCount={ratings.length}
-                showCount={false}
-                className="bg-black/50 px-2 py-1 rounded-md"
-              />
+          {/* Weighted rating in the gradient area */}
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
+            <div className="flex items-center gap-2">
+              <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
+              <span className="text-white text-sm">
+                ({averageRatings?.overall.toFixed(1) || "0.0"})
+              </span>
             </div>
-          )}
-          
-          {/* If no ratings yet, show the weighted rating */}
-          {(!ratings || ratings.length === 0) && (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
-              <div className="flex items-center gap-2">
-                <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
-                <span className="text-white text-sm">
-                  ({averageRatings?.overall.toFixed(1) || "0.0"})
-                </span>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* New book banner */}
@@ -328,100 +272,42 @@ export function BookCard({
             absolute inset-0 bg-gradient-to-t from-background/95 to-background/60
             transition-all duration-300 ease-in-out
             transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}
-            p-4 flex flex-col
+            p-4 flex flex-col justify-end
             z-30
           `} 
           style={{height: '100%'}}
         >
           <h3 className="text-lg font-semibold mb-1">{book.title}</h3>
-          <p className="text-sm text-muted-foreground mb-1">{book.authorName}</p>
+          <p className="text-sm text-muted-foreground mb-2">{book.authorName}</p>
 
-          {/* Top 5 taxonomic tags */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            {topTaxonomies.map((taxonomy) => (
-              <TooltipProvider key={`${taxonomy.taxonomyId}-${taxonomy.rank}`}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge 
-                      variant={
-                        taxonomy.type === "genre"
-                          ? "default"
-                          : taxonomy.type === "subgenre"
-                          ? "secondary"
-                          : taxonomy.type === "theme"
-                          ? "outline"
-                          : "destructive"
-                      }
-                      className="text-xs cursor-help"
-                    >
-                      {taxonomy.name}
-                    </Badge>
-                  </TooltipTrigger>
-                  {taxonomy.description && (
-                    <TooltipContent className="max-w-xs">
-                      <p>{taxonomy.description}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
-            ))}
-          </div>
-
-          {/* Book description */}
-          <p className="text-sm mb-3 flex-grow">
+          {/* Book description (first 100 characters) */}
+          <p className="text-sm mb-4 flex-grow">
             {truncatedDescription}
           </p>
 
-          {/* Compatibility rating */}
-          {averageRatings && (
-            <div className="mb-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium">Compatibility</span>
-                <SeashellRating 
-                  compatibility={averageRatings.compatibility || 0} 
-                  readOnly 
-                  size="xs" 
-                />
-              </div>
+          {/* 5 vector star ratings */}
+          <div className="space-y-1 mt-auto">
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Enjoyment</span>
+              <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
             </div>
-          )}
-
-          {/* Rating sentiment display for all ratings */}
-          {ratings && ratings.length > 0 && (
-            <div className="mt-1">
-              <RatingSentimentDisplay 
-                ratings={unweightedRatings as any} 
-                ratingsCount={ratings.length}
-                showCount={true}
-              />
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Writing</span>
+              <StarRating rating={averageRatings?.writing || 0} readOnly size="xs" />
             </div>
-          )}
-
-          {/* If no ratings are available, show the old style ratings */}
-          {(!ratings || ratings.length === 0) && averageRatings && (
-            <div className="space-y-1 mt-auto">
-              <div className="flex justify-between items-center">
-                <span className="text-xs">Enjoyment</span>
-                <StarRating rating={averageRatings.enjoyment || 0} readOnly size="xs" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs">Writing</span>
-                <StarRating rating={averageRatings.writing || 0} readOnly size="xs" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs">Themes</span>
-                <StarRating rating={averageRatings.themes || 0} readOnly size="xs" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs">Characters</span>
-                <StarRating rating={averageRatings.characters || 0} readOnly size="xs" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs">World Building</span>
-                <StarRating rating={averageRatings.worldbuilding || 0} readOnly size="xs" />
-              </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Themes</span>
+              <StarRating rating={averageRatings?.themes || 0} readOnly size="xs" />
             </div>
-          )}
+            <div className="flex justify-between items-center">
+              <span className="text-xs">Characters</span>
+              <StarRating rating={averageRatings?.characters || 0} readOnly size="xs" />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs">World Building</span>
+              <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="xs" />
+            </div>
+          </div>
         </div>
       </Card>
     </div>
