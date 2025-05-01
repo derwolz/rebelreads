@@ -144,9 +144,9 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
       }
 
       // Find applicable thresholds for this criteria
-      const criteriaThresholds = thresholds.filter(
+      const criteriaThresholds = Array.isArray(thresholds) ? thresholds.filter(
         (t: RatingSentimentThreshold) => t.criteriaName === criteriaName
-      ) as RatingSentimentThreshold[];
+      ) as RatingSentimentThreshold[] : [];
 
       // Find matching sentiment level
       let sentimentLevel: SentimentLevel | null = null;
@@ -229,7 +229,7 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
                       </p>
                     ) : (
                       <p className="text-muted-foreground">
-                        Not enough ratings yet ({result.count}/{thresholds?.find(
+                        Not enough ratings yet ({result.count}/{Array.isArray(thresholds) && thresholds.find(
                           (t: RatingSentimentThreshold) => 
                             t.criteriaName === result.criteriaName && 
                             t.sentimentLevel === 'mixed'
@@ -237,8 +237,8 @@ const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
                       </p>
                     )}
                     <div className="flex justify-between mt-1">
-                      <p className="text-green-500">👍 {Math.round(result.count * (result.averageRating > 0 ? result.averageRating : 0))}</p>
-                      <p className="text-red-500">👎 {Math.round(result.count * (result.averageRating < 0 ? Math.abs(result.averageRating) : 0))}</p>
+                      <p className="text-green-500">👍 {Math.round(result.count * (1 + result.averageRating) / 2)}</p>
+                      <p className="text-red-500">👎 {Math.round(result.count * (1 - result.averageRating) / 2)}</p>
                     </div>
                   </div>
                 </TooltipContent>

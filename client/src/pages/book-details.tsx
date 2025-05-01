@@ -962,9 +962,6 @@ export default function BookDetails() {
                         <div className="flex flex-col">
                           <span className="text-sm font-semibold mb-1">Compatibility Rating</span>
                           <SeashellRating compatibility={averageRatings.compatibility} readOnly />
-                          <span className="text-xs text-muted-foreground mt-1">
-                            ({averageRatings.compatibility.toFixed(2)})
-                          </span>
                         </div>
                       </div>
                       
