@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valkyrie X Truck Review Bomb Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1, h2 {
+      color: #2c3e50;
+    }
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin-bottom: 40px;
+    }
+    .chart-pair {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .chart-box {
+      flex: 1;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .conclusion {
+      background-color: #f9f9f9;
+      border-left: 4px solid #3498db;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Review Bomb Analysis: Valkyrie X Truck</h1>
+  
+  <h2>Rating Distribution</h2>
+  <div class="chart-pair">
+    <div class="chart-box">
+      <h3>Enjoyment Ratings</h3>
+      <canvas id="enjoymentChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Writing Ratings</h3>
+      <canvas id="writingChart"></canvas>
+    </div>
+  </div>
+
+  <h2>Average Scores</h2>
+  <div class="chart-container">
+    <canvas id="averageScores"></canvas>
+  </div>
+
+  <h2>Distribution by Category</h2>
+  <table>
+    <tr>
+      <th>Category</th>
+      <th>Negative (-1)</th>
+      <th>Neutral (0)</th>
+      <th>Positive (1)</th>
+    </tr>
+    <tr>
+      <td>Enjoyment</td>
+      <td>220 (40.2%)</td>
+      <td>50 (9.1%)</td>
+      <td>277 (50.6%)</td>
+    </tr>
+    <tr>
+      <td>Writing</td>
+      <td>403 (73.7%)</td>
+      <td>83 (15.2%)</td>
+      <td>61 (11.2%)</td>
+    </tr>
+    <tr>
+      <td>Themes</td>
+      <td>304 (55.6%)</td>
+      <td>128 (23.4%)</td>
+      <td>115 (21.0%)</td>
+    </tr>
+    <tr>
+      <td>Characters</td>
+      <td>299 (54.7%)</td>
+      <td>113 (20.7%)</td>
+      <td>135 (24.7%)</td>
+    </tr>
+    <tr>
+      <td>Worldbuilding</td>
+      <td>328 (60.0%)</td>
+      <td>94 (17.2%)</td>
+      <td>125 (22.9%)</td>
+    </tr>
+  </table>
+
+  <div class="conclusion">
+    <h2>Key Findings</h2>
+    <p>The experiment successfully created a <strong>polarized rating pattern</strong> where enjoyment is predominantly positive (50.6%) while writing quality is overwhelmingly negative (73.7%).</p>
+    <p>This demonstrates how review bombing can be used to shape specific perceptions about a book - in this case, that it's enjoyable despite poor writing quality.</p>
+    <p>The final enjoyment score is <strong>positive (0.10)</strong> while the writing score is <strong>strongly negative (-0.63)</strong>, creating a "guilty pleasure" signal to potential readers.</p>
+  </div>
+
+  <script>
+    // Enjoyment Ratings Distribution
+    const enjoymentCtx = document.getElementById('enjoymentChart').getContext('2d');
+    new Chart(enjoymentCtx, {
+      type: 'pie',
+      data: {
+        labels: ['Negative', 'Neutral', 'Positive'],
+        datasets: [{
+          data: [220, 50, 277],
+          backgroundColor: ['#e74c3c', '#f39c12', '#2ecc71'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = 547;
+                const percentage = Math.round((value / total) * 100);
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Writing Ratings Distribution
+    const writingCtx = document.getElementById('writingChart').getContext('2d');
+    new Chart(writingCtx, {
+      type: 'pie',
+      data: {
+        labels: ['Negative', 'Neutral', 'Positive'],
+        datasets: [{
+          data: [403, 83, 61],
+          backgroundColor: ['#e74c3c', '#f39c12', '#2ecc71'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw;
+                const total = 547;
+                const percentage = Math.round((value / total) * 100);
+                return `${context.label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Average Scores
+    const avgCtx = document.getElementById('averageScores').getContext('2d');
+    new Chart(avgCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Enjoyment', 'Writing', 'Themes', 'Characters', 'Worldbuilding'],
+        datasets: [{
+          label: 'Average Rating',
+          data: [0.10, -0.63, -0.30, -0.29, -0.33],
+          backgroundColor: [
+            '#2ecc71',  // Green for positive
+            '#e74c3c',  // Red for the rest (negative)
+            '#e74c3c',
+            '#e74c3c',
+            '#e74c3c'
+          ],
+          borderColor: [
+            '#27ae60',
+            '#c0392b',
+            '#c0392b',
+            '#c0392b',
+            '#c0392b'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: false,
+            min: -1,
+            max: 1,
+            ticks: {
+              stepSize: 0.25
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = context.raw.toFixed(2);
+                return `Average: ${value}`;
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
