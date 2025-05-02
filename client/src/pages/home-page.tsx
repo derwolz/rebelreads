@@ -161,11 +161,6 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Coming Soon Section - Books with future publication dates */}
-            <div className="max-w-[1024px] mb-8">
-              <ComingSoonSection title="Coming Soon" limit={8} />
-            </div>
-
             {/* Dynamic Home Sections for logged-in users */}
             {user ? (
               <DynamicHomeSections />
