@@ -13,15 +13,7 @@ export function ComingSoonSection({
 }: ComingSoonSectionProps) {
   // Fetch coming soon books from the API
   const { data: comingSoonBooks, isLoading, error } = useQuery<Book[]>({
-    queryKey: [`/api/coming-soon?limit=${limit}`],
-    onSettled: (data, error) => {
-      if (data) {
-        console.log("Coming soon books data:", data);
-      }
-      if (error) {
-        console.error("Error fetching coming soon books:", error);
-      }
-    }
+    queryKey: [`/api/coming-soon?limit=${limit}`]
   });
 
   // Log debugging info
