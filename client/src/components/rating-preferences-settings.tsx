@@ -82,15 +82,17 @@ function CriteriaSlider({
       </div>
       
       <Slider
+        defaultValue={[percentage]}
         value={[percentage]}
         min={1}
-        max={80}
+        max={100}
         step={1}
         disabled={disabled}
         onValueChange={(values) => {
+          console.log(`Slider ${id} value changing to ${values[0]}%`);
           onChange(values[0] / 100);
         }}
-        className={disabled ? "opacity-70" : ""}
+        className={`${disabled ? "opacity-70 pointer-events-none" : "cursor-pointer"} h-7`}
       />
     </div>
   );
@@ -155,51 +157,46 @@ export function RatingPreferencesSettings({
   const handleSliderChange = (id: string, value: number) => {
     // Calculate the adjustment needed for the other sliders
     const newWeights = { ...currentWeights };
-    const oldValue = newWeights[id];
-    const valueDifference = value - oldValue;
     
-    if (valueDifference === 0) return;
+    // If value is 1 (100%), set all others to nearly 0
+    if (value >= 0.98) {
+      // Special case: If slider is set to (nearly) max, set this to 100% and others to minimum
+      const minValue = 0.001; // Very small value for others
+      Object.keys(newWeights).forEach(key => {
+        newWeights[key] = key === id ? 1 - (minValue * (Object.keys(newWeights).length - 1)) : minValue;
+      });
+      setCurrentWeights(newWeights);
+      return;
+    }
     
     // Set the new value for this slider
     newWeights[id] = value;
     
-    // Get the total of all other sliders
-    const otherCriteria = Object.keys(newWeights).filter(key => key !== id);
-    const otherTotal = otherCriteria.reduce((sum, key) => sum + newWeights[key], 0);
-    
-    if (otherTotal <= 0) return;
-    
-    // Distribute the difference proportionally across other sliders
-    const adjustmentFactor = (otherTotal - valueDifference) / otherTotal;
-    
-    // Ensure adjustment factor is positive and not too small
-    if (adjustmentFactor <= 0) {
-      // If we can't adjust proportionally, set minimum values and redistribute
-      const minValue = 0.01; // 1% minimum
-      let availableWeight = 1 - value;
-      let remainingCriteria = otherCriteria.length;
-      
-      otherCriteria.forEach(key => {
-        const weight = Math.max(minValue, availableWeight / remainingCriteria);
-        newWeights[key] = weight;
-        availableWeight -= weight;
-        remainingCriteria--;
-      });
-    } else {
-      // Apply proportional adjustment
-      otherCriteria.forEach(key => {
-        newWeights[key] = Math.max(0.01, newWeights[key] * adjustmentFactor);
-      });
-    }
-    
-    // Normalize to ensure total is exactly 1 (100%)
+    // Get the total of all weights
     const newTotal = Object.values(newWeights).reduce((sum, val) => sum + val, 0);
-    if (newTotal !== 1) {
-      const normalizer = 1 / newTotal;
-      Object.keys(newWeights).forEach(key => {
-        newWeights[key] *= normalizer;
+    
+    // If we're over 1.0, we need to reduce other values
+    if (newTotal > 1) {
+      // Get other criteria
+      const otherCriteria = Object.keys(newWeights).filter(key => key !== id);
+      const otherTotal = otherCriteria.reduce((sum, key) => sum + newWeights[key], 0);
+      
+      // Calculate how much we need to reduce the other values
+      const reductionFactor = (1 - value) / otherTotal;
+      
+      // Apply reduction to other criteria
+      otherCriteria.forEach(key => {
+        newWeights[key] = Math.max(0.001, newWeights[key] * reductionFactor);
       });
     }
+    
+    // Final normalization to ensure exact sum of 1.0
+    const finalTotal = Object.values(newWeights).reduce((sum, val) => sum + val, 0);
+    const normalizer = 1 / finalTotal;
+    
+    Object.keys(newWeights).forEach(key => {
+      newWeights[key] *= normalizer;
+    });
     
     setCurrentWeights(newWeights);
   };
@@ -278,15 +275,42 @@ export function RatingPreferencesSettings({
         />
       </div>
       
-      {RATING_CRITERIA.map((id) => (
-        <CriteriaSlider
-          key={id}
-          id={id}
-          value={currentWeights[id] || DEFAULT_WEIGHTS[id as keyof typeof DEFAULT_WEIGHTS]}
-          onChange={(value) => handleSliderChange(id, value)}
-          disabled={autoAdjust}
-        />
-      ))}
+      {/* Display sliders in fixed order to prevent reordering */}
+      <CriteriaSlider
+        key="enjoyment"
+        id="enjoyment"
+        value={currentWeights.enjoyment || DEFAULT_WEIGHTS.enjoyment}
+        onChange={(value) => handleSliderChange("enjoyment", value)}
+        disabled={autoAdjust}
+      />
+      <CriteriaSlider
+        key="writing"
+        id="writing"
+        value={currentWeights.writing || DEFAULT_WEIGHTS.writing}
+        onChange={(value) => handleSliderChange("writing", value)}
+        disabled={autoAdjust}
+      />
+      <CriteriaSlider
+        key="themes"
+        id="themes"
+        value={currentWeights.themes || DEFAULT_WEIGHTS.themes}
+        onChange={(value) => handleSliderChange("themes", value)}
+        disabled={autoAdjust}
+      />
+      <CriteriaSlider
+        key="characters"
+        id="characters"
+        value={currentWeights.characters || DEFAULT_WEIGHTS.characters}
+        onChange={(value) => handleSliderChange("characters", value)}
+        disabled={autoAdjust}
+      />
+      <CriteriaSlider
+        key="worldbuilding"
+        id="worldbuilding"
+        value={currentWeights.worldbuilding || DEFAULT_WEIGHTS.worldbuilding}
+        onChange={(value) => handleSliderChange("worldbuilding", value)}
+        disabled={autoAdjust}
+      />
       
       <div className="mt-4 text-sm text-muted-foreground">
         <p className="flex items-center">
