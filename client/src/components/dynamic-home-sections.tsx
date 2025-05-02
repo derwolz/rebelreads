@@ -7,6 +7,7 @@ import { BookGrid } from "./book-grid";
 import { BookRack } from "./book-rack";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { useLocation } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Define the HomepageSection interface based on what's in the schema
 interface HomepageSection {
@@ -62,6 +63,7 @@ export function DynamicHomeSections({ sections: manualSections }: DynamicHomeSec
 function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const isMobile = useIsMobile();
   
   // Type guard to check if user is authenticated for certain section types
   if (!user && ["authors_you_follow", "wishlist", "reviewed", "completed"].includes(section.type)) {
@@ -145,6 +147,14 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
   // For coming_soon section, we want to show future releases, not filter them out
   if (section.type === "coming_soon") {
     displayBooks = books || [];
+    // Sort by publishedDate for coming soon section
+    if (displayBooks.length > 0) {
+      displayBooks.sort((a, b) => {
+        if (!a.publishedDate) return 1;
+        if (!b.publishedDate) return -1;
+        return new Date(a.publishedDate).getTime() - new Date(b.publishedDate).getTime();
+      });
+    }
   } else {
     // For all other sections, filter out future releases
     displayBooks = books ? filterOutFutureReleases(books) : [];
@@ -237,7 +247,8 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
   );
 
   // Render the section with the appropriate display mode
-  if (section.displayMode === "carousel") {
+  // Force carousel mode on mobile devices for all sections
+  if (isMobile || section.displayMode === "carousel") {
     return (
       <div className="relative">
         <BookCarousel 
@@ -268,7 +279,6 @@ function HomepageSectionRenderer({ section }: { section: HomepageSection }) {
         books={displayBooks} 
         isLoading={isLoading}
         onDiscoverMore={handleDiscoverMore}
-        showPublishedDate={section.type === "coming_soon"} // Show published dates for coming soon section
       />
     );
   }
