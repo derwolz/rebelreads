@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Info, Check } from "lucide-react";
@@ -45,9 +45,6 @@ function CriteriaSlider({
   onChange: (value: number) => void;
   disabled: boolean;
 }) {
-  const [isDragging, setIsDragging] = useState(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
-  
   // Capitalize the first letter of the criteria name
   const displayName = id.charAt(0).toUpperCase() + id.slice(1);
   
@@ -56,57 +53,6 @@ function CriteriaSlider({
   
   // Convert weight to percentage for display
   const percentage = Math.round(value * 100);
-  
-  // Handle custom slider interaction
-  const handleSliderInteraction = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    if (disabled) return;
-    
-    // Only handle left mouse button
-    if ('button' in e && e.button !== 0) return;
-    
-    // Get slider dimensions
-    const slider = sliderRef.current;
-    if (!slider) return;
-    
-    const rect = slider.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    
-    // Calculate percentage based on click position
-    const position = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    const newValue = Math.max(0.01, Math.min(1, position));
-    
-    // Update value
-    onChange(newValue);
-    
-    // Start dragging
-    setIsDragging(true);
-    
-    // Add event listeners for move and up events
-    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
-      if (!slider) return;
-      
-      const rect = slider.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      
-      const position = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const newValue = Math.max(0.01, Math.min(1, position));
-      
-      onChange(newValue);
-    };
-    
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('touchmove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchend', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('touchmove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchend', handleMouseUp);
-  };
   
   return (
     <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm transition-all">
@@ -135,25 +81,17 @@ function CriteriaSlider({
         </div>
       </div>
       
-      {/* Custom slider implementation */}
-      <div 
-        ref={sliderRef}
-        className={`relative h-6 rounded-full bg-muted ${disabled ? "opacity-50" : "cursor-pointer"}`}
-        onMouseDown={handleSliderInteraction}
-        onTouchStart={handleSliderInteraction}
-      >
-        {/* Filled track */}
-        <div 
-          className="absolute top-0 left-0 h-full rounded-full bg-primary"
-          style={{ width: `${percentage}%` }}
-        />
-        
-        {/* Thumb */}
-        <div 
-          className={`absolute top-0 h-6 w-6 rounded-full bg-primary transform -translate-y-0 -translate-x-1/2 border-2 border-background ${isDragging ? "scale-110" : ""}`}
-          style={{ left: `${percentage}%` }}
-        />
-      </div>
+      <Slider
+        value={[percentage]}
+        min={0}
+        max={100}
+        step={1}
+        disabled={disabled}
+        onValueChange={(values) => {
+          onChange(values[0] / 100);
+        }}
+        className={disabled ? "opacity-70" : ""}
+      />
     </div>
   );
 }
