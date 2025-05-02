@@ -537,6 +537,8 @@ export const rating_preferences = pgTable("rating_preferences", {
   writing: decimal("writing").notNull().default("0.25"),
   enjoyment: decimal("enjoyment").notNull().default("0.35"),
   characters: decimal("characters").notNull().default("0.12"),
+  // Auto adjust weights flag - when true, the system automatically adjusts to ensure weights add up to 1.0
+  autoAdjust: boolean("auto_adjust").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -914,6 +916,7 @@ export const insertRatingPreferencesSchema = createInsertSchema(rating_preferenc
   writing: z.number().min(0).max(1).optional(),
   enjoyment: z.number().min(0).max(1).optional(),
   characters: z.number().min(0).max(1).optional(),
+  autoAdjust: z.boolean().optional().default(false),
 });
 
 export const loginSchema = z.object({
