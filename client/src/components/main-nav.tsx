@@ -296,61 +296,63 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                               Author Dashboard
                             </Button>
                           </Link>
-                          {/* Pro submenu - always visible without accordion when in pro route */}
-                          <div className="pl-2 pt-2">
-                            <div className="grid gap-2">
-                              <Link href="/pro">
-                                <Button
-                                  variant={location === "/pro" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                >
-                                  <LineChart className="mr-2 h-4 w-4" />
-                                  Analytics
-                                </Button>
-                              </Link>
-                              <Link href="/pro/reviews">
-                                <Button
-                                  variant={location === "/pro/reviews" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                >
-                                  <MessageSquare className="mr-2 h-4 w-4" />
-                                  Review Management
-                                </Button>
-                              </Link>
-                              <Link href="/pro/action">
-                                <Button
-                                  variant={location === "/pro/action" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                >
-                                  <Flag className="mr-2 h-4 w-4" />
-                                  Take Action
-                                </Button>
-                              </Link>
-                              <Link href="/pro/book-management">
-                                <Button
-                                  variant={location === "/pro/book-management" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                >
-                                  <Feather className="mr-2 h-4 w-4" />
-                                  Book Management
-                                </Button>
-                              </Link>
-                              <Link href="/pro/author">
-                                <Button
-                                  variant={location === "/pro/author" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                >
-                                  <User className="mr-2 h-4 w-4" />
-                                  Author Profile
-                                </Button>
-                              </Link>
+                          {/* Pro submenu - only visible when in pro route */}
+                          {isProRoute && (
+                            <div className="pl-2 pt-2">
+                              <div className="grid gap-2">
+                                <Link href="/pro">
+                                  <Button
+                                    variant={location === "/pro" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                  >
+                                    <LineChart className="mr-2 h-4 w-4" />
+                                    Analytics
+                                  </Button>
+                                </Link>
+                                <Link href="/pro/reviews">
+                                  <Button
+                                    variant={location === "/pro/reviews" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                  >
+                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                    Review Management
+                                  </Button>
+                                </Link>
+                                <Link href="/pro/action">
+                                  <Button
+                                    variant={location === "/pro/action" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                  >
+                                    <Flag className="mr-2 h-4 w-4" />
+                                    Take Action
+                                  </Button>
+                                </Link>
+                                <Link href="/pro/book-management">
+                                  <Button
+                                    variant={location === "/pro/book-management" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                  >
+                                    <Feather className="mr-2 h-4 w-4" />
+                                    Book Management
+                                  </Button>
+                                </Link>
+                                <Link href="/pro/author">
+                                  <Button
+                                    variant={location === "/pro/author" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                  >
+                                    <User className="mr-2 h-4 w-4" />
+                                    Author Profile
+                                  </Button>
+                                </Link>
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </>
                       )}
                       {publisherStatus?.isPublisher && (
