@@ -203,202 +203,25 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
           {user ? (
             <>
               {isAuthor && (
-                <div className="relative flex items-center">
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-1"
-                    onClick={() => navigate("/pro")}
-                  >
-                    Author Dashboard
-                    <ChevronDown className="h-4 w-4 ml-1" />
-                  </Button>
-                  <div className="absolute top-full mt-1 z-50 min-w-[200px] bg-background rounded-md border shadow-lg hidden hover:flex flex-col peer-hover:flex hover:flex">
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/pro")}
-                    >
-                      <LineChart className="mr-2 h-4 w-4" />
-                      Analytics
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/pro/reviews")}
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Review Management
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/pro/action")}
-                    >
-                      <Flag className="mr-2 h-4 w-4" />
-                      Take Action
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/pro/book-management")}
-                    >
-                      <Feather className="mr-2 h-4 w-4" />
-                      Book Management
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/pro/author")}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      Author Profile
-                    </Button>
-                  </div>
-                </div>
+                <Link href="/pro">
+                  <Button variant="outline">Author Dashboard</Button>
+                </Link>
               )}
               {publisherStatus?.isPublisher && (
-                <div className="relative flex items-center">
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-1"
-                    onClick={() => navigate("/publisher")}
-                  >
-                    Publisher Dashboard
-                    <ChevronDown className="h-4 w-4 ml-1" />
-                  </Button>
-                  <div className="absolute top-full mt-1 z-50 min-w-[200px] bg-background rounded-md border shadow-lg hidden hover:flex flex-col peer-hover:flex hover:flex">
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/publisher")}
-                    >
-                      <LineChart className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/publisher/books")}
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      Manage Books
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/publisher/authors")}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      Authors
-                    </Button>
-                  </div>
-                </div>
+                <Link href="/publisher">
+                  <Button variant="outline">Publisher Dashboard</Button>
+                </Link>
               )}
               {sellerStatus?.isPublisherSeller && (
-                <div className="relative flex items-center">
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-1"
-                    onClick={() => navigate("/sales")}
-                  >
-                    Sales Panel
-                    <ChevronDown className="h-4 w-4 ml-1" />
-                  </Button>
-                  <div className="absolute top-full mt-1 z-50 min-w-[200px] bg-background rounded-md border shadow-lg hidden hover:flex flex-col peer-hover:flex hover:flex">
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/sales")}
-                    >
-                      <LineChart className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/sales/orders")}
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      Orders
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="justify-start rounded-none"
-                      onClick={() => navigate("/sales/analytics")}
-                    >
-                      <LineChart className="mr-2 h-4 w-4" />
-                      Analytics
-                    </Button>
-                  </div>
-                </div>
+                <Link href="/sales">
+                  <Button variant="outline">Sales Panel</Button>
+                </Link>
               )}
-              <div className="relative flex items-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => navigate("/settings")}
-                >
+              <Link href="/settings">
+                <Button variant="ghost" size="icon">
                   <Settings className="h-5 w-5" />
                 </Button>
-                <div className="absolute top-full right-0 mt-1 z-50 min-w-[200px] bg-background rounded-md border shadow-lg hidden hover:flex flex-col peer-hover:flex hover:flex">
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings")}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings/appearance")}
-                  >
-                    <Monitor className="mr-2 h-4 w-4" />
-                    Appearance
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings/rating-preferences")}
-                  >
-                    <Star className="mr-2 h-4 w-4" />
-                    Rating Preferences
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings/genre-preferences")}
-                  >
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Genre Preferences
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings/homepage")}
-                  >
-                    <LayoutGrid className="mr-2 h-4 w-4" />
-                    Homepage Layout
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings/filters")}
-                  >
-                    <Filter className="mr-2 h-4 w-4" />
-                    Content Filters
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="justify-start rounded-none"
-                    onClick={() => navigate("/settings/book-shelf")}
-                  >
-                    <BookOpenCheck className="mr-2 h-4 w-4" />
-                    Book Shelves
-                  </Button>
-                </div>
-              </div>
+              </Link>
               <div className="flex items-center gap-2">
                 <Link href="/dashboard" className={"flex items-center gap-2"}>
                 <Avatar className="h-8 w-8">
@@ -556,126 +379,24 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                         </>
                       )}
                       {publisherStatus?.isPublisher && (
-                        <>
+                        <Link href="/publisher">
                           <Button
-                            variant={location.startsWith("/publisher") ? "secondary" : "outline"}
+                            variant="outline"
                             className="w-full justify-start"
-                            onClick={() => {
-                              navigate("/publisher");
-                              // Keep the drawer open
-                              setDrawerOpen(true);
-                            }}
                           >
                             Publisher Dashboard
                           </Button>
-                          {/* Publisher submenu - only visible when in publisher route */}
-                          {location.startsWith("/publisher") && (
-                            <div className="pl-2 pt-2">
-                              <div className="grid gap-2">
-                                <Button
-                                  variant={location === "/publisher" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    navigate("/publisher");
-                                    // Keep drawer open
-                                    setDrawerOpen(true);
-                                  }}
-                                >
-                                  <LineChart className="mr-2 h-4 w-4" />
-                                  Dashboard
-                                </Button>
-                                <Button
-                                  variant={location === "/publisher/books" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    navigate("/publisher/books");
-                                    // Keep drawer open
-                                    setDrawerOpen(true);
-                                  }}
-                                >
-                                  <BookOpen className="mr-2 h-4 w-4" />
-                                  Manage Books
-                                </Button>
-                                <Button
-                                  variant={location === "/publisher/authors" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    navigate("/publisher/authors");
-                                    // Keep drawer open
-                                    setDrawerOpen(true);
-                                  }}
-                                >
-                                  <User className="mr-2 h-4 w-4" />
-                                  Authors
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </>
+                        </Link>
                       )}
                       {sellerStatus?.isPublisherSeller && (
-                        <>
+                        <Link href="/sales">
                           <Button
-                            variant={location.startsWith("/sales") ? "secondary" : "outline"}
+                            variant="outline"
                             className="w-full justify-start"
-                            onClick={() => {
-                              navigate("/sales");
-                              // Keep the drawer open
-                              setDrawerOpen(true);
-                            }}
                           >
                             Sales Panel
                           </Button>
-                          {/* Sales submenu - only visible when in sales route */}
-                          {location.startsWith("/sales") && (
-                            <div className="pl-2 pt-2">
-                              <div className="grid gap-2">
-                                <Button
-                                  variant={location === "/sales" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    navigate("/sales");
-                                    // Keep drawer open
-                                    setDrawerOpen(true);
-                                  }}
-                                >
-                                  <LineChart className="mr-2 h-4 w-4" />
-                                  Dashboard
-                                </Button>
-                                <Button
-                                  variant={location === "/sales/orders" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    navigate("/sales/orders");
-                                    // Keep drawer open
-                                    setDrawerOpen(true);
-                                  }}
-                                >
-                                  <BookOpen className="mr-2 h-4 w-4" />
-                                  Orders
-                                </Button>
-                                <Button
-                                  variant={location === "/sales/analytics" ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start"
-                                  onClick={() => {
-                                    navigate("/sales/analytics");
-                                    // Keep drawer open
-                                    setDrawerOpen(true);
-                                  }}
-                                >
-                                  <LineChart className="mr-2 h-4 w-4" />
-                                  Analytics
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </>
+                        </Link>
                       )}
                       <>
                         <Button
