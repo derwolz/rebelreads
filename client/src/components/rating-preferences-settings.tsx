@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { MoveVertical, Info, Check } from "lucide-react";
+import { Info, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RATING_CRITERIA, RATING_CRITERIA_DESCRIPTIONS } from "@shared/schema";
 
@@ -14,106 +14,84 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
-// Weight values based on position (index)
-const POSITION_WEIGHTS = [0.35, 0.25, 0.20, 0.12, 0.08];
+// Default weight values
+const DEFAULT_WEIGHTS = {
+  enjoyment: 0.35,
+  writing: 0.25,
+  themes: 0.20,
+  characters: 0.12,
+  worldbuilding: 0.08
+};
 
-// Helper component for each sortable criteria item
-function SortableCriteriaItem({ 
+// Helper component for each criteria slider
+function CriteriaSlider({ 
   id, 
-  index, 
-  savedWeights,
-  currentWeights
+  value,
+  onChange,
+  disabled
 }: { 
   id: string; 
-  index: number; 
-  savedWeights?: any;
-  currentWeights?: Record<string, number>;
+  value: number;
+  onChange: (value: number) => void;
+  disabled: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
-  
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   // Capitalize the first letter of the criteria name
   const displayName = id.charAt(0).toUpperCase() + id.slice(1);
   
   // Description from the schema
   const description = RATING_CRITERIA_DESCRIPTIONS[id as keyof typeof RATING_CRITERIA_DESCRIPTIONS];
   
-  // Weight percentage calculation priority:
-  // 1. Current weights (after reordering)
-  // 2. Saved weights from database
-  // 3. Default position weights
-  const weight = currentWeights && currentWeights[id] !== undefined
-    ? currentWeights[id] * 100
-    : savedWeights && savedWeights[id] !== undefined
-      ? savedWeights[id] * 100
-      : POSITION_WEIGHTS[index] * 100;
+  // Convert weight to percentage for display
+  const percentage = Math.round(value * 100);
   
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style}
-      className="flex items-center py-2 px-3 mb-2 bg-card border rounded-md shadow-sm hover:shadow-md transition-all group"
-    >
-      <div 
-        {...attributes}
-        {...listeners}
-        className="mr-2 p-1 cursor-grab rounded hover:bg-muted"
-      >
-        <MoveVertical className="h-5 w-5 text-muted-foreground" />
-      </div>
-      
-      <div className="flex-1">
+    <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm transition-all">
+      <div className="flex justify-between items-center mb-2">
         <div className="font-medium">{displayName}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-medium text-primary">{percentage}%</div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-muted-foreground cursor-help">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="max-w-[200px]">
+                  <p className="text-sm">{description}</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
       
-      <div className="flex items-center gap-2">
-        <div className="text-sm font-medium text-primary">{weight.toFixed(0)}%</div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="text-muted-foreground cursor-help">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <div className="max-w-[200px]">
-                <p className="text-sm">{description}</p>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+      <Slider
+        value={[percentage]}
+        min={1}
+        max={80}
+        step={1}
+        disabled={disabled}
+        onValueChange={(values) => {
+          onChange(values[0] / 100);
+        }}
+        className={disabled ? "opacity-70" : ""}
+      />
     </div>
   );
 }
@@ -131,47 +109,12 @@ export function RatingPreferencesSettings({
   onSkip,
   initialCriteriaOrder,
 }: RatingPreferencesSettingsProps) {
-  const [criteriaOrder, setCriteriaOrder] = useState<string[]>(
-    initialCriteriaOrder || [...RATING_CRITERIA]
-  );
-  const [currentWeights, setCurrentWeights] = useState<Record<string, number>>({});
+  const [currentWeights, setCurrentWeights] = useState<Record<string, number>>(DEFAULT_WEIGHTS);
+  const [autoAdjust, setAutoAdjust] = useState<boolean>(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Sensors for drag and drop
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-  
-  // Handle drag end - update criteria order
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = criteriaOrder.indexOf(active.id as string);
-      const newIndex = criteriaOrder.indexOf(over.id as string);
-      
-      const newOrder = [...criteriaOrder];
-      newOrder.splice(oldIndex, 1);
-      newOrder.splice(newIndex, 0, active.id as string);
-      
-      
-      
-      // Generate new weights based on position
-      const newWeights = updateWeightsForNewOrder(newOrder, currentWeights);
-      
-      
-      // Update the weights state
-      setCurrentWeights(newWeights);
-      
-      setCriteriaOrder(newOrder);
-    }
-  };
-
-  // Query to get existing preferences (if any) - only if initialCriteriaOrder is not provided
+  // Query to get existing preferences (if any)
   const { isLoading: isLoadingPreferences, data: preferencesData } = useQuery<{
     id: number;
     userId: number;
@@ -180,6 +123,7 @@ export function RatingPreferencesSettings({
     themes: number;
     characters: number;
     worldbuilding: number;
+    autoAdjust: boolean;
     createdAt: string;
     updatedAt: string;
   }>({
@@ -188,10 +132,10 @@ export function RatingPreferencesSettings({
     enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });
 
-  // Load criteria order and weights from preferences data only once on initial load
+  // Load weights from preferences data
   useEffect(() => {
-    if (preferencesData && !initialCriteriaOrder && Object.keys(currentWeights).length === 0) {
-      // Derive criteria order from the weights - only on initial load
+    if (preferencesData) {
+      // Set weights from database
       const weights = {
         enjoyment: preferencesData.enjoyment,
         writing: preferencesData.writing,
@@ -200,67 +144,79 @@ export function RatingPreferencesSettings({
         worldbuilding: preferencesData.worldbuilding
       };
       
-      // Sort criteria by weight in descending order
-      const derivedOrder = Object.entries(weights)
-        .sort((a, b) => b[1] - a[1])
-        .map(([criterion]) => criterion);
-        
-      setCriteriaOrder(derivedOrder);
-      setCurrentWeights(weights); // Initialize current weights only once
+      setCurrentWeights(weights);
       
-      
-    } else if (!preferencesData && Object.keys(currentWeights).length === 0) {
-      // If no saved preferences, initialize with default weights based on initial order
-      // Only do this once when the component mounts
-      const defaultWeights = generateCriteriaWeights(criteriaOrder);
-      setCurrentWeights(defaultWeights);
+      // Set auto-adjust from database
+      setAutoAdjust(preferencesData.autoAdjust ?? false);
     }
-  }, [preferencesData, initialCriteriaOrder]);
-  
-  // Helper function to generate criteria weights from order
-  const generateCriteriaWeights = (order: string[]): Record<string, number> => {
-    const weights: Record<string, number> = {};
+  }, [preferencesData]);
+
+  // Handle slider change for a specific criteria
+  const handleSliderChange = (id: string, value: number) => {
+    // Calculate the adjustment needed for the other sliders
+    const newWeights = { ...currentWeights };
+    const oldValue = newWeights[id];
+    const valueDifference = value - oldValue;
     
-    // Assign weights based on position in the user's criteria order
-    order.forEach((criterion, index) => {
-      weights[criterion] = POSITION_WEIGHTS[index];
-    });
+    if (valueDifference === 0) return;
     
+    // Set the new value for this slider
+    newWeights[id] = value;
     
-    return weights;
+    // Get the total of all other sliders
+    const otherCriteria = Object.keys(newWeights).filter(key => key !== id);
+    const otherTotal = otherCriteria.reduce((sum, key) => sum + newWeights[key], 0);
+    
+    if (otherTotal <= 0) return;
+    
+    // Distribute the difference proportionally across other sliders
+    const adjustmentFactor = (otherTotal - valueDifference) / otherTotal;
+    
+    // Ensure adjustment factor is positive and not too small
+    if (adjustmentFactor <= 0) {
+      // If we can't adjust proportionally, set minimum values and redistribute
+      const minValue = 0.01; // 1% minimum
+      let availableWeight = 1 - value;
+      let remainingCriteria = otherCriteria.length;
+      
+      otherCriteria.forEach(key => {
+        const weight = Math.max(minValue, availableWeight / remainingCriteria);
+        newWeights[key] = weight;
+        availableWeight -= weight;
+        remainingCriteria--;
+      });
+    } else {
+      // Apply proportional adjustment
+      otherCriteria.forEach(key => {
+        newWeights[key] = Math.max(0.01, newWeights[key] * adjustmentFactor);
+      });
+    }
+    
+    // Normalize to ensure total is exactly 1 (100%)
+    const newTotal = Object.values(newWeights).reduce((sum, val) => sum + val, 0);
+    if (newTotal !== 1) {
+      const normalizer = 1 / newTotal;
+      Object.keys(newWeights).forEach(key => {
+        newWeights[key] *= normalizer;
+      });
+    }
+    
+    setCurrentWeights(newWeights);
   };
-  
-  // Helper function to update weights for a new order
-  const updateWeightsForNewOrder = (
-    newOrder: string[], 
-    existingWeights: Record<string, number>
-  ): Record<string, number> => {
-    const updatedWeights: Record<string, number> = {};
-    
-    // Always assign weights based on position in the list
-    // This ensures that dragging an item to a new position 
-    // always gives it the weight appropriate for that position
-    newOrder.forEach((criterion, index) => {
-      updatedWeights[criterion] = POSITION_WEIGHTS[index];
-    });
-    
-    
-    
-    return updatedWeights;
+
+  // Toggle auto-adjust setting
+  const handleAutoAdjustToggle = (checked: boolean) => {
+    setAutoAdjust(checked);
   };
   
   // Mutation to save preferences
-  // Note: This is the ONLY place where data is saved to the database.
-  // There is NO autosave - changes are only persisted when the user
-  // explicitly clicks the Save button to trigger this mutation.
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
-      // Use current weights state instead of regenerating from order
-      // This ensures we use the weights that reflect the most recent user changes
-      
-      
-      // Send just the weights (individual columns, not nested objects)
-      return apiRequest('POST', '/api/rating-preferences', currentWeights);
+      // Send weights and autoAdjust setting
+      return apiRequest('POST', '/api/rating-preferences', {
+        ...currentWeights,
+        autoAdjust: autoAdjust
+      });
     },
     onSuccess: () => {
       toast({
@@ -285,8 +241,6 @@ export function RatingPreferencesSettings({
   });
   
   const handleSave = () => {
-    
-    
     savePreferences();
   };
   
@@ -296,42 +250,48 @@ export function RatingPreferencesSettings({
     }
   };
 
-  // Content is the same for both modes, only the container changes
+  // Content with sliders for each rating criteria
   const content = (
     <>
-      <div className="mb-4 flex items-center">
-        <div className="flex-1">
-          <h3 className="text-sm font-medium">Criteria</h3>
+      <div className="flex items-center justify-between mb-4 pb-2 border-b">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="auto-adjust" className="cursor-pointer">Auto adjust weights</Label>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-muted-foreground cursor-help">
+                  <Info className="h-4 w-4" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="max-w-[240px]">
+                  <p className="text-sm">When enabled, weights will be automatically balanced to maintain an optimal reading experience based on the platform's algorithm.</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-        <div className="text-sm font-medium">Weight</div>
-        <div className="w-8"></div>
+        <Switch 
+          id="auto-adjust" 
+          checked={autoAdjust} 
+          onCheckedChange={handleAutoAdjustToggle}
+        />
       </div>
       
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={criteriaOrder}
-          strategy={verticalListSortingStrategy}
-        >
-          {criteriaOrder.map((id, index) => (
-            <SortableCriteriaItem 
-              key={id} 
-              id={id} 
-              index={index} 
-              savedWeights={preferencesData ? preferencesData : undefined}
-              currentWeights={currentWeights}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
+      {RATING_CRITERIA.map((id) => (
+        <CriteriaSlider
+          key={id}
+          id={id}
+          value={currentWeights[id] || DEFAULT_WEIGHTS[id as keyof typeof DEFAULT_WEIGHTS]}
+          onChange={(value) => handleSliderChange(id, value)}
+          disabled={autoAdjust}
+        />
+      ))}
       
       <div className="mt-4 text-sm text-muted-foreground">
         <p className="flex items-center">
           <Info className="w-4 h-4 mr-2" />
-          Drag to reorder. The higher an item is in the list, the more it affects the overall book rating.
+          Adjust the sliders to set how much each criterion influences your overall book ratings. All percentages always total to 100%.
         </p>
       </div>
     </>
@@ -345,7 +305,7 @@ export function RatingPreferencesSettings({
           <CardTitle>Rating Preferences</CardTitle>
           <CardDescription>
             Customize how you rate books by prioritizing the criteria that matter most to you.
-            Drag and reorder the criteria below to match your preferences.
+            Use the sliders below to adjust the importance of each rating factor.
           </CardDescription>
         </CardHeader>
         <CardContent>
