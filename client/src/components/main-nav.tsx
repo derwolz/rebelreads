@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
-import { Search, Settings, Menu, LineChart, Flag, MessageSquare, User, Feather, ChevronDown } from "lucide-react";
+import { 
+  Search, Settings, Menu, LineChart, Flag, MessageSquare, User, Feather, ChevronDown,
+  Monitor, Star, BookOpen, LayoutGrid, Filter, BookOpenCheck
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
 import logo from "@/public/images/logo.svg";
@@ -47,8 +50,9 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { theme } = useTheme();
   
-  // Check if current location is in a pro route
+  // Check if current location is in a pro route or settings route
   const isProRoute = location.startsWith("/pro");
+  const isSettingsRoute = location.startsWith("/settings");
 
   // Check if user is a seller
   const { data: sellerStatus } = useQuery({
@@ -375,15 +379,104 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                           </Button>
                         </Link>
                       )}
-                      <Link href="/settings">
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start"
-                        >
-                          <Settings className="mr-2 h-4 w-4" />
-                          Settings
-                        </Button>
-                      </Link>
+                      <>
+                        <Link href="/settings">
+                          <Button
+                            variant={isSettingsRoute ? "secondary" : "outline"}
+                            className="w-full justify-start"
+                          >
+                            <Settings className="mr-2 h-4 w-4" />
+                            Settings
+                          </Button>
+                        </Link>
+                        {/* Settings submenu - only visible when in settings route */}
+                        {isSettingsRoute && (
+                          <div className="pl-2 pt-2">
+                            <div className="grid gap-2">
+                              <Link href="/settings">
+                                <Button
+                                  variant={location === "/settings" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <User className="mr-2 h-4 w-4" />
+                                  Profile
+                                </Button>
+                              </Link>
+                              <Link href="/settings/account">
+                                <Button
+                                  variant={location === "/settings/account" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <Settings className="mr-2 h-4 w-4" />
+                                  Account
+                                </Button>
+                              </Link>
+                              <Link href="/settings/appearance">
+                                <Button
+                                  variant={location === "/settings/appearance" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <Monitor className="mr-2 h-4 w-4" />
+                                  Appearance
+                                </Button>
+                              </Link>
+                              <Link href="/settings/rating-preferences">
+                                <Button
+                                  variant={location === "/settings/rating-preferences" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <Star className="mr-2 h-4 w-4" />
+                                  Rating Preferences
+                                </Button>
+                              </Link>
+                              <Link href="/settings/genre-preferences">
+                                <Button
+                                  variant={location === "/settings/genre-preferences" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <BookOpen className="mr-2 h-4 w-4" />
+                                  Genre Preferences
+                                </Button>
+                              </Link>
+                              <Link href="/settings/homepage">
+                                <Button
+                                  variant={location === "/settings/homepage" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <LayoutGrid className="mr-2 h-4 w-4" />
+                                  Homepage Layout
+                                </Button>
+                              </Link>
+                              <Link href="/settings/filters">
+                                <Button
+                                  variant={location === "/settings/filters" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <Filter className="mr-2 h-4 w-4" />
+                                  Content Filters
+                                </Button>
+                              </Link>
+                              <Link href="/settings/book-shelf">
+                                <Button
+                                  variant={location === "/settings/book-shelf" ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className="w-full justify-start"
+                                >
+                                  <BookOpenCheck className="mr-2 h-4 w-4" />
+                                  Book Shelves
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        )}
+                      </>
                       <Button
                         variant="outline"
                         className="w-full justify-start"
