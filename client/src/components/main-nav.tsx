@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
-import { Search, Settings, Menu } from "lucide-react";
+import { Search, Settings, Menu, LineChart, Flag, MessageSquare, User, Feather, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
 import logo from "@/public/images/logo.svg";
@@ -25,6 +25,12 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
@@ -278,14 +284,79 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                     </div>
                     <div className="grid gap-2">
                       {isAuthor && (
-                        <Link href="/pro">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                          >
-                            Author Dashboard
-                          </Button>
-                        </Link>
+                        <>
+                          <Link href="/pro">
+                            <Button
+                              variant="outline"
+                              className="w-full justify-start"
+                            >
+                              Author Dashboard
+                            </Button>
+                          </Link>
+                          <div className="pl-4">
+                            <Accordion type="single" collapsible className="w-full border-none">
+                              <AccordionItem value="author-dashboard-menu" className="border-none">
+                                <AccordionTrigger className="py-2 px-0 hover:no-underline text-sm">
+                                  Author Dashboard Menu
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-2 pb-0">
+                                  <div className="grid gap-2">
+                                    <Link href="/pro">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-start"
+                                      >
+                                        <LineChart className="mr-2 h-4 w-4" />
+                                        Analytics
+                                      </Button>
+                                    </Link>
+                                    <Link href="/pro/reviews">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-start"
+                                      >
+                                        <MessageSquare className="mr-2 h-4 w-4" />
+                                        Review Management
+                                      </Button>
+                                    </Link>
+                                    <Link href="/pro/action">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-start"
+                                      >
+                                        <Flag className="mr-2 h-4 w-4" />
+                                        Take Action
+                                      </Button>
+                                    </Link>
+                                    <Link href="/pro/book-management">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-start"
+                                      >
+                                        <Feather className="mr-2 h-4 w-4" />
+                                        Book Management
+                                      </Button>
+                                    </Link>
+                                    <Link href="/pro/author">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full justify-start"
+                                      >
+                                        <User className="mr-2 h-4 w-4" />
+                                        Author Profile
+                                      </Button>
+                                    </Link>
+                                  </div>
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
+                          </div>
+                        </>
                       )}
                       {publisherStatus?.isPublisher && (
                         <Link href="/publisher">
