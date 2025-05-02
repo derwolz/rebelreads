@@ -300,6 +300,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                                   variant={isProRoute ? "secondary" : "outline"}
                                   className="w-full justify-start"
                                 >
+                                  <LineChart className="mr-2 h-4 w-4" />
                                   Author Dashboard
                                 </Button>
                               </AccordionTrigger>
@@ -400,22 +401,20 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                         </Link>
                       )}
                       <>
-                        <Button
-                          variant={isSettingsRoute ? "secondary" : "outline"}
-                          className="w-full justify-start"
-                          onClick={() => {
-                            navigate("/settings");
-                            // Keep the drawer open
-                            setDrawerOpen(true);
-                          }}
-                        >
-                          <Settings className="mr-2 h-4 w-4" />
-                          Settings
-                        </Button>
-                        {/* Settings submenu - only visible when in settings route */}
-                        {isSettingsRoute && (
-                          <div className="pl-2 pt-2">
-                            <div className="grid gap-2">
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="settings-menu" className="border-0">
+                            <AccordionTrigger className="p-0 hover:no-underline">
+                              <Button
+                                variant={isSettingsRoute ? "secondary" : "outline"}
+                                className="w-full justify-start"
+                              >
+                                <Settings className="mr-2 h-4 w-4" />
+                                Settings
+                              </Button>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-0 pt-2">
+                              <div className="pl-2">
+                                <div className="grid gap-2">
                               <Button
                                 variant={location === "/settings" ? "secondary" : "ghost"}
                                 size="sm"
@@ -521,8 +520,10 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                                 Book Shelves
                               </Button>
                             </div>
-                          </div>
-                        )}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </>
                       <Button
                         variant="outline"
