@@ -41,11 +41,14 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const { user, isAuthor, logoutMutation } = useAuth();
   const { setIsOpen } = useAuthModal();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { theme } = useTheme();
+  
+  // Check if current route is part of the Pro section
+  const isProRoute = location.startsWith("/pro");
 
   // Check if user is a seller
   const { data: sellerStatus } = useQuery({
@@ -284,79 +287,59 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                     </div>
                     <div className="grid gap-2">
                       {isAuthor && (
-                        <>
+                        <div className="w-full space-y-2 mb-2 border rounded-lg p-3 bg-background/60">
+                          <div className="font-medium text-sm border-b pb-2 mb-1">Author Dashboard</div>
                           <Link href="/pro">
                             <Button
-                              variant="outline"
-                              className="w-full justify-start"
+                              variant="ghost"
+                              size="sm"
+                              className={`w-full justify-start ${location === "/pro" ? "bg-secondary" : ""}`}
                             >
-                              Author Dashboard
+                              <LineChart className="mr-2 h-4 w-4" />
+                              Analytics
                             </Button>
                           </Link>
-                          <div className="pl-4">
-                            <Accordion type="single" collapsible className="w-full border-none">
-                              <AccordionItem value="author-dashboard-menu" className="border-none">
-                                <AccordionTrigger className="py-2 px-0 hover:no-underline text-sm">
-                                  Author Dashboard Menu
-                                </AccordionTrigger>
-                                <AccordionContent className="pt-2 pb-0">
-                                  <div className="grid gap-2">
-                                    <Link href="/pro">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                      >
-                                        <LineChart className="mr-2 h-4 w-4" />
-                                        Analytics
-                                      </Button>
-                                    </Link>
-                                    <Link href="/pro/reviews">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                      >
-                                        <MessageSquare className="mr-2 h-4 w-4" />
-                                        Review Management
-                                      </Button>
-                                    </Link>
-                                    <Link href="/pro/action">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                      >
-                                        <Flag className="mr-2 h-4 w-4" />
-                                        Take Action
-                                      </Button>
-                                    </Link>
-                                    <Link href="/pro/book-management">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                      >
-                                        <Feather className="mr-2 h-4 w-4" />
-                                        Book Management
-                                      </Button>
-                                    </Link>
-                                    <Link href="/pro/author">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                      >
-                                        <User className="mr-2 h-4 w-4" />
-                                        Author Profile
-                                      </Button>
-                                    </Link>
-                                  </div>
-                                </AccordionContent>
-                              </AccordionItem>
-                            </Accordion>
-                          </div>
-                        </>
+                          <Link href="/pro/reviews">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`w-full justify-start ${location === "/pro/reviews" ? "bg-secondary" : ""}`}
+                            >
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Review Management
+                            </Button>
+                          </Link>
+                          <Link href="/pro/action">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`w-full justify-start ${location === "/pro/action" ? "bg-secondary" : ""}`}
+                            >
+                              <Flag className="mr-2 h-4 w-4" />
+                              Take Action
+                            </Button>
+                          </Link>
+                          <Link href="/pro/book-management">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`w-full justify-start ${location === "/pro/book-management" ? "bg-secondary" : ""}`}
+                            >
+                              <Feather className="mr-2 h-4 w-4" />
+                              Book Management
+                            </Button>
+                          </Link>
+                          <Link href="/pro/author">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`w-full justify-start ${location === "/pro/author" ? "bg-secondary" : ""}`}
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Author Profile
+                            </Button>
+                          </Link>
+                        </div>
                       )}
                       {publisherStatus?.isPublisher && (
                         <Link href="/publisher">
