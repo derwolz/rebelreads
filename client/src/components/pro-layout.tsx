@@ -31,14 +31,7 @@ export function ProLayout({ children }: ProLayoutProps) {
 
   return (
     <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-4rem)]">
-      {/* Mobile Sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[240px] p-0">
-          <div className="h-full pt-8">
-            <ProDashboardSidebar />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Mobile Sidebar is removed as we're now using the main navigation menu for mobile */}
 
       <div className="flex gap-4 md:gap-6 min-h-[calc(100vh-8rem)]">
         {/* Desktop Sidebar */}
@@ -61,18 +54,7 @@ export function ProLayout({ children }: ProLayoutProps) {
         </div>
         
         <div className="flex-1 min-w-0">
-          {/* Mobile menu button - only visible on mobile */}
-          <div className="md:hidden mb-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-2"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu className="h-4 w-4" />
-              <span>Menu</span>
-            </Button>
-          </div>
+          {/* Mobile menu button removed, now using main navigation menu for mobile */}
           
           {children}
         </div>

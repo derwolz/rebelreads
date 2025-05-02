@@ -48,28 +48,7 @@ export function SettingsSidebarWrapper({ location }: SettingsSidebarWrapperProps
           <SettingsSidebar collapsed={isSidebarCollapsed} />
         </div>
       </div>
-      
-      {/* Mobile menu button - only visible on mobile */}
-      <div className="md:hidden mb-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center gap-2"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <Menu className="h-4 w-4" />
-          <span>Menu</span>
-        </Button>
-      </div>
-      
-      {/* Mobile sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-[250px]">
-          <div className="p-6">
-            <SettingsSidebar collapsed={false} />
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Mobile sidebar sheet is removed, as we're now using the main navigation menu for mobile */}
     </>
   );
 }
