@@ -90,7 +90,8 @@ router.get("/rating-preferences", async (req: Request, res: Response) => {
         writing: 0.25,
         themes: 0.20,
         characters: 0.12,
-        worldbuilding: 0.08
+        worldbuilding: 0.08,
+        autoAdjust: false
       });
     }
     
@@ -120,7 +121,8 @@ router.post("/rating-preferences", async (req: Request, res: Response) => {
     writing: z.number(),
     themes: z.number(),
     characters: z.number(),
-    worldbuilding: z.number()
+    worldbuilding: z.number(),
+    autoAdjust: z.boolean().optional()
   });
   
   try {

@@ -616,16 +616,19 @@ export class AccountStorage implements IAccountStorage {
     return preferences[0];
   }
 
-  async saveRatingPreferences(userId: number, weights: Record<string, number>): Promise<RatingPreferences> {
+  async saveRatingPreferences(userId: number, weights: Record<string, number | boolean>): Promise<RatingPreferences> {
     
     
-    // Ensure all weights are provided or use defaults
+    // Extract autoAdjust from weights if present
+    const autoAdjust = typeof weights.autoAdjust === 'boolean' ? weights.autoAdjust : false;
+    
+    // Ensure all weight values are provided or use defaults
     const criteriaWeights = {
-      enjoyment: weights.enjoyment ?? 0.35,
-      writing: weights.writing ?? 0.25,
-      themes: weights.themes ?? 0.2,
-      characters: weights.characters ?? 0.12,
-      worldbuilding: weights.worldbuilding ?? 0.08
+      enjoyment: (weights.enjoyment as number) ?? 0.35,
+      writing: (weights.writing as number) ?? 0.25,
+      themes: (weights.themes as number) ?? 0.2,
+      characters: (weights.characters as number) ?? 0.12,
+      worldbuilding: (weights.worldbuilding as number) ?? 0.08
     };
     
     
@@ -647,6 +650,7 @@ export class AccountStorage implements IAccountStorage {
           writing: String(criteriaWeights.writing),
           enjoyment: String(criteriaWeights.enjoyment),
           characters: String(criteriaWeights.characters),
+          autoAdjust: autoAdjust,
           updatedAt: new Date()
         };
         
@@ -698,7 +702,8 @@ export class AccountStorage implements IAccountStorage {
           worldbuilding: String(criteriaWeights.worldbuilding),
           writing: String(criteriaWeights.writing),
           enjoyment: String(criteriaWeights.enjoyment),
-          characters: String(criteriaWeights.characters)
+          characters: String(criteriaWeights.characters),
+          autoAdjust: autoAdjust
         };
         
         
@@ -753,6 +758,7 @@ export class AccountStorage implements IAccountStorage {
               writing = ${String(criteriaWeights.writing)},
               enjoyment = ${String(criteriaWeights.enjoyment)},
               characters = ${String(criteriaWeights.characters)},
+              auto_adjust = ${autoAdjust},
               updated_at = NOW()
             WHERE user_id = ${userId}
             RETURNING *
@@ -773,6 +779,7 @@ export class AccountStorage implements IAccountStorage {
               writing,
               enjoyment,
               characters,
+              auto_adjust,
               created_at, 
               updated_at
             )
@@ -783,6 +790,7 @@ export class AccountStorage implements IAccountStorage {
               ${String(criteriaWeights.writing)},
               ${String(criteriaWeights.enjoyment)},
               ${String(criteriaWeights.characters)},
+              ${autoAdjust},
               NOW(), 
               NOW()
             )
