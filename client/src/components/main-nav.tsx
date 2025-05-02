@@ -293,19 +293,18 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                     <div className="grid gap-2">
                       {isAuthor && (
                         <>
-                          <Button
-                            variant={isProRoute ? "secondary" : "outline"}
-                            className="w-full justify-start"
-                            onClick={() => {
-                              navigate("/pro");
-                              // Keep the drawer open
-                              setDrawerOpen(true);
-                            }}
-                          >
-                            Author Dashboard
-                          </Button>
-                          {/* Pro submenu - only visible when in pro route */}
-                          {isProRoute && (
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="author-dashboard" className="border-none">
+                              <AccordionTrigger className="p-0 hover:no-underline">
+                                <Button
+                                  variant={isProRoute ? "secondary" : "outline"}
+                                  className="w-full justify-start"
+                                >
+                                  Author Dashboard
+                                </Button>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-0 pt-2">
+                                {/* Pro submenu */}
                             <div className="pl-2 pt-2">
                               <div className="grid gap-2">
                                 <Button
@@ -375,7 +374,9 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                                 </Button>
                               </div>
                             </div>
-                          )}
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
                         </>
                       )}
                       {publisherStatus?.isPublisher && (
