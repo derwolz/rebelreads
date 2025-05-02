@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Info, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { RATING_CRITERIA, RATING_CRITERIA_DESCRIPTIONS } from "@shared/schema";
+import { RATING_CRITERIA_DESCRIPTIONS } from "@shared/schema";
 
 import {
   Card,
@@ -14,7 +14,6 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,89 +32,46 @@ const DEFAULT_WEIGHTS = {
   worldbuilding: 0.08
 };
 
-// Helper component for each criteria slider
-function CriteriaSlider({ 
-  id, 
-  value,
-  onChange,
-  disabled
-}: { 
-  id: string; 
-  value: number;
-  onChange: (value: number) => void;
-  disabled: boolean;
-}) {
-  // Capitalize the first letter of the criteria name
-  const displayName = id.charAt(0).toUpperCase() + id.slice(1);
-  
-  // Description from the schema
-  const description = RATING_CRITERIA_DESCRIPTIONS[id as keyof typeof RATING_CRITERIA_DESCRIPTIONS];
-  
-  // Convert weight to percentage for display
-  const percentage = Math.round(value * 100);
-  
-  return (
-    <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm transition-all">
-      <div className="flex justify-between items-center mb-2">
-        <div className="font-medium">{displayName}</div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-medium text-primary">{percentage}%</div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-muted-foreground cursor-help">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <div className="max-w-[200px]">
-                  <p className="text-sm">{description}</p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
-      
-      <Slider
-        value={[percentage]}
-        min={0}
-        max={100}
-        step={1}
-        disabled={disabled}
-        onValueChange={(values) => {
-          onChange(values[0] / 100);
-        }}
-        className={disabled ? "opacity-70" : ""}
-      />
-    </div>
-  );
-}
+// Weight criteria as array for easier iteration
+const WEIGHT_CRITERIA = [
+  "enjoyment",
+  "writing",
+  "themes",
+  "characters",
+  "worldbuilding"
+];
 
 interface RatingPreferencesSettingsProps {
   isWizard?: boolean;
   onComplete?: () => void;
   onSkip?: () => void;
-  initialCriteriaOrder?: string[];
 }
 
 export function RatingPreferencesSettings({
   isWizard = false,
   onComplete,
   onSkip,
-  initialCriteriaOrder,
 }: RatingPreferencesSettingsProps) {
-  const [currentWeights, setCurrentWeights] = useState<Record<string, number>>(DEFAULT_WEIGHTS);
+  // State for the current weights
+  const [weights, setWeights] = useState<Record<string, number>>({
+    enjoyment: 0.35,
+    writing: 0.25,
+    themes: 0.20,
+    characters: 0.12,
+    worldbuilding: 0.08
+  });
+  
+  // State for auto adjust
   const [autoAdjust, setAutoAdjust] = useState<boolean>(false);
+  
+  // For toast notifications
   const { toast } = useToast();
+  
+  // Query client for cache invalidation
   const queryClient = useQueryClient();
 
-  // Query to get existing preferences (if any)
-  const { isLoading: isLoadingPreferences, data: preferencesData } = useQuery<{
+  // Query to get existing preferences
+  const { data: preferencesData } = useQuery<{
     id: number;
     userId: number;
     enjoyment: number;
@@ -124,93 +80,86 @@ export function RatingPreferencesSettings({
     characters: number;
     worldbuilding: number;
     autoAdjust: boolean;
-    createdAt: string;
-    updatedAt: string;
   }>({
     queryKey: ['/api/rating-preferences'],
     staleTime: 60000,
-    enabled: !initialCriteriaOrder, // Only run query if initialCriteriaOrder not provided
   });
 
-  // Load weights from preferences data
+  // Load weights from preferences data when it's available
   useEffect(() => {
     if (preferencesData) {
-      // Set weights from database
-      const weights = {
-        enjoyment: preferencesData.enjoyment,
-        writing: preferencesData.writing,
-        themes: preferencesData.themes,
-        characters: preferencesData.characters,
-        worldbuilding: preferencesData.worldbuilding
-      };
-      
-      setCurrentWeights(weights);
-      
-      // Set auto-adjust from database
-      setAutoAdjust(preferencesData.autoAdjust ?? false);
+      console.log("Loading preferences from database:", preferencesData);
+      setWeights({
+        enjoyment: parseFloat(preferencesData.enjoyment.toString()),
+        writing: parseFloat(preferencesData.writing.toString()),
+        themes: parseFloat(preferencesData.themes.toString()),
+        characters: parseFloat(preferencesData.characters.toString()),
+        worldbuilding: parseFloat(preferencesData.worldbuilding.toString())
+      });
+      setAutoAdjust(preferencesData.autoAdjust);
     }
   }, [preferencesData]);
 
   // Handle slider change for a specific criteria
-  const handleSliderChange = (id: string, value: number) => {
-    // Calculate the adjustment needed for the other sliders
-    const newWeights = { ...currentWeights };
+  const handleSliderChange = (id: string, newPercentage: number) => {
+    console.log(`Changing ${id} to ${newPercentage}%`);
     
-    // If value is 1 (100%), set all others to nearly 0
-    if (value >= 0.98) {
-      // Special case: If slider is set to (nearly) max, set this to 100% and others to minimum
-      const minValue = 0.001; // Very small value for others
-      Object.keys(newWeights).forEach(key => {
-        newWeights[key] = key === id ? 1 - (minValue * (Object.keys(newWeights).length - 1)) : minValue;
-      });
-      setCurrentWeights(newWeights);
-      return;
-    }
+    // Don't do anything if auto-adjust is on
+    if (autoAdjust) return;
     
-    // Set the new value for this slider
-    newWeights[id] = value;
+    // Get current values
+    const currentWeights = { ...weights };
     
-    // Get the total of all weights
-    const newTotal = Object.values(newWeights).reduce((sum, val) => sum + val, 0);
+    // Set the new value for this slider (as decimal, not percentage)
+    const newValue = newPercentage / 100;
     
-    // If we're over 1.0, we need to reduce other values
-    if (newTotal > 1) {
-      // Get other criteria
-      const otherCriteria = Object.keys(newWeights).filter(key => key !== id);
-      const otherTotal = otherCriteria.reduce((sum, key) => sum + newWeights[key], 0);
-      
-      // Calculate how much we need to reduce the other values
-      const reductionFactor = (1 - value) / otherTotal;
-      
-      // Apply reduction to other criteria
+    // Get other criteria
+    const otherCriteria = WEIGHT_CRITERIA.filter(key => key !== id);
+    
+    // Get sum of other criteria values
+    const otherSum = otherCriteria.reduce((sum, key) => sum + currentWeights[key], 0);
+    
+    // Calculate how much we need to adjust other criteria to maintain sum of 1.0
+    let remainingWeight = 1.0 - newValue;
+    
+    // If remainingWeight is less than or equal to 0, set minimum values for other criteria
+    if (remainingWeight <= 0.01) {
+      // Special case: this slider is set to (nearly) 100%
+      const minWeight = 0.001;
       otherCriteria.forEach(key => {
-        newWeights[key] = Math.max(0.001, newWeights[key] * reductionFactor);
+        currentWeights[key] = minWeight;
       });
+      // Adjust this slider to make total exactly 1.0
+      currentWeights[id] = 1.0 - (minWeight * otherCriteria.length);
+    } 
+    else {
+      // Normal case: proportionally adjust other sliders
+      const adjustmentRatio = remainingWeight / otherSum;
+      
+      // Apply the adjustment ratio to other criteria
+      otherCriteria.forEach(key => {
+        currentWeights[key] = currentWeights[key] * adjustmentRatio;
+      });
+      
+      // Set the new value for this slider
+      currentWeights[id] = newValue;
     }
     
-    // Final normalization to ensure exact sum of 1.0
-    const finalTotal = Object.values(newWeights).reduce((sum, val) => sum + val, 0);
-    const normalizer = 1 / finalTotal;
-    
-    Object.keys(newWeights).forEach(key => {
-      newWeights[key] *= normalizer;
-    });
-    
-    setCurrentWeights(newWeights);
+    // Update state with the new weights
+    setWeights(currentWeights);
   };
 
-  // Toggle auto-adjust setting
+  // Toggle auto-adjust
   const handleAutoAdjustToggle = (checked: boolean) => {
     setAutoAdjust(checked);
   };
   
-  // Mutation to save preferences
+  // Save preferences mutation
   const { mutate: savePreferences, isPending: isSaving } = useMutation({
     mutationFn: async () => {
-      // Send weights and autoAdjust setting
       return apiRequest('POST', '/api/rating-preferences', {
-        ...currentWeights,
-        autoAdjust: autoAdjust
+        ...weights,
+        autoAdjust
       });
     },
     onSuccess: () => {
@@ -220,7 +169,6 @@ export function RatingPreferencesSettings({
       });
       queryClient.invalidateQueries({ queryKey: ['/api/rating-preferences'] });
       
-      // Call onComplete callback if provided (for wizard mode)
       if (onComplete) {
         onComplete();
       }
@@ -235,17 +183,19 @@ export function RatingPreferencesSettings({
     },
   });
   
+  // Save preferences
   const handleSave = () => {
     savePreferences();
   };
   
+  // Skip for wizard mode
   const handleSkip = () => {
     if (onSkip) {
       onSkip();
     }
   };
 
-  // Content with sliders for each rating criteria
+  // JSX for sliders and content
   const content = (
     <>
       <div className="flex items-center justify-between mb-4 pb-2 border-b">
@@ -273,43 +223,172 @@ export function RatingPreferencesSettings({
         />
       </div>
       
-      {/* Display sliders in fixed order to prevent reordering */}
-      <CriteriaSlider
-        key="enjoyment"
-        id="enjoyment"
-        value={currentWeights.enjoyment || DEFAULT_WEIGHTS.enjoyment}
-        onChange={(value) => handleSliderChange("enjoyment", value)}
-        disabled={autoAdjust}
-      />
-      <CriteriaSlider
-        key="writing"
-        id="writing"
-        value={currentWeights.writing || DEFAULT_WEIGHTS.writing}
-        onChange={(value) => handleSliderChange("writing", value)}
-        disabled={autoAdjust}
-      />
-      <CriteriaSlider
-        key="themes"
-        id="themes"
-        value={currentWeights.themes || DEFAULT_WEIGHTS.themes}
-        onChange={(value) => handleSliderChange("themes", value)}
-        disabled={autoAdjust}
-      />
-      <CriteriaSlider
-        key="characters"
-        id="characters"
-        value={currentWeights.characters || DEFAULT_WEIGHTS.characters}
-        onChange={(value) => handleSliderChange("characters", value)}
-        disabled={autoAdjust}
-      />
-      <CriteriaSlider
-        key="worldbuilding"
-        id="worldbuilding"
-        value={currentWeights.worldbuilding || DEFAULT_WEIGHTS.worldbuilding}
-        onChange={(value) => handleSliderChange("worldbuilding", value)}
-        disabled={autoAdjust}
-      />
+      {/* Enjoyment slider */}
+      <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <div className="font-medium">Enjoyment</div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium text-primary">{Math.round(weights.enjoyment * 100)}%</div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-muted-foreground cursor-help">
+                    <Info className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="max-w-[200px]">
+                    <p className="text-sm">{RATING_CRITERIA_DESCRIPTIONS.enjoyment}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={Math.round(weights.enjoyment * 100)} 
+          onChange={(e) => handleSliderChange("enjoyment", parseInt(e.target.value))}
+          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+          disabled={autoAdjust}
+        />
+      </div>
       
+      {/* Writing slider */}
+      <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <div className="font-medium">Writing</div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium text-primary">{Math.round(weights.writing * 100)}%</div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-muted-foreground cursor-help">
+                    <Info className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="max-w-[200px]">
+                    <p className="text-sm">{RATING_CRITERIA_DESCRIPTIONS.writing}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={Math.round(weights.writing * 100)} 
+          onChange={(e) => handleSliderChange("writing", parseInt(e.target.value))}
+          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+          disabled={autoAdjust}
+        />
+      </div>
+      
+      {/* Themes slider */}
+      <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <div className="font-medium">Themes</div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium text-primary">{Math.round(weights.themes * 100)}%</div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-muted-foreground cursor-help">
+                    <Info className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="max-w-[200px]">
+                    <p className="text-sm">{RATING_CRITERIA_DESCRIPTIONS.themes}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={Math.round(weights.themes * 100)} 
+          onChange={(e) => handleSliderChange("themes", parseInt(e.target.value))}
+          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+          disabled={autoAdjust}
+        />
+      </div>
+      
+      {/* Characters slider */}
+      <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <div className="font-medium">Characters</div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium text-primary">{Math.round(weights.characters * 100)}%</div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-muted-foreground cursor-help">
+                    <Info className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="max-w-[200px]">
+                    <p className="text-sm">{RATING_CRITERIA_DESCRIPTIONS.characters}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={Math.round(weights.characters * 100)} 
+          onChange={(e) => handleSliderChange("characters", parseInt(e.target.value))}
+          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer" 
+          disabled={autoAdjust}
+        />
+      </div>
+      
+      {/* Worldbuilding slider */}
+      <div className="py-3 px-3 mb-3 bg-card border rounded-md shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <div className="font-medium">Worldbuilding</div>
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium text-primary">{Math.round(weights.worldbuilding * 100)}%</div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="text-muted-foreground cursor-help">
+                    <Info className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="max-w-[200px]">
+                    <p className="text-sm">{RATING_CRITERIA_DESCRIPTIONS.worldbuilding}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="100" 
+          value={Math.round(weights.worldbuilding * 100)} 
+          onChange={(e) => handleSliderChange("worldbuilding", parseInt(e.target.value))}
+          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
+          disabled={autoAdjust}
+        />
+      </div>
+      
+      {/* Help text */}
       <div className="mt-4 text-sm text-muted-foreground">
         <p className="flex items-center">
           <Info className="w-4 h-4 mr-2" />
