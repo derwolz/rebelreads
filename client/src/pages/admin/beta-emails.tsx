@@ -31,9 +31,15 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Download, Search, RefreshCw } from "lucide-react";
+import { Mail, Download, Search, RefreshCw, CheckCircle, Mail as MailIcon } from "lucide-react";
 import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
+
+// Extended SignupInterest type with beta key information
+interface EnrichedSignupInterest extends SignupInterest {
+  hasBetaKey: boolean;
+  betaKeyDetails: any | null;
+}
 
 type SendBetaEmailsResult = {
   message: string;
@@ -49,9 +55,10 @@ const BetaEmailsPage = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const [filteredData, setFilteredData] = useState<SignupInterest[]>([]);
+  const [filteredData, setFilteredData] = useState<EnrichedSignupInterest[]>([]);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
+  const [showWithBetaKeys, setShowWithBetaKeys] = useState(false);
   
   // Fetch signup interests
   const { 
@@ -66,7 +73,7 @@ const BetaEmailsPage = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch signup interests");
       }
-      return response.json() as Promise<SignupInterest[]>;
+      return response.json() as Promise<EnrichedSignupInterest[]>;
     },
   });
 

@@ -2,9 +2,9 @@ import { Router, Request, Response } from "express";
 import { adminAuthMiddleware } from "../middleware/admin-auth";
 import { db } from "../db";
 import { dbStorage } from "../storage";
-import { signup_interests } from "../../shared/schema";
+import { signup_interests, betaKeys } from "../../shared/schema";
 import { emailService } from "../email";
-import { asc, desc, eq, isNull, notInArray, sql } from "drizzle-orm";
+import { asc, desc, eq, isNull, notInArray, sql, like } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -12,17 +12,40 @@ const router = Router();
 // Use admin middleware for all routes
 router.use(adminAuthMiddleware);
 
-// Get signup interests that haven't received a beta key yet
+// Get signup interests with a flag indicating if they've received a beta key
 router.get("/signup-interests", async (req: Request, res: Response) => {
   try {
-    // Get signup interests that don't have a beta key yet
+    // Get all signup interests
     const signupInterests = await db
       .select()
       .from(signup_interests)
       .orderBy(desc(signup_interests.createdAt));
     
+    // Get all beta keys that were sent to signup interests (based on description pattern)
+    const betaKeysForSignups = await db
+      .select()
+      .from(betaKeys)
+      .where(like(betaKeys.description, 'Beta key for %from signup interest'));
+    
+    // Create a map of emails to beta keys for quick lookup
+    const emailToBetaKeyMap = new Map();
+    for (const key of betaKeysForSignups) {
+      // Extract email from the description: "Beta key for email@example.com from signup interest"
+      const match = key.description?.match(/Beta key for ([^\s]+) from signup interest/);
+      if (match && match[1]) {
+        emailToBetaKeyMap.set(match[1], key);
+      }
+    }
+    
+    // Add a flag to each signup interest indicating if they've already received a beta key
+    const enrichedSignupInterests = signupInterests.map(interest => ({
+      ...interest,
+      hasBetaKey: emailToBetaKeyMap.has(interest.email),
+      betaKeyDetails: emailToBetaKeyMap.get(interest.email) || null
+    }));
+    
     // Return as JSON
-    res.json(signupInterests);
+    res.json(enrichedSignupInterests);
   } catch (error) {
     console.error("Error fetching signup interests:", error);
     res.status(500).json({ error: "Failed to fetch signup interests" });
