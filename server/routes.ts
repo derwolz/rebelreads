@@ -95,6 +95,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/public", publicAuthorRoutes);
   app.use("/api/public", publicVerificationRoutes);
   
+  // Register user profile routes (these need to be public)
+  app.use("/api/users", userProfileRoutes);
+  
   // Register verification routes before auth for password reset functionality
   app.use("/api", verificationRoutes);
   app.use("/api/account", accountLookupRoutes);
@@ -164,9 +167,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/catalogue/publisher", cataloguePublisherRoutes);
   app.use("/api/catalogue/publishers/authors", cataloguePublisherAuthorsRoutes);
   app.use("/api/catalogue/publishers/books", cataloguePublisherBooksRoutes);
-  
-  // Register user profile routes
-  app.use("/api/users", userProfileRoutes);
   
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);

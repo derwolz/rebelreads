@@ -127,7 +127,7 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   };
 }
 
-// Get user profile by username
+// Get user profile by username (public endpoint, no auth required)
 router.get("/:username", async (req: Request, res: Response) => {
   const { username } = req.params;
   
