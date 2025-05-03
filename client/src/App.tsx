@@ -128,6 +128,12 @@ function App() {
 
           {/* Public routes that require authentication in beta mode */}
           <Route path="/" component={HomeComponent} />
+          {/* 
+            ***** IMPORTANT: DO NOT EVER USE THIS ROUTE *****
+            ***** NEVER ALLOWED TO USE :id TO FETCH BOOKS *****
+            ***** ONLY EVER USE /book-details?authorName={}&bookTitle={} *****
+            ***** DO NOT DELETE THIS COMMENT *****
+           */}
           <Route path="/books/:id" component={BookDetails} />
           <Route path="/book-details" component={BookDetails} />
           <Route path="/search/books" component={SearchBooksPage} />

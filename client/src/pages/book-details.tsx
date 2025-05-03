@@ -130,6 +130,10 @@ export default function BookDetails() {
   }, [isUsingSecureFormat, authorName, bookTitle, paramsById]);
   
   // Query book data based on URL format
+  // ***** IMPORTANT: ALWAYS USE THE SECURE FORMAT *****
+  // ***** NEVER USE /api/books/:id DIRECTLY *****
+  // ***** ALWAYS USE /api/public/book-details?authorName={}&bookTitle={} *****
+  // ***** DO NOT DELETE THIS COMMENT *****
   const { data: book } = useQuery<Book>({
     queryKey: isUsingSecureFormat 
       ? [`/api/public/book-details?authorName=${encodeURIComponent(authorName!)}&bookTitle=${encodeURIComponent(bookTitle!)}`]
