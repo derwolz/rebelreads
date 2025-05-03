@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useLocation, useRoute, Link } from "wouter";
+import React, { useState } from "react";
+import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -25,7 +25,8 @@ import { BookshelfCard } from "@/components/bookshelf-card";
 import { SeashellRating } from "@/components/seashell-rating";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/api-helpers";
+import { queryClient } from "@/lib/queryClient";
 
 // Icons
 import { 
@@ -78,22 +79,31 @@ const UserProfilePage: React.FC = () => {
   // Get user profile data
   const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: [username],
-    queryFn: () => apiRequest(`/${username}`),
+    queryFn: async () => {
+      const response = await apiRequest(`/${username}`);
+      return response as unknown as UserProfileData;
+    },
     enabled: !!username
   });
   
   // Get following status (if not own profile)
   const { data: followingData, isLoading: followingLoading } = useQuery({
     queryKey: [username, 'following-status'],
-    queryFn: () => apiRequest(`/${username}/following-status`),
+    queryFn: async () => {
+      const response = await apiRequest(`/${username}/following-status`);
+      return response as {isFollowing: boolean};
+    },
     enabled: !!username && isAuthenticated && !isOwnProfile
   });
   
   // Follow/unfollow mutation
   const followMutation = useMutation({
-    mutationFn: () => apiRequest(`/${username}/follow`, {
-      method: 'POST'
-    }),
+    mutationFn: async () => {
+      const response = await apiRequest(`/${username}/follow`, {
+        method: 'POST'
+      });
+      return response as {success: boolean, action: 'followed' | 'unfollowed'};
+    },
     onSuccess: (data) => {
       // Show toast message
       toast({

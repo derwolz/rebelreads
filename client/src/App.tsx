@@ -47,6 +47,7 @@ import AdShowcasePage from "@/pages/ad-showcase-page";
 import ProReviewsPage from "@/pages/pro-reviews-page";
 import DiscoverPage from "@/pages/discover-page";
 import BookShelfPage from "@/pages/book-shelf-page";
+import UserProfilePage from "@/pages/user-profile-page";
 import FeedbackButton from "@/components/feedback-button";
 import BrandingPage from "@/pages/branding-page";
 import AuthWallPage from "@/pages/auth-wall-page";
@@ -153,6 +154,9 @@ function App() {
           <Route path="/discover" component={DiscoverPage} />
           <Route path="/discover/:type" component={DiscoverPage} />
           <Route path="/discover/:type/:id" component={DiscoverPage} />
+          
+          {/* User Profile Route */}
+          <Route path="/:username" component={UserProfilePage} />
 
           {/* Protected routes (always require login) */}
           <ProtectedRoute path="/settings" component={SettingsPage} />
