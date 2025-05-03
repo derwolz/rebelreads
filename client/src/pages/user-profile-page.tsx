@@ -6,16 +6,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +64,6 @@ const UserProfilePage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
   
   // Check if this is the logged in user's profile
   const isOwnProfile = isAuthenticated && user?.username === username;
@@ -382,217 +374,131 @@ const UserProfilePage: React.FC = () => {
         
         {/* Main Content Area */}
         <div className="w-full lg:w-3/4">
-          <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="wishlist">Wishlist</TabsTrigger>
-              <TabsTrigger value="bookshelves">Bookshelves</TabsTrigger>
-              <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-            </TabsList>
-            
-            {/* Overview Tab - Shows a bit of everything */}
-            <TabsContent value="overview">
-              <div className="space-y-8">
-                {/* Wishlist Preview */}
-                {wishlist.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-center">
-                        <CardTitle className="text-xl">Wishlist</CardTitle>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setActiveTab("wishlist")}
-                        >
-                          View All
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {wishlist.slice(0, 3).map((item, index) => (
-                          <BookCard key={index} book={item.book} />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {/* Pinned Bookshelves */}
-                {pinnedShelves.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-center">
-                        <CardTitle className="text-xl">Pinned Bookshelves</CardTitle>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setActiveTab("bookshelves")}
-                        >
-                          View All
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {pinnedShelves.slice(0, 3).map((shelf) => (
-                          <BookshelfCard
-                            key={shelf.id}
-                            id={shelf.id}
-                            title={shelf.title}
-                            coverImageUrl={shelf.coverImageUrl}
-                            bookCount={shelf.bookCount || 0}
-                            username={username}
-                            featuredBooks={shelf.books}
-                          />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                {/* Recommended Books */}
-                {recommendedBooks.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-center">
-                        <CardTitle className="text-xl">Recommended Books</CardTitle>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setActiveTab("recommendations")}
-                        >
-                          View All
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {recommendedBooks.slice(0, 3).map((item, index) => (
-                          <BookCard key={index} book={item.book} />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
-            
-            {/* Wishlist Tab */}
-            <TabsContent value="wishlist">
+          <div className="space-y-8">
+            {/* Bio Section */}
+            {bio && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <BookmarkIcon className="mr-2 h-5 w-5" />
-                    Wishlist
+                    <UserIcon className="mr-2 h-5 w-5" />
+                    About
                   </CardTitle>
-                  <CardDescription>
-                    Books {isOwnProfile ? "you've" : `${displayName} has`} added to wishlist
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {wishlist.length === 0 ? (
-                    <div className="text-center py-6">
-                      <BookmarkIcon className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-                      <h3 className="text-lg font-medium">No books in wishlist</h3>
-                      <p className="text-muted-foreground">
-                        {isOwnProfile 
-                          ? "You haven't added any books to your wishlist yet." 
-                          : `${displayName} hasn't added any books to their wishlist yet.`}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {wishlist.map((item, index) => (
-                        <BookCard key={index} book={item.book} />
-                      ))}
-                    </div>
-                  )}
+                  <p>{bio}</p>
                 </CardContent>
               </Card>
-            </TabsContent>
+            )}
             
-            {/* Bookshelves Tab */}
-            <TabsContent value="bookshelves">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BookOpenIcon className="mr-2 h-5 w-5" />
-                    Bookshelves
-                  </CardTitle>
-                  <CardDescription>
-                    Shared bookshelves created by {isOwnProfile ? "you" : displayName}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {pinnedShelves.length === 0 ? (
-                    <div className="text-center py-6">
-                      <BookOpenIcon className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-                      <h3 className="text-lg font-medium">No shared bookshelves</h3>
-                      <p className="text-muted-foreground">
-                        {isOwnProfile 
-                          ? "You haven't shared any bookshelves yet." 
-                          : `${displayName} hasn't shared any bookshelves yet.`}
-                      </p>
-                      {isOwnProfile && (
-                        <Button className="mt-4" asChild>
-                          <Link href="/book-shelf">Manage Bookshelves</Link>
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {pinnedShelves.map((shelf) => (
-                        <BookshelfCard
-                          key={shelf.id}
-                          id={shelf.id}
-                          title={shelf.title}
-                          coverImageUrl={shelf.coverImageUrl}
-                          bookCount={shelf.bookCount || 0}
-                          username={username}
-                          featuredBooks={shelf.books}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {/* Wishlist Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BookmarkIcon className="mr-2 h-5 w-5" />
+                  Wishlist
+                </CardTitle>
+                <CardDescription>
+                  Books {isOwnProfile ? "you've" : `${displayName} has`} added to wishlist
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {wishlist.length === 0 ? (
+                  <div className="text-center py-6">
+                    <BookmarkIcon className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                    <h3 className="text-lg font-medium">No books in wishlist</h3>
+                    <p className="text-muted-foreground">
+                      {isOwnProfile 
+                        ? "You haven't added any books to your wishlist yet." 
+                        : `${displayName} hasn't added any books to their wishlist yet.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {wishlist.map((item, index) => (
+                      <BookCard key={index} book={item.book} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
             
-            {/* Recommendations Tab */}
-            <TabsContent value="recommendations">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <HeartIcon className="mr-2 h-5 w-5" />
-                    Recommended Books
-                  </CardTitle>
-                  <CardDescription>
-                    Books {isOwnProfile ? "you've" : `${displayName} has`} enjoyed and recommended
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {recommendedBooks.length === 0 ? (
-                    <div className="text-center py-6">
-                      <HeartIcon className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-                      <h3 className="text-lg font-medium">No recommended books</h3>
-                      <p className="text-muted-foreground">
-                        {isOwnProfile 
-                          ? "You haven't recommended any books yet." 
-                          : `${displayName} hasn't recommended any books yet.`}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {recommendedBooks.map((item, index) => (
-                        <BookCard key={index} book={item.book} />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+            {/* Bookshelves Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BookOpenIcon className="mr-2 h-5 w-5" />
+                  Bookshelves
+                </CardTitle>
+                <CardDescription>
+                  Shared bookshelves created by {isOwnProfile ? "you" : displayName}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pinnedShelves.length === 0 ? (
+                  <div className="text-center py-6">
+                    <BookOpenIcon className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                    <h3 className="text-lg font-medium">No shared bookshelves</h3>
+                    <p className="text-muted-foreground">
+                      {isOwnProfile 
+                        ? "You haven't shared any bookshelves yet." 
+                        : `${displayName} hasn't shared any bookshelves yet.`}
+                    </p>
+                    {isOwnProfile && (
+                      <Button className="mt-4" asChild>
+                        <Link href="/book-shelf">Manage Bookshelves</Link>
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {pinnedShelves.map((shelf) => (
+                      <BookshelfCard
+                        key={shelf.id}
+                        id={shelf.id}
+                        title={shelf.title}
+                        coverImageUrl={shelf.coverImageUrl}
+                        bookCount={shelf.bookCount || 0}
+                        username={username}
+                        featuredBooks={shelf.books}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Recommended Books Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <HeartIcon className="mr-2 h-5 w-5" />
+                  Recommended Books
+                </CardTitle>
+                <CardDescription>
+                  Books {isOwnProfile ? "you've" : `${displayName} has`} enjoyed and recommended
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recommendedBooks.length === 0 ? (
+                  <div className="text-center py-6">
+                    <HeartIcon className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                    <h3 className="text-lg font-medium">No recommended books</h3>
+                    <p className="text-muted-foreground">
+                      {isOwnProfile 
+                        ? "You haven't recommended any books yet." 
+                        : `${displayName} hasn't recommended any books yet.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {recommendedBooks.map((item, index) => (
+                      <BookCard key={index} book={item.book} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
