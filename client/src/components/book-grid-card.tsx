@@ -189,8 +189,8 @@ export function BookGridCard({ book }: { book: Book }) {
       const encodedTitle = encodeURIComponent(book.title);
       navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
     } else {
-      // Fallback to traditional ID-based URL if authorName is not available
-      navigate(`/books/${book.id}`);
+      // Fallback to using "unknown" author if author name is not available
+      navigate(`/book-details?authorName=unknown&bookTitle=${encodeURIComponent(book.title)}`);
     }
   };
 
