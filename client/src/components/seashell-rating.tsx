@@ -1,148 +1,62 @@
-import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-type SeashellRatingProps = {
-  compatibility: number;
-  readOnly?: boolean;
-  size?: "xs" | "sm" | "md" | "lg";
+interface SeashellRatingProps {
+  score: number; // -3 to +3 scale
   className?: string;
-  onChange?: (newRating: number) => void;
-};
+}
 
-/**
- * SeashellRating component for displaying compatibility ratings
- * 
- * Uses a -3 to +3 compatibility scale:
- * - Negative values (incompatible) are displayed in red
- * - Positive values (compatible) are displayed in purple
- * - Neutral values (near 0) are displayed in gray
- * 
- * The component displays 3 seashells and colors them based on the compatibility value
- */
-export function SeashellRating({
-  compatibility,
-  readOnly = false,
-  size = "md",
+export const SeashellRating: React.FC<SeashellRatingProps> = ({
+  score,
   className,
-  onChange,
-}: SeashellRatingProps) {
-  // Clamp compatibility value between -3 and 3
-  const clampedValue = Math.max(-3, Math.min(3, compatibility));
+}) => {
+  // Constrain score to the valid range
+  const normalizedScore = Math.max(-3, Math.min(3, score));
   
-  // Convert the -3 to 3 range to an absolute 0 to 3 scale for display purposes
-  const absoluteValue = Math.abs(clampedValue);
+  // Generate an array of seashells based on the score
+  const seashells = [];
   
-  // Determine color based on compatibility direction - Using Sirened purple for positive (colorblind friendly)
-  const color = clampedValue > 0 
-    ? "text-[hsl(271,56%,63%)]" // Sirened purple for positive/compatible
-    : clampedValue < 0 
-      ? "text-red-500"  // Red for negative/incompatible
-      : "text-gray-400"; // Gray for neutral/no preference
+  // Logic:
+  // - Positive scores (1 to 3) show 1 to 3 purple seashells
+  // - Negative scores (-1 to -3) show 1 to 3 red seashells
+  // - Score of 0 shows no seashells
+  const absScore = Math.abs(normalizedScore);
+  const isPositive = normalizedScore > 0;
+  const isNegative = normalizedScore < 0;
   
-  // Size classes
-  const sizeClasses = {
-    xs: "text-xs gap-0.5",
-    sm: "text-sm gap-1",
-    md: "text-base gap-1",
-    lg: "text-lg gap-1.5",
-  };
-  
-  // Round to the nearest integer for clearer display
-  const roundedValue = Math.round(absoluteValue);
-  
-  // Helper function to render a single seashell
-  const renderSeashell = (index: number) => {
-    // If current index is less than the rounded value, render a full seashell
-    if (index < roundedValue) {
-      return (
-        <div key={index} className={color}>
-          <SeashellIcon />
-        </div>
-      );
-    }
-    
-    // Otherwise render an empty (gray) seashell
-    return (
-      <div key={index} className="text-gray-300">
-        <SeashellIcon />
+  // Add the appropriate number of seashells
+  for (let i = 0; i < absScore; i++) {
+    seashells.push(
+      <div 
+        key={i} 
+        className={cn(
+          "h-6 w-6", 
+          isPositive ? "text-purple-500" : "text-red-500"
+        )}
+      >
+        {/* SVG of a seashell */}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21.484 9.6c-.328-.295-.74-.519-1.16-.519-.525 0-1.09.382-1.496.077-.407-.304-.407-.81-.407-1.255 0-.764.261-1.523.68-2.124.287-.41.487-.896.487-1.45C19.588 3.6 18.8 3 17.878 3c-1.821 0-3.31 1.563-3.31 3.5v.128c-1.292-.972-2.52-1.942-3.57-2.856V5.69c0 1.165.699 2.305 2.058 3.152.855.535 1.92.899 2.994 1.231 1.997.617 4.065 1.256 5.566 2.779.71.722 1.07 1.518 1.07 2.37 0 1.249-1.12 2.47-3.059 3.35-1.72.779-4.038 1.208-6.535 1.208-5.081 0-9.096-1.954-9.096-4.43 0-1.358 1.383-2.598 3.78-3.399-.263-.156-.485-.295-.665-.42C5.015 9.98 3.069 8.67 3.069 6.75c0-1.946 1.28-2.533 3.021-2.533 1.878 0 3.971.442 5.72 1.184.307-.544.877-.915 1.509-.915.313 0 .617.089.879.256.263-.169.568-.256.88-.256.633 0 1.201.371 1.508.915 1.748-.742 3.84-1.184 5.717-1.184 1.742 0 3.023.587 3.023 2.533 0 .989-.5 1.7-1.313 2.37.485.42.975.868 1.437 1.372 2.106 2.292 3.551 4.66 3.551 4.66-.698-.044-1.365-.153-2.008-.297-.644.962-1.674 1.803-3.013 2.387-1.824.797-4.126 1.235-6.49 1.235-5.945 0-10.212-2.3-10.212-5.5 0-1.08.606-2.076 1.674-2.892-2.312-1.292-3.496-3.24-3.496-5.425 0-3.156 2.353-4.368 5.025-4.368 1.982 0 4.1.52 5.892 1.39.605-.501 1.364-.797 2.187-.797.31 0 .612.049.898.147.285-.097.586-.147.895-.147.823 0 1.582.296 2.188.797 1.794-.87 3.91-1.39 5.893-1.39 2.67 0 5.022 1.212 5.022 4.368 0 1.28-.462 2.428-1.212 3.394z" />
+        </svg>
       </div>
     );
-  };
-
-  // Calculate compatibility percentage (from -3/3 to percentage)
-  const compatibilityPercentage = Math.round((clampedValue / 3) * 100);
+  }
   
-  // Generate tooltip text based on the compatibility percentage
-  const getCompatibilityTooltip = () => {
-    const isPositive = clampedValue > 0;
-    const absPercentage = Math.abs(compatibilityPercentage);
-    
-    // For values between -10% and +10% show "Unknown Compatibility"
-    if (absPercentage <= 10) {
-      const directionPrefix = isPositive ? "Positive" : "Negative";
-      return `${directionPrefix} ${absPercentage}% (Unknown Compatibility)`;
-    }
-    
-    // Direction prefix (Positive/Negative)
-    const directionPrefix = isPositive ? "Positive" : "Negative";
-    
-    // Level description based on percentage range
-    let levelDescription = "";
-    if (absPercentage <= 33) {
-      levelDescription = isPositive ? "Some Compatibility" : "Some Incompatibility";
-    } else if (absPercentage <= 66) {
-      levelDescription = isPositive ? "Medium Compatibility" : "Medium Incompatibility";
-    } else {
-      levelDescription = isPositive ? "High Compatibility" : "High Incompatibility";
-    }
-    
-    return `${directionPrefix} ${absPercentage}% (${levelDescription})`;
-  };
-
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div 
-            className={cn(
-              "flex items-center", 
-              sizeClasses[size],
-              className
-            )}
-          >
-            {/* Display 3 seashells - one for each rating point */}
-            {[0, 1, 2].map(renderSeashell)}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="text-xs">
-            <p className="font-semibold">Compatibility Rating</p>
-            <p className={clampedValue > 0 ? "text-[hsl(271,56%,63%)]" : clampedValue < 0 ? "text-red-500" : "text-gray-500"}>
-              {getCompatibilityTooltip()}
-            </p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className={cn("flex items-center justify-center space-x-1", className)}>
+      {/* Display text representation of the score */}
+      <span className="sr-only">
+        Rating: {normalizedScore} {normalizedScore === 1 ? 'seashell' : 'seashells'}
+      </span>
+      
+      {/* Display the seashells */}
+      {seashells.length > 0 ? (
+        seashells
+      ) : (
+        <span className="text-muted-foreground text-sm">Neutral</span>
+      )}
+    </div>
   );
-}
+};
 
-// Simple seashell SVG icon
-function SeashellIcon() {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="2em" 
-      height="2em" 
-      viewBox="0 0 24 24" 
-      fill="currentColor"
-    >
-      <path d="M12.134 2a.75.75 0 0 0-.544.232 13.593 13.593 0 0 0-1.234 1.496c-.582.823-1.17 1.87-1.555 3.178-.364 1.243-.542 2.688-.384 4.322.1 1.082.366 2.308.86 3.597.254.657.571 1.348.961 2.048-.804.342-1.559.487-2.27.418-.704-.062-1.305-.327-1.787-.75-.447-.394-.775-.945-.941-1.588-.163-.622-.167-1.346-.003-2.12.09-.393.23-.81.42-1.235a.75.75 0 1 0-1.4-.532 8.111 8.111 0 0 0-.494 1.453c-.191.898-.19 1.793.019 2.591.205.779.618 1.516 1.225 2.058.642.566 1.442.913 2.328.993.9.082 1.85-.097 2.845-.518.67 1.056 1.489 2.07 2.443 2.921a.75.75 0 0 0 .554.245.75.75 0 0 0 .555-.245c.954-.851 1.773-1.865 2.444-2.921.994.421 1.944.6 2.844.518.886-.08 1.687-.427 2.33-.993.606-.542 1.019-1.279 1.223-2.058.21-.798.21-1.693.02-2.591a8.111 8.111 0 0 0-.494-1.453.75.75 0 1 0-1.4.532c.19.425.33.843.42 1.235.163.774.16 1.498-.004 2.12-.165.643-.494 1.194-.94 1.588-.483.423-1.084.688-1.788.75-.711.069-1.465-.076-2.27-.418.39-.7.708-1.391.962-2.048.494-1.289.76-2.515.859-3.597.159-1.634-.02-3.08-.383-4.322-.386-1.307-.974-2.355-1.556-3.178A13.593 13.593 0 0 0 12.678 2.232a.75.75 0 0 0-.544-.232zm0 1.61c.204.228.445.507.714.84.467.66.973 1.562 1.306 2.689.318 1.078.472 2.35.335 3.775-.087.94-.329 2.066-.783 3.26-.38.984-.888 2.047-1.572 3.092-.684-1.045-1.192-2.108-1.572-3.091-.454-1.195-.696-2.321-.783-3.261-.137-1.425.017-2.697.334-3.775.334-1.127.84-2.029 1.307-2.69.269-.332.51-.61.714-.839z" />
-    </svg>
-  );
-}
+export default SeashellRating;

@@ -178,15 +178,21 @@ router.get("/:username", async (req: Request, res: Response) => {
     const wishlistIds = wishlist.map(item => item.bookId);
     
     // Get wishlisted books with details
-    let wishlistBooks = [];
+    let wishlistBooks: Array<{book: typeof books.$inferSelect & {coverImage?: typeof bookImages.$inferSelect}}> = [];
     if (wishlistIds.length > 0) {
-      wishlistBooks = await db
+      const tempBooks = await db
         .select({
           book: books,
         })
         .from(books)
         .where(inArray(books.id, wishlistIds))
         .limit(5); // Limit to 5 books for the profile page
+      
+      wishlistBooks = tempBooks.map(item => ({
+        book: {
+          ...item.book
+        }
+      }));
       
       // Get images for wishlist books
       for (let i = 0; i < wishlistBooks.length; i++) {
@@ -227,17 +233,23 @@ router.get("/:username", async (req: Request, res: Response) => {
     const recommendedBookIds = positiveRatings.map(rating => rating.bookId);
     
     // Get recommended books with details
-    let recommendedBooks = [];
+    let recommendedBooks: Array<{book: typeof books.$inferSelect & {coverImage?: typeof bookImages.$inferSelect}}> = [];
     if (recommendedBookIds.length > 0) {
       // Get a random selection of 5 books with positive enjoyment ratings
       const randomizedIds = [...recommendedBookIds].sort(() => Math.random() - 0.5).slice(0, 5);
       
-      recommendedBooks = await db
+      const tempBooks = await db
         .select({
           book: books,
         })
         .from(books)
         .where(inArray(books.id, randomizedIds));
+      
+      recommendedBooks = tempBooks.map(item => ({
+        book: {
+          ...item.book
+        }
+      }));
       
       // Get images for recommended books
       for (let i = 0; i < recommendedBooks.length; i++) {
@@ -305,7 +317,7 @@ router.get("/:username/following-status", async (req: Request, res: Response) =>
       where: and(
         eq(followers.followerId, req.user.id),
         eq(followers.followingId, targetUser.id),
-        eq(followers.deletedAt, null)
+        eq(followers.deletedAt, null as any)
       )
     });
     
