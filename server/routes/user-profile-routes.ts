@@ -19,19 +19,48 @@ const router = Router();
 // Helper to calculate reading compatibility between two users
 async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   // Get both users' rating preferences
-  const user1Prefs = await db.query.rating_preferences.findFirst({
+  let user1Prefs = await db.query.rating_preferences.findFirst({
     where: eq(rating_preferences.userId, user1Id)
   });
   
-  const user2Prefs = await db.query.rating_preferences.findFirst({
+  let user2Prefs = await db.query.rating_preferences.findFirst({
     where: eq(rating_preferences.userId, user2Id)
   });
   
-  if (!user1Prefs || !user2Prefs) {
-    return {
-      overall: "unknown",
-      criteria: {}
+  console.log("User 1 preferences:", user1Prefs);
+  console.log("User 2 preferences:", user2Prefs);
+  
+  // Create default preferences if they don't exist
+  if (!user1Prefs) {
+    console.log(`Creating default preferences for user ${user1Id}`);
+    const defaults = {
+      userId: user1Id,
+      enjoyment: 0.5,
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
+      autoAdjust: true
     };
+    
+    await db.insert(rating_preferences).values(defaults);
+    user1Prefs = defaults;
+  }
+  
+  if (!user2Prefs) {
+    console.log(`Creating default preferences for user ${user2Id}`);
+    const defaults = {
+      userId: user2Id,
+      enjoyment: 0.5,
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
+      autoAdjust: true
+    };
+    
+    await db.insert(rating_preferences).values(defaults);
+    user2Prefs = defaults;
   }
   
   // Calculate normalized differences for each rating criterion
@@ -269,7 +298,13 @@ router.get("/:username", async (req: Request, res: Response) => {
     // Calculate rating compatibility if the request is from a different authenticated user
     let compatibility = null;
     if (req.user && req.user.id !== user.id) {
+      console.log(`Calculating compatibility between user ${req.user.id} and ${user.id}`);
       compatibility = await calculateReadingCompatibility(req.user.id, user.id);
+      console.log("Compatibility result:", compatibility);
+    } else if (req.user) {
+      console.log(`User viewing own profile or not authenticated: ${req.user.id}, target: ${user.id}`);
+    } else {
+      console.log("No authenticated user");
     }
     
     // Return complete user profile data
