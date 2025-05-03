@@ -52,6 +52,7 @@ import testSirenedBucketRoutes from "./routes/test-sirened-bucket-routes";
 import dashboardRoutes from "./routes/modules/dashboard-routes";
 import wishlistRoutes from "./routes/modules/wishlist-routes";
 import booksByNameRoutes from "./routes/modules/books-by-name-routes";
+import userProfileRoutes from "./routes/user-profile-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -194,6 +195,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register random book routes for the image guide page
   registerRandomBookRoutes(app);
+  
+  // Register user profile routes (/{username})
+  app.use("/", userProfileRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
