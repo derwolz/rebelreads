@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
-import { Search, Settings, Menu } from "lucide-react";
+import { 
+  Search, Settings, Menu, LineChart, Flag, MessageSquare, User, Feather, ChevronDown,
+  Monitor, Star, BookOpen, LayoutGrid, Filter, BookOpenCheck
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
 import logo from "@/public/images/logo.svg";
@@ -25,6 +28,12 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Book } from "@shared/schema";
@@ -35,11 +44,16 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
   const { user, isAuthor, logoutMutation } = useAuth();
   const { setIsOpen } = useAuthModal();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { theme } = useTheme();
+  
+  // Check if current location is in a pro route or settings route
+  const isProRoute = location.startsWith("/pro");
+  const isSettingsRoute = location.startsWith("/settings");
 
   // Check if user is a seller
   const { data: sellerStatus } = useQuery({
@@ -241,7 +255,7 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
 
         {/* Mobile Navigation */}
         <div className="md:hidden">
-          <Drawer>
+          <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-6 w-6" />
@@ -278,14 +292,93 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                     </div>
                     <div className="grid gap-2">
                       {isAuthor && (
-                        <Link href="/pro">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                          >
-                            Author Dashboard
-                          </Button>
-                        </Link>
+                        <>
+                          <Accordion type="single" collapsible className="w-full">
+                            <AccordionItem value="author-dashboard" className="border-none">
+                              <AccordionTrigger className="p-0 hover:no-underline">
+                                <Button
+                                  variant={isProRoute ? "secondary" : "outline"}
+                                  className="w-full justify-start"
+                                >
+                                  <LineChart className="mr-2 h-4 w-4" />
+                                  Author Dashboard
+                                </Button>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-0 pt-2">
+                                {/* Pro submenu */}
+                              <div className="pl-2">
+                                <div className="grid gap-2">
+                                  <Button
+                                    variant={location === "/pro" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/pro");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <LineChart className="mr-2 h-4 w-4" />
+                                    Analytics
+                                  </Button>
+                                  <Button
+                                    variant={location === "/pro/reviews" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/pro/reviews");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <MessageSquare className="mr-2 h-4 w-4" />
+                                    Review Management
+                                  </Button>
+                                  <Button
+                                    variant={location === "/pro/action" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/pro/action");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <Flag className="mr-2 h-4 w-4" />
+                                    Take Action
+                                  </Button>
+                                  <Button
+                                    variant={location === "/pro/book-management" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/pro/book-management");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <Feather className="mr-2 h-4 w-4" />
+                                    Book Management
+                                  </Button>
+                                  <Button
+                                    variant={location === "/pro/author" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/pro/author");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <User className="mr-2 h-4 w-4" />
+                                    Author Profile
+                                  </Button>
+                              </div>
+                            </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </>
                       )}
                       {publisherStatus?.isPublisher && (
                         <Link href="/publisher">
@@ -307,15 +400,131 @@ export function MainNav({ onSearch }: { onSearch?: (query: string) => void }) {
                           </Button>
                         </Link>
                       )}
-                      <Link href="/settings">
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start"
-                        >
-                          <Settings className="mr-2 h-4 w-4" />
-                          Settings
-                        </Button>
-                      </Link>
+                      <>
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="settings-menu" className="border-0">
+                            <AccordionTrigger className="p-0 hover:no-underline">
+                              <Button
+                                variant={isSettingsRoute ? "secondary" : "outline"}
+                                className="w-full justify-start"
+                              >
+                                <Settings className="mr-2 h-4 w-4" />
+                                Settings
+                              </Button>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-0 pt-2">
+                              <div className="pl-2">
+                                <div className="grid gap-2">
+                                  <Button
+                                    variant={location === "/settings" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <User className="mr-2 h-4 w-4" />
+                                    Profile
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/account" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/account");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    Account
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/appearance" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/appearance");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <Monitor className="mr-2 h-4 w-4" />
+                                    Appearance
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/rating-preferences" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/rating-preferences");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <Star className="mr-2 h-4 w-4" />
+                                    Rating Preferences
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/genre-preferences" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/genre-preferences");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <BookOpen className="mr-2 h-4 w-4" />
+                                    Genre Preferences
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/homepage" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/homepage");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <LayoutGrid className="mr-2 h-4 w-4" />
+                                    Homepage Layout
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/filters" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/filters");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Content Filters
+                                  </Button>
+                                  <Button
+                                    variant={location === "/settings/book-shelf" ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => {
+                                      navigate("/settings/book-shelf");
+                                      // Keep drawer open
+                                      setDrawerOpen(true);
+                                    }}
+                                  >
+                                    <BookOpenCheck className="mr-2 h-4 w-4" />
+                                    Book Shelves
+                                  </Button>
+                            </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </>
                       <Button
                         variant="outline"
                         className="w-full justify-start"

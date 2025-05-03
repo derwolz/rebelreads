@@ -5,6 +5,7 @@ import {
   Rating,
   Author,
   calculateWeightedRating,
+  calculateCompatibilityRating,
   RATING_CRITERIA,
   DEFAULT_RATING_WEIGHTS,
   RatingPreferences,
@@ -13,11 +14,13 @@ import {
 import { Heart, ChevronRight } from "lucide-react";
 import { MainNav } from "@/components/main-nav";
 import { StarRating } from "@/components/star-rating";
+import { SeashellRating } from "@/components/seashell-rating";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { RatingDialog } from "@/components/rating-dialog";
 import { FollowButton } from "@/components/follow-button";
+import { RatingSentimentDisplay } from "@/components/rating-sentiment-display";
 import { format } from "date-fns";
 import { ChevronDown, ExternalLink, MoreVertical, Ban, Flag } from "lucide-react";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -63,6 +66,14 @@ import { apiRequest } from "@/lib/queryClient";
 import { HorizontalBannerAd } from "@/components/banner-ads";
 import { ContentReportDialog } from "@/components/content-report-dialog";
 import { useTheme } from "@/hooks/use-theme";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 // Position-based weights for rating criteria
 const POSITION_WEIGHTS = [0.35, 0.25, 0.2, 0.12, 0.08];
 
@@ -100,6 +111,8 @@ export default function BookDetails() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 20;
   const {theme} = useTheme();
   // Parse query parameters if we're using the secure URL format
   const urlSearchParams = new URLSearchParams(window.location.search);
@@ -117,6 +130,10 @@ export default function BookDetails() {
   }, [isUsingSecureFormat, authorName, bookTitle, paramsById]);
   
   // Query book data based on URL format
+  // ***** IMPORTANT: ALWAYS USE THE SECURE FORMAT *****
+  // ***** NEVER USE /api/books/:id DIRECTLY *****
+  // ***** ALWAYS USE /api/public/book-details?authorName={}&bookTitle={} *****
+  // ***** DO NOT DELETE THIS COMMENT *****
   const { data: book } = useQuery<Book>({
     queryKey: isUsingSecureFormat 
       ? [`/api/public/book-details?authorName=${encodeURIComponent(authorName!)}&bookTitle=${encodeURIComponent(bookTitle!)}`]
@@ -223,6 +240,17 @@ export default function BookDetails() {
           } as Rating,
           ratingPreferences,
         ),
+        // Calculate compatibility rating (ranges from -3 to 3)
+        compatibility: calculateCompatibilityRating(
+          {
+            enjoyment: unweightedRatings.enjoyment,
+            writing: unweightedRatings.writing,
+            themes: unweightedRatings.themes,
+            characters: unweightedRatings.characters,
+            worldbuilding: unweightedRatings.worldbuilding,
+          } as Rating,
+          ratingPreferences,
+        ),
       }
     : null;
 
@@ -235,6 +263,11 @@ export default function BookDetails() {
 
   const filteredRatings = ratings
     ?.filter((rating) => {
+      // Filter out reviews with no text
+      if (!rating.review || rating.review.trim() === '') {
+        return false;
+      }
+      
       // Apply user preferences to rating calculation for filtering
       const overallRating = calculateWeightedRating(rating, ratingPreferences);
       switch (ratingFilter) {
@@ -262,6 +295,16 @@ export default function BookDetails() {
         calculateWeightedRating(a, ratingPreferences)
       );
     });
+    
+  // Get total pages
+  const totalReviews = filteredRatings?.length || 0;
+  const totalPages = Math.ceil(totalReviews / reviewsPerPage);
+  
+  // Get current page reviews
+  const paginatedReviews = filteredRatings?.slice(
+    (currentPage - 1) * reviewsPerPage,
+    currentPage * reviewsPerPage
+  );
 
   return (
     <div className="relative">
@@ -918,113 +961,22 @@ export default function BookDetails() {
                   </div>
 
                   {averageRatings ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="flex items-center gap-2">
-                        <StarRating rating={averageRatings.overall} readOnly />
-                        <span className="text-sm text-muted-foreground">
-                          ({averageRatings.overall.toFixed(2)})
-                        </span>
-                      </div>
-                      <div className="grid gap-2">
-                        {ratingPreferences ? (
-                          // If user has preferences, show a message
-                          <p className="text-xs text-muted-foreground mb-2">
-                            Showing ratings weighted to your preferences
-                          </p>
-                        ) : null}
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Enjoyment (
-                            {getWeightPercentage(
-                              "enjoyment",
-                              ratingPreferences,
-                            )}
-                            )
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.enjoyment}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.enjoyment.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Writing (
-                            {getWeightPercentage("writing", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.writing}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.writing.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Themes (
-                            {getWeightPercentage("themes", ratingPreferences)})
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.themes}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.themes.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            Characters (
-                            {getWeightPercentage(
-                              "characters",
-                              ratingPreferences,
-                            )}
-                            )
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.characters}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.characters.toFixed(2)})
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">
-                            World Building (
-                            {getWeightPercentage(
-                              "worldbuilding",
-                              ratingPreferences,
-                            )}
-                            )
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={averageRatings.worldbuilding}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              ({averageRatings.worldbuilding.toFixed(2)})
-                            </span>
-                          </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold mb-1">Compatibility Rating</span>
+                          <SeashellRating compatibility={averageRatings.compatibility} readOnly />
                         </div>
                       </div>
+                      
+                      {/* Rating Sentiment Display */}
+                      <RatingSentimentDisplay 
+                        ratings={averageRatings} 
+                        ratingsCount={ratings?.length || 0}
+                        className="mb-2 bg-secondary/20 p-3 rounded-md" 
+                      />
+                      
+                      
                     </div>
                   ) : (
                     <p className="text-muted-foreground">No ratings yet</p>
@@ -1050,12 +1002,87 @@ export default function BookDetails() {
                     </div>
                   )}
 
-                  <div className="space-y-4 mt-8">
-                    <h3 className="text-xl font-semibold">Reviews</h3>
+                  <div id="reviews-section" className="space-y-4 mt-8">
+                    <h3 className="text-xl font-semibold">Reviews{totalReviews > 0 ? ` (${totalReviews})` : ''}</h3>
                     <div className="max-w-3xl space-y-4">
-                      {filteredRatings?.map((review) => (
-                        <ReviewCard key={review.id} review={review} />
-                      ))}
+                      {totalReviews === 0 ? (
+                        <p className="text-muted-foreground">No reviews available</p>
+                      ) : (
+                        <>
+                          {paginatedReviews?.map((review) => (
+                            <ReviewCard key={review.id} review={review} />
+                          ))}
+                          
+                          {/* Pagination controls */}
+                          {totalPages > 1 && (
+                            <Pagination className="mt-6">
+                              <PaginationContent>
+                                {currentPage > 1 && (
+                                  <PaginationItem>
+                                    <PaginationPrevious 
+                                      href="#" 
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrentPage(currentPage - 1);
+                                        // Scroll back to the top of the reviews section
+                                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                      }} 
+                                    />
+                                  </PaginationItem>
+                                )}
+                                
+                                {/* Show up to 5 page numbers */}
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                  // Calculate page number to display
+                                  let pageNum;
+                                  if (totalPages <= 5) {
+                                    // Less than 5 pages total, just show all
+                                    pageNum = i + 1;
+                                  } else if (currentPage <= 3) {
+                                    // Near the start
+                                    pageNum = i + 1;
+                                  } else if (currentPage >= totalPages - 2) {
+                                    // Near the end
+                                    pageNum = totalPages - 4 + i;
+                                  } else {
+                                    // In the middle
+                                    pageNum = currentPage - 2 + i;
+                                  }
+                                  
+                                  return (
+                                    <PaginationItem key={pageNum}>
+                                      <PaginationLink 
+                                        href="#"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setCurrentPage(pageNum);
+                                          document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        isActive={currentPage === pageNum}
+                                      >
+                                        {pageNum}
+                                      </PaginationLink>
+                                    </PaginationItem>
+                                  );
+                                })}
+                                
+                                {currentPage < totalPages && (
+                                  <PaginationItem>
+                                    <PaginationNext 
+                                      href="#" 
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrentPage(currentPage + 1);
+                                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                      }} 
+                                    />
+                                  </PaginationItem>
+                                )}
+                              </PaginationContent>
+                            </Pagination>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

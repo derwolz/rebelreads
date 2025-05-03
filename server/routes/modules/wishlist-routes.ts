@@ -19,7 +19,7 @@ router.post("/books/:id/wishlist", async (req, res) => {
   }
   
   try {
-    const wishlistItem = await dbStorage.addToWishlist(req.user!.id, bookId);
+    const wishlistItem = await dbStorage.toggleWishlist(req.user!.id, bookId);
     res.json(wishlistItem);
   } catch (error: any) {
     console.error(`Error adding to wishlist:`, error);
@@ -43,7 +43,8 @@ router.delete("/books/:id/wishlist", async (req, res) => {
   }
   
   try {
-    await dbStorage.removeFromWishlist(req.user!.id, bookId);
+    // We can use toggleWishlist since it will check if the item exists and toggle it off
+    await dbStorage.toggleWishlist(req.user!.id, bookId);
     res.json({ success: true });
   } catch (error: any) {
     console.error(`Error removing from wishlist:`, error);

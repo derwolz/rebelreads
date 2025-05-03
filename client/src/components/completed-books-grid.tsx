@@ -61,7 +61,11 @@ function CompletedBookItem({ book }: { book: Book }) {
   const needsReview = !userRating;
 
   return (
-    <Link href={`/books/${book.id}`}>
+    <Link href={
+      book.authorName 
+        ? `/book-details?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`
+        : `/book-details?authorName=unknown&bookTitle=${encodeURIComponent(book.title)}`
+    }>
       <Card 
         className={`cursor-pointer transition-all hover:shadow-md ${
           needsReview ? "ring-2 ring-amber-300/40 ring-offset-2 ring-offset-background/5" : ""

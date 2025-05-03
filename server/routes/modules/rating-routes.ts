@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { dbStorage } from "../../storage";
 import { db } from "../../db";
 import { and, eq } from "drizzle-orm";
-import { ratings } from "@shared/schema";
+import { ratings, RATING_CRITERIA, SentimentLevel } from "@shared/schema";
 
 const router = Router();
 
@@ -141,7 +141,9 @@ router.get("/books/:id/user-rating", async (req, res) => {
   }
   
   try {
-    const rating = await dbStorage.getUserRating(req.user!.id, bookId);
+    // Get all user ratings and filter for the specific book
+    const userRatings = await dbStorage.getUserRatings(req.user!.id);
+    const rating = userRatings.find(r => r.bookId === bookId);
     
     if (!rating) {
       return res.json(null);
@@ -151,6 +153,41 @@ router.get("/books/:id/user-rating", async (req, res) => {
   } catch (error: any) {
     console.error(`Error getting user rating:`, error);
     res.status(500).json({ error: error.message || "Failed to get user rating" });
+  }
+});
+
+/**
+ * GET /api/rating-sentiments
+ * Get all rating sentiment thresholds
+ * Public endpoint - no authentication required
+ */
+router.get("/rating-sentiments", async (req, res) => {
+  try {
+    const thresholds = await dbStorage.getSentimentThresholds();
+    res.json(thresholds);
+  } catch (error) {
+    console.error("Error fetching rating sentiment thresholds:", error);
+    res.status(500).json({ error: "Failed to fetch rating sentiment thresholds" });
+  }
+});
+
+/**
+ * GET /api/rating-sentiments/:criteria
+ * Get rating sentiment thresholds for a specific criteria
+ * Public endpoint - no authentication required
+ */
+router.get("/rating-sentiments/:criteria", async (req, res) => {
+  try {
+    const criteria = req.params.criteria;
+    if (!RATING_CRITERIA.includes(criteria as any)) {
+      return res.status(400).json({ error: "Invalid criteria" });
+    }
+    
+    const thresholds = await dbStorage.getSentimentThresholdsByCriteria(criteria);
+    res.json(thresholds);
+  } catch (error) {
+    console.error(`Error fetching rating sentiment thresholds for criteria ${req.params.criteria}:`, error);
+    res.status(500).json({ error: "Failed to fetch rating sentiment thresholds" });
   }
 });
 

@@ -84,6 +84,35 @@ export const DEFAULT_RATING_WEIGHTS = {
   worldbuilding: 0.08
 } as const;
 
+// Rating sentiment thresholds with count requirements
+export type SentimentLevel = 
+  | "overwhelmingly_negative" 
+  | "very_negative" 
+  | "mostly_negative" 
+  | "mixed" 
+  | "mostly_positive" 
+  | "very_positive" 
+  | "overwhelmingly_positive";
+
+export type RatingSentimentThresholds = {
+  sentimentLevel: SentimentLevel;
+  ratingMin: number;
+  ratingMax: number;
+  requiredCount: number;
+}
+
+// Table to store the sentiment threshold configuration
+export const ratingSentimentThresholds = pgTable("rating_sentiment_thresholds", {
+  id: serial("id").primaryKey(),
+  criteriaName: text("criteria_name").notNull(), // enjoyment, writing, themes, characters, worldbuilding
+  sentimentLevel: text("sentiment_level").notNull(), // Maps to SentimentLevel type
+  ratingMin: decimal("rating_min").notNull(),
+  ratingMax: decimal("rating_max").notNull(),
+  requiredCount: integer("required_count").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Base users table with common authentication and profile fields
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -252,11 +281,12 @@ export const ratings = pgTable("ratings", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   bookId: integer("book_id").notNull(),
-  enjoyment: integer("enjoyment").notNull(),
-  writing: integer("writing").notNull(),
-  themes: integer("themes").notNull(),
-  characters: integer("characters").notNull(),
-  worldbuilding: integer("worldbuilding").notNull(),
+  // Changed to use -1 (thumbs down), 0 (not answered), or 1 (thumbs up)
+  enjoyment: integer("enjoyment").notNull().default(0),
+  writing: integer("writing").notNull().default(0),
+  themes: integer("themes").notNull().default(0),
+  characters: integer("characters").notNull().default(0),
+  worldbuilding: integer("worldbuilding").notNull().default(0),
   review: text("review"),
   analysis: jsonb("analysis").$type<ReviewAnalysis>(),
   featured: boolean("featured").default(false),
@@ -359,6 +389,8 @@ export const rating_preferences = pgTable("rating_preferences", {
   writing: decimal("writing").notNull().default("0.25"),
   enjoyment: decimal("enjoyment").notNull().default("0.35"),
   characters: decimal("characters").notNull().default("0.12"),
+  // Auto adjust weights flag - when true, the system automatically adjusts to ensure weights add up to 1.0
+  autoAdjust: boolean("auto_adjust").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -736,6 +768,7 @@ export const insertRatingPreferencesSchema = createInsertSchema(rating_preferenc
   writing: z.number().min(0).max(1).optional(),
   enjoyment: z.number().min(0).max(1).optional(),
   characters: z.number().min(0).max(1).optional(),
+  autoAdjust: z.boolean().optional().default(false),
 });
 
 export const loginSchema = z.object({
@@ -900,6 +933,11 @@ export function calculateStraightAverageRating(rating: Rating): number {
 /**
  * Calculates a weighted rating based on user preferences
  * Used for most of the application outside of Pro Book Management
+ * 
+ * With the new thumbs up/down system:
+ * - Thumbs up (1) contributes positively based on weight
+ * - Thumbs down (-1) contributes negatively based on weight
+ * - No rating (0) doesn't contribute
  */
 export function calculateWeightedRating(
   rating: Rating, 
@@ -934,14 +972,100 @@ export function calculateWeightedRating(
     }
   });
   
-  // Apply weights to each rating component
-  return (
-    rating.enjoyment * weights.enjoyment +
-    rating.writing * weights.writing +
-    rating.themes * weights.themes + 
-    rating.characters * weights.characters +
-    rating.worldbuilding * weights.worldbuilding
-  );
+  // Count how many criteria were actually rated (non-zero)
+  let ratedCriteriaCount = 0;
+  let totalWeightedRating = 0;
+  let totalWeight = 0;
+  
+  // Process each criterion
+  const criteria = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'] as const;
+  
+  for (const criterion of criteria) {
+    const value = rating[criterion];
+    
+    // Skip if this criterion wasn't rated
+    if (value === 0) continue;
+    
+    ratedCriteriaCount++;
+    const weight = weights[criterion];
+    totalWeight += weight;
+    
+    // Convert -1/1 to a value we can use
+    // -1 (thumbs down) maps to 1 (negative contribution)
+    // 1 (thumbs up) maps to 5 (positive contribution)
+    const normalizedValue = value === 1 ? 5 : 1;
+    totalWeightedRating += normalizedValue * weight;
+  }
+  
+  // If nothing was rated, return a neutral score
+  if (ratedCriteriaCount === 0) return 0;
+  
+  // Calculate the weighted average
+  return totalWeightedRating / totalWeight;
+}
+
+/**
+ * Calculates a compatibility rating directly from thumbs up/down values
+ * Produces a value between -3 and 3
+ * - Negative values indicate incompatibility (shown in red)
+ * - Positive values indicate compatibility (shown in purple)
+ */
+export function calculateCompatibilityRating(
+  rating: Rating, 
+  customWeights?: Record<string, number> | RatingPreferences
+): number {
+  let weights: Record<string, number>;
+  
+  // If RatingPreferences object is provided with individual columns
+  if (customWeights && 'themes' in customWeights) {
+    // Handle string values from DB by converting to numbers
+    weights = {
+      enjoyment: typeof customWeights.enjoyment === 'string' ? parseFloat(customWeights.enjoyment) : Number(customWeights.enjoyment),
+      writing: typeof customWeights.writing === 'string' ? parseFloat(customWeights.writing) : Number(customWeights.writing),
+      themes: typeof customWeights.themes === 'string' ? parseFloat(customWeights.themes) : Number(customWeights.themes),
+      characters: typeof customWeights.characters === 'string' ? parseFloat(customWeights.characters) : Number(customWeights.characters),
+      worldbuilding: typeof customWeights.worldbuilding === 'string' ? parseFloat(customWeights.worldbuilding) : Number(customWeights.worldbuilding)
+    };
+  } 
+  // If custom weights are provided as a Record
+  else if (customWeights && typeof customWeights === 'object' && !('id' in customWeights)) {
+    weights = customWeights as Record<string, number>;
+  }
+  // Default fallback using system default weights
+  else {
+    weights = {...DEFAULT_RATING_WEIGHTS};
+  }
+  
+  // Ensure all weights are valid numbers
+  Object.keys(weights).forEach(key => {
+    if (isNaN(weights[key])) {
+      weights[key] = DEFAULT_RATING_WEIGHTS[key as keyof typeof DEFAULT_RATING_WEIGHTS];
+    }
+  });
+  
+  // Process each criterion and directly use the -1/0/1 values
+  const criteria = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'] as const;
+  let weightedSum = 0;
+  let totalWeight = 0;
+  
+  for (const criterion of criteria) {
+    const value = rating[criterion];
+    
+    // Skip if this criterion wasn't rated
+    if (value === 0) continue;
+    
+    const weight = weights[criterion];
+    totalWeight += weight;
+    
+    // Use the raw -1/1 value directly (multiplied by 3 for -3 to 3 scale)
+    weightedSum += (value * 3) * weight;
+  }
+  
+  // If nothing was rated, return a neutral score
+  if (totalWeight === 0) return 0;
+  
+  // Return the weighted average (already in the -3 to 3 scale)
+  return weightedSum / totalWeight;
 }
 
 export const landing_sessions = pgTable("landing_sessions", {

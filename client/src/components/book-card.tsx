@@ -1,14 +1,24 @@
-import { Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
+import { Rating, calculateWeightedRating, RatingPreferences, type SentimentLevel } from "@shared/schema";
 import { Book } from "../types";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StarRating } from "./star-rating";
 import { WishlistButton } from "./wishlist-button";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { BookCardContextMenu } from "./book-card-context-menu";
+import { SeashellRating } from "./seashell-rating";
+import { 
+  Heart, Pencil, Lightbulb, Drama, GlobeIcon 
+} from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 // Helper function to check if a book is new (published within last 7 days)
 function isNewBook(book: Book) {
@@ -16,6 +26,37 @@ function isNewBook(book: Book) {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   return book.publishedDate ? new Date(book.publishedDate) > oneWeekAgo : false;
 }
+
+// Define category icons
+const SENTIMENT_ICONS = {
+  enjoyment: Heart,
+  writing: Pencil,
+  themes: Lightbulb, 
+  characters: Drama,
+  worldbuilding: GlobeIcon,
+};
+
+// Map sentiment levels to colors
+const SENTIMENT_COLORS: Record<SentimentLevel, string> = {
+  overwhelmingly_positive: 'text-[hsl(271,56%,45%)]',
+  very_positive: 'text-[hsl(271,56%,45%)]',
+  mostly_positive: 'text-[hsl(271,56%,70%)]',
+  mixed: 'text-amber-500',
+  mostly_negative: 'text-red-400',
+  very_negative: 'text-red-500',
+  overwhelmingly_negative: 'text-red-600',
+};
+
+// Map sentiment levels to readable labels
+const SENTIMENT_LABELS: Record<SentimentLevel, string> = {
+  overwhelmingly_positive: 'Overwhelmingly Positive',
+  very_positive: 'Very Positive',
+  mostly_positive: 'Mostly Positive',
+  mixed: 'Mixed',
+  mostly_negative: 'Mostly Negative',
+  very_negative: 'Very Negative',
+  overwhelmingly_negative: 'Overwhelmingly Negative',
+};
 
 export function BookCard({ 
   book, 
@@ -43,6 +84,11 @@ export function BookCard({
   // Fetch user's rating preferences
   const { data: ratingPreferences } = useQuery<RatingPreferences>({
     queryKey: ["/api/rating-preferences"],
+  });
+
+  // Fetch sentiment thresholds
+  const { data: sentimentThresholds } = useQuery({
+    queryKey: ['/api/rating-sentiments'],
   });
 
   // Generate pixel trails that follow the traveler
@@ -141,8 +187,55 @@ export function BookCard({
           } as Rating,
           ratingPreferences,
         ),
+        // Compatibility calculation would come from the backend or be calculated 
+        // based on user preferences and book ratings
+        compatibility: 1.5, // Example value: 1.5 on a scale of -3 to 3
       }
     : null;
+
+  // Calculate sentiment results for each criteria
+  const sentimentResults = sentimentThresholds && unweightedRatings && ratings ? 
+    Object.entries(unweightedRatings).map(([criteriaName, averageRating]) => {
+      // Skip overall as it's not a sentiment criteria
+      if (criteriaName === 'overall') return null;
+
+      const count = ratings.length;
+      let sentimentLevel: SentimentLevel | null = null;
+      let hasEnoughRatings = false;
+
+      // Find the applicable sentiment threshold for this criteria and rating
+      if (sentimentThresholds) {
+        const criteriaThresholds = sentimentThresholds.filter(
+          (t: any) => t.criteriaName === criteriaName
+        );
+
+        for (const threshold of criteriaThresholds) {
+          if (
+            count >= threshold.requiredCount &&
+            averageRating >= threshold.ratingMin &&
+            averageRating <= threshold.ratingMax
+          ) {
+            sentimentLevel = threshold.sentimentLevel;
+            hasEnoughRatings = true;
+            break;
+          }
+        }
+      }
+
+      return {
+        criteriaName,
+        sentimentLevel,
+        averageRating,
+        count,
+        hasEnoughRatings
+      };
+    }).filter(Boolean) : [];
+
+  // Get only the positive sentiments to display when card is not hovered
+  const positiveSentiments = sentimentResults?.filter(result => 
+    result?.sentimentLevel && 
+    ['mostly_positive', 'very_positive', 'overwhelmingly_positive'].includes(result.sentimentLevel)
+  );
 
   const handleCardClick = async (e: React.MouseEvent) => {
     // Don't navigate if clicking on the wishlist button
@@ -155,16 +248,10 @@ export function BookCard({
       referrer: window.location.pathname,
     });
 
-    // Use anti-scraping link format when navigating to book details
-    if (book.authorName) {
-      // Encode both authorName and bookTitle for the URL
-      const encodedAuthor = encodeURIComponent(book.authorName);
-      const encodedTitle = encodeURIComponent(book.title);
-      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
-    } else {
-      // Fallback to traditional ID-based URL if authorName is not available
-      navigate(`/books/${book.id}`);
-    }
+    // Use anti-scraping link format for navigating to book details
+    const encodedAuthor = encodeURIComponent(book.authorName);
+    const encodedTitle = encodeURIComponent(book.title);
+    navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
   };
 
   // Get the first 100 characters of book description
@@ -243,18 +330,43 @@ export function BookCard({
             className="w-full h-full object-cover object-center"
           />
 
-          {/* Black gradient overlay at bottom third */}
+          {/* Black gradient overlay at bottom */}
           <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
 
-          {/* Weighted rating in the gradient area */}
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
-            <div className="flex items-center gap-2">
-              <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
-              <span className="text-white text-sm">
-                ({averageRatings?.overall.toFixed(1) || "0.0"})
-              </span>
+          {/* ONLY POSITIVE Sentiment icons in the bottom area when not hovered */}
+          {!isHovered && positiveSentiments?.length > 0 && (
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20 gap-2">
+              {positiveSentiments.map((result) => {
+                const IconComponent = SENTIMENT_ICONS[result.criteriaName as keyof typeof SENTIMENT_ICONS];
+                return (
+                  <TooltipProvider key={result.criteriaName}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          <IconComponent 
+                            className={cn(
+                              "h-5 w-5 text-white", 
+                              result.sentimentLevel && SENTIMENT_COLORS[result.sentimentLevel]
+                            )} 
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-xs">
+                          <p className="font-semibold capitalize">{result.criteriaName}</p>
+                          {result.sentimentLevel && (
+                            <p className={SENTIMENT_COLORS[result.sentimentLevel]}>
+                              {SENTIMENT_LABELS[result.sentimentLevel]}
+                            </p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
 
         {/* New book banner */}
@@ -285,27 +397,56 @@ export function BookCard({
             {truncatedDescription}
           </p>
 
-          {/* 5 vector star ratings */}
+          {/* Compatibility rating */}
+          {averageRatings && (
+            <div className="mb-3">
+              <div className="text-sm font-medium mb-1">Compatibility</div>
+              <SeashellRating compatibility={averageRatings.compatibility} readOnly size="sm" />
+            </div>
+          )}
+
+          {/* Sentiment ratings */}
           <div className="space-y-1 mt-auto">
-            <div className="flex justify-between items-center">
-              <span className="text-xs">Enjoyment</span>
-              <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs">Writing</span>
-              <StarRating rating={averageRatings?.writing || 0} readOnly size="xs" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs">Themes</span>
-              <StarRating rating={averageRatings?.themes || 0} readOnly size="xs" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs">Characters</span>
-              <StarRating rating={averageRatings?.characters || 0} readOnly size="xs" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs">World Building</span>
-              <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="xs" />
+            <h4 className="text-sm font-medium mb-2">Rating Sentiment</h4>
+            
+            <div className="flex flex-wrap gap-2 mb-2">
+              {sentimentResults.map((result) => {
+                const IconComponent = SENTIMENT_ICONS[result.criteriaName as keyof typeof SENTIMENT_ICONS];
+                
+                return (
+                  <TooltipProvider key={result.criteriaName}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative flex items-center gap-2">
+                          <IconComponent 
+                            className={cn(
+                              "h-5 w-5", 
+                              result.hasEnoughRatings && result.sentimentLevel
+                                ? SENTIMENT_COLORS[result.sentimentLevel]
+                                : "text-muted-foreground"
+                            )} 
+                          />
+                          <span className="text-xs capitalize">{result.criteriaName}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-xs">
+                          <p className="font-semibold capitalize">{result.criteriaName}</p>
+                          {result.hasEnoughRatings && result.sentimentLevel ? (
+                            <p className={SENTIMENT_COLORS[result.sentimentLevel]}>
+                              {SENTIMENT_LABELS[result.sentimentLevel]}
+                            </p>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Not enough ratings yet
+                            </p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
             </div>
           </div>
         </div>

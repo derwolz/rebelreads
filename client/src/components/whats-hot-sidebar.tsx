@@ -164,13 +164,8 @@ function MiniBookCard({ book, rank }: { book: PopularBook, rank: number }) {
       window.location.pathname
     );
     
-    // Use secure anti-scraping URL format instead of the traditional ID-based URL
-    if (book.authorName) {
-      navigate(`/book-details?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`);
-    } else {
-      // Fall back to traditional format if author name is missing
-      navigate(`/books/${book.id}`);
-    }
+    // Use secure anti-scraping URL format
+    navigate(`/book-details?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`);
   };
   
   return (

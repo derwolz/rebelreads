@@ -1,8 +1,15 @@
-import { Rating, calculateWeightedRating, DEFAULT_RATING_WEIGHTS, RatingPreferences } from "@shared/schema";
+import { 
+  Rating, 
+  calculateWeightedRating, 
+  calculateCompatibilityRating, 
+  DEFAULT_RATING_WEIGHTS, 
+  RatingPreferences 
+} from "@shared/schema";
 import { Book } from "../types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StarRating } from "./star-rating";
+import { SeashellRating } from "./seashell-rating";
 import { WishlistButton } from "./wishlist-button";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -136,6 +143,17 @@ export function BookCardA({
           } as Rating,
           ratingPreferences,
         ),
+        // Calculate compatibility rating (-3 to 3 scale)
+        compatibility: calculateCompatibilityRating(
+          {
+            enjoyment: unweightedRatings.enjoyment,
+            writing: unweightedRatings.writing,
+            themes: unweightedRatings.themes,
+            characters: unweightedRatings.characters,
+            worldbuilding: unweightedRatings.worldbuilding,
+          } as Rating,
+          ratingPreferences,
+        ),
       }
     : null;
 
@@ -150,16 +168,10 @@ export function BookCardA({
       referrer: window.location.pathname,
     });
     
-    // Use anti-scraping link format when navigating to book details
-    if (book.authorName) {
-      // Encode both authorName and bookTitle for the URL
-      const encodedAuthor = encodeURIComponent(book.authorName);
-      const encodedTitle = encodeURIComponent(book.title);
-      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
-    } else {
-      // Fallback to traditional ID-based URL if authorName is not available
-      navigate(`/books/${book.id}`);
-    }
+    // Use anti-scraping link format for navigating to book details
+    const encodedAuthor = encodeURIComponent(book.authorName);
+    const encodedTitle = encodeURIComponent(book.title);
+    navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
   };
 
   // Get the first 100 characters of book description
@@ -236,13 +248,13 @@ export function BookCardA({
           {/* Black gradient overlay at bottom third */}
           <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black to-transparent z-10"></div>
           
-          {/* Weighted rating in the gradient area */}
+          {/* Compatibility rating in the gradient area */}
           <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center z-20">
-            <div className="flex items-center gap-2">
-              <StarRating rating={averageRatings?.overall || 0} readOnly size="sm" />
-              <span className="text-white text-sm">
-                ({averageRatings?.overall.toFixed(1) || "0.0"})
-              </span>
+            <div className="flex flex-col items-center gap-1">
+              <div className="text-white text-xs">Compatibility</div>
+              <div className="flex items-center gap-1">
+                <SeashellRating compatibility={averageRatings?.compatibility || 0} readOnly size="sm" />
+              </div>
             </div>
           </div>
         </div>
@@ -275,27 +287,27 @@ export function BookCardA({
             {truncatedDescription}
           </p>
           
-          {/* 5 vector star ratings */}
+          {/* Compatibility ratings by criteria */}
           <div className="space-y-1 mt-auto">
             <div className="flex justify-between items-center">
               <span className="text-xs">Enjoyment</span>
-              <StarRating rating={averageRatings?.enjoyment || 0} readOnly size="xs" />
+              <SeashellRating compatibility={averageRatings?.enjoyment ? averageRatings.enjoyment * 3 : 0} readOnly size="xs" />
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs">Writing</span>
-              <StarRating rating={averageRatings?.writing || 0} readOnly size="xs" />
+              <SeashellRating compatibility={averageRatings?.writing ? averageRatings.writing * 3 : 0} readOnly size="xs" />
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs">Themes</span>
-              <StarRating rating={averageRatings?.themes || 0} readOnly size="xs" />
+              <SeashellRating compatibility={averageRatings?.themes ? averageRatings.themes * 3 : 0} readOnly size="xs" />
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs">Characters</span>
-              <StarRating rating={averageRatings?.characters || 0} readOnly size="xs" />
+              <SeashellRating compatibility={averageRatings?.characters ? averageRatings.characters * 3 : 0} readOnly size="xs" />
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs">World Building</span>
-              <StarRating rating={averageRatings?.worldbuilding || 0} readOnly size="xs" />
+              <SeashellRating compatibility={averageRatings?.worldbuilding ? averageRatings.worldbuilding * 3 : 0} readOnly size="xs" />
             </div>
           </div>
         </div>

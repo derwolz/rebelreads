@@ -380,14 +380,14 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
     >
       <div className="flex items-center space-x-2">
         <Button 
-          variant="ghost" 
+          variant={null} 
           size="icon" 
-          className="h-7 w-7 cursor-grab touch-none  "
+          className="h-7 w-full max-w-[18ch] overflow-hidden flex flex-start justify-start align-start cursor-grab touch-none  "
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-4 w-4" />
-        </Button>
+       
+       
         <Badge variant={
           taxonomy.type === "genre" ? "default" :
           taxonomy.type === "subgenre" ? "secondary" :
@@ -397,7 +397,9 @@ function SortableGenreItem({ id, taxonomy, index, calculateImportance, onRemove 
           {taxonomy.type}
         </Badge>
         <span className="font-medium text-foreground">{taxonomy.name}</span>
-      </div>
+        </Button>
+      </div> 
+    
       <div className="flex items-center space-x-2">
         <Button 
           variant="ghost" 

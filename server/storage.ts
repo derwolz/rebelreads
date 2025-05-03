@@ -14,6 +14,7 @@ import { FilterStorage } from "./storage/filters";
 import { ContentReportStorage } from "./storage/content-reports";
 import { SecurityStorage } from "./storage/security";
 import { ShelfStorage } from "./storage/shelf";
+import { RatingSentimentStorage, ratingSentimentStorage } from "./storage/rating-sentiments";
 
 // Create instances of all storage modules
 const accountStorage = new AccountStorage();
@@ -35,6 +36,11 @@ const shelfStorage = new ShelfStorage();
 
 // Combine all storage instances into a single object
 export const dbStorage = {
+  // Rating Sentiments
+  getSentimentThresholds: ratingSentimentStorage.getSentimentThresholds.bind(ratingSentimentStorage),
+  getSentimentThresholdsByCriteria: ratingSentimentStorage.getSentimentThresholdsByCriteria.bind(ratingSentimentStorage),
+  updateSentimentThreshold: ratingSentimentStorage.updateSentimentThreshold.bind(ratingSentimentStorage),
+  
   // User and account management
   getUser: accountStorage.getUser.bind(accountStorage),
   getUserByEmail: accountStorage.getUserByEmail.bind(accountStorage),

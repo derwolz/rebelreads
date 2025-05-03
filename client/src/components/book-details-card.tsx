@@ -169,7 +169,11 @@ export function BookDetailsCard({ book, className }: BookDetailsCardProps) {
             )}
             
             <Link 
-              href={`/books/${book.id}`}
+              href={
+                book.authorName 
+                  ? `/book-details?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}` 
+                  : `/book-details?authorName=unknown&bookTitle=${encodeURIComponent(book.title)}`
+              }
               className="block mt-4"
               onClick={async (e) => {
                 e.stopPropagation();

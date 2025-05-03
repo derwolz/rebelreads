@@ -161,7 +161,16 @@ export function BookShelfCard({
       source: "shelf-card",
       referrer: window.location.pathname,
     });
-    navigate(`/books/${book.id}`);
+    // Use anti-scraping link format when navigating to book details
+    if (book.authorName) {
+      // Encode both authorName and bookTitle for the URL
+      const encodedAuthor = encodeURIComponent(book.authorName);
+      const encodedTitle = encodeURIComponent(book.title);
+      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
+    } else {
+      // Fallback to traditional ID-based URL if authorName is not available
+      navigate(`/book-details?authorName=unknown&bookTitle=${encodeURIComponent(book.title)}`);
+    }
   };
 
   // Inject keyframes into the document head once for the shelf rotation animation
@@ -301,7 +310,16 @@ export function BookShelfCard({
                   source: "shelf-card-mobile",
                   referrer: window.location.pathname,
                 });
-                navigate(`/books/${book.id}`);
+                // Use anti-scraping link format when navigating to book details
+                if (book.authorName) {
+                  // Encode both authorName and bookTitle for the URL
+                  const encodedAuthor = encodeURIComponent(book.authorName);
+                  const encodedTitle = encodeURIComponent(book.title);
+                  navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
+                } else {
+                  // Fallback to traditional ID-based URL if authorName is not available
+                  navigate(`/book-details?authorName=unknown&bookTitle=${encodeURIComponent(book.title)}`);
+                }
               }}
             >
               <ExternalLink className="h-3 w-3 mr-1" />
