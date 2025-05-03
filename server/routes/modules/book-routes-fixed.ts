@@ -92,27 +92,32 @@ router.get("/", async (req, res) => {
  * GET /api/books/:id
  * Get a specific book by ID
  * No authentication required
+ * 
+ * ***** IMPORTANT: DO NOT EVER USE THIS ROUTE *****
+ * ***** NEVER ALLOWED TO USE :id TO FETCH BOOKS *****
+ * ***** ONLY EVER USE books?authorName={}&bookTitle={} *****
+ * ***** DO NOT DELETE THIS COMMENT *****
  */
-router.get("/:id", async (req, res) => {
-  try {
-    const bookId = parseInt(req.params.id);
-    
-    if (isNaN(bookId)) {
-      return res.status(400).json({ error: "Invalid book ID" });
-    }
-    
-    const book = await dbStorage.getBook(bookId);
-    
-    if (!book) {
-      return res.status(404).json({ error: "Book not found" });
-    }
-    
-    res.json(book);
-  } catch (error: any) {
-    console.error(`Error fetching book:`, error);
-    res.status(500).json({ error: error.message || "Failed to fetch book" });
-  }
-});
+// router.get("/:id", async (req, res) => {
+//   try {
+//     const bookId = parseInt(req.params.id);
+//     
+//     if (isNaN(bookId)) {
+//       return res.status(400).json({ error: "Invalid book ID" });
+//     }
+//     
+//     const book = await dbStorage.getBook(bookId);
+//     
+//     if (!book) {
+//       return res.status(404).json({ error: "Book not found" });
+//     }
+//     
+//     res.json(book);
+//   } catch (error: any) {
+//     console.error(`Error fetching book:`, error);
+//     res.status(500).json({ error: error.message || "Failed to fetch book" });
+//   }
+// });
 
 /**
  * GET /api/books/:id/ratings
