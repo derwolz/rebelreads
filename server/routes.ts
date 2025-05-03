@@ -165,6 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/catalogue/publishers/authors", cataloguePublisherAuthorsRoutes);
   app.use("/api/catalogue/publishers/books", cataloguePublisherBooksRoutes);
   
+  // Register user profile routes
+  app.use("/api/users", userProfileRoutes);
+  
   // Register publisher routes
   app.use("/api/publishers", publisherRoutes);
   
@@ -195,9 +198,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register random book routes for the image guide page
   registerRandomBookRoutes(app);
-  
-  // Register user profile routes (/{username})
-  app.use("/", userProfileRoutes);
 
   const httpServer = createServer(app);
   return httpServer;
