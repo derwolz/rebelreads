@@ -120,21 +120,27 @@ const BetaEmailsPage = () => {
     },
   });
 
-  // Filter data based on search
+  // Filter data based on search and beta key status
   useEffect(() => {
     if (signupInterests) {
-      if (!search) {
-        setFilteredData(signupInterests);
-      } else {
+      let filtered = [...signupInterests];
+      
+      // Apply search filter
+      if (search) {
         const searchLower = search.toLowerCase();
-        setFilteredData(
-          signupInterests.filter((item) => 
-            item.email.toLowerCase().includes(searchLower)
-          )
+        filtered = filtered.filter((item) => 
+          item.email.toLowerCase().includes(searchLower)
         );
       }
+      
+      // Apply beta key filter
+      if (!showWithBetaKeys) {
+        filtered = filtered.filter((item) => !item.hasBetaKey);
+      }
+      
+      setFilteredData(filtered);
     }
-  }, [search, signupInterests]);
+  }, [search, signupInterests, showWithBetaKeys]);
 
   // Handle row selection
   const handleRowSelection = (id: number) => {
@@ -169,6 +175,21 @@ const BetaEmailsPage = () => {
         variant: "destructive",
       });
       return;
+    }
+    
+    // Check if any selected rows already have beta keys
+    if (signupInterests) {
+      const selectedWithBetaKeys = signupInterests
+        .filter(item => selectedRows.includes(item.id) && item.hasBetaKey);
+      
+      if (selectedWithBetaKeys.length > 0) {
+        toast({
+          title: "Some emails already have beta keys",
+          description: `${selectedWithBetaKeys.length} of your selected emails already have beta keys. Please deselect them.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     // Open confirmation dialog
@@ -235,22 +256,52 @@ const BetaEmailsPage = () => {
     );
   }
 
+  // Count users with and without beta keys
+  const stats = signupInterests ? {
+    total: signupInterests.length,
+    withBetaKey: signupInterests.filter(i => i.hasBetaKey).length,
+    withoutBetaKey: signupInterests.filter(i => !i.hasBetaKey).length
+  } : { total: 0, withBetaKey: 0, withoutBetaKey: 0 };
+
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Beta Email Management</CardTitle>
         <CardDescription>Send beta keys to users who've signed up for interest</CardDescription>
+        <div className="flex gap-4 mt-2">
+          <Badge variant="outline" className="px-3 py-1">
+            Total: {stats.total}
+          </Badge>
+          <Badge variant="outline" className="px-3 py-1 bg-green-50 dark:bg-green-950/20">
+            With Beta Key: {stats.withBetaKey}
+          </Badge>
+          <Badge variant="outline" className="px-3 py-1">
+            Without Beta Key: {stats.withoutBetaKey}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between mb-4">
-          <div className="relative w-96">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative w-96">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="showWithBetaKeys" 
+                checked={showWithBetaKeys} 
+                onCheckedChange={(checked) => setShowWithBetaKeys(!!checked)}
+              />
+              <Label htmlFor="showWithBetaKeys" className="cursor-pointer">
+                Show users with beta keys
+              </Label>
+            </div>
           </div>
           <div className="flex space-x-2">
             <Button
@@ -298,29 +349,34 @@ const BetaEmailsPage = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Interests</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Beta Key Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : filteredData?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     No signup interests found.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredData?.map((item) => (
-                  <TableRow key={item.id}>
+                  <TableRow 
+                    key={item.id}
+                    className={item.hasBetaKey ? "bg-muted/30" : ""}
+                  >
                     <TableCell>
                       <Checkbox
                         checked={selectedRows.includes(item.id)}
                         onCheckedChange={() => handleRowSelection(item.id)}
                         aria-label={`Select row ${item.id}`}
+                        disabled={item.hasBetaKey}
                       />
                     </TableCell>
                     <TableCell>{item.id}</TableCell>
@@ -337,6 +393,24 @@ const BetaEmailsPage = () => {
                     </TableCell>
                     <TableCell>
                       {format(new Date(item.createdAt), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {item.hasBetaKey ? (
+                        <div className="flex items-center text-green-600">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          <span>Sent</span>
+                          {item.betaKeyDetails && (
+                            <Badge variant="outline" className="ml-2">
+                              {new Date(item.betaKeyDetails.createdAt).toLocaleDateString()}
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-muted-foreground">
+                          <MailIcon className="w-4 h-4 mr-1" />
+                          <span>Not Sent</span>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
