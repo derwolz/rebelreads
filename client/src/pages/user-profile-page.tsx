@@ -80,8 +80,7 @@ const UserProfilePage: React.FC = () => {
   const { data: profileData, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: [username],
     queryFn: async () => {
-      const response = await apiRequest(`/${username}`);
-      return response as unknown as UserProfileData;
+      return apiRequest<UserProfileData>(`/api/users/${username}`);
     },
     enabled: !!username
   });
@@ -90,8 +89,7 @@ const UserProfilePage: React.FC = () => {
   const { data: followingData, isLoading: followingLoading } = useQuery({
     queryKey: [username, 'following-status'],
     queryFn: async () => {
-      const response = await apiRequest(`/${username}/following-status`);
-      return response as {isFollowing: boolean};
+      return apiRequest<{isFollowing: boolean}>(`/api/users/${username}/following-status`);
     },
     enabled: !!username && isAuthenticated && !isOwnProfile
   });
@@ -99,10 +97,9 @@ const UserProfilePage: React.FC = () => {
   // Follow/unfollow mutation
   const followMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/${username}/follow`, {
+      return apiRequest<{success: boolean, action: 'followed' | 'unfollowed'}>(`/api/users/${username}/follow`, {
         method: 'POST'
       });
-      return response as {success: boolean, action: 'followed' | 'unfollowed'};
     },
     onSuccess: (data) => {
       // Show toast message

@@ -155,8 +155,7 @@ function App() {
           <Route path="/discover/:type" component={DiscoverPage} />
           <Route path="/discover/:type/:id" component={DiscoverPage} />
           
-          {/* User Profile Route */}
-          <Route path="/:username" component={UserProfilePage} />
+          {/* User Profile Route - placed at the end to avoid conflicts */}
 
           {/* Protected routes (always require login) */}
           <ProtectedRoute path="/settings" component={SettingsPage} />
@@ -192,7 +191,11 @@ function App() {
           
           {/* Publisher routes */}
           <ProtectedRoute path="/publisher" component={PublisherDashboard} />
-
+          
+          {/* User Profile Route - must be placed at the end to avoid conflicts with other routes */}
+          <Route path="/:username" component={UserProfilePage} />
+          
+          {/* Not found route (must be the last route) */}
           <Route component={NotFound} />
         </Switch>
       </>
