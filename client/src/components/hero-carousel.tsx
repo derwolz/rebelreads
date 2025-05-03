@@ -121,7 +121,7 @@ export function HeroCarousel() {
                       <Button
                         variant="default"
                         className="bg-purple-700 hover:bg-purple-800 gap-2 px-4 py-2"
-                        onClick={() => navigate(`/books/${book.id}`)}
+                        onClick={() => navigate(`/book-details?authorName=${encodeURIComponent(book.authorName)}&bookTitle=${encodeURIComponent(book.title)}`)}
                       >
                         <span className="text-lg">▶</span> PLAY NOW
                       </Button>

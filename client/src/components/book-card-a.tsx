@@ -168,16 +168,10 @@ export function BookCardA({
       referrer: window.location.pathname,
     });
     
-    // Use anti-scraping link format when navigating to book details
-    if (book.authorName) {
-      // Encode both authorName and bookTitle for the URL
-      const encodedAuthor = encodeURIComponent(book.authorName);
-      const encodedTitle = encodeURIComponent(book.title);
-      navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
-    } else {
-      // Fallback to traditional ID-based URL if authorName is not available
-      navigate(`/books/${book.id}`);
-    }
+    // Use anti-scraping link format for navigating to book details
+    const encodedAuthor = encodeURIComponent(book.authorName);
+    const encodedTitle = encodeURIComponent(book.title);
+    navigate(`/book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}`);
   };
 
   // Get the first 100 characters of book description
