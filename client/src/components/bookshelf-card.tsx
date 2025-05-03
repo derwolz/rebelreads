@@ -1,49 +1,94 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { BookOpenIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Link } from 'wouter';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BookOpenIcon, ArrowRightIcon } from 'lucide-react';
 
-interface BookshelfCardProps {
+interface Book {
+  id: number;
   title: string;
   coverImageUrl?: string;
-  className?: string;
 }
 
+interface BookshelfCardProps {
+  id: number;
+  title: string;
+  bookCount: number;
+  coverImageUrl?: string;
+  username: string;
+  featuredBooks?: Book[];
+}
+
+/**
+ * BookshelfCard Component
+ * 
+ * Displays a user's bookshelf as a card with a preview of books contained within.
+ * Used on the user profile page to showcase pinned/featured bookshelves.
+ */
 export const BookshelfCard: React.FC<BookshelfCardProps> = ({
+  id,
   title,
+  bookCount,
   coverImageUrl,
-  className,
+  username,
+  featuredBooks = [],
 }) => {
   return (
-    <Card 
-      className={cn(
-        "overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer h-[160px]",
-        className
-      )}
-    >
-      <div className="relative h-full">
-        {/* Bookshelf background/cover */}
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-primary/40">
-          {coverImageUrl && (
-            <img 
-              src={coverImageUrl} 
-              alt={title}
-              className="w-full h-full object-cover opacity-60"
-            />
-          )}
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium line-clamp-1">
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <div className="flex items-center gap-3 mb-3">
+          <BookOpenIcon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            {bookCount} {bookCount === 1 ? 'book' : 'books'}
+          </span>
         </div>
         
-        {/* Overlay for better text visibility */}
-        <div className="absolute inset-0 bg-background/30" />
-        
-        {/* Content */}
-        <CardContent className="relative h-full flex flex-col items-center justify-center p-4 text-center">
-          <BookOpenIcon className="h-8 w-8 mb-2" />
-          <h3 className="font-semibold text-lg line-clamp-2">{title}</h3>
-        </CardContent>
-      </div>
+        {featuredBooks && featuredBooks.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {featuredBooks.map((book) => (
+              <Link
+                key={book.id}
+                href={`/books/${book.id}`}
+                className="relative aspect-[2/3] rounded-md overflow-hidden bg-muted"
+              >
+                {book.coverImageUrl ? (
+                  <img
+                    src={book.coverImageUrl}
+                    alt={book.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-secondary">
+                    <BookOpenIcon className="h-6 w-6 text-secondary-foreground opacity-70" />
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="w-full h-24 flex items-center justify-center bg-muted rounded-md">
+            <span className="text-sm text-muted-foreground">No books yet</span>
+          </div>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full flex justify-between"
+          asChild
+        >
+          <Link href={`/${username}/shelves/${id}`}>
+            <span>View shelf</span>
+            <ArrowRightIcon className="h-4 w-4" />
+          </Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 };
-
-export default BookshelfCard;

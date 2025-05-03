@@ -310,7 +310,7 @@ const UserProfilePage: React.FC = () => {
                 <div className="mb-4">
                   <p className="font-semibold text-center mb-2">Overall</p>
                   <div className="flex justify-center mb-2">
-                    <SeashellRating score={compatibility.score} />
+                    <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
                   </div>
                   <p className="text-center text-sm">{compatibility.overall}</p>
                 </div>
@@ -346,7 +346,7 @@ const UserProfilePage: React.FC = () => {
                   <div className="mb-4">
                     <p className="font-semibold text-center mb-2">Overall</p>
                     <div className="flex justify-center mb-2">
-                      <SeashellRating score={1} />
+                      <SeashellRating compatibilityScore={1} isLoggedIn={false} />
                     </div>
                     <p className="text-center text-sm">Sample Compatibility</p>
                   </div>
@@ -436,12 +436,15 @@ const UserProfilePage: React.FC = () => {
                     <CardContent>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {pinnedShelves.slice(0, 3).map((shelf) => (
-                          <Link key={shelf.id} href={`/book-shelf/share?username=${username}&shelfname=${shelf.title}`}>
-                            <BookshelfCard
-                              title={shelf.title}
-                              coverImageUrl={shelf.coverImageUrl}
-                            />
-                          </Link>
+                          <BookshelfCard
+                            key={shelf.id}
+                            id={shelf.id}
+                            title={shelf.title}
+                            coverImageUrl={shelf.coverImageUrl}
+                            bookCount={shelf.bookCount || 0}
+                            username={username}
+                            featuredBooks={shelf.books}
+                          />
                         ))}
                       </div>
                     </CardContent>
@@ -540,12 +543,15 @@ const UserProfilePage: React.FC = () => {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {pinnedShelves.map((shelf) => (
-                        <Link key={shelf.id} href={`/book-shelf/share?username=${username}&shelfname=${shelf.title}`}>
-                          <BookshelfCard
-                            title={shelf.title}
-                            coverImageUrl={shelf.coverImageUrl}
-                          />
-                        </Link>
+                        <BookshelfCard
+                          key={shelf.id}
+                          id={shelf.id}
+                          title={shelf.title}
+                          coverImageUrl={shelf.coverImageUrl}
+                          bookCount={shelf.bookCount || 0}
+                          username={username}
+                          featuredBooks={shelf.books}
+                        />
                       ))}
                     </div>
                   )}
