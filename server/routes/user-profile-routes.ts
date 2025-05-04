@@ -473,12 +473,13 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
 
 // Route 1: Ratings comparison route
 router.get("/:username/ratings-comparison", async (req: Request, res: Response) => {
-  if (!req.user) {
+  console.log("Ratings comparison route called, auth status:", req.isAuthenticated());
+  if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
   const { username } = req.params;
-  const currentUserId = req.user.id;
+  const currentUserId = req.user!.id;
 
   try {
     // Find target user by username
@@ -513,7 +514,7 @@ router.get("/:username/ratings-comparison", async (req: Request, res: Response) 
 
 // Route 2: User rating route (for the same user only)
 router.get("/:username/ratings", async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
@@ -550,12 +551,12 @@ router.get("/:username/ratings", async (req: Request, res: Response) => {
 
 // Route 3: Genre preference comparison route
 router.get("/:username/genre-comparison", async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
   const { username } = req.params;
-  const currentUserId = req.user.id;
+  const currentUserId = req.user!.id;
 
   try {
     // Find target user by username
@@ -643,7 +644,7 @@ router.get("/:username/genre-comparison", async (req: Request, res: Response) =>
 
 // Route 4: User genre preferences route (for the same user only)
 router.get("/:username/genres", async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Authentication required" });
   }
 
