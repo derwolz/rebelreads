@@ -161,7 +161,7 @@ const UserProfilePage: React.FC = () => {
   
   if (profileLoading) {
     return (
-      <div className="container py-8">
+      <div className="container flex flex-col justify-center items-center py-8">
         <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="w-full md:w-1/4">
             <Card>
@@ -195,7 +195,7 @@ const UserProfilePage: React.FC = () => {
   
   if (profileError || !profileData) {
     return (
-      <div className="container py-8">
+      <div className="container flex flex-col justify-center py-8">
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col items-center space-y-4">
@@ -234,7 +234,7 @@ const UserProfilePage: React.FC = () => {
   const isFollowing = followingData?.isFollowing || false;
   
   return (
-    <div className="container py-8">
+    <div className="container flex flex-col justify-center py-8">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Sidebar - Profile Info */}
         <div className="w-full lg:w-1/4 space-y-4">
@@ -470,7 +470,7 @@ const UserProfilePage: React.FC = () => {
                     <p className="font-semibold text-center mb-2">Overall Compatibility</p>
                     <div className="flex justify-center mb-2">
                       <SeashellRating 
-                        compatibilityScore={1} 
+                        compatibilityScore={2} 
                         compatibilityLabel="Sample compatibility" 
                         isLoggedIn={false}
                       />
