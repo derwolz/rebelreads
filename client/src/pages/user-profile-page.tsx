@@ -348,15 +348,30 @@ const UserProfilePage: React.FC = () => {
                     {ratingData ? (
                       <div className="space-y-4">
                         <div className="mb-2">
-                          <p className="font-semibold text-center mb-2">Rating Preferences Comparison</p>
-                          {/* Only show compatibility score if available from old system */}
-                          {compatibility && (
+                          <p className="font-semibold text-center mb-2">Rating Preferences Compatibility</p>
+                          {/* Check if we have compatibility data from either source */}
+                          {ratingData.compatibility ? (
                             <>
                               <div className="flex justify-center mb-2">
-                                <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
+                                <SeashellRating 
+                                  compatibilityScore={ratingData.compatibility.score} 
+                                  compatibilityLabel={ratingData.compatibility.overall}
+                                  isLoggedIn={true} 
+                                />
                               </div>
-                              <p className="text-center text-sm">{compatibility.overall}</p>
                             </>
+                          ) : compatibility ? (
+                            <>
+                              <div className="flex justify-center mb-2">
+                                <SeashellRating 
+                                  compatibilityScore={compatibility.score} 
+                                  compatibilityLabel={compatibility.overall}
+                                  isLoggedIn={true} 
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-center text-sm text-muted-foreground">No compatibility data available</p>
                           )}
                         </div>
                         
@@ -389,6 +404,18 @@ const UserProfilePage: React.FC = () => {
                             <Separator className="my-4" />
                             <div>
                               <p className="font-medium text-sm mb-2">Genre Preference Comparison:</p>
+                              
+                              {/* Display genre compatibility if available */}
+                              {genreData.compatibility && (
+                                <div className="flex justify-center mb-3">
+                                  <SeashellRating 
+                                    compatibilityScore={genreData.compatibility.score} 
+                                    compatibilityLabel={genreData.compatibility.overall}
+                                    isLoggedIn={true} 
+                                  />
+                                </div>
+                              )}
+                              
                               <div className="space-y-1">
                                 {genreData.currentUser.genreViews?.length > 0 && genreData.targetUser.genreViews?.length > 0 ? (
                                   <div className="space-y-2">
@@ -450,11 +477,14 @@ const UserProfilePage: React.FC = () => {
               <CardContent className="relative">
                 <div className="blur-sm pointer-events-none">
                   <div className="mb-4">
-                    <p className="font-semibold text-center mb-2">Overall</p>
+                    <p className="font-semibold text-center mb-2">Overall Compatibility</p>
                     <div className="flex justify-center mb-2">
-                      <SeashellRating compatibilityScore={1} isLoggedIn={false} />
+                      <SeashellRating 
+                        compatibilityScore={1} 
+                        compatibilityLabel="Sample compatibility" 
+                        isLoggedIn={false}
+                      />
                     </div>
-                    <p className="text-center text-sm">Sample Compatibility</p>
                   </div>
                   
                   <Separator className="my-4" />
