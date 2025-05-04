@@ -12,6 +12,7 @@ import {
   bookImages
 } from "../../shared/schema";
 import { eq, and, desc, asc, inArray, ilike, or, ne, count, avg, gt } from "drizzle-orm";
+import { dbStorage } from "../storage";
 import { z } from "zod";
 
 const router = Router();
@@ -20,31 +21,12 @@ const router = Router();
 async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   console.log(`Calculating compatibility between user ${user1Id} and ${user2Id}`);
   
-  // Check if rating preferences exist directly in the database using raw SQL
-  const user1PrefsCheck = await pool.query(
-    `SELECT * FROM rating_preferences WHERE user_id = $1`,
-    [user1Id]
-  );
+  // Get both users' rating preferences using the storage class
+  let user1Prefs = await dbStorage.getRatingPreferences(user1Id);
+  let user2Prefs = await dbStorage.getRatingPreferences(user2Id);
   
-  const user2PrefsCheck = await pool.query(
-    `SELECT * FROM rating_preferences WHERE user_id = $1`,
-    [user2Id]
-  );
-  
-  console.log("SQL query result for user1:", user1PrefsCheck.rows);
-  console.log("SQL query result for user2:", user2PrefsCheck.rows);
-  
-  // Get both users' rating preferences using drizzle
-  let user1Prefs = await db.query.rating_preferences.findFirst({
-    where: eq(rating_preferences.userId, user1Id)
-  });
-  
-  let user2Prefs = await db.query.rating_preferences.findFirst({
-    where: eq(rating_preferences.userId, user2Id)
-  });
-  
-  console.log("User 1 drizzle preferences:", user1Prefs);
-  console.log("User 2 drizzle preferences:", user2Prefs);
+  console.log("User 1 preferences from dbStorage:", user1Prefs);
+  console.log("User 2 preferences from dbStorage:", user2Prefs);
   
   // Create default preferences if they don't exist
   if (!user1Prefs) {
@@ -59,12 +41,10 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
       autoAdjust: true
     };
     
-    await db.insert(rating_preferences).values([defaults]);
+    await dbStorage.saveRatingPreferences(user1Id, defaults);
     
-    // Fetch the newly created preferences to get the complete object with id, etc.
-    user1Prefs = await db.query.rating_preferences.findFirst({
-      where: eq(rating_preferences.userId, user1Id)
-    });
+    // Fetch the newly created preferences
+    user1Prefs = await dbStorage.getRatingPreferences(user1Id);
     
     if (!user1Prefs) {
       // Fall back to defaults if fetch fails
@@ -95,12 +75,10 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
       autoAdjust: true
     };
     
-    await db.insert(rating_preferences).values([defaults]);
+    await dbStorage.saveRatingPreferences(user2Id, defaults);
     
-    // Fetch the newly created preferences to get the complete object with id, etc.
-    user2Prefs = await db.query.rating_preferences.findFirst({
-      where: eq(rating_preferences.userId, user2Id)
-    });
+    // Fetch the newly created preferences
+    user2Prefs = await dbStorage.getRatingPreferences(user2Id);
     
     if (!user2Prefs) {
       // Fall back to defaults if fetch fails
