@@ -35,32 +35,72 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     console.log(`Creating default preferences for user ${user1Id}`);
     const defaults = {
       userId: user1Id,
-      enjoyment: 0.5,
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
+      enjoyment: "0.5",
+      writing: "0.5",
+      themes: "0.5",
+      characters: "0.5",
+      worldbuilding: "0.5",
       autoAdjust: true
     };
     
-    await db.insert(rating_preferences).values(defaults);
-    user1Prefs = defaults;
+    await db.insert(rating_preferences).values([defaults]);
+    
+    // Fetch the newly created preferences to get the complete object with id, etc.
+    user1Prefs = await db.query.rating_preferences.findFirst({
+      where: eq(rating_preferences.userId, user1Id)
+    });
+    
+    if (!user1Prefs) {
+      // Fall back to defaults if fetch fails
+      user1Prefs = {
+        id: 0,
+        userId: user1Id,
+        enjoyment: "0.5",
+        writing: "0.5",
+        themes: "0.5",
+        characters: "0.5",
+        worldbuilding: "0.5",
+        autoAdjust: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
   }
   
   if (!user2Prefs) {
     console.log(`Creating default preferences for user ${user2Id}`);
     const defaults = {
       userId: user2Id,
-      enjoyment: 0.5,
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
+      enjoyment: "0.5",
+      writing: "0.5",
+      themes: "0.5",
+      characters: "0.5",
+      worldbuilding: "0.5",
       autoAdjust: true
     };
     
-    await db.insert(rating_preferences).values(defaults);
-    user2Prefs = defaults;
+    await db.insert(rating_preferences).values([defaults]);
+    
+    // Fetch the newly created preferences to get the complete object with id, etc.
+    user2Prefs = await db.query.rating_preferences.findFirst({
+      where: eq(rating_preferences.userId, user2Id)
+    });
+    
+    if (!user2Prefs) {
+      // Fall back to defaults if fetch fails
+      user2Prefs = {
+        id: 0,
+        userId: user2Id,
+        enjoyment: "0.5",
+        writing: "0.5",
+        themes: "0.5",
+        characters: "0.5",
+        worldbuilding: "0.5",
+        autoAdjust: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
   }
   
   // Calculate normalized differences for each rating criterion
@@ -207,7 +247,7 @@ router.get("/:username", async (req: Request, res: Response) => {
     const wishlistIds = wishlist.map(item => item.bookId);
     
     // Get wishlisted books with details
-    let wishlistBooks: Array<{book: typeof books.$inferSelect & {coverImage?: typeof bookImages.$inferSelect}}> = [];
+    let wishlistBooks: Array<{book: typeof books.$inferSelect & {images?: typeof bookImages.$inferSelect[]}}> = [];
     if (wishlistIds.length > 0) {
       const tempBooks = await db
         .select({
@@ -219,22 +259,30 @@ router.get("/:username", async (req: Request, res: Response) => {
       
       wishlistBooks = tempBooks.map(item => ({
         book: {
-          ...item.book
+          ...item.book,
+          images: [] // Initialize images array
         }
       }));
       
-      // Get images for wishlist books
-      for (let i = 0; i < wishlistBooks.length; i++) {
-        const bookCoverImage = await db.query.bookImages.findFirst({
-          where: and(
-            eq(bookImages.bookId, wishlistBooks[i].book.id),
-            eq(bookImages.imageType, "book-card")
-          )
-        });
-        
-        if (bookCoverImage) {
-          wishlistBooks[i].book.coverImage = bookCoverImage;
+      // Get all images for wishlist books at once for better performance
+      const bookImagesList = await db
+        .select()
+        .from(bookImages)
+        .where(inArray(bookImages.bookId, wishlistIds));
+      
+      // Group images by book ID
+      const imagesByBookId = new Map<number, typeof bookImages.$inferSelect[]>();
+      bookImagesList.forEach(image => {
+        if (!imagesByBookId.has(image.bookId)) {
+          imagesByBookId.set(image.bookId, []);
         }
+        imagesByBookId.get(image.bookId)?.push(image);
+      });
+      
+      // Add images to books
+      for (let i = 0; i < wishlistBooks.length; i++) {
+        const bookId = wishlistBooks[i].book.id;
+        wishlistBooks[i].book.images = imagesByBookId.get(bookId) || [];
       }
     }
     
@@ -262,7 +310,7 @@ router.get("/:username", async (req: Request, res: Response) => {
     const recommendedBookIds = positiveRatings.map(rating => rating.bookId);
     
     // Get recommended books with details
-    let recommendedBooks: Array<{book: typeof books.$inferSelect & {coverImage?: typeof bookImages.$inferSelect}}> = [];
+    let recommendedBooks: Array<{book: typeof books.$inferSelect & {images?: typeof bookImages.$inferSelect[]}}> = [];
     if (recommendedBookIds.length > 0) {
       // Get a random selection of 5 books with positive enjoyment ratings
       const randomizedIds = [...recommendedBookIds].sort(() => Math.random() - 0.5).slice(0, 5);
@@ -276,22 +324,30 @@ router.get("/:username", async (req: Request, res: Response) => {
       
       recommendedBooks = tempBooks.map(item => ({
         book: {
-          ...item.book
+          ...item.book,
+          images: [] // Initialize images array
         }
       }));
       
-      // Get images for recommended books
-      for (let i = 0; i < recommendedBooks.length; i++) {
-        const bookCoverImage = await db.query.bookImages.findFirst({
-          where: and(
-            eq(bookImages.bookId, recommendedBooks[i].book.id),
-            eq(bookImages.imageType, "book-card")
-          )
-        });
-        
-        if (bookCoverImage) {
-          recommendedBooks[i].book.coverImage = bookCoverImage;
+      // Get all images for recommended books at once for better performance
+      const bookImagesList = await db
+        .select()
+        .from(bookImages)
+        .where(inArray(bookImages.bookId, randomizedIds));
+      
+      // Group images by book ID
+      const imagesByBookId = new Map<number, typeof bookImages.$inferSelect[]>();
+      bookImagesList.forEach(image => {
+        if (!imagesByBookId.has(image.bookId)) {
+          imagesByBookId.set(image.bookId, []);
         }
+        imagesByBookId.get(image.bookId)?.push(image);
+      });
+      
+      // Add images to books
+      for (let i = 0; i < recommendedBooks.length; i++) {
+        const bookId = recommendedBooks[i].book.id;
+        recommendedBooks[i].book.images = imagesByBookId.get(bookId) || [];
       }
     }
     
