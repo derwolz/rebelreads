@@ -47,6 +47,7 @@ interface UserProfileData {
       compatibility: string;
       difference: number;
       normalized: number;
+      score: number;
     }>;
   } | null;
   wishlist: Array<{
@@ -297,8 +298,24 @@ const UserProfilePage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Reading Compatibility</CardTitle>
+                <CardDescription className="text-xs">
+                  {isAuthenticated ? 'You are logged in' : 'Not logged in'} - 
+                  User ID: {user?.id}, Profile user: {profileData?.username}
+                </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Debug information */}
+                <div className="mb-2 p-2 bg-muted rounded-md text-xs">
+                  <p>Debug: compatibility data available? {compatibility ? 'Yes' : 'No'}</p>
+                  {compatibility && (
+                    <>
+                      <p>Score: {compatibility.score}</p>
+                      <p>Overall: {compatibility.overall}</p>
+                      <p>Difference: {compatibility.normalizedDifference.toFixed(4)}</p>
+                    </>
+                  )}
+                </div>
+                
                 {compatibility ? (
                   <>
                     <div className="mb-4">
@@ -321,6 +338,10 @@ const UserProfilePage: React.FC = () => {
                             <Badge variant={value.compatibility.includes("Compatible") ? "default" : "outline"}>
                               {value.compatibility}
                             </Badge>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-xs text-muted-foreground">Score: {value.score}</span>
+                            <SeashellRating compatibilityScore={value.score} isLoggedIn={true} className="ml-2 scale-75" />
                           </div>
                         </div>
                       ))}
