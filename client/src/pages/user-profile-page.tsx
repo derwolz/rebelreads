@@ -28,7 +28,8 @@ import {
   UserMinusIcon, 
   BookmarkIcon, 
   BookOpenIcon,
-  HeartIcon
+  HeartIcon,
+  LockIcon
 } from "lucide-react";
 
 interface UserProfileData {
@@ -84,6 +85,32 @@ const UserProfilePage: React.FC = () => {
       return apiRequest<{isFollowing: boolean}>(`/api/users/${username}/following-status`);
     },
     enabled: !!username && isAuthenticated && !isOwnProfile
+  });
+  
+  // Get rating preferences based on whether it's own profile or not
+  const { data: ratingData, isLoading: ratingLoading } = useQuery({
+    queryKey: [username, 'ratings', isOwnProfile ? 'own' : 'comparison'],
+    queryFn: async () => {
+      if (isOwnProfile) {
+        return apiRequest(`/api/users/${username}/ratings`);
+      } else {
+        return apiRequest(`/api/users/${username}/ratings-comparison`);
+      }
+    },
+    enabled: !!username && isAuthenticated // Only load if authenticated
+  });
+  
+  // Get genre preferences based on whether it's own profile or not
+  const { data: genreData, isLoading: genreLoading } = useQuery({
+    queryKey: [username, 'genres', isOwnProfile ? 'own' : 'comparison'],
+    queryFn: async () => {
+      if (isOwnProfile) {
+        return apiRequest(`/api/users/${username}/genres`);
+      } else {
+        return apiRequest(`/api/users/${username}/genre-comparison`);
+      }
+    },
+    enabled: !!username && isAuthenticated // Only load if authenticated
   });
   
   // Follow/unfollow mutation
@@ -264,65 +291,152 @@ const UserProfilePage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Rating Preferences (visible only to the profile owner) */}
-          {isOwnProfile && ratingPreferences && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Rating Preferences</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(ratingPreferences).map(([key, value]) => {
-                    if (['id', 'userId', 'createdAt', 'updatedAt', 'autoAdjust'].includes(key)) return null;
-                    
-                    return (
-                      <div key={key} className="flex justify-between items-center">
-                        <span className="capitalize">{key}</span>
-                        <span className="font-medium">{Number(value).toFixed(2)}</span>
-                      </div>
-                    );
-                  })}
-                  
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span>Auto-adjust</span>
-                    <span>{ratingPreferences.autoAdjust ? 'Yes' : 'No'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Reading Compatibility (for logged in users viewing other profiles) */}
-          {!isOwnProfile && isAuthenticated && compatibility && (
+          {/* Reading Compatibility - Using New API Routes */}
+          {isAuthenticated && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Reading Compatibility</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4">
-                  <p className="font-semibold text-center mb-2">Overall</p>
-                  <div className="flex justify-center mb-2">
-                    <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
+                {ratingLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-6 w-full" />
                   </div>
-                  <p className="text-center text-sm">{compatibility.overall}</p>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <div className="space-y-3">
-                  <p className="font-medium text-sm">Criteria Details:</p>
-                  
-                  {Object.entries(compatibility.criteria).map(([key, value]) => (
-                    <div key={key} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="capitalize text-sm">{key}</span>
-                        <Badge variant={value.compatibility.includes("Compatible") ? "default" : "outline"}>
-                          {value.compatibility}
-                        </Badge>
+                ) : isOwnProfile ? (
+                  // Own profile - show personal rating preferences
+                  <div className="space-y-2">
+                    {ratingData?.preferences && (
+                      <>
+                        <p className="font-medium text-sm">Your Rating Preferences:</p>
+                        {Object.entries(ratingData.preferences).map(([key, value]) => {
+                          if (['id', 'userId', 'createdAt', 'updatedAt', 'autoAdjust'].includes(key)) return null;
+                          
+                          return (
+                            <div key={key} className="flex justify-between items-center">
+                              <span className="capitalize text-sm">{key}</span>
+                              <span className="font-medium">{Number(value).toFixed(2)}</span>
+                            </div>
+                          );
+                        })}
+                        <div className="pt-2 border-t mt-2">
+                          <p className="font-medium text-sm mt-2">Genre Preferences:</p>
+                          {genreLoading ? (
+                            <Skeleton className="h-6 w-full" />
+                          ) : (
+                            <div className="space-y-1 mt-1">
+                              {genreData?.genreViews?.length > 0 ? (
+                                genreData.genreViews.slice(0, 3).map((view, index) => (
+                                  <div key={index} className="flex justify-between items-center">
+                                    <span className="text-sm">{view.name}</span>
+                                    <Badge>{view.genres?.length || 0} genres</Badge>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No genre preferences set</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  // Other user profile - show compatibility
+                  <div>
+                    {ratingData ? (
+                      <div className="space-y-4">
+                        <div className="mb-2">
+                          <p className="font-semibold text-center mb-2">Rating Preferences Comparison</p>
+                          {/* Only show compatibility score if available from old system */}
+                          {compatibility && (
+                            <>
+                              <div className="flex justify-center mb-2">
+                                <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
+                              </div>
+                              <p className="text-center text-sm">{compatibility.overall}</p>
+                            </>
+                          )}
+                        </div>
+                        
+                        <Separator className="my-4" />
+                        
+                        {/* Show rating comparison from new API */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-medium">
+                            <span>Criteria</span>
+                            <div className="flex gap-4">
+                              <span>You</span>
+                              <span>{ratingData.targetUser.username}</span>
+                            </div>
+                          </div>
+                          
+                          {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
+                            <div key={criterion} className="flex justify-between items-center">
+                              <span className="capitalize text-sm">{criterion}</span>
+                              <div className="flex gap-4">
+                                <span className="w-12 text-right">{Number(ratingData.currentUser.preferences?.[criterion]).toFixed(2)}</span>
+                                <span className="w-12 text-right">{Number(ratingData.targetUser.preferences?.[criterion]).toFixed(2)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Add genre comparison info if available */}
+                        {!genreLoading && genreData && (
+                          <>
+                            <Separator className="my-4" />
+                            <div>
+                              <p className="font-medium text-sm mb-2">Genre Preference Comparison:</p>
+                              <div className="space-y-1">
+                                {genreData.currentUser.genreViews?.length > 0 && genreData.targetUser.genreViews?.length > 0 ? (
+                                  <div className="space-y-2">
+                                    <p className="text-sm">Top genres you have in common:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {/* Find common taxonomy IDs between users */}
+                                      {genreData.currentUser.genreViews
+                                        .flatMap(view => view.genres || [])
+                                        .filter(genre => 
+                                          genreData.targetUser.genreViews
+                                            .flatMap(view => view.genres || [])
+                                            .some(targetGenre => targetGenre.taxonomyId === genre.taxonomyId)
+                                        )
+                                        .slice(0, 5)
+                                        .map((genre, index) => (
+                                          <Badge key={index} variant="outline" className="capitalize">
+                                            {genre.taxonomy?.name || "Genre"}
+                                          </Badge>
+                                        ))
+                                      }
+                                      {genreData.currentUser.genreViews
+                                        .flatMap(view => view.genres || [])
+                                        .filter(genre => 
+                                          genreData.targetUser.genreViews
+                                            .flatMap(view => view.genres || [])
+                                            .some(targetGenre => targetGenre.taxonomyId === genre.taxonomyId)
+                                        ).length === 0 && (
+                                          <p className="text-sm text-muted-foreground">No common genres found</p>
+                                        )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground">
+                                    {genreData.currentUser.genreViews?.length === 0 
+                                      ? "Set up your genre preferences to see a comparison" 
+                                      : "This user hasn't set their genre preferences yet"}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground">Unable to load comparison data</p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -362,9 +476,9 @@ const UserProfilePage: React.FC = () => {
                 </div>
                 
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 p-4">
-                  <p className="font-semibold text-center mb-4">Login to discover your reading compatibility</p>
+                  <p className="font-semibold text-center mb-4">Create an account to see compatibility</p>
                   <Button asChild>
-                    <Link href="/login">Login</Link>
+                    <Link href="/auth">Sign Up</Link>
                   </Button>
                 </div>
               </CardContent>
