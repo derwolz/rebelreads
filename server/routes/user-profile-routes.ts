@@ -229,9 +229,11 @@ router.get("/:username", async (req: Request, res: Response) => {
       ));
     
     // Get user's rating preferences
+    console.log(`Looking up rating preferences for user ${user.id} (${user.username})`);
     const ratingPreferences = await db.query.rating_preferences.findFirst({
       where: eq(rating_preferences.userId, user.id)
     });
+    console.log(`Rating preferences result for ${user.username}:`, ratingPreferences);
     
     // Get wishlist books
     const wishlist = await db
@@ -355,6 +357,8 @@ router.get("/:username", async (req: Request, res: Response) => {
     let compatibility = null;
     let showRatingPreferences = false;
     
+    console.log("Found rating preferences for user profile:", ratingPreferences);
+    
     // If the user is viewing their own profile, show them their rating preferences
     if (req.user && req.user.id === user.id) {
       console.log(`User viewing own profile: ${req.user.id}`);
@@ -363,8 +367,12 @@ router.get("/:username", async (req: Request, res: Response) => {
     // If an authenticated user is viewing another user's profile, calculate compatibility
     else if (req.user) {
       console.log(`Calculating compatibility between user ${req.user.id} and ${user.id}`);
-      compatibility = await calculateReadingCompatibility(req.user.id, user.id);
-      console.log("Compatibility result:", compatibility);
+      if (ratingPreferences) {
+        compatibility = await calculateReadingCompatibility(req.user.id, user.id);
+        console.log("Compatibility result:", compatibility);
+      } else {
+        console.log("Cannot calculate compatibility: Missing rating preferences for profile user");
+      }
     }
     // For non-authenticated users, don't calculate compatibility
     else {
