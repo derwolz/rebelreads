@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
+import { dbStorage } from "../storage";
 import { 
   users, 
   followers, 
@@ -9,7 +10,10 @@ import {
   shelfBooks,
   books,
   rating_preferences,
-  bookImages
+  bookImages,
+  userGenreViews,
+  viewGenres,
+  genreTaxonomies
 } from "../../shared/schema";
 import { eq, and, desc, asc, inArray, ilike, or, ne, count, avg, gt } from "drizzle-orm";
 import { z } from "zod";
@@ -33,34 +37,72 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   // Create default preferences if they don't exist
   if (!user1Prefs) {
     console.log(`Creating default preferences for user ${user1Id}`);
-    const defaults = {
-      userId: user1Id,
-      enjoyment: 0.5,
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
-      autoAdjust: true
-    };
     
-    await db.insert(rating_preferences).values(defaults);
-    user1Prefs = defaults;
+    await db.insert(rating_preferences).values([{
+      userId: user1Id,
+      enjoyment: "0.5",
+      writing: "0.5",
+      themes: "0.5",
+      characters: "0.5",
+      worldbuilding: "0.5",
+      autoAdjust: true
+    }]);
+    
+    // Retrieve the newly created preferences
+    user1Prefs = await db.query.rating_preferences.findFirst({
+      where: eq(rating_preferences.userId, user1Id)
+    });
+    
+    // If still not found, create a temporary object
+    if (!user1Prefs) {
+      user1Prefs = {
+        id: 0, // Placeholder until we retrieve it again
+        userId: user1Id,
+        enjoyment: "0.5",
+        writing: "0.5",
+        themes: "0.5",
+        characters: "0.5",
+        worldbuilding: "0.5",
+        autoAdjust: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
   }
   
   if (!user2Prefs) {
     console.log(`Creating default preferences for user ${user2Id}`);
-    const defaults = {
-      userId: user2Id,
-      enjoyment: 0.5,
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
-      autoAdjust: true
-    };
     
-    await db.insert(rating_preferences).values(defaults);
-    user2Prefs = defaults;
+    await db.insert(rating_preferences).values([{
+      userId: user2Id,
+      enjoyment: "0.5",
+      writing: "0.5",
+      themes: "0.5",
+      characters: "0.5",
+      worldbuilding: "0.5",
+      autoAdjust: true
+    }]);
+    
+    // Retrieve the newly created preferences
+    user2Prefs = await db.query.rating_preferences.findFirst({
+      where: eq(rating_preferences.userId, user2Id)
+    });
+    
+    // If still not found, create a temporary object
+    if (!user2Prefs) {
+      user2Prefs = {
+        id: 0, // Placeholder until we retrieve it again
+        userId: user2Id,
+        enjoyment: "0.5",
+        writing: "0.5",
+        themes: "0.5",
+        characters: "0.5",
+        worldbuilding: "0.5",
+        autoAdjust: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
   }
   
   // Calculate normalized differences for each rating criterion
@@ -425,6 +467,240 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error("Error updating follow status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Route 1: Ratings comparison route
+router.get("/:username/ratings-comparison", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const { username } = req.params;
+  const currentUserId = req.user.id;
+
+  try {
+    // Find target user by username
+    const targetUser = await dbStorage.getUserByUsername(username);
+    
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get rating preferences for both users
+    const currentUserPreferences = await dbStorage.getRatingPreferences(currentUserId);
+    const targetUserPreferences = await dbStorage.getRatingPreferences(targetUser.id);
+
+    // Return both users' preferences for comparison
+    res.json({
+      currentUser: {
+        id: currentUserId,
+        username: req.user.username,
+        preferences: currentUserPreferences || null
+      },
+      targetUser: {
+        id: targetUser.id,
+        username: targetUser.username,
+        preferences: targetUserPreferences || null
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching rating comparison:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Route 2: User rating route (for the same user only)
+router.get("/:username/ratings", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const { username } = req.params;
+  
+  try {
+    // Find target user by username
+    const targetUser = await dbStorage.getUserByUsername(username);
+    
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if current user is requesting their own preferences
+    if (req.user.id !== targetUser.id) {
+      return res.status(403).json({ error: "You can only view your own rating preferences" });
+    }
+
+    // Get rating preferences
+    const preferences = await dbStorage.getRatingPreferences(targetUser.id);
+    
+    res.json({
+      user: {
+        id: targetUser.id,
+        username: targetUser.username
+      },
+      preferences: preferences || null
+    });
+  } catch (error) {
+    console.error("Error fetching user ratings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Route 3: Genre preference comparison route
+router.get("/:username/genre-comparison", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const { username } = req.params;
+  const currentUserId = req.user.id;
+
+  try {
+    // Find target user by username
+    const targetUser = await dbStorage.getUserByUsername(username);
+    
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Get genre views for both users
+    const currentUserGenreViews = await dbStorage.getUserGenreViews(currentUserId);
+    const targetUserGenreViews = await dbStorage.getUserGenreViews(targetUser.id);
+
+    // Initialize result objects with taxonomies
+    const currentUserGenres = await Promise.all(
+      currentUserGenreViews.map(async (view) => {
+        const { genres } = await dbStorage.getViewGenres(view.id);
+        
+        // Get taxonomy details for each genre
+        const genresWithTaxonomies = await Promise.all(
+          genres.map(async (genre) => {
+            // Get the taxonomy from db
+            const taxonomy = await db.query.genreTaxonomies.findFirst({
+              where: eq(genreTaxonomies.id, genre.taxonomyId)
+            });
+            
+            return {
+              ...genre,
+              taxonomy
+            };
+          })
+        );
+        
+        return {
+          ...view,
+          genres: genresWithTaxonomies
+        };
+      })
+    );
+
+    const targetUserGenres = await Promise.all(
+      targetUserGenreViews.map(async (view) => {
+        const { genres } = await dbStorage.getViewGenres(view.id);
+        
+        // Get taxonomy details for each genre
+        const genresWithTaxonomies = await Promise.all(
+          genres.map(async (genre) => {
+            // Get the taxonomy from db
+            const taxonomy = await db.query.genreTaxonomies.findFirst({
+              where: eq(genreTaxonomies.id, genre.taxonomyId)
+            });
+            
+            return {
+              ...genre,
+              taxonomy
+            };
+          })
+        );
+        
+        return {
+          ...view,
+          genres: genresWithTaxonomies
+        };
+      })
+    );
+
+    // Return both users' genre preferences for comparison
+    res.json({
+      currentUser: {
+        id: currentUserId,
+        username: req.user.username,
+        genreViews: currentUserGenres
+      },
+      targetUser: {
+        id: targetUser.id,
+        username: targetUser.username,
+        genreViews: targetUserGenres
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching genre comparison:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Route 4: User genre preferences route (for the same user only)
+router.get("/:username/genres", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const { username } = req.params;
+  
+  try {
+    // Find target user by username
+    const targetUser = await dbStorage.getUserByUsername(username);
+    
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if current user is requesting their own preferences
+    if (req.user.id !== targetUser.id) {
+      return res.status(403).json({ error: "You can only view your own genre preferences" });
+    }
+
+    // Get user's genre views
+    const userGenreViews = await dbStorage.getUserGenreViews(targetUser.id);
+    
+    // Get detailed genre information with taxonomies
+    const genreViewsWithDetails = await Promise.all(
+      userGenreViews.map(async (view) => {
+        const { genres } = await dbStorage.getViewGenres(view.id);
+        
+        // Get taxonomy details for each genre
+        const genresWithTaxonomies = await Promise.all(
+          genres.map(async (genre) => {
+            // Get the taxonomy from db
+            const taxonomy = await db.query.genreTaxonomies.findFirst({
+              where: eq(genreTaxonomies.id, genre.taxonomyId)
+            });
+            
+            return {
+              ...genre,
+              taxonomy
+            };
+          })
+        );
+        
+        return {
+          ...view,
+          genres: genresWithTaxonomies
+        };
+      })
+    );
+    
+    res.json({
+      user: {
+        id: targetUser.id,
+        username: targetUser.username
+      },
+      genreViews: genreViewsWithDetails
+    });
+  } catch (error) {
+    console.error("Error fetching user genre preferences:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
