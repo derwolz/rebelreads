@@ -351,15 +351,23 @@ router.get("/:username", async (req: Request, res: Response) => {
       }
     }
     
-    // Calculate rating compatibility if the request is from a different authenticated user
+    // Calculate rating compatibility for different viewing scenarios
     let compatibility = null;
-    if (req.user && req.user.id !== user.id) {
+    let showRatingPreferences = false;
+    
+    // If the user is viewing their own profile, show them their rating preferences
+    if (req.user && req.user.id === user.id) {
+      console.log(`User viewing own profile: ${req.user.id}`);
+      showRatingPreferences = true;
+    } 
+    // If an authenticated user is viewing another user's profile, calculate compatibility
+    else if (req.user) {
       console.log(`Calculating compatibility between user ${req.user.id} and ${user.id}`);
       compatibility = await calculateReadingCompatibility(req.user.id, user.id);
       console.log("Compatibility result:", compatibility);
-    } else if (req.user) {
-      console.log(`User viewing own profile or not authenticated: ${req.user.id}, target: ${user.id}`);
-    } else {
+    }
+    // For non-authenticated users, don't calculate compatibility
+    else {
       console.log("No authenticated user");
     }
     
@@ -371,8 +379,8 @@ router.get("/:username", async (req: Request, res: Response) => {
       bio: user.bio,
       followerCount: followerCount[0]?.count || 0,
       followingCount: followingCount[0]?.count || 0,
-      ratingPreferences: compatibility ? null : ratingPreferences, // Only show preferences to the owner
-      compatibility, // Only for logged-in users viewing others
+      ratingPreferences: showRatingPreferences ? ratingPreferences : null, // Only show preferences to the owner
+      compatibility, // Show compatibility for logged-in users viewing others
       wishlist: wishlistBooks,
       pinnedShelves,
       recommendedBooks

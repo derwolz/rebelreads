@@ -264,7 +264,7 @@ const UserProfilePage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Rating Preferences (visible only to the profile owner) */}
+          {/* CASE 1: Rating Preferences (visible only to the profile owner) */}
           {isOwnProfile && ratingPreferences && (
             <Card>
               <CardHeader>
@@ -292,43 +292,51 @@ const UserProfilePage: React.FC = () => {
             </Card>
           )}
           
-          {/* Reading Compatibility (for logged in users viewing other profiles) */}
-          {!isOwnProfile && isAuthenticated && compatibility && (
+          {/* CASE 2: Reading Compatibility (for logged in users viewing other profiles) */}
+          {!isOwnProfile && isAuthenticated && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Reading Compatibility</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4">
-                  <p className="font-semibold text-center mb-2">Overall</p>
-                  <div className="flex justify-center mb-2">
-                    <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
-                  </div>
-                  <p className="text-center text-sm">{compatibility.overall}</p>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <div className="space-y-3">
-                  <p className="font-medium text-sm">Criteria Details:</p>
-                  
-                  {Object.entries(compatibility.criteria).map(([key, value]) => (
-                    <div key={key} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="capitalize text-sm">{key}</span>
-                        <Badge variant={value.compatibility.includes("Compatible") ? "default" : "outline"}>
-                          {value.compatibility}
-                        </Badge>
+                {compatibility ? (
+                  <>
+                    <div className="mb-4">
+                      <p className="font-semibold text-center mb-2">Overall</p>
+                      <div className="flex justify-center mb-2">
+                        <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
                       </div>
+                      <p className="text-center text-sm">{compatibility.overall}</p>
                     </div>
-                  ))}
-                </div>
+                    
+                    <Separator className="my-4" />
+                    
+                    <div className="space-y-3">
+                      <p className="font-medium text-sm">Criteria Details:</p>
+                      
+                      {Object.entries(compatibility.criteria).map(([key, value]) => (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="capitalize text-sm">{key}</span>
+                            <Badge variant={value.compatibility.includes("Compatible") ? "default" : "outline"}>
+                              {value.compatibility}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-4">
+                    <p className="text-center mb-4">Compatibility calculation not available. This may happen if you or this user doesn't have rating preferences set up yet.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
           
-          {/* Reading Compatibility Teaser (for non-logged in users) */}
-          {!isAuthenticated && (
+          {/* CASE 3: Reading Compatibility Teaser (for non-logged in users) */}
+          {!isAuthenticated && !isOwnProfile && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Reading Compatibility</CardTitle>
