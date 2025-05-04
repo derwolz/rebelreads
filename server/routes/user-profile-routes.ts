@@ -32,12 +32,11 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   if (!user1Prefs) {
     console.log(`Creating default preferences for user ${user1Id}`);
     const defaults = {
-      userId: user1Id,
-      enjoyment: "0.5",
-      writing: "0.5",
-      themes: "0.5",
-      characters: "0.5",
-      worldbuilding: "0.5",
+      enjoyment: 0.5, // Use numeric values for saveRatingPreferences
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
       autoAdjust: true
     };
     
@@ -66,12 +65,11 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   if (!user2Prefs) {
     console.log(`Creating default preferences for user ${user2Id}`);
     const defaults = {
-      userId: user2Id,
-      enjoyment: "0.5",
-      writing: "0.5",
-      themes: "0.5",
-      characters: "0.5",
-      worldbuilding: "0.5",
+      enjoyment: 0.5, // Use numeric values for saveRatingPreferences
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
       autoAdjust: true
     };
     
@@ -195,38 +193,22 @@ router.get("/:username", async (req: Request, res: Response) => {
   const { username } = req.params;
   
   try {
-    // Find user by username
-    const user = await db.query.users.findFirst({
-      where: eq(users.username, username)
-    });
+    // Find user by username using dbStorage
+    const user = await dbStorage.getUserByUsername(username);
     
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Get follower count
-    const followerCount = await db
-      .select({ count: count() })
-      .from(followers)
-      .where(and(
-        eq(followers.followingId, user.id),
-        eq(followers.deletedAt, null as any)
-      ));
+    // Get follower count using dbStorage
+    const followerCount = await dbStorage.getFollowerCount(user.id);
     
-    // Get following count
-    const followingCount = await db
-      .select({ count: count() })
-      .from(followers)
-      .where(and(
-        eq(followers.followerId, user.id),
-        eq(followers.deletedAt, null as any)
-      ));
+    // Get following count using dbStorage
+    const followingCount = await dbStorage.getFollowingCount(user.id);
     
-    // Get user's rating preferences
+    // Get user's rating preferences using dbStorage
     console.log(`Looking up rating preferences for user ${user.id} (${user.username})`);
-    const ratingPreferences = await db.query.rating_preferences.findFirst({
-      where: eq(rating_preferences.userId, user.id)
-    });
+    const ratingPreferences = await dbStorage.getRatingPreferences(user.id);
     console.log(`Rating preferences result for ${user.username}:`, ratingPreferences);
     
     // Get wishlist books
@@ -361,11 +343,14 @@ router.get("/:username", async (req: Request, res: Response) => {
     // If an authenticated user is viewing another user's profile, calculate compatibility
     else if (req.user) {
       console.log(`Calculating compatibility between user ${req.user.id} and ${user.id}`);
-      if (ratingPreferences) {
+      // Get or create rating preferences for both users using dbStorage
+      const loggedInUserPrefs = await dbStorage.getRatingPreferences(req.user.id);
+      
+      if (ratingPreferences && loggedInUserPrefs) {
         compatibility = await calculateReadingCompatibility(req.user.id, user.id);
         console.log("Compatibility result:", compatibility);
       } else {
-        console.log("Cannot calculate compatibility: Missing rating preferences for profile user");
+        console.log("Cannot calculate compatibility: Missing rating preferences for one or both users");
       }
     }
     // For non-authenticated users, don't calculate compatibility
@@ -379,8 +364,8 @@ router.get("/:username", async (req: Request, res: Response) => {
       displayName: user.displayName || user.username,
       profileImageUrl: user.profileImageUrl,
       bio: user.bio,
-      followerCount: followerCount[0]?.count || 0,
-      followingCount: followingCount[0]?.count || 0,
+      followerCount: followerCount || 0, // dbStorage returns a number directly
+      followingCount: followingCount || 0, // dbStorage returns a number directly
       ratingPreferences: showRatingPreferences ? ratingPreferences : null, // Only show preferences to the owner
       compatibility, // Show compatibility for logged-in users viewing others
       wishlist: wishlistBooks,
@@ -405,24 +390,16 @@ router.get("/:username/following-status", async (req: Request, res: Response) =>
   
   try {
     // Find target user by username
-    const targetUser = await db.query.users.findFirst({
-      where: eq(users.username, username)
-    });
+    const targetUser = await dbStorage.getUserByUsername(username);
     
     if (!targetUser) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Check if the current user is following the target user
-    const followRecord = await db.query.followers.findFirst({
-      where: and(
-        eq(followers.followerId, req.user.id),
-        eq(followers.followingId, targetUser.id),
-        eq(followers.deletedAt, null as any)
-      )
-    });
+    // Check if the current user is following the target user using dbStorage
+    const isFollowing = await dbStorage.isFollowing(req.user.id, targetUser.id);
     
-    res.json({ isFollowing: !!followRecord });
+    res.json({ isFollowing });
   } catch (error) {
     console.error("Error checking following status:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -439,9 +416,7 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
   
   try {
     // Find target user by username
-    const targetUser = await db.query.users.findFirst({
-      where: eq(users.username, username)
-    });
+    const targetUser = await dbStorage.getUserByUsername(username);
     
     if (!targetUser) {
       return res.status(404).json({ error: "User not found" });
@@ -452,41 +427,16 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Cannot follow yourself" });
     }
     
-    // Check if already following
-    const existingFollow = await db.query.followers.findFirst({
-      where: and(
-        eq(followers.followerId, req.user.id),
-        eq(followers.followingId, targetUser.id)
-      )
-    });
+    // Check if already following 
+    const isFollowing = await dbStorage.isFollowing(req.user.id, targetUser.id);
     
-    if (existingFollow) {
-      if (existingFollow.deletedAt) {
-        // If previously unfollowed, reactivate by removing deletedAt
-        await db
-          .update(followers)
-          .set({ deletedAt: null })
-          .where(eq(followers.id, existingFollow.id));
-        
-        return res.json({ success: true, action: "followed" });
-      } else {
-        // If already following, mark as unfollowed
-        await db
-          .update(followers)
-          .set({ deletedAt: new Date() })
-          .where(eq(followers.id, existingFollow.id));
-        
-        return res.json({ success: true, action: "unfollowed" });
-      }
+    if (isFollowing) {
+      // If already following, unfollow
+      await dbStorage.unfollowAuthor(req.user.id, targetUser.id);
+      return res.json({ success: true, action: "unfollowed" });
     } else {
-      // Create new follow record
-      await db
-        .insert(followers)
-        .values({
-          followerId: req.user.id,
-          followingId: targetUser.id
-        });
-      
+      // If not following, follow
+      await dbStorage.followAuthor(req.user.id, targetUser.id);
       return res.json({ success: true, action: "followed" });
     }
   } catch (error) {
