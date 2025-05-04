@@ -77,7 +77,6 @@ export const dbStorage = {
   addGenreToView: accountStorage.addGenreToView.bind(accountStorage),
   removeGenreFromView: accountStorage.removeGenreFromView.bind(accountStorage),
   updateGenreRank: accountStorage.updateGenreRank.bind(accountStorage),
-  getUserGenrePreferences: accountStorage.getUserGenrePreferences.bind(accountStorage),
   
   // Author analytics
   recordAuthorAction: authorAnalyticsStorage.recordAuthorAction.bind(authorAnalyticsStorage),

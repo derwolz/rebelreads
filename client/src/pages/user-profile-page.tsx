@@ -47,7 +47,6 @@ interface UserProfileData {
       compatibility: string;
       difference: number;
       normalized: number;
-      score: number;
     }>;
   } | null;
   wishlist: Array<{
@@ -265,7 +264,7 @@ const UserProfilePage: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* CASE 1: Rating Preferences (visible only to the profile owner) */}
+          {/* Rating Preferences (visible only to the profile owner) */}
           {isOwnProfile && ratingPreferences && (
             <Card>
               <CardHeader>
@@ -293,76 +292,43 @@ const UserProfilePage: React.FC = () => {
             </Card>
           )}
           
-          {/* CASE 2: Reading Compatibility (for logged in users viewing other profiles) */}
-          {!isOwnProfile && isAuthenticated && (
+          {/* Reading Compatibility (for logged in users viewing other profiles) */}
+          {!isOwnProfile && isAuthenticated && compatibility && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Reading Compatibility</CardTitle>
-                <CardDescription className="text-xs">
-                  {isAuthenticated ? 'You are logged in' : 'Not logged in'} - 
-                  User ID: {user?.id}, Profile user: {profileData?.username}
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Debug information */}
-                <div className="mb-2 p-2 bg-muted rounded-md text-xs">
-                  <p>Debug: compatibility data available? {compatibility ? 'Yes' : 'No'}</p>
-                  {compatibility && (
-                    <>
-                      <p>Score: {compatibility.score}</p>
-                      <p>Overall: {compatibility.overall}</p>
-                      <p>Difference: {compatibility.normalizedDifference.toFixed(4)}</p>
-                    </>
-                  )}
+                <div className="mb-4">
+                  <p className="font-semibold text-center mb-2">Overall</p>
+                  <div className="flex justify-center mb-2">
+                    <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
+                  </div>
+                  <p className="text-center text-sm">{compatibility.overall}</p>
                 </div>
                 
-                {compatibility ? (
-                  <>
-                    <div className="mb-4">
-                      <p className="font-semibold text-center mb-2">Overall</p>
-                      <div className="flex justify-center mb-2">
-                        <SeashellRating compatibilityScore={compatibility.score} isLoggedIn={true} />
+                <Separator className="my-4" />
+                
+                <div className="space-y-3">
+                  <p className="font-medium text-sm">Criteria Details:</p>
+                  
+                  {Object.entries(compatibility.criteria).map(([key, value]) => (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="capitalize text-sm">{key}</span>
+                        <Badge variant={value.compatibility.includes("Compatible") ? "default" : "outline"}>
+                          {value.compatibility}
+                        </Badge>
                       </div>
-                      <p className="text-center text-sm">{compatibility.overall}</p>
                     </div>
-                    
-                    <Separator className="my-4" />
-                    
-                    <div className="space-y-3">
-                      <p className="font-medium text-sm">Criteria Details:</p>
-                      
-                      {Object.entries(compatibility.criteria).map(([key, value]) => (
-                        <div key={key} className="space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="capitalize text-sm">{key}</span>
-                            <Badge variant={value.compatibility.includes("Compatible") ? "default" : "outline"}>
-                              {value.compatibility}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-xs text-muted-foreground">Score: {value.score}</span>
-                            <SeashellRating compatibilityScore={value.score} isLoggedIn={true} className="ml-2 scale-75" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-4">
-                    <p className="text-center mb-4">
-                      Compatibility calculation not available. This may happen if rating preferences haven't been set up yet.
-                    </p>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href="/rating-preferences">Set Up My Rating Preferences</Link>
-                    </Button>
-                  </div>
-                )}
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
           
-          {/* CASE 3: Reading Compatibility Teaser (for non-logged in users) */}
-          {!isAuthenticated && !isOwnProfile && (
+          {/* Reading Compatibility Teaser (for non-logged in users) */}
+          {!isAuthenticated && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Reading Compatibility</CardTitle>

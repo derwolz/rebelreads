@@ -73,7 +73,6 @@ export interface IAccountStorage {
   addGenreToView(viewId: number, taxonomyId: number, type: string, rank: number): Promise<ViewGenre>;
   removeGenreFromView(viewGenreId: number): Promise<void>;
   updateGenreRank(viewGenreId: number, newRank: number): Promise<ViewGenre>;
-  getUserGenrePreferences(userId: number): Promise<any[]>;
   
   getFollowerMetrics(
     authorId: number,
@@ -958,56 +957,5 @@ export class AccountStorage implements IAccountStorage {
     }
     
     return updatedGenre;
-  }
-  
-  /**
-   * Get a user's genre preferences for compatibility calculation
-   * @param userId - User ID to get preferences for
-   * @returns Array of genre views with their associated genres
-   */
-  async getUserGenrePreferences(userId: number): Promise<any[]> {
-    try {
-      // Get all genre views for the user
-      const views = await db
-        .select()
-        .from(userGenreViews)
-        .where(eq(userGenreViews.userId, userId))
-        .orderBy(userGenreViews.rank);
-      
-      // For each view, get the associated genres
-      const result = [];
-      
-      for (const view of views) {
-        // Get genres for this view
-        const genres = await db
-          .select({
-            id: viewGenres.id,
-            viewId: viewGenres.viewId,
-            taxonomyId: viewGenres.taxonomyId,
-            type: viewGenres.type,
-            rank: viewGenres.rank,
-            // Join to get genre details
-            genre: genreTaxonomies
-          })
-          .from(viewGenres)
-          .innerJoin(
-            genreTaxonomies, 
-            eq(viewGenres.taxonomyId, genreTaxonomies.id)
-          )
-          .where(eq(viewGenres.viewId, view.id))
-          .orderBy(viewGenres.rank);
-        
-        // Add view and its genres to result
-        result.push({
-          view,
-          genres
-        });
-      }
-      
-      return result;
-    } catch (error) {
-      console.error("Error getting user genre preferences:", error);
-      return []; // Return empty array on error
-    }
   }
 }

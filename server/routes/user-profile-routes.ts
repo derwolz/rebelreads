@@ -12,57 +12,56 @@ import {
   bookImages
 } from "../../shared/schema";
 import { eq, and, desc, asc, inArray, ilike, or, ne, count, avg, gt } from "drizzle-orm";
-import { dbStorage } from "../storage";
 import { z } from "zod";
 
 const router = Router();
 
-// Get the current user's rating preferences - MUST be placed BEFORE the /:username route to avoid conflicts
-router.get("/current/rating-preferences", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
-  
-  try {
-    const preferences = await dbStorage.getRatingPreferences(req.user.id);
-    
-    if (!preferences) {
-      // Create default preferences if they don't exist
-      const defaults = {
-        enjoyment: 0.5, 
-        writing: 0.5,
-        themes: 0.5,
-        characters: 0.5,
-        worldbuilding: 0.5,
-        autoAdjust: true
-      };
-      
-      // Save default preferences
-      await dbStorage.saveRatingPreferences(req.user.id, defaults);
-      
-      // Get the newly created preferences
-      const newPreferences = await dbStorage.getRatingPreferences(req.user.id);
-      return res.json(newPreferences);
-    }
-    
-    return res.json(preferences);
-  } catch (error) {
-    console.error("Error fetching user rating preferences:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // Helper to calculate reading compatibility between two users
 async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
-  console.log(`Calculating compatibility between user ${user1Id} and ${user2Id}`);
+  // Get both users' rating preferences
+  let user1Prefs = await db.query.rating_preferences.findFirst({
+    where: eq(rating_preferences.userId, user1Id)
+  });
   
-  // Get or create rating preferences for both users
-  const user1Prefs = await getOrCreateUserPreferences(user1Id);
-  const user2Prefs = await getOrCreateUserPreferences(user2Id);
+  let user2Prefs = await db.query.rating_preferences.findFirst({
+    where: eq(rating_preferences.userId, user2Id)
+  });
   
-  // Get genres for both users as well (for future genre similarity calculation)
-  const user1Genres = await dbStorage.getUserGenrePreferences(user1Id);
-  const user2Genres = await dbStorage.getUserGenrePreferences(user2Id);
+  console.log("User 1 preferences:", user1Prefs);
+  console.log("User 2 preferences:", user2Prefs);
+  
+  // Create default preferences if they don't exist
+  if (!user1Prefs) {
+    console.log(`Creating default preferences for user ${user1Id}`);
+    const defaults = {
+      userId: user1Id,
+      enjoyment: 0.5,
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
+      autoAdjust: true
+    };
+    
+    await db.insert(rating_preferences).values(defaults);
+    user1Prefs = defaults;
+  }
+  
+  if (!user2Prefs) {
+    console.log(`Creating default preferences for user ${user2Id}`);
+    const defaults = {
+      userId: user2Id,
+      enjoyment: 0.5,
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
+      autoAdjust: true
+    };
+    
+    await db.insert(rating_preferences).values(defaults);
+    user2Prefs = defaults;
+  }
   
   // Calculate normalized differences for each rating criterion
   const criteria = ["enjoyment", "writing", "themes", "characters", "worldbuilding"] as const;
@@ -72,7 +71,6 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     compatibility: string;
     difference: number;
     normalized: number;
-    score: number;
   }> = {};
   
   // Calculate the total weighted difference for overall compatibility
@@ -90,36 +88,26 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     
     // Apply compatibility levels based on normalized difference
     let compatibility = "";
-    let criterionScore = 0;
-    
     if (normalized <= 0.02) {
       compatibility = "Overwhelmingly Compatible";
-      criterionScore = 3;
     } else if (normalized <= 0.05) {
       compatibility = "Very Compatible";
-      criterionScore = 2;
     } else if (normalized <= 0.10) {
       compatibility = "Mostly Compatible";
-      criterionScore = 1;
     } else if (normalized <= 0.20) {
       compatibility = "Mixed";
-      criterionScore = 0;
     } else if (normalized <= 0.35) {
       compatibility = "Mostly Incompatible";
-      criterionScore = -1;
     } else if (normalized <= 0.40) {
       compatibility = "Not Compatible";
-      criterionScore = -2;
     } else {
       compatibility = "Overwhelmingly Not Compatible";
-      criterionScore = -3;
     }
     
     criteriaCompatibility[criterion] = {
       compatibility,
       difference: diff,
-      normalized,
-      score: criterionScore
+      normalized
     };
     
     // Add to weighted overall calculation
@@ -132,91 +120,40 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   // Calculate overall normalized difference
   const overallNormalized = totalWeight > 0 ? totalWeightedDiff / totalWeight : 0;
   
-  // Determine overall compatibility and score on a -3 to +3 scale
+  // Determine overall compatibility
   let overallCompatibility = "";
-  let compatibilityScore = 0;
-  
   if (overallNormalized <= 0.02) {
     overallCompatibility = "Overwhelmingly Compatible";
-    compatibilityScore = 3;
   } else if (overallNormalized <= 0.05) {
     overallCompatibility = "Very Compatible";
-    compatibilityScore = 2;
   } else if (overallNormalized <= 0.10) {
     overallCompatibility = "Mostly Compatible";
-    compatibilityScore = 1;
   } else if (overallNormalized <= 0.20) {
     overallCompatibility = "Mixed";
-    compatibilityScore = 0;
   } else if (overallNormalized <= 0.35) {
     overallCompatibility = "Mostly Incompatible";
-    compatibilityScore = -1;
   } else if (overallNormalized <= 0.40) {
     overallCompatibility = "Not Compatible";
-    compatibilityScore = -2;
   } else {
     overallCompatibility = "Overwhelmingly Not Compatible";
-    compatibilityScore = -3;
   }
   
-  // For now, just include the genre preferences for future use (real calculation to be implemented later)
-  const genreCompatibility = {
-    user1Genres,
-    user2Genres,
-    // Placeholder for future genre similarity calculation
-    similarityScore: 0
-  };
+  // Calculate compatibility score on a -3 to +3 scale
+  let compatibilityScore = 0;
+  if (overallNormalized <= 0.02) compatibilityScore = 3;
+  else if (overallNormalized <= 0.05) compatibilityScore = 2;
+  else if (overallNormalized <= 0.10) compatibilityScore = 1;
+  else if (overallNormalized <= 0.20) compatibilityScore = 0;
+  else if (overallNormalized <= 0.35) compatibilityScore = -1;
+  else if (overallNormalized <= 0.40) compatibilityScore = -2;
+  else compatibilityScore = -3;
   
   return {
     overall: overallCompatibility,
     score: compatibilityScore,
     normalizedDifference: overallNormalized,
-    criteria: criteriaCompatibility,
-    genres: genreCompatibility
+    criteria: criteriaCompatibility
   };
-}
-
-// Helper to get or create user rating preferences
-async function getOrCreateUserPreferences(userId: number) {
-  // Try to get existing preferences
-  let preferences = await dbStorage.getRatingPreferences(userId);
-  
-  if (!preferences) {
-    console.log(`Creating default preferences for user ${userId}`);
-    // Create default preferences if they don't exist
-    const defaults = {
-      enjoyment: 0.5,
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
-      autoAdjust: true
-    };
-    
-    // Save the default preferences
-    await dbStorage.saveRatingPreferences(userId, defaults);
-    
-    // Fetch the newly created preferences
-    preferences = await dbStorage.getRatingPreferences(userId);
-    
-    // In case the save or fetch fails, use default values
-    if (!preferences) {
-      preferences = {
-        id: 0,
-        userId: userId,
-        enjoyment: "0.5",
-        writing: "0.5",
-        themes: "0.5",
-        characters: "0.5",
-        worldbuilding: "0.5",
-        autoAdjust: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
-  }
-  
-  return preferences;
 }
 
 // Get user profile by username (public endpoint, no auth required)
@@ -224,23 +161,37 @@ router.get("/:username", async (req: Request, res: Response) => {
   const { username } = req.params;
   
   try {
-    // Find user by username using dbStorage
-    const user = await dbStorage.getUserByUsername(username);
+    // Find user by username
+    const user = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
     
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Get follower count using dbStorage
-    const followerCount = await dbStorage.getFollowerCount(user.id);
+    // Get follower count
+    const followerCount = await db
+      .select({ count: count() })
+      .from(followers)
+      .where(and(
+        eq(followers.followingId, user.id),
+        eq(followers.deletedAt, null as any)
+      ));
     
-    // Get following count using dbStorage
-    const followingCount = await dbStorage.getFollowingCount(user.id);
+    // Get following count
+    const followingCount = await db
+      .select({ count: count() })
+      .from(followers)
+      .where(and(
+        eq(followers.followerId, user.id),
+        eq(followers.deletedAt, null as any)
+      ));
     
-    // Get user's rating preferences using dbStorage
-    console.log(`Looking up rating preferences for user ${user.id} (${user.username})`);
-    const ratingPreferences = await dbStorage.getRatingPreferences(user.id);
-    console.log(`Rating preferences result for ${user.username}:`, ratingPreferences);
+    // Get user's rating preferences
+    const ratingPreferences = await db.query.rating_preferences.findFirst({
+      where: eq(rating_preferences.userId, user.id)
+    });
     
     // Get wishlist books
     const wishlist = await db
@@ -256,7 +207,7 @@ router.get("/:username", async (req: Request, res: Response) => {
     const wishlistIds = wishlist.map(item => item.bookId);
     
     // Get wishlisted books with details
-    let wishlistBooks: Array<{book: typeof books.$inferSelect & {images?: typeof bookImages.$inferSelect[]}}> = [];
+    let wishlistBooks: Array<{book: typeof books.$inferSelect & {coverImage?: typeof bookImages.$inferSelect}}> = [];
     if (wishlistIds.length > 0) {
       const tempBooks = await db
         .select({
@@ -268,30 +219,22 @@ router.get("/:username", async (req: Request, res: Response) => {
       
       wishlistBooks = tempBooks.map(item => ({
         book: {
-          ...item.book,
-          images: [] // Initialize images array
+          ...item.book
         }
       }));
       
-      // Get all images for wishlist books at once for better performance
-      const bookImagesList = await db
-        .select()
-        .from(bookImages)
-        .where(inArray(bookImages.bookId, wishlistIds));
-      
-      // Group images by book ID
-      const imagesByBookId = new Map<number, typeof bookImages.$inferSelect[]>();
-      bookImagesList.forEach(image => {
-        if (!imagesByBookId.has(image.bookId)) {
-          imagesByBookId.set(image.bookId, []);
-        }
-        imagesByBookId.get(image.bookId)?.push(image);
-      });
-      
-      // Add images to books
+      // Get images for wishlist books
       for (let i = 0; i < wishlistBooks.length; i++) {
-        const bookId = wishlistBooks[i].book.id;
-        wishlistBooks[i].book.images = imagesByBookId.get(bookId) || [];
+        const bookCoverImage = await db.query.bookImages.findFirst({
+          where: and(
+            eq(bookImages.bookId, wishlistBooks[i].book.id),
+            eq(bookImages.imageType, "book-card")
+          )
+        });
+        
+        if (bookCoverImage) {
+          wishlistBooks[i].book.coverImage = bookCoverImage;
+        }
       }
     }
     
@@ -319,7 +262,7 @@ router.get("/:username", async (req: Request, res: Response) => {
     const recommendedBookIds = positiveRatings.map(rating => rating.bookId);
     
     // Get recommended books with details
-    let recommendedBooks: Array<{book: typeof books.$inferSelect & {images?: typeof bookImages.$inferSelect[]}}> = [];
+    let recommendedBooks: Array<{book: typeof books.$inferSelect & {coverImage?: typeof bookImages.$inferSelect}}> = [];
     if (recommendedBookIds.length > 0) {
       // Get a random selection of 5 books with positive enjoyment ratings
       const randomizedIds = [...recommendedBookIds].sort(() => Math.random() - 0.5).slice(0, 5);
@@ -333,81 +276,51 @@ router.get("/:username", async (req: Request, res: Response) => {
       
       recommendedBooks = tempBooks.map(item => ({
         book: {
-          ...item.book,
-          images: [] // Initialize images array
+          ...item.book
         }
       }));
       
-      // Get all images for recommended books at once for better performance
-      const bookImagesList = await db
-        .select()
-        .from(bookImages)
-        .where(inArray(bookImages.bookId, randomizedIds));
-      
-      // Group images by book ID
-      const imagesByBookId = new Map<number, typeof bookImages.$inferSelect[]>();
-      bookImagesList.forEach(image => {
-        if (!imagesByBookId.has(image.bookId)) {
-          imagesByBookId.set(image.bookId, []);
-        }
-        imagesByBookId.get(image.bookId)?.push(image);
-      });
-      
-      // Add images to books
+      // Get images for recommended books
       for (let i = 0; i < recommendedBooks.length; i++) {
-        const bookId = recommendedBooks[i].book.id;
-        recommendedBooks[i].book.images = imagesByBookId.get(bookId) || [];
+        const bookCoverImage = await db.query.bookImages.findFirst({
+          where: and(
+            eq(bookImages.bookId, recommendedBooks[i].book.id),
+            eq(bookImages.imageType, "book-card")
+          )
+        });
+        
+        if (bookCoverImage) {
+          recommendedBooks[i].book.coverImage = bookCoverImage;
+        }
       }
     }
     
-    // Calculate rating compatibility for different viewing scenarios
+    // Calculate rating compatibility if the request is from a different authenticated user
     let compatibility = null;
-    let showRatingPreferences = false;
-    
-    console.log("Found rating preferences for user profile:", ratingPreferences);
-    
-    // If the user is viewing their own profile, show them their rating preferences
-    if (req.user && req.user.id === user.id) {
-      console.log(`User viewing own profile: ${req.user.id}`);
-      showRatingPreferences = true;
-    } 
-    // If an authenticated user is viewing another user's profile, calculate compatibility
-    else if (req.user) {
+    if (req.user && req.user.id !== user.id) {
       console.log(`Calculating compatibility between user ${req.user.id} and ${user.id}`);
-      
-      // Use our helper function to calculate compatibility - it will handle missing preferences
       compatibility = await calculateReadingCompatibility(req.user.id, user.id);
       console.log("Compatibility result:", compatibility);
-    }
-    // For non-authenticated users, don't calculate compatibility
-    else {
+    } else if (req.user) {
+      console.log(`User viewing own profile or not authenticated: ${req.user.id}, target: ${user.id}`);
+    } else {
       console.log("No authenticated user");
     }
     
     // Return complete user profile data
-    console.log(`Just before sending response, rating preferences for ${user.username} are:`, ratingPreferences);
-    
     const profileData = {
       username: user.username,
       displayName: user.displayName || user.username,
       profileImageUrl: user.profileImageUrl,
       bio: user.bio,
-      followerCount: followerCount || 0, // dbStorage returns a number directly
-      followingCount: followingCount || 0, // dbStorage returns a number directly
-      ratingPreferences: ratingPreferences, // Always include rating preferences regardless of who is viewing
-      compatibility, // Show compatibility for logged-in users viewing others
+      followerCount: followerCount[0]?.count || 0,
+      followingCount: followingCount[0]?.count || 0,
+      ratingPreferences: compatibility ? null : ratingPreferences, // Only show preferences to the owner
+      compatibility, // Only for logged-in users viewing others
       wishlist: wishlistBooks,
       pinnedShelves,
       recommendedBooks
     };
-    
-    console.log(`Final profile data to send (focusing on ratingPreferences):`, { 
-      ...profileData, 
-      ratingPreferences: profileData.ratingPreferences,
-      wishlist: [], // Truncate large arrays for log readability
-      pinnedShelves: [],
-      recommendedBooks: []
-    });
     
     res.json(profileData);
   } catch (error) {
@@ -426,16 +339,24 @@ router.get("/:username/following-status", async (req: Request, res: Response) =>
   
   try {
     // Find target user by username
-    const targetUser = await dbStorage.getUserByUsername(username);
+    const targetUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
     
     if (!targetUser) {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Check if the current user is following the target user using dbStorage
-    const isFollowing = await dbStorage.isFollowing(req.user.id, targetUser.id);
+    // Check if the current user is following the target user
+    const followRecord = await db.query.followers.findFirst({
+      where: and(
+        eq(followers.followerId, req.user.id),
+        eq(followers.followingId, targetUser.id),
+        eq(followers.deletedAt, null as any)
+      )
+    });
     
-    res.json({ isFollowing });
+    res.json({ isFollowing: !!followRecord });
   } catch (error) {
     console.error("Error checking following status:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -452,7 +373,9 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
   
   try {
     // Find target user by username
-    const targetUser = await dbStorage.getUserByUsername(username);
+    const targetUser = await db.query.users.findFirst({
+      where: eq(users.username, username)
+    });
     
     if (!targetUser) {
       return res.status(404).json({ error: "User not found" });
@@ -463,16 +386,41 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Cannot follow yourself" });
     }
     
-    // Check if already following 
-    const isFollowing = await dbStorage.isFollowing(req.user.id, targetUser.id);
+    // Check if already following
+    const existingFollow = await db.query.followers.findFirst({
+      where: and(
+        eq(followers.followerId, req.user.id),
+        eq(followers.followingId, targetUser.id)
+      )
+    });
     
-    if (isFollowing) {
-      // If already following, unfollow
-      await dbStorage.unfollowAuthor(req.user.id, targetUser.id);
-      return res.json({ success: true, action: "unfollowed" });
+    if (existingFollow) {
+      if (existingFollow.deletedAt) {
+        // If previously unfollowed, reactivate by removing deletedAt
+        await db
+          .update(followers)
+          .set({ deletedAt: null })
+          .where(eq(followers.id, existingFollow.id));
+        
+        return res.json({ success: true, action: "followed" });
+      } else {
+        // If already following, mark as unfollowed
+        await db
+          .update(followers)
+          .set({ deletedAt: new Date() })
+          .where(eq(followers.id, existingFollow.id));
+        
+        return res.json({ success: true, action: "unfollowed" });
+      }
     } else {
-      // If not following, follow
-      await dbStorage.followAuthor(req.user.id, targetUser.id);
+      // Create new follow record
+      await db
+        .insert(followers)
+        .values({
+          followerId: req.user.id,
+          followingId: targetUser.id
+        });
+      
       return res.json({ success: true, action: "followed" });
     }
   } catch (error) {
