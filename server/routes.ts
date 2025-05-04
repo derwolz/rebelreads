@@ -52,7 +52,7 @@ import testSirenedBucketRoutes from "./routes/test-sirened-bucket-routes";
 import dashboardRoutes from "./routes/modules/dashboard-routes";
 import wishlistRoutes from "./routes/modules/wishlist-routes";
 import booksByNameRoutes from "./routes/modules/books-by-name-routes";
-import userProfileRoutes from "./routes/user-profile-routes";
+import userProfileRoutes, { authenticatedUserProfileRoutes } from "./routes/user-profile-routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure file uploads path (public before auth) - legacy path
@@ -109,6 +109,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", simpleApiRoutes);
   
   // Register authenticated route modules
+  // Register authenticated user profile routes (these need auth)
+  app.use("/api/users", authenticatedUserProfileRoutes);
+  
   app.use("/api/landing", landingRoutes);
   app.use("/api", accountRoutes);
   app.use("/api/pro", proRoutes);

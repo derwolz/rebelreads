@@ -201,6 +201,8 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
 
 // Get user profile by username (public endpoint, no auth required)
 router.get("/:username", async (req: Request, res: Response) => {
+  // Log authentication status for debugging
+  console.log("Profile request - Auth status:", !!req.user, req.user?.id);
   const { username } = req.params;
   
   try {
@@ -472,9 +474,15 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
   }
 });
 
-// Route 1: Ratings comparison route
-router.get("/:username/ratings-comparison", requireAuth, async (req: Request, res: Response) => {
-  console.log("Ratings comparison route called, auth status: true");
+// Ratings and genre routes have been moved to authenticatedUserProfileRoutes below
+// See line ~700 for the routes
+
+// Create a separate router for authenticated routes
+export const authenticatedUserProfileRoutes = Router();
+
+// Add the authenticated routes to this router
+authenticatedUserProfileRoutes.get("/:username/ratings-comparison", requireAuth, async (req: Request, res: Response) => {
+  console.log("Ratings comparison route called, auth status: true", "user:", req.user?.id, req.user?.username);
 
   const { username } = req.params;
   const currentUserId = req.user!.id;
@@ -510,9 +518,7 @@ router.get("/:username/ratings-comparison", requireAuth, async (req: Request, re
   }
 });
 
-// Route 2: User rating route (for the same user only)
-router.get("/:username/ratings", requireAuth, async (req: Request, res: Response) => {
-
+authenticatedUserProfileRoutes.get("/:username/ratings", requireAuth, async (req: Request, res: Response) => {
   const { username } = req.params;
   
   try {
@@ -544,9 +550,7 @@ router.get("/:username/ratings", requireAuth, async (req: Request, res: Response
   }
 });
 
-// Route 3: Genre preference comparison route
-router.get("/:username/genre-comparison", requireAuth, async (req: Request, res: Response) => {
-
+authenticatedUserProfileRoutes.get("/:username/genre-comparison", requireAuth, async (req: Request, res: Response) => {
   const { username } = req.params;
   const currentUserId = req.user!.id;
 
@@ -634,9 +638,7 @@ router.get("/:username/genre-comparison", requireAuth, async (req: Request, res:
   }
 });
 
-// Route 4: User genre preferences route (for the same user only)
-router.get("/:username/genres", requireAuth, async (req: Request, res: Response) => {
-
+authenticatedUserProfileRoutes.get("/:username/genres", requireAuth, async (req: Request, res: Response) => {
   const { username } = req.params;
   
   try {
@@ -695,4 +697,5 @@ router.get("/:username/genres", requireAuth, async (req: Request, res: Response)
   }
 });
 
+// Export both routers
 export default router;
