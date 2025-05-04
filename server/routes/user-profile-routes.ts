@@ -132,19 +132,19 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     // Apply compatibility levels based on normalized difference
     let compatibility = "";
     if (normalized <= 0.02) {
-      compatibility = "Overwhelmingly Compatible";
+      compatibility = "Overwhelmingly compatible";
     } else if (normalized <= 0.05) {
-      compatibility = "Very Compatible";
+      compatibility = "Very compatible";
     } else if (normalized <= 0.10) {
-      compatibility = "Mostly Compatible";
+      compatibility = "Mostly compatible";
     } else if (normalized <= 0.20) {
-      compatibility = "Mixed";
+      compatibility = "Mixed compatibility";
     } else if (normalized <= 0.35) {
-      compatibility = "Mostly Incompatible";
+      compatibility = "Mostly incompatible";
     } else if (normalized <= 0.40) {
-      compatibility = "Not Compatible";
+      compatibility = "Very incompatible";
     } else {
-      compatibility = "Overwhelmingly Not Compatible";
+      compatibility = "Overwhelmingly incompatible";
     }
     
     criteriaCompatibility[criterion] = {
@@ -166,19 +166,19 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   // Determine overall compatibility
   let overallCompatibility = "";
   if (overallNormalized <= 0.02) {
-    overallCompatibility = "Overwhelmingly Compatible";
+    overallCompatibility = "Overwhelmingly compatible";
   } else if (overallNormalized <= 0.05) {
-    overallCompatibility = "Very Compatible";
+    overallCompatibility = "Very compatible";
   } else if (overallNormalized <= 0.10) {
-    overallCompatibility = "Mostly Compatible";
+    overallCompatibility = "Mostly compatible";
   } else if (overallNormalized <= 0.20) {
-    overallCompatibility = "Mixed";
+    overallCompatibility = "Mixed compatibility";
   } else if (overallNormalized <= 0.35) {
-    overallCompatibility = "Mostly Incompatible";
+    overallCompatibility = "Mostly incompatible";
   } else if (overallNormalized <= 0.40) {
-    overallCompatibility = "Not Compatible";
+    overallCompatibility = "Very incompatible";
   } else {
-    overallCompatibility = "Overwhelmingly Not Compatible";
+    overallCompatibility = "Overwhelmingly incompatible";
   }
   
   // Calculate compatibility score on a -3 to +3 scale
@@ -498,8 +498,11 @@ authenticatedUserProfileRoutes.get("/:username/ratings-comparison", requireAuth,
     // Get rating preferences for both users
     const currentUserPreferences = await dbStorage.getRatingPreferences(currentUserId);
     const targetUserPreferences = await dbStorage.getRatingPreferences(targetUser.id);
+    
+    // Calculate compatibility between the users using the K-means approach
+    const compatibility = await calculateReadingCompatibility(currentUserId, targetUser.id);
 
-    // Return both users' preferences for comparison
+    // Return both users' preferences for comparison along with compatibility data
     res.json({
       currentUser: {
         id: currentUserId,
@@ -510,6 +513,12 @@ authenticatedUserProfileRoutes.get("/:username/ratings-comparison", requireAuth,
         id: targetUser.id,
         username: targetUser.username,
         preferences: targetUserPreferences || null
+      },
+      compatibility: {
+        overall: compatibility.overall,
+        score: compatibility.score,
+        normalizedDifference: compatibility.normalizedDifference,
+        criteria: compatibility.criteria
       }
     });
   } catch (error) {
@@ -619,7 +628,10 @@ authenticatedUserProfileRoutes.get("/:username/genre-comparison", requireAuth, a
       })
     );
 
-    // Return both users' genre preferences for comparison
+    // Calculate reading compatibility between the users
+    const compatibility = await calculateReadingCompatibility(currentUserId, targetUser.id);
+    
+    // Return both users' genre preferences for comparison along with compatibility
     res.json({
       currentUser: {
         id: currentUserId,
@@ -630,6 +642,12 @@ authenticatedUserProfileRoutes.get("/:username/genre-comparison", requireAuth, a
         id: targetUser.id,
         username: targetUser.username,
         genreViews: targetUserGenres
+      },
+      compatibility: {
+        overall: compatibility.overall,
+        score: compatibility.score,
+        normalizedDifference: compatibility.normalizedDifference,
+        criteria: compatibility.criteria
       }
     });
   } catch (error) {
