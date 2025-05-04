@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db";
 import { dbStorage } from "../storage";
+import { requireAuth } from "../middleware/auth";
 import { 
   users, 
   followers, 
@@ -472,11 +473,8 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
 });
 
 // Route 1: Ratings comparison route
-router.get("/:username/ratings-comparison", async (req: Request, res: Response) => {
-  console.log("Ratings comparison route called, auth status:", !!req.user);
-  if (!req.user) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
+router.get("/:username/ratings-comparison", requireAuth, async (req: Request, res: Response) => {
+  console.log("Ratings comparison route called, auth status: true");
 
   const { username } = req.params;
   const currentUserId = req.user!.id;
@@ -513,10 +511,7 @@ router.get("/:username/ratings-comparison", async (req: Request, res: Response) 
 });
 
 // Route 2: User rating route (for the same user only)
-router.get("/:username/ratings", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
+router.get("/:username/ratings", requireAuth, async (req: Request, res: Response) => {
 
   const { username } = req.params;
   
