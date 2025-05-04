@@ -56,79 +56,9 @@ router.get("/current/rating-preferences", async (req: Request, res: Response) =>
 async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   console.log(`Calculating compatibility between user ${user1Id} and ${user2Id}`);
   
-  // Get both users' rating preferences using the storage class
-  let user1Prefs = await dbStorage.getRatingPreferences(user1Id);
-  let user2Prefs = await dbStorage.getRatingPreferences(user2Id);
-  
-  console.log("User 1 preferences from dbStorage:", user1Prefs);
-  console.log("User 2 preferences from dbStorage:", user2Prefs);
-  
-  // Create default preferences if they don't exist
-  if (!user1Prefs) {
-    console.log(`Creating default preferences for user ${user1Id}`);
-    const defaults = {
-      enjoyment: 0.5, // Use numeric values for saveRatingPreferences
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
-      autoAdjust: true
-    };
-    
-    await dbStorage.saveRatingPreferences(user1Id, defaults);
-    
-    // Fetch the newly created preferences
-    user1Prefs = await dbStorage.getRatingPreferences(user1Id);
-    
-    if (!user1Prefs) {
-      // Fall back to defaults if fetch fails
-      user1Prefs = {
-        id: 0,
-        userId: user1Id,
-        enjoyment: "0.5",
-        writing: "0.5",
-        themes: "0.5",
-        characters: "0.5",
-        worldbuilding: "0.5",
-        autoAdjust: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
-  }
-  
-  if (!user2Prefs) {
-    console.log(`Creating default preferences for user ${user2Id}`);
-    const defaults = {
-      enjoyment: 0.5, // Use numeric values for saveRatingPreferences
-      writing: 0.5,
-      themes: 0.5,
-      characters: 0.5,
-      worldbuilding: 0.5,
-      autoAdjust: true
-    };
-    
-    await dbStorage.saveRatingPreferences(user2Id, defaults);
-    
-    // Fetch the newly created preferences
-    user2Prefs = await dbStorage.getRatingPreferences(user2Id);
-    
-    if (!user2Prefs) {
-      // Fall back to defaults if fetch fails
-      user2Prefs = {
-        id: 0,
-        userId: user2Id,
-        enjoyment: "0.5",
-        writing: "0.5",
-        themes: "0.5",
-        characters: "0.5",
-        worldbuilding: "0.5",
-        autoAdjust: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
-  }
+  // Get or create rating preferences for both users
+  const user1Prefs = await getOrCreateUserPreferences(user1Id);
+  const user2Prefs = await getOrCreateUserPreferences(user2Id);
   
   // Calculate normalized differences for each rating criterion
   const criteria = ["enjoyment", "writing", "themes", "characters", "worldbuilding"] as const;
@@ -221,6 +151,49 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     normalizedDifference: overallNormalized,
     criteria: criteriaCompatibility
   };
+}
+
+// Helper to get or create user rating preferences
+async function getOrCreateUserPreferences(userId: number) {
+  // Try to get existing preferences
+  let preferences = await dbStorage.getRatingPreferences(userId);
+  
+  if (!preferences) {
+    console.log(`Creating default preferences for user ${userId}`);
+    // Create default preferences if they don't exist
+    const defaults = {
+      enjoyment: 0.5,
+      writing: 0.5,
+      themes: 0.5,
+      characters: 0.5,
+      worldbuilding: 0.5,
+      autoAdjust: true
+    };
+    
+    // Save the default preferences
+    await dbStorage.saveRatingPreferences(userId, defaults);
+    
+    // Fetch the newly created preferences
+    preferences = await dbStorage.getRatingPreferences(userId);
+    
+    // In case the save or fetch fails, use default values
+    if (!preferences) {
+      preferences = {
+        id: 0,
+        userId: userId,
+        enjoyment: "0.5",
+        writing: "0.5",
+        themes: "0.5",
+        characters: "0.5",
+        worldbuilding: "0.5",
+        autoAdjust: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+  }
+  
+  return preferences;
 }
 
 // Get user profile by username (public endpoint, no auth required)
@@ -378,15 +351,10 @@ router.get("/:username", async (req: Request, res: Response) => {
     // If an authenticated user is viewing another user's profile, calculate compatibility
     else if (req.user) {
       console.log(`Calculating compatibility between user ${req.user.id} and ${user.id}`);
-      // Get or create rating preferences for both users using dbStorage
-      const loggedInUserPrefs = await dbStorage.getRatingPreferences(req.user.id);
       
-      if (ratingPreferences && loggedInUserPrefs) {
-        compatibility = await calculateReadingCompatibility(req.user.id, user.id);
-        console.log("Compatibility result:", compatibility);
-      } else {
-        console.log("Cannot calculate compatibility: Missing rating preferences for one or both users");
-      }
+      // Use our helper function to calculate compatibility - it will handle missing preferences
+      compatibility = await calculateReadingCompatibility(req.user.id, user.id);
+      console.log("Compatibility result:", compatibility);
     }
     // For non-authenticated users, don't calculate compatibility
     else {
