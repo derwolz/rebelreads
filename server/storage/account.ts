@@ -73,6 +73,7 @@ export interface IAccountStorage {
   addGenreToView(viewId: number, taxonomyId: number, type: string, rank: number): Promise<ViewGenre>;
   removeGenreFromView(viewGenreId: number): Promise<void>;
   updateGenreRank(viewGenreId: number, newRank: number): Promise<ViewGenre>;
+  getUserGenrePreferences(userId: number): Promise<any[]>;
   
   getFollowerMetrics(
     authorId: number,
