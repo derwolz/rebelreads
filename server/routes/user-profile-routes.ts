@@ -60,6 +60,10 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   const user1Prefs = await getOrCreateUserPreferences(user1Id);
   const user2Prefs = await getOrCreateUserPreferences(user2Id);
   
+  // Get genres for both users as well (for future genre similarity calculation)
+  const user1Genres = await dbStorage.getUserGenrePreferences(user1Id);
+  const user2Genres = await dbStorage.getUserGenrePreferences(user2Id);
+  
   // Calculate normalized differences for each rating criterion
   const criteria = ["enjoyment", "writing", "themes", "characters", "worldbuilding"] as const;
   
@@ -68,6 +72,7 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     compatibility: string;
     difference: number;
     normalized: number;
+    score: number;
   }> = {};
   
   // Calculate the total weighted difference for overall compatibility
@@ -85,26 +90,36 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     
     // Apply compatibility levels based on normalized difference
     let compatibility = "";
+    let criterionScore = 0;
+    
     if (normalized <= 0.02) {
       compatibility = "Overwhelmingly Compatible";
+      criterionScore = 3;
     } else if (normalized <= 0.05) {
       compatibility = "Very Compatible";
+      criterionScore = 2;
     } else if (normalized <= 0.10) {
       compatibility = "Mostly Compatible";
+      criterionScore = 1;
     } else if (normalized <= 0.20) {
       compatibility = "Mixed";
+      criterionScore = 0;
     } else if (normalized <= 0.35) {
       compatibility = "Mostly Incompatible";
+      criterionScore = -1;
     } else if (normalized <= 0.40) {
       compatibility = "Not Compatible";
+      criterionScore = -2;
     } else {
       compatibility = "Overwhelmingly Not Compatible";
+      criterionScore = -3;
     }
     
     criteriaCompatibility[criterion] = {
       compatibility,
       difference: diff,
-      normalized
+      normalized,
+      score: criterionScore
     };
     
     // Add to weighted overall calculation
@@ -117,39 +132,47 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
   // Calculate overall normalized difference
   const overallNormalized = totalWeight > 0 ? totalWeightedDiff / totalWeight : 0;
   
-  // Determine overall compatibility
+  // Determine overall compatibility and score on a -3 to +3 scale
   let overallCompatibility = "";
+  let compatibilityScore = 0;
+  
   if (overallNormalized <= 0.02) {
     overallCompatibility = "Overwhelmingly Compatible";
+    compatibilityScore = 3;
   } else if (overallNormalized <= 0.05) {
     overallCompatibility = "Very Compatible";
+    compatibilityScore = 2;
   } else if (overallNormalized <= 0.10) {
     overallCompatibility = "Mostly Compatible";
+    compatibilityScore = 1;
   } else if (overallNormalized <= 0.20) {
     overallCompatibility = "Mixed";
+    compatibilityScore = 0;
   } else if (overallNormalized <= 0.35) {
     overallCompatibility = "Mostly Incompatible";
+    compatibilityScore = -1;
   } else if (overallNormalized <= 0.40) {
     overallCompatibility = "Not Compatible";
+    compatibilityScore = -2;
   } else {
     overallCompatibility = "Overwhelmingly Not Compatible";
+    compatibilityScore = -3;
   }
   
-  // Calculate compatibility score on a -3 to +3 scale
-  let compatibilityScore = 0;
-  if (overallNormalized <= 0.02) compatibilityScore = 3;
-  else if (overallNormalized <= 0.05) compatibilityScore = 2;
-  else if (overallNormalized <= 0.10) compatibilityScore = 1;
-  else if (overallNormalized <= 0.20) compatibilityScore = 0;
-  else if (overallNormalized <= 0.35) compatibilityScore = -1;
-  else if (overallNormalized <= 0.40) compatibilityScore = -2;
-  else compatibilityScore = -3;
+  // For now, just include the genre preferences for future use (real calculation to be implemented later)
+  const genreCompatibility = {
+    user1Genres,
+    user2Genres,
+    // Placeholder for future genre similarity calculation
+    similarityScore: 0
+  };
   
   return {
     overall: overallCompatibility,
     score: compatibilityScore,
     normalizedDifference: overallNormalized,
-    criteria: criteriaCompatibility
+    criteria: criteriaCompatibility,
+    genres: genreCompatibility
   };
 }
 
