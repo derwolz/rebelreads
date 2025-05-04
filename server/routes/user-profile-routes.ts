@@ -524,7 +524,7 @@ router.get("/:username/ratings", requireAuth, async (req: Request, res: Response
     }
 
     // Check if current user is requesting their own preferences
-    if (req.user.id !== targetUser.id) {
+    if (req.user!.id !== targetUser.id) {
       return res.status(403).json({ error: "You can only view your own rating preferences" });
     }
 
@@ -648,7 +648,7 @@ router.get("/:username/genres", requireAuth, async (req: Request, res: Response)
     }
 
     // Check if current user is requesting their own preferences
-    if (req.user.id !== targetUser.id) {
+    if (req.user!.id !== targetUser.id) {
       return res.status(403).json({ error: "You can only view your own genre preferences" });
     }
 
