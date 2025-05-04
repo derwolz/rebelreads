@@ -359,6 +359,8 @@ router.get("/:username", async (req: Request, res: Response) => {
     }
     
     // Return complete user profile data
+    console.log(`Just before sending response, rating preferences for ${user.username} are:`, ratingPreferences);
+    
     const profileData = {
       username: user.username,
       displayName: user.displayName || user.username,
@@ -366,12 +368,20 @@ router.get("/:username", async (req: Request, res: Response) => {
       bio: user.bio,
       followerCount: followerCount || 0, // dbStorage returns a number directly
       followingCount: followingCount || 0, // dbStorage returns a number directly
-      ratingPreferences: showRatingPreferences ? ratingPreferences : null, // Only show preferences to the owner
+      ratingPreferences: ratingPreferences, // Always include rating preferences regardless of who is viewing
       compatibility, // Show compatibility for logged-in users viewing others
       wishlist: wishlistBooks,
       pinnedShelves,
       recommendedBooks
     };
+    
+    console.log(`Final profile data to send (focusing on ratingPreferences):`, { 
+      ...profileData, 
+      ratingPreferences: profileData.ratingPreferences,
+      wishlist: [], // Truncate large arrays for log readability
+      pinnedShelves: [],
+      recommendedBooks: []
+    });
     
     res.json(profileData);
   } catch (error) {
@@ -441,6 +451,41 @@ router.post("/:username/follow", async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error("Error updating follow status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get the current user's rating preferences
+router.get("/rating-preferences", async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  
+  try {
+    const preferences = await dbStorage.getRatingPreferences(req.user.id);
+    
+    if (!preferences) {
+      // Create default preferences if they don't exist
+      const defaults = {
+        enjoyment: 0.5, 
+        writing: 0.5,
+        themes: 0.5,
+        characters: 0.5,
+        worldbuilding: 0.5,
+        autoAdjust: true
+      };
+      
+      // Save default preferences
+      await dbStorage.saveRatingPreferences(req.user.id, defaults);
+      
+      // Get the newly created preferences
+      const newPreferences = await dbStorage.getRatingPreferences(req.user.id);
+      return res.json(newPreferences);
+    }
+    
+    return res.json(preferences);
+  } catch (error) {
+    console.error("Error fetching user rating preferences:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
