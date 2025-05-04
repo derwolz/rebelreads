@@ -742,12 +742,43 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.get("/api/user", (req, res) => {
+  app.get("/api/user", async (req, res) => {
     if (!req.isAuthenticated()) {
       res.setHeader('Content-Type', 'application/json');
       return res.status(401).json({ error: "Not authenticated" });
     }
-    res.json(req.user);
+    
+    try {
+      // Get user's rating preferences or create defaults if none exist
+      let ratingPreferences = await dbStorage.getRatingPreferences(req.user.id);
+      
+      if (!ratingPreferences) {
+        // Create default preferences
+        const defaults = {
+          enjoyment: 0.5,
+          writing: 0.5,
+          themes: 0.5,
+          characters: 0.5,
+          worldbuilding: 0.5,
+          autoAdjust: true
+        };
+        
+        // Save default preferences
+        await dbStorage.saveRatingPreferences(req.user.id, defaults);
+        
+        // Get the newly created preferences
+        ratingPreferences = await dbStorage.getRatingPreferences(req.user.id);
+      }
+      
+      // Return user with rating preferences
+      res.json({
+        ...req.user,
+        ratingPreferences
+      });
+    } catch (error) {
+      console.error("Error fetching user with rating preferences:", error);
+      res.status(500).json({ error: "Failed to fetch user data" });
+    }
   });
   
   // Add middleware to ensure API routes always return JSON for unauthenticated requests
