@@ -18,7 +18,23 @@ const router = Router();
 
 // Helper to calculate reading compatibility between two users
 async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
-  // Get both users' rating preferences
+  console.log(`Calculating compatibility between user ${user1Id} and ${user2Id}`);
+  
+  // Check if rating preferences exist directly in the database using raw SQL
+  const user1PrefsCheck = await pool.query(
+    `SELECT * FROM rating_preferences WHERE user_id = $1`,
+    [user1Id]
+  );
+  
+  const user2PrefsCheck = await pool.query(
+    `SELECT * FROM rating_preferences WHERE user_id = $1`,
+    [user2Id]
+  );
+  
+  console.log("SQL query result for user1:", user1PrefsCheck.rows);
+  console.log("SQL query result for user2:", user2PrefsCheck.rows);
+  
+  // Get both users' rating preferences using drizzle
   let user1Prefs = await db.query.rating_preferences.findFirst({
     where: eq(rating_preferences.userId, user1Id)
   });
@@ -27,8 +43,8 @@ async function calculateReadingCompatibility(user1Id: number, user2Id: number) {
     where: eq(rating_preferences.userId, user2Id)
   });
   
-  console.log("User 1 preferences:", user1Prefs);
-  console.log("User 2 preferences:", user2Prefs);
+  console.log("User 1 drizzle preferences:", user1Prefs);
+  console.log("User 2 drizzle preferences:", user2Prefs);
   
   // Create default preferences if they don't exist
   if (!user1Prefs) {

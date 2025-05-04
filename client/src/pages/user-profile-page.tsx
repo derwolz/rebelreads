@@ -328,7 +328,12 @@ const UserProfilePage: React.FC = () => {
                   </>
                 ) : (
                   <div className="flex flex-col items-center justify-center p-4">
-                    <p className="text-center mb-4">Compatibility calculation not available. This may happen if you or this user doesn't have rating preferences set up yet.</p>
+                    <p className="text-center mb-4">
+                      Compatibility calculation not available. This may happen if rating preferences haven't been set up yet.
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/rating-preferences">Set Up My Rating Preferences</Link>
+                    </Button>
                   </div>
                 )}
               </CardContent>
