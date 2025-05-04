@@ -495,7 +495,7 @@ router.get("/:username/ratings-comparison", requireAuth, async (req: Request, re
     res.json({
       currentUser: {
         id: currentUserId,
-        username: req.user.username,
+        username: req.user!.username,
         preferences: currentUserPreferences || null
       },
       targetUser: {
@@ -545,10 +545,7 @@ router.get("/:username/ratings", requireAuth, async (req: Request, res: Response
 });
 
 // Route 3: Genre preference comparison route
-router.get("/:username/genre-comparison", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
+router.get("/:username/genre-comparison", requireAuth, async (req: Request, res: Response) => {
 
   const { username } = req.params;
   const currentUserId = req.user!.id;
@@ -622,7 +619,7 @@ router.get("/:username/genre-comparison", async (req: Request, res: Response) =>
     res.json({
       currentUser: {
         id: currentUserId,
-        username: req.user.username,
+        username: req.user!.username,
         genreViews: currentUserGenres
       },
       targetUser: {
@@ -638,10 +635,7 @@ router.get("/:username/genre-comparison", async (req: Request, res: Response) =>
 });
 
 // Route 4: User genre preferences route (for the same user only)
-router.get("/:username/genres", async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
+router.get("/:username/genres", requireAuth, async (req: Request, res: Response) => {
 
   const { username } = req.params;
   
