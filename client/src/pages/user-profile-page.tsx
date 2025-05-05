@@ -395,14 +395,19 @@ const UserProfilePage: React.FC = () => {
                               <h3 className="text-sm font-medium text-center">Genre Compatibility</h3>
                               
                               {/* Show genre compatibility rating */}
-                              {genreData.compatibility && (
-                                <div className="flex justify-center mt-2 mb-3">
-                                  <SeashellRating 
-                                    compatibilityScore={genreData.compatibility.score} 
-                                    compatibilityLabel={genreData.compatibility.overall}
-                                    isLoggedIn={true}
-                                    showLabel={false}
-                                  />
+                              {genreData.genreCompatibility && (
+                                <div className="text-center mb-3">
+                                  <div className="flex justify-center">
+                                    <SeashellRating 
+                                      compatibilityScore={genreData.genreCompatibility.score} 
+                                      compatibilityLabel={genreData.genreCompatibility.overall}
+                                      isLoggedIn={true}
+                                      showLabel={false}
+                                    />
+                                  </div>
+                                  <div className="mt-1 text-sm">
+                                    <span className="font-medium">{genreData.genreCompatibility.similarityPercentage}%</span> similar tastes
+                                  </div>
                                 </div>
                               )}
                               
@@ -410,42 +415,32 @@ const UserProfilePage: React.FC = () => {
                               <div className="mt-3">
                                 <p className="text-xs text-center text-muted-foreground mb-2">Top genres in common:</p>
                                 <div className="flex flex-wrap justify-center gap-1">
-                                  {genreData.currentUser.genreViews?.length > 0 && 
-                                   genreData.targetUser.genreViews?.length > 0 ? (
-                                    genreData.currentUser.genreViews
-                                      .flatMap((view: any) => view.genres || [])
-                                      .filter((genre: any) => 
-                                        genreData.targetUser.genreViews
-                                          .flatMap((view: any) => view.genres || [])
-                                          .some((targetGenre: any) => targetGenre.taxonomyId === genre.taxonomyId)
-                                      )
-                                      .slice(0, 5)
-                                      .map((genre: any, index: number) => (
-                                        <Badge key={index} variant="outline" className="capitalize">
-                                          {genre.taxonomy?.name || "Genre"}
-                                        </Badge>
-                                      ))
+                                  {genreData.genreCompatibility?.topCommonGenres?.length > 0 ? (
+                                    genreData.genreCompatibility.topCommonGenres.map((genre: any, index: number) => (
+                                      <Badge key={index} variant="outline" className="capitalize">
+                                        {genre?.name || "Genre"}
+                                      </Badge>
+                                    ))
                                   ) : (
-                                    <p className="text-xs text-muted-foreground">
-                                      {genreData.currentUser.genreViews?.length === 0 
-                                        ? "Set up your preferences to see common genres" 
-                                        : "This user hasn't set genre preferences"}
-                                    </p>
-                                  )}
-                                  
-                                  {/* Show "no common genres" message if needed */}
-                                  {genreData.currentUser.genreViews?.length > 0 && 
-                                   genreData.targetUser.genreViews?.length > 0 &&
-                                   genreData.currentUser.genreViews
-                                    .flatMap((view: any) => view.genres || [])
-                                    .filter((genre: any) => 
-                                      genreData.targetUser.genreViews
-                                        .flatMap((view: any) => view.genres || [])
-                                        .some((targetGenre: any) => targetGenre.taxonomyId === genre.taxonomyId)
-                                    ).length === 0 && (
-                                    <p className="text-xs text-muted-foreground">No common genres found</p>
+                                    genreData.currentUser.genreViews?.length > 0 && 
+                                    genreData.targetUser.genreViews?.length > 0 ? (
+                                      <p className="text-xs text-muted-foreground">No common genres found</p>
+                                    ) : (
+                                      <p className="text-xs text-muted-foreground">
+                                        {genreData.currentUser.genreViews?.length === 0 
+                                          ? "Set up your preferences to see common genres" 
+                                          : "This user hasn't set genre preferences"}
+                                      </p>
+                                    )
                                   )}
                                 </div>
+                                
+                                {/* Show total common genres if applicable */}
+                                {genreData.genreCompatibility?.totalCommonGenres > 5 && (
+                                  <p className="text-xs text-center text-muted-foreground mt-2">
+                                    + {genreData.genreCompatibility.totalCommonGenres - 5} more genres in common
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </>

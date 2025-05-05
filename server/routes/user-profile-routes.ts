@@ -599,18 +599,23 @@ async function calculateGenreCompatibility(user1Genres: any[], user2Genres: any[
   const user2AggregatedGenres = aggregateGenres(user2Genres);
   
   // Step 2: Find common and unique genres
-  const user1GenreIds = new Set(user1AggregatedGenres.map(g => g.taxonomyId));
-  const user2GenreIds = new Set(user2AggregatedGenres.map(g => g.taxonomyId));
+  const user1GenreIds = user1AggregatedGenres.map(g => g.taxonomyId);
+  const user2GenreIds = user2AggregatedGenres.map(g => g.taxonomyId);
+  
+  // Create Sets from the arrays
+  const user1GenreIdSet = new Set(user1GenreIds);
+  const user2GenreIdSet = new Set(user2GenreIds);
   
   // Find genres that both users have (intersection)
-  const commonGenreIds = [...user1GenreIds].filter(id => user2GenreIds.has(id));
+  const commonGenreIds = user1GenreIds.filter(id => user2GenreIdSet.has(id));
   
   // Unique genres for each user
-  const uniqueToUser1 = [...user1GenreIds].filter(id => !user2GenreIds.has(id));
-  const uniqueToUser2 = [...user2GenreIds].filter(id => !user1GenreIds.has(id));
+  const uniqueToUser1 = user1GenreIds.filter(id => !user2GenreIdSet.has(id));
+  const uniqueToUser2 = user2GenreIds.filter(id => !user1GenreIdSet.has(id));
   
   // Total number of unique genres across both users
-  const totalUniqueGenres = new Set([...user1GenreIds, ...user2GenreIds]).size;
+  const allGenreIds = [...user1GenreIds, ...user2GenreIds];
+  const totalUniqueGenres = new Set(allGenreIds).size;
   
   // Calculate similarity (Jaccard similarity coefficient)
   // Defined as: intersection size / union size
