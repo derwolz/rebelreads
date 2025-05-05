@@ -559,6 +559,103 @@ authenticatedUserProfileRoutes.get("/:username/ratings", requireAuth, async (req
   }
 });
 
+// Helper function to calculate genre compatibility based on aggregated taxonomies
+async function calculateGenreCompatibility(user1Genres: any[], user2Genres: any[]) {
+  // Step 1: Aggregate the taxonomies by name for both users
+  
+  // Helper to aggregate genres by taxonomyId
+  function aggregateGenres(genres: any[]) {
+    const aggregated: Record<string, any> = {};
+    
+    // Flatten all genres from all views
+    const flatGenres = genres.flatMap(view => view.genres || []);
+    
+    // Group by taxonomy ID
+    flatGenres.forEach(genre => {
+      if (!genre.taxonomy) return;
+      
+      const taxonomyId = genre.taxonomyId;
+      
+      if (!aggregated[taxonomyId]) {
+        aggregated[taxonomyId] = {
+          count: 0,
+          genre: { ...genre }
+        };
+      }
+      
+      // Count occurrences (for averaging later)
+      aggregated[taxonomyId].count++;
+    });
+    
+    // Convert to array and normalize the values
+    return Object.values(aggregated).map((item: any) => ({
+      ...item.genre,
+      // Each genre can only have a maximum value of 1
+      normalized: 1
+    }));
+  }
+  
+  const user1AggregatedGenres = aggregateGenres(user1Genres);
+  const user2AggregatedGenres = aggregateGenres(user2Genres);
+  
+  // Step 2: Find common and unique genres
+  const user1GenreIds = new Set(user1AggregatedGenres.map(g => g.taxonomyId));
+  const user2GenreIds = new Set(user2AggregatedGenres.map(g => g.taxonomyId));
+  
+  // Find genres that both users have (intersection)
+  const commonGenreIds = [...user1GenreIds].filter(id => user2GenreIds.has(id));
+  
+  // Unique genres for each user
+  const uniqueToUser1 = [...user1GenreIds].filter(id => !user2GenreIds.has(id));
+  const uniqueToUser2 = [...user2GenreIds].filter(id => !user1GenreIds.has(id));
+  
+  // Total number of unique genres across both users
+  const totalUniqueGenres = new Set([...user1GenreIds, ...user2GenreIds]).size;
+  
+  // Calculate similarity (Jaccard similarity coefficient)
+  // Defined as: intersection size / union size
+  const similarityScore = commonGenreIds.length / totalUniqueGenres;
+  
+  // Normalize to a percentage
+  const similarityPercentage = Math.round(similarityScore * 100);
+  
+  // Get the top common genres for display
+  const topCommonGenres = commonGenreIds.map(id => {
+    const genre1 = user1AggregatedGenres.find(g => g.taxonomyId === id);
+    return genre1?.taxonomy || null;
+  }).filter(Boolean);
+  
+  // Convert similarity to a -3 to +3 scale for consistency with rating compatibility
+  // 0-30% = -3 to -1, 30-50% = 0, 50-100% = +1 to +3
+  let compatibilityScore = 0;
+  if (similarityPercentage >= 80) compatibilityScore = 3;
+  else if (similarityPercentage >= 65) compatibilityScore = 2;
+  else if (similarityPercentage >= 50) compatibilityScore = 1;
+  else if (similarityPercentage >= 35) compatibilityScore = 0;
+  else if (similarityPercentage >= 20) compatibilityScore = -1;
+  else if (similarityPercentage >= 10) compatibilityScore = -2;
+  else compatibilityScore = -3;
+  
+  // Define compatibility label based on score
+  let compatibilityLabel = "";
+  if (compatibilityScore >= 3) compatibilityLabel = "Overwhelmingly compatible";
+  else if (compatibilityScore >= 2) compatibilityLabel = "Very compatible";
+  else if (compatibilityScore >= 1) compatibilityLabel = "Mostly compatible";
+  else if (compatibilityScore >= 0) compatibilityLabel = "Mixed compatibility";
+  else if (compatibilityScore >= -1) compatibilityLabel = "Mostly incompatible";
+  else if (compatibilityScore >= -2) compatibilityLabel = "Very incompatible";
+  else compatibilityLabel = "Overwhelmingly incompatible";
+  
+  return {
+    similarityPercentage,
+    compatibilityScore,
+    compatibilityLabel,
+    commonGenres: topCommonGenres.slice(0, 5), // Return top 5 common genres
+    totalCommonGenres: commonGenreIds.length,
+    totalUniqueGenres
+  };
+}
+
 authenticatedUserProfileRoutes.get("/:username/genre-comparison", requireAuth, async (req: Request, res: Response) => {
   const { username } = req.params;
   const currentUserId = req.user!.id;
@@ -628,10 +725,13 @@ authenticatedUserProfileRoutes.get("/:username/genre-comparison", requireAuth, a
       })
     );
 
-    // Calculate reading compatibility between the users
-    const compatibility = await calculateReadingCompatibility(currentUserId, targetUser.id);
+    // Calculate rating compatibility between the users (for overall section)
+    const ratingCompatibility = await calculateReadingCompatibility(currentUserId, targetUser.id);
     
-    // Return both users' genre preferences for comparison along with compatibility
+    // Calculate genre compatibility
+    const genreCompatibility = await calculateGenreCompatibility(currentUserGenres, targetUserGenres);
+    
+    // Return both users' genre preferences for comparison along with compatibility scores
     res.json({
       currentUser: {
         id: currentUserId,
@@ -643,11 +743,21 @@ authenticatedUserProfileRoutes.get("/:username/genre-comparison", requireAuth, a
         username: targetUser.username,
         genreViews: targetUserGenres
       },
+      // Add both compatibility results
       compatibility: {
-        overall: compatibility.overall,
-        score: compatibility.score,
-        normalizedDifference: compatibility.normalizedDifference,
-        criteria: compatibility.criteria
+        overall: ratingCompatibility.overall,
+        score: ratingCompatibility.score,
+        normalizedDifference: ratingCompatibility.normalizedDifference,
+        criteria: ratingCompatibility.criteria
+      },
+      // Add new genre compatibility information
+      genreCompatibility: {
+        overall: genreCompatibility.compatibilityLabel,
+        score: genreCompatibility.compatibilityScore,
+        similarityPercentage: genreCompatibility.similarityPercentage,
+        topCommonGenres: genreCompatibility.commonGenres,
+        totalCommonGenres: genreCompatibility.totalCommonGenres,
+        totalGenres: genreCompatibility.totalUniqueGenres
       }
     });
   } catch (error) {
