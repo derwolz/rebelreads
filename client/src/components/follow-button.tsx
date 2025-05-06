@@ -10,11 +10,16 @@ interface FollowButtonProps {
   className?: string;
 }
 
+interface FollowStatus {
+  isFollowing?: boolean;
+  following?: boolean;
+}
+
 export function FollowButton({ authorId, authorName, className }: FollowButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const { data: followStatus } = useQuery({
+  const { data: followStatus } = useQuery<FollowStatus>({
     queryKey: [`/api/authors/${authorId}/following`],
     enabled: !!user && authorId !== user.id,
   });

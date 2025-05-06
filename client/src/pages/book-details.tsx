@@ -699,10 +699,10 @@ export default function BookDetails() {
                     {author?.author_name || book.authorName}
                   </Link>
                 </p>
-                {author?.author_name && (
+                {book.authorId && (
                   <FollowButton
                     authorId={book.authorId}
-                    authorName={author.author_name}
+                    authorName={author?.author_name || book.authorName || ""}
                     className="ml-0 mt-1 md:mt-0 md:ml-2"
                   />
                 )}
