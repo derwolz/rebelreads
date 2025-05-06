@@ -19,11 +19,15 @@ export function FollowButton({ authorId, authorName, className }: FollowButtonPr
     enabled: !!user && authorId !== user.id,
   });
 
+  // Determine if the user is following the author, handling both response formats
+  // The API can return either {isFollowing: boolean} or {following: boolean}
+  const isFollowing = followStatus?.isFollowing || followStatus?.following || false;
+
   const followMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest(
         "POST",
-        `/api/authors/${authorId}/${followStatus?.isFollowing ? 'unfollow' : 'follow'}`
+        `/api/authors/${authorId}/${isFollowing ? 'unfollow' : 'follow'}`
       );
       if (!res.ok) throw new Error("Failed to update follow status");
     },
@@ -31,8 +35,8 @@ export function FollowButton({ authorId, authorName, className }: FollowButtonPr
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}/following`] });
       toast({
-        title: followStatus?.isFollowing ? "Unfollowed" : "Following",
-        description: `You are ${followStatus?.isFollowing ? 'no longer' : 'now'} following ${authorName}`,
+        title: isFollowing ? "Unfollowed" : "Following",
+        description: `You are ${isFollowing ? 'no longer' : 'now'} following ${authorName}`,
       });
     },
   });
@@ -41,11 +45,11 @@ export function FollowButton({ authorId, authorName, className }: FollowButtonPr
 
   return (
     <Button
-      variant={followStatus?.isFollowing ? "outline" : "default"}
+      variant={isFollowing ? "outline" : "default"}
       onClick={() => followMutation.mutate()}
       className={className}
     >
-      {followStatus?.isFollowing ? "Unfollow" : "Follow"}
+      {isFollowing ? "Unfollow" : "Follow"}
     </Button>
   );
 }
