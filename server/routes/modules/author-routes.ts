@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import { dbStorage } from "../../storage";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
+import { db } from "../../db";
+import { rating_preferences } from "../../../shared/schema";
 
 const router = Router();
 
@@ -301,6 +303,225 @@ router.get("/my-books/ratings", async (req, res) => {
   const allRatings = await dbStorage.getRatingsForBooks(bookIds);
   
   res.json(allRatings);
+});
+
+// Helper to calculate reading compatibility between an author and a user
+async function calculateAuthorUserCompatibility(authorId: number, userId: number) {
+  try {
+    // Get author's average ratings across books
+    const authorRatings = await dbStorage.getAuthorAggregateRatings(authorId);
+    
+    if (!authorRatings) {
+      return {
+        overall: "No ratings available",
+        score: 0,
+        normalizedDifference: 1, // Maximum difference
+        criteria: {}
+      };
+    }
+    
+    // Get user's rating preferences
+    let userPrefs = await db.query.rating_preferences.findFirst({
+      where: eq(rating_preferences.userId, userId)
+    });
+    
+    // Create default preferences if they don't exist
+    if (!userPrefs) {
+      console.log(`Creating default preferences for user ${userId}`);
+      
+      await db.insert(rating_preferences).values([{
+        userId: userId,
+        enjoyment: "0.5",
+        writing: "0.5",
+        themes: "0.5",
+        characters: "0.5",
+        worldbuilding: "0.5",
+        autoAdjust: true
+      }]);
+      
+      // Retrieve the newly created preferences
+      userPrefs = await db.query.rating_preferences.findFirst({
+        where: eq(rating_preferences.userId, userId)
+      });
+      
+      // If still not found, create a temporary object
+      if (!userPrefs) {
+        userPrefs = {
+          id: 0, // Placeholder
+          userId: userId,
+          enjoyment: "0.5",
+          writing: "0.5",
+          themes: "0.5",
+          characters: "0.5",
+          worldbuilding: "0.5",
+          autoAdjust: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      }
+    }
+    
+    // Calculate compatibility for each criterion
+    const criteria = ['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'] as const;
+    let totalWeightedDiff = 0;
+    let totalWeight = 0;
+    const criteriaCompatibility: Record<string, any> = {};
+    
+    for (const criterion of criteria) {
+      // Convert to our new -1 to 1 scale from the old 0 to 5 star scale
+      // For author ratings: 
+      // 0 stars = -1 (thumbs down)
+      // 2.5 stars = 0 (neutral)
+      // 5 stars = 1 (thumbs up)
+      const authorRatingOldScale = authorRatings[criterion];
+      const authorValue = (authorRatingOldScale - 2.5) / 2.5; // Convert 0-5 scale to -1 to 1
+      
+      // User preferences are already on 0-1 scale, convert to -1 to 1
+      const userValue = parseFloat(userPrefs[criterion].toString()) * 2 - 1;
+      
+      // Calculate the absolute difference and normalize to 0-1 scale
+      // Since our weights are on a -1 to 1 scale, the max difference is 2
+      const diff = Math.abs(authorValue - userValue) / 2;
+      const normalized = diff;
+      
+      // Apply compatibility levels based on normalized difference
+      let compatibility = "";
+      if (normalized <= 0.02) {
+        compatibility = "Overwhelmingly compatible";
+      } else if (normalized <= 0.05) {
+        compatibility = "Very compatible";
+      } else if (normalized <= 0.10) {
+        compatibility = "Mostly compatible";
+      } else if (normalized <= 0.20) {
+        compatibility = "Mixed compatibility";
+      } else if (normalized <= 0.35) {
+        compatibility = "Mostly incompatible";
+      } else if (normalized <= 0.40) {
+        compatibility = "Very incompatible";
+      } else {
+        compatibility = "Overwhelmingly incompatible";
+      }
+      
+      criteriaCompatibility[criterion] = {
+        compatibility,
+        difference: diff,
+        normalized
+      };
+      
+      // Add to weighted overall calculation
+      // Use the average of both values for this criterion
+      const criterionWeight = (Math.abs(authorValue) + Math.abs(userValue)) / 2;
+      totalWeightedDiff += diff * criterionWeight;
+      totalWeight += criterionWeight;
+    }
+    
+    // Calculate overall normalized difference
+    const overallNormalized = totalWeight > 0 ? totalWeightedDiff / totalWeight : 0;
+    
+    // Determine overall compatibility
+    let overallCompatibility = "";
+    if (overallNormalized <= 0.02) {
+      overallCompatibility = "Overwhelmingly compatible";
+    } else if (overallNormalized <= 0.05) {
+      overallCompatibility = "Very compatible";
+    } else if (overallNormalized <= 0.10) {
+      overallCompatibility = "Mostly compatible";
+    } else if (overallNormalized <= 0.20) {
+      overallCompatibility = "Mixed compatibility";
+    } else if (overallNormalized <= 0.35) {
+      overallCompatibility = "Mostly incompatible";
+    } else if (overallNormalized <= 0.40) {
+      overallCompatibility = "Very incompatible";
+    } else {
+      overallCompatibility = "Overwhelmingly incompatible";
+    }
+    
+    // Calculate compatibility score on a -3 to +3 scale
+    let compatibilityScore = 0;
+    if (overallNormalized <= 0.02) compatibilityScore = 3;
+    else if (overallNormalized <= 0.05) compatibilityScore = 2;
+    else if (overallNormalized <= 0.10) compatibilityScore = 1;
+    else if (overallNormalized <= 0.20) compatibilityScore = 0;
+    else if (overallNormalized <= 0.35) compatibilityScore = -1;
+    else if (overallNormalized <= 0.40) compatibilityScore = -2;
+    else compatibilityScore = -3;
+    
+    return {
+      overall: overallCompatibility,
+      score: compatibilityScore,
+      normalizedDifference: overallNormalized,
+      criteria: criteriaCompatibility,
+      // Include additional data for debugging or advanced display
+      authorRatings: {
+        enjoyment: authorRatings.enjoyment,
+        writing: authorRatings.writing,
+        themes: authorRatings.themes,
+        characters: authorRatings.characters,
+        worldbuilding: authorRatings.worldbuilding,
+        overall: authorRatings.overall
+      }
+    };
+  } catch (error) {
+    console.error("Error calculating author compatibility:", error);
+    return {
+      overall: "Error calculating compatibility",
+      score: 0,
+      normalizedDifference: 1,
+      criteria: {}
+    };
+  }
+}
+
+/**
+ * GET /api/authors/:id/compatibility
+ * Get the compatibility rating between the logged-in user and an author
+ * Authentication required
+ */
+router.get("/:id/compatibility", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  
+  const authorId = parseInt(req.params.id);
+  if (isNaN(authorId)) {
+    return res.status(400).json({ error: "Invalid author ID" });
+  }
+  
+  try {
+    // Check if the author exists
+    const author = await dbStorage.getAuthor(authorId);
+    if (!author) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+    
+    // Get the current user's ID
+    const userId = req.user!.id;
+    
+    // Calculate compatibility between user and author
+    const compatibility = await calculateAuthorUserCompatibility(authorId, userId);
+    
+    // Get user's rating preferences
+    const userPreferences = await dbStorage.getRatingPreferences(userId);
+    
+    // Return both author ratings and compatibility data
+    res.json({
+      currentUser: {
+        id: userId,
+        username: req.user!.username,
+        preferences: userPreferences || null
+      },
+      authorRatings: compatibility.authorRatings,
+      compatibility: {
+        overall: compatibility.overall,
+        score: compatibility.score,
+        normalizedDifference: compatibility.normalizedDifference,
+        criteria: compatibility.criteria
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching author compatibility:", error);
+    res.status(500).json({ error: "Failed to calculate compatibility" });
+  }
 });
 
 export default router;

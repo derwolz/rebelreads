@@ -1,20 +1,25 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { BookCard } from "@/components/book-card";
 import { BookGridCard } from "@/components/book-grid-card";
 import { BookRack } from "@/components/book-rack";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { FollowButton } from "@/components/follow-button";
 import { StarRating } from "@/components/star-rating";
+import { SeashellRating } from "@/components/seashell-rating";
+import { RatingSimilarityIcon } from "@/components/rating-similarity-icon";
+import { Separator } from "@/components/ui/separator";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Carousel,
@@ -42,6 +47,7 @@ interface AuthorTaxonomy {
 interface AuthorDetails {
   id: number;
   username: string;
+  userId: number;              // User ID associated with the author
   authorName?: string | null;  // Potential camelCase field
   author_name?: string | null; // Snake_case field from database
   authorBio: string | null;
@@ -70,6 +76,36 @@ interface AuthorDetails {
 interface ShelfWithBooks {
   shelf: BookShelf;
   books: Book[];
+}
+
+interface CompatibilityResponse {
+  currentUser: {
+    id: number;
+    username: string;
+    preferences: {
+      [key: string]: string;
+    } | null;
+  };
+  authorRatings: {
+    enjoyment: number;
+    writing: number;
+    themes: number;
+    characters: number;
+    worldbuilding: number;
+    overall: number;
+  };
+  compatibility: {
+    overall: string;
+    score: number;
+    normalizedDifference: number;
+    criteria: {
+      [key: string]: {
+        compatibility: string;
+        difference: number;
+        normalized: number;
+      };
+    };
+  };
 }
 
 // Helper function to convert API books to client books
@@ -122,6 +158,18 @@ export default function AuthorPage() {
   } = useQuery<ShelfWithBooks[]>({
     queryKey: [`/api/authors/${authorId}/bookshelves`],
     enabled: !!authorId,
+  });
+  
+  // Fetch author-user compatibility ratings if user is logged in
+  const isLoggedIn = !!user;
+  const isAuthorViewing = user?.isAuthor && user?.id === author?.userId;
+  
+  const {
+    data: compatibilityData,
+    isLoading: isCompatibilityLoading,
+  } = useQuery<CompatibilityResponse>({
+    queryKey: [`/api/authors/${authorId}/compatibility`],
+    enabled: !!authorId && isLoggedIn && !isAuthorViewing,
   });
 
   // Filter books based on search term
@@ -298,93 +346,238 @@ export default function AuthorPage() {
               {author.aggregateRatings && (
                 <Card className="h-full bg-card/50 backdrop-blur-sm shadow-lg">
                   <CardHeader>
-                    <CardTitle>Overall Ratings</CardTitle>
-                    <CardDescription>Average across all books</CardDescription>
+                    <CardTitle>
+                      {isAuthorViewing 
+                        ? "Your Books Ratings" 
+                        : isLoggedIn 
+                          ? "Reading Compatibility" 
+                          : "Overall Ratings"}
+                    </CardTitle>
+                    <CardDescription>
+                      {isAuthorViewing 
+                        ? "Average ratings across all your books"
+                        : isLoggedIn
+                          ? "How compatible this author's writing is with your preferences"
+                          : "Average across all books"}
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-2 mb-4">
-                      <StarRating
-                        rating={Math.round(author.aggregateRatings.overall)}
-                        readOnly
-                        size="lg"
-                      />
-                      <span className="text-lg font-medium">
-                        {author.aggregateRatings.overall.toFixed(1)}
-                      </span>
-                    </div>
-                    
-                    <div className="grid gap-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Enjoyment</span>
-                        <div className="flex items-center gap-2">
-                          <StarRating
-                            rating={author.aggregateRatings.enjoyment}
-                            readOnly
-                            size="sm"
-                          />
-                          <span className="text-sm">
-                            {author.aggregateRatings.enjoyment.toFixed(1)}
-                          </span>
-                        </div>
+
+                  {/* View 1: Author viewing their own page - show traditional average ratings */}
+                  {isAuthorViewing && (
+                    <CardContent>
+                      <div className="flex items-center gap-2 mb-4">
+                        <StarRating
+                          rating={Math.round(author.aggregateRatings.overall)}
+                          readOnly
+                          size="lg"
+                        />
+                        <span className="text-lg font-medium">
+                          {author.aggregateRatings.overall.toFixed(1)}
+                        </span>
                       </div>
                       
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Writing Style</span>
-                        <div className="flex items-center gap-2">
-                          <StarRating
-                            rating={author.aggregateRatings.writing}
-                            readOnly
-                            size="sm"
-                          />
-                          <span className="text-sm">
-                            {author.aggregateRatings.writing.toFixed(1)}
-                          </span>
+                      <div className="grid gap-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Enjoyment</span>
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={author.aggregateRatings.enjoyment}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-sm">
+                              {author.aggregateRatings.enjoyment.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Writing Style</span>
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={author.aggregateRatings.writing}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-sm">
+                              {author.aggregateRatings.writing.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Themes</span>
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={author.aggregateRatings.themes}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-sm">
+                              {author.aggregateRatings.themes.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Characters</span>
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={author.aggregateRatings.characters}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-sm">
+                              {author.aggregateRatings.characters.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">World Building</span>
+                          <div className="flex items-center gap-2">
+                            <StarRating
+                              rating={author.aggregateRatings.worldbuilding}
+                              readOnly
+                              size="sm"
+                            />
+                            <span className="text-sm">
+                              {author.aggregateRatings.worldbuilding.toFixed(1)}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                    </CardContent>
+                  )}
+
+                  {/* View 2: Logged-in user (not author) viewing the page - show compatibility */}
+                  {isLoggedIn && !isAuthorViewing && (
+                    <CardContent>
+                      {isCompatibilityLoading ? (
+                        <div className="space-y-4">
+                          <Skeleton className="h-6 w-full" />
+                          <Skeleton className="h-6 w-full" />
+                          <Skeleton className="h-6 w-full" />
+                        </div>
+                      ) : compatibilityData ? (
+                        <>
+                          {/* Overall compatibility section */}
+                          <div className="flex flex-col items-center space-y-2 mb-4">
+                            <h3 className="text-sm font-medium">Overall Compatibility</h3>
+                            <SeashellRating 
+                              compatibilityScore={compatibilityData.compatibility.score} 
+                              compatibilityLabel={compatibilityData.compatibility.overall}
+                              isLoggedIn={true} 
+                            />
+                          </div>
+                          
+                          <Separator />
+                          
+                          {/* Individual rating criteria */}
+                          <div className="space-y-3 mt-4">
+                            <h3 className="text-sm font-medium text-center">Reading Preferences Comparison</h3>
+                            <div className="flex flex-wrap justify-center gap-4 mt-2">
+                              {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => {
+                                // Calculate difference/similarity from the compatibility data
+                                const criteriaData = compatibilityData.compatibility.criteria[criterion];
+                                const similarity = criteriaData ? criteriaData.normalized : 0;
+                                
+                                return (
+                                  <RatingSimilarityIcon
+                                    key={criterion}
+                                    criterion={criterion}
+                                    similarity={similarity}
+                                    label={`${criterion}: ${Math.round((1 - similarity) * 100)}% similar`}
+                                    size="md"
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                          
+                          {/* Display the author's average ratings */}
+                          <div className="mt-6">
+                            <Separator className="mb-4" />
+                            <h3 className="text-sm font-medium mb-2">Author's Average Ratings</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                              {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
+                                <div key={criterion} className="flex items-center gap-2">
+                                  <span className="text-xs capitalize">{criterion}:</span>
+                                  <span className="text-xs font-medium">
+                                    {compatibilityData.authorRatings[criterion].toFixed(1)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center text-muted-foreground">
+                          <p>Error loading compatibility data</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  )}
+
+                  {/* View 3: Not logged in - show default view with login prompt */}
+                  {!isLoggedIn && (
+                    <>
+                      <CardContent className="relative">
+                        <div className="blur-sm pointer-events-none">
+                          <div className="mb-4">
+                            <p className="font-semibold text-center mb-2">Overall Compatibility</p>
+                            <div className="flex justify-center mb-2">
+                              <SeashellRating 
+                                compatibilityScore={2} 
+                                compatibilityLabel="Sample compatibility" 
+                                isLoggedIn={false}
+                              />
+                            </div>
+                          </div>
+                          
+                          <Separator className="my-4" />
+                          
+                          <div className="space-y-3">
+                            <p className="font-medium text-sm text-center">Reading Preferences Comparison</p>
+                            <div className="flex flex-wrap justify-center gap-4 mt-2">
+                              {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
+                                <div key={criterion} className="flex flex-col items-center opacity-50">
+                                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                    <span className="text-xs">{criterion.charAt(0).toUpperCase()}</span>
+                                  </div>
+                                  <span className="text-xs capitalize mt-1">{criterion}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Overlay with login button */}
+                        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 space-y-4">
+                          <p className="text-center font-medium">
+                            Login to see how compatible this author is with your reading preferences
+                          </p>
+                          <Link to="/login">
+                            <Button>Login Now</Button>
+                          </Link>
+                        </div>
+                      </CardContent>
                       
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Themes</span>
-                        <div className="flex items-center gap-2">
+                      <CardFooter className="flex flex-col space-y-3 border-t pt-4">
+                        <h3 className="text-sm font-medium w-full">Traditional Ratings</h3>
+                        <div className="flex items-center gap-2 w-full">
                           <StarRating
-                            rating={author.aggregateRatings.themes}
+                            rating={Math.round(author.aggregateRatings.overall)}
                             readOnly
-                            size="sm"
+                            size="md"
                           />
-                          <span className="text-sm">
-                            {author.aggregateRatings.themes.toFixed(1)}
+                          <span className="text-sm font-medium">
+                            {author.aggregateRatings.overall.toFixed(1)} / 5 average
                           </span>
                         </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">Characters</span>
-                        <div className="flex items-center gap-2">
-                          <StarRating
-                            rating={author.aggregateRatings.characters}
-                            readOnly
-                            size="sm"
-                          />
-                          <span className="text-sm">
-                            {author.aggregateRatings.characters.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">World Building</span>
-                        <div className="flex items-center gap-2">
-                          <StarRating
-                            rating={author.aggregateRatings.worldbuilding}
-                            readOnly
-                            size="sm"
-                          />
-                          <span className="text-sm">
-                            {author.aggregateRatings.worldbuilding.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
+                      </CardFooter>
+                    </>
+                  )}
                 </Card>
               )}
             </div>
