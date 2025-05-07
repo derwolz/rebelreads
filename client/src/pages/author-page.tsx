@@ -113,14 +113,10 @@ interface CompatibilityResponse {
   };
 }
 
-// Helper function to convert API books to client books with all necessary data for BookCard
-const convertBooksToClientFormat = (books: any[], authorData: AuthorDetails | undefined): Book[] => {
+// Helper function to convert API books to client books
+const convertBooksToClientFormat = (books: any[]): Book[] => {
   return books.map(book => ({
     ...book,
-    // Ensure the book has author information for proper navigation and display
-    authorName: book.authorName || authorData?.authorName || authorData?.author_name || authorData?.username || "",
-    authorId: book.authorId || authorData?.id || 0,
-    // Make sure referralLinks exists to prevent errors
     referralLinks: book.referralLinks || []
   }));
 };
@@ -809,7 +805,7 @@ export default function AuthorPage() {
                     key={book.id}
                     className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4 pl-4 pb-4"
                   >
-                    <BookCard book={convertBooksToClientFormat([book], author)[0]} />
+                    <BookCard book={convertBooksToClientFormat([book])[0]} />
                   </CarouselItem>
                 ))
               ) : (
@@ -846,7 +842,7 @@ export default function AuthorPage() {
                   {shelf.books.length > 0 && (
                     <BookRack 
                       title="" 
-                      books={convertBooksToClientFormat(shelf.books, author)} 
+                      books={convertBooksToClientFormat(shelf.books)} 
                       isLoading={false}
                     />
                   )}
