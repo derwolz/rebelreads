@@ -16,6 +16,7 @@ interface RatingSimilarityIconProps {
   similarity: number; // 0-1 where 1 is identical
   label?: string;
   size?: "sm" | "md" | "lg";
+  sentiment?: string; // Added sentiment parameter for direct color control
 }
 
 // This component displays a visual icon for rating similarity/compatibility
@@ -24,13 +25,29 @@ export const RatingSimilarityIcon: React.FC<RatingSimilarityIconProps> = ({
   criterion, 
   similarity, 
   label,
-  size = "md"
+  size = "md",
+  sentiment
 }) => {
   // Convert numeric difference to percentage similarity
   const similarityPercent = Math.max(0, Math.min(100, Math.round((1 - similarity) * 100)));
   
-  // Determine color based on similarity percentage
+  // Determine color based on sentiment or similarity percentage
   const getColor = () => {
+    // If sentiment is provided, use it for coloring
+    if (sentiment) {
+      switch (sentiment) {
+        case "overwhelmingly_positive": return "text-green-600";
+        case "very_positive": return "text-green-500";
+        case "mostly_positive": return "text-green-400";
+        case "mixed": return "text-amber-400";
+        case "mostly_negative": return "text-orange-400";
+        case "very_negative": return "text-orange-600";
+        case "overwhelmingly_negative": return "text-rose-500";
+        default: return "text-amber-400"; // Default to mixed if unknown
+      }
+    }
+    
+    // Fall back to similarity percentage if sentiment not provided
     if (similarityPercent >= 90) return "text-green-500";
     if (similarityPercent >= 70) return "text-green-400";
     if (similarityPercent >= 50) return "text-amber-400";

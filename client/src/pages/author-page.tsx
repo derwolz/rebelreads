@@ -411,18 +411,15 @@ export default function AuthorPage() {
                           className="group relative cursor-pointer"
                           title="Enjoyment: How readers connect with your stories"
                         >
-                          <div className={sentimentThresholds && 
-                            Array.isArray(sentimentThresholds) ?
-                            SENTIMENT_COLORS[getSentimentLevel(101, 0, sentimentThresholds.filter(
-                              (t: any) => t.criteriaName === "enjoyment")) || "mixed"] : ""
-                          }>
-                            <RatingSimilarityIcon
-                              criterion="enjoyment"
-                              similarity={0}
-                              label=""
-                              size="lg"
-                            />
-                          </div>
+                          <RatingSimilarityIcon
+                            criterion="enjoyment"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                            sentiment={getSentimentLevel(101, 0, Array.isArray(sentimentThresholds) ? 
+                              sentimentThresholds.filter((t: any) => t.criteriaName === "enjoyment") : []
+                            ) || "mixed"}
+                          />
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Enjoyment</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
@@ -437,18 +434,15 @@ export default function AuthorPage() {
                           className="group relative cursor-pointer"
                           title="Writing: Your prose, pacing and style"
                         >
-                          <div className={sentimentThresholds && 
-                            Array.isArray(sentimentThresholds) ?
-                            SENTIMENT_COLORS[getSentimentLevel(1, 100, sentimentThresholds.filter(
-                              (t: any) => t.criteriaName === "writing")) || "mixed"] : ""
-                          }>
-                            <RatingSimilarityIcon
-                              criterion="writing"
-                              similarity={0}
-                              label=""
-                              size="lg"
-                            />
-                          </div>
+                          <RatingSimilarityIcon
+                            criterion="writing"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                            sentiment={getSentimentLevel(1, 100, Array.isArray(sentimentThresholds) ? 
+                              sentimentThresholds.filter((t: any) => t.criteriaName === "writing") : []
+                            ) || "mixed"}
+                          />
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Writing</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
@@ -463,18 +457,15 @@ export default function AuthorPage() {
                           className="group relative cursor-pointer"
                           title="Themes: The core ideas in your work"
                         >
-                          <div className={sentimentThresholds && 
-                            Array.isArray(sentimentThresholds) ?
-                            SENTIMENT_COLORS[getSentimentLevel(7, 4, sentimentThresholds.filter(
-                              (t: any) => t.criteriaName === "themes")) || "mixed"] : ""
-                          }>
-                            <RatingSimilarityIcon
-                              criterion="themes"
-                              similarity={0}
-                              label=""
-                              size="lg"
-                            />
-                          </div>
+                          <RatingSimilarityIcon
+                            criterion="themes"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                            sentiment={getSentimentLevel(7, 4, Array.isArray(sentimentThresholds) ? 
+                              sentimentThresholds.filter((t: any) => t.criteriaName === "themes") : []
+                            ) || "mixed"}
+                          />
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Themes</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
@@ -489,18 +480,15 @@ export default function AuthorPage() {
                           className="group relative cursor-pointer"
                           title="Characters: How readers respond to your cast"
                         >
-                          <div className={sentimentThresholds && 
-                            Array.isArray(sentimentThresholds) ?
-                            SENTIMENT_COLORS[getSentimentLevel(64, 37, sentimentThresholds.filter(
-                              (t: any) => t.criteriaName === "characters")) || "mixed"] : ""
-                          }>
-                            <RatingSimilarityIcon
-                              criterion="characters"
-                              similarity={0}
-                              label=""
-                              size="lg"
-                            />
-                          </div>
+                          <RatingSimilarityIcon
+                            criterion="characters"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                            sentiment={getSentimentLevel(64, 37, Array.isArray(sentimentThresholds) ? 
+                              sentimentThresholds.filter((t: any) => t.criteriaName === "characters") : []
+                            ) || "mixed"}
+                          />
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Characters</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
