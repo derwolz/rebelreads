@@ -117,9 +117,10 @@ interface CompatibilityResponse {
 const convertBooksToClientFormat = (books: any[], authorData: AuthorDetails | undefined): Book[] => {
   return books.map(book => ({
     ...book,
-    // Ensure the book has author information for proper navigation and display
-    authorName: book.authorName || authorData?.authorName || authorData?.author_name || authorData?.username || "",
-    authorId: book.authorId || authorData?.id || 0,
+    // Maintain the original author info of each book, only use page author as fallback
+    // This ensures books from other authors in bookshelves display correctly
+    authorName: book.authorName || book.author_name || (book.author ? book.author.authorName || book.author.author_name || book.author.username : null) || "",
+    authorId: book.authorId || (book.author ? book.author.id : null) || 0,
     // Make sure referralLinks exists to prevent errors
     referralLinks: book.referralLinks || []
   }));
