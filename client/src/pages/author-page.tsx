@@ -4,7 +4,6 @@ import { useRoute, Link } from "wouter";
 import { BookCard } from "@/components/book-card";
 import { BookGridCard } from "@/components/book-grid-card";
 import { BookRack } from "@/components/book-rack";
-import { BookRackShelf } from "@/components/book-rack-shelf";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -884,30 +883,23 @@ export default function AuthorPage() {
             <div className="space-y-12">
               {bookshelves.map((shelf) => (
                 <div key={shelf.shelf.id} className="bg-card/30 backdrop-blur-sm p-6 rounded-lg">
-                  {/* Shelf Title + Book Count */}
-                  <Link 
-                    to={`/book-shelf/share?username=${encodeURIComponent(author.username)}&shelfname=${encodeURIComponent(shelf.shelf.title)}`}
-                    className="block mb-8 hover:opacity-90 transition-opacity cursor-pointer"
-                  >
-                    <h3 className="text-2xl font-bold text-center text-foreground mb-2">
-                      {shelf.shelf.title}
-                    </h3>
-                    <p className="text-center text-muted-foreground text-sm">
-                      {shelf.books.length} {shelf.books.length === 1 ? 'book' : 'books'}
-                    </p>
-                  </Link>
+                  {/* Shelf Title */}
+                  <h3 className="text-2xl font-bold text-center text-foreground mb-2">
+                    {shelf.shelf.title}
+                  </h3>
                   
-                  {/* BookRackShelf Component */}
-                  <Link 
-                    to={`/book-shelf/share?username=${encodeURIComponent(author.username)}&shelfname=${encodeURIComponent(shelf.shelf.title)}`}
-                    className="block hover:opacity-90 transition-opacity"
-                  >
-                    <BookRackShelf 
-                      books={shelf.books}
-                      isLoading={false}
-                      className="mx-auto max-w-4xl"
-                    />
-                  </Link>
+                  {/* Book Count */}
+                  <p className="text-center text-muted-foreground text-sm mb-6">
+                    {shelf.books.length} {shelf.books.length === 1 ? 'book' : 'books'}
+                  </p>
+                  
+                  {/* BookRack Component - Books link directly to their detail pages */}
+                  <BookRack
+                    title=""
+                    books={shelf.books}
+                    isLoading={false}
+                    className="mx-auto"
+                  />
                 </div>
               ))}
             </div>
