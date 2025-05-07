@@ -366,7 +366,7 @@ export default function AuthorPage() {
                     </CardDescription>
                   </CardHeader>
 
-                  {/* View 1: Author viewing their own page - show traditional average ratings */}
+                  {/* View 1: Author viewing their own page - show traditional average ratings with sentiment icons */}
                   {isAuthorViewing && (
                     <CardContent>
                       <div className="flex items-center gap-2 mb-4">
@@ -380,9 +380,18 @@ export default function AuthorPage() {
                         </span>
                       </div>
                       
-                      <div className="grid gap-3">
+                      <div className="grid gap-5">
+                        {/* Enjoyment row */}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Enjoyment</span>
+                          <div className="flex items-center gap-2">
+                            <RatingSimilarityIcon
+                              criterion="enjoyment"
+                              similarity={0}
+                              label="Enjoyment"
+                              size="sm"
+                            />
+                            <span className="text-sm">Enjoyment</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={author.aggregateRatings.enjoyment}
@@ -395,8 +404,17 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
+                        {/* Writing Style row */}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Writing Style</span>
+                          <div className="flex items-center gap-2">
+                            <RatingSimilarityIcon
+                              criterion="writing"
+                              similarity={0}
+                              label="Writing Style"
+                              size="sm"
+                            />
+                            <span className="text-sm">Writing Style</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={author.aggregateRatings.writing}
@@ -409,8 +427,17 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
+                        {/* Themes row */}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Themes</span>
+                          <div className="flex items-center gap-2">
+                            <RatingSimilarityIcon
+                              criterion="themes"
+                              similarity={0}
+                              label="Themes"
+                              size="sm"
+                            />
+                            <span className="text-sm">Themes</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={author.aggregateRatings.themes}
@@ -423,8 +450,17 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
+                        {/* Characters row */}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">Characters</span>
+                          <div className="flex items-center gap-2">
+                            <RatingSimilarityIcon
+                              criterion="characters"
+                              similarity={0}
+                              label="Characters"
+                              size="sm"
+                            />
+                            <span className="text-sm">Characters</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={author.aggregateRatings.characters}
@@ -437,8 +473,17 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
+                        {/* World Building row */}
                         <div className="flex justify-between items-center">
-                          <span className="text-sm">World Building</span>
+                          <div className="flex items-center gap-2">
+                            <RatingSimilarityIcon
+                              criterion="worldbuilding"
+                              similarity={0}
+                              label="World Building"
+                              size="sm"
+                            />
+                            <span className="text-sm">World Building</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <StarRating
                               rating={author.aggregateRatings.worldbuilding}
