@@ -4,6 +4,7 @@ import { useRoute, Link } from "wouter";
 import { BookCard } from "@/components/book-card";
 import { BookGridCard } from "@/components/book-grid-card";
 import { BookRack } from "@/components/book-rack";
+import { BookRackShelf } from "@/components/book-rack-shelf";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
