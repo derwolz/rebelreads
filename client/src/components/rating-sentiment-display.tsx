@@ -1,277 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import React from "react";
+import { RatingSimilarityIcon } from "./rating-similarity-icon";
 import { 
-  Drama, CircleX, CircleDashed, 
-  Lightbulb, Pencil, Heart, BookMarked, GlobeIcon
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { SentimentLevel } from '../../../shared/schema';
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
+import { Lock } from "lucide-react";
 
-
-
-// Define category icons
-const CATEGORY_ICONS = {
-  enjoyment: Heart,
-  writing: Pencil,
-  themes: Lightbulb, 
-  characters: Drama,
-  worldbuilding: GlobeIcon,
-};
-
-// Map sentiment levels to readable descriptions
-const SENTIMENT_LABELS: Record<SentimentLevel, string> = {
-  overwhelmingly_positive: 'Overwhelmingly Positive',
-  very_positive: 'Very Positive',
-  mostly_positive: 'Mostly Positive',
-  mixed: 'Mixed',
-  mostly_negative: 'Mostly Negative',
-  very_negative: 'Very Negative',
-  overwhelmingly_negative: 'Overwhelmingly Negative',
-};
-
-// Map sentiment levels to colors - Using Sirened purple for positive sentiments (colorblind friendly)
-const SENTIMENT_COLORS: Record<SentimentLevel, string> = {
-  overwhelmingly_positive: 'text-[hsl(271,56%,45%)] fill-[hsl(271,56%,25%)]', // primary-600 - Darker purple for strongest contrast
-  very_positive: 'text-[hsl(271,56%,45%)]',          // primary-500 - Medium dark purple
-  mostly_positive: 'text-[hsl(271,56%,70%)]',        // primary-400 - Main purple
-  mixed: 'text-amber-500',                          // Keep amber for mixed
-  mostly_negative: 'text-red-400',                  // Keep red for negative
-  very_negative: 'text-red-500',                    // Keep red for negative
-  overwhelmingly_negative: 'text-red-600 fill-red-900',          // Keep red for negative
-};
-
-interface RatingSentimentThreshold {
-  id: number;
+interface RatingCategory {
   criteriaName: string;
-  sentimentLevel: SentimentLevel;
-  ratingMin: number;
-  ratingMax: number;
-  requiredCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface RatingSentimentResult {
-  criteriaName: string;
-  sentimentLevel: SentimentLevel | null;
-  averageRating: number;
-  count: number;
-  hasEnoughRatings: boolean;
-}
-
-// Define our own rating type to avoid import issues
-interface Rating {
-  id: number;
-  userId: number;
-  bookId: number;
-  enjoyment: number;
-  writing: number;
-  themes: number;
-  characters: number;
-  worldbuilding: number;
-  review?: string | null;
-  createdAt: string;
-}
-
-// Define aggregated ratings type
-interface AggregatedRatings {
-  overall: number;
-  enjoyment: number;
-  writing: number;
-  themes: number;
-  characters: number;
-  worldbuilding: number;
+  totalPositive: number;
+  totalNegative: number;
+  sentiment: string;
 }
 
 interface RatingSentimentDisplayProps {
-  ratings: Rating[] | AggregatedRatings;
-  ratingsCount?: number;
-  className?: string;
-  showCount?: boolean;
+  ratings: RatingCategory[];
+  isLoggedIn: boolean;
+  isAuthor: boolean;
+  totalRatings: number;
 }
 
-/**
- * Format count with abbreviations (k, m) for large numbers
- * @param count Number to format
- * @returns Formatted string with abbreviation
- */
-function formatCount(count: number): string {
-  if (count >= 1000000) {
-    // For numbers >= 1M, format as #.##m
-    return (Math.floor(count / 10000) / 100).toFixed(2).replace(/\.0+$/, '') + 'm';
-  } else if (count >= 1000) {
-    // For numbers >= 1k, format as #.##k
-    return (Math.floor(count / 10) / 100).toFixed(2).replace(/\.0+$/, '') + 'k';
+// Calculate sentiment based on positive/negative ratio
+const calculateSentiment = (positive: number, negative: number): string => {
+  if (positive + negative === 0) return "mixed";
+  
+  const ratio = positive / (positive + negative);
+  
+  if (ratio >= 0.95) return "overwhelmingly_positive";
+  if (ratio >= 0.85) return "very_positive";
+  if (ratio >= 0.70) return "mostly_positive";
+  if (ratio >= 0.40 && ratio <= 0.60) return "mixed";
+  if (ratio >= 0.30) return "mostly_negative";
+  if (ratio >= 0.15) return "very_negative";
+  return "overwhelmingly_negative";
+};
+
+// Sample data for non-logged in users
+const sampleRatings: RatingCategory[] = [
+  { 
+    criteriaName: "enjoyment", 
+    totalPositive: 75, 
+    totalNegative: 25, 
+    sentiment: "mostly_positive" 
+  },
+  { 
+    criteriaName: "writing", 
+    totalPositive: 60, 
+    totalNegative: 40, 
+    sentiment: "mixed" 
+  },
+  { 
+    criteriaName: "themes", 
+    totalPositive: 5, 
+    totalNegative: 5, 
+    sentiment: "mixed" 
+  },
+  { 
+    criteriaName: "characters", 
+    totalPositive: 65, 
+    totalNegative: 35, 
+    sentiment: "mostly_positive" 
+  },
+  { 
+    criteriaName: "worldbuilding", 
+    totalPositive: 40, 
+    totalNegative: 60, 
+    sentiment: "mostly_negative" 
   }
-  // For small numbers, no abbreviation
-  return count.toString();
-}
+];
 
-const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({ 
-  ratings, 
-  ratingsCount = 0,
-  className,
-  showCount = false
+export const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
+  ratings,
+  isLoggedIn,
+  isAuthor,
+  totalRatings
 }) => {
-  const [sentimentResults, setSentimentResults] = useState<RatingSentimentResult[]>([]);
-
-  // Fetch sentiment thresholds from the API
-  const { data: thresholds, isLoading, error } = useQuery({
-    queryKey: ['/api/rating-sentiments'],
-  });
-
-  // Calculate sentiment levels based on ratings and thresholds
-  useEffect(() => {
-    if (!thresholds) return;
-
-    // Determine if we have array of ratings or aggregated ratings
-    const isAggregated = !Array.isArray(ratings);
-    
-    // Initialize result data
-    const criterias = ["enjoyment", "writing", "themes", "characters", "worldbuilding"];
-    const results = criterias.map(criteriaName => {
-      let averageRating = 0;
-      let count = ratingsCount || 0;
-
-      if (isAggregated) {
-        // If we have aggregated ratings, use those values directly
-        const aggregated = ratings as AggregatedRatings;
-        averageRating = aggregated[criteriaName as keyof AggregatedRatings] || 0;
-      } else {
-        // If we have array of ratings, calculate averages
-        const ratingArray = ratings as Rating[];
-        if (!ratingArray.length) {
-          count = 0;
-        } else {
-          const ratingValues = ratingArray
-            .map(r => r[criteriaName as keyof Rating] as number)
-            .filter(v => typeof v === 'number');
-          
-          if (ratingValues.length) {
-            averageRating = ratingValues.reduce((sum, r) => sum + r, 0) / ratingValues.length;
-            count = ratingValues.length;
-          } else {
-            count = 0;
-          }
-        }
-      }
-
-      // Find applicable thresholds for this criteria
-      const criteriaThresholds = Array.isArray(thresholds) ? thresholds.filter(
-        (t: RatingSentimentThreshold) => t.criteriaName === criteriaName
-      ) as RatingSentimentThreshold[] : [];
-
-      // Find matching sentiment level
-      let sentimentLevel: SentimentLevel | null = null;
-      let hasEnoughRatings = false;
-
-      for (const threshold of criteriaThresholds) {
-        if (
-          count >= threshold.requiredCount &&
-          averageRating >= threshold.ratingMin &&
-          averageRating <= threshold.ratingMax
-        ) {
-          sentimentLevel = threshold.sentimentLevel;
-          hasEnoughRatings = true;
-          break;
-        }
-      }
-
-      return {
-        criteriaName,
-        sentimentLevel,
-        averageRating,
-        count,
-        hasEnoughRatings
-      };
-    });
-
-    setSentimentResults(results);
-  }, [ratings, thresholds, ratingsCount]);
-
-  if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading sentiment ratings...</div>;
-  }
-
-  if (error) {
-    console.error('Error loading sentiment thresholds:', error);
-    return null;
-  }
-
-  if (
-    (Array.isArray(ratings) && ratings.length === 0) ||
-    (!Array.isArray(ratings) && !Object.values(ratings).some(v => v > 0))
-  ) {
-    return null;
+  // Use actual ratings for logged-in users, sample data for non-logged in
+  const displayRatings = isLoggedIn ? ratings : sampleRatings;
+  
+  // For authors, show progress toward 10 ratings if less than 10
+  if (isAuthor && totalRatings < 10) {
+    return (
+      <div className="flex flex-col items-center p-4 gap-2">
+        <p className="text-sm text-center mb-2">
+          You need {10 - totalRatings} more ratings to see detailed sentiment analysis
+        </p>
+        <Progress value={totalRatings * 10} className="w-full max-w-md" />
+        <p className="text-xs text-muted-foreground mt-1">
+          {totalRatings}/10 ratings received
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div className={cn("flex flex-col space-y-2", className)}>
-      <h3 className="text-sm font-medium">Rating Sentiment</h3>
-      <div className="flex flex-wrap gap-2">
-        {sentimentResults.map((result) => {
-          // Get the appropriate icon for this criteria
-          const IconComponent = CATEGORY_ICONS[result.criteriaName as keyof typeof CATEGORY_ICONS] || CircleDashed;
-          
-          // Calculate thumbs up and thumbs down counts
-          const thumbsUpCount = Math.round(result.count * (1 + result.averageRating) / 2);
-          const thumbsDownCount = Math.round(result.count * (1 - result.averageRating) / 2);
-          
-          return (
-            <TooltipProvider key={result.criteriaName}>
+    <div className="w-full">
+      <div className="flex justify-center gap-4 sm:gap-6 md:gap-8 flex-wrap">
+        {displayRatings.map((category) => (
+          <div 
+            key={category.criteriaName} 
+            className="relative"
+          >
+            <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="relative">
-                    <IconComponent 
-                      className={cn(
-                        "h-6 w-6", 
-                        result.hasEnoughRatings && result.sentimentLevel
-                          ? SENTIMENT_COLORS[result.sentimentLevel]
-                          : "text-muted-foreground"
-                      )} 
+                <TooltipTrigger className="cursor-pointer">
+                  <div className="flex flex-col items-center">
+                    <RatingSimilarityIcon
+                      criterion={category.criteriaName}
+                      similarity={0} // Not used for coloring
+                      sentiment={category.sentiment}
+                      size="lg"
+                      label={`${category.criteriaName.charAt(0).toUpperCase() + category.criteriaName.slice(1)}: ${category.totalPositive} 👍 ${category.totalNegative} 👎`}
                     />
-                    {showCount && (
-                      <span className="absolute -bottom-1 -right-1 text-[10px] font-semibold">
-                        {result.count}
-                      </span>
-                    )}
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <div className="text-xs">
-                    <p className="font-semibold capitalize">{result.criteriaName}</p>
-                    {result.hasEnoughRatings && result.sentimentLevel ? (
-                      <p className={SENTIMENT_COLORS[result.sentimentLevel]}>
-                        {SENTIMENT_LABELS[result.sentimentLevel]}
-                      </p>
-                    ) : (
-                      <p className="text-muted-foreground">
-                        Not enough ratings yet ({result.count}/{Array.isArray(thresholds) && thresholds.find(
-                          (t: RatingSentimentThreshold) => 
-                            t.criteriaName === result.criteriaName && 
-                            t.sentimentLevel === 'mixed'
-                        )?.requiredCount || 5})
-                      </p>
-                    )}
-                    <div className="flex justify-between mt-1">
-                      <p className="text-[hsl(271,56%,63%)]">👍 {formatCount(thumbsUpCount)}</p>
-                      <p className="text-red-500">👎 {formatCount(thumbsDownCount)}</p>
-                    </div>
+                  <div className="text-sm">
+                    <div className="font-medium capitalize mb-1">{category.criteriaName}</div>
+                    <div>👍 {category.totalPositive} positive</div>
+                    <div>👎 {category.totalNegative} negative</div>
                   </div>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          );
-        })}
+            
+            {/* Lock overlay for non-logged in users */}
+            {!isLoggedIn && (
+              <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-md">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
 };
-
-export { RatingSentimentDisplay };

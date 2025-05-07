@@ -12,6 +12,7 @@ import { FollowButton } from "@/components/follow-button";
 import { StarRating } from "@/components/star-rating";
 import { SeashellRating } from "@/components/seashell-rating";
 import { RatingSimilarityIcon } from "@/components/rating-similarity-icon";
+import { RatingSentimentDisplay } from "@/components/rating-sentiment-display";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
