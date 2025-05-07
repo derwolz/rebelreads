@@ -380,8 +380,8 @@ export default function AuthorPage() {
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Enjoyment</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
-                              <span className="text-green-500">👍 123</span>
-                              <span className="text-red-500">👎 45</span>
+                              <span className="text-green-500">👍 101</span>
+                              <span className="text-red-500">👎 0</span>
                             </div>
                           </div>
                         </div>
@@ -400,8 +400,8 @@ export default function AuthorPage() {
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Writing</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
-                              <span className="text-green-500">👍 89</span>
-                              <span className="text-red-500">👎 21</span>
+                              <span className="text-green-500">👍 1</span>
+                              <span className="text-red-500">👎 100</span>
                             </div>
                           </div>
                         </div>
@@ -420,8 +420,8 @@ export default function AuthorPage() {
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Themes</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
-                              <span className="text-green-500">👍 67</span>
-                              <span className="text-red-500">👎 12</span>
+                              <span className="text-green-500">👍 7</span>
+                              <span className="text-red-500">👎 4</span>
                             </div>
                           </div>
                         </div>
@@ -440,8 +440,8 @@ export default function AuthorPage() {
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Characters</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
-                              <span className="text-green-500">👍 105</span>
-                              <span className="text-red-500">👎 34</span>
+                              <span className="text-green-500">👍 64</span>
+                              <span className="text-red-500">👎 37</span>
                             </div>
                           </div>
                         </div>
@@ -460,8 +460,8 @@ export default function AuthorPage() {
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">World Building</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
-                              <span className="text-green-500">👍 78</span>
-                              <span className="text-red-500">👎 19</span>
+                              <span className="text-green-500">👍 47</span>
+                              <span className="text-red-500">👎 54</span>
                             </div>
                           </div>
                         </div>
@@ -496,8 +496,8 @@ export default function AuthorPage() {
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                               <div className="font-medium">Enjoyment</div>
                               <div className="flex items-center gap-2 justify-center mt-1">
-                                <span className="text-green-500">👍 {Math.floor(Math.random() * 150) + 50}</span>
-                                <span className="text-red-500">👎 {Math.floor(Math.random() * 30) + 10}</span>
+                                <span className="text-green-500">👍 101</span>
+                                <span className="text-red-500">👎 0</span>
                               </div>
                             </div>
                           </div>
