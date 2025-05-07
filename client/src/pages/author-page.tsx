@@ -42,10 +42,14 @@ interface AuthorTaxonomy {
 interface AuthorDetails {
   id: number;
   username: string;
-  authorName: string | null;
+  authorName?: string | null;  // Potential camelCase field
+  author_name?: string | null; // Snake_case field from database
   authorBio: string | null;
+  bio?: string | null;         // Potential field from database
   birthDate?: string | null;
+  birth_date?: string | null;  // Snake_case field from database
   deathDate?: string | null;
+  death_date?: string | null;  // Snake_case field from database
   website?: string | null;
   books: Book[];
   followerCount: number;
@@ -208,12 +212,12 @@ export default function AuthorPage() {
                   <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 border-2 border-primary">
                     <img 
                       src={author.author_image_url || author.profileImageUrl || '/images/default-bookshelf-cover.svg'} 
-                      alt={`${author.authorName || author.username}'s profile`}
+                      alt={`${author.authorName || author.author_name || author.username}'s profile`}
                       className="w-full h-full object-cover"
                     />
                   </div>
                 )}
-                <CardTitle className="text-2xl text-center">{author.authorName || author.username}</CardTitle>
+                <CardTitle className="text-2xl text-center">{author.authorName || author.author_name || author.username}</CardTitle>
                 <CardDescription className="flex flex-col space-y-1">
                   <div className="flex items-center gap-2 justify-center">
                     <span>{author.followerCount} followers</span>
@@ -221,12 +225,12 @@ export default function AuthorPage() {
                     <span>{author.books.length} books</span>
                   </div>
                   
-                  {author.birthDate && (
+                  {(author.birthDate || author.birth_date) && (
                     <span className="text-sm">
-                      Born: {format(new Date(author.birthDate), "MMMM d, yyyy")}
-                      {author.deathDate && (
+                      Born: {format(new Date(author.birthDate || author.birth_date || ''), "MMMM d, yyyy")}
+                      {(author.deathDate || author.death_date) && (
                         <>
-                          {" • "}Died: {format(new Date(author.deathDate), "MMMM d, yyyy")}
+                          {" • "}Died: {format(new Date(author.deathDate || author.death_date || ''), "MMMM d, yyyy")}
                         </>
                       )}
                     </span>
@@ -247,7 +251,7 @@ export default function AuthorPage() {
                 <div className="mt-4">
                   <FollowButton
                     authorId={author.id}
-                    authorName={author.authorName || author.username}
+                    authorName={author.authorName || author.author_name || author.username}
                   />
                 </div>
                 
@@ -259,9 +263,9 @@ export default function AuthorPage() {
               </CardHeader>
               
               <CardContent>
-                {author.authorBio && (
+                {(author.authorBio || author.bio) && (
                   <div className="prose prose-sm max-w-none">
-                    {author.authorBio.split('\n').map((paragraph, index) => (
+                    {(author.authorBio || author.bio || '').split('\n').map((paragraph, index) => (
                       <p key={index} className="text-sm text-muted-foreground">{paragraph}</p>
                     ))}
                   </div>
