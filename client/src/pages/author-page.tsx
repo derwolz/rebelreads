@@ -13,6 +13,8 @@ import { StarRating } from "@/components/star-rating";
 import { SeashellRating } from "@/components/seashell-rating";
 import { RatingSimilarityIcon } from "@/components/rating-similarity-icon";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -33,7 +35,6 @@ import type { Book } from "@/types";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
 import { Search } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Interface representing a taxonomy with its usage weight
 interface AuthorTaxonomy {
@@ -94,7 +95,10 @@ interface CompatibilityResponse {
     worldbuilding: number;
     overall: number;
   };
-  compatibility: {
+  totalRatings: number;
+  hasEnoughRatings: boolean;
+  ratingsNeeded?: number;
+  compatibility?: {
     overall: string;
     score: number;
     normalizedDifference: number;
@@ -461,55 +465,98 @@ export default function AuthorPage() {
                         </div>
                       ) : compatibilityData ? (
                         <>
-                          {/* Overall compatibility section */}
-                          <div className="flex flex-col items-center space-y-2 mb-4">
-                            <h3 className="text-sm font-medium">Overall Compatibility</h3>
-                            <SeashellRating 
-                              compatibilityScore={compatibilityData.compatibility.score} 
-                              compatibilityLabel={compatibilityData.compatibility.overall}
-                              isLoggedIn={true} 
-                            />
-                          </div>
-                          
-                          <Separator />
-                          
-                          {/* Individual rating criteria */}
-                          <div className="space-y-3 mt-4">
-                            <h3 className="text-sm font-medium text-center">Reading Preferences Comparison</h3>
-                            <div className="flex flex-wrap justify-center gap-4 mt-2">
-                              {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => {
-                                // Calculate difference/similarity from the compatibility data
-                                const criteriaData = compatibilityData.compatibility.criteria[criterion];
-                                const similarity = criteriaData ? criteriaData.normalized : 0;
-                                
-                                return (
-                                  <RatingSimilarityIcon
-                                    key={criterion}
-                                    criterion={criterion}
-                                    similarity={similarity}
-                                    label={`${criterion}: ${Math.round((1 - similarity) * 100)}% similar`}
-                                    size="md"
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                          
-                          {/* Display the author's average ratings */}
-                          <div className="mt-6">
-                            <Separator className="mb-4" />
-                            <h3 className="text-sm font-medium mb-2">Author's Average Ratings</h3>
-                            <div className="grid grid-cols-2 gap-2">
-                              {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
-                                <div key={criterion} className="flex items-center gap-2">
-                                  <span className="text-xs capitalize">{criterion}:</span>
-                                  <span className="text-xs font-medium">
-                                    {compatibilityData.authorRatings[criterion].toFixed(1)}
-                                  </span>
+                          {/* If not enough ratings, show the "needs more ratings" message */}
+                          {!compatibilityData.hasEnoughRatings && compatibilityData.ratingsNeeded !== undefined && (
+                            <div className="flex flex-col items-center space-y-6 mb-4">
+                              <div className="text-center">
+                                <h3 className="text-lg font-medium mb-2">Not Enough Ratings Yet</h3>
+                                <p className="text-muted-foreground mb-4">
+                                  This author needs {compatibilityData.ratingsNeeded} more {compatibilityData.ratingsNeeded === 1 ? 'review' : 'reviews'} before we can calculate compatibility with your preferences.
+                                </p>
+                                <div className="inline-flex items-center gap-2 py-1 px-3 bg-muted rounded-full text-sm">
+                                  <span className="font-medium">{compatibilityData.totalRatings}</span>
+                                  <span className="text-muted-foreground">of</span>
+                                  <span className="font-medium">10</span>
+                                  <span className="text-muted-foreground">reviews collected</span>
                                 </div>
-                              ))}
+                              </div>
+
+                              <div className="w-full max-w-xs">
+                                <Progress value={(compatibilityData.totalRatings / 10) * 100} className="h-2" />
+                              </div>
+                              
+                              {/* Show author's current average ratings */}
+                              <div className="w-full mt-6">
+                                <Separator className="mb-4" />
+                                <h3 className="text-sm font-medium mb-2">Author's Current Average Ratings</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                  {Object.entries(compatibilityData.authorRatings).map(([key, value]) => (
+                                    <div key={key} className="flex items-center gap-2">
+                                      <span className="text-xs capitalize">{key}:</span>
+                                      <span className="text-xs font-medium">
+                                        {value.toFixed(1)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          )}
+
+                          {/* If enough ratings, show the compatibility data */}
+                          {compatibilityData.hasEnoughRatings && compatibilityData.compatibility && (
+                            <>
+                              {/* Overall compatibility section */}
+                              <div className="flex flex-col items-center space-y-2 mb-4">
+                                <h3 className="text-sm font-medium">Overall Compatibility</h3>
+                                <SeashellRating 
+                                  compatibilityScore={compatibilityData.compatibility.score} 
+                                  compatibilityLabel={compatibilityData.compatibility.overall}
+                                  isLoggedIn={true} 
+                                />
+                              </div>
+                              
+                              <Separator />
+                              
+                              {/* Individual rating criteria */}
+                              <div className="space-y-3 mt-4">
+                                <h3 className="text-sm font-medium text-center">Reading Preferences Comparison</h3>
+                                <div className="flex flex-wrap justify-center gap-4 mt-2">
+                                  {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => {
+                                    // Calculate difference/similarity from the compatibility data
+                                    const criteriaData = compatibilityData.compatibility.criteria[criterion];
+                                    const similarity = criteriaData ? criteriaData.normalized : 0;
+                                    
+                                    return (
+                                      <RatingSimilarityIcon
+                                        key={criterion}
+                                        criterion={criterion}
+                                        similarity={similarity}
+                                        label={`${criterion}: ${Math.round((1 - similarity) * 100)}% similar`}
+                                        size="md"
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              
+                              {/* Display the author's average ratings */}
+                              <div className="mt-6">
+                                <Separator className="mb-4" />
+                                <h3 className="text-sm font-medium mb-2">Author's Average Ratings</h3>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
+                                    <div key={criterion} className="flex items-center gap-2">
+                                      <span className="text-xs capitalize">{criterion}:</span>
+                                      <span className="text-xs font-medium">
+                                        {compatibilityData.authorRatings[criterion as keyof typeof compatibilityData.authorRatings].toFixed(1)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </>
                       ) : (
                         <div className="text-center text-muted-foreground">
@@ -626,69 +673,66 @@ export default function AuthorPage() {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold mb-6">Bookshelves</h2>
             <div className="grid grid-cols-1 gap-6">
-              <div className="animate-pulse">
-                <Skeleton className="h-8 w-48 mb-4" />
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-64 rounded-lg" />
-                  ))}
-                </div>
-              </div>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="p-4 border border-border rounded-lg bg-muted/30 animate-pulse h-64"
+                />
+              ))}
             </div>
           </div>
         ) : bookshelves && bookshelves.length > 0 ? (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold mb-6">Shared Bookshelves</h2>
-            {bookshelves.map((shelfWithBooks) => (
-              <div key={shelfWithBooks.shelf.id} className="">
-              
-                {shelfWithBooks.books && shelfWithBooks.books.length > 0 ? (
-                  <div className="flex flex-col md:flex-row mb-12 justify-center items-center gap-6">
-                    {/* Bookshelf cover on the left */}
-                    <div className="w-full md:w-48 flex-shrink-0">
-                      <div className="aspect-[2/3] relative rounded-lg   border shadow">
-                        <div className="absolute inset-0 bg-gradient-to-b from-muted/20 to-muted/60">
-                          <img 
-                            src={shelfWithBooks.shelf.coverImageUrl?.toString() || "/images/default-bookshelf-cover.svg"} 
-                            alt={`${shelfWithBooks.shelf.title} cover`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = "/images/default-bookshelf-cover.svg";
-                            }}
-                          />
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Public Bookshelves</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {bookshelves.map((shelf) => (
+                <Card key={shelf.shelf.id} className="bg-card/80 shadow">
+                  <CardHeader>
+                    <CardTitle className="text-xl">{shelf.shelf.title}</CardTitle>
+                    <CardDescription>
+                      {shelf.books.length} {shelf.books.length === 1 ? 'book' : 'books'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-4">
+                      {shelf.books.slice(0, 6).map((book) => (
+                        <div
+                          key={book.id}
+                          className="w-16 h-24 bg-muted rounded-md overflow-hidden shadow-sm"
+                        >
+                          {book.coverUrl ? (
+                            <img
+                              src={book.coverUrl}
+                              alt={book.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                              <span className="text-xs text-center px-1">{book.title}</span>
+                            </div>
+                          )}
                         </div>
-                        
-                      </div>
+                      ))}
                       
+                      {shelf.books.length > 6 && (
+                        <div className="w-16 h-24 bg-muted/50 rounded-md flex items-center justify-center">
+                          <span className="text-sm font-medium">+{shelf.books.length - 6}</span>
+                        </div>
+                      )}
                     </div>
-                    {/* Book rack display on the right */}
-                    <div className="flex-1 w-full">
-                      <BookRack 
-                        title="" 
-                        books={convertBooksToClientFormat(shelfWithBooks.books)} 
-                        isLoading={false}
-                        className="m-0 mb-0"
-                      />
-                      <h3 className="text-xl font-semibold">{shelfWithBooks.shelf.title}</h3>
-                    </div>
-                    
-                  </div>
-                ) : (
-                  <div className="flex justify-center items-center h-32 bg-muted/20 rounded-lg">
-                    <p className="text-muted-foreground">No books in this bookshelf</p>
-                  </div>
-                )}
-              </div>
-            ))}
+                  </CardContent>
+                  <CardFooter>
+                    <Link to={`/bookshelf/${shelf.shelf.id}`} className="w-full">
+                      <Button variant="outline" size="sm" className="w-full">
+                        View Shelf
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="mt-16 text-center py-12 border rounded-lg bg-muted/10">
-            <h2 className="text-2xl font-semibold mb-2">No Shared Bookshelves</h2>
-            <p className="text-muted-foreground">
-              This author hasn't shared any bookshelves yet.
-            </p>
-          </div>
-        )}
+        ) : null}
       </main>
     </div>
   );

@@ -494,8 +494,49 @@ router.get("/:id/compatibility", async (req, res) => {
       return res.status(404).json({ error: "Author not found" });
     }
     
+    // Check if the author has enough ratings for meaningful compatibility
+    // Get books by this author
+    const authorBooks = await dbStorage.getBooksByAuthor(authorId);
+    
+    // Get total number of ratings across all books
+    let totalRatings = 0;
+    if (authorBooks && authorBooks.length > 0) {
+      const bookIds = authorBooks.map(book => book.id);
+      const allRatings = await dbStorage.getRatingsForBooks(bookIds);
+      totalRatings = allRatings.length;
+    }
+    
+    // Minimum ratings needed for compatibility calculation
+    const MINIMUM_RATINGS_REQUIRED = 10;
+    const hasEnoughRatings = totalRatings >= MINIMUM_RATINGS_REQUIRED;
+    
     // Get the current user's ID
     const userId = req.user!.id;
+    
+    if (!hasEnoughRatings) {
+      // Get author's average ratings still, but don't calculate compatibility
+      const authorRatings = await dbStorage.getAuthorAggregateRatings(authorId);
+      const userPreferences = await dbStorage.getRatingPreferences(userId);
+      
+      return res.json({
+        currentUser: {
+          id: userId,
+          username: req.user!.username,
+          preferences: userPreferences || null
+        },
+        authorRatings: authorRatings || {
+          overall: 0,
+          enjoyment: 0,
+          writing: 0,
+          themes: 0, 
+          characters: 0,
+          worldbuilding: 0
+        },
+        totalRatings: totalRatings,
+        ratingsNeeded: MINIMUM_RATINGS_REQUIRED - totalRatings,
+        hasEnoughRatings: false
+      });
+    }
     
     // Calculate compatibility between user and author
     const compatibility = await calculateAuthorUserCompatibility(authorId, userId);
@@ -511,6 +552,8 @@ router.get("/:id/compatibility", async (req, res) => {
         preferences: userPreferences || null
       },
       authorRatings: compatibility.authorRatings,
+      totalRatings: totalRatings,
+      hasEnoughRatings: true,
       compatibility: {
         overall: compatibility.overall,
         score: compatibility.score,
