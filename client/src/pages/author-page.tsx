@@ -115,15 +115,23 @@ interface CompatibilityResponse {
 
 // Helper function to convert API books to client books with all necessary data for BookCard
 const convertBooksToClientFormat = (books: any[], authorData: AuthorDetails | undefined): Book[] => {
-  return books.map(book => ({
-    ...book,
-    // Maintain the original author info of each book, only use page author as fallback
-    // This ensures books from other authors in bookshelves display correctly
-    authorName: book.authorName || book.author_name || (book.author ? book.author.authorName || book.author.author_name || book.author.username : null) || "",
-    authorId: book.authorId || (book.author ? book.author.id : null) || 0,
-    // Make sure referralLinks exists to prevent errors
-    referralLinks: book.referralLinks || []
-  }));
+  return books.map(book => {
+    // First look for book's own author info (we must use AUTHOR NAME, not ID)
+    // The author name is essential for navigation in book-details which uses
+    // /book-details?authorName=${encodedAuthor}&bookTitle=${encodedTitle}
+    const bookAuthorName = 
+      book.authorName || 
+      book.author_name || 
+      (book.author ? book.author.authorName || book.author.author_name || book.author.username : null);
+    
+    return {
+      ...book,
+      // Use the book's actual author name - this is crucial for navigation
+      authorName: bookAuthorName || "",
+      // Make sure referralLinks exists to prevent errors
+      referralLinks: book.referralLinks || []
+    };
+  });
 };
 
 // Map sentiment levels to colors (copied from rating-sentiment-display.tsx)
