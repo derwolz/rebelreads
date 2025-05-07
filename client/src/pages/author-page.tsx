@@ -34,7 +34,7 @@ import type { SocialMediaLink, BookShelf } from "@shared/schema";
 import type { Book } from "@/types";
 import { format } from "date-fns";
 import { SocialMediaLinks } from "@/components/social-media-links";
-import { Search } from "lucide-react";
+import { Lock, Search } from "lucide-react";
 
 // Interface representing a taxonomy with its usage weight
 interface AuthorTaxonomy {
@@ -593,7 +593,7 @@ export default function AuthorPage() {
                         {/* Blur overlay */}
                         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
                           <div className="text-center p-4">
-                            <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                            <div className="h-8 w-8 mx-auto mb-2 text-muted-foreground">🔒</div>
                             <p className="font-medium">Log in to view detailed ratings</p>
                             <Link to="/login">
                               <Button size="sm" className="mt-2">Log In</Button>
