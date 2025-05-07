@@ -780,52 +780,7 @@ export default function AuthorPage() {
           </div>
         </div>
         
-        {/* Rating Sentiment Display Section */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Rating Sentiment</h2>
-          <Card className="bg-card/80 shadow p-4">
-            <CardContent className="pt-6">
-              {/* Process book ratings data for Valkyrie X Truck */}
-              <RatingSentimentDisplay
-                ratings={[
-                  {
-                    criteriaName: "enjoyment",
-                    totalPositive: 101, // Hard-coded data for Valkyrie X Truck
-                    totalNegative: 0,
-                    sentiment: "overwhelmingly_positive"
-                  },
-                  {
-                    criteriaName: "writing",
-                    totalPositive: 1,
-                    totalNegative: 100,
-                    sentiment: "overwhelmingly_negative"
-                  },
-                  {
-                    criteriaName: "themes",
-                    totalPositive: 7,
-                    totalNegative: 4,
-                    sentiment: "mostly_positive"
-                  },
-                  {
-                    criteriaName: "characters",
-                    totalPositive: 64,
-                    totalNegative: 37,
-                    sentiment: "mostly_positive"
-                  },
-                  {
-                    criteriaName: "worldbuilding",
-                    totalPositive: 47,
-                    totalNegative: 54,
-                    sentiment: "mostly_negative"
-                  }
-                ]}
-                isLoggedIn={!!user} 
-                isAuthor={!!isAuthorViewing}
-                totalRatings={compatibilityData?.totalRatings || 300} // We have 300+ total ratings
-              />
-            </CardContent>
-          </Card>
-        </div>
+       
         
         {/* Books Section with Search */}
         <div className="mb-12">
