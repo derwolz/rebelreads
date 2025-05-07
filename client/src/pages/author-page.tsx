@@ -516,8 +516,8 @@ export default function AuthorPage() {
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                               <div className="font-medium">Writing</div>
                               <div className="flex items-center gap-2 justify-center mt-1">
-                                <span className="text-green-500">👍 {Math.floor(Math.random() * 120) + 40}</span>
-                                <span className="text-red-500">👎 {Math.floor(Math.random() * 25) + 5}</span>
+                                <span className="text-green-500">👍 1</span>
+                                <span className="text-red-500">👎 100</span>
                               </div>
                             </div>
                           </div>
@@ -536,8 +536,8 @@ export default function AuthorPage() {
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                               <div className="font-medium">Themes</div>
                               <div className="flex items-center gap-2 justify-center mt-1">
-                                <span className="text-green-500">👍 {Math.floor(Math.random() * 90) + 30}</span>
-                                <span className="text-red-500">👎 {Math.floor(Math.random() * 20) + 5}</span>
+                                <span className="text-green-500">👍 7</span>
+                                <span className="text-red-500">👎 4</span>
                               </div>
                             </div>
                           </div>
@@ -556,8 +556,8 @@ export default function AuthorPage() {
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                               <div className="font-medium">Characters</div>
                               <div className="flex items-center gap-2 justify-center mt-1">
-                                <span className="text-green-500">👍 {Math.floor(Math.random() * 110) + 40}</span>
-                                <span className="text-red-500">👎 {Math.floor(Math.random() * 30) + 10}</span>
+                                <span className="text-green-500">👍 64</span>
+                                <span className="text-red-500">👎 37</span>
                               </div>
                             </div>
                           </div>
@@ -576,8 +576,8 @@ export default function AuthorPage() {
                             <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                               <div className="font-medium">World Building</div>
                               <div className="flex items-center gap-2 justify-center mt-1">
-                                <span className="text-green-500">👍 {Math.floor(Math.random() * 100) + 30}</span>
-                                <span className="text-red-500">👎 {Math.floor(Math.random() * 25) + 5}</span>
+                                <span className="text-green-500">👍 47</span>
+                                <span className="text-red-500">👎 54</span>
                               </div>
                             </div>
                           </div>
@@ -586,11 +586,22 @@ export default function AuthorPage() {
                     </CardContent>
                   )}
 
-                  {/* View 3: Not logged in - show same minimal icons view */}
+                  {/* View 3: Not logged in - show blurred sample data view */}
                   {!isLoggedIn && (
                     <CardContent>
-                      <div className="flex justify-center items-center gap-8 p-6">
-                        {/* Enjoyment icon */}
+                      <div className="flex justify-center items-center gap-8 p-6 relative">
+                        {/* Blur overlay */}
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+                          <div className="text-center p-4">
+                            <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                            <p className="font-medium">Log in to view detailed ratings</p>
+                            <Link to="/login">
+                              <Button size="sm" className="mt-2">Log In</Button>
+                            </Link>
+                          </div>
+                        </div>
+                        
+                        {/* Enjoyment icon - blurred behind */}
                         <div 
                           className="group relative cursor-pointer"
                           title="Enjoyment: Reader engagement scores"
@@ -610,7 +621,7 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
-                        {/* Writing Style icon */}
+                        {/* Writing Style icon - blurred behind */}
                         <div 
                           className="group relative cursor-pointer"
                           title="Writing: Prose quality ratings"
@@ -630,7 +641,7 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
-                        {/* Themes icon */}
+                        {/* Themes icon - blurred behind */}
                         <div 
                           className="group relative cursor-pointer"
                           title="Themes: Core ideas and concepts"
@@ -650,7 +661,7 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
-                        {/* Characters icon */}
+                        {/* Characters icon - blurred behind */}
                         <div 
                           className="group relative cursor-pointer"
                           title="Characters: Cast and character development"
@@ -670,7 +681,7 @@ export default function AuthorPage() {
                           </div>
                         </div>
                         
-                        {/* World Building icon */}
+                        {/* World Building icon - blurred behind */}
                         <div 
                           className="group relative cursor-pointer"
                           title="World Building: Settings and environments"
