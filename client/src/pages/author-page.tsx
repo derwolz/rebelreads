@@ -352,155 +352,115 @@ export default function AuthorPage() {
                   <CardHeader>
                     <CardTitle>
                       {isAuthorViewing 
-                        ? "Your Books Ratings" 
-                        : isLoggedIn 
-                          ? "Reading Compatibility" 
-                          : "Overall Ratings"}
+                        ? "Author Ratings" 
+                        : "Author Ratings"}
                     </CardTitle>
                     <CardDescription>
                       {isAuthorViewing 
-                        ? "Average ratings across all your books"
-                        : isLoggedIn
-                          ? "How compatible this author's writing is with your preferences"
-                          : "Average across all books"}
+                        ? "See how readers rate your books by category"
+                        : "See how readers rate this author's books by category"}
                     </CardDescription>
                   </CardHeader>
 
-                  {/* View 1: Author viewing their own page - show traditional average ratings with sentiment icons */}
+                  {/* View 1: Author viewing their own page - show only sentiment icons */}
                   {isAuthorViewing && (
                     <CardContent>
-                      <div className="flex items-center gap-2 mb-4">
-                        <StarRating
-                          rating={Math.round(author.aggregateRatings.overall)}
-                          readOnly
-                          size="lg"
-                        />
-                        <span className="text-lg font-medium">
-                          {author.aggregateRatings.overall.toFixed(1)}
-                        </span>
-                      </div>
-                      
-                      <div className="grid gap-5">
+                      <div className="grid gap-6">
+                        
                         {/* Enjoyment row */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <RatingSimilarityIcon
-                              criterion="enjoyment"
-                              similarity={0}
-                              label="Enjoyment"
-                              size="sm"
-                            />
-                            <span className="text-sm">Enjoyment</span>
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="enjoyment"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Enjoyment</h4>
+                            <p className="text-sm text-muted-foreground">How readers connect with your stories</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={author.aggregateRatings.enjoyment}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-sm">
-                              {author.aggregateRatings.enjoyment.toFixed(1)}
-                            </span>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.enjoyment.toFixed(1)}
                           </div>
                         </div>
                         
                         {/* Writing Style row */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <RatingSimilarityIcon
-                              criterion="writing"
-                              similarity={0}
-                              label="Writing Style"
-                              size="sm"
-                            />
-                            <span className="text-sm">Writing Style</span>
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="writing"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Writing</h4>
+                            <p className="text-sm text-muted-foreground">Your prose, pacing and style</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={author.aggregateRatings.writing}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-sm">
-                              {author.aggregateRatings.writing.toFixed(1)}
-                            </span>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.writing.toFixed(1)}
                           </div>
                         </div>
                         
                         {/* Themes row */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <RatingSimilarityIcon
-                              criterion="themes"
-                              similarity={0}
-                              label="Themes"
-                              size="sm"
-                            />
-                            <span className="text-sm">Themes</span>
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="themes"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Themes</h4>
+                            <p className="text-sm text-muted-foreground">The core ideas in your work</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={author.aggregateRatings.themes}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-sm">
-                              {author.aggregateRatings.themes.toFixed(1)}
-                            </span>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.themes.toFixed(1)}
                           </div>
                         </div>
                         
                         {/* Characters row */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <RatingSimilarityIcon
-                              criterion="characters"
-                              similarity={0}
-                              label="Characters"
-                              size="sm"
-                            />
-                            <span className="text-sm">Characters</span>
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="characters"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Characters</h4>
+                            <p className="text-sm text-muted-foreground">How readers respond to your cast</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={author.aggregateRatings.characters}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-sm">
-                              {author.aggregateRatings.characters.toFixed(1)}
-                            </span>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.characters.toFixed(1)}
                           </div>
                         </div>
                         
                         {/* World Building row */}
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <RatingSimilarityIcon
-                              criterion="worldbuilding"
-                              similarity={0}
-                              label="World Building"
-                              size="sm"
-                            />
-                            <span className="text-sm">World Building</span>
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="worldbuilding"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">World Building</h4>
+                            <p className="text-sm text-muted-foreground">The settings and environments</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <StarRating
-                              rating={author.aggregateRatings.worldbuilding}
-                              readOnly
-                              size="sm"
-                            />
-                            <span className="text-sm">
-                              {author.aggregateRatings.worldbuilding.toFixed(1)}
-                            </span>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.worldbuilding.toFixed(1)}
                           </div>
+                        </div>
+                        
+                        <div className="text-sm text-center text-muted-foreground mt-2">
+                          Values represent average ratings across all your books
                         </div>
                       </div>
                     </CardContent>
                   )}
 
-                  {/* View 2: Logged-in user (not author) viewing the page - show compatibility */}
-                  {isLoggedIn && !isAuthorViewing && (
+                  {/* View 2: Logged-in user (not author) viewing the page - use same visualization */}
+                  {(isLoggedIn && !isAuthorViewing) && (
                     <CardContent>
                       {isCompatibilityLoading ? (
                         <div className="space-y-4">
@@ -508,167 +468,197 @@ export default function AuthorPage() {
                           <Skeleton className="h-6 w-full" />
                           <Skeleton className="h-6 w-full" />
                         </div>
-                      ) : compatibilityData ? (
-                        <>
-                          {/* If not enough ratings, show the "needs more ratings" message */}
-                          {!compatibilityData.hasEnoughRatings && compatibilityData.ratingsNeeded !== undefined && (
-                            <div className="flex flex-col items-center space-y-6 mb-4">
-                              <div className="text-center">
-                                <h3 className="text-lg font-medium mb-2">Not Enough Ratings Yet</h3>
-                                <p className="text-muted-foreground mb-4">
-                                  This author needs {compatibilityData.ratingsNeeded} more {compatibilityData.ratingsNeeded === 1 ? 'review' : 'reviews'} before we can calculate compatibility with your preferences.
-                                </p>
-                                <div className="inline-flex items-center gap-2 py-1 px-3 bg-muted rounded-full text-sm">
-                                  <span className="font-medium">{compatibilityData.totalRatings}</span>
-                                  <span className="text-muted-foreground">of</span>
-                                  <span className="font-medium">10</span>
-                                  <span className="text-muted-foreground">reviews collected</span>
-                                </div>
-                              </div>
-
-                              <div className="w-full max-w-xs">
-                                <Progress value={(compatibilityData.totalRatings / 10) * 100} className="h-2" />
-                              </div>
-                              
-                              {/* Show author's current average ratings */}
-                              <div className="w-full mt-6">
-                                <Separator className="mb-4" />
-                                <h3 className="text-sm font-medium mb-2">Author's Current Average Ratings</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                  {Object.entries(compatibilityData.authorRatings).map(([key, value]) => (
-                                    <div key={key} className="flex items-center gap-2">
-                                      <span className="text-xs capitalize">{key}:</span>
-                                      <span className="text-xs font-medium">
-                                        {value.toFixed(1)}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* If enough ratings, show the compatibility data */}
-                          {compatibilityData.hasEnoughRatings && compatibilityData.compatibility && (
-                            <>
-                              {/* Overall compatibility section */}
-                              <div className="flex flex-col items-center space-y-2 mb-4">
-                                <h3 className="text-sm font-medium">Overall Compatibility</h3>
-                                <SeashellRating 
-                                  compatibilityScore={compatibilityData.compatibility.score} 
-                                  compatibilityLabel={compatibilityData.compatibility.overall}
-                                  isLoggedIn={true} 
-                                />
-                              </div>
-                              
-                              <Separator />
-                              
-                              {/* Individual rating criteria */}
-                              <div className="space-y-3 mt-4">
-                                <h3 className="text-sm font-medium text-center">Reading Preferences Comparison</h3>
-                                <div className="flex flex-wrap justify-center gap-4 mt-2">
-                                  {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => {
-                                    // Calculate difference/similarity from the compatibility data
-                                    const criteriaData = compatibilityData.compatibility.criteria[criterion];
-                                    const similarity = criteriaData ? criteriaData.normalized : 0;
-                                    
-                                    return (
-                                      <RatingSimilarityIcon
-                                        key={criterion}
-                                        criterion={criterion}
-                                        similarity={similarity}
-                                        label={`${criterion}: ${Math.round((1 - similarity) * 100)}% similar`}
-                                        size="md"
-                                      />
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              
-                              {/* Display the author's average ratings */}
-                              <div className="mt-6">
-                                <Separator className="mb-4" />
-                                <h3 className="text-sm font-medium mb-2">Author's Average Ratings</h3>
-                                <div className="grid grid-cols-2 gap-2">
-                                  {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
-                                    <div key={criterion} className="flex items-center gap-2">
-                                      <span className="text-xs capitalize">{criterion}:</span>
-                                      <span className="text-xs font-medium">
-                                        {compatibilityData.authorRatings[criterion as keyof typeof compatibilityData.authorRatings].toFixed(1)}
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </>
-                          )}
-                        </>
                       ) : (
-                        <div className="text-center text-muted-foreground">
-                          <p>Error loading compatibility data</p>
+                        <div className="grid gap-6">
+                          
+                          {/* Enjoyment row */}
+                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                            <RatingSimilarityIcon
+                              criterion="enjoyment"
+                              similarity={0}
+                              label=""
+                              size="lg"
+                            />
+                            <div>
+                              <h4 className="font-medium">Enjoyment</h4>
+                              <p className="text-sm text-muted-foreground">How readers connect with the stories</p>
+                            </div>
+                            <div className="ml-auto text-lg font-bold">
+                              {compatibilityData?.authorRatings.enjoyment.toFixed(1) || "-"}
+                            </div>
+                          </div>
+                          
+                          {/* Writing Style row */}
+                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                            <RatingSimilarityIcon
+                              criterion="writing"
+                              similarity={0}
+                              label=""
+                              size="lg"
+                            />
+                            <div>
+                              <h4 className="font-medium">Writing</h4>
+                              <p className="text-sm text-muted-foreground">Prose, pacing and style elements</p>
+                            </div>
+                            <div className="ml-auto text-lg font-bold">
+                              {compatibilityData?.authorRatings.writing.toFixed(1) || "-"}
+                            </div>
+                          </div>
+                          
+                          {/* Themes row */}
+                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                            <RatingSimilarityIcon
+                              criterion="themes"
+                              similarity={0}
+                              label=""
+                              size="lg"
+                            />
+                            <div>
+                              <h4 className="font-medium">Themes</h4>
+                              <p className="text-sm text-muted-foreground">The core ideas in the work</p>
+                            </div>
+                            <div className="ml-auto text-lg font-bold">
+                              {compatibilityData?.authorRatings.themes.toFixed(1) || "-"}
+                            </div>
+                          </div>
+                          
+                          {/* Characters row */}
+                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                            <RatingSimilarityIcon
+                              criterion="characters"
+                              similarity={0}
+                              label=""
+                              size="lg"
+                            />
+                            <div>
+                              <h4 className="font-medium">Characters</h4>
+                              <p className="text-sm text-muted-foreground">How readers respond to the cast</p>
+                            </div>
+                            <div className="ml-auto text-lg font-bold">
+                              {compatibilityData?.authorRatings.characters.toFixed(1) || "-"}
+                            </div>
+                          </div>
+                          
+                          {/* World Building row */}
+                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                            <RatingSimilarityIcon
+                              criterion="worldbuilding"
+                              similarity={0}
+                              label=""
+                              size="lg"
+                            />
+                            <div>
+                              <h4 className="font-medium">World Building</h4>
+                              <p className="text-sm text-muted-foreground">The settings and environments</p>
+                            </div>
+                            <div className="ml-auto text-lg font-bold">
+                              {compatibilityData?.authorRatings.worldbuilding.toFixed(1) || "-"}
+                            </div>
+                          </div>
+                          
+                          <div className="text-sm text-center text-muted-foreground mt-2">
+                            Values represent average ratings across all books
+                          </div>
                         </div>
                       )}
                     </CardContent>
                   )}
 
-                  {/* View 3: Not logged in - show default view with login prompt */}
+                  {/* View 3: Not logged in - show clean ratings view with login prompt */}
                   {!isLoggedIn && (
-                    <>
-                      <CardContent className="relative">
-                        <div className="blur-sm pointer-events-none">
-                          <div className="mb-4">
-                            <p className="font-semibold text-center mb-2">Overall Compatibility</p>
-                            <div className="flex justify-center mb-2">
-                              <SeashellRating 
-                                compatibilityScore={2} 
-                                compatibilityLabel="Sample compatibility" 
-                                isLoggedIn={false}
-                              />
-                            </div>
+                    <CardContent>
+                      <div className="grid gap-6">
+                        
+                        {/* Enjoyment row */}
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="enjoyment"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Enjoyment</h4>
+                            <p className="text-sm text-muted-foreground">How readers connect with the stories</p>
                           </div>
-                          
-                          <Separator className="my-4" />
-                          
-                          <div className="space-y-3">
-                            <p className="font-medium text-sm text-center">Reading Preferences Comparison</p>
-                            <div className="flex flex-wrap justify-center gap-4 mt-2">
-                              {['enjoyment', 'writing', 'themes', 'characters', 'worldbuilding'].map(criterion => (
-                                <div key={criterion} className="flex flex-col items-center opacity-50">
-                                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                                    <span className="text-xs">{criterion.charAt(0).toUpperCase()}</span>
-                                  </div>
-                                  <span className="text-xs capitalize mt-1">{criterion}</span>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.enjoyment.toFixed(1)}
                           </div>
                         </div>
                         
-                        {/* Overlay with login button */}
-                        <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center p-4 space-y-4">
-                          <p className="text-center font-medium">
-                            Login to see how compatible this author is with your reading preferences
-                          </p>
-                          <Link to="/login">
-                            <Button>Login Now</Button>
-                          </Link>
-                        </div>
-                      </CardContent>
-                      
-                      <CardFooter className="flex flex-col space-y-3 border-t pt-4">
-                        <h3 className="text-sm font-medium w-full">Traditional Ratings</h3>
-                        <div className="flex items-center gap-2 w-full">
-                          <StarRating
-                            rating={Math.round(author.aggregateRatings.overall)}
-                            readOnly
-                            size="md"
+                        {/* Writing Style row */}
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="writing"
+                            similarity={0}
+                            label=""
+                            size="lg"
                           />
-                          <span className="text-sm font-medium">
-                            {author.aggregateRatings.overall.toFixed(1)} / 5 average
-                          </span>
+                          <div>
+                            <h4 className="font-medium">Writing</h4>
+                            <p className="text-sm text-muted-foreground">Prose, pacing and style elements</p>
+                          </div>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.writing.toFixed(1)}
+                          </div>
                         </div>
-                      </CardFooter>
-                    </>
+                        
+                        {/* Themes row */}
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="themes"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Themes</h4>
+                            <p className="text-sm text-muted-foreground">The core ideas in the work</p>
+                          </div>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.themes.toFixed(1)}
+                          </div>
+                        </div>
+                        
+                        {/* Characters row */}
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="characters"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">Characters</h4>
+                            <p className="text-sm text-muted-foreground">How readers respond to the cast</p>
+                          </div>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.characters.toFixed(1)}
+                          </div>
+                        </div>
+                        
+                        {/* World Building row */}
+                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          <RatingSimilarityIcon
+                            criterion="worldbuilding"
+                            similarity={0}
+                            label=""
+                            size="lg"
+                          />
+                          <div>
+                            <h4 className="font-medium">World Building</h4>
+                            <p className="text-sm text-muted-foreground">The settings and environments</p>
+                          </div>
+                          <div className="ml-auto text-lg font-bold">
+                            {author.aggregateRatings.worldbuilding.toFixed(1)}
+                          </div>
+                        </div>
+                        
+                        <div className="text-sm text-center text-muted-foreground mt-2">
+                          Values represent average ratings across all books
+                        </div>
+                      </div>
+                    </CardContent>
                   )}
                 </Card>
               )}
