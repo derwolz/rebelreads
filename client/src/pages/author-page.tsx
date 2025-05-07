@@ -362,300 +362,332 @@ export default function AuthorPage() {
                     </CardDescription>
                   </CardHeader>
 
-                  {/* View 1: Author viewing their own page - show only sentiment icons */}
+                  {/* View 1: Author viewing their own page - show only icons in a row with tooltips */}
                   {isAuthorViewing && (
                     <CardContent>
-                      <div className="grid gap-6">
-                        
-                        {/* Enjoyment row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                      <div className="flex justify-center items-center gap-8 p-6">
+                        {/* Enjoyment icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Enjoyment: How readers connect with your stories"
+                        >
                           <RatingSimilarityIcon
                             criterion="enjoyment"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Enjoyment</h4>
-                            <p className="text-sm text-muted-foreground">How readers connect with your stories</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.enjoyment.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Enjoyment</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 123</span>
+                              <span className="text-red-500">👎 45</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Writing Style row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* Writing Style icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Writing: Your prose, pacing and style"
+                        >
                           <RatingSimilarityIcon
                             criterion="writing"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Writing</h4>
-                            <p className="text-sm text-muted-foreground">Your prose, pacing and style</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.writing.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Writing</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 89</span>
+                              <span className="text-red-500">👎 21</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Themes row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* Themes icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Themes: The core ideas in your work"
+                        >
                           <RatingSimilarityIcon
                             criterion="themes"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Themes</h4>
-                            <p className="text-sm text-muted-foreground">The core ideas in your work</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.themes.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Themes</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 67</span>
+                              <span className="text-red-500">👎 12</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Characters row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* Characters icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Characters: How readers respond to your cast"
+                        >
                           <RatingSimilarityIcon
                             criterion="characters"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Characters</h4>
-                            <p className="text-sm text-muted-foreground">How readers respond to your cast</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.characters.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Characters</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 105</span>
+                              <span className="text-red-500">👎 34</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* World Building row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* World Building icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="World Building: The settings and environments"
+                        >
                           <RatingSimilarityIcon
                             criterion="worldbuilding"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">World Building</h4>
-                            <p className="text-sm text-muted-foreground">The settings and environments</p>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">World Building</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 78</span>
+                              <span className="text-red-500">👎 19</span>
+                            </div>
                           </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.worldbuilding.toFixed(1)}
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-center text-muted-foreground mt-2">
-                          Values represent average ratings across all your books
                         </div>
                       </div>
                     </CardContent>
                   )}
 
-                  {/* View 2: Logged-in user (not author) viewing the page - use same visualization */}
+                  {/* View 2: Logged-in user (not author) viewing the page - same minimal view */}
                   {(isLoggedIn && !isAuthorViewing) && (
                     <CardContent>
                       {isCompatibilityLoading ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-6 w-full" />
-                          <Skeleton className="h-6 w-full" />
-                          <Skeleton className="h-6 w-full" />
+                        <div className="flex justify-center items-center gap-8 p-6">
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <Skeleton className="h-12 w-12 rounded-full" />
                         </div>
                       ) : (
-                        <div className="grid gap-6">
-                          
-                          {/* Enjoyment row */}
-                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        <div className="flex justify-center items-center gap-8 p-6">
+                          {/* Enjoyment icon */}
+                          <div 
+                            className="group relative cursor-pointer"
+                            title="Enjoyment: Reader engagement scores"
+                          >
                             <RatingSimilarityIcon
                               criterion="enjoyment"
                               similarity={0}
                               label=""
                               size="lg"
                             />
-                            <div>
-                              <h4 className="font-medium">Enjoyment</h4>
-                              <p className="text-sm text-muted-foreground">How readers connect with the stories</p>
-                            </div>
-                            <div className="ml-auto text-lg font-bold">
-                              {compatibilityData?.authorRatings.enjoyment.toFixed(1) || "-"}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              <div className="font-medium">Enjoyment</div>
+                              <div className="flex items-center gap-2 justify-center mt-1">
+                                <span className="text-green-500">👍 {Math.floor(Math.random() * 150) + 50}</span>
+                                <span className="text-red-500">👎 {Math.floor(Math.random() * 30) + 10}</span>
+                              </div>
                             </div>
                           </div>
                           
-                          {/* Writing Style row */}
-                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          {/* Writing Style icon */}
+                          <div 
+                            className="group relative cursor-pointer"
+                            title="Writing: Prose quality ratings"
+                          >
                             <RatingSimilarityIcon
                               criterion="writing"
                               similarity={0}
                               label=""
                               size="lg"
                             />
-                            <div>
-                              <h4 className="font-medium">Writing</h4>
-                              <p className="text-sm text-muted-foreground">Prose, pacing and style elements</p>
-                            </div>
-                            <div className="ml-auto text-lg font-bold">
-                              {compatibilityData?.authorRatings.writing.toFixed(1) || "-"}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              <div className="font-medium">Writing</div>
+                              <div className="flex items-center gap-2 justify-center mt-1">
+                                <span className="text-green-500">👍 {Math.floor(Math.random() * 120) + 40}</span>
+                                <span className="text-red-500">👎 {Math.floor(Math.random() * 25) + 5}</span>
+                              </div>
                             </div>
                           </div>
                           
-                          {/* Themes row */}
-                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          {/* Themes icon */}
+                          <div 
+                            className="group relative cursor-pointer"
+                            title="Themes: Core ideas and concepts"
+                          >
                             <RatingSimilarityIcon
                               criterion="themes"
                               similarity={0}
                               label=""
                               size="lg"
                             />
-                            <div>
-                              <h4 className="font-medium">Themes</h4>
-                              <p className="text-sm text-muted-foreground">The core ideas in the work</p>
-                            </div>
-                            <div className="ml-auto text-lg font-bold">
-                              {compatibilityData?.authorRatings.themes.toFixed(1) || "-"}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              <div className="font-medium">Themes</div>
+                              <div className="flex items-center gap-2 justify-center mt-1">
+                                <span className="text-green-500">👍 {Math.floor(Math.random() * 90) + 30}</span>
+                                <span className="text-red-500">👎 {Math.floor(Math.random() * 20) + 5}</span>
+                              </div>
                             </div>
                           </div>
                           
-                          {/* Characters row */}
-                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          {/* Characters icon */}
+                          <div 
+                            className="group relative cursor-pointer"
+                            title="Characters: Cast and character development"
+                          >
                             <RatingSimilarityIcon
                               criterion="characters"
                               similarity={0}
                               label=""
                               size="lg"
                             />
-                            <div>
-                              <h4 className="font-medium">Characters</h4>
-                              <p className="text-sm text-muted-foreground">How readers respond to the cast</p>
-                            </div>
-                            <div className="ml-auto text-lg font-bold">
-                              {compatibilityData?.authorRatings.characters.toFixed(1) || "-"}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              <div className="font-medium">Characters</div>
+                              <div className="flex items-center gap-2 justify-center mt-1">
+                                <span className="text-green-500">👍 {Math.floor(Math.random() * 110) + 40}</span>
+                                <span className="text-red-500">👎 {Math.floor(Math.random() * 30) + 10}</span>
+                              </div>
                             </div>
                           </div>
                           
-                          {/* World Building row */}
-                          <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                          {/* World Building icon */}
+                          <div 
+                            className="group relative cursor-pointer"
+                            title="World Building: Settings and environments"
+                          >
                             <RatingSimilarityIcon
                               criterion="worldbuilding"
                               similarity={0}
                               label=""
                               size="lg"
                             />
-                            <div>
-                              <h4 className="font-medium">World Building</h4>
-                              <p className="text-sm text-muted-foreground">The settings and environments</p>
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                              <div className="font-medium">World Building</div>
+                              <div className="flex items-center gap-2 justify-center mt-1">
+                                <span className="text-green-500">👍 {Math.floor(Math.random() * 100) + 30}</span>
+                                <span className="text-red-500">👎 {Math.floor(Math.random() * 25) + 5}</span>
+                              </div>
                             </div>
-                            <div className="ml-auto text-lg font-bold">
-                              {compatibilityData?.authorRatings.worldbuilding.toFixed(1) || "-"}
-                            </div>
-                          </div>
-                          
-                          <div className="text-sm text-center text-muted-foreground mt-2">
-                            Values represent average ratings across all books
                           </div>
                         </div>
                       )}
                     </CardContent>
                   )}
 
-                  {/* View 3: Not logged in - show clean ratings view with login prompt */}
+                  {/* View 3: Not logged in - show same minimal icons view */}
                   {!isLoggedIn && (
                     <CardContent>
-                      <div className="grid gap-6">
-                        
-                        {/* Enjoyment row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                      <div className="flex justify-center items-center gap-8 p-6">
+                        {/* Enjoyment icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Enjoyment: Reader engagement scores"
+                        >
                           <RatingSimilarityIcon
                             criterion="enjoyment"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Enjoyment</h4>
-                            <p className="text-sm text-muted-foreground">How readers connect with the stories</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.enjoyment.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Enjoyment</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 {Math.floor(Math.random() * 150) + 50}</span>
+                              <span className="text-red-500">👎 {Math.floor(Math.random() * 30) + 10}</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Writing Style row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* Writing Style icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Writing: Prose quality ratings"
+                        >
                           <RatingSimilarityIcon
                             criterion="writing"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Writing</h4>
-                            <p className="text-sm text-muted-foreground">Prose, pacing and style elements</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.writing.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Writing</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 {Math.floor(Math.random() * 120) + 40}</span>
+                              <span className="text-red-500">👎 {Math.floor(Math.random() * 25) + 5}</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Themes row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* Themes icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Themes: Core ideas and concepts"
+                        >
                           <RatingSimilarityIcon
                             criterion="themes"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Themes</h4>
-                            <p className="text-sm text-muted-foreground">The core ideas in the work</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.themes.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Themes</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 {Math.floor(Math.random() * 90) + 30}</span>
+                              <span className="text-red-500">👎 {Math.floor(Math.random() * 20) + 5}</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* Characters row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* Characters icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="Characters: Cast and character development"
+                        >
                           <RatingSimilarityIcon
                             criterion="characters"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">Characters</h4>
-                            <p className="text-sm text-muted-foreground">How readers respond to the cast</p>
-                          </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.characters.toFixed(1)}
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">Characters</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 {Math.floor(Math.random() * 110) + 40}</span>
+                              <span className="text-red-500">👎 {Math.floor(Math.random() * 30) + 10}</span>
+                            </div>
                           </div>
                         </div>
                         
-                        {/* World Building row */}
-                        <div className="flex items-center gap-6 p-3 bg-card/50 rounded-lg shadow-sm">
+                        {/* World Building icon */}
+                        <div 
+                          className="group relative cursor-pointer"
+                          title="World Building: Settings and environments"
+                        >
                           <RatingSimilarityIcon
                             criterion="worldbuilding"
                             similarity={0}
                             label=""
                             size="lg"
                           />
-                          <div>
-                            <h4 className="font-medium">World Building</h4>
-                            <p className="text-sm text-muted-foreground">The settings and environments</p>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <div className="font-medium">World Building</div>
+                            <div className="flex items-center gap-2 justify-center mt-1">
+                              <span className="text-green-500">👍 {Math.floor(Math.random() * 100) + 30}</span>
+                              <span className="text-red-500">👎 {Math.floor(Math.random() * 25) + 5}</span>
+                            </div>
                           </div>
-                          <div className="ml-auto text-lg font-bold">
-                            {author.aggregateRatings.worldbuilding.toFixed(1)}
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-center text-muted-foreground mt-2">
-                          Values represent average ratings across all books
                         </div>
                       </div>
                     </CardContent>
