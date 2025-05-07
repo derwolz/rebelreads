@@ -19,7 +19,7 @@ interface RatingCategory {
 interface RatingSentimentDisplayProps {
   ratings: RatingCategory[];
   isLoggedIn: boolean;
-  isAuthor: boolean;
+  isAuthor: boolean | undefined;
   totalRatings: number;
 }
 
