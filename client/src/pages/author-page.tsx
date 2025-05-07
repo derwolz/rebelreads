@@ -897,7 +897,7 @@ export default function AuthorPage() {
                     {shelf.books.length > 0 && (
                       <Carousel className="w-full">
                         <CarouselContent>
-                          {shelf.books.map((book) => (
+                          {convertBooksToClientFormat(shelf.books).map((book) => (
                             <CarouselItem key={book.id} className="md:basis-1/3 lg:basis-1/4">
                               <div className="p-1">
                                 <BookCard book={book} />
