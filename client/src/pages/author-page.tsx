@@ -120,6 +120,41 @@ const convertBooksToClientFormat = (books: any[]): Book[] => {
   }));
 };
 
+// Map sentiment levels to colors (copied from rating-sentiment-display.tsx)
+const SENTIMENT_COLORS: Record<string, string> = {
+  overwhelmingly_positive: 'text-[hsl(271,56%,45%)] fill-[hsl(271,56%,25%)]',
+  very_positive: 'text-[hsl(271,56%,45%)]',
+  mostly_positive: 'text-[hsl(271,56%,70%)]',
+  mixed: 'text-amber-500',
+  mostly_negative: 'text-red-400',
+  very_negative: 'text-red-500',
+  overwhelmingly_negative: 'text-red-600 fill-red-900',
+};
+
+// Helper function to determine sentiment level based on upvotes and downvotes
+const getSentimentLevel = (upvotes: number, downvotes: number, thresholds: any[] | undefined) => {
+  if (!thresholds || !Array.isArray(thresholds)) return null;
+  
+  const totalVotes = upvotes + downvotes;
+  if (totalVotes === 0) return null;
+  
+  // Calculate the normalized rating between -1 and 1
+  const normalizedRating = (upvotes - downvotes) / totalVotes;
+  
+  // Find the matching sentiment threshold
+  for (const threshold of thresholds) {
+    if (
+      totalVotes >= threshold.requiredCount &&
+      normalizedRating >= threshold.ratingMin &&
+      normalizedRating <= threshold.ratingMax
+    ) {
+      return threshold.sentimentLevel;
+    }
+  }
+  
+  return null;
+};
+
 export default function AuthorPage() {
   const [matchAuthorsId, paramsById] = useRoute("/authors/:id");
   const [matchAuthorName] = useRoute("/author");
@@ -174,6 +209,11 @@ export default function AuthorPage() {
   } = useQuery<CompatibilityResponse>({
     queryKey: [`/api/authors/${authorId}/compatibility`],
     enabled: !!authorId && isLoggedIn && !isAuthorViewing,
+  });
+  
+  // Fetch rating sentiment thresholds
+  const { data: sentimentThresholds } = useQuery({
+    queryKey: ['/api/rating-sentiments'],
   });
 
   // Filter books based on search term
@@ -371,12 +411,18 @@ export default function AuthorPage() {
                           className="group relative cursor-pointer"
                           title="Enjoyment: How readers connect with your stories"
                         >
-                          <RatingSimilarityIcon
-                            criterion="enjoyment"
-                            similarity={0}
-                            label=""
-                            size="lg"
-                          />
+                          <div className={sentimentThresholds && 
+                            Array.isArray(sentimentThresholds) ?
+                            SENTIMENT_COLORS[getSentimentLevel(101, 0, sentimentThresholds.filter(
+                              (t: any) => t.criteriaName === "enjoyment")) || "mixed"] : ""
+                          }>
+                            <RatingSimilarityIcon
+                              criterion="enjoyment"
+                              similarity={0}
+                              label=""
+                              size="lg"
+                            />
+                          </div>
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-card rounded-lg shadow-lg text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             <div className="font-medium">Enjoyment</div>
                             <div className="flex items-center gap-2 justify-center mt-1">
