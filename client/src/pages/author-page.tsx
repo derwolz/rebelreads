@@ -881,51 +881,34 @@ export default function AuthorPage() {
         ) : bookshelves && bookshelves.length > 0 ? (
           <div>
             <h2 className="text-2xl font-bold mb-6">Public Bookshelves</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-12">
               {bookshelves.map((shelf) => (
-                <Card key={shelf.shelf.id} className="bg-card/80 shadow">
-                  <CardHeader>
-                    <CardTitle className="text-xl">{shelf.shelf.title}</CardTitle>
-                    <CardDescription>
+                <div key={shelf.shelf.id} className="bg-card/30 backdrop-blur-sm p-6 rounded-lg">
+                  {/* Shelf Title + Book Count */}
+                  <Link 
+                    to={`/book-shelf/share?username=${encodeURIComponent(author.username)}&shelfname=${encodeURIComponent(shelf.shelf.title)}`}
+                    className="block mb-8 hover:opacity-90 transition-opacity cursor-pointer"
+                  >
+                    <h3 className="text-2xl font-bold text-center text-foreground mb-2">
+                      {shelf.shelf.title}
+                    </h3>
+                    <p className="text-center text-muted-foreground text-sm">
                       {shelf.books.length} {shelf.books.length === 1 ? 'book' : 'books'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-4">
-                      {shelf.books.slice(0, 6).map((book) => (
-                        <div
-                          key={book.id}
-                          className="w-16 h-24 bg-muted rounded-md overflow-hidden shadow-sm"
-                        >
-                          {book.coverUrl ? (
-                            <img
-                              src={book.coverUrl}
-                              alt={book.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-primary/10">
-                              <span className="text-xs text-center px-1">{book.title}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      
-                      {shelf.books.length > 6 && (
-                        <div className="w-16 h-24 bg-muted/50 rounded-md flex items-center justify-center">
-                          <span className="text-sm font-medium">+{shelf.books.length - 6}</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Link to={`/bookshelf/${shelf.shelf.id}`} className="w-full">
-                      <Button variant="outline" size="sm" className="w-full">
-                        View Shelf
-                      </Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
+                    </p>
+                  </Link>
+                  
+                  {/* BookRackShelf Component */}
+                  <Link 
+                    to={`/book-shelf/share?username=${encodeURIComponent(author.username)}&shelfname=${encodeURIComponent(shelf.shelf.title)}`}
+                    className="block hover:opacity-90 transition-opacity"
+                  >
+                    <BookRackShelf 
+                      books={shelf.books}
+                      isLoading={false}
+                      className="mx-auto max-w-4xl"
+                    />
+                  </Link>
+                </div>
               ))}
             </div>
           </div>
