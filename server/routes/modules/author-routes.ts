@@ -265,8 +265,9 @@ router.get("/:id/following", async (req, res) => {
   }
   
   try {
-    const isFollowing = await dbStorage.isFollowingAuthor(req.user!.id, authorId);
-    res.json({ following: isFollowing });
+    const isFollowing = await dbStorage.isFollowing(req.user!.id, authorId);
+    // Return both formats for compatibility (isFollowing and following)
+    res.json({ isFollowing: isFollowing, following: isFollowing });
   } catch (error: any) {
     console.error("Error checking following status:", error);
     res.status(500).json({ error: error.message || "Failed to check following status" });

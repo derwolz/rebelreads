@@ -553,6 +553,33 @@ export class AccountStorage implements IAccountStorage {
   }
 
   async followAuthor(followerId: number, authorId: number): Promise<Follower> {
+    // First check if the user is already following this author
+    const existing = await db
+      .select()
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followerId, followerId),
+          eq(followers.followingId, authorId)
+        )
+      )
+      .limit(1);
+      
+    if (existing.length > 0) {
+      // If the relationship exists but was marked as deleted, update it
+      if (existing[0].deletedAt) {
+        const [updated] = await db
+          .update(followers)
+          .set({ deletedAt: null })
+          .where(eq(followers.id, existing[0].id))
+          .returning();
+        return updated;
+      }
+      // If already following and not deleted, just return the existing relationship
+      return existing[0];
+    }
+    
+    // Insert new follow relationship if one doesn't exist
     const [follower] = await db
       .insert(followers)
       .values({ followerId, followingId: authorId })
