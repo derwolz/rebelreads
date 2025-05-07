@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 interface FollowButtonProps {
   authorId: number;
@@ -17,7 +16,6 @@ interface FollowStatus {
 
 export function FollowButton({ authorId, authorName, className }: FollowButtonProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
 
   const { data: followStatus } = useQuery<FollowStatus>({
     queryKey: [`/api/authors/${authorId}/following`],
@@ -37,12 +35,9 @@ export function FollowButton({ authorId, authorName, className }: FollowButtonPr
       if (!res.ok) throw new Error("Failed to update follow status");
     },
     onSuccess: () => {
+      // Just invalidate the queries without showing a toast notification
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}`] });
       queryClient.invalidateQueries({ queryKey: [`/api/authors/${authorId}/following`] });
-      toast({
-        title: isFollowing ? "Unfollowed" : "Following",
-        description: `You are ${isFollowing ? 'no longer' : 'now'} following ${authorName}`,
-      });
     },
   });
 
