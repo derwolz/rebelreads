@@ -38,6 +38,10 @@ export function AccountSettings() {
   const queryClient = useQueryClient();
   const revokeButtonRef = React.useRef<HTMLButtonElement>(null);
   
+  // State for author status confirmation
+  const [confirmUsername, setConfirmUsername] = useState("");
+  const [confirmError, setConfirmError] = useState("");
+  
   // Check if the user is using SSO
   const isSSO = user?.provider !== null && user?.provider !== undefined;
   
@@ -507,12 +511,77 @@ export function AccountSettings() {
                     <p className="text-sm">
                       Become an author to publish books, sell directly to readers, and build your online presence.
                     </p>
-                    <Button 
-                      onClick={() => becomeAuthorMutation.mutate({})}
-                      className="w-full"
-                    >
-                      Register as Author
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          className="w-full"
+                        >
+                          Register as Author
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Become an Author</AlertDialogTitle>
+                          
+                          {/* Use regular div instead of AlertDialogDescription to avoid nesting issues */}
+                          <div className="space-y-4 py-2">
+                            <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                              <strong className="text-amber-800">Important:</strong>
+                              <p className="text-amber-800 text-sm mt-1">
+                                Becoming an author will create a public profile and enable publishing tools. 
+                                This is a major change to your account.
+                              </p>
+                            </div>
+                            
+                            <p>As an author, you will be able to:</p>
+                            <div className="ml-5 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span>•</span> Publish books to the platform
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span>•</span> Build a public author profile
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span>•</span> Access analytics and reader insights
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <p className="text-sm font-medium mb-2">Please type your username to confirm:</p>
+                              <Input 
+                                type="text" 
+                                placeholder={user?.username || ""}
+                                value={confirmUsername}
+                                onChange={(e) => setConfirmUsername(e.target.value)}
+                                className="mb-2"
+                              />
+                              {confirmError && (
+                                <p className="text-sm text-destructive">{confirmError}</p>
+                              )}
+                            </div>
+                          </div>
+                        </AlertDialogHeader>
+                        <AlertDialogAction
+                          onClick={() => {
+                            if (confirmUsername !== user?.username) {
+                              setConfirmError("Username does not match");
+                              return;
+                            }
+                            setConfirmError("");
+                            becomeAuthorMutation.mutate({ confirmUsername });
+                          }}
+                          className="bg-primary text-primary-foreground"
+                        >
+                          I understand, register me as an author
+                        </AlertDialogAction>
+                        <AlertDialogCancel onClick={() => {
+                          setConfirmUsername("");
+                          setConfirmError("");
+                        }}>
+                          Cancel
+                        </AlertDialogCancel>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 )}
               </CardContent>

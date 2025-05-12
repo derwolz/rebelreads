@@ -599,6 +599,25 @@ router.post("/become-author", async (req: Request, res: Response) => {
   }
   
   try {
+    // Validate username confirmation
+    const confirmSchema = z.object({
+      confirmUsername: z.string()
+    });
+    
+    let confirmUsername;
+    try {
+      // Extract and validate the confirmation username
+      const { confirmUsername: extractedUsername } = confirmSchema.parse(req.body);
+      confirmUsername = extractedUsername;
+      
+      // Check if the confirmation username matches
+      if (confirmUsername !== req.user.username) {
+        return res.status(400).json({ error: "Username confirmation does not match" });
+      }
+    } catch (validationError) {
+      return res.status(400).json({ error: "Username confirmation is required" });
+    }
+    
     // Check if the user is already an author
     const isExistingAuthor = await dbStorage.isUserAuthor(req.user.id);
     

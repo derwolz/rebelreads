@@ -37,7 +37,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<any, Error, any>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
-  becomeAuthorMutation: UseMutationResult<Author, Error, any>;
+  becomeAuthorMutation: UseMutationResult<Author, Error, { confirmUsername: string }>;
   revokeAuthorMutation: UseMutationResult<any, Error, { confirmUsername: string }>;
   verifyLoginMutation: UseMutationResult<SelectUser, Error, { userId: number, code: string }>;
 };
@@ -267,11 +267,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const becomeAuthorMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ confirmUsername }: { confirmUsername: string }) => {
+      // Verify username confirmation matches the current user
+      if (confirmUsername !== user?.username) {
+        throw new Error("Username confirmation does not match");
+      }
+      
       // The server endpoint expects 'author_name' (with underscore) as defined in the schema
       const res = await apiRequest("POST", "/api/become-author", {
         author_name: user?.username || "",
-        bio: ""
+        bio: "",
+        confirmUsername // Add the confirmation to the request
       });
       
       if (!res.ok) {
