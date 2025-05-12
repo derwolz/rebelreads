@@ -1890,10 +1890,7 @@ export async function runMigrations() {
   await addDatabaseIndexes();
   
 
-  // Import and run AuthorBash migrations
-  const { runAuthorBashMigrations } = await import("./migrations/authorbash-tables");
-  await runAuthorBashMigrations();
-  
+
   // Update ratings table to use thumbs up/down system
   await updateRatingsToThumbsSystem();
   

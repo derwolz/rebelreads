@@ -426,18 +426,7 @@ export function AccountSettings() {
           </div>
         )}
         
-        {/* Information for SSO users */}
-        {isSSO && (
-          <div className="border-t pt-4 mt-4">
-            <h3 className="text-lg font-medium mb-4">SSO Authentication</h3>
-            <div className="bg-muted/50 p-4 rounded-md">
-              <p className="text-sm text-muted-foreground">
-                Your account uses {user?.provider} for authentication. 
-                Password management is handled by your {user?.provider} account.
-              </p>
-            </div>
-          </div>
-        )}
+
 
         {/* Author Account Management Section */}
         <div className="border-t pt-4 mt-4">
@@ -455,7 +444,7 @@ export function AccountSettings() {
                     </div>
                     
                     <p className="text-sm">
-                      As an author, you can publish books, manage your portfolio, and access analytics.
+                      As an author, you can list books, manage your portfolio, and access analytics.
                     </p>
                     
                     <AlertDialog>
@@ -480,7 +469,7 @@ export function AccountSettings() {
                             <p>Revoking your author status will:</p>
                             <div className="ml-5 space-y-1">
                               <div className="flex items-center gap-2">
-                                <span>•</span> Delete all books you've published
+                                <span>•</span> Delete all books you've listed
                               </div>
                               <div className="flex items-center gap-2">
                                 <span>•</span> Remove your author profile and analytics
@@ -492,7 +481,7 @@ export function AccountSettings() {
                             
                             <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
                               <p className="text-amber-800 text-sm font-medium">
-                                Consider carefully before proceeding, as this will delete all your published content.
+                                Consider carefully before proceeding, as this will delete all your listed content.
                               </p>
                             </div>
                             
@@ -537,7 +526,7 @@ export function AccountSettings() {
                 ) : (
                   <div className="space-y-4">
                     <p className="text-sm">
-                      Become an author to publish books, sell directly to readers, and build your online presence.
+                      Become an author to list books and build your online presence.
                     </p>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -556,7 +545,7 @@ export function AccountSettings() {
                             <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
                               <strong className="text-amber-800">Important:</strong>
                               <p className="text-amber-800 text-sm mt-1">
-                                Becoming an author will create a public profile and enable publishing tools. 
+                                Becoming an author will create a public profile and enable listing tools. 
                                 This is a major change to your account.
                               </p>
                             </div>
@@ -564,7 +553,7 @@ export function AccountSettings() {
                             <p>As an author, you will be able to:</p>
                             <div className="ml-5 space-y-1">
                               <div className="flex items-center gap-2">
-                                <span>•</span> Publish books to the platform
+                                <span>•</span> List books on the platform
                               </div>
                               <div className="flex items-center gap-2">
                                 <span>•</span> Build a public author profile
