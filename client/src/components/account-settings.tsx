@@ -39,8 +39,10 @@ export function AccountSettings() {
   const revokeButtonRef = React.useRef<HTMLButtonElement>(null);
   
   // State for author status confirmation
-  const [confirmUsername, setConfirmUsername] = useState("");
-  const [confirmError, setConfirmError] = useState("");
+  const [becomeAuthorUsername, setBecomeAuthorUsername] = useState("");
+  const [becomeAuthorError, setBecomeAuthorError] = useState("");
+  const [revokeAuthorUsername, setRevokeAuthorUsername] = useState("");
+  const [revokeAuthorError, setRevokeAuthorError] = useState("");
   
   // Check if the user is using SSO
   const isSSO = user?.provider !== null && user?.provider !== undefined;
@@ -493,16 +495,42 @@ export function AccountSettings() {
                                 Consider carefully before proceeding, as this will delete all your published content.
                               </p>
                             </div>
+                            
+                            <div className="mt-4">
+                              <p className="text-sm font-medium mb-2">Please type your username to confirm:</p>
+                              <Input 
+                                type="text" 
+                                placeholder={user?.username || ""}
+                                value={revokeAuthorUsername}
+                                onChange={(e) => setRevokeAuthorUsername(e.target.value)}
+                                className="mb-2"
+                              />
+                              {revokeAuthorError && (
+                                <p className="text-sm text-destructive">{revokeAuthorError}</p>
+                              )}
+                            </div>
                           </div>
                         </AlertDialogHeader>
                         <AlertDialogAction
                           ref={revokeButtonRef}
-                          onClick={() => revokeAuthorMutation.mutate({ confirmUsername: user?.username || '' })}
+                          onClick={() => {
+                            if (revokeAuthorUsername !== user?.username) {
+                              setRevokeAuthorError("Username does not match");
+                              return;
+                            }
+                            setRevokeAuthorError("");
+                            revokeAuthorMutation.mutate({ confirmUsername: revokeAuthorUsername });
+                          }}
                           className="bg-destructive text-destructive-foreground"
                         >
                           I understand, revoke my author status
                         </AlertDialogAction>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => {
+                          setRevokeAuthorUsername("");
+                          setRevokeAuthorError("");
+                        }}>
+                          Cancel
+                        </AlertDialogCancel>
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
@@ -551,32 +579,32 @@ export function AccountSettings() {
                               <Input 
                                 type="text" 
                                 placeholder={user?.username || ""}
-                                value={confirmUsername}
-                                onChange={(e) => setConfirmUsername(e.target.value)}
+                                value={becomeAuthorUsername}
+                                onChange={(e) => setBecomeAuthorUsername(e.target.value)}
                                 className="mb-2"
                               />
-                              {confirmError && (
-                                <p className="text-sm text-destructive">{confirmError}</p>
+                              {becomeAuthorError && (
+                                <p className="text-sm text-destructive">{becomeAuthorError}</p>
                               )}
                             </div>
                           </div>
                         </AlertDialogHeader>
                         <AlertDialogAction
                           onClick={() => {
-                            if (confirmUsername !== user?.username) {
-                              setConfirmError("Username does not match");
+                            if (becomeAuthorUsername !== user?.username) {
+                              setBecomeAuthorError("Username does not match");
                               return;
                             }
-                            setConfirmError("");
-                            becomeAuthorMutation.mutate({ confirmUsername });
+                            setBecomeAuthorError("");
+                            becomeAuthorMutation.mutate({ confirmUsername: becomeAuthorUsername });
                           }}
                           className="bg-primary text-primary-foreground"
                         >
                           I understand, register me as an author
                         </AlertDialogAction>
                         <AlertDialogCancel onClick={() => {
-                          setConfirmUsername("");
-                          setConfirmError("");
+                          setBecomeAuthorUsername("");
+                          setBecomeAuthorError("");
                         }}>
                           Cancel
                         </AlertDialogCancel>
