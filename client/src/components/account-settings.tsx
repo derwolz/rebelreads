@@ -38,9 +38,12 @@ export function AccountSettings() {
   const queryClient = useQueryClient();
   const revokeButtonRef = React.useRef<HTMLButtonElement>(null);
   
+  // Check if the user is using SSO
+  const isSSO = user?.provider !== null && user?.provider !== undefined;
+  
   // Initial verification state
-  const [isVerified, setIsVerified] = useState(false);
-  const [showVerification, setShowVerification] = useState(true);
+  const [isVerified, setIsVerified] = useState(isSSO); // Auto-verified for SSO users
+  const [showVerification, setShowVerification] = useState(!isSSO); // Skip verification for SSO users
   
   // Separate form for initial password verification
   const verificationForm = useForm({
@@ -338,82 +341,97 @@ export function AccountSettings() {
           </Form>
         </div>
 
-        {/* Password Change Form */}
-        <div className="border-t pt-4 mt-4">
-          <h3 className="text-lg font-medium mb-4">Change Password</h3>
-          <Form {...passwordForm}>
-            <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} className="space-y-4">
-              <FormField
-                control={passwordForm.control}
-                name="currentPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Current Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        autoComplete="current-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="newPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        autoComplete="new-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Must be at least 8 characters long
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={passwordForm.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        autoComplete="new-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="mt-6">
-                <Button 
-                  type="submit"
-                  disabled={updatePasswordMutation.isPending}
-                >
-                  {updatePasswordMutation.isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        {/* Password Change Form - Only shown for non-SSO users */}
+        {!isSSO && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-medium mb-4">Change Password</h3>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} className="space-y-4">
+                <FormField
+                  control={passwordForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          autoComplete="current-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  Change Password
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </div>
+                />
+
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Must be at least 8 characters long
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          autoComplete="new-password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="mt-6">
+                  <Button 
+                    type="submit"
+                    disabled={updatePasswordMutation.isPending}
+                  >
+                    {updatePasswordMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Change Password
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        )}
+        
+        {/* Information for SSO users */}
+        {isSSO && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-medium mb-4">SSO Authentication</h3>
+            <div className="bg-muted/50 p-4 rounded-md">
+              <p className="text-sm text-muted-foreground">
+                Your account uses {user?.provider} for authentication. 
+                Password management is handled by your {user?.provider} account.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Author Account Management Section */}
         <div className="border-t pt-4 mt-4">
