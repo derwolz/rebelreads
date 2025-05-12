@@ -693,7 +693,7 @@ export function setupAuth(app: Express) {
   app.post("/api/auth/google/store-beta-key", async (req, res) => {
     try {
       
-      const { betaKey } = req.body;
+      const { betaKey, isAuthor } = req.body;
       
       
       // This is a critical endpoint where we validate and prepare for the Google OAuth flow
@@ -722,9 +722,13 @@ export function setupAuth(app: Express) {
       (req.session as any).pending_beta_key = validatedBetaKey || "";
       (req.session as any).google_auth_beta_key = validatedBetaKey || "";
       
+      // Store the isAuthor preference in the session
+      (req.session as any).google_auth_is_author = isAuthor === true;
       
-      
-      
+      console.log("Storing Google auth preferences:", { 
+        betaKey: validatedBetaKey ? "[REDACTED]" : "none", 
+        isAuthor: isAuthor === true 
+      });
       
       // Save the session explicitly to ensure it's persisted
       req.session.save(err => {
