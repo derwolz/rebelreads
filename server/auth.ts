@@ -118,6 +118,10 @@ export function setupAuth(app: Express) {
           username = `${username}${Math.floor(Math.random() * 10000)}`;
         }
 
+        // Get isAuthor preference from session
+        // Note: We have to use a function that can access the session
+        // This will be checked again in the callback route
+        
         // Create the user
         const newUser = await dbStorage.createUser({
           email,
@@ -126,6 +130,7 @@ export function setupAuth(app: Express) {
           newsletterOptIn: false,
           provider: "google",
           providerId,
+          // isAuthor is not set here, it will be handled in the callback route
           // Set profile image separately after user creation if needed
         });
 
@@ -662,6 +667,36 @@ export function setupAuth(app: Express) {
         
         // Successful authentication, redirect to appropriate page
         
+        // Check if the user should be registered as an author
+        if (req.user && (req.session as any).google_auth_is_author === true) {
+          try {
+            console.log(`Checking if user ${req.user.id} should be registered as an author`);
+            
+            // Check if user is already an author
+            const isAlreadyAuthor = await dbStorage.isUserAuthor(req.user.id);
+            
+            if (!isAlreadyAuthor) {
+              console.log(`Creating author record for user ${req.user.id}`);
+              
+              // Create an author record for this user
+              await dbStorage.createAuthor({
+                userId: req.user.id,
+                author_name: req.user.username || req.user.email.split('@')[0],
+                bio: ""
+              });
+              
+              // Update the isAuthor flag in the session
+              req.user.isAuthor = true;
+            }
+            
+            // Clear the flag from session after processing
+            delete (req.session as any).google_auth_is_author;
+            
+          } catch (authorError) {
+            console.error("Error processing author registration:", authorError);
+            // Continue with the flow even if author registration fails
+          }
+        }
         
         // Always trust the device for Google auth users since they're already verified by Google
         if (req.user) {
