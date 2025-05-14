@@ -124,8 +124,15 @@ function App() {
           <Route path="/auth-check" component={AuthCheckPage} />
           <Route path="/reset-password" component={ResetPasswordPage} />
 
-          {/* Public routes that require authentication in beta mode */}
-          <Route path="/" component={HomeComponent} />
+          {/* Root path - redirects to landing page if not authenticated */}
+          <Route path="/">
+            {() => {
+              if (!user) {
+                return <Redirect to="/landing" />;
+              }
+              return <HomeComponent />;
+            }}
+          </Route>
           {/* 
             ***** IMPORTANT: DO NOT EVER USE THIS ROUTE *****
             ***** NEVER ALLOWED TO USE :id TO FETCH BOOKS *****

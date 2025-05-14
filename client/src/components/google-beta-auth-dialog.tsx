@@ -23,13 +23,15 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { SiGoogle } from "react-icons/si";
 import { BetaKeyInput } from "@/components/beta-key-input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Schema for beta key validation - optional
-const betaKeySchema = z.object({
-  betaKey: z.string().optional()
+// Schema for beta key validation and user type
+const googleAuthSchema = z.object({
+  betaKey: z.string().optional(),
+  userType: z.enum(["reader", "author"]),
 });
 
-type BetaKeyFormData = z.infer<typeof betaKeySchema>;
+type GoogleAuthFormData = z.infer<typeof googleAuthSchema>;
 
 interface GoogleBetaAuthDialogProps {
   isOpen: boolean;
@@ -40,44 +42,53 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<BetaKeyFormData>({
-    resolver: zodResolver(betaKeySchema),
+  const form = useForm<GoogleAuthFormData>({
+    resolver: zodResolver(googleAuthSchema),
     defaultValues: {
       betaKey: "",
+      userType: "reader", // Default to reader
     },
   });
   
   // Reset form when dialog is closed
   useEffect(() => {
     if (!isOpen) {
-      form.reset({ betaKey: "" });
+      form.reset({ 
+        betaKey: "",
+        userType: "reader"
+      });
       setIsSubmitting(false);
     }
   }, [isOpen, form]);
 
-  const onSubmit = async (data: BetaKeyFormData) => {
+  const onSubmit = async (data: GoogleAuthFormData) => {
     try {
       setIsSubmitting(true);
       
-      // First, store the beta key in the server session
-      const storeBetaKeyResponse = await fetch("/api/auth/google/store-beta-key", {
+      // Store the beta key and user type in the server session
+      const storeDataResponse = await fetch("/api/auth/google/store-beta-key", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ betaKey: data.betaKey }),
+        body: JSON.stringify({ 
+          betaKey: data.betaKey,
+          isAuthor: data.userType === "author" 
+        }),
       });
       
-      const storeBetaKeyResult = await storeBetaKeyResponse.json();
+      const storeDataResult = await storeDataResponse.json();
       
-      if (storeBetaKeyResponse.ok && storeBetaKeyResult.success) {
-        // Also store the beta key in localStorage for redundancy
+      if (storeDataResponse.ok && storeDataResult.success) {
+        // Also store the data in localStorage for redundancy
         if (data.betaKey) {
           // Store the beta key in localStorage with a timestamp to expire it later if needed
           localStorage.setItem('sirened_beta_key', data.betaKey);
           localStorage.setItem('sirened_beta_key_timestamp', Date.now().toString());
-          console.log('Beta key stored in localStorage:', data.betaKey);
         }
+        
+        // Store the userType selection
+        localStorage.setItem('sirened_user_type', data.userType);
         
         // Redirect to Google OAuth endpoint
         window.location.href = "/api/auth/google";
@@ -92,7 +103,7 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
     } catch (error) {
       toast({
         title: "Error",
-        description: "There was a problem validating your beta key. Please try again.",
+        description: "There was a problem processing your request. Please try again.",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -131,7 +142,43 @@ export function GoogleBetaAuthDialog({ isOpen, onOpenChange }: GoogleBetaAuthDia
                 </FormItem>
               )}
             />
-            <div className="flex gap-2 justify-end">
+            
+            <FormField
+              control={form.control}
+              name="userType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>I am registering as a:</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="reader" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Reader
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="author" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          Author
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="flex gap-2 justify-end mt-4">
               <Button 
                 type="button"
                 variant="outline"
