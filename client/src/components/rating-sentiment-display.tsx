@@ -18,9 +18,11 @@ interface RatingCategory {
 
 interface RatingSentimentDisplayProps {
   ratings: RatingCategory[];
-  isLoggedIn: boolean;
-  isAuthor: boolean | undefined;
-  totalRatings: number;
+  isLoggedIn?: boolean;
+  isAuthor?: boolean;
+  totalRatings?: number;
+  neverLock?: boolean;
+  className?: string;
 }
 
 // Calculate sentiment based on positive/negative ratio
@@ -74,21 +76,26 @@ const sampleRatings: RatingCategory[] = [
 
 export const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
   ratings,
-  isLoggedIn,
-  isAuthor,
-  totalRatings
+  isLoggedIn = true,
+  isAuthor = false,
+  totalRatings = 0,
+  neverLock = false,
+  className = ""
 }) => {
-  // Use actual ratings for logged-in users, sample data for non-logged in
-  const displayRatings = isLoggedIn ? ratings : sampleRatings;
+  // Always display the actual ratings
+  const displayRatings = ratings;
   
   // For authors, show progress toward 10 ratings if less than 10
-  if (isAuthor && totalRatings < 10) {
+  if (isAuthor && totalRatings !== undefined && totalRatings < 10) {
+    const ratingsToGo = 10 - totalRatings;
+    const progressValue = totalRatings * 10;
+    
     return (
-      <div className="flex flex-col items-center p-4 gap-2">
+      <div className={`flex flex-col items-center p-4 gap-2 ${className}`}>
         <p className="text-sm text-center mb-2">
-          You need {10 - totalRatings} more ratings to see detailed sentiment analysis
+          You need {ratingsToGo} more ratings to see detailed sentiment analysis
         </p>
-        <Progress value={totalRatings * 10} className="w-full max-w-md" />
+        <Progress value={progressValue} className="w-full max-w-md" />
         <p className="text-xs text-muted-foreground mt-1">
           {totalRatings}/10 ratings received
         </p>
@@ -127,12 +134,7 @@ export const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
               </Tooltip>
             </TooltipProvider>
             
-            {/* Lock overlay for non-logged in users */}
-            {!isLoggedIn && (
-              <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm rounded-md">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-              </div>
-            )}
+            {/* No lock overlay - ratings are always visible */}
           </div>
         ))}
       </div>
