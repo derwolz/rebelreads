@@ -25,7 +25,7 @@ interface RatingSentimentDisplayProps {
   className?: string;
 }
 
-// Calculate sentiment based on positive/negative ratio
+// Calculate sentiment based on positive/negative ratio or rating value
 const calculateSentiment = (positive: number, negative: number): string => {
   if (positive + negative === 0) return "mixed";
   
@@ -37,6 +37,17 @@ const calculateSentiment = (positive: number, negative: number): string => {
   if (ratio >= 0.40 && ratio <= 0.60) return "mixed";
   if (ratio >= 0.30) return "mostly_negative";
   if (ratio >= 0.15) return "very_negative";
+  return "overwhelmingly_negative";
+};
+
+// Calculate sentiment from a rating value (typically -1 to 1 range)
+const getSentimentFromRating = (rating: number): string => {
+  if (rating > 0.8) return "overwhelmingly_positive";
+  if (rating > 0.6) return "very_positive";
+  if (rating > 0.3) return "mostly_positive";
+  if (rating >= -0.3 && rating <= 0.3) return "mixed";
+  if (rating >= -0.6) return "mostly_negative";
+  if (rating >= -0.8) return "very_negative";
   return "overwhelmingly_negative";
 };
 
@@ -82,8 +93,30 @@ export const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
   neverLock = false,
   className = ""
 }) => {
-  // Always display the actual ratings
-  const displayRatings = ratings;
+  // Convert ratings to array format if it's an object
+  let displayRatings: RatingCategory[] = [];
+  
+  if (Array.isArray(ratings)) {
+    // If ratings is already an array, use it directly
+    displayRatings = ratings;
+  } else if (ratings && typeof ratings === 'object') {
+    // If ratings is an object (like averageRatings from book-details), convert it to array format
+    displayRatings = Object.entries(ratings)
+      .filter(([key]) => !['overall', 'compatibility', 'id', 'bookId', 'userId'].includes(key))
+      .map(([criteriaName, value]: [string, any]) => {
+        // Use more nuanced sentiment calculation based on the value
+        const numValue = parseFloat(value);
+        // Convert from 0-5 scale to -1 to +1 scale for sentiment
+        const normalizedValue = (numValue - 2.5) / 2.5;
+        const sentiment = getSentimentFromRating(normalizedValue);
+        return {
+          criteriaName,
+          totalPositive: normalizedValue > 0 ? Math.round(50 + (normalizedValue * 50)) : 0,
+          totalNegative: normalizedValue <= 0 ? Math.round(50 - (normalizedValue * 50)) : 0,
+          sentiment
+        };
+      });
+  }
   
   // For authors, show progress toward 10 ratings if less than 10
   if (isAuthor && totalRatings !== undefined && totalRatings < 10) {
@@ -104,7 +137,7 @@ export const RatingSentimentDisplay: React.FC<RatingSentimentDisplayProps> = ({
   }
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${className}`}>
       <div className="flex justify-center gap-4 sm:gap-6 md:gap-8 flex-wrap">
         {displayRatings.map((category) => (
           <div 
